@@ -31,8 +31,12 @@ user_chats = {}
 model = None
 try:
     print("Configurando Gemini...")
+    
+    # --- LA CORRECCIÓN ESTÁ AQUÍ ---
+    # Forzamos la API v1 en la configuración global, NO en el modelo.
     genai.configure(
-        api_key=GEMINI_API_KEY
+        api_key=GEMINI_API_KEY,
+        client_options={"api_version": "v1"}
     )
     
     generation_config = {
@@ -47,21 +51,17 @@ try:
         {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
     ]
 
-    # --- CAMBIO CLAVE: Usando el modelo recomendado ---
     model = genai.GenerativeModel(
         model_name='gemini-1.5-pro-latest',
         generation_config=generation_config,
-        safety_settings=safety_settings,
-        client_options={"api_version": "v1"}  # <--- AÑADE ESTA LÍNEA
+        safety_settings=safety_settings
+        # Ya NO ponemos 'client_options' aquí
     )
     print("Modelo Gemini (gemini-1.5-pro-latest) cargado exitosamente.")
 
 except Exception as e:
     print(f"Error fatal al configurar Gemini: {e}")
-    # Si Gemini falla al iniciar, el bot no puede funcionar.
-    # Podrías querer que la app falle aquí.
-    # exit(1)
-
+    
 # --- Funciones Auxiliares ---
 
 def send_whatsapp_message(to_number, message_text):
