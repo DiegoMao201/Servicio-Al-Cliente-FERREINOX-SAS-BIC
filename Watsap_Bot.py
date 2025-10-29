@@ -8,7 +8,6 @@ from flask import Flask, request, make_response
 app = Flask(__name__)
 
 # Cargar las variables de entorno
-# ... (el resto de tu configuración de variables de entorno va aquí) ...
 WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN')
@@ -21,9 +20,17 @@ if not all([WHATSAPP_VERIFY_TOKEN, GEMINI_API_KEY, WHATSAPP_ACCESS_TOKEN, WHATSA
 
 # Configurar Gemini
 try:
-    genai.configure(api_key=GEMINI_API_KEY)
+    # --- CAMBIO IMPORTANTE ---
+    # Forzar el uso de la API v1, ya que el entorno de Render
+    # parece estar atascado en v1beta por alguna razón.
+    client_options = {"api_version": "v1"}
+    # -------------------------
+
+    genai.configure(
+        api_key=GEMINI_API_KEY,
+        client_options=client_options  # <-- AÑADIDO
+    )
     
-    # ... (el resto de tu configuración de Gemini va aquí) ...
     generation_config = {
         "temperature": 0.8,
         "top_p": 0.95,
@@ -45,7 +52,7 @@ try:
 except Exception as e:
     print(f"Error al configurar Gemini: {e}")
 
-# ... (el resto de tu diccionario user_chats va aquí) ...
+# Diccionario para almacenar los historiales de chat por usuario
 user_chats = {}
 
 # --- Funciones Auxiliares ---
@@ -73,7 +80,6 @@ def send_whatsapp_message(to_number, message_text):
         response.raise_for_status() # Lanza un error si la solicitud falla
         print(f"Respuesta enviada a {to_number}: {response.json()}")
     except requests.exceptions.RequestException as e:
-        # Imprime el error pero no rompe el flujo
         print(f"Error al enviar mensaje de WhatsApp: {e}")
         if e.response is not None:
             print(f"Respuesta del error de WhatsApp: {e.response.text}")
@@ -97,7 +103,7 @@ def version():
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     if request.method == 'GET':
-        # Verificación del Webhook (Configuración inicial en Meta)
+        # Verificación del Webhook
         print("Recibiendo solicitud GET de verificación...")
         if request.args.get('hub.mode') == 'subscribe' and request.args.get('hub.verify_token') == WHATSAPP_VERIFY_TOKEN:
             print("¡Webhook verificado!")
@@ -108,7 +114,7 @@ def webhook():
             return make_response('Error de verificación', 403)
     
     if request.method == 'POST':
-        # ... (el resto de tu lógica POST va aquí) ...
+        # Recepción de mensajes del usuario
         data = request.get_json()
         print("¡Mensaje POST recibido!")
         print(json.dumps(data, indent=2))
@@ -120,7 +126,6 @@ def webhook():
                 data['entry'][0]['changes'][0].get('value') and 
                 data['entry'][0]['changes'][0]['value'].get('messages')):
                 
-                # Extraer la información relevante
                 message_info = data['entry'][0]['changes'][0]['value']['messages'][0]
                 
                 # Asegurarse de que es un mensaje de texto
@@ -132,7 +137,6 @@ def webhook():
 
                     # --- Lógica del Chatbot con Memoria ---
 
-                    # 1. Obtener o crear el historial de chat para este usuario
                     if user_phone_number not in user_chats:
                         print(f"Creando nuevo historial de chat para {user_phone_number}")
                         user_chats[user_phone_number] = model.start_chat(history=[])
@@ -148,9 +152,8 @@ def webhook():
 
                     except Exception as e:
                         print(f"Error al llamar a Gemini: {e}")
-                        # Informar al usuario que algo salió mal con la IA
                         gemini_reply = "Lo siento, tuve un problema al procesar tu solicitud. Intenta de nuevo."
-                        # Opcional: reiniciar el historial de chat si la conversación se corrompe
+                        # Opcional: reiniciar el historial de chat
                         # del user_chats[user_phone_number]
                     
                     # 3. Enviar la respuesta de Gemini de vuelta a WhatsApp
@@ -160,13 +163,9 @@ def webhook():
             print(f"KeyError: El payload no tiene la estructura esperada. Error en la clave: {e}")
         except Exception as e:
             print(f"Error general procesando el webhook POST: {e}")
-            # No hagas 'pass' en silencio, imprime el error
         
-        # Siempre devuelve 200 a Meta para que sepa que recibiste el evento
         return make_response('EVENT_RECEIVED', 200)
 
 if __name__ == '__main__':
-    # ... (el resto de tu bloque if __name__ == '__main__' va aquí) ...
-    port = int(os.environ.get('PORT', 8080)) # Cambiado a 8080, un puerto común
-    app.run(host='0.0.0.0', port=port, debug=True) # debug=True es útil para desarrollo
-
+    port = int(os.environ.get('PORT', 8080))
+    app.run(host='0.0.0.0', port=port, debug=True)
