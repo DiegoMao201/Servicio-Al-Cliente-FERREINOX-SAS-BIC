@@ -2,6 +2,10 @@ import os
 import json
 import requests
 import google.generativeai as genai
+# --- AGREGA ESTAS DOS LÍNEAS AQUÍ ---
+print(f"--- DEBUG: Versión de genai: {genai.__version__}")
+print(f"--- DEBUG: Ubicación de genai: {genai.__file__}")
+# -------------------------------------
 from flask import Flask, request, make_response
 
 # --- Configuración ---
