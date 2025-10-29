@@ -19,11 +19,14 @@ if not all([WHATSAPP_VERIFY_TOKEN, GEMINI_API_KEY, WHATSAPP_ACCESS_TOKEN, WHATSA
     # En un entorno de producción, probablemente quieras que esto detenga la app:
     # exit(1)
 
-# Configurar Gemini
+# Diccionario para almacenar los historiales de chat por usuario
+# ADVERTENCIA: ¡Esto se pierde si el servidor se reinicia!
+user_chats = {}
+
+# --- Configuración de Gemini (Movida para mejor manejo de errores) ---
+model = None
 try:
-    # --- CORRECCIÓN ---
-    # Se eliminó client_options={"api_version": "v1"}
-    # La biblioteca maneja la versión de la API automáticamente.
+    print("Configurando Gemini...")
     genai.configure(
         api_key=GEMINI_API_KEY
     )
@@ -40,21 +43,19 @@ try:
         {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
     ]
 
-    # --- CAMBIO CLAVE (REVERTIDO) ---
-    # Volvemos a 'gemini-pro'
-    # El problema no era el modelo, sino la versión de la biblioteca.
-modelo = genai.GenerativeModel(  # <--- ¡CORRECTO! (Alineado con 4 espacios)
+    # --- CAMBIO CLAVE: Usando el modelo recomendado ---
+    model = genai.GenerativeModel(
         model_name='gemini-1.5-pro-latest',
         generation_config=generation_config,
         safety_settings=safety_settings
     )
-    print("Modelo Gemini (gemini-pro) cargado exitosamente.")
-except Exception as e:
-    print(f"Error al configurar Gemini: {e}")
+    print("Modelo Gemini (gemini-1.5-pro-latest) cargado exitosamente.")
 
-# Diccionario para almacenar los historiales de chat por usuario
-# ADVERTENCIA: ¡Esto se pierde si el servidor se reinicia!
-user_chats = {}
+except Exception as e:
+    print(f"Error fatal al configurar Gemini: {e}")
+    # Si Gemini falla al iniciar, el bot no puede funcionar.
+    # Podrías querer que la app falle aquí.
+    # exit(1)
 
 # --- Funciones Auxiliares ---
 
@@ -62,6 +63,10 @@ def send_whatsapp_message(to_number, message_text):
     """
     Función para enviar un mensaje de vuelta al usuario.
     """
+    if not WHATSAPP_ACCESS_TOKEN or not WHATSAPP_PHONE_NUMBER_ID:
+        print("Error: Tokens de WhatsApp no configurados. No se puede enviar mensaje.")
+        return
+
     url = f"https://graph.facebook.com/v19.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
     
     headers = {
@@ -136,7 +141,13 @@ def webhook():
                     
                     print(f"Mensaje de {user_phone_number}: {user_message}")
 
-                    # --- Lógica del Chatbot con Memoria (REVERTIDA A GEMINI) ---
+                    # Verificar si el modelo de Gemini se cargó correctamente al inicio
+                    if model is None:
+                        print("Error: El modelo Gemini no está inicializado. Enviando mensaje de error.")
+                        send_whatsapp_message(user_phone_number, "Lo siento, el servicio de IA no está disponible en este momento.")
+                        return make_response('EVENT_RECEIVED', 200)
+
+                    # --- Lógica del Chatbot con Memoria ---
 
                     # 1. Obtener o crear el historial de chat
                     if user_phone_number not in user_chats:
@@ -147,7 +158,7 @@ def webhook():
 
                     # 2. Enviar el mensaje a Gemini y manejar posibles errores
                     try:
-                        print("Enviando a Gemini (gemini-pro)...")
+                        print(f"Enviando a Gemini ({model.model_name})...")
                         
                         # Manejar comandos especiales
                         if user_message.strip().lower() == "/reset":
@@ -155,7 +166,7 @@ def webhook():
                             gemini_reply = "He olvidado nuestra conversación anterior. ¡Empecemos de nuevo!"
                             print("Historial de chat reseteado.")
                         else:
-                            # --- Lógica de generación REVERTIDA para gemini-pro ---
+                            # --- Lógica de generación ---
                             response_gemini = chat.send_message(user_message)
                             gemini_reply = response_gemini.text
                         
@@ -182,5 +193,4 @@ if __name__ == '__main__':
     # Render (o tu proveedor de hosting) te dará el puerto a través de una variable de entorno
     port = int(os.environ.get('PORT', 8080))
     # debug=True es útil para desarrollo, pero considera ponerlo en False en producción
-    app.run(host='0.0.0.0', port=port, debug=True)
-
+    app.run(host='0.0.0.0', port=port, debug=False)
