@@ -41,16 +41,17 @@ try:
     ]
 
     # --- CAMBIO CLAVE ---
-    # Cambiado de 'gemini-1.5-pro-latest' a 'gemini-pro'
-    # 'gemini-pro' es más compatible con la API v1beta que tu log reporta estar usando.
+    # Cambiado a 'models/text-bison-001' (un modelo PaLM 2)
+    # Esto es para ser compatible con la antigua API v1beta que tus logs 
+    # reportan que estás usando.
     model = genai.GenerativeModel(
-        model_name='gemini-pro',
+        model_name='models/text-bison-001',
         generation_config=generation_config,
         safety_settings=safety_settings
     )
-    print("Modelo Gemini cargado exitosamente.")
+    print("Modelo PaLM 2 (text-bison-001) cargado exitosamente.")
 except Exception as e:
-    print(f"Error al configurar Gemini: {e}")
+    print(f"Error al configurar Gemini/PaLM: {e}")
 
 # Diccionario para almacenar los historiales de chat por usuario
 # ADVERTENCIA: ¡Esto se pierde si el servidor se reinicia!
@@ -139,28 +140,43 @@ def webhook():
                     # --- Lógica del Chatbot con Memoria ---
 
                     # 1. Obtener o crear el historial de chat
+                    # NOTA: text-bison no usa 'start_chat', la lógica debe cambiar.
+                    # Vamos a simular un historial simple.
                     if user_phone_number not in user_chats:
                         print(f"Creando nuevo historial de chat para {user_phone_number}")
-                        user_chats[user_phone_number] = model.start_chat(history=[])
+                        # El historial para PaLM es solo una lista de strings o tuplas
+                        user_chats[user_phone_number] = [] 
                     
-                    chat = user_chats[user_phone_number]
-
                     # 2. Enviar el mensaje a Gemini y manejar posibles errores
                     try:
-                        print("Enviando a Gemini...")
+                        print("Enviando a PaLM (text-bison)...")
+                        
                         # Manejar comandos especiales
                         if user_message.strip().lower() == "/reset":
-                            user_chats[user_phone_number] = model.start_chat(history=[])
+                            user_chats[user_phone_number] = []
                             gemini_reply = "He olvidado nuestra conversación anterior. ¡Empecemos de nuevo!"
                             print("Historial de chat reseteado.")
                         else:
-                            response_gemini = chat.send_message(user_message)
+                            # 'text-bison' no usa 'chat.send_message'. Usa 'model.generate_content'
+                            # Construir el historial para PaLM (simplificado)
+                            # PaLM no es tan bueno en 'chat' como Gemini,
+                            # así que le enviaremos solo el último mensaje.
+                            # Para un historial real, necesitaríamos 'Context' y 'Examples'.
+                            
+                            # --- Lógica de generación cambiada para text-bison ---
+                            prompt = user_message # Simplificado
+                            response_gemini = model.generate_content(prompt)
+                            
+                            # Añadir al historial (simplificado)
+                            user_chats[user_phone_number].append(f"User: {user_message}")
+                            user_chats[user_phone_number].append(f"Model: {response_gemini.text}")
+
                             gemini_reply = response_gemini.text
                         
-                        print(f"Respuesta de Gemini: {gemini_reply}")
+                        print(f"Respuesta de PaLM: {gemini_reply}")
 
                     except Exception as e:
-                        print(f"Error al llamar a Gemini: {e}")
+                        print(f"Error al llamar a PaLM: {e}")
                         gemini_reply = "Lo siento, tuve un problema al procesar tu solicitud. Intenta de nuevo."
                         # Opcional: reiniciar el historial de chat si falla
                         if user_phone_number in user_chats:
