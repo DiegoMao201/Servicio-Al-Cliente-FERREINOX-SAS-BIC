@@ -8,7 +8,7 @@ from flask import Flask, request, make_response
 app = Flask(__name__)
 
 # Cargar las variables de entorno
-# Asegúrate de que estas variables estén configurADAS en tu entorno
+# ... (el resto de tu configuración de variables de entorno va aquí) ...
 WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN')
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN')
@@ -17,14 +17,13 @@ WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
 # Validar que las variables de entorno existan
 if not all([WHATSAPP_VERIFY_TOKEN, GEMINI_API_KEY, WHATSAPP_ACCESS_TOKEN, WHATSAPP_PHONE_NUMBER_ID]):
     print("Error: Faltan una o más variables de entorno.")
-    # En un escenario real, querrías que la app falle si no tiene la configuración
     # exit(1) 
 
 # Configurar Gemini
 try:
     genai.configure(api_key=GEMINI_API_KEY)
     
-    # Configuración de seguridad (ajusta según sea necesario)
+    # ... (el resto de tu configuración de Gemini va aquí) ...
     generation_config = {
         "temperature": 0.8,
         "top_p": 0.95,
@@ -46,9 +45,7 @@ try:
 except Exception as e:
     print(f"Error al configurar Gemini: {e}")
 
-# Diccionario para almacenar los historiales de chat por usuario
-# NOTA: En producción, esto se reinicia si el servidor se reinicia.
-# Para persistencia, deberías usar una base de datos (como Redis o Firestore).
+# ... (el resto de tu diccionario user_chats va aquí) ...
 user_chats = {}
 
 # --- Funciones Auxiliares ---
@@ -81,6 +78,20 @@ def send_whatsapp_message(to_number, message_text):
         if e.response is not None:
             print(f"Respuesta del error de WhatsApp: {e.response.text}")
 
+# --- Ruta de Depuración ---
+
+@app.route('/version')
+def version():
+    """
+    Una ruta de depuración para verificar la versión de la biblioteca instalada.
+    """
+    try:
+        # Intenta obtener la versión de la biblioteca
+        version = genai.__version__
+        return f"La versión de google-generativeai instalada es: {version}"
+    except Exception as e:
+        return f"Error al obtener la versión: {e}"
+
 # --- Rutas del Webhook ---
 
 @app.route('/webhook', methods=['GET', 'POST'])
@@ -97,7 +108,7 @@ def webhook():
             return make_response('Error de verificación', 403)
     
     if request.method == 'POST':
-        # Recepción de mensajes del usuario
+        # ... (el resto de tu lógica POST va aquí) ...
         data = request.get_json()
         print("¡Mensaje POST recibido!")
         print(json.dumps(data, indent=2))
@@ -155,7 +166,7 @@ def webhook():
         return make_response('EVENT_RECEIVED', 200)
 
 if __name__ == '__main__':
-    # El puerto 5000 es común, pero algunos servicios de despliegue
-    # (como Heroku o Render) te asignan un puerto en la variable 'PORT'
+    # ... (el resto de tu bloque if __name__ == '__main__' va aquí) ...
     port = int(os.environ.get('PORT', 8080)) # Cambiado a 8080, un puerto común
     app.run(host='0.0.0.0', port=port, debug=True) # debug=True es útil para desarrollo
+
