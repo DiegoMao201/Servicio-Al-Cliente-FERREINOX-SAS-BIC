@@ -43,8 +43,8 @@ try:
     # --- CAMBIO CLAVE (REVERTIDO) ---
     # Volvemos a 'gemini-pro'
     # El problema no era el modelo, sino la versión de la biblioteca.
-    model = genai.GenerativeModel(
-        model_name='gemini-pro',
+   model = genai.GenerativeModel(
+    model_name='gemini-1.5-pro-latest',
         generation_config=generation_config,
         safety_settings=safety_settings
     )
