@@ -40,8 +40,11 @@ try:
         {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_MEDIUM_AND_ABOVE"},
     ]
 
+    # --- CAMBIO CLAVE ---
+    # Cambiado de 'gemini-1.5-pro-latest' a 'gemini-pro'
+    # 'gemini-pro' es más compatible con la API v1beta que tu log reporta estar usando.
     model = genai.GenerativeModel(
-        model_name='gemini-1.5-pro-latest',
+        model_name='gemini-pro',
         generation_config=generation_config,
         safety_settings=safety_settings
     )
@@ -178,3 +181,4 @@ if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     # debug=True es útil para desarrollo, pero considera ponerlo en False en producción
     app.run(host='0.0.0.0', port=port, debug=True)
+
