@@ -33,10 +33,10 @@ try:
     print("Configurando Gemini...")
     
     # --- LA CORRECCIÓN ESTÁ AQUÍ ---
-    # Forzamos la API v1 en la configuración global, NO en el modelo.
+    # Simplemente configuramos la API Key.
     genai.configure(
-        api_key=GEMINI_API_KEY,
-        client_options={"api_version": "v1"}
+        api_key=GEMINI_API_KEY
+        # NO se necesita 'client_options' aquí.
     )
     
     generation_config = {
