@@ -1,54 +1,41 @@
 import os
 import json
 import requests
-import logging # Importar logging
+import logging 
 from flask import Flask, request, make_response
-
-# --- LIBRERÍA DE GOOGLE AI STUDIO (LA GRATUITA) ---
 import google.generativeai as genai
 
 # --- Configuración ---
 app = Flask(__name__)
-
-# Configurar el logger de Flask
 app.logger.setLevel(logging.INFO) 
 
-# Cargar las variables de entorno de WhatsApp
+# Cargar las variables de entorno
 WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN')
 WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN')
 WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
-# --- NUEVA CONFIGURACIÓN DE GOOGLE AI STUDIO (GEMINI GRATUITO) ---
 model = None
-
-# --- ADVERTENCIA IMPORTANTE DE PRODUCCIÓN ---
-# `user_chats` guardado en la memoria de Python NO funcionará
-# correctamente en Render cuando se usa Gunicorn (que es el estándar).
-# SOLUCIÓN: Debes usar un almacenamiento externo como Redis (recomendado).
-user_chats = {} # Diccionario para almacenar los historiales de chat (sesiones)
-# --- FIN DE LA ADVERTENCIA ---
+user_chats = {} # Advertencia: Esto fallará en producción con Gunicorn (usar Redis)
 
 try:
-    # 1. Lee la API Key de las variables de entorno
-    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
-
     if not GEMINI_API_KEY:
-        raise ValueError("Error: La variable 'GEMINI_API_KEY' no está configurada. Obtén una desde aistudio.google.com")
+        raise ValueError("Error: La variable 'GEMINI_API_KEY' no está configurada.")
 
-    # 2. Configura la biblioteca de genai
     genai.configure(api_key=GEMINI_API_KEY)
 
-    # 3. Carga el modelo
-    
     # --- CORRECCIÓN ---
-    # Cambiamos a "gemini-1.5-pro-latest".
-    # Este es el modelo más avanzado (superior al 1.0 Pro y al 1.5 Flash)
-    # disponible en la biblioteca gratuita de AI Studio.
-    model = genai.GenerativeModel("gemini-1.5-pro-latest")
+    # Basado en la lista que obtuviste, tu API Key tiene acceso a los
+    # modelos más nuevos. Usaremos "gemini-pro-latest", que SÍ está 
+    # en tu lista y soporta 'generateContent'.
+    model = genai.GenerativeModel("gemini-pro-latest")
     # --- FIN CORRECCIÓN ---
 
+    # (Opcional) Puedes verificar si el modelo carga antes de arrancar
+    model.generate_content("Test") 
+    
     app.logger.info("Google AI Studio (Gemini Gratuito) inicializado exitosamente.")
-    app.logger.info("Modelo 'gemini-1.5-pro-latest' cargado.") # Actualizado el log
+    app.logger.info("Modelo 'gemini-pro-latest' cargado y verificado.")
 
 except Exception as e:
     app.logger.error(f"Error fatal al configurar Google AI Studio: {e}")
@@ -57,9 +44,6 @@ except Exception as e:
 # --- Funciones Auxiliares ---
 
 def send_whatsapp_message(to_number, message_text):
-    """
-    Función para enviar un mensaje de vuelta al usuario.
-    """
     if not WHATSAPP_ACCESS_TOKEN or not WHATSAPP_PHONE_NUMBER_ID:
         app.logger.error("Error: Tokens de WhatsApp no configurados. No se puede enviar mensaje.")
         return
@@ -86,24 +70,18 @@ def send_whatsapp_message(to_number, message_text):
             app.logger.error(f"Respuesta del error de WhatsApp: {e.response.text}")
 
 # --- Ruta de Depuración (Opcional) ---
-
 @app.route('/version')
 def version():
-    """
-    Una ruta de depuración para verificar la versión de la biblioteca instalada.
-    """
     try:
         version_num = genai.__version__
-        return f"La versión de google-generativeai (Google AI Studio) instalada es: {version_num}"
+        return f"Versión de google-generativeai: {version_num}"
     except Exception as e:
         return f"Error al obtener la versión: {e}"
 
 # --- Rutas del Webhook ---
-
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     if request.method == 'GET':
-        # Verificación del Webhook
         app.logger.info("Recibiendo solicitud GET de verificación...")
         if request.args.get('hub.mode') == 'subscribe' and request.args.get('hub.verify_token') == WHATSAPP_VERIFY_TOKEN:
             app.logger.info("¡Webhook verificado!")
@@ -114,12 +92,10 @@ def webhook():
             return make_response('Error de verificación', 403)
 
     if request.method == 'POST':
-        # Recepción de mensajes del usuario
         data = request.get_json()
         app.logger.info("¡Mensaje POST recibido!")
 
         try:
-            # Asegurarse de que el payload tiene la estructura esperada
             if (data.get('entry') and 
                 data['entry'][0].get('changes') and 
                 data['entry'][0]['changes'][0].get('value') and 
@@ -127,37 +103,31 @@ def webhook():
 
                 message_info = data['entry'][0]['changes'][0]['value']['messages'][0]
 
-                # Asegurarse de que es un mensaje de texto
                 if message_info['type'] == 'text':
                     user_message = message_info['text']['body']
                     user_phone_number = message_info['from']
 
                     app.logger.info(f"Mensaje de {user_phone_number}: {user_message}")
 
-                    # Verificar si el modelo de Google AI Studio se cargó correctamente
                     if model is None:
-                        app.logger.error("Error: El modelo Google AI Studio no está inicializado. Enviando mensaje de error.")
+                        app.logger.error("Error: El modelo Google AI Studio no está inicializado.")
                         send_whatsapp_message(user_phone_number, "Lo siento, el servicio de IA no está disponible en este momento.")
                         return make_response('EVENT_RECEIVED', 200)
 
-                    # --- LÓGICA DE CHATBOT CON GOOGLE AI STUDIO (GRATUITO) ---
-
+                    # --- Lógica de Chatbot ---
                     if user_phone_number not in user_chats:
                         app.logger.info(f"Creando nueva sesión de chat para {user_phone_number}")
                         user_chats[user_phone_number] = model.start_chat(history=[])
                     
                     chat_session = user_chats[user_phone_number]
 
-                    # 2. Enviar el mensaje a Gemini y manejar posibles errores
                     try:
-                        app.logger.info(f"Enviando a Google AI Studio (gemini-1.5-pro-latest)...") # Actualizado el log
+                        app.logger.info(f"Enviando a Google AI Studio (gemini-pro-latest)...") 
 
-                        # Manejar comandos especiales
                         if user_message.strip().lower() == "/reset":
                             user_chats[user_phone_number] = model.start_chat(history=[])
                             gemini_reply = "He olvidado nuestra conversación anterior. ¡Empecemos de nuevo!"
                             app.logger.info(f"Historial de chat reseteado para {user_phone_number}.")
-
                         else:
                             response_gemini = chat_session.send_message(user_message)
                             gemini_reply = response_gemini.text
@@ -165,16 +135,16 @@ def webhook():
                         app.logger.info(f"Respuesta de Google AI Studio: {gemini_reply[:50]}...")
 
                     except Exception as e:
+                        # Aquí es donde ya no deberías ver el error 404
                         app.logger.error(f"Error al llamar a Google AI Studio: {e}")
                         gemini_reply = "Lo siento, tuve un problema al procesar tu solicitud. Intenta de nuevo."
                         if user_phone_number in user_chats:
                             del user_chats[user_phone_number]
 
-                    # 3. Enviar la respuesta de Gemini de vuelta a WhatsApp
                     send_whatsapp_message(user_phone_number, gemini_reply)
 
         except KeyError as e:
-            app.logger.error(f"KeyError: El payload no tiene la estructura esperada. Error en la clave: {e}")
+            app.logger.error(f"KeyError: El payload no tiene la estructura esperada. Clave: {e}")
         except Exception as e:
             app.logger.error(f"Error general procesando el webhook POST: {e}", exc_info=True)
 
