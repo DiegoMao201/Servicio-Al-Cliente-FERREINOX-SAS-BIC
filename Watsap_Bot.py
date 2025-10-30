@@ -57,10 +57,10 @@ try:
     vertexai.init(project=PROJECT_ID, credentials=credentials)
 
     # 5. Carga el modelo (¡asegúrate de que sea 'gemini-pro'!)
-    model = GenerativeModel("gemini-1.0-pro") # Usamos gemini-1.0-pro (equivalente a gemini-pro)
+    model = GenerativeModel("gemini-1.5-pro") # Usamos gemini-1.0-pro (equivalente a gemini-pro)
 
     print(f"Vertex AI inicializado. Proyecto: {PROJECT_ID}")
-    print("Modelo Gemini (gemini-1.0-pro) cargado exitosamente.")
+    print("Modelo Gemini (gemini-1.5-pro) cargado exitosamente.")
 
 except Exception as e:
     print(f"Error fatal al configurar Vertex AI: {e}")
