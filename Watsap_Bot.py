@@ -5,7 +5,7 @@ from flask import Flask, request, make_response
 
 # --- NUEVAS LIBRERÍAS DE GOOGLE CLOUD ---
 import vertexai
-from vertexai.generative_models import GenerativeModel, Part
+from vertexai.generative_models import GenerativeModel, Part, Content # <--- 1. AÑADIMOS 'Content'
 from google.oauth2 import service_account
 from google.auth.exceptions import DefaultCredentialsError
 
@@ -56,7 +56,7 @@ try:
     # 4. Inicializa Vertex AI (CON LA REGIÓN CORRECTA!)
     vertexai.init(project=PROJECT_ID, credentials=credentials, location="us-east1")
 
-    # 5. Carga el modelo (¡USAMOS EL MODELO DE TU IMAGEN!)
+    # 5. Carga el modelo (EL QUE SÍ TIENES)
     model = GenerativeModel("gemini-2.5-pro") 
 
     print(f"Vertex AI inicializado. Proyecto: {PROJECT_ID} en Región: us-east1")
@@ -164,7 +164,6 @@ def webhook():
 
                     # 2. Enviar el mensaje a Gemini y manejar posibles errores
                     try:
-                        # --- ¡CAMBIADO AL MODELO DE TU IMAGEN! ---
                         print(f"Enviando a Vertex AI (gemini-2.5-pro)...") 
 
                         # Manejar comandos especiales
@@ -174,15 +173,17 @@ def webhook():
                             print("Historial de chat reseteado.")
 
                         else:
-                            # --- Lógica de generación de Vertex AI ---
-                            # Construimos el historial para la API
-                            chat_history_parts = []
+                            # --- 2. ¡ESTA ES LA PARTE CORREGIDA! ---
+                            # Construimos el historial en el formato 'Content'
+                            chat_history_content = []
                             for item in history:
-                                chat_history_parts.append(Part.from_text(item["text"]))
-                                chat_history_parts.append(Part.from_text(item["response"]))
+                                # Turno del usuario
+                                chat_history_content.append(Content(role="user", parts=[Part.from_text(item["text"])]))
+                                # Turno del modelo
+                                chat_history_content.append(Content(role="model", parts=[Part.from_text(item["response"])]))
 
-                            # Iniciamos una nueva sesión de chat con el historial
-                            chat = model.start_chat(history=chat_history_parts)
+                            # Iniciamos una nueva sesión de chat con el historial correcto
+                            chat = model.start_chat(history=chat_history_content)
 
                             response_gemini = chat.send_message(user_message)
                             gemini_reply = response_gemini.text
