@@ -17,7 +17,5 @@ google-generativeai = "*" # Corregido: eliminado el carácter de escape ()
 
 [build-system]
 
-La lista de requerimientos debe estar entre corchetes
-
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
