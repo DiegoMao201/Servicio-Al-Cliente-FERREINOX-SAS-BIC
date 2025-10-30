@@ -164,7 +164,7 @@ def webhook():
 
                     # 2. Enviar el mensaje a Gemini y manejar posibles errores
                     try:
-                        print(f"Enviando a Vertex AI ({model.model_name})...")
+                        print(f"Enviando a Vertex AI (gemini-1.0-pro)...")
 
                         # Manejar comandos especiales
                         if user_message.strip().lower() == "/reset":
