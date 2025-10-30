@@ -2,16 +2,15 @@ import os
 import json
 import requests
 import logging
-import threading  # Usado para responder rápido a WhatsApp y evitar mensajes duplicados
-import gspread     # Librería para Google Sheets
-from google.oauth2.service_account import Credentials  # Para la autenticación con el JSON
-from datetime import datetime  # Para la marca de tiempo del log
+import threading  # Corregido: Reemplazado el espacio invisible U+00A0 con un espacio normal
+import gspread    # Para Google Sheets
+from google.oauth2.service_account import Credentials  # Para Google Sheets
+from datetime import datetime  # Para la marca de tiempo
 from flask import Flask, request, make_response
 import google.generativeai as genai
 
 # --- Configuración de Logging y Flask ---
 app = Flask(__name__)
-# Configuración del logging para ver los errores detallados
 app.logger.setLevel(logging.INFO)
 
 # --- Cargar Variables de Entorno ---
@@ -30,6 +29,9 @@ GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
 GOOGLE_WORKSHEET_NAME = os.environ.get('GOOGLE_WORKSHEET_NAME')
 
 # --- Estado en Memoria (¡ADVERTENCIA!) ---
+# Estas variables se reiniciarán con cada despliegue.
+# Y NO funcionarán correctamente si Gunicorn usa más de 1 worker (proceso).
+# Para una solución de producción real, esto debería usar una base de datos (ej. Redis).
 user_chats = {}
 processed_message_ids = set() # Para evitar procesar duplicados
 
@@ -37,11 +39,9 @@ processed_message_ids = set() # Para evitar procesar duplicados
 worksheet = None # Hoja de cálculo de Google
 try:
     if not GCP_JSON_STR or not GOOGLE_SHEET_NAME or not GOOGLE_WORKSHEET_NAME:
-        # Esto ocurre si falta alguna variable de entorno. Es una advertencia válida.
         app.logger.warning("Variables de Google Sheets no configuradas. El log de chats está desactivado.")
     else:
-        # Cargar las credenciales desde el string JSON
-        # Usamos json.loads para convertir el string de la variable de entorno en un diccionario
+        # Cargar las credenciales desde el string JSON en la variable de entorno
         creds_dict = json.loads(GCP_JSON_STR)
         scopes = [
             'https://www.googleapis.com/auth/spreadsheets',
@@ -50,23 +50,19 @@ try:
         creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
         client_gspread = gspread.authorize(creds)
         
-        # Abrir la hoja de cálculo por su nombre
+        # Abrir la hoja de cálculo y la pestaña
         sheet = client_gspread.open(GOOGLE_SHEET_NAME)
-        # Seleccionar la pestaña (worksheet) por su nombre
         worksheet = sheet.worksheet(GOOGLE_WORKSHEET_NAME)
         
         # (Opcional) Añadir cabeceras si la hoja está vacía
         if not worksheet.get_all_values():
-             worksheet.append_row(["Timestamp", "Numero_Usuario", "Mensaje_Usuario", "Respuesta_Bot"])
+              worksheet.append_row(["Timestamp", "Numero_Usuario", "Mensaje_Usuario", "Respuesta_Bot"])
         
         app.logger.info(f"Conectado a Google Sheets: {GOOGLE_SHEET_NAME} -> {GOOGLE_WORKSHEET_NAME}")
 
-# BLOQUE CRÍTICO: MUESTRA ERROR DETALLADO SI FALLA LA CONEXIÓN
 except Exception as e:
-    # Si este error aparece, nos dirá si es SpreadsheetNotFound, JSONDecodeError, etc.
-    # El parámetro 'exc_info=True' imprime la pila de error completa, ¡clave para el diagnóstico!
-    app.logger.error(f"Error FATAL al inicializar Google Sheets. CAUSA PROBABLE: Nombre de Hoja/Pestaña incorrecto o JSON corrupto.", exc_info=True) 
-    worksheet = None # Desactivar el log si falla la inicialización
+    app.logger.error(f"Error al inicializar Google Sheets: {e}")
+    worksheet = None # Desactivar si falla
 
 # --- Inicialización de Gemini ---
 model = None
@@ -76,7 +72,9 @@ try:
 
     genai.configure(api_key=GEMINI_API_KEY)
 
-    # --- Instrucción de Sistema para el Tono (Personaliza [Nombre de tu Empresa]) ---
+    # --- Instrucción de Sistema para el Tono ---
+    # Aquí definimos la "personalidad" del bot.
+    # ¡Personaliza el "[Nombre de tu Empresa]"!
     system_instruction = (
         "Eres un asistente de servicio al cliente de [Nombre de tu Empresa]. "
         "Habla de forma amable, cercana y natural, como lo haría una persona. "
@@ -85,11 +83,12 @@ try:
         "Trata al cliente con familiaridad (tuteándolo)."
     )
     
-    # Cargar el modelo con la instrucción de sistema
+    # Usamos el modelo con la instrucción de sistema
     model = genai.GenerativeModel(
-        model_name="gemini-pro-latest",
+        model_name="gemini-pro-latest", # O "gemini-1.5-flash-latest" si lo prefieres
         system_instruction=system_instruction
     )
+
     # Verificación rápida del modelo
     model.generate_content("Test")
     app.logger.info("Modelo Gemini ('gemini-pro-latest' con System Instruction) inicializado exitosamente.")
@@ -101,7 +100,6 @@ except Exception as e:
 
 def send_whatsapp_message(to_number, message_text):
     """Envía un mensaje de texto de WhatsApp."""
-    # ... (código sin cambios) ...
     if not WHATSAPP_ACCESS_TOKEN or not WHATSAPP_PHONE_NUMBER_ID:
         app.logger.error("Error: Tokens de WhatsApp no configurados.")
         return
@@ -127,9 +125,8 @@ def send_whatsapp_message(to_number, message_text):
         if e.response is not None:
             app.logger.error(f"Respuesta del error de WhatsApp: {e.response.text}")
 
-
 def log_to_google_sheet(timestamp, phone, user_msg, bot_msg):
-    """Registra la conversación en la hoja de Google Sheets (en un hilo en segundo plano)."""
+    """Registra la conversación en la hoja de Google Sheets."""
     global worksheet
     if worksheet is None:
         app.logger.warning("Intento de loggear, pero Google Sheets no está configurado.")
@@ -140,37 +137,43 @@ def log_to_google_sheet(timestamp, phone, user_msg, bot_msg):
         worksheet.append_row([timestamp, phone, user_msg, bot_msg])
         app.logger.info(f"Chat loggeado en Google Sheets para {phone}")
     except Exception as e:
-        # Si falla al escribir (ej. la hoja fue eliminada después del inicio)
-        app.logger.error(f"Error al escribir en Google Sheets (conexión rota después de iniciar): {e}")
-
+        # Si falla (ej. permisos, API caída), solo registra el error y continúa
+        app.logger.error(f"Error al escribir en Google Sheets: {e}")
 
 def process_message_in_thread(user_phone_number, user_message, message_id):
-    """Función que maneja la IA y el envío, ejecutada en un hilo separado."""
+    """
+    Esta función se ejecuta en un hilo separado para procesar el mensaje
+    y responder, evitando el timeout de WhatsApp.
+    """
     global model, user_chats, processed_message_ids
 
     try:
-        # Lógica de prevención de duplicados
+        # --- SOLUCIÓN DUPLICADOS (Paso 1) ---
+        # Si ya hemos procesado este ID, lo ignoramos.
         if message_id in processed_message_ids:
             app.logger.warning(f"Mensaje duplicado recibido (ID: {message_id}). Ignorando.")
             return
         
+        # Añadimos el ID al set para no procesarlo de nuevo.
+        # (Limitamos el set a 1000 IDs para que no crezca indefinidamente)
         if len(processed_message_ids) > 1000:
             processed_message_ids.clear()
         processed_message_ids.add(message_id)
-        # --- Fin Lógica de prevención de duplicados ---
+        # --- FIN SOLUCIÓN DUPLICADOS ---
 
         if model is None:
             app.logger.error("Error: El modelo Google AI Studio no está inicializado.")
             send_whatsapp_message(user_phone_number, "Lo siento, el servicio de IA no está disponible en este momento.")
             return
 
-        # Lógica de Chatbot
+        # --- Lógica de Chatbot ---
         if user_phone_number not in user_chats:
             app.logger.info(f"Creando nueva sesión de chat para {user_phone_number}")
             user_chats[user_phone_number] = model.start_chat(history=[])
         
         chat_session = user_chats[user_phone_number]
-        gemini_reply = ""
+        
+        gemini_reply = "" # Inicializar variable
         
         try:
             app.logger.info(f"Enviando a Google AI Studio...")
@@ -180,6 +183,7 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
                 gemini_reply = "¡Listo! Empecemos de nuevo. ¿En qué te puedo ayudar?"
                 app.logger.info(f"Historial de chat reseteado para {user_phone_number}.")
             else:
+                # Aquí es donde Gemini usa la "system_instruction" para el tono
                 response_gemini = chat_session.send_message(user_message)
                 gemini_reply = response_gemini.text
 
@@ -188,19 +192,19 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
         except Exception as e:
             app.logger.error(f"Error al llamar a Google AI Studio: {e}")
             gemini_reply = "Perdona, se me fue la idea. ¿Puedes repetirme eso?"
+            # Reiniciamos el chat si falla Gemini
             if user_phone_number in user_chats:
                 del user_chats[user_phone_number]
 
-        # 1. Enviar respuesta a WhatsApp (El cliente recibe esto primero)
+        # 1. Enviar respuesta a WhatsApp
         send_whatsapp_message(user_phone_number, gemini_reply)
 
-        # 2. Registrar en Google Sheets (El cliente NO espera por esto)
+        # 2. Registrar en Google Sheets
         timestamp = datetime.now().isoformat()
         log_to_google_sheet(timestamp, user_phone_number, user_message, gemini_reply)
 
     except Exception as e:
         app.logger.error(f"Error fatal en el hilo de procesamiento: {e}", exc_info=True)
-
 
 # --- Rutas del Webhook ---
 @app.route('/webhook', methods=['GET', 'POST'])
@@ -233,30 +237,34 @@ def webhook():
                 if message_info['type'] == 'text':
                     user_message = message_info['text']['body']
                     user_phone_number = message_info['from']
-                    message_id = message_info['id'] 
+                    message_id = message_info['id'] # ID único del mensaje
 
                     app.logger.info(f"Mensaje de {user_phone_number} (ID: {message_id}): {user_message}")
 
-                    # 1. Creamos y empezamos el hilo para el procesamiento
+                    # --- SOLUCIÓN A MÚLTIPLES RESPUESTAS ---
+                    # 1. Creamos un hilo (thread) que ejecutará la función 'process_message_in_thread'
                     processing_thread = threading.Thread(
                         target=process_message_in_thread,
                         args=(user_phone_number, user_message, message_id)
                     )
+                    
+                    # 2. Iniciamos el hilo (se ejecutará en segundo plano)
                     processing_thread.start()
                     
-                    # 2. Respondemos INMEDIATAMENTE a WhatsApp con 200
+                    # 3. Respondemos INMEDIATAMENTE a WhatsApp con 200 (OK)
+                    # Esto le dice a WhatsApp "Recibido, gracias", y ya no lo volverá a enviar.
                     return make_response('EVENT_RECEIVED', 200)
 
-            # Si no es un mensaje de texto, ignoramos, pero damos OK
+            # Si no es un mensaje de texto o tiene otra estructura, lo ignoramos pero damos OK
             app.logger.info("Payload recibido, pero no es un mensaje de texto procesable.")
             return make_response('EVENT_RECEIVED', 200)
 
         except KeyError as e:
             app.logger.error(f"KeyError: El payload no tiene la estructura esperada. Clave: {e}")
-            return make_response('EVENT_RECEIVED', 200)
+            return make_response('EVENT_RECEIVED', 200) # Igual respondemos 200
         except Exception as e:
             app.logger.error(f"Error general procesando el webhook POST: {e}", exc_info=True)
-            return make_response('EVENT_RECEIVED', 200)
+            return make_response('EVENT_RECEIVED', 200) # Igual respondemos 200
 
 # --- Ruta de Depuración (Opcional) ---
 @app.route('/version')
@@ -270,4 +278,5 @@ def version():
 # --- Inicio de la Aplicación ---
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
+    # 'debug=False' es crucial para producción
     app.run(host='0.0.0.0', port=port, debug=False)
