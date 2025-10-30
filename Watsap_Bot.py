@@ -3,67 +3,40 @@ import json
 import requests
 from flask import Flask, request, make_response
 
-# --- NUEVAS LIBRERÍAS DE GOOGLE CLOUD ---
-import vertexai
-from vertexai.generative_models import GenerativeModel, Part, Content # <--- 1. AÑADIMOS 'Content'
-from google.oauth2 import service_account
-from google.auth.exceptions import DefaultCredentialsError
-
-# --- AGREGA ESTAS DOS LÍNEAS AQUÍ ---
-try:
-    import google.generativeai
-    print(f"--- DEBUG: Versión de genai (antigua): {google.generativeai.__version__}")
-except ImportError:
-    print("--- DEBUG: google-generativeai (antigua) no está instalada.")
-
-try:
-    import vertexai
-    print(f"--- DEBUG: Versión de vertexai (nueva): {vertexai.__version__}")
-except Exception as e:
-    print(f"--- DEBUG: Error al importar vertexai: {e}")
-# -------------------------------------
+# --- LIBRERÍA DE GOOGLE AI STUDIO (LA GRATUITA) ---
+import google.generativeai as genai
 
 # --- Configuración ---
 app = Flask(__name__)
 
-# Cargar las variables de entorno
+# Cargar las variables de entorno de WhatsApp
 WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN')
 WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN')
 WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
 
-# --- NUEVA CONFIGURACIÓN DE GOOGLE CLOUD (VERTEX AI) ---
+# --- NUEVA CONFIGURACIÓN DE GOOGLE AI STUDIO (GEMINI GRATUITO) ---
 model = None
-user_chats = {} # Diccionario para almacenar los historiales de chat
+user_chats = {} # Diccionario para almacenar los historiales de chat (sesiones)
 
 try:
-    print("Configurando Vertex AI (Google Cloud)...")
+    # 1. Lee la API Key de las variables de entorno
+    GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
-    # 1. Lee el JSON de la variable de entorno que creamos en Render
-    credentials_json_str = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS_JSON')
+    if not GEMINI_API_KEY:
+        raise ValueError("Error: La variable 'GEMINI_API_KEY' no está configurada. Obtén una desde aistudio.google.com")
 
-    if not credentials_json_str:
-        raise ValueError("Error: La variable 'GOOGLE_APPLICATION_CREDENTIALS_JSON' no está configurada.")
+    # 2. Configura la biblioteca de genai
+    genai.configure(api_key=GEMINI_API_KEY)
 
-    # 2. Convierte el texto JSON en credenciales
-    credentials_info = json.loads(credentials_json_str)
-    credentials = service_account.Credentials.from_service_account_info(credentials_info)
+    # 3. Carga el modelo (¡Usamos el modelo flash, que es rápido y gratuito!)
+    model = genai.GenerativeModel("gemini-1.5-flash-latest")
 
-    # 3. Obtiene el ID del Proyecto del JSON
-    PROJECT_ID = credentials_info.get("project_id")
-    if not PROJECT_ID:
-        raise ValueError("Error: 'project_id' no encontrado en las credenciales JSON.")
-
-    # 4. Inicializa Vertex AI (CON LA REGIÓN CORRECTA!)
-    vertexai.init(project=PROJECT_ID, credentials=credentials, location="us-east1")
-
-    # 5. Carga el modelo (EL QUE SÍ TIENES)
-    model = GenerativeModel("gemini-2.5-pro") 
-
-    print(f"Vertex AI inicializado. Proyecto: {PROJECT_ID} en Región: us-east1")
-    print("Modelo Gemini (gemini-2.5-pro) cargado exitosamente.")
+    print("Google AI Studio (Gemini Gratuito) inicializado exitosamente.")
+    print("Modelo 'gemini-1.5-flash-latest' cargado.")
 
 except Exception as e:
-    print(f"Error fatal al configurar Vertex AI: {e}")
+    print(f"Error fatal al configurar Google AI Studio: {e}")
+
 
 # --- Funciones Auxiliares ---
 
@@ -96,7 +69,7 @@ def send_whatsapp_message(to_number, message_text):
         if e.response is not None:
             print(f"Respuesta del error de WhatsApp: {e.response.text}")
 
-# --- Ruta de Depuración ---
+# --- Ruta de Depuración (Opcional) ---
 
 @app.route('/version')
 def version():
@@ -104,8 +77,8 @@ def version():
     Una ruta de depuración para verificar la versión de la biblioteca instalada.
     """
     try:
-        version_num = vertexai.__version__
-        return f"La versión de google-cloud-aiplatform (vertexai) instalada es: {version_num}"
+        version_num = genai.__version__
+        return f"La versión de google-generativeai (Google AI Studio) instalada es: {version_num}"
     except Exception as e:
         return f"Error al obtener la versión: {e}"
 
@@ -146,55 +119,43 @@ def webhook():
 
                     print(f"Mensaje de {user_phone_number}: {user_message}")
 
-                    # Verificar si el modelo de Vertex AI se cargó correctamente al inicio
+                    # Verificar si el modelo de Google AI Studio se cargó correctamente
                     if model is None:
-                        print("Error: El modelo Vertex AI no está inicializado. Enviando mensaje de error.")
+                        print("Error: El modelo Google AI Studio no está inicializado. Enviando mensaje de error.")
                         send_whatsapp_message(user_phone_number, "Lo siento, el servicio de IA no está disponible en este momento.")
                         return make_response('EVENT_RECEIVED', 200)
 
-                    # --- NUEVA LÓGICA DEL CHATBOT CON VERTEX AI ---
+                    # --- LÓGICA DE CHATBOT CON GOOGLE AI STUDIO (GRATUITO) ---
 
-                    # 1. Obtener o crear el historial de chat
+                    # 1. Obtener o crear la sesión de chat
+                    #    La biblioteca 'genai' maneja el historial internamente en el objeto 'chat'
                     if user_phone_number not in user_chats:
-                        print(f"Creando nuevo historial de chat para {user_phone_number}")
-                        # La biblioteca de Vertex AI maneja el historial de forma diferente
-                        user_chats[user_phone_number] = [] 
-
-                    history = user_chats[user_phone_number]
+                        print(f"Creando nueva sesión de chat para {user_phone_number}")
+                        # Inicia un chat vacío. La biblioteca guardará el historial.
+                        user_chats[user_phone_number] = model.start_chat(history=[])
+                    
+                    chat_session = user_chats[user_phone_number]
 
                     # 2. Enviar el mensaje a Gemini y manejar posibles errores
                     try:
-                        print(f"Enviando a Vertex AI (gemini-2.5-pro)...") 
+                        print(f"Enviando a Google AI Studio (gemini-1.5-flash)...") 
 
                         # Manejar comandos especiales
                         if user_message.strip().lower() == "/reset":
-                            user_chats[user_phone_number] = []
+                            # Creamos una sesión de chat nueva y limpia
+                            user_chats[user_phone_number] = model.start_chat(history=[])
                             gemini_reply = "He olvidado nuestra conversación anterior. ¡Empecemos de nuevo!"
                             print("Historial de chat reseteado.")
 
                         else:
-                            # --- 2. ¡ESTA ES LA PARTE CORREGIDA! ---
-                            # Construimos el historial en el formato 'Content'
-                            chat_history_content = []
-                            for item in history:
-                                # Turno del usuario
-                                chat_history_content.append(Content(role="user", parts=[Part.from_text(item["text"])]))
-                                # Turno del modelo
-                                chat_history_content.append(Content(role="model", parts=[Part.from_text(item["response"])]))
-
-                            # Iniciamos una nueva sesión de chat con el historial correcto
-                            chat = model.start_chat(history=chat_history_content)
-
-                            response_gemini = chat.send_message(user_message)
+                            # Enviamos el mensaje. La sesión (chat_session) recuerda la conversación.
+                            response_gemini = chat_session.send_message(user_message)
                             gemini_reply = response_gemini.text
 
-                            # Guardamos el nuevo turno en nuestro historial simple
-                            history.append({"text": user_message, "response": gemini_reply})
-
-                        print(f"Respuesta de Vertex AI: {gemini_reply}")
+                        print(f"Respuesta de Google AI Studio: {gemini_reply}")
 
                     except Exception as e:
-                        print(f"Error al llamar a Vertex AI: {e}")
+                        print(f"Error al llamar a Google AI Studio: {e}")
                         gemini_reply = "Lo siento, tuve un problema al procesar tu solicitud. Intenta de nuevo."
                         # Opcional: reiniciar el historial si falla
                         if user_phone_number in user_chats:
