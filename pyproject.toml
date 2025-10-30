@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "WhatsApp Bot for Ferreinox"
 authors = ["Diego Mao"]
 readme = "README.md"
+package-mode = false  # <--- ¡ESTA ES LA CORRECCIÓN!
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
