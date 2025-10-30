@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "ferreinox-bot"
+version = "0.1.0"
+description = "WhatsApp Bot for Ferreinox"
+authors = ["Diego Mao"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"  # Usamos Python 3.11
+flask = "*"
+gunicorn = "*"
+google-generativeai = ">=1.0.0"  # La versión que SÍ funciona
+requests = "*"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
