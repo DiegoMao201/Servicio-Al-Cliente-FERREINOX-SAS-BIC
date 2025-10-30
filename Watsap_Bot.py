@@ -11,7 +11,6 @@ import google.generativeai as genai
 app = Flask(__name__)
 
 # Configurar el logger de Flask
-# En Render, esto se conectará automáticamente al sistema de logs
 app.logger.setLevel(logging.INFO) 
 
 # Cargar las variables de entorno de WhatsApp
@@ -25,15 +24,7 @@ model = None
 # --- ADVERTENCIA IMPORTANTE DE PRODUCCIÓN ---
 # `user_chats` guardado en la memoria de Python NO funcionará
 # correctamente en Render cuando se usa Gunicorn (que es el estándar).
-# Gunicorn crea múltiples 'workers' (procesos), y cada uno
-# tiene su propia memoria. Un usuario puede enviar un mensaje al Worker 1
-# y el siguiente al Worker 2, perdiendo el historial de chat.
-#
-# SOLUCIÓN: Debes usar un almacenamiento externo como Redis (recomendado),
-# una base de datos (PostgreSQL, etc.) o un sistema de caché
-# para almacenar las sesiones de chat (el historial).
-#
-# Dejamos esto por ahora para que funcione en desarrollo y pruebas simples.
+# SOLUCIÓN: Debes usar un almacenamiento externo como Redis (recomendado).
 user_chats = {} # Diccionario para almacenar los historiales de chat (sesiones)
 # --- FIN DE LA ADVERTENCIA ---
 
@@ -47,11 +38,17 @@ try:
     # 2. Configura la biblioteca de genai
     genai.configure(api_key=GEMINI_API_KEY)
 
-    # 3. Carga el modelo (¡Usamos el modelo flash, que es rápido y gratuito!)
-    model = genai.GenerativeModel("gemini-1.5-flash-latest")
+    # 3. Carga el modelo
+    
+    # --- CORRECCIÓN ---
+    # Cambiamos a "gemini-1.5-pro-latest".
+    # Este es el modelo más avanzado (superior al 1.0 Pro y al 1.5 Flash)
+    # disponible en la biblioteca gratuita de AI Studio.
+    model = genai.GenerativeModel("gemini-1.5-pro-latest")
+    # --- FIN CORRECCIÓN ---
 
     app.logger.info("Google AI Studio (Gemini Gratuito) inicializado exitosamente.")
-    app.logger.info("Modelo 'gemini-1.5-flash-latest' cargado.")
+    app.logger.info("Modelo 'gemini-1.5-pro-latest' cargado.") # Actualizado el log
 
 except Exception as e:
     app.logger.error(f"Error fatal al configurar Google AI Studio: {e}")
@@ -120,8 +117,6 @@ def webhook():
         # Recepción de mensajes del usuario
         data = request.get_json()
         app.logger.info("¡Mensaje POST recibido!")
-        # Loggear el payload completo puede ser útil para depurar
-        # app.logger.debug(json.dumps(data, indent=2))
 
         try:
             # Asegurarse de que el payload tiene la estructura esperada
@@ -147,37 +142,31 @@ def webhook():
 
                     # --- LÓGICA DE CHATBOT CON GOOGLE AI STUDIO (GRATUITO) ---
 
-                    # 1. Obtener o crear la sesión de chat
-                    # (Recordar la advertencia sobre 'user_chats' en producción)
                     if user_phone_number not in user_chats:
                         app.logger.info(f"Creando nueva sesión de chat para {user_phone_number}")
-                        # Inicia un chat vacío. La biblioteca guardará el historial.
                         user_chats[user_phone_number] = model.start_chat(history=[])
                     
                     chat_session = user_chats[user_phone_number]
 
                     # 2. Enviar el mensaje a Gemini y manejar posibles errores
                     try:
-                        app.logger.info(f"Enviando a Google AI Studio (gemini-1.5-flash)...") 
+                        app.logger.info(f"Enviando a Google AI Studio (gemini-1.5-pro-latest)...") # Actualizado el log
 
                         # Manejar comandos especiales
                         if user_message.strip().lower() == "/reset":
-                            # Creamos una sesión de chat nueva y limpia
                             user_chats[user_phone_number] = model.start_chat(history=[])
                             gemini_reply = "He olvidado nuestra conversación anterior. ¡Empecemos de nuevo!"
                             app.logger.info(f"Historial de chat reseteado para {user_phone_number}.")
 
                         else:
-                            # Enviamos el mensaje. La sesión (chat_session) recuerda la conversación.
                             response_gemini = chat_session.send_message(user_message)
                             gemini_reply = response_gemini.text
 
-                        app.logger.info(f"Respuesta de Google AI Studio: {gemini_reply[:50]}...") # Acortamos para no llenar el log
+                        app.logger.info(f"Respuesta de Google AI Studio: {gemini_reply[:50]}...")
 
                     except Exception as e:
                         app.logger.error(f"Error al llamar a Google AI Studio: {e}")
                         gemini_reply = "Lo siento, tuve un problema al procesar tu solicitud. Intenta de nuevo."
-                        # Opcional: reiniciar el historial si falla
                         if user_phone_number in user_chats:
                             del user_chats[user_phone_number]
 
@@ -187,12 +176,10 @@ def webhook():
         except KeyError as e:
             app.logger.error(f"KeyError: El payload no tiene la estructura esperada. Error en la clave: {e}")
         except Exception as e:
-            app.logger.error(f"Error general procesando el webhook POST: {e}", exc_info=True) # exc_info=True da más detalles
+            app.logger.error(f"Error general procesando el webhook POST: {e}", exc_info=True)
 
         return make_response('EVENT_RECEIVED', 200)
 
 if __name__ == '__main__':
-    # Render (o tu proveedor de hosting) te dará el puerto
     port = int(os.environ.get('PORT', 8080))
-    # debug=False es CRÍTICO para producción
     app.run(host='0.0.0.0', port=port, debug=False)
