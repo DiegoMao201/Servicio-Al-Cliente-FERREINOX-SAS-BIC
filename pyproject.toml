@@ -12,8 +12,6 @@ flask = ""
 gunicorn = ""
 requests = "*"
 
---- BIBLIOTECA PARA GOOGLE AI STUDIO (GRATUITA) ---
-
 google-generativeai = "*"
 
 [build-system]
