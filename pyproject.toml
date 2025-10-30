@@ -4,15 +4,18 @@ version = "0.1.0"
 description = "WhatsApp Bot for Ferreinox"
 authors = ["Diego Mao"]
 readme = "README.md"
-package-mode = false  # <--- ¡ESTA ES LA CORRECCIÓN!
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
 flask = "*"
 gunicorn = "*"
-# USAMOS LA VERSIÓN MÁXIMA QUE RENDER PUEDE VER
-google-generativeai = "==0.8.5"
 requests = "*"
+
+# --- ¡ESTAS SON LAS NUEVAS BIBLIOTECAS! ---
+google-cloud-aiplatform = "*"
+google-auth = "*"
+# Ya no usamos google-generativeai
 
 [build-system]
 requires = ["poetry-core"]
