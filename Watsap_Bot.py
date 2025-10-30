@@ -53,14 +53,14 @@ try:
     if not PROJECT_ID:
         raise ValueError("Error: 'project_id' no encontrado en las credenciales JSON.")
 
-    # 4. Inicializa Vertex AI (¡CON LA REGIÓN CORRECTA!)
+    # 4. Inicializa Vertex AI (CON LA REGIÓN CORRECTA!)
     vertexai.init(project=PROJECT_ID, credentials=credentials, location="us-east1")
 
-    # 5. Carga el modelo (¡USAMOS EL MODELO ESTABLE!)
-    model = GenerativeModel("gemini-1.0-pro") 
+    # 5. Carga el modelo (¡USAMOS EL MODELO DE TU IMAGEN!)
+    model = GenerativeModel("gemini-2.5-pro") 
 
     print(f"Vertex AI inicializado. Proyecto: {PROJECT_ID} en Región: us-east1")
-    print("Modelo Gemini (gemini-1.0-pro) cargado exitosamente.")
+    print("Modelo Gemini (gemini-2.5-pro) cargado exitosamente.")
 
 except Exception as e:
     print(f"Error fatal al configurar Vertex AI: {e}")
@@ -164,8 +164,8 @@ def webhook():
 
                     # 2. Enviar el mensaje a Gemini y manejar posibles errores
                     try:
-                        # --- ¡CAMBIADO AL MODELO ESTABLE! ---
-                        print(f"Enviando a Vertex AI (gemini-1.0-pro)...") 
+                        # --- ¡CAMBIADO AL MODELO DE TU IMAGEN! ---
+                        print(f"Enviando a Vertex AI (gemini-2.5-pro)...") 
 
                         # Manejar comandos especiales
                         if user_message.strip().lower() == "/reset":
