@@ -13,7 +13,7 @@ import google.generativeai as genai
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
 
-# --- Cargar Variables de Entorno ---
+# --- Cargar Variables de Entorno (Se cargan aquí pero se usan en su respectivo bloque) ---
 
 # WhatsApp
 WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN')
@@ -23,34 +23,41 @@ WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
 # Gemini
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
-# Google Sheets
-GCP_JSON_STR = os.environ.get('GCP_SERVICE_ACCOUNT_JSON')
-GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
-GOOGLE_WORKSHEET_NAME = os.environ.get('GOOGLE_WORKSHEET_NAME')
-
 # --- Estado en Memoria (¡ADVERTENCIA!) ---
-# Estas variables se reiniciarán con cada despliegue.
-# Y NO funcionarán correctamente si Gunicorn usa más de 1 worker (proceso).
-# Para una solución de producción real, esto debería usar una base de datos (ej. Redis).
 user_chats = {}
 processed_message_ids = set() # Para evitar procesar duplicados
 
-# --- Inicialización de Google Sheets ---
+# ----------------------------------------------------------------------
+## 📊 Inicialización de Google Sheets (CORREGIDO)
+# ----------------------------------------------------------------------
 worksheet = None # Hoja de cálculo de Google
 try:
+    # Cargar variables aquí para controlarlas
+    GCP_JSON_STR = os.environ.get('GCP_SERVICE_ACCOUNT_JSON')
+    GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
+    GOOGLE_WORKSHEET_NAME = os.environ.get('GOOGLE_WORKSHEET_NAME')
+
     if not GCP_JSON_STR or not GOOGLE_SHEET_NAME or not GOOGLE_WORKSHEET_NAME:
         app.logger.warning("Variables de Google Sheets no configuradas. El log de chats está desactivado.")
     else:
-        # Cargar las credenciales desde el string JSON en la variable de entorno
-        creds_dict = json.loads(GCP_JSON_STR)
+        # Intentar parsear el JSON de credenciales
+        try:
+            creds_dict = json.loads(GCP_JSON_STR)
+        except json.JSONDecodeError as e:
+            # Captura el error si la cadena JSON está malformada (ej. si la private_key no se pegó bien)
+            app.logger.error(f"Error al decodificar el JSON de credenciales: {e}")
+            raise ValueError("Credenciales JSON mal formadas (Revisa GCP_SERVICE_ACCOUNT_JSON en Render).")
+
         scopes = [
             'https://www.googleapis.com/auth/spreadsheets',
             'https://www.googleapis.com/auth/drive.file'
         ]
+        
+        # 1. Autorizar la cuenta de servicio
         creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
         client_gspread = gspread.authorize(creds)
         
-        # Abrir la hoja de cálculo y la pestaña
+        # 2. Abrir la hoja de cálculo y la pestaña
         sheet = client_gspread.open(GOOGLE_SHEET_NAME)
         worksheet = sheet.worksheet(GOOGLE_WORKSHEET_NAME)
         
@@ -61,10 +68,13 @@ try:
         app.logger.info(f"Conectado a Google Sheets: {GOOGLE_SHEET_NAME} -> {GOOGLE_WORKSHEET_NAME}")
 
 except Exception as e:
+    # Captura cualquier otro error, incluyendo APIError 403 o "No key could be detected"
     app.logger.error(f"Error al inicializar Google Sheets: {e}")
     worksheet = None # Desactivar si falla
 
-# --- Inicialización de Gemini ---
+# ----------------------------------------------------------------------
+## 🧠 Inicialización de Gemini
+# ----------------------------------------------------------------------
 model = None
 try:
     if not GEMINI_API_KEY:
@@ -73,7 +83,6 @@ try:
     genai.configure(api_key=GEMINI_API_KEY)
 
     # --- Instrucción de Sistema para el Tono ---
-    # Aquí definimos la "personalidad" del bot.
     # ¡Personaliza el "[Nombre de tu Empresa]"!
     system_instruction = (
         "Eres un asistente de servicio al cliente de [Nombre de tu Empresa]. "
@@ -85,18 +94,19 @@ try:
     
     # Usamos el modelo con la instrucción de sistema
     model = genai.GenerativeModel(
-        model_name="gemini-pro-latest", # O "gemini-1.5-flash-latest" si lo prefieres
+        model_name="gemini-pro-latest",
         system_instruction=system_instruction
     )
 
-    # Verificación rápida del modelo
     model.generate_content("Test")
     app.logger.info("Modelo Gemini ('gemini-pro-latest' con System Instruction) inicializado exitosamente.")
 
 except Exception as e:
     app.logger.error(f"Error fatal al configurar Google AI Studio: {e}")
 
-# --- Funciones Auxiliares ---
+# ----------------------------------------------------------------------
+## 💬 Funciones Auxiliares
+# ----------------------------------------------------------------------
 
 def send_whatsapp_message(to_number, message_text):
     """Envía un mensaje de texto de WhatsApp."""
@@ -133,29 +143,24 @@ def log_to_google_sheet(timestamp, phone, user_msg, bot_msg):
         return
 
     try:
-        # Añade una nueva fila al final de la hoja
         worksheet.append_row([timestamp, phone, user_msg, bot_msg])
         app.logger.info(f"Chat loggeado en Google Sheets para {phone}")
     except Exception as e:
-        # Si falla (ej. permisos, API caída), solo registra el error y continúa
         app.logger.error(f"Error al escribir en Google Sheets: {e}")
 
 def process_message_in_thread(user_phone_number, user_message, message_id):
     """
-    Esta función se ejecuta en un hilo separado para procesar el mensaje
+    Función que se ejecuta en un hilo separado para procesar el mensaje
     y responder, evitando el timeout de WhatsApp.
     """
     global model, user_chats, processed_message_ids
 
     try:
-        # --- SOLUCIÓN DUPLICADOS (Paso 1) ---
-        # Si ya hemos procesado este ID, lo ignoramos.
+        # --- SOLUCIÓN DUPLICADOS ---
         if message_id in processed_message_ids:
             app.logger.warning(f"Mensaje duplicado recibido (ID: {message_id}). Ignorando.")
             return
         
-        # Añadimos el ID al set para no procesarlo de nuevo.
-        # (Limitamos el set a 1000 IDs para que no crezca indefinidamente)
         if len(processed_message_ids) > 1000:
             processed_message_ids.clear()
         processed_message_ids.add(message_id)
@@ -172,8 +177,7 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
             user_chats[user_phone_number] = model.start_chat(history=[])
         
         chat_session = user_chats[user_phone_number]
-        
-        gemini_reply = "" # Inicializar variable
+        gemini_reply = ""
         
         try:
             app.logger.info(f"Enviando a Google AI Studio...")
@@ -183,7 +187,6 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
                 gemini_reply = "¡Listo! Empecemos de nuevo. ¿En qué te puedo ayudar?"
                 app.logger.info(f"Historial de chat reseteado para {user_phone_number}.")
             else:
-                # Aquí es donde Gemini usa la "system_instruction" para el tono
                 response_gemini = chat_session.send_message(user_message)
                 gemini_reply = response_gemini.text
 
@@ -192,7 +195,6 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
         except Exception as e:
             app.logger.error(f"Error al llamar a Google AI Studio: {e}")
             gemini_reply = "Perdona, se me fue la idea. ¿Puedes repetirme eso?"
-            # Reiniciamos el chat si falla Gemini
             if user_phone_number in user_chats:
                 del user_chats[user_phone_number]
 
@@ -206,7 +208,9 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
     except Exception as e:
         app.logger.error(f"Error fatal en el hilo de procesamiento: {e}", exc_info=True)
 
-# --- Rutas del Webhook ---
+# ----------------------------------------------------------------------
+## 🌐 Rutas del Webhook
+# ----------------------------------------------------------------------
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     if request.method == 'GET':
@@ -242,17 +246,14 @@ def webhook():
                     app.logger.info(f"Mensaje de {user_phone_number} (ID: {message_id}): {user_message}")
 
                     # --- SOLUCIÓN A MÚLTIPLES RESPUESTAS ---
-                    # 1. Creamos un hilo (thread) que ejecutará la función 'process_message_in_thread'
+                    # Despachamos el trabajo a un hilo para responder a WhatsApp inmediatamente
                     processing_thread = threading.Thread(
                         target=process_message_in_thread,
                         args=(user_phone_number, user_message, message_id)
                     )
-                    
-                    # 2. Iniciamos el hilo (se ejecutará en segundo plano)
                     processing_thread.start()
                     
-                    # 3. Respondemos INMEDIATAMENTE a WhatsApp con 200 (OK)
-                    # Esto le dice a WhatsApp "Recibido, gracias", y ya no lo volverá a enviar.
+                    # Respondemos INMEDIATAMENTE a WhatsApp con 200 (OK)
                     return make_response('EVENT_RECEIVED', 200)
 
             # Si no es un mensaje de texto o tiene otra estructura, lo ignoramos pero damos OK
@@ -261,12 +262,14 @@ def webhook():
 
         except KeyError as e:
             app.logger.error(f"KeyError: El payload no tiene la estructura esperada. Clave: {e}")
-            return make_response('EVENT_RECEIVED', 200) # Igual respondemos 200
+            return make_response('EVENT_RECEIVED', 200)
         except Exception as e:
             app.logger.error(f"Error general procesando el webhook POST: {e}", exc_info=True)
-            return make_response('EVENT_RECEIVED', 200) # Igual respondemos 200
+            return make_response('EVENT_RECEIVED', 200)
 
-# --- Ruta de Depuración (Opcional) ---
+# ----------------------------------------------------------------------
+## ℹ️ Rutas de Depuración
+# ----------------------------------------------------------------------
 @app.route('/version')
 def version():
     try:
@@ -275,8 +278,9 @@ def version():
     except Exception as e:
         return f"Error al obtener la versión: {e}"
 
-# --- Inicio de la Aplicación ---
+# ----------------------------------------------------------------------
+## ▶️ Inicio de la Aplicación
+# ----------------------------------------------------------------------
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
-    # 'debug=False' es crucial para producción
     app.run(host='0.0.0.0', port=port, debug=False)
