@@ -8,14 +8,13 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-flask = "*"
-gunicorn = "*"
+flask = ""
+gunicorn = ""
 requests = "*"
 
-# --- ¡ESTAS SON LAS NUEVAS BIBLIOTECAS! ---
-google-cloud-aiplatform = "*"
-google-auth = "*"
-# Ya no usamos google-generativeai
+--- BIBLIOTECA PARA GOOGLE AI STUDIO (GRATUITA) ---
+
+google-generativeai = "*"
 
 [build-system]
 requires = ["poetry-core"]
