@@ -1,3 +1,9 @@
+# FORZAMOS A POETRY A USAR EL ÍNDICE OFICIAL DE PyPI
+[[tool.poetry.source]]
+name = "PyPI"
+url = "https://pypi.org/simple/"
+priority = "default"
+
 [tool.poetry]
 name = "ferreinox-bot"
 version = "0.1.0"
@@ -6,10 +12,10 @@ authors = ["Diego Mao"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"  # Usamos Python 3.11
+python = ">=3.11,<3.12"
 flask = "*"
 gunicorn = "*"
-google-generativeai = ">=1.0.0"  # La versión que SÍ funciona
+google-generativeai = ">=1.0.0"
 requests = "*"
 
 [build-system]
