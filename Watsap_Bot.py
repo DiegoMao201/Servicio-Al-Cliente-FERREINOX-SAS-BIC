@@ -1,6 +1,7 @@
 import os
 import json
 import requests
+import logging # Importar logging
 from flask import Flask, request, make_response
 
 # --- LIBRERÍA DE GOOGLE AI STUDIO (LA GRATUITA) ---
@@ -9,6 +10,10 @@ import google.generativeai as genai
 # --- Configuración ---
 app = Flask(__name__)
 
+# Configurar el logger de Flask
+# En Render, esto se conectará automáticamente al sistema de logs
+app.logger.setLevel(logging.INFO) 
+
 # Cargar las variables de entorno de WhatsApp
 WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN')
 WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN')
@@ -16,7 +21,21 @@ WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
 
 # --- NUEVA CONFIGURACIÓN DE GOOGLE AI STUDIO (GEMINI GRATUITO) ---
 model = None
+
+# --- ADVERTENCIA IMPORTANTE DE PRODUCCIÓN ---
+# `user_chats` guardado en la memoria de Python NO funcionará
+# correctamente en Render cuando se usa Gunicorn (que es el estándar).
+# Gunicorn crea múltiples 'workers' (procesos), y cada uno
+# tiene su propia memoria. Un usuario puede enviar un mensaje al Worker 1
+# y el siguiente al Worker 2, perdiendo el historial de chat.
+#
+# SOLUCIÓN: Debes usar un almacenamiento externo como Redis (recomendado),
+# una base de datos (PostgreSQL, etc.) o un sistema de caché
+# para almacenar las sesiones de chat (el historial).
+#
+# Dejamos esto por ahora para que funcione en desarrollo y pruebas simples.
 user_chats = {} # Diccionario para almacenar los historiales de chat (sesiones)
+# --- FIN DE LA ADVERTENCIA ---
 
 try:
     # 1. Lee la API Key de las variables de entorno
@@ -31,11 +50,11 @@ try:
     # 3. Carga el modelo (¡Usamos el modelo flash, que es rápido y gratuito!)
     model = genai.GenerativeModel("gemini-1.5-flash-latest")
 
-    print("Google AI Studio (Gemini Gratuito) inicializado exitosamente.")
-    print("Modelo 'gemini-1.5-flash-latest' cargado.")
+    app.logger.info("Google AI Studio (Gemini Gratuito) inicializado exitosamente.")
+    app.logger.info("Modelo 'gemini-1.5-flash-latest' cargado.")
 
 except Exception as e:
-    print(f"Error fatal al configurar Google AI Studio: {e}")
+    app.logger.error(f"Error fatal al configurar Google AI Studio: {e}")
 
 
 # --- Funciones Auxiliares ---
@@ -45,7 +64,7 @@ def send_whatsapp_message(to_number, message_text):
     Función para enviar un mensaje de vuelta al usuario.
     """
     if not WHATSAPP_ACCESS_TOKEN or not WHATSAPP_PHONE_NUMBER_ID:
-        print("Error: Tokens de WhatsApp no configurados. No se puede enviar mensaje.")
+        app.logger.error("Error: Tokens de WhatsApp no configurados. No se puede enviar mensaje.")
         return
 
     url = f"https://graph.facebook.com/v19.0/{WHATSAPP_PHONE_NUMBER_ID}/messages"
@@ -63,11 +82,11 @@ def send_whatsapp_message(to_number, message_text):
     try:
         response = requests.post(url, headers=headers, json=data)
         response.raise_for_status() 
-        print(f"Respuesta enviada a {to_number}: {response.json()}")
+        app.logger.info(f"Respuesta enviada a {to_number}: {response.json()}")
     except requests.exceptions.RequestException as e:
-        print(f"Error al enviar mensaje de WhatsApp: {e}")
+        app.logger.error(f"Error al enviar mensaje de WhatsApp: {e}")
         if e.response is not None:
-            print(f"Respuesta del error de WhatsApp: {e.response.text}")
+            app.logger.error(f"Respuesta del error de WhatsApp: {e.response.text}")
 
 # --- Ruta de Depuración (Opcional) ---
 
@@ -88,20 +107,21 @@ def version():
 def webhook():
     if request.method == 'GET':
         # Verificación del Webhook
-        print("Recibiendo solicitud GET de verificación...")
+        app.logger.info("Recibiendo solicitud GET de verificación...")
         if request.args.get('hub.mode') == 'subscribe' and request.args.get('hub.verify_token') == WHATSAPP_VERIFY_TOKEN:
-            print("¡Webhook verificado!")
+            app.logger.info("¡Webhook verificado!")
             challenge = request.args.get('hub.challenge')
             return make_response(challenge, 200)
         else:
-            print("Error de verificación. Tokens no coinciden.")
+            app.logger.warning("Error de verificación. Tokens no coinciden.")
             return make_response('Error de verificación', 403)
 
     if request.method == 'POST':
         # Recepción de mensajes del usuario
         data = request.get_json()
-        print("¡Mensaje POST recibido!")
-        print(json.dumps(data, indent=2))
+        app.logger.info("¡Mensaje POST recibido!")
+        # Loggear el payload completo puede ser útil para depurar
+        # app.logger.debug(json.dumps(data, indent=2))
 
         try:
             # Asegurarse de que el payload tiene la estructura esperada
@@ -117,20 +137,20 @@ def webhook():
                     user_message = message_info['text']['body']
                     user_phone_number = message_info['from']
 
-                    print(f"Mensaje de {user_phone_number}: {user_message}")
+                    app.logger.info(f"Mensaje de {user_phone_number}: {user_message}")
 
                     # Verificar si el modelo de Google AI Studio se cargó correctamente
                     if model is None:
-                        print("Error: El modelo Google AI Studio no está inicializado. Enviando mensaje de error.")
+                        app.logger.error("Error: El modelo Google AI Studio no está inicializado. Enviando mensaje de error.")
                         send_whatsapp_message(user_phone_number, "Lo siento, el servicio de IA no está disponible en este momento.")
                         return make_response('EVENT_RECEIVED', 200)
 
                     # --- LÓGICA DE CHATBOT CON GOOGLE AI STUDIO (GRATUITO) ---
 
                     # 1. Obtener o crear la sesión de chat
-                    #    La biblioteca 'genai' maneja el historial internamente en el objeto 'chat'
+                    # (Recordar la advertencia sobre 'user_chats' en producción)
                     if user_phone_number not in user_chats:
-                        print(f"Creando nueva sesión de chat para {user_phone_number}")
+                        app.logger.info(f"Creando nueva sesión de chat para {user_phone_number}")
                         # Inicia un chat vacío. La biblioteca guardará el historial.
                         user_chats[user_phone_number] = model.start_chat(history=[])
                     
@@ -138,24 +158,24 @@ def webhook():
 
                     # 2. Enviar el mensaje a Gemini y manejar posibles errores
                     try:
-                        print(f"Enviando a Google AI Studio (gemini-1.5-flash)...") 
+                        app.logger.info(f"Enviando a Google AI Studio (gemini-1.5-flash)...") 
 
                         # Manejar comandos especiales
                         if user_message.strip().lower() == "/reset":
                             # Creamos una sesión de chat nueva y limpia
                             user_chats[user_phone_number] = model.start_chat(history=[])
                             gemini_reply = "He olvidado nuestra conversación anterior. ¡Empecemos de nuevo!"
-                            print("Historial de chat reseteado.")
+                            app.logger.info(f"Historial de chat reseteado para {user_phone_number}.")
 
                         else:
                             # Enviamos el mensaje. La sesión (chat_session) recuerda la conversación.
                             response_gemini = chat_session.send_message(user_message)
                             gemini_reply = response_gemini.text
 
-                        print(f"Respuesta de Google AI Studio: {gemini_reply}")
+                        app.logger.info(f"Respuesta de Google AI Studio: {gemini_reply[:50]}...") # Acortamos para no llenar el log
 
                     except Exception as e:
-                        print(f"Error al llamar a Google AI Studio: {e}")
+                        app.logger.error(f"Error al llamar a Google AI Studio: {e}")
                         gemini_reply = "Lo siento, tuve un problema al procesar tu solicitud. Intenta de nuevo."
                         # Opcional: reiniciar el historial si falla
                         if user_phone_number in user_chats:
@@ -165,13 +185,14 @@ def webhook():
                     send_whatsapp_message(user_phone_number, gemini_reply)
 
         except KeyError as e:
-            print(f"KeyError: El payload no tiene la estructura esperada. Error en la clave: {e}")
+            app.logger.error(f"KeyError: El payload no tiene la estructura esperada. Error en la clave: {e}")
         except Exception as e:
-            print(f"Error general procesando el webhook POST: {e}")
+            app.logger.error(f"Error general procesando el webhook POST: {e}", exc_info=True) # exc_info=True da más detalles
 
         return make_response('EVENT_RECEIVED', 200)
 
 if __name__ == '__main__':
     # Render (o tu proveedor de hosting) te dará el puerto
     port = int(os.environ.get('PORT', 8080))
+    # debug=False es CRÍTICO para producción
     app.run(host='0.0.0.0', port=port, debug=False)
