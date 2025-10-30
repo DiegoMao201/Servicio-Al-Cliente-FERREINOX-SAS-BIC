@@ -4,6 +4,8 @@ import requests
 import logging
 import threading  # Corregido: Reemplazado el espacio invisible U+00A0 con un espacio normal
 import gspread    # Para Google Sheets
+# Importamos tempfile para crear el archivo temporal
+import tempfile
 from google.oauth2.service_account import Credentials  # Para Google Sheets
 from datetime import datetime  # Para la marca de tiempo
 from flask import Flask, request, make_response
@@ -13,7 +15,7 @@ import google.generativeai as genai
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
 
-# --- Cargar Variables de Entorno (Se cargan aquí pero se usan en su respectivo bloque) ---
+# --- Cargar Variables de Entorno ---
 
 # WhatsApp
 WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN')
@@ -28,11 +30,13 @@ user_chats = {}
 processed_message_ids = set() # Para evitar procesar duplicados
 
 # ----------------------------------------------------------------------
-## 📊 Inicialización de Google Sheets (CORREGIDO)
+## 📊 Inicialización de Google Sheets (CORRECCIÓN FINAL DE CARGA)
 # ----------------------------------------------------------------------
 worksheet = None # Hoja de cálculo de Google
+temp_creds_file = None # Variable para mantener la referencia al archivo temporal
+
 try:
-    # Cargar variables aquí para controlarlas
+    # Cargar variables de configuración
     GCP_JSON_STR = os.environ.get('GCP_SERVICE_ACCOUNT_JSON')
     GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
     GOOGLE_WORKSHEET_NAME = os.environ.get('GOOGLE_WORKSHEET_NAME')
@@ -40,24 +44,16 @@ try:
     if not GCP_JSON_STR or not GOOGLE_SHEET_NAME or not GOOGLE_WORKSHEET_NAME:
         app.logger.warning("Variables de Google Sheets no configuradas. El log de chats está desactivado.")
     else:
-        # Intentar parsear el JSON de credenciales
-        try:
-            creds_dict = json.loads(GCP_JSON_STR)
-        except json.JSONDecodeError as e:
-            # Captura el error si la cadena JSON está malformada (ej. si la private_key no se pegó bien)
-            app.logger.error(f"Error al decodificar el JSON de credenciales: {e}")
-            raise ValueError("Credenciales JSON mal formadas (Revisa GCP_SERVICE_ACCOUNT_JSON en Render).")
-
-        scopes = [
-            'https://www.googleapis.com/auth/spreadsheets',
-            'https://www.googleapis.com/auth/drive.file'
-        ]
+        # 1. Crear un archivo temporal con el contenido JSON de la variable de entorno
+        with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
+            temp_file.write(GCP_JSON_STR)
+            temp_creds_file = temp_file.name
         
-        # 1. Autorizar la cuenta de servicio
-        creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
-        client_gspread = gspread.authorize(creds)
+        # 2. AUTORIZAR usando el archivo temporal (ESTO RESUELVE EL "No key could be detected")
+        # gspread.service_account lee directamente el archivo.
+        client_gspread = gspread.service_account(filename=temp_creds_file)
         
-        # 2. Abrir la hoja de cálculo y la pestaña
+        # 3. Abrir la hoja de cálculo y la pestaña
         sheet = client_gspread.open(GOOGLE_SHEET_NAME)
         worksheet = sheet.worksheet(GOOGLE_WORKSHEET_NAME)
         
@@ -68,9 +64,13 @@ try:
         app.logger.info(f"Conectado a Google Sheets: {GOOGLE_SHEET_NAME} -> {GOOGLE_WORKSHEET_NAME}")
 
 except Exception as e:
-    # Captura cualquier otro error, incluyendo APIError 403 o "No key could be detected"
+    # Captura cualquier error, incluyendo si el JSON es inválido o faltan permisos
     app.logger.error(f"Error al inicializar Google Sheets: {e}")
     worksheet = None # Desactivar si falla
+finally:
+    # Asegurarse de eliminar el archivo temporal
+    if temp_creds_file and os.path.exists(temp_creds_file):
+        os.remove(temp_creds_file)
 
 # ----------------------------------------------------------------------
 ## 🧠 Inicialización de Gemini
@@ -83,7 +83,6 @@ try:
     genai.configure(api_key=GEMINI_API_KEY)
 
     # --- Instrucción de Sistema para el Tono ---
-    # ¡Personaliza el "[Nombre de tu Empresa]"!
     system_instruction = (
         "Eres un asistente de servicio al cliente de [Nombre de tu Empresa]. "
         "Habla de forma amable, cercana y natural, como lo haría una persona. "
@@ -92,7 +91,6 @@ try:
         "Trata al cliente con familiaridad (tuteándolo)."
     )
     
-    # Usamos el modelo con la instrucción de sistema
     model = genai.GenerativeModel(
         model_name="gemini-pro-latest",
         system_instruction=system_instruction
