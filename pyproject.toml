@@ -1,7 +1,7 @@
 [[tool.poetry.source]]
-name = "PyPI"
+name = "pypi_oficial" # <--- ¡ESTA ES LA CORRECCIÓN! (Cambiamos el nombre)
 url = "https://pypi.org/simple/"
-priority = "primary"  # <--- ¡ESTA ES LA CORRECCIÓN!
+priority = "primary"
 
 [tool.poetry]
 name = "ferreinox-bot"
