@@ -1,8 +1,7 @@
-# FORZAMOS A POETRY A USAR EL ÍNDICE OFICIAL DE PyPI
 [[tool.poetry.source]]
 name = "PyPI"
 url = "https://pypi.org/simple/"
-priority = "default"
+priority = "primary"  # <--- ¡ESTA ES LA CORRECCIÓN!
 
 [tool.poetry]
 name = "ferreinox-bot"
