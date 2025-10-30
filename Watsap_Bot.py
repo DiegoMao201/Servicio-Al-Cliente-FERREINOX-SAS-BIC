@@ -54,7 +54,7 @@ try:
         raise ValueError("Error: 'project_id' no encontrado en las credenciales JSON.")
 
     # 4. Inicializa Vertex AI
-    vertexai.init(project=PROJECT_ID, credentials=credentials)
+    vertexai.init(project=PROJECT_ID, credentials=credentials, location="us-east1")
 
     # 5. Carga el modelo (¡asegúrate de que sea 'gemini-pro'!)
     model = GenerativeModel("gemini-1.5-pro") # Usamos gemini-1.0-pro (equivalente a gemini-pro)
