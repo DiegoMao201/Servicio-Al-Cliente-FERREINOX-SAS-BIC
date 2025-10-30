@@ -2,6 +2,7 @@
 name = "ferreinox-bot"
 version = "0.1.0"
 description = "WhatsApp Bot for Ferreinox"
+
 authors = ["Diego Mao"]
 readme = "README.md"
 package-mode = false
@@ -10,10 +11,13 @@ package-mode = false
 python = ">=3.11,<3.12"
 flask = ""
 gunicorn = ""
-requests = "*"
+requests = "*" # Corregido: eliminado el carácter de escape ()
 
-google-generativeai = "*"
+google-generativeai = "*" # Corregido: eliminado el carácter de escape ()
 
 [build-system]
+
+La lista de requerimientos debe estar entre corchetes
+
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
