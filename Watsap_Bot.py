@@ -15,8 +15,8 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 from flask import Flask, request, make_response
 import google.generativeai as genai
-# CORRECCIÓN DE IMPORTACIÓN: Importar 'Part' desde 'content_types'
-from google.generativeai.types.content_types import Part
+# CORRECCIÓN DE IMPORTACIÓN: 'Part' se importa desde 'types', no 'content_types'
+from google.generativeai.types import Part
 
 # --- CONFIGURACIÓN DE LOGGING Y FLASK ---
 app = Flask(__name__)
@@ -266,6 +266,14 @@ def consultar_estado_cliente_seguro(nit: str, codigo_cliente: str) -> str:
             return "Los datos de cartera no han podido ser cargados correctamente."
 
         # Búsqueda por NIT y Código (Ambos deben coincidir por seguridad)
+        # CORRECCIÓN: Asegurar que la columna 'cod_cliente' exista tras la normalización.
+        # Si la columna original era 'Cod Cliente', se normalizó a 'cod_cliente'.
+        
+        # Primero, verificar que las columnas necesarias existen
+        if 'nit' not in cartera_procesada.columns or 'cod_cliente' not in cartera_procesada.columns:
+            app.logger.error("Error: Las columnas 'nit' o 'cod_cliente' no se encontraron después del procesamiento.")
+            return "Error interno: El formato de los datos de cartera no es válido."
+
         datos_cliente_seleccionado = cartera_procesada[
             (cartera_procesada['nit'].astype(str) == str(nit).strip()) &
             (cartera_procesada['cod_cliente'].astype(str) == str(codigo_cliente).strip())
@@ -333,7 +341,7 @@ try:
     ]
     
     model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash", # Modelo de bajo costo
+        model_name="gemini-1.5-flash", # Usamos 1.5 Flash (o gemini-2.5-flash si está disponible)
         system_instruction=system_instruction,
         tools=tools_list
     )
@@ -470,7 +478,9 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
                 break # Salir si no hay tool_calls para evitar bucle infinito
         
         gemini_reply = response.text
-        app.logger.info(f"Respuesta final de Gemini: {gemapi_reply[:50]}...")
+        # *** CORRECCIÓN DE ERROR TIPOGRÁFICO ***
+        # Se cambió 'gemapi_reply' a 'gemini_reply'
+        app.logger.info(f"Respuesta final de Gemini: {gemini_reply[:50]}...")
 
     except Exception as e:
         app.logger.error(f"Error fatal en el proceso de chat o Tool Calling: {e}", exc_info=True)
