@@ -15,7 +15,8 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 from flask import Flask, request, make_response
 import google.generativeai as genai
-from google.generativeai.types import Part
+# CORRECCIÓN DE IMPORTACIÓN: Importar 'Part' desde 'content_types'
+from google.generativeai.types.content_types import Part
 
 # --- CONFIGURACIÓN DE LOGGING Y FLASK ---
 app = Flask(__name__)
@@ -332,7 +333,7 @@ try:
     ]
     
     model = genai.GenerativeModel(
-        model_name="gemini-2.5-flash", # CORRECCIÓN CLAVE: Usamos el modelo de bajo costo
+        model_name="gemini-2.5-flash", # Modelo de bajo costo
         system_instruction=system_instruction,
         tools=tools_list
     )
@@ -425,7 +426,7 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
         
         response = chat_session.send_message(user_message)
         
-        # CORRECCIÓN DEL ERROR: Acceder a function_calls a través de response.candidates[0].content.parts[0].function_call
+        # CORRECCIÓN DE ERROR 'function_calls': Acceder a través de candidates
         while (response.candidates and 
                len(response.candidates) > 0 and 
                response.candidates[0].content.parts and
@@ -450,6 +451,7 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
                     app.logger.info(f"Argumentos para {tool_function_name}: {args}")
                     tool_output = func_to_call(**args)
                 
+                    # CORRECCIÓN DE IMPORTACIÓN: Usamos 'Part' que importamos correctamente
                     tool_calls_list.append(Part.from_function_response(
                         name=tool_function_name,
                         response={'result': tool_output} # El output del tool
@@ -468,7 +470,7 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
                 break # Salir si no hay tool_calls para evitar bucle infinito
         
         gemini_reply = response.text
-        app.logger.info(f"Respuesta final de Gemini: {gemini_reply[:50]}...")
+        app.logger.info(f"Respuesta final de Gemini: {gemapi_reply[:50]}...")
 
     except Exception as e:
         app.logger.error(f"Error fatal en el proceso de chat o Tool Calling: {e}", exc_info=True)
