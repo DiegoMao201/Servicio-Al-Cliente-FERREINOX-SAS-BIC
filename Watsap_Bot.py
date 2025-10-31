@@ -336,7 +336,6 @@ try:
         tools=tools_list
     )
 
-    model.generate_content("Hola") 
     app.logger.info("Modelo Gemini (Ferreinox CRM AI) inicializado exitosamente con Tools.")
 
 except Exception as e:
