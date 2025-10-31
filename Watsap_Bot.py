@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import json
 import requests
@@ -9,85 +10,130 @@ import glob
 import re
 import unicodedata
 import dropbox
-from io import StringIO
+from io import StringIO, BytesIO
 import pandas as pd
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 from flask import Flask, request, make_response
 import google.generativeai as genai
 
-# --- ¡ESTA ES LA CORRECCIÓN! ---
-# 'Part' ya no se importa. Fue eliminado.
-
-
 # --- CONFIGURACIÓN DE LOGGING Y FLASK ---
 app = Flask(__name__)
-# Configuración del Logger para ver los logs en el terminal
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 app.logger.setLevel(logging.INFO)
 
-# --- CARGAR VARIABLES DE ENTORNO ---
+# ----------------------------------------------------------------------
+## 🔑 CARGAR VARIABLES DE ENTORNO
+# ----------------------------------------------------------------------
 
-# WhatsApp (Webhooks)
+# --- WhatsApp (Webhooks) ---
 WHATSAPP_VERIFY_TOKEN = os.environ.get('WHATSAPP_VERIFY_TOKEN')
 WHATSAPP_ACCESS_TOKEN = os.environ.get('WHATSAPP_ACCESS_TOKEN')
 WHATSAPP_PHONE_NUMBER_ID = os.environ.get('WHATSAPP_PHONE_NUMBER_ID')
 
-# Gemini
+# --- Gemini ---
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
 
-# Dropbox (Datos de Cartera)
-DBX_APP_KEY = os.environ.get('DBX_APP_KEY')
-DBX_APP_SECRET = os.environ.get('DBX_APP_SECRET')
-DBX_REFRESH_TOKEN = os.environ.get('DBX_REFRESH_TOKEN')
-DBX_FILE_PATH = os.environ.get('DBX_FILE_PATH', '/data/cartera_detalle.csv')
+# --- Dropbox (Cartera) ---
+DBX_APP_KEY_CARTERA = os.environ.get('DBX_APP_KEY_CARTERA')
+DBX_APP_SECRET_CARTERA = os.environ.get('DBX_APP_SECRET_CARTERA')
+DBX_REFRESH_TOKEN_CARTERA = os.environ.get('DBX_REFRESH_TOKEN_CARTERA')
+DBX_FILE_PATH_CARTERA = os.environ.get('DBX_FILE_PATH_CARTERA')
 
-# Google Sheets (Log)
+# --- Dropbox (Inventario) ---
+DBX_APP_KEY_INVENTARIO = os.environ.get('DBX_APP_KEY_INVENTARIO')
+DBX_APP_SECRET_INVENTARIO = os.environ.get('DBX_APP_SECRET_INVENTARIO')
+DBX_REFRESH_TOKEN_INVENTARIO = os.environ.get('DBX_REFRESH_TOKEN_INVENTARIO')
+DBX_FILE_PATH_INVENTARIO = os.environ.get('DBX_FILE_PATH_INVENTARIO')
+DBX_FILE_PATH_PROVEEDORES = os.environ.get('DBX_FILE_PATH_PROVEEDORES')
+
+# --- Dropbox (Ventas) ---
+DBX_APP_KEY_VENTAS = os.environ.get('DBX_APP_KEY_VENTAS')
+DBX_APP_SECRET_VENTAS = os.environ.get('DBX_APP_SECRET_VENTAS')
+DBX_REFRESH_TOKEN_VENTAS = os.environ.get('DBX_REFRESH_TOKEN_VENTAS')
+DBX_FILE_PATH_VENTAS = os.environ.get('DBX_FILE_PATH_VENTAS')
+DBX_FILE_PATH_COBROS = os.environ.get('DBX_FILE_PATH_COBROS')
+DBX_FILE_PATH_CL4 = os.environ.get('DBX_FILE_PATH_CL4')
+
+# --- Google Sheets (Log de Chat) ---
 GCP_JSON_STR = os.environ.get('GCP_SERVICE_ACCOUNT_JSON')
-GOOGLE_SHEET_NAME = os.environ.get('GOOGLE_SHEET_NAME')
-GOOGLE_WORKSHEET_NAME = os.environ.get('GOOGLE_WORKSHEET_NAME')
+GOOGLE_SHEET_NAME_LOG = os.environ.get('GOOGLE_SHEET_NAME') # Renombrada para claridad
+GOOGLE_WORKSHEET_NAME_LOG = os.environ.get('GOOGLE_WORKSHEET_NAME') # Renombrada para claridad
 
-# --- ESTADO EN MEMORIA ---
+# --- Google Sheets (Maestro de Productos) ---
+# (Reutiliza las credenciales GCP_JSON_STR)
+GOOGLE_SHEET_NAME_PRODUCTOS = os.environ.get('GOOGLE_SHEET_NAME_PRODUCTOS')
+GOOGLE_WORKSHEET_NAME_PRODUCTOS = os.environ.get('GOOGLE_WORKSHEET_NAME_PRODUCTOS')
+
+
+# ----------------------------------------------------------------------
+## 💾 ESTADO EN MEMORIA (CACHE GLOBAL)
+# ----------------------------------------------------------------------
 user_chats = {}
 processed_message_ids = set()
 user_security_context = {}
-CARTERA_PROCESADA_DF = pd.DataFrame() # Cache para los datos de cartera
+
+# --- Caches de Datos de Negocio ---
+CARTERA_PROCESADA_DF = pd.DataFrame()
+INVENTARIO_ANALIZADO_DF = pd.DataFrame()
+PROVEEDORES_DF = pd.DataFrame()
+VENTAS_DF = pd.DataFrame()
+COBROS_DF = pd.DataFrame()
+CL4_DF = pd.DataFrame()
+PRODUCTOS_MAESTRO_DF = pd.DataFrame() # Cache para precios del GSheet
 
 # ----------------------------------------------------------------------
-## 📊 INICIALIZACIÓN DE GOOGLE SHEETS (LOG DE CHAT)
+## 📊 INICIALIZACIÓN DE GOOGLE SHEETS
 # ----------------------------------------------------------------------
-worksheet = None
-temp_creds_file = None
+worksheet_log = None
+worksheet_productos = None
+temp_creds_file_path = None # Ruta al archivo temporal de credenciales
 
 def init_google_sheets():
-    global worksheet, temp_creds_file
-    try:
-        if not GCP_JSON_STR or not GOOGLE_SHEET_NAME or not GOOGLE_WORKSHEET_NAME:
-            app.logger.warning("Variables de Google Sheets no configuradas. El log de chats está desactivado.")
-            return
+    """Inicializa la conexión a Google Sheets tanto para el Log como para Productos."""
+    global worksheet_log, worksheet_productos, temp_creds_file_path
+    
+    if not GCP_JSON_STR:
+        app.logger.warning("GCP_SERVICE_ACCOUNT_JSON no configurado. El Log y la carga de Productos GSheets están desactivados.")
+        return
 
+    try:
+        # Crear un archivo temporal para las credenciales
         with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_file:
             temp_file.write(GCP_JSON_STR)
-            temp_creds_file = temp_file.name
+            temp_creds_file_path = temp_file.name
         
-        client_gspread = gspread.service_account(filename=temp_creds_file)
-        sheet = client_gspread.open(GOOGLE_SHEET_NAME)
-        worksheet = sheet.worksheet(GOOGLE_WORKSHEET_NAME)
-        
-        if not worksheet.get_all_values():
-            worksheet.append_row(["Timestamp", "Numero_Usuario", "Mensaje_Usuario", "Respuesta_Bot", "Herramienta_Usada"])
-        
-        app.logger.info(f"Conectado a Google Sheets para Logging: {GOOGLE_SHEET_NAME} -> {GOOGLE_WORKSHEET_NAME}")
+        client_gspread = gspread.service_account(filename=temp_creds_file_path)
+
+        # 1. Conectar al Log de Chats
+        if GOOGLE_SHEET_NAME_LOG and GOOGLE_WORKSHEET_NAME_LOG:
+            sheet_log = client_gspread.open(GOOGLE_SHEET_NAME_LOG)
+            worksheet_log = sheet_log.worksheet(GOOGLE_WORKSHEET_NAME_LOG)
+            if not worksheet_log.get_all_values():
+                worksheet_log.append_row(["Timestamp", "Numero_Usuario", "Mensaje_Usuario", "Respuesta_Bot", "Herramienta_Usada"])
+            app.logger.info(f"Conectado a Google Sheets para Logging: {GOOGLE_SHEET_NAME_LOG}")
+        else:
+            app.logger.warning("Variables de Google Sheets (Log) no configuradas. Log de chats desactivado.")
+
+        # 2. Conectar al Maestro de Productos
+        if GOOGLE_SHEET_NAME_PRODUCTOS and GOOGLE_WORKSHEET_NAME_PRODUCTOS:
+            sheet_productos = client_gspread.open(GOOGLE_SHEET_NAME_PRODUCTOS)
+            worksheet_productos = sheet_productos.worksheet(GOOGLE_WORKSHEET_NAME_PRODUCTOS)
+            app.logger.info(f"Conectado a Google Sheets para Productos: {GOOGLE_SHEET_NAME_PRODUCTOS}")
+            # La carga de datos se hará en 'cargar_y_procesar_datos_global'
+        else:
+            app.logger.warning("Variables de Google Sheets (Productos) no configuradas. La consulta de precios no funcionará.")
 
     except Exception as e:
         app.logger.error(f"Error al inicializar Google Sheets: {e}")
-        worksheet = None
     finally:
-        if temp_creds_file and os.path.exists(temp_creds_file):
-            os.remove(temp_creds_file)
+        # Limpiar el archivo temporal solo si se ha creado
+        if temp_creds_file_path and os.path.exists(temp_creds_file_path):
+            os.remove(temp_creds_file_path)
+            temp_creds_file_path = None # Resetear la variable
 
 # ----------------------------------------------------------------------
-## 🗃️ LÓGICA DE DATOS DE CARTERA (ADAPTACIÓN DE STREAMLIT)
+## 🗃️ LÓGICA DE CARGA DE DATOS (REFACTORIZADA)
 # ----------------------------------------------------------------------
 
 def normalizar_nombre(nombre: str) -> str:
@@ -96,28 +142,31 @@ def normalizar_nombre(nombre: str) -> str:
     nombre = ''.join(c for c in unicodedata.normalize('NFD', nombre) if unicodedata.category(c) != 'Mn')
     return ' '.join(nombre.split())
 
-ZONAS_SERIE = { "PEREIRA": [155, 189, 158, 439], "MANIZALES": [157, 238], "ARMENIA": [156] }
+def _conectar_y_descargar_dropbox(app_key, app_secret, refresh_token, file_path) -> BytesIO | None:
+    """Función genérica para descargar un archivo de Dropbox."""
+    if not all([app_key, app_secret, refresh_token, file_path]):
+        app.logger.error(f"Credenciales de Dropbox incompletas para el archivo: {file_path}.")
+        return None
+    
+    try:
+        with dropbox.Dropbox(app_key=app_key, app_secret=app_secret, oauth2_refresh_token=refresh_token) as dbx:
+            metadata, res = dbx.files_download(path=file_path)
+            return BytesIO(res.content)
+    except Exception as e:
+        app.logger.error(f"Error al descargar {file_path} desde Dropbox: {e}")
+        return None
 
+# --- LÓGICA DE CARTERA (Script Original) ---
 def procesar_cartera(df: pd.DataFrame) -> pd.DataFrame:
     df_proc = df.copy()
-    
-    # 1. CORRECCIÓN CRÍTICA: Normalizar todos los nombres de columnas primero para evitar KeyErrors
     df_proc.rename(columns=lambda x: normalizar_nombre(x).lower().replace(' ', '_'), inplace=True)
-
-    # Limpieza y conversión de tipos (ahora usando nombres normalizados y consistentes)
     df_proc['importe'] = pd.to_numeric(df_proc['importe'], errors='coerce').fillna(0)
     df_proc['numero'] = pd.to_numeric(df_proc['numero'], errors='coerce').fillna(0)
-    
-    # Corregir el importe si el número es negativo
     df_proc.loc[df_proc['numero'] < 0, 'importe'] *= -1
-    
-    # Corregir días vencido
     df_proc['dias_vencido'] = pd.to_numeric(df_proc['dias_vencido'], errors='coerce').fillna(0)
-    
-    # Crear nombre de vendedor normalizado (usando 'nomvendedor' que ya fue renombrado)
     df_proc['nomvendedor_norm'] = df_proc['nomvendedor'].apply(normalizar_nombre)
     
-    # Asignación de Zonas
+    ZONAS_SERIE = { "PEREIRA": [155, 189, 158, 439], "MANIZALES": [157, 238], "ARMENIA": [156] }
     ZONAS_SERIE_STR = {zona: [str(s) for s in series] for zona, series in ZONAS_SERIE.items()}
     def asignar_zona_robusta(valor_serie):
         if pd.isna(valor_serie): return "OTRAS ZONAS"
@@ -126,177 +175,239 @@ def procesar_cartera(df: pd.DataFrame) -> pd.DataFrame:
         for zona, series_clave_str in ZONAS_SERIE_STR.items():
             if set(numeros_en_celda) & set(series_clave_str): return zona
         return "OTRAS ZONAS"
-        
-    df_proc['zona'] = df_proc['serie'].apply(asignar_zona_robusta) # Usando 'serie' normalizado
     
-    # Clasificación de Edad de Cartera
+    df_proc['zona'] = df_proc['serie'].apply(asignar_zona_robusta)
     bins = [-float('inf'), 0, 15, 30, 60, float('inf')]
     labels = ['Al día', '1-15 días', '16-30 días', '31-60 días', 'Más de 60 días']
     df_proc['edad_cartera'] = pd.cut(df_proc['dias_vencido'], bins=bins, labels=labels, right=True)
-    
     return df_proc
 
-def cargar_datos_desde_dropbox():
-    """Carga datos desde Dropbox usando variables de entorno."""
-    if not all([DBX_APP_KEY, DBX_APP_SECRET, DBX_REFRESH_TOKEN]):
-        app.logger.error("Credenciales de Dropbox no configuradas.")
+def cargar_datos_cartera() -> pd.DataFrame:
+    """Carga y procesa los datos de Cartera."""
+    app.logger.info("Iniciando carga de Cartera...")
+    file_content_stream = _conectar_y_descargar_dropbox(
+        DBX_APP_KEY_CARTERA, DBX_APP_SECRET_CARTERA, DBX_REFRESH_TOKEN_CARTERA, DBX_FILE_PATH_CARTERA
+    )
+    if file_content_stream is None:
         return pd.DataFrame()
-
+        
     try:
-        with dropbox.Dropbox(app_key=DBX_APP_KEY, app_secret=DBX_APP_SECRET, oauth2_refresh_token=DBX_REFRESH_TOKEN) as dbx:
-            metadata, res = dbx.files_download(path=DBX_FILE_PATH)
-            contenido_csv = res.content.decode('latin-1')
-
-            # Nombres originales de las columnas
-            nombres_columnas_originales = [
-                'Serie', 'Numero', 'Fecha Documento', 'Fecha Vencimiento', 'Cod Cliente',
-                'NombreCliente', 'Nit', 'Poblacion', 'Provincia', 'Telefono1', 'Telefono2',
-                'NomVendedor', 'Entidad Autoriza', 'E-Mail', 'Importe', 'Descuento',
-                'Cupo Aprobado', 'Dias Vencido'
-            ]
-
-            df = pd.read_csv(StringIO(contenido_csv), header=None, names=nombres_columnas_originales, sep='|', engine='python')
-            app.logger.info("Datos de Dropbox cargados exitosamente.")
-            return df
+        contenido_csv = file_content_stream.getvalue().decode('latin-1')
+        nombres_columnas_originales = [
+            'Serie', 'Numero', 'Fecha Documento', 'Fecha Vencimiento', 'Cod Cliente',
+            'NombreCliente', 'Nit', 'Poblacion', 'Provincia', 'Telefono1', 'Telefono2',
+            'NomVendedor', 'Entidad Autoriza', 'E-Mail', 'Importe', 'Descuento',
+            'Cupo Aprobado', 'Dias Vencido'
+        ]
+        df = pd.read_csv(StringIO(contenido_csv), header=None, names=nombres_columnas_originales, sep='|', engine='python')
+        df_procesado = procesar_cartera(df)
+        app.logger.info(f"Carga de Cartera exitosa. {len(df_procesado)} registros procesados.")
+        return df_procesado
     except Exception as e:
-        app.logger.error(f"Error al cargar datos desde Dropbox: {e}")
+        app.logger.error(f"Error al procesar datos de Cartera: {e}")
         return pd.DataFrame()
 
-def cargar_datos_historicos():
-    """Carga los archivos Excel históricos locales (simplificado)."""
-    return pd.DataFrame()
-
-def cargar_y_procesar_datos():
-    """Orquesta la carga de datos, los combina, limpia y procesa, con caching en memoria."""
-    global CARTERA_PROCESADA_DF
+# --- LÓGICA DE INVENTARIO (Script 1 y 2) ---
+def cargar_datos_inventario() -> (pd.DataFrame, pd.DataFrame):
+    """Carga y procesa el Inventario y los Proveedores."""
+    app.logger.info("Iniciando carga de Inventario...")
     
+    # 1. Cargar Inventario
+    df_inventario = pd.DataFrame()
+    file_content_stream = _conectar_y_descargar_dropbox(
+        DBX_APP_KEY_INVENTARIO, DBX_APP_SECRET_INVENTARIO, DBX_REFRESH_TOKEN_INVENTARIO, DBX_FILE_PATH_INVENTARIO
+    )
+    if file_content_stream:
+        try:
+            nombres_columnas_csv = [
+                'DEPARTAMENTO', 'REFERENCIA', 'DESCRIPCION', 'MARCA', 'PESO_ARTICULO',
+                'UNIDADES_VENDIDAS', 'STOCK', 'COSTO_PROMEDIO_UND', 'CODALMACEN',
+                'LEAD_TIME_PROVEEDOR', 'HISTORIAL_VENTAS'
+            ]
+            df_inventario = pd.read_csv(
+                file_content_stream, encoding='latin1', delimiter='|', header=None,
+                names=nombres_columnas_csv,
+                dtype={'REFERENCIA': str, 'CODALMACEN': str}
+            )
+            # --- Aquí iría la lógica de 'analizar_inventario_completo' (Script 2) ---
+            # (Esta lógica es muy extensa, la añadiremos en el siguiente paso)
+            # Por ahora, solo limpiamos y renombramos
+            df_inventario['REFERENCIA'] = df_inventario['REFERENCIA'].str.strip()
+            df_inventario['STOCK'] = pd.to_numeric(df_inventario['STOCK'], errors='coerce').fillna(0)
+            
+            app.logger.info(f"Carga de Inventario exitosa. {len(df_inventario)} registros.")
+        except Exception as e:
+            app.logger.error(f"Error al procesar datos de Inventario: {e}")
+
+    # 2. Cargar Proveedores
+    df_proveedores = pd.DataFrame()
+    file_content_stream_prov = _conectar_y_descargar_dropbox(
+        DBX_APP_KEY_INVENTARIO, DBX_APP_SECRET_INVENTARIO, DBX_REFRESH_TOKEN_INVENTARIO, DBX_FILE_PATH_PROVEEDORES
+    )
+    if file_content_stream_prov:
+        try:
+            df_proveedores = pd.read_excel(file_content_stream_prov, dtype={'REFERENCIA': str, 'COD PROVEEDOR': str})
+            df_proveedores.rename(columns={'REFERENCIA': 'SKU', 'PROVEEDOR': 'Proveedor'}, inplace=True)
+            app.logger.info(f"Carga de Proveedores exitosa. {len(df_proveedores)} registros.")
+        except Exception as e:
+            app.logger.error(f"Error al procesar datos de Proveedores: {e}")
+
+    # (Aquí se combinaría el inventario y proveedores y se haría el análisis completo)
+    # Por ahora, devolvemos los DFs crudos
+    return df_inventario, df_proveedores
+
+# --- LÓGICA DE VENTAS (Script 3) ---
+def cargar_datos_ventas() -> (pd.DataFrame, pd.DataFrame, pd.DataFrame):
+    """Carga Ventas, Cobros y el reporte CL4."""
+    app.logger.info("Iniciando carga de Ventas, Cobros y CL4...")
+    
+    # 1. Cargar Ventas
+    df_ventas = pd.DataFrame()
+    stream_ventas = _conectar_y_descargar_dropbox(
+        DBX_APP_KEY_VENTAS, DBX_APP_SECRET_VENTAS, DBX_REFRESH_TOKEN_VENTAS, DBX_FILE_PATH_VENTAS
+    )
+    if stream_ventas:
+        try:
+            nombres_cols = ['anio', 'mes', 'fecha_venta', 'Serie', 'TipoDocumento', 'codigo_vendedor', 'nomvendedor', 'cliente_id', 'nombre_cliente', 'codigo_articulo', 'nombre_articulo', 'categoria_producto', 'linea_producto', 'marca_producto', 'valor_venta', 'unidades_vendidas', 'costo_unitario', 'super_categoria']
+            contenido_csv = stream_ventas.getvalue().decode('latin-1')
+            df_ventas = pd.read_csv(StringIO(contenido_csv), header=None, names=nombres_cols, sep='|', engine='python', quoting=3)
+            # Aplicar limpieza básica de Script 3
+            df_ventas['fecha_venta'] = pd.to_datetime(df_ventas['fecha_venta'], errors='coerce')
+            df_ventas['cliente_id'] = df_ventas['cliente_id'].astype(str)
+            df_ventas['nombre_articulo'] = df_ventas['nombre_articulo'].apply(normalizar_nombre)
+            df_ventas['nombre_cliente'] = df_ventas['nombre_cliente'].apply(normalizar_nombre)
+            app.logger.info(f"Carga de Ventas exitosa. {len(df_ventas)} registros.")
+        except Exception as e:
+            app.logger.error(f"Error al procesar datos de Ventas: {e}")
+
+    # 2. Cargar Cobros
+    df_cobros = pd.DataFrame()
+    stream_cobros = _conectar_y_descargar_dropbox(
+        DBX_APP_KEY_VENTAS, DBX_APP_SECRET_VENTAS, DBX_REFRESH_TOKEN_VENTAS, DBX_FILE_PATH_COBROS
+    )
+    if stream_cobros:
+        try:
+            nombres_cols = ['anio', 'mes', 'fecha_cobro', 'codigo_vendedor', 'valor_cobro']
+            contenido_csv = stream_cobros.getvalue().decode('latin-1')
+            df_cobros = pd.read_csv(StringIO(contenido_csv), header=None, names=nombres_cols, sep='|', engine='python', quoting=3)
+            app.logger.info(f"Carga de Cobros exitosa. {len(df_cobros)} registros.")
+        except Exception as e:
+            app.logger.error(f"Error al procesar datos de Cobros: {e}")
+
+    # 3. Cargar CL4
+    df_cl4 = pd.DataFrame()
+    stream_cl4 = _conectar_y_descargar_dropbox(
+        DBX_APP_KEY_VENTAS, DBX_APP_SECRET_VENTAS, DBX_REFRESH_TOKEN_VENTAS, DBX_FILE_PATH_CL4
+    )
+    if stream_cl4:
+        try:
+            df_cl4 = pd.read_excel(stream_cl4)
+            # Lógica de limpieza de Script 3
+            df_cl4.columns = [normalizar_nombre(col) for col in df_cl4.columns]
+            if 'ID CLIENTE' in df_cl4.columns:
+                df_cl4.rename(columns={'ID CLIENTE': 'cliente_id'}, inplace=True)
+            df_cl4['cliente_id'] = df_cl4['cliente_id'].astype(str)
+            app.logger.info(f"Carga de CL4 exitosa. {len(df_cl4)} registros.")
+        except Exception as e:
+            app.logger.error(f"Error al procesar datos de CL4: {e}")
+            
+    return df_ventas, df_cobros, df_cl4
+
+# --- LÓGICA DE PRODUCTOS (GSheets) ---
+def cargar_maestro_productos() -> pd.DataFrame:
+    """Carga el maestro de productos desde Google Sheets."""
+    global worksheet_productos
+    if worksheet_productos is None:
+        app.logger.warning("Worksheet de Productos no inicializado. No se pueden cargar precios.")
+        return pd.DataFrame()
+    
+    try:
+        app.logger.info("Iniciando carga del Maestro de Productos desde GSheets...")
+        records = worksheet_productos.get_all_records()
+        df = pd.DataFrame(records)
+        # Aplicar normalizaciones necesarias
+        if 'Referencia' in df.columns:
+            df['Referencia'] = df['Referencia'].astype(str).str.strip()
+        if 'Nombre Producto' in df.columns: # Asumiendo este nombre de columna
+             df['Nombre_Producto_Norm'] = df['Nombre Producto'].apply(normalizar_nombre)
+        app.logger.info(f"Carga de Maestro de Productos exitosa. {len(df)} registros.")
+        return df
+    except Exception as e:
+        app.logger.error(f"Error al cargar Maestro de Productos desde GSheets: {e}")
+        return pd.DataFrame()
+
+
+# --- ORQUESTADOR GLOBAL DE CARGA ---
+def cargar_y_procesar_datos_global():
+    """Orquesta la carga de TODOS los datos (Cartera, Inventario, Ventas) y los guarda en caché."""
+    global CARTERA_PROCESADA_DF, INVENTARIO_ANALIZADO_DF, PROVEEDORES_DF, VENTAS_DF, COBROS_DF, CL4_DF, PRODUCTOS_MAESTRO_DF
+
+    app.logger.info("Iniciando carga de datos globales...")
+    
+    # Cargar Cartera
     if CARTERA_PROCESADA_DF.empty:
-        app.logger.info("Recargando datos de cartera desde cero...")
-        df_dropbox = cargar_datos_desde_dropbox()
-        df_historico = cargar_datos_historicos()
-        
-        df_combinado = pd.concat([df_dropbox, df_historico], ignore_index=True)
+        CARTERA_PROCESADA_DF = cargar_datos_cartera()
 
-        if df_combinado.empty:
-            app.logger.error("No se pudieron cargar datos de ninguna fuente. La app no funcionará.")
-            return pd.DataFrame()
+    # Cargar Inventario y Proveedores
+    if INVENTARIO_ANALIZADO_DF.empty or PROVEEDORES_DF.empty:
+        df_inv, df_prov = cargar_datos_inventario()
+        INVENTARIO_ANALIZADO_DF = df_inv # (Reemplazar con el DF analizado en el futuro)
+        PROVEEDORES_DF = df_prov
 
-        df_combinado = df_combinado.loc[:, ~df_combinado.columns.duplicated()]
+    # Cargar Ventas, Cobros y CL4
+    if VENTAS_DF.empty or COBROS_DF.empty or CL4_DF.empty:
+        VENTAS_DF, COBROS_DF, CL4_DF = cargar_datos_ventas()
         
-        df_combinado.dropna(subset=['Importe'], inplace=True)
-        
-        CARTERA_PROCESADA_DF = procesar_cartera(df_combinado)
-        app.logger.info(f"Procesamiento de cartera finalizado. {len(CARTERA_PROCESADA_DF)} registros cargados.")
-    
-    return CARTERA_PROCESADA_DF.copy()
+    # Cargar Maestro de Productos
+    if PRODUCTOS_MAESTRO_DF.empty:
+        PRODUCTOS_MAESTRO_DF = cargar_maestro_productos()
+
+    app.logger.info("Carga de datos globales finalizada.")
+    return True
+
 
 # ----------------------------------------------------------------------
-## 🛡️ FUNCIONES DE HERRAMIENTA (TOOLS) PARA GEMINI - SEGURAS
+## 🛡️ FUNCIONES DE HERRAMIENTA (TOOLS) PARA GEMINI
 # ----------------------------------------------------------------------
 
-def generar_analisis_cartera_texto(kpis: dict):
-    """Genera un resumen de texto de los KPIs para el bot."""
-    comentarios = []
-    
-    comentarios.append(f"El porcentaje de cartera vencida es del {kpis['porcentaje_vencido']:.1f}%.")
-    
-    if kpis['antiguedad_prom_vencida'] > 0:
-        comentarios.append(f"La antigüedad promedio de la cartera vencida es de {kpis['antiguedad_prom_vencida']:.0f} días.")
-    else:
-        comentarios.append("No hay cartera vencida para analizar su antigüedad.")
-
-    if kpis['porcentaje_vencido'] > 30:
-        comentarios.append("Recomendación: ¡ALERTA CRÍTICA! Urge contactar a los clientes con más de 60 días vencidos.")
-    elif kpis['porcentaje_vencido'] > 15:
-        comentarios.append("Recomendación: Es importante intensificar las gestiones de cobro para evitar el envejecimiento.")
-    else:
-        comentarios.append("Recomendación: La cartera está saludable, mantén el seguimiento proactivo.")
-    
-    return " ".join(comentarios)
-
-def obtener_analisis_cartera(vendedor: str = "Total") -> str:
-    """
-    [TOOL] Calcula los KPIs clave (CSI, % Vencido) para un vendedor o la cartera total.
-    Retorna un resumen ejecutivo. (No requiere datos sensibles del cliente).
-    """
-    cartera_procesada = cargar_y_procesar_datos()
-    
-    if cartera_procesada.empty:
-        return "Los datos de cartera no han podido ser cargados correctamente."
-        
-    if vendedor and vendedor.lower() != "total":
-        cartera_filtrada = cartera_procesada[
-            cartera_procesada['nomvendedor_norm'] == normalizar_nombre(vendedor)
-        ]
-        if cartera_filtrada.empty:
-            return f"No hay datos de cartera para el vendedor: {vendedor}."
-    else:
-        cartera_filtrada = cartera_procesada.copy()
-
-    total_cartera = cartera_filtrada['importe'].sum()
-    cartera_vencida_df = cartera_filtrada[cartera_filtrada['dias_vencido'] > 0]
-    total_vencido = cartera_vencida_df['importe'].sum()
-    
-    porcentaje_vencido = (total_vencido / total_cartera) * 100 if total_cartera > 0 else 0
-    csi = (cartera_vencida_df['importe'] * cartera_vencida_df['dias_vencido']).sum() / total_cartera if total_cartera > 0 else 0
-    antiguedad_prom_vencida = (cartera_vencida_df['importe'] * cartera_vencida_df['dias_vencido']).sum() / total_vencido if total_vencido > 0 else 0
-    
-    kpis = {
-        'total_cartera': total_cartera,
-        'total_vencido': total_vencido,
-        'porcentaje_vencido': porcentaje_vencido,
-        'csi': csi,
-        'antiguedad_prom_vencida': antiguedad_prom_vencida,
-    }
-    
-    resumen_analisis = generar_analisis_cartera_texto(kpis)
-    
-    return f"Métricas clave: Cartera Total: ${total_cartera:,.0f}. Cartera Vencida: ${total_vencido:,.0f}. {resumen_analisis}"
-
+# --- Herramienta de Cartera (Original) ---
 def consultar_estado_cliente_seguro(nit: str, codigo_cliente: str) -> str:
     """
-    [TOOL] Consulta el estado de cuenta. Requiere credenciales validadas.
+    [TOOL] Consulta el estado de cuenta (cartera/deuda). Requiere credenciales validadas.
     Retorna un resumen de la deuda total y vencida.
     """
     if not nit or not codigo_cliente:
         return "Error: Faltan el NIT o el Código de Cliente para realizar la consulta."
 
     try:
-        cartera_procesada = cargar_y_procesar_datos()
-        
-        if cartera_procesada.empty:
-            return "Los datos de cartera no han podido ser cargados correctamente."
+        # Asegurar que los datos estén cargados
+        if CARTERA_PROCESADA_DF.empty:
+            app.logger.warning("CARTERA_PROCESADA_DF está vacío. Intentando recargar...")
+            cargar_datos_cartera()
+            if CARTERA_PROCESADA_DF.empty:
+                 return "Los datos de cartera no han podido ser cargados. Intenta más tarde."
 
-        # Búsqueda por NIT y Código (Ambos deben coincidir por seguridad)
-        # CORRECCIÓN: Asegurar que la columna 'cod_cliente' exista tras la normalización.
-        # Si la columna original era 'Cod Cliente', se normalizó a 'cod_cliente'.
-        
-        # Primero, verificar que las columnas necesarias existen
-        if 'nit' not in cartera_procesada.columns or 'cod_cliente' not in cartera_procesada.columns:
-            app.logger.error("Error: Las columnas 'nit' o 'cod_cliente' no se encontraron después del procesamiento.")
+        # Búsqueda (usa nombres de columna ya normalizados en procesar_cartera)
+        if 'nit' not in CARTERA_PROCESADA_DF.columns or 'cod_cliente' not in CARTERA_PROCESADA_DF.columns:
+            app.logger.error("Columnas 'nit' o 'cod_cliente' no encontradas en Cartera DF.")
             return "Error interno: El formato de los datos de cartera no es válido."
 
-        datos_cliente_seleccionado = cartera_procesada[
-            (cartera_procesada['nit'].astype(str) == str(nit).strip()) &
-            (cartera_procesada['cod_cliente'].astype(str) == str(codigo_cliente).strip())
+        datos_cliente_seleccionado = CARTERA_PROCESADA_DF[
+            (CARTERA_PROCESADA_DF['nit'].astype(str) == str(nit).strip()) &
+            (CARTERA_PROCESADA_DF['cod_cliente'].astype(str) == str(codigo_cliente).strip())
         ].copy()
 
         if datos_cliente_seleccionado.empty:
             return "Las credenciales no coinciden o no hay un estado de cuenta activo con esos datos. Por favor, verifica el NIT y el Código de Cliente."
 
-        # Cálculo de métricas
         total_cartera_cliente = datos_cliente_seleccionado['importe'].sum()
-        facturas_vencidas_cliente = datos_cliente_seleccionado[
-            datos_cliente_seleccionado['dias_vencido'] > 0
-        ]
+        facturas_vencidas_cliente = datos_cliente_seleccionado[datos_cliente_seleccionado['dias_vencido'] > 0]
         total_vencido_cliente = facturas_vencidas_cliente['importe'].sum()
-
         nombre_cliente = datos_cliente_seleccionado.iloc[0]['nombrecliente']
         portal_link = "https://ferreinoxtiendapintuco.epayco.me/recaudo/ferreinoxrecaudoenlinea/"
         
         if total_vencido_cliente > 0:
             dias_max_vencido = int(facturas_vencidas_cliente['dias_vencido'].max())
-            
             respuesta = (
                 f"Hola {nombre_cliente}. Tu *deuda total es de ${total_cartera_cliente:,.0f}*. "
                 f"De este monto, *${total_vencido_cliente:,.0f} está vencido*. "
@@ -309,15 +420,144 @@ def consultar_estado_cliente_seguro(nit: str, codigo_cliente: str) -> str:
                 f"Tu cartera total activa es de ${total_cartera_cliente:,.0f}. "
                 f"Puedes consultar tus pagos futuros aquí: {portal_link}"
             )
-
         return respuesta
-
     except Exception as e:
         app.logger.error(f"Error en consultar_estado_cliente_seguro: {e}")
-        return "Lo siento, hubo un error interno al consultar tu estado de cuenta. Intenta de nuevo más tarde."
+        return "Lo siento, hubo un error interno al consultar tu estado de cuenta."
+
+# --- ¡NUEVA HERRAMIENTA DE INVENTARIO! ---
+def consultar_stock_producto(nombre_producto_o_referencia: str) -> str:
+    """
+    [TOOL] Consulta el stock (inventario) disponible de un producto específico en todas las tiendas (CEDI, Armenia, Manizales, etc.).
+    """
+    app.logger.info(f"Iniciando consulta de stock para: {nombre_producto_o_referencia}")
+    
+    if INVENTARIO_ANALIZADO_DF.empty:
+        app.logger.warning("INVENTARIO_ANALIZADO_DF está vacío. Recargando...")
+        cargar_datos_inventario()
+        if INVENTARIO_ANALIZADO_DF.empty:
+            return "Lo siento, no puedo acceder a la información de inventario en este momento."
+
+    # --- (PASO PENDIENTE: Aquí implementaremos la lógica de 'analizar_inventario_completo'
+    # para pivotar el stock por tienda y hacer la búsqueda.) ---
+    
+    # Lógica de búsqueda (simplificada por ahora):
+    termino_busqueda = normalizar_nombre(nombre_producto_o_referencia)
+    
+    # Asumimos que INVENTARIO_ANALIZADO_DF tiene 'REFERENCIA', 'DESCRIPCION' y 'STOCK'
+    resultados = INVENTARIO_ANALIZADO_DF[
+        (INVENTARIO_ANALIZADO_DF['REFERENCIA'].astype(str) == termino_busqueda) |
+        (INVENTARIO_ANALIZADO_DF['DESCRIPCION'].apply(normalizar_nombre).str.contains(termino_busqueda, na=False))
+    ]
+    
+    if resultados.empty:
+        return f"No encontré ningún producto que coincida con '{nombre_producto_o_referencia}'."
+
+    # (Lógica futura: Agrupar por 'CODALMACEN' y sumar el 'STOCK')
+    # Por ahora, solo mostramos el stock total del primer match
+    stock_total = resultados['STOCK'].sum()
+    nombre_real = resultados.iloc[0]['DESCRIPCION']
+    
+    if stock_total > 0:
+        return f"¡Buenas noticias! Tenemos {stock_total:,.0f} unidades de '{nombre_real}' en inventario total. ¿Te gustaría saber el stock por tienda?"
+    else:
+        # (Lógica futura: Consultar 'Lead_Time_Proveedor' del script de inventario)
+        return f"Ups, parece que el producto '{nombre_real}' está agotado en este momento. ¿Puedo ayudarte a buscar una alternativa?"
+
+# --- ¡NUEVA HERRAMIENTA DE PRECIOS! ---
+def consultar_precio_producto(nombre_producto_o_referencia: str) -> str:
+    """
+    [TOOL] Consulta el precio de lista de un producto desde el maestro de productos.
+    """
+    if PRODUCTOS_MAESTRO_DF.empty:
+        app.logger.warning("PRODUCTOS_MAESTRO_DF está vacío. Recargando...")
+        cargar_maestro_productos()
+        if PRODUCTOS_MAESTRO_DF.empty:
+            return "Lo siento, no puedo acceder a la lista de precios en este momento."
+
+    termino_busqueda = normalizar_nombre(nombre_producto_o_referencia)
+    
+    # Asumimos que PRODUCTOS_MAESTRO_DF tiene 'Referencia', 'Nombre_Producto_Norm' y 'PRECIO 1' (o similar)
+    resultados = PRODUCTOS_MAESTRO_DF[
+        (PRODUCTOS_MAESTRO_DF['Referencia'].astype(str) == termino_busqueda) |
+        (PRODUCTOS_MAESTRO_DF['Nombre_Producto_Norm'].str.contains(termino_busqueda, na=False))
+    ]
+    
+    if resultados.empty:
+        return f"No encontré un precio para '{nombre_producto_o_referencia}'."
+
+    # (Lógica de precios del Cotizador: Asumimos una columna 'PRECIO 1')
+    try:
+        precio_lista = pd.to_numeric(resultados.iloc[0]['PRECIO 1'], errors='coerce').fillna(0)
+        nombre_real = resultados.iloc[0]['Nombre Producto']
+        if precio_lista > 0:
+            return f"El precio de lista para '{nombre_real}' (Ref: {resultados.iloc[0]['Referencia']}) es de ${precio_lista:,.0f} (antes de IVA)."
+        else:
+            return f"Encontré el producto '{nombre_real}', pero no tiene un precio de lista asignado."
+    except KeyError:
+        return "Encontré el producto, pero no pude identificar su columna de precio. Contacta a un asesor."
+    except Exception as e:
+        app.logger.error(f"Error en consulta de precio: {e}")
+        return "Error al consultar el precio."
+
+
+# --- ¡NUEVA HERRAMIENTA DE VENTAS! ---
+def consultar_historial_compras_cliente(nit: str, codigo_cliente: str) -> str:
+    """
+    [TOOL] Consulta las compras recientes (últimos 60 días) de un cliente. Requiere credenciales validadas.
+    """
+    if not nit or not codigo_cliente:
+        return "Error: Faltan el NIT o el Código de Cliente para realizar la consulta."
+
+    # Primero, validar identidad con Cartera (igual que la otra tool)
+    if CARTERA_PROCESADA_DF.empty:
+        cargar_datos_cartera()
+    
+    cliente_valido = CARTERA_PROCESADA_DF[
+        (CARTERA_PROCESADA_DF['nit'].astype(str) == str(nit).strip()) &
+        (CARTERA_PROCESADA_DF['cod_cliente'].astype(str) == str(codigo_cliente).strip())
+    ]
+    
+    if cliente_valido.empty:
+        return "Las credenciales no coinciden. No puedo mostrar el historial de compras."
+
+    # Si es válido, consultar el historial de Ventas
+    if VENTAS_DF.empty:
+        cargar_datos_ventas()
+        if VENTAS_DF.empty:
+            return "Estoy teniendo problemas para acceder al historial de ventas. Intenta más tarde."
+
+    # Lógica de Script 3: Filtrar por cliente y rango de fechas
+    id_cliente_str = cliente_valido.iloc[0]['cod_cliente']
+    
+    # (Lógica simplificada, usaremos el cliente_id de Cartera para buscar en Ventas)
+    # NOTA: Necesitamos mapear 'cod_cliente' de cartera al 'cliente_id' de ventas si son diferentes.
+    # Asumiremos por ahora que 'cod_cliente' (cartera) == 'cliente_id' (ventas)
+    
+    df_ventas_cliente = VENTAS_DF[VENTAS_DF['cliente_id'].astype(str) == str(id_cliente_str)]
+    
+    if df_ventas_cliente.empty:
+        return "¡Hola! Veo que tus credenciales son correctas, pero no encuentro un historial de compras reciente para ti."
+
+    # Filtrar por últimos 60 días
+    fecha_limite = datetime.now() - pd.Timedelta(days=60)
+    df_ventas_recientes = df_ventas_cliente[df_ventas_cliente['fecha_venta'] > fecha_limite]
+    
+    if df_ventas_recientes.empty:
+        return "No he encontrado compras en los últimos 60 días. ¿Te gustaría consultar un rango de fechas anterior?"
+
+    # Resumir compras
+    total_comprado = df_ventas_recientes['valor_venta'].sum()
+    productos_comprados = df_ventas_recientes.groupby('nombre_articulo')['valor_venta'].sum().nlargest(3)
+    
+    respuesta = f"En los últimos 60 días, has comprado un total de ${total_comprado:,.0f}. Tus productos más comprados fueron: \n"
+    for producto, valor in productos_comprados.items():
+        respuesta += f"* {producto} (${valor:,.0f})\n"
+    
+    return respuesta
 
 # ----------------------------------------------------------------------
-## 🧠 INICIALIZACIÓN DE GEMINI
+## 🧠 INICIALIZACIÓN DE GEMINI (ACTUALIZADO)
 # ----------------------------------------------------------------------
 model = None
 try:
@@ -327,37 +567,40 @@ try:
     genai.configure(api_key=GEMINI_API_KEY)
 
     system_instruction = (
-        "Eres **Ferreinox CRM AI**, un asistente de servicio al cliente, CRM y analista de cartera experto para FERREINOX SAS BIC. "
-        "Tu función principal es consultar estados de cuenta (usando el NIT y Código de Cliente), analizar la gestión de cartera y ofrecer información general de la empresa. "
-        "Habla de forma amable, cercana y natural, resumiendo la información de manera concisa. "
-        "Tutea al cliente y nunca digas que eres un bot o una inteligencia artificial. "
-        "**PROTOCOLO DE SEGURIDAD (MÁXIMA PRIORIDAD):** "
-        "1. Si el cliente pide su estado de cuenta, deuda, o información financiera, *DEBES* pedirle su **NIT** y su **Código de Cliente** para poder usar tu herramienta `consultar_estado_cliente_seguro`. NUNCA uses la herramienta sin tener AMBOS datos del cliente. "
-        "2. Si la consulta es de análisis de negocio (ej: '¿cómo va la cartera?', '¿quién vende más?'), usa la herramienta `obtener_analisis_cartera` sin pedir credenciales. "
-        "3. La página web de la empresa es www.ferreinox.co."
+        "Eres **Ferreinox CRM AI**, el asistente experto en servicio al cliente, inventarios y análisis de cartera para **FERREINOX SAS BIC**."
+        "Tu misión es ayudar a los clientes con sus consultas de forma amable, cercana y natural. Tutea al cliente."
+        "Tu página web de referencia es www.ferreinox.co."
+        "Tienes varias capacidades:"
+        "1.  **Consultar Deudas (Cartera):** Si el cliente pregunta por su deuda o estado de cuenta, *DEBES* pedirle su **NIT** y su **Código de Cliente** para usar la herramienta `consultar_estado_cliente_seguro`."
+        "2.  **Consultar Historial de Compras:** Si el cliente pregunta por sus compras pasadas, *DEBES* pedirle su **NIT** y **Código de Cliente** para usar la herramienta `consultar_historial_compras_cliente`."
+        "3.  **Consultar Inventario (Stock):** Si el cliente pregunta '¿tienes...?' o '¿hay stock de...?', usa la herramienta `consultar_stock_producto`."
+        "4.  **Consultar Precios:** Si el cliente pregunta por el precio de un producto, usa la herramienta `consultar_precio_producto`."
+        "5.  **Análisis de Cartera (Uso Interno):** La herramienta `obtener_analisis_cartera` es solo para análisis general, no para clientes."
+        "**PROTOCOLO DE SEGURIDAD MÁXIMA:** Nunca entregues información financiera (deudas o historial de compras) sin validar al cliente con NIT y Código de Cliente usando las herramientas seguras."
     )
     
     tools_list = [
-        consultar_estado_cliente_seguro,
-        obtener_analisis_cartera
+        consultar_estado_cliente_seguro,     # Cartera
+        consultar_stock_producto,          # Inventario
+        consultar_precio_producto,           # Precios (GSheets)
+        consultar_historial_compras_cliente, # Ventas
+        # obtener_analisis_cartera, (Desactivada por ahora para enfocarnos en el cliente)
     ]
     
     model = genai.GenerativeModel(
-        # --- ¡ESTA ES LA SEGUNDA CORRECCIÓN! ---
-        # Actualizado al modelo más reciente de tu lista
         model_name="models/gemini-flash-latest",
         system_instruction=system_instruction,
         tools=tools_list
     )
 
-    app.logger.info("Modelo Gemini (Ferreinox CRM AI) inicializado exitosamente con Tools.")
+    app.logger.info("Modelo Gemini (Ferreinox CRM AI v2) inicializado exitosamente con Tools.")
 
 except Exception as e:
     app.logger.error(f"Error fatal al configurar Google AI Studio o Tools: {e}")
     model = None
 
 # ----------------------------------------------------------------------
-## 💬 FUNCIONES AUXILIARES DE CHAT
+## 💬 FUNCIONES AUXILIARES DE CHAT (Sin cambios)
 # ----------------------------------------------------------------------
 
 def send_whatsapp_message(to_number, message_text):
@@ -389,14 +632,18 @@ def send_whatsapp_message(to_number, message_text):
 
 def log_to_google_sheet(timestamp, phone, user_msg, bot_msg, tool_used="N/A"):
     """Registra la conversación en la hoja de Google Sheets."""
-    global worksheet
-    if worksheet is None: return
+    global worksheet_log
+    if worksheet_log is None: return
 
     try:
-        worksheet.append_row([timestamp, phone, user_msg, bot_msg, tool_used])
+        worksheet_log.append_row([timestamp, phone, user_msg, bot_msg, tool_used])
         app.logger.info(f"Chat loggeado en Google Sheets para {phone}")
     except Exception as e:
         app.logger.error(f"Error al escribir en Google Sheets: {e}")
+        # Intentar reconectar si se perdió la conexión (ej. gspread.exceptions.APIError)
+        if "APIError" in str(e):
+             app.logger.info("Intentando reconectar a Google Sheets (Log)...")
+             init_google_sheets()
 
 def process_message_in_thread(user_phone_number, user_message, message_id):
     """
@@ -429,7 +676,6 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
         log_to_google_sheet(datetime.now().isoformat(), user_phone_number, user_message, gemini_reply, "Reset")
         return
 
-    # INICIALIZACIÓN DE VARIABLES CRÍTICAS FUERA DEL TRY/EXCEPT
     gemini_reply = "Perdona, hubo un error grave en la comunicación. ¿Puedes repetirme tu pregunta?"
     tool_function_name = "N/A"
 
@@ -438,44 +684,41 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
         
         response = chat_session.send_message(user_message)
         
-        # CORRECCIÓN DE ERROR 'function_calls': Acceder a través de candidates
         while (response.candidates and 
                len(response.candidates) > 0 and 
                response.candidates[0].content.parts and
                response.candidates[0].content.parts[0].function_call):
             
-            # La respuesta en Tool Calling solo tiene un candidato y una función por parte en este escenario
             function_call = response.candidates[0].content.parts[0].function_call
-            
             tool_function_name = function_call.name
             app.logger.info(f"Gemini quiere llamar a la función: {tool_function_name}")
             
             func_to_call = globals().get(tool_function_name)
-            
-            tool_calls_list = [] # Lista para enviar la respuesta de la tool
+            tool_calls_list = []
 
             if not func_to_call:
                 app.logger.error(f"Función no definida: {tool_function_name}")
                 tool_output = f"Error: Herramienta {tool_function_name} no encontrada."
+                tool_calls_list.append({
+                    "function_response": {
+                        'name': tool_function_name,
+                        'response': {'result': tool_output}
+                    }
+                })
             else:
                 try:
                     args = dict(function_call.args)
                     app.logger.info(f"Argumentos para {tool_function_name}: {args}")
                     tool_output = func_to_call(**args)
-                
-                    # --- ¡AQUÍ ESTÁ LA CORRECCIÓN 1! ---
-                    # Ya no se usa 'Part', se envía un diccionario simple.
+                    
                     tool_calls_list.append({
                         "function_response": {
                             'name': tool_function_name,
-                            'response': {'result': tool_output} # El output del tool
+                            'response': {'result': tool_output}
                         }
                     })
                 except Exception as e:
                     app.logger.error(f"Error al ejecutar la herramienta {tool_function_name}: {e}")
-                    
-                    # --- ¡AQUÍ ESTÁ LA CORRECCIÓN 2! ---
-                    # También se aplica al manejar errores.
                     tool_calls_list.append({
                         "function_response": {
                             'name': tool_function_name,
@@ -484,30 +727,25 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
                     })
             
             if tool_calls_list:
-                # Envía la respuesta de la tool y continúa el chat
                 response = chat_session.send_message(tool_calls_list)
             else:
-                break # Salir si no hay tool_calls para evitar bucle infinito
+                break
         
         gemini_reply = response.text
         app.logger.info(f"Respuesta final de Gemini: {gemini_reply[:50]}...")
 
     except Exception as e:
         app.logger.error(f"Error fatal en el proceso de chat o Tool Calling: {e}", exc_info=True)
-        # Si hay error (como 429), gemini_reply ya tiene el mensaje de fallback definido arriba.
-        # Eliminamos el chat si el error es grave para que la siguiente conversación sea limpia.
         if user_phone_number in user_chats:
             del user_chats[user_phone_number]
 
     send_whatsapp_message(user_phone_number, gemini_reply)
-
     timestamp = datetime.now().isoformat()
-    # Ahora tool_function_name siempre tendrá un valor ("N/A" o el nombre de la tool)
     log_to_google_sheet(timestamp, user_phone_number, user_message, gemini_reply, tool_function_name)
 
 
 # ----------------------------------------------------------------------
-## 🌐 RUTAS DEL WEBHOOK
+## 🌐 RUTAS DEL WEBHOOK (Sin cambios)
 # ----------------------------------------------------------------------
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
@@ -521,7 +759,6 @@ def webhook():
 
     if request.method == 'POST':
         data = request.get_json()
-
         try:
             if (data.get('entry') and 
                 data['entry'][0].get('changes') and 
@@ -560,17 +797,15 @@ def webhook():
 ## ▶️ INICIO DE LA APLICACIÓN
 # ----------------------------------------------------------------------
 
-# 1. Ejecutar inicialización de Google Sheets
+# 1. Ejecutar inicialización de Google Sheets (Log y Productos)
 init_google_sheets()
 
-# 2. Ejecutar la carga inicial de datos
+# 2. Ejecutar la carga inicial de TODOS los datos
 try:
-    # La carga de datos debe ejecutarse antes de iniciar el servidor para evitar que 
-    # la primera petición de WhatsApp sea muy lenta.
-    cargar_y_procesar_datos()
+    # Esta función ahora carga Cartera, Inventario, Ventas y Productos
+    cargar_y_procesar_datos_global()
 except Exception as e:
-    # Este log capturará si la carga inicial de datos falla por completo
-    app.logger.error(f"Error en la carga inicial de datos de cartera al iniciar la aplicación: {e}")
+    app.logger.error(f"Error en la carga inicial de datos globales al iniciar la aplicación: {e}")
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
