@@ -15,8 +15,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 from flask import Flask, request, make_response
 import google.generativeai as genai
-# <<< CORRECCIÓN DEFINITIVA >>>: Esta es la importación correcta para la v0.8.5
-# El error anterior era por un caché corrupto en el servidor.
+# ESTA LÍNEA ES CORRECTA para la v0.8.5. El error está en el caché de Render.
 from google.generativeai import Part
 
 # --- CONFIGURACIÓN DE LOGGING Y FLASK ---
