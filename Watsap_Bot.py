@@ -481,7 +481,7 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
         
         gemini_reply = response.text
         # *** CORRECCIÓN DE ERROR TIPOGRÁFICO ***
-        # Se cambió 'gemapi_reply' a 'gemini_reply'
+        # Se cambió 'gemapi_reply' a 'gemini_reply' (YA ESTABA CORREGIDO EN TU CÓDIGO)
         app.logger.info(f"Respuesta final de Gemini: {gemini_reply[:50]}...")
 
     except Exception as e:
