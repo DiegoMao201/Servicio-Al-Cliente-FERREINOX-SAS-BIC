@@ -11,16 +11,13 @@ python = ">=3.11,<3.12"
 flask = "*"
 gunicorn = "*"
 requests = "*"
-google-generativeai = "*"
-# Para Google Sheets API
+# --- CORRECCIÓN DE ESTRATEGIA ---
+# Forzamos la versión exacta para evitar que el caché use una versión ambigua
+google-generativeai = "0.8.5" 
 gspread = "*"
-# Para autenticación de Google Sheets
 google-auth = "*"
-# Para el procesamiento y análisis de la cartera (como en Streamlit)
 pandas = "*"
-# Para la carga de datos de cartera desde Dropbox
 dropbox = "*"
-# No se incluyó yagmail ni openpyxl, ya que el código de Flask no requiere su uso directo en el runtime principal.
 
 [build-system]
 requires = ["poetry-core"]
