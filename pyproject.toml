@@ -1,24 +1,10 @@
-[tool.poetry]
-name = "ferreinox-bot"
-version = "0.1.0"
-description = "WhatsApp Bot for Ferreinox, including CRM and Business Intelligence features."
-authors = ["Diego Mao"]
-readme = "README.md"
-package-mode = false
-
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
 flask = "*"
 gunicorn = "*"
 requests = "*"
-# --- CORRECCIÓN DE ESTRATEGIA ---
-# Forzamos la versión exacta (SIN ESPACIOS RAROS AL FINAL)
-google-generativeai = "0.8.5"
+google-generativeai = "0.8.5" # ¡Asegúrate de que esta línea esté aquí!
 gspread = "*"
 google-auth = "*"
 pandas = "*"
 dropbox = "*"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
