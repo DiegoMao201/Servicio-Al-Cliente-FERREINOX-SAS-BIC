@@ -12,10 +12,14 @@ flask = "*"
 gunicorn = "*"
 requests = "*"
 google-generativeai = "*"
-gspread = "*"               # Para Google Sheets API
-google-auth = "*"           # Para autenticación de Google Sheets
-pandas = "*"                # Para el procesamiento y análisis de la cartera (como en Streamlit)
-dropbox = "*"               # Para la carga de datos de cartera desde Dropbox
+# Para Google Sheets API
+gspread = "*"
+# Para autenticación de Google Sheets
+google-auth = "*"
+# Para el procesamiento y análisis de la cartera (como en Streamlit)
+pandas = "*"
+# Para la carga de datos de cartera desde Dropbox
+dropbox = "*"
 # No se incluyó yagmail ni openpyxl, ya que el código de Flask no requiere su uso directo en el runtime principal.
 
 [build-system]
