@@ -15,8 +15,9 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 from flask import Flask, request, make_response
 import google.generativeai as genai
-# <<< CORRECCIÓN FINAL DE API >>>: 'Part' está en 'types.content_types' en esta versión
-from google.generativeai.types.content_types import Part
+# <<< CORRECCIÓN DEFINITIVA >>>: Esta es la importación correcta para la v0.8.5
+# El error anterior era por un caché corrupto en el servidor.
+from google.generativeai import Part
 
 # --- CONFIGURACIÓN DE LOGGING Y FLASK ---
 app = Flask(__name__)
