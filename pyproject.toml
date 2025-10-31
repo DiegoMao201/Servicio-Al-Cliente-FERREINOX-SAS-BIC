@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "ferreinox-bot"
 version = "0.1.0"
-description = "WhatsApp Bot for Ferreinox"
+description = "WhatsApp Bot for Ferreinox, including CRM and Business Intelligence features."
 authors = ["Diego Mao"]
 readme = "README.md"
 package-mode = false
@@ -12,8 +12,11 @@ flask = "*"
 gunicorn = "*"
 requests = "*"
 google-generativeai = "*"
-gspread = "*"               # <-- AÑADIDO: Para Google Sheets
-google-auth = "*"           # <-- AÑADIDO: Para autenticación de Google
+gspread = "*"               # Para Google Sheets API
+google-auth = "*"           # Para autenticación de Google Sheets
+pandas = "*"                # Para el procesamiento y análisis de la cartera (como en Streamlit)
+dropbox = "*"               # Para la carga de datos de cartera desde Dropbox
+# No se incluyó yagmail ni openpyxl, ya que el código de Flask no requiere su uso directo en el runtime principal.
 
 [build-system]
 requires = ["poetry-core"]
