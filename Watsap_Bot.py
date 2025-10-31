@@ -15,8 +15,8 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 from flask import Flask, request, make_response
 import google.generativeai as genai
-# CORRECCIÓN DE IMPORTACIÓN: 'Part' se importa desde 'types', no 'content_types'
-from google.generativeai.types import Part
+# <<< CORRECCIÓN DE API >>>: 'Part' se importa directamente en versiones recientes
+from google.generativeai import Part
 
 # --- CONFIGURACIÓN DE LOGGING Y FLASK ---
 app = Flask(__name__)
@@ -341,7 +341,7 @@ try:
     ]
     
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash", # Usamos 1.5 Flash (o gemini-2.5-flash si está disponible)
+        model_name="gemini-1.5-flash", # Usamos 1.5 Flash
         system_instruction=system_instruction,
         tools=tools_list
     )
@@ -459,17 +459,18 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
                     app.logger.info(f"Argumentos para {tool_function_name}: {args}")
                     tool_output = func_to_call(**args)
                 
-                    # CORRECCIÓN DE IMPORTACIÓN: Usamos 'Part' que importamos correctamente
-                    tool_calls_list.append(Part.from_function_response(
-                        name=tool_function_name,
-                        response={'result': tool_output} # El output del tool
-                    ))
+                    # <<< CORRECCIÓN DE API >>>: 'Part.from_function_response' está obsoleto.
+                    tool_calls_list.append(Part(function_response={
+                        'name': tool_function_name,
+                        'response': {'result': tool_output} # El output del tool
+                    }))
                 except Exception as e:
                     app.logger.error(f"Error al ejecutar la herramienta {tool_function_name}: {e}")
-                    tool_calls_list.append(Part.from_function_response(
-                        name=tool_function_name,
-                        response={'result': f"Error en la ejecución de la función: {e}"}
-                    ))
+                    # <<< CORRECCIÓN DE API >>>: 'Part.from_function_response' está obsoleto.
+                    tool_calls_list.append(Part(function_response={
+                        'name': tool_function_name,
+                        'response': {'result': f"Error en la ejecución de la función: {e}"}
+                    }))
             
             if tool_calls_list:
                 # Envía la respuesta de la tool y continúa el chat
