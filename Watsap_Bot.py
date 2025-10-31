@@ -15,9 +15,10 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 from flask import Flask, request, make_response
 import google.generativeai as genai
+
 # --- ¡ESTA ES LA CORRECCIÓN! ---
-# 'Part' ya no vive en 'google.generativeai', fue movido a 'google.generativeai.types'
-from google.generativeai.types import Part
+# 'Part' ya no se importa. Fue eliminado.
+
 
 # --- CONFIGURACIÓN DE LOGGING Y FLASK ---
 app = Flask(__name__)
@@ -462,19 +463,25 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
                     app.logger.info(f"Argumentos para {tool_function_name}: {args}")
                     tool_output = func_to_call(**args)
                 
-                    # Esta sintaxis de 'Part(function_response=...)' es correcta
-                    # para la librería 0.8.5, siempre que 'Part' se importe
-                    # desde 'google.generativeai.types'.
-                    tool_calls_list.append(Part(function_response={
-                        'name': tool_function_name,
-                        'response': {'result': tool_output} # El output del tool
-                    }))
+                    # --- ¡AQUÍ ESTÁ LA CORRECCIÓN 1! ---
+                    # Ya no se usa 'Part', se envía un diccionario simple.
+                    tool_calls_list.append({
+                        "function_response": {
+                            'name': tool_function_name,
+                            'response': {'result': tool_output} # El output del tool
+                        }
+                    })
                 except Exception as e:
                     app.logger.error(f"Error al ejecutar la herramienta {tool_function_name}: {e}")
-                    tool_calls_list.append(Part(function_response={
-                        'name': tool_function_name,
-                        'response': {'result': f"Error en la ejecución de la función: {e}"}
-                    }))
+                    
+                    # --- ¡AQUÍ ESTÁ LA CORRECCIÓN 2! ---
+                    # También se aplica al manejar errores.
+                    tool_calls_list.append({
+                        "function_response": {
+                            'name': tool_function_name,
+                            'response': {'result': f"Error en la ejecución de la función: {e}"}
+                        }
+                    })
             
             if tool_calls_list:
                 # Envía la respuesta de la tool y continúa el chat
