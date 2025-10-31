@@ -15,8 +15,8 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 from flask import Flask, request, make_response
 import google.generativeai as genai
-# <<< CORRECCIÓN DE API >>>: 'Part' se importa directamente en versiones recientes
-from google.generativeai import Part
+# <<< CORRECCIÓN FINAL DE API >>>: 'Part' está en 'types.content_types' en esta versión
+from google.generativeai.types.content_types import Part
 
 # --- CONFIGURACIÓN DE LOGGING Y FLASK ---
 app = Flask(__name__)
@@ -460,6 +460,7 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
                     tool_output = func_to_call(**args)
                 
                     # <<< CORRECCIÓN DE API >>>: 'Part.from_function_response' está obsoleto.
+                    # Usamos el constructor de Part con 'function_response'
                     tool_calls_list.append(Part(function_response={
                         'name': tool_function_name,
                         'response': {'result': tool_output} # El output del tool
