@@ -415,12 +415,14 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
         log_to_google_sheet(datetime.now().isoformat(), user_phone_number, user_message, gemini_reply, "Reset")
         return
 
+    # INICIALIZACIÓN DE VARIABLES CRÍTICAS FUERA DEL TRY/EXCEPT
+    gemini_reply = "Perdona, hubo un error grave en la comunicación. ¿Puedes repetirme tu pregunta?"
+    tool_function_name = "N/A"
+
     try:
         app.logger.info(f"Enviando a Gemini...")
         
         response = chat_session.send_message(user_message)
-        
-        tool_function_name = "N/A"
         
         while response.function_calls:
             function_calls = response.function_calls
@@ -462,13 +464,15 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
 
     except Exception as e:
         app.logger.error(f"Error fatal en el proceso de chat o Tool Calling: {e}", exc_info=True)
-        gemini_reply = "Perdona, hubo un error grave en la comunicación. ¿Puedes repetirme tu pregunta?"
+        # Si hay error (como 429), gemini_reply ya tiene el mensaje de fallback definido arriba.
+        # Eliminamos el chat si el error es grave para que la siguiente conversación sea limpia.
         if user_phone_number in user_chats:
             del user_chats[user_phone_number]
 
     send_whatsapp_message(user_phone_number, gemini_reply)
 
     timestamp = datetime.now().isoformat()
+    # Ahora tool_function_name siempre tendrá un valor ("N/A" o el nombre de la tool)
     log_to_google_sheet(timestamp, user_phone_number, user_message, gemini_reply, tool_function_name)
 
 
