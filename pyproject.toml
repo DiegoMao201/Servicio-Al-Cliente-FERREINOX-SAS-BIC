@@ -12,8 +12,8 @@ flask = "*"
 gunicorn = "*"
 requests = "*"
 # --- CORRECCIÓN DE ESTRATEGIA ---
-# Forzamos la versión exacta para evitar que el caché use una versión ambigua
-google-generativeai = "0.8.5" 
+# Forzamos la versión exacta (SIN ESPACIOS RAROS AL FINAL)
+google-generativeai = "0.8.5"
 gspread = "*"
 google-auth = "*"
 pandas = "*"
