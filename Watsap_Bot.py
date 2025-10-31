@@ -15,8 +15,9 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 from flask import Flask, request, make_response
 import google.generativeai as genai
-# ESTA LÍNEA ES CORRECTA para la v0.8.5. El error está en el caché de Render.
-from google.generativeai import Part
+# --- ¡ESTA ES LA CORRECCIÓN! ---
+# 'Part' ya no vive en 'google.generativeai', fue movido a 'google.generativeai.types'
+from google.generativeai.types import Part
 
 # --- CONFIGURACIÓN DE LOGGING Y FLASK ---
 app = Flask(__name__)
@@ -341,7 +342,9 @@ try:
     ]
     
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash", # Usamos 1.5 Flash
+        # --- ¡ESTA ES LA SEGUNDA CORRECCIÓN! ---
+        # Actualizado al modelo más reciente de tu lista
+        model_name="models/gemini-flash-latest",
         system_instruction=system_instruction,
         tools=tools_list
     )
@@ -459,15 +462,15 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
                     app.logger.info(f"Argumentos para {tool_function_name}: {args}")
                     tool_output = func_to_call(**args)
                 
-                    # <<< CORRECCIÓN DE API >>>: 'Part.from_function_response' está obsoleto.
-                    # Usamos el constructor de Part con 'function_response'
+                    # Esta sintaxis de 'Part(function_response=...)' es correcta
+                    # para la librería 0.8.5, siempre que 'Part' se importe
+                    # desde 'google.generativeai.types'.
                     tool_calls_list.append(Part(function_response={
                         'name': tool_function_name,
                         'response': {'result': tool_output} # El output del tool
                     }))
                 except Exception as e:
                     app.logger.error(f"Error al ejecutar la herramienta {tool_function_name}: {e}")
-                    # <<< CORRECCIÓN DE API >>>: 'Part.from_function_response' está obsoleto.
                     tool_calls_list.append(Part(function_response={
                         'name': tool_function_name,
                         'response': {'result': f"Error en la ejecución de la función: {e}"}
@@ -480,8 +483,6 @@ def process_message_in_thread(user_phone_number, user_message, message_id):
                 break # Salir si no hay tool_calls para evitar bucle infinito
         
         gemini_reply = response.text
-        # *** CORRECCIÓN DE ERROR TIPOGRÁFICO ***
-        # Se cambió 'gemapi_reply' a 'gemini_reply' (YA ESTABA CORREGIDO EN TU CÓDIGO)
         app.logger.info(f"Respuesta final de Gemini: {gemini_reply[:50]}...")
 
     except Exception as e:
