@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Bot de servicio al cliente (CRM AI) para Ferreinox SAS BIC"
 authors = ["Tu Nombre <tu@email.com>"]
 readme = "README.md"
-package-mode = false # <-- ¡AÑADE ESTA LÍNEA!
+package-mode = false # <-- ¡Correcto! Esto optimiza el despliegue
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
@@ -16,6 +16,7 @@ gspread = "*"
 google-auth = "*"
 pandas = "*"
 dropbox = "*"
+openpyxl = "*" # <-- ¡AQUÍ ESTÁ LA LIBRERÍA QUE FALTABA!
 
 [build-system]
 requires = ["poetry-core"]
