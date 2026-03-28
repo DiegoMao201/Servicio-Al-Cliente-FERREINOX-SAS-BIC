@@ -1,0 +1,1 @@
+"""Paquete frontend para la app operativa de CRM Ferreinox."""

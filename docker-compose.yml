@@ -1,0 +1,43 @@
+services:
+  # 1. Base de Datos (Tu bóveda de ventas y clientes)
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ferreinox_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  # 2. Backend (Tu Cerebro IA + WhatsApp API)
+  backend:
+    build: ./backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - db
+
+  # 3. Frontend (Tu Torre de Control Streamlit)
+  frontend:
+    build: ./frontend
+    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "8501:8501"
+    environment:
+      - BACKEND_URL=http://backend:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
