@@ -418,9 +418,14 @@ def execute_sql_script(db_uri, sql_file_path):
 
 def ensure_postgrest_access(db_uri):
     """Crea el rol anonimo y aplica permisos de lectura para PostgREST."""
-    engine = create_engine(db_uri)
+    role_engine = create_engine(db_uri, isolation_level="AUTOCOMMIT")
+    with role_engine.connect() as connection:
+        connection.execute(
+            text("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'web_anon') THEN CREATE ROLE web_anon NOLOGIN; END IF; END $$;")
+        )
+
+    grant_engine = create_engine(db_uri)
     statements = [
-        "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'web_anon') THEN CREATE ROLE web_anon NOLOGIN; END IF; END $$;",
         "GRANT USAGE ON SCHEMA public TO web_anon",
         "GRANT SELECT ON ALL TABLES IN SCHEMA public TO web_anon",
         "GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO web_anon",
@@ -430,7 +435,7 @@ def ensure_postgrest_access(db_uri):
         "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO web_anon",
     ]
 
-    with engine.begin() as connection:
+    with grant_engine.begin() as connection:
         for statement in statements:
             connection.execute(text(statement))
 
