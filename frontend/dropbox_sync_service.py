@@ -187,23 +187,13 @@ def parse_excel_content(content, has_header):
         return {"ok": False, "error": f"Error leyendo el archivo Excel: {exc}"}
 
 
-def parse_dropbox_csv(dbx, file_path, has_header):
+def parse_dropbox_csv(dbx, file_path, has_header, source_label=None, file_name=None):
     """Descarga y parsea un archivo tabular de Dropbox con soporte CSV y Excel."""
     _, response = dbx.files_download(file_path)
     content = response.content
     lower_path = file_path.lower()
-    canonical_spec = None
-    path_parts = [part for part in lower_path.split("/") if part]
-    if len(path_parts) >= 2:
-        source_lookup = {
-            "ventas ferreinox": "Ventas Ferreinox",
-            "cartera ferreinox": "Cartera Ferreinox",
-            "rotación inventarios": "Rotación Inventarios",
-            "rotacion inventarios": "Rotación Inventarios",
-        }
-        source_label = source_lookup.get(path_parts[0])
-        if source_label:
-            canonical_spec = get_canonical_spec(source_label, path_parts[-1])
+    resolved_file_name = file_name or Path(lower_path).name
+    canonical_spec = get_canonical_spec(source_label, resolved_file_name) if source_label else None
 
     expected_columns = len(canonical_spec["columns"]) if canonical_spec else None
     if lower_path.endswith(".csv"):

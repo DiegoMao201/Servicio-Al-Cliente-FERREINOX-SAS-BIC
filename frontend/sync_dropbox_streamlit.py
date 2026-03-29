@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from frontend.config import get_database_uri, get_dropbox_sources
-from frontend.data_catalog import CATALOG_SPECS, get_canonical_spec
+from frontend.data_catalog import CATALOG_SPECS, get_canonical_spec, get_official_file_names_for_source, get_specs_for_source
 from frontend.dropbox_sync_service import (
     build_target_table_name,
     execute_sql_script,
@@ -69,7 +69,7 @@ def preflight_catalog_entry(spec, dropbox_conf, dbx):
 
 def sync_single_file(db_uri, source_label, dropbox_folder, file_name, file_path, target_table, has_header, columns, dbx):
     """Sincroniza un archivo Dropbox hacia una tabla raw en PostgreSQL."""
-    parse_result = parse_dropbox_csv(dbx, file_path, has_header=has_header)
+    parse_result = parse_dropbox_csv(dbx, file_path, has_header=has_header, source_label=source_label, file_name=file_name)
     if not parse_result["ok"]:
         record_sync_run(db_uri, None, source_label, file_name, target_table, "error", message=parse_result["error"])
         return False, parse_result["error"]
@@ -108,7 +108,13 @@ def sync_catalog_entry(db_uri, spec, dropbox_conf, dbx, write_mode):
         record_sync_run(db_uri, None, spec["source_label"], spec["file_name"], spec["target_table"], "error", message="Archivo no encontrado en Dropbox.")
         return False, f"No se encontró {spec['file_name']} en {spec['source_label']}."
 
-    parse_result = parse_dropbox_csv(dbx, selected_file.path_lower, has_header=False)
+    parse_result = parse_dropbox_csv(
+        dbx,
+        selected_file.path_lower,
+        has_header=False,
+        source_label=spec["source_label"],
+        file_name=spec["file_name"],
+    )
     if not parse_result["ok"]:
         record_sync_run(db_uri, None, spec["source_label"], spec["file_name"], spec["target_table"], "error", message=parse_result["error"])
         return False, parse_result["error"]
@@ -208,16 +214,37 @@ def main():
         st.warning("No se encontraron archivos tabulares compatibles en la carpeta configurada.")
         return
 
-    file_lookup = {file_entry.name: file_entry for file_entry in files}
-    selected_file_name = st.selectbox("Archivo tabular", list(file_lookup.keys()))
+    official_file_names = get_official_file_names_for_source(source_label)
+    official_files = [file_entry for file_entry in files if file_entry.name in official_file_names]
+    ignored_files = [file_entry.name for file_entry in files if file_entry.name not in official_file_names]
+
+    if not official_files:
+        st.error("No se encontraron los CSV oficiales esperados para esta fuente de Dropbox.")
+        return
+
+    file_lookup = {file_entry.name: file_entry for file_entry in official_files}
+    selected_file_name = st.selectbox("Archivo oficial del ERP", list(file_lookup.keys()))
     selected_file = file_lookup[selected_file_name]
     saved_schema = fetch_saved_schema(db_uri, source_label, selected_file.path_lower)
     canonical_spec = get_canonical_spec(source_label, selected_file_name)
 
+    st.info(f"Fuente oficial activa: {source_label}. Solo se muestran aquí los CSV oficiales definidos para esta fuente.")
+    st.caption("Asignación oficial:")
+    for spec in get_specs_for_source(source_label):
+        st.caption(f"{spec['file_name']} -> {spec['target_table']}")
+    if ignored_files:
+        st.caption(f"Archivos ignorados en esta fuente: {len(ignored_files)}")
+
     default_has_header = saved_schema["has_header"] if saved_schema else False
     has_header = st.checkbox("La primera fila contiene encabezados", value=default_has_header)
 
-    parse_result = parse_dropbox_csv(dbx, selected_file.path_lower, has_header=has_header)
+    parse_result = parse_dropbox_csv(
+        dbx,
+        selected_file.path_lower,
+        has_header=has_header,
+        source_label=source_label,
+        file_name=selected_file_name,
+    )
     if not parse_result["ok"]:
         st.error(parse_result["error"])
         return

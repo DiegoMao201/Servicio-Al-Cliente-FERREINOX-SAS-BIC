@@ -146,6 +146,18 @@ def get_canonical_spec(source_label, file_name):
     return None
 
 
+def get_specs_for_source(source_label):
+    return [spec for spec in CATALOG_SPECS if spec["source_label"] == source_label]
+
+
+def get_official_file_names_for_source(source_label):
+    return [spec["file_name"] for spec in get_specs_for_source(source_label)]
+
+
+def is_official_file_for_source(source_label, file_name):
+    return get_canonical_spec(source_label, file_name) is not None
+
+
 def get_catalog_rows():
     rows = []
     for spec in CATALOG_SPECS:
