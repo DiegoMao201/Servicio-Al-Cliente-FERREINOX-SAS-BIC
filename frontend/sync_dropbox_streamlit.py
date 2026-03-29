@@ -5,6 +5,7 @@ from frontend.config import get_database_uri, get_dropbox_sources
 from frontend.data_catalog import CATALOG_SPECS, get_canonical_spec, get_official_file_names_for_source, get_specs_for_source
 from frontend.dropbox_sync_service import (
     build_target_table_name,
+    ensure_postgrest_access,
     execute_sql_script,
     ensure_sync_tables,
     fetch_saved_schema,
@@ -48,7 +49,7 @@ def build_column_mapping_preview(dataframe, canonical_columns):
 
 def prepare_official_raw_base(db_uri):
     """Asegura que las tablas raw oficiales acepten datos textuales del ERP antes de cargar."""
-    return execute_sql_script(db_uri, "backend/raw_schema_hardening.sql")
+    return db_uri
 
 
 def preflight_catalog_entry(spec, dropbox_conf, dbx):
@@ -350,9 +351,9 @@ def main():
 
     if action_col_2.button("Aplicar o refrescar vistas PostgREST"):
         try:
-            hardening_path = execute_sql_script(db_uri, "backend/raw_schema_hardening.sql")
+            ensure_postgrest_access(db_uri)
             views_path = execute_sql_script(db_uri, "backend/postgrest_views.sql")
-            st.success(f"Estructura raw endurecida desde {hardening_path} y vistas PostgREST aplicadas desde {views_path}.")
+            st.success(f"Vistas PostgREST aplicadas correctamente desde {views_path}.")
         except Exception as exc:
             st.error(f"No fue posible aplicar la capa SQL de PostgREST: {exc}")
 

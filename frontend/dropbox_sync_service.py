@@ -416,6 +416,25 @@ def execute_sql_script(db_uri, sql_file_path):
     return str(script_path)
 
 
+def ensure_postgrest_access(db_uri):
+    """Crea el rol anonimo y aplica permisos de lectura para PostgREST."""
+    engine = create_engine(db_uri)
+    statements = [
+        "DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'web_anon') THEN CREATE ROLE web_anon NOLOGIN; END IF; END $$;",
+        "GRANT USAGE ON SCHEMA public TO web_anon",
+        "GRANT SELECT ON ALL TABLES IN SCHEMA public TO web_anon",
+        "GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO web_anon",
+        "GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO web_anon",
+        "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO web_anon",
+        "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON SEQUENCES TO web_anon",
+        "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT EXECUTE ON FUNCTIONS TO web_anon",
+    ]
+
+    with engine.begin() as connection:
+        for statement in statements:
+            connection.execute(text(statement))
+
+
 def validate_columns(columns):
     """Valida que los nombres de columnas sean únicos y no vacíos."""
     cleaned = [str(column).strip() for column in columns]
