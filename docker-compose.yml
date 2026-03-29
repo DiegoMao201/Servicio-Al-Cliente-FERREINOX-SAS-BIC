@@ -27,6 +27,7 @@ services:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PGRST_URL=http://postgrest:3000
+      - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN}
     depends_on:
       - db
 

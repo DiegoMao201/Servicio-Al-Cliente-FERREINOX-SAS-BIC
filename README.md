@@ -158,6 +158,50 @@ Si arrancas la base local desde cero, PostgreSQL inicializa automáticamente:
 2. `backend/postgrest_views.sql`
 3. `backend/postgrest_setup.sql`
 
+## Estado de actualización
+
+La app Streamlit ahora incluye un módulo llamado `Estado de Actualización`.
+
+Ahí puedes ver:
+
+1. Cuál fue el último resultado por cada CSV oficial.
+2. Cuántas filas quedaron cargadas en cada tabla raw.
+3. Cuándo fue la última sincronización registrada.
+
+## Webhook base de WhatsApp
+
+El backend ya expone un webhook base en estas rutas:
+
+```text
+GET  /webhooks/whatsapp
+POST /webhooks/whatsapp
+```
+
+Qué hace ahora mismo:
+
+1. Valida la suscripción del webhook con `WHATSAPP_VERIFY_TOKEN`.
+2. Recibe mensajes entrantes de WhatsApp Cloud API.
+3. Crea o reutiliza el contacto en `whatsapp_contacto`.
+4. Crea o reutiliza la conversación en `agent_conversation`.
+5. Guarda el mensaje entrante en `agent_message`.
+
+Qué debes poner en tu servidor para comenzar completo:
+
+1. `DATABASE_URL`
+2. `PGRST_URL`
+3. `WHATSAPP_VERIFY_TOKEN`
+4. Si luego vas a responder mensajes automáticamente: `WHATSAPP_ACCESS_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID`
+
+## Flujo recomendado para empezar full conectado
+
+1. Desplegar PostgreSQL, backend y PostgREST en tu servidor.
+2. Ejecutar la sincronización oficial con `sync_official_postgrest.py`.
+3. Confirmar en la pantalla `Estado de Actualización` que los 5 CSV oficiales quedaron bien.
+4. Publicar el backend con HTTPS.
+5. Configurar el webhook de Meta apuntando a `/webhooks/whatsapp`.
+6. Verificar que los mensajes entren y se guarden en `agent_message`.
+7. Después conectar la lógica de respuesta automática del agente.
+
 ## Reinicio limpio de la base de datos
 
 Si quieres borrar todo el esquema `public` y empezar desde cero, usa el script de reseteo controlado incluido en el proyecto.
