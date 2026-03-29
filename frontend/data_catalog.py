@@ -83,17 +83,6 @@ CATALOG_SPECS = [
         "notes": "Estado detallado de cuentas por cobrar con reglas de zona, mora y exclusiones.",
     },
     {
-        "source_label": "Cartera Ferreinox",
-        "file_name": "cobros_detalle.csv",
-        "source_role": "base_oficial_csv",
-        "updates_postgrest": True,
-        "target_table": "raw_cobros_detalle",
-        "columns": ["anio", "mes", "fecha_cobro", "codigo_vendedor", "valor_cobro"],
-        "postgrest_views": ["vw_recaudos"],
-        "business_entities": ["cartera_cliente"],
-        "notes": "Recaudos historicos. Comparte tabla raw con el origen de ventas.",
-    },
-    {
         "source_label": "Ventas Ferreinox",
         "file_name": "cobros_detalle.csv",
         "source_role": "base_oficial_csv",
@@ -102,7 +91,7 @@ CATALOG_SPECS = [
         "columns": ["anio", "mes", "fecha_cobro", "codigo_vendedor", "valor_cobro"],
         "postgrest_views": ["vw_recaudos"],
         "business_entities": ["cartera_cliente"],
-        "notes": "Recaudos complementarios. Se consolida con Cartera Ferreinox en la misma raw.",
+        "notes": "Fuente oficial y unica para recaudos automaticos del ERP.",
     },
     {
         "source_label": "Cartera Ferreinox",

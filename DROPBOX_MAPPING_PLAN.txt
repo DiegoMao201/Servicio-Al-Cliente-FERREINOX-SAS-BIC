@@ -132,6 +132,8 @@ dias_vencido (INTEGER)
 D. MÓDULO DE RECAUDOS
 Archivo: cobros_detalle.csv
 
+Fuente oficial Dropbox: dropbox_ventas
+
 Parámetros: Delimitador , (o | dependiendo del origen), Encoding utf-8, Sin encabezados.
 
 Tabla Destino: raw_cobros_detalle
@@ -205,6 +207,12 @@ Si valor_total_erp < 0 y num_factura es nulo, construir un ID virtual: 'NC-' || 
 Limpiar caracteres especiales en num_factura usando REGEXP_REPLACE(num_factura, '[^A-Z0-9]', '', 'g').
 
 4. NOTAS OPERATIVAS DEL PROYECTO
+
+Pertenencia oficial de los CSV automáticos:
+- Rotacion.csv siempre se lee desde dropbox_rotacion
+- cartera_detalle.csv y Proveedores.csv siempre se leen desde dropbox_cartera
+- ventas_detalle.csv y cobros_detalle.csv siempre se leen desde dropbox_ventas
+- El resto de archivos debe ignorarse hasta nueva instrucción funcional
 
 Las tablas raw canónicas del proyecto deben llamarse:
 - raw_ventas_detalle
