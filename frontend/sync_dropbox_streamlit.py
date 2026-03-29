@@ -46,6 +46,11 @@ def build_column_mapping_preview(dataframe, canonical_columns):
     return pd.DataFrame(rows)
 
 
+def prepare_official_raw_base(db_uri):
+    """Asegura que las tablas raw oficiales acepten datos textuales del ERP antes de cargar."""
+    return execute_sql_script(db_uri, "backend/raw_schema_hardening.sql")
+
+
 def preflight_catalog_entry(spec, dropbox_conf, dbx):
     """Valida antes de sincronizar que el archivo oficial exista y respete el ancho esperado."""
     file_lookup = {file_entry.name.lower(): file_entry for file_entry in list_csv_files(dbx, dropbox_conf.get("folder", "/"))}
@@ -69,6 +74,10 @@ def preflight_catalog_entry(spec, dropbox_conf, dbx):
 
 def sync_single_file(db_uri, source_label, dropbox_folder, file_name, file_path, target_table, has_header, columns, dbx):
     """Sincroniza un archivo Dropbox hacia una tabla raw en PostgreSQL."""
+    canonical_spec = get_canonical_spec(source_label, file_name)
+    if canonical_spec:
+        prepare_official_raw_base(db_uri)
+
     parse_result = parse_dropbox_csv(dbx, file_path, has_header=has_header, source_label=source_label, file_name=file_name)
     if not parse_result["ok"]:
         record_sync_run(db_uri, None, source_label, file_name, target_table, "error", message=parse_result["error"])
@@ -81,7 +90,7 @@ def sync_single_file(db_uri, source_label, dropbox_folder, file_name, file_path,
         return False, message
 
     dataframe.columns = columns
-    upload_dataframe(db_uri, dataframe, target_table, mode="truncate_append")
+    upload_dataframe(db_uri, dataframe, target_table, mode="truncate_append", expected_columns=columns)
     registry_id = save_sync_schema(
         db_uri,
         source_label,
@@ -126,7 +135,7 @@ def sync_catalog_entry(db_uri, spec, dropbox_conf, dbx, write_mode):
         return False, message
 
     dataframe.columns = spec["columns"]
-    upload_dataframe(db_uri, dataframe, spec["target_table"], mode=write_mode)
+    upload_dataframe(db_uri, dataframe, spec["target_table"], mode=write_mode, expected_columns=spec["columns"])
     registry_id = save_sync_schema(
         db_uri,
         spec["source_label"],
@@ -150,6 +159,8 @@ def sync_canonical_base(db_uri, dropbox_sources):
     initialized_tables = set()
     source_clients = {}
     preflight_results = []
+
+    prepare_official_raw_base(db_uri)
 
     for source_label, dropbox_conf in dropbox_sources.items():
         source_clients[source_label] = (dropbox_conf, get_dropbox_client(dropbox_conf))

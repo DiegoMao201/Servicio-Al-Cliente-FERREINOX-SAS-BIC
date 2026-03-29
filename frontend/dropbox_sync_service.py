@@ -41,6 +41,11 @@ def validate_table_name(table_name):
     return table_name
 
 
+def quote_identifier(identifier):
+    """Escapa identificadores SQL simples de forma segura."""
+    return '"' + str(identifier).replace('"', '""') + '"'
+
+
 def get_dropbox_client(config):
     """Devuelve un cliente autenticado de Dropbox."""
     return dropbox.Dropbox(
@@ -351,7 +356,27 @@ def record_sync_run(db_uri, registry_id, source_label, file_name, target_table, 
         )
 
 
-def upload_dataframe(db_uri, dataframe, target_table, mode="truncate_append"):
+def ensure_text_table_structure(connection, inspector, target_table, expected_columns):
+    """Recrea la tabla raw si no coincide con el esquema textual esperado."""
+    current_columns = []
+    current_types = []
+    if inspector.has_table(target_table, schema="public"):
+        current_columns = [column["name"] for column in inspector.get_columns(target_table, schema="public")]
+        current_types = [str(column["type"]).upper() for column in inspector.get_columns(target_table, schema="public")]
+
+    same_columns = current_columns == expected_columns
+    text_compatible = all("TEXT" in column_type or "CHAR" in column_type for column_type in current_types)
+    if same_columns and text_compatible:
+        return
+
+    if current_columns:
+        connection.execute(text(f'DROP TABLE IF EXISTS public.{quote_identifier(target_table)} CASCADE'))
+
+    column_sql = ", ".join(f"{quote_identifier(column_name)} text" for column_name in expected_columns)
+    connection.execute(text(f'CREATE TABLE public.{quote_identifier(target_table)} ({column_sql})'))
+
+
+def upload_dataframe(db_uri, dataframe, target_table, mode="truncate_append", expected_columns=None):
     """Carga un dataframe preservando el esquema cuando la tabla ya existe."""
     engine = create_engine(db_uri)
     target_table = validate_table_name(target_table)
@@ -361,6 +386,10 @@ def upload_dataframe(db_uri, dataframe, target_table, mode="truncate_append"):
     table_exists = inspector.has_table(target_table, schema="public")
 
     with engine.begin() as connection:
+        if expected_columns:
+            ensure_text_table_structure(connection, inspector, target_table, expected_columns)
+            table_exists = True
+
         if table_exists:
             if mode == "truncate_append":
                 connection.execute(text(f'TRUNCATE TABLE public."{target_table}"'))
