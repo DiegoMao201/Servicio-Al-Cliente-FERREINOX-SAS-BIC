@@ -191,6 +191,16 @@ def sync_canonical_base(db_uri, dropbox_sources):
     return results, preflight_results
 
 
+def refresh_official_base_and_postgrest(db_uri, dropbox_sources):
+    results, preflight_results = sync_canonical_base(db_uri, dropbox_sources)
+    if not results:
+        return results, preflight_results, None
+
+    ensure_postgrest_access(db_uri)
+    views_path = execute_sql_script(db_uri, "backend/postgrest_views.sql")
+    return results, preflight_results, views_path
+
+
 def main():
     """Renderiza el módulo principal de sincronización Dropbox -> PostgreSQL raw."""
     st.title("Sincronización Dropbox")
@@ -325,12 +335,11 @@ def main():
 
     st.markdown("---")
     st.subheader("Base operativa")
-    st.caption("Usa estos botones para refrescar la base oficial desde los CSV del ERP y reaplicar la capa SQL de PostgREST. Los Excel quedan solo como apoyo y no pisan la base oficial.")
+    st.caption("Usa este botón para hacer la actualización completa: cargar los CSV oficiales del ERP y refrescar PostgREST en una sola acción.")
 
-    action_col_1, action_col_2 = st.columns(2)
-    if action_col_1.button("Actualizar base oficial CSV"):
+    if st.button("Actualizar base oficial y PostgREST"):
         with st.spinner("Sincronizando archivos canónicos desde Dropbox..."):
-            results, preflight_results = sync_canonical_base(db_uri, dropbox_sources)
+            results, preflight_results, views_path = refresh_official_base_and_postgrest(db_uri, dropbox_sources)
         st.write("Validación previa de archivos oficiales:")
         for success, message in preflight_results:
             if success:
@@ -348,14 +357,8 @@ def main():
                 st.success(message)
             else:
                 st.error(message)
-
-    if action_col_2.button("Aplicar o refrescar vistas PostgREST"):
-        try:
-            ensure_postgrest_access(db_uri)
-            views_path = execute_sql_script(db_uri, "backend/postgrest_views.sql")
-            st.success(f"Vistas PostgREST aplicadas correctamente desde {views_path}.")
-        except Exception as exc:
-            st.error(f"No fue posible aplicar la capa SQL de PostgREST: {exc}")
+        if views_path:
+            st.success(f"PostgREST actualizado correctamente desde {views_path}.")
 
     st.markdown("---")
     st.subheader("Actualización automática")

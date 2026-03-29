@@ -12,24 +12,38 @@ def load_status_snapshot(db_uri):
     snapshot = []
 
     with engine.connect() as connection:
+        sync_log_exists = connection.execute(
+            text(
+                """
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.tables
+                    WHERE table_schema = 'public' AND table_name = 'sync_run_log'
+                )
+                """
+            )
+        ).scalar_one()
+
         for spec in CATALOG_SPECS:
             row_count = connection.execute(text(f'SELECT COUNT(*) FROM public."{spec["target_table"]}"')).scalar_one()
-            latest_log = connection.execute(
-                text(
-                    """
-                    SELECT status, row_count, message, executed_at
-                    FROM public.sync_run_log
-                    WHERE source_label = :source_label AND file_name = :file_name AND target_table = :target_table
-                    ORDER BY executed_at DESC
-                    LIMIT 1
-                    """
-                ),
-                {
-                    "source_label": spec["source_label"],
-                    "file_name": spec["file_name"],
-                    "target_table": spec["target_table"],
-                },
-            ).mappings().one_or_none()
+            latest_log = None
+            if sync_log_exists:
+                latest_log = connection.execute(
+                    text(
+                        """
+                        SELECT status, row_count, message, executed_at
+                        FROM public.sync_run_log
+                        WHERE source_label = :source_label AND file_name = :file_name AND target_table = :target_table
+                        ORDER BY executed_at DESC
+                        LIMIT 1
+                        """
+                    ),
+                    {
+                        "source_label": spec["source_label"],
+                        "file_name": spec["file_name"],
+                        "target_table": spec["target_table"],
+                    },
+                ).mappings().one_or_none()
 
             snapshot.append(
                 {
@@ -44,16 +58,18 @@ def load_status_snapshot(db_uri):
                 }
             )
 
-        recent_logs = connection.execute(
-            text(
-                """
-                SELECT source_label, file_name, target_table, status, row_count, message, executed_at
-                FROM public.sync_run_log
-                ORDER BY executed_at DESC
-                LIMIT 20
-                """
-            )
-        ).mappings().all()
+        recent_logs = []
+        if sync_log_exists:
+            recent_logs = connection.execute(
+                text(
+                    """
+                    SELECT source_label, file_name, target_table, status, row_count, message, executed_at
+                    FROM public.sync_run_log
+                    ORDER BY executed_at DESC
+                    LIMIT 20
+                    """
+                )
+            ).mappings().all()
 
     return pd.DataFrame(snapshot), pd.DataFrame(recent_logs)
 

@@ -122,6 +122,7 @@ def sync_official_sources(db_uri, secrets):
 
 
 def apply_postgrest_layer(db_uri):
+    execute_sql_script(db_uri, "backend/agent_schema.sql")
     ensure_postgrest_access(db_uri)
     execute_sql_script(db_uri, "backend/postgrest_views.sql")
 

@@ -202,6 +202,85 @@ Qué debes poner en tu servidor para comenzar completo:
 6. Verificar que los mensajes entren y se guarden en `agent_message`.
 7. Después conectar la lógica de respuesta automática del agente.
 
+## Paso a paso para desplegar el webhook desde tu servidor
+
+Este es el camino simple y correcto:
+
+1. Tener el backend publicado con HTTPS.
+2. Tener PostgreSQL y PostgREST accesibles desde ese backend.
+3. Poner las variables de entorno del backend.
+4. Configurar el webhook en Meta.
+5. Probar verificación y luego mensajes reales.
+
+### 1. Variables mínimas en tu servidor
+
+Debes definir al menos estas variables para el contenedor o servicio del backend:
+
+```text
+DATABASE_URL=postgresql://usuario:password@host:puerto/base
+PGRST_URL=http://postgrest:3000
+WHATSAPP_VERIFY_TOKEN=tu_token_privado_de_verificacion
+```
+
+Si más adelante vas a responder mensajes desde el backend, agrega también:
+
+```text
+WHATSAPP_ACCESS_TOKEN=EAA...
+WHATSAPP_PHONE_NUMBER_ID=1234567890
+```
+
+### 2. URL que debes publicar
+
+Tu backend debe quedar accesible por una URL pública HTTPS, por ejemplo:
+
+```text
+https://api.tudominio.com
+```
+
+El webhook de Meta apuntará a:
+
+```text
+https://api.tudominio.com/webhooks/whatsapp
+```
+
+### 3. Cómo verificar que tu servidor está listo
+
+Antes de ir a Meta, prueba estas rutas desde navegador o Postman:
+
+```text
+GET https://api.tudominio.com/
+GET https://api.tudominio.com/health
+GET https://api.tudominio.com/webhooks/whatsapp?hub.mode=subscribe&hub.verify_token=tu_token_privado_de_verificacion&hub.challenge=12345
+```
+
+La última debe responder `12345`.
+
+### 4. Qué hacer en Meta
+
+En WhatsApp Cloud API o Meta for Developers:
+
+1. Entra a tu app.
+2. Abre el producto WhatsApp.
+3. Ve a la sección de Webhooks.
+4. Pega la URL pública del webhook.
+5. Pega exactamente el mismo `WHATSAPP_VERIFY_TOKEN` que pusiste en tu servidor.
+6. Guarda y verifica.
+
+### 5. Qué hacer después de verificar
+
+1. Suscribir el campo de mensajes.
+2. Enviar un mensaje de prueba al número conectado.
+3. Verificar que aparezca en `agent_message`.
+4. Revisar la pantalla `Centro del Agente` en Streamlit.
+
+## Operación diaria
+
+Para refrescar la base operativa desde Streamlit ya quedó un solo botón en `Sincronización Dropbox`:
+
+1. Carga los 5 CSV oficiales.
+2. Refresca PostgREST.
+3. Deja los logs listos para `Estado de Actualización`.
+
 ## Reinicio limpio de la base de datos
 
 Si quieres borrar todo el esquema `public` y empezar desde cero, usa el script de reseteo controlado incluido en el proyecto.
