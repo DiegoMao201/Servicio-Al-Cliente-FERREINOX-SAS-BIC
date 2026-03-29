@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 import requests
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -27,7 +28,7 @@ def get_db_engine():
     return create_engine(get_database_url())
 
 
-def normalize_phone(phone_number: str | None):
+def normalize_phone(phone_number: Optional[str]):
     if not phone_number:
         return None
     digits = "".join(character for character in phone_number if character.isdigit())
@@ -36,7 +37,7 @@ def normalize_phone(phone_number: str | None):
     return digits if digits.startswith("+") else f"+{digits}"
 
 
-def ensure_contact_and_conversation(phone_number: str, profile_name: str | None):
+def ensure_contact_and_conversation(phone_number: str, profile_name: Optional[str]):
     engine = get_db_engine()
     normalized_phone = normalize_phone(phone_number)
     if not normalized_phone:
@@ -103,7 +104,13 @@ def ensure_contact_and_conversation(phone_number: str, profile_name: str | None)
     }
 
 
-def store_inbound_message(conversation_id: int, provider_message_id: str | None, message_type: str, content: str | None, payload: dict):
+def store_inbound_message(
+    conversation_id: int,
+    provider_message_id: Optional[str],
+    message_type: str,
+    content: Optional[str],
+    payload: dict,
+):
     engine = get_db_engine()
     with engine.begin() as connection:
         connection.execute(
