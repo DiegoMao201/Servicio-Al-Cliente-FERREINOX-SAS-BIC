@@ -35,7 +35,7 @@ def classify_table(table_name):
 def main():
     """Renderiza el dashboard de exploración de tablas en PostgreSQL."""
     st.title("CRM Ferreinox | Dashboard Operativo")
-    st.caption("Exploración rápida de tablas sincronizadas para validación y análisis inicial.")
+    st.caption("Exploración rápida de tablas sincronizadas para validación y análisis inicial. Las vistas prefijadas con vw_ son la capa operativa principal para PostgREST.")
 
     try:
         db_uri = get_database_uri()
@@ -65,7 +65,8 @@ def main():
         "Control de sincronización": [table for table in tablas if classify_table(table) == "Control de sincronización"],
     }
     available_groups = [group for group, group_tables in table_groups.items() if group_tables]
-    selected_group = st.sidebar.radio("Tipo de tabla", available_groups)
+    default_group = "Vistas PostgREST" if "Vistas PostgREST" in available_groups else available_groups[0]
+    selected_group = st.sidebar.radio("Tipo de tabla", available_groups, index=available_groups.index(default_group))
     tabla_seleccionada = st.sidebar.radio("Selecciona una tabla", table_groups[selected_group])
     st.sidebar.markdown("---")
     st.sidebar.info(f"Tabla activa: {tabla_seleccionada}")
@@ -80,6 +81,13 @@ def main():
     c1.metric("Filas cargadas", len(df))
     c2.metric("Columnas", len(df.columns))
     c3.metric("Estado", "Online")
+
+    if df.empty and selected_group == "Modelo de negocio":
+        st.warning(
+            "Esta tabla física está vacía. La sincronización oficial actual carga primero las tablas raw_ y expone la base operativa en las vistas vw_. Revisa Vistas PostgREST o Raw Dropbox para validar los datos cargados."
+        )
+    elif not df.empty and selected_group == "Vistas PostgREST":
+        st.success("Estás viendo la capa operativa publicada por PostgREST.")
 
     tab1, tab2 = st.tabs(["Datos", "Análisis rápido"])
 
