@@ -11,6 +11,8 @@ from frontend.dropbox_sync_service import (
     get_dropbox_client,
     list_csv_files,
     parse_dropbox_csv,
+    record_sync_run,
+    save_sync_schema,
     upload_dataframe,
 )
 
@@ -82,6 +84,29 @@ def sync_official_sources(db_uri, secrets):
         mode = "append" if spec["target_table"] in initialized_tables else "truncate_append"
         upload_dataframe(db_uri, dataframe, spec["target_table"], mode=mode, expected_columns=spec["columns"])
         initialized_tables.add(spec["target_table"])
+
+        registry_id = save_sync_schema(
+            db_uri,
+            spec["source_label"],
+            folder,
+            spec["file_name"],
+            entry.path_lower,
+            spec["target_table"],
+            False,
+            spec["columns"],
+            parse_result["delimiter"],
+            parse_result["encoding"],
+        )
+        record_sync_run(
+            db_uri,
+            registry_id,
+            spec["source_label"],
+            spec["file_name"],
+            spec["target_table"],
+            "success",
+            row_count=len(dataframe),
+            message=f"Sincronización oficial completada. Filas reparadas: {len(parse_result.get('repaired_rows', []))}",
+        )
 
         results.append(
             {
