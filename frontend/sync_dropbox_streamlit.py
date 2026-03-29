@@ -219,10 +219,10 @@ def main():
 
     st.markdown("---")
     st.subheader("Base operativa")
-    st.caption("Usa estos botones para refrescar toda la base raw canónica y reaplicar la capa SQL de PostgREST.")
+    st.caption("Usa estos botones para refrescar la base oficial desde los CSV del ERP y reaplicar la capa SQL de PostgREST. Los Excel quedan solo como apoyo y no pisan la base oficial.")
 
     action_col_1, action_col_2 = st.columns(2)
-    if action_col_1.button("Actualizar base canónica completa"):
+    if action_col_1.button("Actualizar base oficial CSV"):
         with st.spinner("Sincronizando archivos canónicos desde Dropbox..."):
             results = sync_canonical_base(db_uri, dropbox_sources)
         success_count = sum(1 for success, _ in results if success)

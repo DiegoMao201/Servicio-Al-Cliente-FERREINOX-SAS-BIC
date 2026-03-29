@@ -2,6 +2,8 @@ CATALOG_SPECS = [
     {
         "source_label": "Ventas Ferreinox",
         "file_name": "ventas_detalle.csv",
+        "source_role": "base_oficial_csv",
+        "updates_postgrest": True,
         "target_table": "raw_ventas_detalle",
         "columns": [
             "anio",
@@ -30,6 +32,8 @@ CATALOG_SPECS = [
     {
         "source_label": "Rotación Inventarios",
         "file_name": "Rotacion.csv",
+        "source_role": "base_oficial_csv",
+        "updates_postgrest": True,
         "target_table": "raw_rotacion_inventarios",
         "columns": [
             "departamento",
@@ -51,6 +55,8 @@ CATALOG_SPECS = [
     {
         "source_label": "Cartera Ferreinox",
         "file_name": "cartera_detalle.csv",
+        "source_role": "base_oficial_csv",
+        "updates_postgrest": True,
         "target_table": "raw_cartera_detalle",
         "columns": [
             "serie",
@@ -79,6 +85,8 @@ CATALOG_SPECS = [
     {
         "source_label": "Cartera Ferreinox",
         "file_name": "cobros_detalle.csv",
+        "source_role": "base_oficial_csv",
+        "updates_postgrest": True,
         "target_table": "raw_cobros_detalle",
         "columns": ["anio", "mes", "fecha_cobro", "codigo_vendedor", "valor_cobro"],
         "postgrest_views": ["vw_recaudos"],
@@ -88,6 +96,8 @@ CATALOG_SPECS = [
     {
         "source_label": "Ventas Ferreinox",
         "file_name": "cobros_detalle.csv",
+        "source_role": "base_oficial_csv",
+        "updates_postgrest": True,
         "target_table": "raw_cobros_detalle",
         "columns": ["anio", "mes", "fecha_cobro", "codigo_vendedor", "valor_cobro"],
         "postgrest_views": ["vw_recaudos"],
@@ -97,6 +107,8 @@ CATALOG_SPECS = [
     {
         "source_label": "Cartera Ferreinox",
         "file_name": "Proveedores.csv",
+        "source_role": "base_oficial_csv",
+        "updates_postgrest": True,
         "target_table": "raw_proveedores_pagos",
         "columns": [
             "nombre_proveedor_erp",
@@ -115,6 +127,17 @@ CATALOG_SPECS = [
 ]
 
 
+def classify_source_role(file_name, canonical_spec=None):
+    if canonical_spec:
+        return "Base oficial CSV"
+    lowered_name = file_name.lower()
+    if lowered_name.endswith((".xlsx", ".xls")):
+        return "Excel de apoyo"
+    if lowered_name.endswith(".csv"):
+        return "CSV pendiente de mapping"
+    return "Archivo no clasificado"
+
+
 def get_canonical_spec(source_label, file_name):
     lowered_name = file_name.lower()
     for spec in CATALOG_SPECS:
@@ -130,6 +153,8 @@ def get_catalog_rows():
             {
                 "Fuente Dropbox": spec["source_label"],
                 "Archivo": spec["file_name"],
+                "Rol": "Base oficial CSV",
+                "Actualiza PostgREST": "Si" if spec["updates_postgrest"] else "No",
                 "Tabla raw": spec["target_table"],
                 "Vistas PostgREST": ", ".join(spec["postgrest_views"]) or "Sin vista directa",
                 "Modelo alimentado": ", ".join(spec["business_entities"]),

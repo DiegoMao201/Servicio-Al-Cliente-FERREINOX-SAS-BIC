@@ -214,4 +214,46 @@ SELECT
     public.fn_parse_numeric(valor_cobro) AS valor_cobro
 FROM public.raw_cobros_detalle;
 
+CREATE OR REPLACE VIEW public.vw_cliente_contexto_agente AS
+WITH ventas AS (
+    SELECT
+        cliente_id AS cliente_codigo,
+        MAX(nombre_cliente) AS nombre_cliente,
+        MAX(nom_vendedor) AS vendedor,
+        MAX(fecha_venta) AS ultima_compra,
+        COUNT(*) AS documentos_venta,
+        COALESCE(SUM(valor_venta_neto), 0) AS ventas_netas_total,
+        COALESCE(SUM(unidades_vendidas_netas), 0) AS unidades_netas_total
+    FROM public.vw_ventas_netas
+    WHERE cliente_id IS NOT NULL
+    GROUP BY cliente_id
+),
+cartera AS (
+    SELECT
+        cod_cliente AS cliente_codigo,
+        MAX(nombre_cliente) AS nombre_cliente,
+        MAX(nom_vendedor) AS vendedor,
+        MAX(zona) AS zona,
+        COALESCE(SUM(importe_normalizado), 0) AS saldo_cartera,
+        COALESCE(MAX(dias_vencido), 0) AS max_dias_vencido,
+        COUNT(*) FILTER (WHERE COALESCE(dias_vencido, 0) > 0) AS documentos_vencidos
+    FROM public.vw_estado_cartera
+    WHERE cod_cliente IS NOT NULL
+    GROUP BY cod_cliente
+)
+SELECT
+    COALESCE(ventas.cliente_codigo, cartera.cliente_codigo) AS cliente_codigo,
+    COALESCE(ventas.nombre_cliente, cartera.nombre_cliente) AS nombre_cliente,
+    COALESCE(ventas.vendedor, cartera.vendedor) AS vendedor,
+    cartera.zona,
+    ventas.ultima_compra,
+    COALESCE(ventas.documentos_venta, 0) AS documentos_venta,
+    COALESCE(ventas.ventas_netas_total, 0) AS ventas_netas_total,
+    COALESCE(ventas.unidades_netas_total, 0) AS unidades_netas_total,
+    COALESCE(cartera.saldo_cartera, 0) AS saldo_cartera,
+    COALESCE(cartera.max_dias_vencido, 0) AS max_dias_vencido,
+    COALESCE(cartera.documentos_vencidos, 0) AS documentos_vencidos
+FROM ventas
+FULL OUTER JOIN cartera ON ventas.cliente_codigo = cartera.cliente_codigo;
+
 COMMIT;

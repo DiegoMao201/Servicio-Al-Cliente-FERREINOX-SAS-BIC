@@ -29,6 +29,7 @@ WHERE table_schema = 'public'
     'vw_albaranes_pendientes',
     'vw_estado_cartera',
     'vw_cuentas_por_pagar',
-    'vw_recaudos'
+    'vw_recaudos',
+    'vw_cliente_contexto_agente'
 )
 ORDER BY table_name;

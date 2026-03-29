@@ -5,7 +5,7 @@ import streamlit as st
 from sqlalchemy import create_engine, inspect, text
 
 from frontend.config import get_database_uri, get_dropbox_sources
-from frontend.data_catalog import CATALOG_SPECS, get_canonical_spec, get_catalog_rows
+from frontend.data_catalog import CATALOG_SPECS, classify_source_role, get_canonical_spec, get_catalog_rows
 from frontend.dropbox_sync_service import build_target_table_name, get_dropbox_client, list_csv_files
 
 
@@ -42,6 +42,8 @@ def build_status_dataframe(db_uri=None):
             {
                 "Fuente Dropbox": spec["source_label"],
                 "Archivo": spec["file_name"],
+                "Rol": "Base oficial CSV",
+                "Actualiza PostgREST": "Si" if spec["updates_postgrest"] else "No",
                 "Tabla raw": spec["target_table"],
                 "Tabla raw creada": "Si" if spec["target_table"] in tables else "No",
                 "Esquema registrado": "Si" if (spec["source_label"], spec["file_name"].lower(), spec["target_table"]) in registry_keys else "No",
@@ -81,12 +83,14 @@ def main():
         st.markdown("**Entrada a PostgreSQL**")
         st.write(f"Fuente: {selected_spec['source_label']}")
         st.write(f"Archivo: {selected_spec['file_name']}")
+        st.write("Rol: Base oficial CSV")
         st.write(f"Tabla raw: {selected_spec['target_table']}")
         st.write(f"Columnas esperadas: {len(selected_spec['columns'])}")
         st.code("\n".join(selected_spec["columns"]), language="text")
 
     with right_col:
         st.markdown("**Salida para PostgREST y modelo**")
+        st.write(f"Actualiza PostgREST: {'Si' if selected_spec['updates_postgrest'] else 'No'}")
         st.write(f"Vistas PostgREST: {', '.join(selected_spec['postgrest_views']) or 'Sin vista directa'}")
         st.write(f"Modelo alimentado: {', '.join(selected_spec['business_entities'])}")
         st.write(f"Notas operativas: {selected_spec['notes']}")
@@ -107,11 +111,13 @@ def main():
                         {
                             "Fuente Dropbox": source_label,
                             "Archivo": entry.name,
+                            "Rol": classify_source_role(entry.name, canonical_spec),
+                            "Actualiza PostgREST": "Si" if canonical_spec and canonical_spec["updates_postgrest"] else "No",
                             "Tipo": entry.name.rsplit(".", 1)[-1].lower(),
                             "Path": entry.path_lower,
                             "Mapeado": "Si" if canonical_spec else "No",
                             "Tabla raw destino": canonical_spec["target_table"] if canonical_spec else build_target_table_name(source_label, entry.name),
-                            "Vista objetivo": ", ".join(canonical_spec["postgrest_views"]) if canonical_spec else "Pendiente de mapping",
+                            "Vista objetivo": ", ".join(canonical_spec["postgrest_views"]) if canonical_spec else "Solo apoyo / pendiente de mapping",
                         }
                     )
             except Exception as exc:
