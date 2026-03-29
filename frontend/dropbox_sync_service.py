@@ -2,22 +2,17 @@ import csv
 import json
 import re
 from io import StringIO
+from pathlib import Path
 
 import dropbox
 import pandas as pd
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, inspect, text
+
+from frontend.data_catalog import get_canonical_spec
 
 
 ENCODINGS = ["utf-8", "latin1", "cp1252"]
 DELIMITERS = [",", "|", ";", "\t", "{"]
-CANONICAL_TARGET_TABLES = {
-    ("Rotación Inventarios", "rotacion.csv"): "raw_rotacion_inventarios",
-    ("Cartera Ferreinox", "cartera_detalle.csv"): "raw_cartera_detalle",
-    ("Cartera Ferreinox", "cobros_detalle.csv"): "raw_cobros_detalle",
-    ("Cartera Ferreinox", "proveedores.csv"): "raw_proveedores_pagos",
-    ("Ventas Ferreinox", "ventas_detalle.csv"): "raw_ventas_detalle",
-    ("Ventas Ferreinox", "cobros_detalle.csv"): "raw_cobros_detalle",
-}
 
 
 def slugify_identifier(value):
@@ -29,12 +24,19 @@ def slugify_identifier(value):
 
 def build_target_table_name(source_label, file_name):
     """Genera el nombre de la tabla raw a partir de la fuente y archivo."""
-    canonical = CANONICAL_TARGET_TABLES.get((source_label, file_name.lower()))
-    if canonical:
-        return canonical
+    canonical_spec = get_canonical_spec(source_label, file_name)
+    if canonical_spec:
+        return canonical_spec["target_table"]
     source_slug = slugify_identifier(source_label)
     file_slug = slugify_identifier(file_name.rsplit(".", 1)[0])
     return f"raw_{source_slug}_{file_slug}"
+
+
+def validate_table_name(table_name):
+    """Restringe los identificadores SQL de tablas a nombres seguros."""
+    if not re.match(r"^[A-Za-z_][A-Za-z0-9_]*$", table_name):
+        raise ValueError(f"Nombre de tabla no válido: {table_name}")
+    return table_name
 
 
 def get_dropbox_client(config):
@@ -245,12 +247,39 @@ def record_sync_run(db_uri, registry_id, source_label, file_name, target_table, 
         )
 
 
-def upload_dataframe(db_uri, dataframe, target_table):
-    """Reemplaza la tabla raw de destino con el dataframe actual."""
+def upload_dataframe(db_uri, dataframe, target_table, mode="truncate_append"):
+    """Carga un dataframe preservando el esquema cuando la tabla ya existe."""
     engine = create_engine(db_uri)
-    dataframe = dataframe.astype(str)
+    target_table = validate_table_name(target_table)
+    dataframe = dataframe.where(pd.notnull(dataframe), None)
+    inspector = inspect(engine)
+    table_exists = inspector.has_table(target_table, schema="public")
+
     with engine.begin() as connection:
-        dataframe.to_sql(target_table, connection, if_exists="replace", index=False)
+        if table_exists:
+            if mode == "truncate_append":
+                connection.execute(text(f'TRUNCATE TABLE public."{target_table}"'))
+            elif mode != "append":
+                raise ValueError(f"Modo de carga no soportado para tablas existentes: {mode}")
+            dataframe.to_sql(target_table, connection, schema="public", if_exists="append", index=False)
+            return
+
+        dataframe.to_sql(target_table, connection, schema="public", if_exists="replace", index=False)
+
+
+def execute_sql_script(db_uri, sql_file_path):
+    """Ejecuta un archivo SQL completo sobre PostgreSQL."""
+    script_path = Path(sql_file_path).resolve()
+    if not script_path.exists():
+        raise FileNotFoundError(f"No se encontró el archivo SQL: {script_path}")
+
+    sql_script = script_path.read_text(encoding="utf-8")
+    engine = create_engine(db_uri, isolation_level="AUTOCOMMIT")
+    with engine.raw_connection() as raw_connection:
+        with raw_connection.cursor() as cursor:
+            cursor.execute(sql_script)
+        raw_connection.commit()
+    return str(script_path)
 
 
 def validate_columns(columns):

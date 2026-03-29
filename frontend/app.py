@@ -15,13 +15,16 @@ def load_data(table_name, db_uri):
 
 @st.cache_data(show_spinner=False)
 def list_tables(db_uri):
-    """Obtiene las tablas disponibles del esquema público."""
+    """Obtiene tablas y vistas disponibles del esquema público."""
     engine = create_engine(db_uri)
-    return inspect(engine).get_table_names(schema="public")
+    inspector = inspect(engine)
+    return inspector.get_table_names(schema="public") + inspector.get_view_names(schema="public")
 
 
 def classify_table(table_name):
     """Clasifica tablas del esquema para navegar mejor en el dashboard."""
+    if table_name.startswith("vw_"):
+        return "Vistas PostgREST"
     if table_name.startswith("raw_"):
         return "Raw Dropbox"
     if table_name.startswith("sync_"):
@@ -58,6 +61,7 @@ def main():
     table_groups = {
         "Modelo de negocio": [table for table in tablas if classify_table(table) == "Modelo de negocio"],
         "Raw Dropbox": [table for table in tablas if classify_table(table) == "Raw Dropbox"],
+        "Vistas PostgREST": [table for table in tablas if classify_table(table) == "Vistas PostgREST"],
         "Control de sincronización": [table for table in tablas if classify_table(table) == "Control de sincronización"],
     }
     available_groups = [group for group, group_tables in table_groups.items() if group_tables]
