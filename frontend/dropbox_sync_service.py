@@ -10,6 +10,14 @@ from sqlalchemy import create_engine, text
 
 ENCODINGS = ["utf-8", "latin1", "cp1252"]
 DELIMITERS = [",", "|", ";", "\t", "{"]
+CANONICAL_TARGET_TABLES = {
+    ("Rotación Inventarios", "rotacion.csv"): "raw_rotacion_inventarios",
+    ("Cartera Ferreinox", "cartera_detalle.csv"): "raw_cartera_detalle",
+    ("Cartera Ferreinox", "cobros_detalle.csv"): "raw_cobros_detalle",
+    ("Cartera Ferreinox", "proveedores.csv"): "raw_proveedores_pagos",
+    ("Ventas Ferreinox", "ventas_detalle.csv"): "raw_ventas_detalle",
+    ("Ventas Ferreinox", "cobros_detalle.csv"): "raw_cobros_detalle",
+}
 
 
 def slugify_identifier(value):
@@ -21,6 +29,9 @@ def slugify_identifier(value):
 
 def build_target_table_name(source_label, file_name):
     """Genera el nombre de la tabla raw a partir de la fuente y archivo."""
+    canonical = CANONICAL_TARGET_TABLES.get((source_label, file_name.lower()))
+    if canonical:
+        return canonical
     source_slug = slugify_identifier(source_label)
     file_slug = slugify_identifier(file_name.rsplit(".", 1)[0])
     return f"raw_{source_slug}_{file_slug}"

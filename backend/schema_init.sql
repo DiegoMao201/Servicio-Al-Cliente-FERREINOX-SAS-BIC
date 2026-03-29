@@ -193,6 +193,81 @@ CREATE TABLE public.cartera_cliente (
     CONSTRAINT chk_cartera_estado CHECK (estado IN ('pendiente', 'pagado', 'vencido', 'acuerdo', 'castigado'))
 );
 
+CREATE TABLE public.raw_ventas_detalle (
+    anio integer,
+    mes integer,
+    fecha_venta date,
+    serie varchar(50),
+    tipo_documento varchar(100),
+    codigo_vendedor varchar(50),
+    nom_vendedor varchar(150),
+    cliente_id varchar(50),
+    nombre_cliente varchar(200),
+    codigo_articulo varchar(50),
+    nombre_articulo varchar(255),
+    categoria_producto varchar(100),
+    linea_producto varchar(100),
+    marca_producto varchar(50),
+    valor_venta numeric(14,2),
+    unidades_vendidas numeric(10,2),
+    costo_unitario numeric(14,2),
+    super_categoria varchar(100)
+);
+
+CREATE TABLE public.raw_rotacion_inventarios (
+    departamento varchar(100),
+    referencia varchar(50),
+    descripcion varchar(255),
+    marca varchar(50),
+    peso_articulo numeric(10,2),
+    unidades_vendidas integer,
+    stock numeric(10,2),
+    costo_promedio_und numeric(14,2),
+    cod_almacen varchar(50),
+    lead_time_proveedor integer,
+    historial_ventas text
+);
+
+CREATE TABLE public.raw_cartera_detalle (
+    serie varchar(50),
+    numero_documento integer,
+    fecha_documento date,
+    fecha_vencimiento date,
+    cod_cliente varchar(50),
+    nombre_cliente varchar(200),
+    nit varchar(50),
+    poblacion varchar(100),
+    provincia varchar(100),
+    telefono1 varchar(50),
+    telefono2 varchar(50),
+    nom_vendedor varchar(150),
+    entidad_autoriza varchar(100),
+    email varchar(150),
+    importe numeric(14,2),
+    descuento numeric(14,2),
+    cupo_aprobado numeric(14,2),
+    dias_vencido integer
+);
+
+CREATE TABLE public.raw_cobros_detalle (
+    anio integer,
+    mes integer,
+    fecha_cobro date,
+    codigo_vendedor varchar(50),
+    valor_cobro numeric(14,2)
+);
+
+CREATE TABLE public.raw_proveedores_pagos (
+    nombre_proveedor_erp varchar(200),
+    serie varchar(50),
+    num_entrada_erp varchar(50),
+    num_factura varchar(50),
+    doc_erp varchar(50),
+    fecha_emision_erp date,
+    fecha_vencimiento_erp date,
+    valor_total_erp numeric(14,2)
+);
+
 CREATE TABLE public.sync_schema_registry (
     id bigserial PRIMARY KEY,
     source_label varchar(120) NOT NULL,
@@ -236,6 +311,14 @@ CREATE INDEX idx_orden_compra_linea_orden_id ON public.orden_compra_linea(orden_
 CREATE INDEX idx_cartera_cliente_id ON public.cartera_cliente(cliente_id);
 CREATE INDEX idx_cartera_estado ON public.cartera_cliente(estado);
 CREATE INDEX idx_cartera_vencimiento ON public.cartera_cliente(fecha_vencimiento);
+CREATE INDEX idx_raw_ventas_fecha ON public.raw_ventas_detalle(fecha_venta);
+CREATE INDEX idx_raw_ventas_tipo_documento ON public.raw_ventas_detalle(tipo_documento);
+CREATE INDEX idx_raw_ventas_cliente ON public.raw_ventas_detalle(cliente_id);
+CREATE INDEX idx_raw_rotacion_referencia ON public.raw_rotacion_inventarios(referencia);
+CREATE INDEX idx_raw_cartera_cliente ON public.raw_cartera_detalle(cod_cliente);
+CREATE INDEX idx_raw_cartera_serie ON public.raw_cartera_detalle(serie);
+CREATE INDEX idx_raw_cobros_fecha ON public.raw_cobros_detalle(fecha_cobro);
+CREATE INDEX idx_raw_proveedores_factura ON public.raw_proveedores_pagos(num_factura);
 CREATE INDEX idx_sync_schema_registry_source ON public.sync_schema_registry(source_label);
 CREATE INDEX idx_sync_run_log_executed_at ON public.sync_run_log(executed_at);
 
