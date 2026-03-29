@@ -5,7 +5,8 @@ Plataforma base para sincronizar archivos de Dropbox hacia PostgreSQL, validar l
 ## Qué incluye
 
 - Panel Streamlit unificado para operación, sincronización y diagnóstico.
-- Carga de archivos CSV desde Dropbox con detección de delimitador y encoding.
+- Carga de archivos CSV y Excel desde Dropbox con detección de delimitador y encoding.
+- Lectura tolerante de filas irregulares sin descartar líneas del archivo fuente.
 - Persistencia de esquemas de sincronización directamente en PostgreSQL.
 - Tablas raw para aterrizar archivos vivos de Dropbox antes de transformarlos al modelo de negocio.
 - Dashboard de exploración de tablas en PostgreSQL.
@@ -129,11 +130,33 @@ Qué revisar en Coolify si falla la conexión:
 
 El flujo recomendado del proyecto ahora es:
 
-1. Dropbox entrega archivos CSV vivos.
+1. Dropbox entrega archivos CSV y Excel vivos.
 2. Streamlit sincroniza esos archivos a tablas `raw_*` en PostgreSQL.
 3. La configuración de cada archivo queda registrada en `sync_schema_registry`.
 4. Cada ejecución queda auditada en `sync_run_log`.
-5. Sobre esas tablas raw se construyen procesos de transformación hacia el modelo limpio de negocio.
+5. Sobre esas tablas raw se construyen vistas SQL y objetos expuestos por PostgREST.
+6. El modelo operativo del agente usa tablas propias para contactos, conversaciones, mensajes y tareas.
+
+## Servicio real de PostgREST
+
+El `docker-compose.yml` incluye un servicio real de PostgREST en `http://localhost:3000`.
+
+Rutas típicas después de levantar el stack:
+
+```text
+/vw_ventas_netas
+/vw_estado_cartera
+/vw_cuentas_por_pagar
+/raw_ventas_detalle
+/agent_conversation
+/agent_message
+```
+
+Si arrancas la base local desde cero, PostgreSQL inicializa automáticamente:
+
+1. `backend/schema_init.sql`
+2. `backend/postgrest_views.sql`
+3. `backend/postgrest_setup.sql`
 
 ## Reinicio limpio de la base de datos
 

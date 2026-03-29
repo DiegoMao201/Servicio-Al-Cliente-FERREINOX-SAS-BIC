@@ -26,6 +26,75 @@ AS $$
     SELECT NULLIF(REGEXP_REPLACE(COALESCE(input_text, ''), '\D', '', 'g'), '');
 $$;
 
+CREATE OR REPLACE FUNCTION public.fn_parse_numeric(input_text text)
+RETURNS numeric
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+DECLARE
+    cleaned text;
+BEGIN
+    cleaned := NULLIF(TRIM(COALESCE(input_text, '')), '');
+    IF cleaned IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    cleaned := REGEXP_REPLACE(cleaned, '[^0-9,.-]', '', 'g');
+    IF cleaned = '' OR cleaned IN ('-', '.', ',') THEN
+        RETURN NULL;
+    END IF;
+
+    IF POSITION(',' IN cleaned) > 0 AND POSITION('.' IN cleaned) > 0 THEN
+        cleaned := REPLACE(cleaned, '.', '');
+        cleaned := REPLACE(cleaned, ',', '.');
+    ELSIF POSITION(',' IN cleaned) > 0 THEN
+        cleaned := REPLACE(cleaned, ',', '.');
+    END IF;
+
+    RETURN cleaned::numeric;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.fn_parse_integer(input_text text)
+RETURNS integer
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+DECLARE
+    numeric_value numeric;
+BEGIN
+    numeric_value := public.fn_parse_numeric(input_text);
+    IF numeric_value IS NULL THEN
+        RETURN NULL;
+    END IF;
+    RETURN numeric_value::integer;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.fn_parse_date(input_text text)
+RETURNS date
+LANGUAGE plpgsql
+IMMUTABLE
+AS $$
+DECLARE
+    cleaned text;
+BEGIN
+    cleaned := NULLIF(TRIM(COALESCE(input_text, '')), '');
+    IF cleaned IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    cleaned := LEFT(cleaned, 10);
+    RETURN cleaned::date;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION public.fn_map_zona_from_serie(serie_value text)
 RETURNS text
 LANGUAGE sql
@@ -45,9 +114,9 @@ $$;
 
 CREATE OR REPLACE VIEW public.vw_ventas_netas AS
 SELECT
-    anio,
-    mes,
-    fecha_venta,
+    public.fn_parse_integer(anio) AS anio,
+    public.fn_parse_integer(mes) AS mes,
+    public.fn_parse_date(fecha_venta) AS fecha_venta,
     public.fn_normalize_text(serie) AS serie,
     public.fn_normalize_text(tipo_documento) AS tipo_documento,
     public.fn_keep_alnum(codigo_vendedor) AS codigo_vendedor,
@@ -60,14 +129,14 @@ SELECT
     public.fn_normalize_text(linea_producto) AS linea_producto,
     public.fn_keep_alnum(marca_producto) AS marca_producto,
     CASE
-        WHEN public.fn_normalize_text(tipo_documento) LIKE '%NOTA%CREDITO%' THEN valor_venta * -1
-        ELSE valor_venta
+        WHEN public.fn_normalize_text(tipo_documento) LIKE '%NOTA%CREDITO%' THEN public.fn_parse_numeric(valor_venta) * -1
+        ELSE public.fn_parse_numeric(valor_venta)
     END AS valor_venta_neto,
     CASE
-        WHEN public.fn_normalize_text(tipo_documento) LIKE '%NOTA%CREDITO%' THEN unidades_vendidas * -1
-        ELSE unidades_vendidas
+        WHEN public.fn_normalize_text(tipo_documento) LIKE '%NOTA%CREDITO%' THEN public.fn_parse_numeric(unidades_vendidas) * -1
+        ELSE public.fn_parse_numeric(unidades_vendidas)
     END AS unidades_vendidas_netas,
-    costo_unitario,
+    public.fn_parse_numeric(costo_unitario) AS costo_unitario,
     public.fn_normalize_text(super_categoria) AS super_categoria
 FROM public.raw_ventas_detalle
 WHERE public.fn_normalize_text(tipo_documento) LIKE '%FACTURA%'
@@ -80,10 +149,10 @@ WITH albaranes AS (
         public.fn_keep_alnum(cliente_id) AS cliente_id,
         public.fn_keep_alnum(codigo_articulo) AS codigo_articulo,
         public.fn_keep_alnum(codigo_vendedor) AS codigo_vendedor,
-        SUM(COALESCE(valor_venta, 0)) AS valor_total,
-        SUM(COALESCE(unidades_vendidas, 0)) AS unidades_totales,
-        MIN(fecha_venta) AS fecha_primera,
-        MAX(fecha_venta) AS fecha_ultima
+        SUM(COALESCE(public.fn_parse_numeric(valor_venta), 0)) AS valor_total,
+        SUM(COALESCE(public.fn_parse_numeric(unidades_vendidas), 0)) AS unidades_totales,
+        MIN(public.fn_parse_date(fecha_venta)) AS fecha_primera,
+        MAX(public.fn_parse_date(fecha_venta)) AS fecha_ultima
     FROM public.raw_ventas_detalle
     WHERE public.fn_normalize_text(tipo_documento) LIKE '%ALBARAN%'
     GROUP BY 1, 2, 3, 4
@@ -95,9 +164,9 @@ WHERE COALESCE(valor_total, 0) <> 0;
 CREATE OR REPLACE VIEW public.vw_estado_cartera AS
 SELECT
     public.fn_normalize_text(serie) AS serie,
-    numero_documento,
-    fecha_documento,
-    fecha_vencimiento,
+    public.fn_parse_integer(numero_documento) AS numero_documento,
+    public.fn_parse_date(fecha_documento) AS fecha_documento,
+    public.fn_parse_date(fecha_vencimiento) AS fecha_vencimiento,
     public.fn_keep_alnum(cod_cliente) AS cod_cliente,
     public.fn_normalize_text(nombre_cliente) AS nombre_cliente,
     public.fn_keep_alnum(nit) AS nit,
@@ -109,12 +178,12 @@ SELECT
     public.fn_normalize_text(entidad_autoriza) AS entidad_autoriza,
     LOWER(NULLIF(TRIM(COALESCE(email, '')), '')) AS email,
     CASE
-        WHEN numero_documento < 0 THEN importe * -1
-        ELSE importe
+        WHEN public.fn_parse_integer(numero_documento) < 0 THEN public.fn_parse_numeric(importe) * -1
+        ELSE public.fn_parse_numeric(importe)
     END AS importe_normalizado,
-    descuento,
-    cupo_aprobado,
-    dias_vencido,
+    public.fn_parse_numeric(descuento) AS descuento,
+    public.fn_parse_numeric(cupo_aprobado) AS cupo_aprobado,
+    public.fn_parse_integer(dias_vencido) AS dias_vencido,
     public.fn_map_zona_from_serie(serie) AS zona
 FROM public.raw_cartera_detalle
 WHERE public.fn_normalize_text(serie) NOT LIKE '%W%'
@@ -126,23 +195,23 @@ SELECT
     public.fn_normalize_text(serie) AS serie,
     public.fn_keep_alnum(num_entrada_erp) AS num_entrada_erp,
     CASE
-        WHEN valor_total_erp < 0 AND NULLIF(TRIM(COALESCE(num_factura, '')), '') IS NULL THEN
-            'NC-' || COALESCE(public.fn_keep_alnum(doc_erp), 'SIN_DOC') || '-' || ABS(valor_total_erp)::text
+        WHEN public.fn_parse_numeric(valor_total_erp) < 0 AND NULLIF(TRIM(COALESCE(num_factura, '')), '') IS NULL THEN
+            'NC-' || COALESCE(public.fn_keep_alnum(doc_erp), 'SIN_DOC') || '-' || ABS(public.fn_parse_numeric(valor_total_erp))::text
         ELSE public.fn_keep_alnum(num_factura)
     END AS num_factura_normalizado,
     public.fn_keep_alnum(doc_erp) AS doc_erp,
-    fecha_emision_erp,
-    fecha_vencimiento_erp,
-    valor_total_erp
+    public.fn_parse_date(fecha_emision_erp) AS fecha_emision_erp,
+    public.fn_parse_date(fecha_vencimiento_erp) AS fecha_vencimiento_erp,
+    public.fn_parse_numeric(valor_total_erp) AS valor_total_erp
 FROM public.raw_proveedores_pagos;
 
 CREATE OR REPLACE VIEW public.vw_recaudos AS
 SELECT
-    anio,
-    mes,
-    fecha_cobro,
+    public.fn_parse_integer(anio) AS anio,
+    public.fn_parse_integer(mes) AS mes,
+    public.fn_parse_date(fecha_cobro) AS fecha_cobro,
     public.fn_keep_alnum(codigo_vendedor) AS codigo_vendedor,
-    valor_cobro
+    public.fn_parse_numeric(valor_cobro) AS valor_cobro
 FROM public.raw_cobros_detalle;
 
 COMMIT;

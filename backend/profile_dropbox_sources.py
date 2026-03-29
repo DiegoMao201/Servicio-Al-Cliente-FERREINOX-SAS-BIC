@@ -1,7 +1,7 @@
 import csv
 import json
 from collections import Counter
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 from statistics import mean
 import tomllib
@@ -12,6 +12,7 @@ import pandas as pd
 
 ENCODINGS = ["utf-8", "latin1", "cp1252"]
 DELIMITERS = [",", "|", ";", "\t", "{"]
+SUPPORTED_EXTENSIONS = (".csv", ".xlsx", ".xls")
 SECRETS_PATH = Path(__file__).resolve().parent.parent / ".streamlit" / "secrets.toml"
 JSON_REPORT_PATH = Path(__file__).resolve().parent / "dropbox_profile_report.json"
 MARKDOWN_REPORT_PATH = Path(__file__).resolve().parent / "dropbox_profile_report.md"
@@ -89,10 +90,44 @@ def analyze_header_candidate(first_row):
     return unique_ratio >= 0.9 and alpha_ratio >= 0.6 and numeric_ratio <= 0.3
 
 
+def profile_excel_file(content):
+    """Perfila un archivo Excel usando la primera hoja."""
+    workbook = pd.ExcelFile(BytesIO(content))
+    sheet_name = workbook.sheet_names[0]
+    raw_df = pd.read_excel(workbook, sheet_name=sheet_name, header=None, dtype=object)
+    first_row = raw_df.iloc[0].fillna("").astype(str).tolist() if not raw_df.empty else []
+    has_header_candidate = analyze_header_candidate(first_row)
+    header_df = pd.read_excel(workbook, sheet_name=sheet_name, header=0, dtype=object) if has_header_candidate else None
+    return {
+        "encoding": None,
+        "delimiter": f"excel:{sheet_name}",
+        "delimiter_profiles": [],
+        "row_count_raw": int(len(raw_df)),
+        "column_count_raw": int(len(raw_df.columns)),
+        "irregular_rows_estimate": 0,
+        "first_row": first_row,
+        "suggested_has_header": has_header_candidate,
+        "suggested_columns": [str(column) for column in header_df.columns] if has_header_candidate and header_df is not None else [],
+        "sample_rows_raw": raw_df.head(5).fillna("").astype(str).values.tolist(),
+    }
+
+
 def profile_csv_file(dbx, entry):
-    """Descarga un CSV y devuelve perfil técnico y de contenido."""
+    """Descarga un archivo tabular y devuelve perfil técnico y de contenido."""
     _, response = dbx.files_download(entry.path_lower)
     content = response.content
+
+    if entry.name.lower().endswith((".xlsx", ".xls")):
+        try:
+            profile = profile_excel_file(content)
+            profile.update({"file_name": entry.name, "file_path": entry.path_lower})
+            return profile
+        except Exception as exc:
+            return {
+                "file_name": entry.name,
+                "file_path": entry.path_lower,
+                "error": str(exc),
+            }
 
     for encoding in ENCODINGS:
         try:
@@ -180,7 +215,7 @@ def main():
         dbx = get_dropbox_client(config)
         folder = config.get("folder", "/")
         entries = dbx.files_list_folder(folder).entries
-        csv_entries = [entry for entry in entries if isinstance(entry, dropbox.files.FileMetadata) and entry.name.lower().endswith(".csv")]
+        csv_entries = [entry for entry in entries if isinstance(entry, dropbox.files.FileMetadata) and entry.name.lower().endswith(SUPPORTED_EXTENSIONS)]
 
         source_report = {
             "source_label": source_label,

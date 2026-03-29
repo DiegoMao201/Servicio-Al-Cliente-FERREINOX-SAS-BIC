@@ -4,8 +4,9 @@ import pandas as pd
 import streamlit as st
 from sqlalchemy import create_engine, inspect, text
 
-from frontend.config import get_database_uri
-from frontend.data_catalog import CATALOG_SPECS, get_catalog_rows
+from frontend.config import get_database_uri, get_dropbox_sources
+from frontend.data_catalog import CATALOG_SPECS, get_canonical_spec, get_catalog_rows
+from frontend.dropbox_sync_service import build_target_table_name, get_dropbox_client, list_csv_files
 
 
 def get_database_status(db_uri):
@@ -92,6 +93,44 @@ def main():
 
     st.subheader("Resumen funcional")
     st.dataframe(pd.DataFrame(get_catalog_rows()), use_container_width=True)
+
+    st.subheader("Inventario vivo de Dropbox")
+    dropbox_sources = get_dropbox_sources()
+    if dropbox_sources:
+        inventory_rows = []
+        for source_label, dropbox_conf in dropbox_sources.items():
+            try:
+                dbx = get_dropbox_client(dropbox_conf)
+                for entry in list_csv_files(dbx, dropbox_conf.get("folder", "/")):
+                    canonical_spec = get_canonical_spec(source_label, entry.name)
+                    inventory_rows.append(
+                        {
+                            "Fuente Dropbox": source_label,
+                            "Archivo": entry.name,
+                            "Tipo": entry.name.rsplit(".", 1)[-1].lower(),
+                            "Path": entry.path_lower,
+                            "Mapeado": "Si" if canonical_spec else "No",
+                            "Tabla raw destino": canonical_spec["target_table"] if canonical_spec else build_target_table_name(source_label, entry.name),
+                            "Vista objetivo": ", ".join(canonical_spec["postgrest_views"]) if canonical_spec else "Pendiente de mapping",
+                        }
+                    )
+            except Exception as exc:
+                inventory_rows.append(
+                    {
+                        "Fuente Dropbox": source_label,
+                        "Archivo": "<error>",
+                        "Tipo": "n/a",
+                        "Path": dropbox_conf.get("folder", "/"),
+                        "Mapeado": "No",
+                        "Tabla raw destino": "n/a",
+                        "Vista objetivo": f"Error leyendo Dropbox: {exc}",
+                    }
+                )
+
+        inventory_df = pd.DataFrame(inventory_rows)
+        st.dataframe(inventory_df, use_container_width=True)
+    else:
+        st.info("No hay fuentes Dropbox configuradas para construir el inventario vivo.")
 
     views_file = Path(__file__).resolve().parent.parent / "backend" / "postgrest_views.sql"
     st.info(f"La capa SQL de PostgREST está definida en: {views_file}")

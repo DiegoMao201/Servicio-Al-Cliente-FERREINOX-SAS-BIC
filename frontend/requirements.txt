@@ -3,3 +3,5 @@ pandas
 dropbox
 sqlalchemy
 psycopg2-binary
+openpyxl
+xlrd

@@ -37,11 +37,6 @@ def sync_single_file(db_uri, source_label, dropbox_folder, file_name, file_path,
         return False, parse_result["error"]
 
     dataframe = parse_result["dataframe"]
-    if parse_result["bad_rows"]:
-        message = f"Se detectaron {len(parse_result['bad_rows'])} filas con número irregular de columnas."
-        record_sync_run(db_uri, None, source_label, file_name, target_table, "error", message=message)
-        return False, message
-
     if len(dataframe.columns) != len(columns):
         message = "La estructura actual del archivo no coincide con el esquema guardado."
         record_sync_run(db_uri, None, source_label, file_name, target_table, "error", message=message)
@@ -62,6 +57,9 @@ def sync_single_file(db_uri, source_label, dropbox_folder, file_name, file_path,
         parse_result["encoding"],
     )
     record_sync_run(db_uri, registry_id, source_label, file_name, target_table, "success", row_count=len(dataframe))
+    repaired_rows = parse_result.get("repaired_rows", [])
+    if repaired_rows:
+        return True, f"Sincronización exitosa de {file_name} hacia {target_table}. Filas reparadas: {len(repaired_rows)}."
     return True, f"Sincronización exitosa de {file_name} hacia {target_table}."
 
 
@@ -76,11 +74,6 @@ def sync_catalog_entry(db_uri, spec, dropbox_conf, dbx, write_mode):
     if not parse_result["ok"]:
         record_sync_run(db_uri, None, spec["source_label"], spec["file_name"], spec["target_table"], "error", message=parse_result["error"])
         return False, parse_result["error"]
-
-    if parse_result["bad_rows"]:
-        message = f"Se detectaron {len(parse_result['bad_rows'])} filas irregulares en {spec['file_name']}."
-        record_sync_run(db_uri, None, spec["source_label"], spec["file_name"], spec["target_table"], "error", message=message)
-        return False, message
 
     dataframe = parse_result["dataframe"]
     if len(dataframe.columns) != len(spec["columns"]):
@@ -103,7 +96,9 @@ def sync_catalog_entry(db_uri, spec, dropbox_conf, dbx, write_mode):
         parse_result["encoding"],
     )
     record_sync_run(db_uri, registry_id, spec["source_label"], spec["file_name"], spec["target_table"], "success", row_count=len(dataframe))
-    return True, f"{spec['file_name']} -> {spec['target_table']} ({len(dataframe)} filas)"
+    repaired_rows = parse_result.get("repaired_rows", [])
+    repair_note = f", reparadas {len(repaired_rows)} filas" if repaired_rows else ""
+    return True, f"{spec['file_name']} -> {spec['target_table']} ({len(dataframe)} filas{repair_note})"
 
 
 def sync_canonical_base(db_uri, dropbox_sources):
@@ -132,7 +127,7 @@ def sync_canonical_base(db_uri, dropbox_sources):
 def main():
     """Renderiza el módulo principal de sincronización Dropbox -> PostgreSQL raw."""
     st.title("Sincronización Dropbox")
-    st.caption("Carga archivos CSV de Dropbox a tablas raw y guarda los esquemas directamente en PostgreSQL.")
+    st.caption("Carga archivos CSV o Excel de Dropbox a tablas raw y guarda los esquemas directamente en PostgreSQL.")
 
     try:
         db_uri = get_database_uri()
@@ -161,11 +156,11 @@ def main():
         return
 
     if not files:
-        st.warning("No se encontraron archivos CSV en la carpeta configurada.")
+        st.warning("No se encontraron archivos tabulares compatibles en la carpeta configurada.")
         return
 
     file_lookup = {file_entry.name: file_entry for file_entry in files}
-    selected_file_name = st.selectbox("Archivo CSV", list(file_lookup.keys()))
+    selected_file_name = st.selectbox("Archivo tabular", list(file_lookup.keys()))
     selected_file = file_lookup[selected_file_name]
     saved_schema = fetch_saved_schema(db_uri, source_label, selected_file.path_lower)
     canonical_spec = get_canonical_spec(source_label, selected_file_name)
@@ -178,11 +173,10 @@ def main():
         st.error(parse_result["error"])
         return
 
-    if parse_result["bad_rows"]:
-        st.error(f"Se detectaron {len(parse_result['bad_rows'])} filas con diferente número de columnas. Corrige el archivo antes de sincronizar.")
-        return
-
     dataframe = parse_result["dataframe"]
+    repaired_rows = parse_result.get("repaired_rows", [])
+    if repaired_rows:
+        st.warning(f"Se conservaron todas las líneas y se repararon {len(repaired_rows)} filas irregulares durante la lectura.")
     st.subheader("Vista previa")
     st.dataframe(dataframe.head(), use_container_width=True)
 
@@ -242,8 +236,9 @@ def main():
 
     if action_col_2.button("Aplicar o refrescar vistas PostgREST"):
         try:
-            sql_path = execute_sql_script(db_uri, "backend/postgrest_views.sql")
-            st.success(f"Vistas PostgREST aplicadas correctamente desde {sql_path}.")
+            hardening_path = execute_sql_script(db_uri, "backend/raw_schema_hardening.sql")
+            views_path = execute_sql_script(db_uri, "backend/postgrest_views.sql")
+            st.success(f"Estructura raw endurecida desde {hardening_path} y vistas PostgREST aplicadas desde {views_path}.")
         except Exception as exc:
             st.error(f"No fue posible aplicar la capa SQL de PostgREST: {exc}")
 

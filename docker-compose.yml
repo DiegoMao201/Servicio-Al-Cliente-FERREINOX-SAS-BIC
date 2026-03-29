@@ -9,6 +9,9 @@ services:
       POSTGRES_DB: ferreinox_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./backend/schema_init.sql:/docker-entrypoint-initdb.d/10-schema_init.sql:ro
+      - ./backend/postgrest_views.sql:/docker-entrypoint-initdb.d/20-postgrest_views.sql:ro
+      - ./backend/postgrest_setup.sql:/docker-entrypoint-initdb.d/30-postgrest_setup.sql:ro
     ports:
       - "5432:5432"
 
@@ -23,6 +26,22 @@ services:
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - PGRST_URL=http://postgrest:3000
+    depends_on:
+      - db
+
+  postgrest:
+    image: postgrest/postgrest:v12.2.8
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      PGRST_DB_URI: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: web_anon
+      PGRST_SERVER_HOST: 0.0.0.0
+      PGRST_SERVER_PORT: 3000
+      PGRST_OPENAPI_SERVER_PROXY_URI: http://localhost:3000
     depends_on:
       - db
 
@@ -36,8 +55,10 @@ services:
       - "8501:8501"
     environment:
       - BACKEND_URL=http://backend:8000
+      - PGRST_URL=http://postgrest:3000
     depends_on:
       - backend
+      - postgrest
 
 volumes:
   postgres_data:

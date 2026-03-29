@@ -194,78 +194,136 @@ CREATE TABLE public.cartera_cliente (
 );
 
 CREATE TABLE public.raw_ventas_detalle (
-    anio integer,
-    mes integer,
-    fecha_venta date,
-    serie varchar(50),
-    tipo_documento varchar(100),
-    codigo_vendedor varchar(50),
-    nom_vendedor varchar(150),
-    cliente_id varchar(50),
-    nombre_cliente varchar(200),
-    codigo_articulo varchar(50),
-    nombre_articulo varchar(255),
-    categoria_producto varchar(100),
-    linea_producto varchar(100),
-    marca_producto varchar(50),
-    valor_venta numeric(14,2),
-    unidades_vendidas numeric(10,2),
-    costo_unitario numeric(14,2),
-    super_categoria varchar(100)
+    anio text,
+    mes text,
+    fecha_venta text,
+    serie text,
+    tipo_documento text,
+    codigo_vendedor text,
+    nom_vendedor text,
+    cliente_id text,
+    nombre_cliente text,
+    codigo_articulo text,
+    nombre_articulo text,
+    categoria_producto text,
+    linea_producto text,
+    marca_producto text,
+    valor_venta text,
+    unidades_vendidas text,
+    costo_unitario text,
+    super_categoria text
 );
 
 CREATE TABLE public.raw_rotacion_inventarios (
-    departamento varchar(100),
-    referencia varchar(50),
-    descripcion varchar(255),
-    marca varchar(50),
-    peso_articulo numeric(10,2),
-    unidades_vendidas integer,
-    stock numeric(10,2),
-    costo_promedio_und numeric(14,2),
-    cod_almacen varchar(50),
-    lead_time_proveedor integer,
+    departamento text,
+    referencia text,
+    descripcion text,
+    marca text,
+    peso_articulo text,
+    unidades_vendidas text,
+    stock text,
+    costo_promedio_und text,
+    cod_almacen text,
+    lead_time_proveedor text,
     historial_ventas text
 );
 
 CREATE TABLE public.raw_cartera_detalle (
-    serie varchar(50),
-    numero_documento integer,
-    fecha_documento date,
-    fecha_vencimiento date,
-    cod_cliente varchar(50),
-    nombre_cliente varchar(200),
-    nit varchar(50),
-    poblacion varchar(100),
-    provincia varchar(100),
-    telefono1 varchar(50),
-    telefono2 varchar(50),
-    nom_vendedor varchar(150),
-    entidad_autoriza varchar(100),
-    email varchar(150),
-    importe numeric(14,2),
-    descuento numeric(14,2),
-    cupo_aprobado numeric(14,2),
-    dias_vencido integer
+    serie text,
+    numero_documento text,
+    fecha_documento text,
+    fecha_vencimiento text,
+    cod_cliente text,
+    nombre_cliente text,
+    nit text,
+    poblacion text,
+    provincia text,
+    telefono1 text,
+    telefono2 text,
+    nom_vendedor text,
+    entidad_autoriza text,
+    email text,
+    importe text,
+    descuento text,
+    cupo_aprobado text,
+    dias_vencido text
 );
 
 CREATE TABLE public.raw_cobros_detalle (
-    anio integer,
-    mes integer,
-    fecha_cobro date,
-    codigo_vendedor varchar(50),
-    valor_cobro numeric(14,2)
+    anio text,
+    mes text,
+    fecha_cobro text,
+    codigo_vendedor text,
+    valor_cobro text
 );
 
 CREATE TABLE public.raw_proveedores_pagos (
-    nombre_proveedor_erp varchar(200),
-    serie varchar(50),
-    num_entrada_erp varchar(50),
-    num_factura varchar(50),
-    doc_erp varchar(50),
-    fecha_emision_erp date,
-    fecha_vencimiento_erp date,
-    valor_total_erp numeric(14,2)
+    nombre_proveedor_erp text,
+    serie text,
+    num_entrada_erp text,
+    num_factura text,
+    doc_erp text,
+    fecha_emision_erp text,
+    fecha_vencimiento_erp text,
+    valor_total_erp text
+);
+
+CREATE TABLE public.whatsapp_contacto (
+    id bigserial PRIMARY KEY,
+    cliente_id bigint REFERENCES public.cliente(id) ON DELETE SET NULL,
+    telefono_e164 varchar(30) NOT NULL,
+    nombre_visible varchar(180),
+    canal varchar(30) NOT NULL DEFAULT 'whatsapp',
+    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+    ultima_interaccion_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT uq_whatsapp_contacto_telefono UNIQUE (telefono_e164)
+);
+
+CREATE TABLE public.agent_conversation (
+    id bigserial PRIMARY KEY,
+    contacto_id bigint NOT NULL REFERENCES public.whatsapp_contacto(id) ON DELETE CASCADE,
+    cliente_id bigint REFERENCES public.cliente(id) ON DELETE SET NULL,
+    canal varchar(30) NOT NULL DEFAULT 'whatsapp',
+    estado varchar(30) NOT NULL DEFAULT 'abierta',
+    resumen text,
+    contexto jsonb NOT NULL DEFAULT '{}'::jsonb,
+    started_at timestamptz NOT NULL DEFAULT now(),
+    last_message_at timestamptz,
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT chk_agent_conversation_estado CHECK (estado IN ('abierta', 'pendiente', 'cerrada', 'escalada'))
+);
+
+CREATE TABLE public.agent_message (
+    id bigserial PRIMARY KEY,
+    conversation_id bigint NOT NULL REFERENCES public.agent_conversation(id) ON DELETE CASCADE,
+    provider_message_id varchar(120),
+    direction varchar(20) NOT NULL,
+    message_type varchar(30) NOT NULL DEFAULT 'text',
+    intent_detectado varchar(80),
+    contenido text,
+    payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+    estado varchar(30) NOT NULL DEFAULT 'recibido',
+    created_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT chk_agent_message_direction CHECK (direction IN ('inbound', 'outbound', 'system')),
+    CONSTRAINT chk_agent_message_estado CHECK (estado IN ('recibido', 'procesado', 'respondido', 'error'))
+);
+
+CREATE TABLE public.agent_task (
+    id bigserial PRIMARY KEY,
+    conversation_id bigint REFERENCES public.agent_conversation(id) ON DELETE SET NULL,
+    cliente_id bigint REFERENCES public.cliente(id) ON DELETE SET NULL,
+    tipo_tarea varchar(50) NOT NULL,
+    prioridad varchar(20) NOT NULL DEFAULT 'media',
+    estado varchar(30) NOT NULL DEFAULT 'pendiente',
+    resumen text NOT NULL,
+    detalle jsonb NOT NULL DEFAULT '{}'::jsonb,
+    due_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT chk_agent_task_prioridad CHECK (prioridad IN ('baja', 'media', 'alta', 'critica')),
+    CONSTRAINT chk_agent_task_estado CHECK (estado IN ('pendiente', 'en_progreso', 'resuelta', 'cancelada'))
 );
 
 CREATE TABLE public.sync_schema_registry (
@@ -319,6 +377,13 @@ CREATE INDEX idx_raw_cartera_cliente ON public.raw_cartera_detalle(cod_cliente);
 CREATE INDEX idx_raw_cartera_serie ON public.raw_cartera_detalle(serie);
 CREATE INDEX idx_raw_cobros_fecha ON public.raw_cobros_detalle(fecha_cobro);
 CREATE INDEX idx_raw_proveedores_factura ON public.raw_proveedores_pagos(num_factura);
+CREATE INDEX idx_whatsapp_contacto_cliente ON public.whatsapp_contacto(cliente_id);
+CREATE INDEX idx_agent_conversation_contacto ON public.agent_conversation(contacto_id);
+CREATE INDEX idx_agent_conversation_estado ON public.agent_conversation(estado);
+CREATE INDEX idx_agent_message_conversation ON public.agent_message(conversation_id);
+CREATE INDEX idx_agent_message_provider ON public.agent_message(provider_message_id);
+CREATE INDEX idx_agent_task_conversation ON public.agent_task(conversation_id);
+CREATE INDEX idx_agent_task_estado ON public.agent_task(estado);
 CREATE INDEX idx_sync_schema_registry_source ON public.sync_schema_registry(source_label);
 CREATE INDEX idx_sync_run_log_executed_at ON public.sync_run_log(executed_at);
 

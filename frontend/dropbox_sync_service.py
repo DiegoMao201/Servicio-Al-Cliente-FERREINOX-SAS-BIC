@@ -1,7 +1,8 @@
 import csv
 import json
 import re
-from io import StringIO
+from collections import Counter
+from io import BytesIO, StringIO
 from pathlib import Path
 
 import dropbox
@@ -13,6 +14,7 @@ from frontend.data_catalog import get_canonical_spec
 
 ENCODINGS = ["utf-8", "latin1", "cp1252"]
 DELIMITERS = [",", "|", ";", "\t", "{"]
+SUPPORTED_EXTENSIONS = (".csv", ".xlsx", ".xls")
 
 
 def slugify_identifier(value):
@@ -49,9 +51,13 @@ def get_dropbox_client(config):
 
 
 def list_csv_files(dbx, folder):
-    """Lista archivos CSV dentro de una carpeta de Dropbox."""
+    """Lista archivos tabulares soportados dentro de una carpeta de Dropbox."""
     entries = dbx.files_list_folder(folder).entries
-    return [entry for entry in entries if isinstance(entry, dropbox.files.FileMetadata) and entry.name.lower().endswith(".csv")]
+    return [
+        entry
+        for entry in entries
+        if isinstance(entry, dropbox.files.FileMetadata) and entry.name.lower().endswith(SUPPORTED_EXTENSIONS)
+    ]
 
 
 def detect_delimiter(text_content):
@@ -63,33 +69,96 @@ def detect_delimiter(text_content):
         return ","
 
 
-def parse_dropbox_csv(dbx, file_path, has_header):
-    """Descarga y parsea un CSV de Dropbox con detección de encoding y delimitador."""
-    _, response = dbx.files_download(file_path)
-    content = response.content
+def profile_delimiter_shape(text_content, delimiter):
+    """Mide la forma del archivo con un delimitador dado usando csv.reader."""
+    reader = csv.reader(StringIO(text_content), delimiter=delimiter)
+    widths = [len(row) for row in reader]
+    width_counter = Counter(widths)
+    most_common_width, most_common_count = width_counter.most_common(1)[0] if width_counter else (0, 0)
+    bad_rows = sum(count for width, count in width_counter.items() if width != most_common_width)
+    return {
+        "delimiter": delimiter,
+        "row_count": len(widths),
+        "most_common_width": most_common_width,
+        "most_common_ratio": (most_common_count / len(widths)) if widths else 0,
+        "bad_rows": bad_rows,
+    }
 
+
+def detect_best_delimiter(text_content, expected_columns=None):
+    """Elige el delimitador más consistente, priorizando el ancho esperado cuando existe."""
+    candidates = [profile_delimiter_shape(text_content, delimiter) for delimiter in DELIMITERS]
+    if expected_columns:
+        candidates.sort(
+            key=lambda item: (
+                item["most_common_width"] == expected_columns,
+                item["most_common_ratio"],
+                item["most_common_width"],
+                -item["bad_rows"],
+            ),
+            reverse=True,
+        )
+    else:
+        candidates.sort(key=lambda item: (item["most_common_width"], item["most_common_ratio"], -item["bad_rows"]), reverse=True)
+    return candidates[0]
+
+
+def normalize_row_length(row, expected_columns, delimiter):
+    """Normaliza una fila al ancho esperado sin descartarla."""
+    values = [value.strip() if isinstance(value, str) else value for value in row]
+    if len(values) == expected_columns:
+        return values, None
+    if len(values) < expected_columns:
+        return values + [None] * (expected_columns - len(values)), "padded"
+    merged_tail = delimiter.join(str(value) for value in values[expected_columns - 1 :] if value is not None)
+    normalized = values[: expected_columns - 1] + [merged_tail]
+    return normalized, "merged_tail"
+
+
+def parse_csv_content(content, has_header, expected_columns=None):
+    """Parsea CSV tolerando filas irregulares y conservando todas las líneas."""
     for encoding in ENCODINGS:
         try:
             text_content = content.decode(encoding)
-            delimiter = detect_delimiter(text_content)
-            header = 0 if has_header else None
-            dataframe = pd.read_csv(StringIO(text_content), sep=delimiter, encoding=encoding, header=header)
-
-            expected_cols = len(dataframe.columns)
-            bad_rows = []
+            best_profile = detect_best_delimiter(text_content, expected_columns=expected_columns)
+            delimiter = best_profile["delimiter"] or detect_delimiter(text_content)
             reader = csv.reader(StringIO(text_content), delimiter=delimiter)
-            for idx, row in enumerate(reader):
-                if has_header and idx == 0:
-                    continue
-                if len(row) != expected_cols:
-                    bad_rows.append((idx + 1, row))
+            rows = list(reader)
+            if not rows:
+                return {
+                    "ok": True,
+                    "dataframe": pd.DataFrame(),
+                    "encoding": encoding,
+                    "delimiter": delimiter,
+                    "bad_rows": [],
+                    "repaired_rows": [],
+                }
 
+            effective_expected = expected_columns or best_profile["most_common_width"] or len(rows[0])
+            if has_header:
+                header_row, data_rows = rows[0], rows[1:]
+                header_row, _ = normalize_row_length(header_row, effective_expected, delimiter)
+                columns = [str(value).strip() if value is not None else f"column_{index + 1}" for index, value in enumerate(header_row)]
+            else:
+                columns = list(range(effective_expected))
+                data_rows = rows
+
+            normalized_rows = []
+            repaired_rows = []
+            for index, row in enumerate(data_rows, start=2 if has_header else 1):
+                normalized_row, repair_action = normalize_row_length(row, effective_expected, delimiter)
+                normalized_rows.append(normalized_row)
+                if repair_action:
+                    repaired_rows.append({"line": index, "action": repair_action, "original_width": len(row)})
+
+            dataframe = pd.DataFrame(normalized_rows, columns=columns)
             return {
                 "ok": True,
                 "dataframe": dataframe,
                 "encoding": encoding,
                 "delimiter": delimiter,
-                "bad_rows": bad_rows,
+                "bad_rows": [],
+                "repaired_rows": repaired_rows,
             }
         except UnicodeDecodeError:
             continue
@@ -97,6 +166,51 @@ def parse_dropbox_csv(dbx, file_path, has_header):
             return {"ok": False, "error": f"Error leyendo el archivo con encoding {encoding}: {exc}"}
 
     return {"ok": False, "error": "No se pudo leer el archivo con los encodings comunes (utf-8, latin1, cp1252)."}
+
+
+def parse_excel_content(content, has_header):
+    """Parsea Excel preservando todas las filas de la primera hoja."""
+    try:
+        workbook = pd.ExcelFile(BytesIO(content))
+        sheet_name = workbook.sheet_names[0]
+        header = 0 if has_header else None
+        dataframe = pd.read_excel(workbook, sheet_name=sheet_name, header=header, dtype=object)
+        return {
+            "ok": True,
+            "dataframe": dataframe,
+            "encoding": None,
+            "delimiter": f"excel:{sheet_name}",
+            "bad_rows": [],
+            "repaired_rows": [],
+        }
+    except Exception as exc:
+        return {"ok": False, "error": f"Error leyendo el archivo Excel: {exc}"}
+
+
+def parse_dropbox_csv(dbx, file_path, has_header):
+    """Descarga y parsea un archivo tabular de Dropbox con soporte CSV y Excel."""
+    _, response = dbx.files_download(file_path)
+    content = response.content
+    lower_path = file_path.lower()
+    canonical_spec = None
+    path_parts = [part for part in lower_path.split("/") if part]
+    if len(path_parts) >= 2:
+        source_lookup = {
+            "ventas ferreinox": "Ventas Ferreinox",
+            "cartera ferreinox": "Cartera Ferreinox",
+            "rotación inventarios": "Rotación Inventarios",
+            "rotacion inventarios": "Rotación Inventarios",
+        }
+        source_label = source_lookup.get(path_parts[0])
+        if source_label:
+            canonical_spec = get_canonical_spec(source_label, path_parts[-1])
+
+    expected_columns = len(canonical_spec["columns"]) if canonical_spec else None
+    if lower_path.endswith(".csv"):
+        return parse_csv_content(content, has_header=has_header, expected_columns=expected_columns)
+    if lower_path.endswith((".xlsx", ".xls")):
+        return parse_excel_content(content, has_header=has_header)
+    return {"ok": False, "error": f"Formato no soportado: {file_path}"}
 
 
 def ensure_sync_tables(db_uri):
@@ -252,6 +366,7 @@ def upload_dataframe(db_uri, dataframe, target_table, mode="truncate_append"):
     engine = create_engine(db_uri)
     target_table = validate_table_name(target_table)
     dataframe = dataframe.where(pd.notnull(dataframe), None)
+    dataframe = dataframe.replace(r"^\s*$", None, regex=True)
     inspector = inspect(engine)
     table_exists = inspector.has_table(target_table, schema="public")
 
