@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 
 from frontend.config import get_database_uri, get_dropbox_sources
 from frontend.data_catalog import CATALOG_SPECS, get_canonical_spec
@@ -27,6 +28,43 @@ def render_column_editor(dataframe, saved_columns=None):
             st.text_input(f"Nombre para columna {index + 1}", value=column_name, key=f"column_{index}").strip()
         )
     return edited_columns
+
+
+def build_column_mapping_preview(dataframe, canonical_columns):
+    """Construye una tabla simple de posición, nombre canónico y ejemplo de valor."""
+    rows = []
+    sample_row = dataframe.iloc[0].tolist() if not dataframe.empty else []
+    for index, column_name in enumerate(canonical_columns):
+        sample_value = sample_row[index] if index < len(sample_row) else None
+        rows.append(
+            {
+                "Posición": index + 1,
+                "Nombre esperado": column_name,
+                "Ejemplo valor": sample_value,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def preflight_catalog_entry(spec, dropbox_conf, dbx):
+    """Valida antes de sincronizar que el archivo oficial exista y respete el ancho esperado."""
+    file_lookup = {file_entry.name.lower(): file_entry for file_entry in list_csv_files(dbx, dropbox_conf.get("folder", "/"))}
+    selected_file = file_lookup.get(spec["file_name"].lower())
+    if not selected_file:
+        return False, f"{spec['source_label']} | {spec['file_name']}: archivo no encontrado"
+
+    parse_result = parse_dropbox_csv(dbx, selected_file.path_lower, has_header=False)
+    if not parse_result["ok"]:
+        return False, f"{spec['source_label']} | {spec['file_name']}: {parse_result['error']}"
+
+    dataframe = parse_result["dataframe"]
+    if len(dataframe.columns) != len(spec["columns"]):
+        return False, (
+            f"{spec['source_label']} | {spec['file_name']}: columnas detectadas {len(dataframe.columns)} "
+            f"y columnas esperadas {len(spec['columns'])}"
+        )
+
+    return True, f"{spec['source_label']} | {spec['file_name']}: OK ({len(spec['columns'])} columnas)"
 
 
 def sync_single_file(db_uri, source_label, dropbox_folder, file_name, file_path, target_table, has_header, columns, dbx):
@@ -105,9 +143,20 @@ def sync_canonical_base(db_uri, dropbox_sources):
     results = []
     initialized_tables = set()
     source_clients = {}
+    preflight_results = []
 
     for source_label, dropbox_conf in dropbox_sources.items():
         source_clients[source_label] = (dropbox_conf, get_dropbox_client(dropbox_conf))
+
+    for spec in CATALOG_SPECS:
+        if spec["source_label"] not in source_clients:
+            preflight_results.append((False, f"No hay configuración Dropbox para {spec['source_label']}"))
+            continue
+        dropbox_conf, dbx = source_clients[spec["source_label"]]
+        preflight_results.append(preflight_catalog_entry(spec, dropbox_conf, dbx))
+
+    if not all(success for success, _ in preflight_results):
+        return [], preflight_results
 
     for spec in CATALOG_SPECS:
         if spec["source_label"] not in source_clients:
@@ -121,7 +170,7 @@ def sync_canonical_base(db_uri, dropbox_sources):
             initialized_tables.add(spec["target_table"])
         results.append((success, message))
 
-    return results
+    return results, preflight_results
 
 
 def main():
@@ -183,9 +232,26 @@ def main():
     default_target_table = saved_schema["target_table"] if saved_schema else build_target_table_name(source_label, selected_file_name)
     target_table = st.text_input("Tabla destino en PostgreSQL", value=default_target_table).strip()
 
+    st.subheader("Control de lectura")
+    expected_count = len(canonical_spec["columns"]) if canonical_spec else None
+    control_col_1, control_col_2, control_col_3 = st.columns(3)
+    control_col_1.metric("Columnas detectadas", len(dataframe.columns))
+    control_col_2.metric("Columnas esperadas", expected_count if expected_count is not None else "n/a")
+    control_col_3.metric("Archivo oficial", "Si" if canonical_spec else "No")
+
+    if canonical_spec:
+        if len(dataframe.columns) == len(canonical_spec["columns"]):
+            st.success("La lectura coincide con el catálogo oficial. Este archivo puede alimentar la base oficial.")
+        else:
+            st.error("La lectura no coincide con el catálogo oficial. No debes actualizar la base hasta corregirlo.")
+
     st.subheader("Esquema de columnas")
     default_columns = saved_schema["columns"] if saved_schema else (canonical_spec["columns"] if canonical_spec else None)
-    edited_columns = render_column_editor(dataframe, saved_columns=default_columns)
+    if canonical_spec:
+        edited_columns = canonical_spec["columns"]
+        st.dataframe(build_column_mapping_preview(dataframe, canonical_spec["columns"]), use_container_width=True)
+    else:
+        edited_columns = render_column_editor(dataframe, saved_columns=default_columns)
     is_valid, validation_message = validate_columns(edited_columns)
     if not is_valid:
         st.error(validation_message)
@@ -200,7 +266,8 @@ def main():
     dataframe_preview.columns = edited_columns
     st.dataframe(dataframe_preview.head(), use_container_width=True)
 
-    if st.button("Sincronizar archivo"):
+    can_sync_selected = not canonical_spec or len(dataframe.columns) == len(canonical_spec["columns"])
+    if st.button("Sincronizar archivo", disabled=not can_sync_selected):
         success, message = sync_single_file(
             db_uri,
             source_label,
@@ -224,7 +291,16 @@ def main():
     action_col_1, action_col_2 = st.columns(2)
     if action_col_1.button("Actualizar base oficial CSV"):
         with st.spinner("Sincronizando archivos canónicos desde Dropbox..."):
-            results = sync_canonical_base(db_uri, dropbox_sources)
+            results, preflight_results = sync_canonical_base(db_uri, dropbox_sources)
+        st.write("Validación previa de archivos oficiales:")
+        for success, message in preflight_results:
+            if success:
+                st.success(message)
+            else:
+                st.error(message)
+        if not results:
+            st.error("La base oficial no se actualizó porque la validación previa encontró problemas.")
+            return
         success_count = sum(1 for success, _ in results if success)
         error_count = len(results) - success_count
         st.write(f"Resultado: {success_count} cargas exitosas, {error_count} con error.")
