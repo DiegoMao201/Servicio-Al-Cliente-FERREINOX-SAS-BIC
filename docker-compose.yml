@@ -1,5 +1,5 @@
 services:
-  # 1. Base de Datos (Tu bóveda de ventas y clientes)
+  # 1. Base de Datos (PostgreSQL, solo accesible internamente)
   db:
     image: postgres:15
     restart: always
@@ -9,21 +9,17 @@ services:
       POSTGRES_DB: ferreinox_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/schema_init.sql:/docker-entrypoint-initdb.d/10-schema_init.sql:ro
-      - ./backend/postgrest_views.sql:/docker-entrypoint-initdb.d/20-postgrest_views.sql:ro
-      - ./backend/postgrest_setup.sql:/docker-entrypoint-initdb.d/30-postgrest_setup.sql:ro
-      - ./backend/agent_schema.sql:/docker-entrypoint-initdb.d/40-agent_schema.sql:ro
-    ports:
-      - "5432:5432"
+      # Solo descomenta las siguientes líneas si necesitas inicializar una base nueva:
+      # - ./backend/schema_init.sql:/docker-entrypoint-initdb.d/10-schema_init.sql:ro
+      # - ./backend/postgrest_views.sql:/docker-entrypoint-initdb.d/20-postgrest_views.sql:ro
+      # - ./backend/postgrest_setup.sql:/docker-entrypoint-initdb.d/30-postgrest_setup.sql:ro
+      # - ./backend/agent_schema.sql:/docker-entrypoint-initdb.d/40-agent_schema.sql:ro
+    # No expongas el puerto 5432 a internet por seguridad
 
-  # 2. Backend (Tu Cerebro IA + WhatsApp API)
+  # 2. Backend (FastAPI, WhatsApp Webhook, IA)
   backend:
     build: ./backend
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8000:8000"
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -31,36 +27,33 @@ services:
       - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN}
     depends_on:
       - db
+    # No expongas el puerto aquí, usa Coolify para mapearlo a tu subdominio (ej: apicrm.datovatenexuspro.com)
 
+  # 3. PostgREST (API SQL segura)
   postgrest:
     image: postgrest/postgrest:v12.2.8
     restart: always
-    ports:
-      - "3000:3000"
     environment:
       PGRST_DB_URI: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
       PGRST_DB_SCHEMA: public
       PGRST_DB_ANON_ROLE: web_anon
       PGRST_SERVER_HOST: 0.0.0.0
       PGRST_SERVER_PORT: 3000
-      PGRST_OPENAPI_SERVER_PROXY_URI: http://localhost:3000
     depends_on:
       - db
+    # No expongas el puerto aquí, usa Coolify para mapearlo a tu subdominio (ej: postgrest.datovatenexuspro.com)
 
-  # 3. Frontend (Tu Torre de Control Streamlit)
+  # 4. Frontend (Streamlit, dashboard)
   frontend:
     build: ./frontend
     command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
-    volumes:
-      - ./frontend:/app
-    ports:
-      - "8501:8501"
     environment:
-      - BACKEND_URL=http://backend:8000
+      - BACKEND_URL=https://apicrm.datovatenexuspro.com
       - PGRST_URL=http://postgrest:3000
     depends_on:
       - backend
       - postgrest
+    # No expongas el puerto aquí, usa Coolify para mapearlo a tu subdominio (ej: crm.datovatenexuspro.com)
 
 volumes:
   postgres_data:
