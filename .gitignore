@@ -17,4 +17,5 @@ frontend/.streamlit/secrets.toml
 .streamlit/secrets.toml
 esquemas_guardados.json
 sync_log.txt
+backend/db_diagnostics_report.json
 .DS_Store

@@ -20,6 +20,15 @@ def list_tables(db_uri):
     return inspect(engine).get_table_names(schema="public")
 
 
+def classify_table(table_name):
+    """Clasifica tablas del esquema para navegar mejor en el dashboard."""
+    if table_name.startswith("raw_"):
+        return "Raw Dropbox"
+    if table_name.startswith("sync_"):
+        return "Control de sincronización"
+    return "Modelo de negocio"
+
+
 def main():
     """Renderiza el dashboard de exploración de tablas en PostgreSQL."""
     st.title("CRM Ferreinox | Dashboard Operativo")
@@ -46,7 +55,14 @@ def main():
         st.info("Primero ejecuta la sincronización desde el módulo de Dropbox.")
         return
 
-    tabla_seleccionada = st.sidebar.radio("Selecciona una tabla", tablas)
+    table_groups = {
+        "Modelo de negocio": [table for table in tablas if classify_table(table) == "Modelo de negocio"],
+        "Raw Dropbox": [table for table in tablas if classify_table(table) == "Raw Dropbox"],
+        "Control de sincronización": [table for table in tablas if classify_table(table) == "Control de sincronización"],
+    }
+    available_groups = [group for group, group_tables in table_groups.items() if group_tables]
+    selected_group = st.sidebar.radio("Tipo de tabla", available_groups)
+    tabla_seleccionada = st.sidebar.radio("Selecciona una tabla", table_groups[selected_group])
     st.sidebar.markdown("---")
     st.sidebar.info(f"Tabla activa: {tabla_seleccionada}")
 

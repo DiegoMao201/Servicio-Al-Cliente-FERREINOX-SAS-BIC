@@ -6,7 +6,8 @@ Plataforma base para sincronizar archivos de Dropbox hacia PostgreSQL, validar l
 
 - Panel Streamlit unificado para operación, sincronización y diagnóstico.
 - Carga de archivos CSV desde Dropbox con detección de delimitador y encoding.
-- Persistencia local de esquemas para reprocesos automáticos.
+- Persistencia de esquemas de sincronización directamente en PostgreSQL.
+- Tablas raw para aterrizar archivos vivos de Dropbox antes de transformarlos al modelo de negocio.
 - Dashboard de exploración de tablas en PostgreSQL.
 - Backend base con FastAPI para futuras integraciones con WhatsApp, IA y webhooks.
 
@@ -88,8 +89,90 @@ git push -u origin main
 1. Abrir `Diagnóstico de Conexiones` y probar PostgreSQL.
 2. Probar al menos una fuente de Dropbox.
 3. Sincronizar un archivo controlado.
-4. Confirmar que la tabla resultante aparece en el dashboard.
+4. Confirmar que la tabla raw resultante aparece en el dashboard.
 5. Revisar que ningún secreto quede dentro del commit.
+
+## Diagnóstico de PostgreSQL y auditoría de estructura
+
+El proyecto incluye un script para probar conectividad, autenticación, SSL y además inventariar tablas, columnas y volumen aproximado de datos.
+
+Ejecuta esto desde el backend o desde el terminal del contenedor en Coolify:
+
+```powershell
+python backend/db_diagnostics.py
+```
+
+También puedes pedir muestras por tabla:
+
+```powershell
+python backend/db_diagnostics.py --sample-rows 3
+```
+
+Qué valida el script:
+
+1. Si el host resuelve y el puerto responde por TCP.
+2. Si SQLAlchemy puede autenticar y abrir sesión.
+3. Versión de PostgreSQL, base activa, usuario activo, host y puerto del servidor.
+4. Estado SSL de la conexión actual.
+5. Tablas del esquema `public`, columnas, tipos de datos, nulabilidad y estimación de filas.
+
+Qué revisar en Coolify si falla la conexión:
+
+1. Si la app corre dentro del mismo stack, usa host interno `db` y puerto `5432`.
+2. Si quieres conectar desde fuera del servidor, debes exponer PostgreSQL públicamente o usar un proxy seguro.
+3. Verifica que PostgreSQL escuche en `0.0.0.0` y no sólo en `localhost`.
+4. Verifica firewall, reglas del proveedor y `pg_hba.conf`.
+5. Si el proveedor exige TLS, agrega `?sslmode=require` a `DATABASE_URL` o define `PGSSLMODE=require`.
+6. En despliegues administrados por Coolify, el puerto publico puede ser distinto al puerto interno 5432. En este proyecto se confirmo acceso externo por el puerto 3000 y acceso interno por 5432.
+
+## Arquitectura de datos actual
+
+El flujo recomendado del proyecto ahora es:
+
+1. Dropbox entrega archivos CSV vivos.
+2. Streamlit sincroniza esos archivos a tablas `raw_*` en PostgreSQL.
+3. La configuración de cada archivo queda registrada en `sync_schema_registry`.
+4. Cada ejecución queda auditada en `sync_run_log`.
+5. Sobre esas tablas raw se construyen procesos de transformación hacia el modelo limpio de negocio.
+
+## Reinicio limpio de la base de datos
+
+Si quieres borrar todo el esquema `public` y empezar desde cero, usa el script de reseteo controlado incluido en el proyecto.
+
+Ejemplo usando la misma URI de Streamlit Cloud:
+
+```powershell
+python backend/reset_public_schema.py --db-uri "postgresql://usuario:password@host:5432/base" --yes-i-understand
+```
+
+Si necesitas SSL:
+
+```powershell
+python backend/reset_public_schema.py --db-uri "postgresql://usuario:password@host:5432/base?sslmode=require" --yes-i-understand
+```
+
+Qué hace este script:
+
+1. Lista las tablas actuales del esquema `public`.
+2. Elimina el esquema `public` completo con `CASCADE`.
+3. Lo recrea limpio.
+4. Restaura permisos base sobre el esquema.
+
+Advertencia: esto elimina tablas, vistas, secuencias y relaciones del esquema `public`. No lo ejecutes sobre una base que no quieras reconstruir.
+
+## Crear estructura desde archivo SQL
+
+Cuando la conexión externa funcione o cuando ejecutes desde una red con acceso a PostgreSQL, puedes aplicar la estructura base del proyecto con un solo comando:
+
+```powershell
+python backend/bootstrap_database.py --db-uri "postgresql://usuario:password@host:5432/base" --sql-file backend/schema_init.sql
+```
+
+Con SSL si aplica:
+
+```powershell
+python backend/bootstrap_database.py --db-uri "postgresql://usuario:password@host:5432/base?sslmode=require" --sql-file backend/schema_init.sql
+```
 
 ## Seguridad
 

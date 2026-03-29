@@ -1,0 +1,81 @@
+ESTRUCTURA LIMPIA INICIAL - CRM_FERREINOX
+
+Archivo SQL base creado en:
+C:\Users\Diego Mauricio\Desktop\CRM_Ferreinox\backend\schema_init.sql
+
+============================================================
+1. SI ESTAS DENTRO DE PSQL EN COOLIFY
+============================================================
+Ejecuta estas consultas para crear la estructura manualmente pegando el contenido de schema_init.sql.
+
+Opcion recomendada:
+- Abre el archivo backend/schema_init.sql
+- Copia todo su contenido
+- Pegalo dentro de psql
+
+============================================================
+2. SI ESTAS EN SHELL DEL CONTENEDOR Y NO EN PSQL
+============================================================
+Entra primero:
+
+psql -U postgres -d postgres
+
+Luego pega el contenido de schema_init.sql
+
+============================================================
+3. SI QUIERES CREAR LAS TABLAS DESDE TU PC CUANDO EL ACCESO EXTERNO FUNCIONE
+============================================================
+Usa alguno de estos comandos.
+
+Con psql si lo tienes instalado:
+
+psql "postgresql://postgres:TU_PASSWORD_REAL@192.81.216.49:3000/postgres" -f backend/schema_init.sql
+
+Con SSL si aplica:
+
+psql "postgresql://postgres:TU_PASSWORD_REAL@192.81.216.49:3000/postgres?sslmode=require" -f backend/schema_init.sql
+
+============================================================
+4. QUE CREA ESTA ESTRUCTURA
+============================================================
+- empresa
+- cliente
+- categoria_producto
+- producto
+- ubicacion
+- stock_por_ubicacion
+- movimiento_stock
+- venta
+- venta_linea
+- orden_compra
+- orden_compra_linea
+- cartera_cliente
+
+============================================================
+5. QUE HACER DESPUES
+============================================================
+1. Crear la estructura con schema_init.sql
+2. Verificar tablas con:
+
+SELECT schemaname, tablename
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename;
+
+3. Luego conectar la app otra vez
+4. Luego adaptar la carga desde Dropbox a este nuevo modelo
+
+============================================================
+6. VERIFICACION RAPIDA
+============================================================
+Despues de crear la estructura ejecuta:
+
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY table_name;
+
+SELECT table_name, column_name, data_type
+FROM information_schema.columns
+WHERE table_schema = 'public'
+ORDER BY table_name, ordinal_position;

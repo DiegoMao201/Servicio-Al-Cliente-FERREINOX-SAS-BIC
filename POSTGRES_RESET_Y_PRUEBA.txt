@@ -1,0 +1,193 @@
+POSTGRES RESET Y PRUEBA - CRM_FERREINOX
+
+Este archivo es para copiar y ejecutar fuera del chat.
+
+============================================================
+1. ENTRAR A POSTGRESQL EN COOLIFY
+============================================================
+Si estas en shell del contenedor:
+
+psql -U postgres -d postgres
+
+Si ya ves el prompt:
+
+postgres=#
+
+entonces ya estas dentro de PostgreSQL.
+
+Si quedas atrapado en ayuda o paginador, pulsa:
+
+q
+
+Si quieres salir de PostgreSQL:
+
+\q
+
+============================================================
+2. VER QUE HAY ANTES DE BORRAR
+============================================================
+Ejecuta dentro de psql:
+
+SELECT schemaname, tablename
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename;
+
+============================================================
+3. BORRAR TODO EL ESQUEMA PUBLIC
+============================================================
+Ejecuta dentro de psql:
+
+DROP SCHEMA public CASCADE;
+
+============================================================
+4. RECREAR EL ESQUEMA VACIO
+============================================================
+Ejecuta dentro de psql:
+
+CREATE SCHEMA public;
+
+============================================================
+5. RESTAURAR PERMISOS BASICOS
+============================================================
+Ejecuta dentro de psql:
+
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO public;
+
+============================================================
+6. CONFIRMAR QUE QUEDO VACIO
+============================================================
+Ejecuta dentro de psql:
+
+SELECT schemaname, tablename
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename;
+
+Resultado esperado:
+
+(0 rows)
+
+============================================================
+7. CREAR TABLA DE PRUEBA
+============================================================
+Ejecuta dentro de psql:
+
+CREATE TABLE public.healthcheck (
+    id serial PRIMARY KEY,
+    status text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+============================================================
+8. INSERTAR REGISTRO DE PRUEBA
+============================================================
+Ejecuta dentro de psql:
+
+INSERT INTO public.healthcheck (status)
+VALUES ('ok');
+
+============================================================
+9. LEER REGISTRO DE PRUEBA
+============================================================
+Ejecuta dentro de psql:
+
+SELECT * FROM public.healthcheck;
+
+============================================================
+10. BORRAR LA TABLA DE PRUEBA
+============================================================
+Ejecuta dentro de psql:
+
+DROP TABLE public.healthcheck;
+
+============================================================
+11. CONFIRMAR OTRA VEZ QUE TODO QUEDO VACIO
+============================================================
+Ejecuta dentro de psql:
+
+SELECT schemaname, tablename
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename;
+
+Resultado esperado:
+
+(0 rows)
+
+============================================================
+12. VALIDAR CONFIGURACION DE POSTGRESQL
+============================================================
+Ejecuta dentro de psql:
+
+SHOW listen_addresses;
+SHOW port;
+SHOW ssl;
+SELECT current_database(), current_user, inet_server_addr(), inet_server_port();
+
+============================================================
+13. BLOQUE COMPLETO PARA COPIAR DE UNA SOLA VEZ EN PSQL
+============================================================
+
+SELECT schemaname, tablename
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename;
+
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+GRANT ALL ON SCHEMA public TO postgres;
+GRANT ALL ON SCHEMA public TO public;
+
+SELECT schemaname, tablename
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename;
+
+CREATE TABLE public.healthcheck (
+    id serial PRIMARY KEY,
+    status text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO public.healthcheck (status)
+VALUES ('ok');
+
+SELECT * FROM public.healthcheck;
+
+DROP TABLE public.healthcheck;
+
+SELECT schemaname, tablename
+FROM pg_tables
+WHERE schemaname = 'public'
+ORDER BY tablename;
+
+SHOW listen_addresses;
+SHOW port;
+SHOW ssl;
+SELECT current_database(), current_user, inet_server_addr(), inet_server_port();
+
+============================================================
+14. SI QUIERES PROBAR DESDE PYTHON DEL PROYECTO
+============================================================
+Desde:
+C:\Users\Diego Mauricio\Desktop\CRM_Ferreinox
+
+Diagnostico:
+
+python backend/db_diagnostics.py --db-uri "postgresql://postgres:TU_PASSWORD_REAL@192.81.216.49:3000/postgres"
+
+Diagnostico con SSL si aplica:
+
+python backend/db_diagnostics.py --db-uri "postgresql://postgres:TU_PASSWORD_REAL@192.81.216.49:3000/postgres?sslmode=require"
+
+Reset por script cuando el acceso externo funcione:
+
+python backend/reset_public_schema.py --db-uri "postgresql://postgres:TU_PASSWORD_REAL@192.81.216.49:3000/postgres" --yes-i-understand
+
+============================================================
+15. NOTA IMPORTANTE
+============================================================
+Si el chat te borra o colapsa texto largo, usa este archivo en vez del chat.
+Abre este archivo y copia desde aqui.

@@ -1,0 +1,134 @@
+POSTGRES EXTERNO Y AUTOMATIZACION - CRM_FERREINOX
+
+Estado actual confirmado desde tu maquina:
+- El host 192.81.216.49 responde a ping.
+- El puerto 5432 sigue cerrado externamente.
+- El puerto 3000 si responde externamente y acepta conexion PostgreSQL.
+- PostgreSQL esta sano por dentro en Coolify.
+
+Conclusion:
+- La base funciona internamente.
+- Coolify esta publicando PostgreSQL por 3000 hacia afuera, mientras internamente PostgreSQL sigue usando 5432.
+
+============================================================
+1. DECISION DE ARQUITECTURA
+============================================================
+
+Opcion A. Seguir con Streamlit Cloud
+- Necesitas que PostgreSQL sea accesible publicamente.
+- En este despliegue, el endpoint publico valido usa el puerto 3000.
+
+Opcion B. Mover la app a Coolify en el mismo servidor
+- No necesitas exponer PostgreSQL a internet.
+- Es mas seguro y mas solido para produccion.
+- La app se conectaria por red interna usando host del servicio, por ejemplo: db
+
+Recomendacion tecnica:
+- Para pruebas rapidas: Streamlit Cloud + PostgreSQL expuesto.
+- Para version estable del agente y la app: desplegar la app en Coolify junto a la base y dejar PostgreSQL privado.
+
+============================================================
+2. SI QUIERES EXPONER POSTGRESQL EN COOLIFY
+============================================================
+
+Debes revisar en la interfaz de Coolify del recurso PostgreSQL:
+
+1. Proyecto > Base de datos > PostgreSQL > Configuracion
+2. Busca si existe alguna opcion tipo:
+   - Public Port
+   - Expose Port
+   - Publish Port
+   - Publicly Accessible
+   - Port Mappings
+3. Debes identificar el puerto publico real publicado por Coolify.
+4. En este despliegue ya se confirmo que el puerto publico es 3000.
+5. Guarda y reinicia el recurso si haces cambios.
+
+Despues, vuelve a probar desde tu PC:
+
+PowerShell:
+
+Test-NetConnection 192.81.216.49 -Port 3000 | Format-List
+
+Resultado correcto esperado:
+
+TcpTestSucceeded : True
+
+============================================================
+3. VALIDAR REGLAS INTERNAS DE POSTGRESQL
+============================================================
+
+Dentro de psql ejecuta:
+
+SHOW listen_addresses;
+SHOW port;
+SHOW hba_file;
+
+SELECT *
+FROM pg_hba_file_rules;
+
+Debes confirmar que existen reglas tipo host y no solo local.
+
+============================================================
+4. SI EL PUERTO SIGUE CERRADO
+============================================================
+
+Posibles causas:
+- Coolify no esta publicando 5432 al host.
+- Firewall del servidor bloquea 5432.
+- Proveedor cloud bloquea puertos entrantes.
+- Existe NAT o proxy sin mapping para 5432.
+
+En ese caso tienes dos caminos:
+
+Camino 1. Exponer PostgreSQL correctamente.
+Camino 2. No exponer PostgreSQL y mover Streamlit/FastAPI a Coolify.
+
+============================================================
+5. COMANDOS CUANDO EL ACCESO EXTERNO FUNCIONE
+============================================================
+
+Diagnostico:
+
+python backend/db_diagnostics.py --db-uri "postgresql://postgres:TU_PASSWORD_REAL@192.81.216.49:3000/postgres"
+
+Diagnostico con SSL:
+
+python backend/db_diagnostics.py --db-uri "postgresql://postgres:TU_PASSWORD_REAL@192.81.216.49:3000/postgres?sslmode=require"
+
+Crear estructura limpia:
+
+python backend/bootstrap_database.py --db-uri "postgresql://postgres:TU_PASSWORD_REAL@192.81.216.49:3000/postgres" --sql-file backend/schema_init.sql
+
+Reset total:
+
+python backend/reset_public_schema.py --db-uri "postgresql://postgres:TU_PASSWORD_REAL@192.81.216.49:3000/postgres" --yes-i-understand
+
+============================================================
+6. COMANDOS SI DESPLIEGAS LA APP EN COOLIFY Y DEJAS DB PRIVADA
+============================================================
+
+URI interna tipica:
+
+postgresql://postgres:TU_PASSWORD_REAL@db:5432/postgres
+
+Diagnostico interno:
+
+python backend/db_diagnostics.py --db-uri "postgresql://postgres:TU_PASSWORD_REAL@db:5432/postgres"
+
+Crear estructura interna:
+
+python backend/bootstrap_database.py --db-uri "postgresql://postgres:TU_PASSWORD_REAL@db:5432/postgres" --sql-file backend/schema_init.sql
+
+============================================================
+7. META DE AUTOMATIZACION SOLIDA
+============================================================
+
+Base minima recomendada:
+1. PostgreSQL limpio con schema_init.sql
+2. Script de diagnostico db_diagnostics.py
+3. Script de reset reset_public_schema.py
+4. Script de bootstrap bootstrap_database.py
+5. Streamlit conectado por db_uri estable
+6. Sincronizacion de Dropbox adaptada a las nuevas tablas
+7. Backend FastAPI para futuras acciones del agente IA
