@@ -20,6 +20,8 @@ services:
   backend:
     build: ./backend
     command: uvicorn main:app --host 0.0.0.0 --port 8000
+    expose:
+      - "8000"
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
       - OPENAI_API_KEY=${OPENAI_API_KEY}
@@ -33,6 +35,8 @@ services:
   postgrest:
     image: postgrest/postgrest:v12.2.8
     restart: always
+    expose:
+      - "3000"
     environment:
       PGRST_DB_URI: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
       PGRST_DB_SCHEMA: public
@@ -47,6 +51,8 @@ services:
   frontend:
     build: ./frontend
     command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0
+    expose:
+      - "8501"
     environment:
       - BACKEND_URL=https://apicrm.datovatenexuspro.com
       - PGRST_URL=http://postgrest:3000
