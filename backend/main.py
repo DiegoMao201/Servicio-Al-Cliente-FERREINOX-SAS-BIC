@@ -1541,6 +1541,21 @@ def extract_document_candidate(text_value: Optional[str]):
     return matches[0] if matches else None
 
 
+def is_identity_verification_message(text_value: Optional[str], conversation_context: Optional[dict]):
+    if not text_value:
+        return False
+    context = conversation_context or {}
+    if not (context.get("awaiting_verification") or context.get("pending_intent") in {"consulta_cartera", "consulta_compras"}):
+        return False
+    document_candidate = extract_document_candidate(text_value)
+    if not document_candidate:
+        return False
+    stripped_text = re.sub(r"[^0-9]", "", text_value)
+    if not stripped_text or stripped_text != document_candidate:
+        return False
+    return True
+
+
 def is_sensitive_intent_message(text_value: Optional[str]):
     if not text_value:
         return False
@@ -3061,6 +3076,9 @@ async def receive_whatsapp_webhook(request: Request):
                 conversation_context = dict(conversation_snapshot.get("contexto") or {})
                 verified_context = None
                 detected_intent = detect_business_intent(content)
+                identity_verification_message = is_identity_verification_message(content, conversation_context)
+                if identity_verification_message:
+                    detected_intent = conversation_context.get("pending_intent") or detected_intent
                 if detected_intent == "consulta_general" and is_product_code_message(content):
                     previous_product_request = conversation_context.get("last_product_request") or {}
                     if conversation_context.get("last_direct_intent") == "consulta_productos" or previous_product_request.get("search_terms"):
@@ -3113,7 +3131,7 @@ async def receive_whatsapp_webhook(request: Request):
                     product_request["product_codes"] = merged_codes[:4]
 
                 document_candidate = None
-                if detected_intent != "consulta_productos":
+                if identity_verification_message or detected_intent != "consulta_productos":
                     document_candidate = extract_document_candidate(content)
                 if document_candidate:
                     try:
