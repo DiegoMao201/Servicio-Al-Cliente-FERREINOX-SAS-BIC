@@ -274,6 +274,20 @@ def sequence_similarity(left_value: Optional[str], right_value: Optional[str]):
     return SequenceMatcher(None, left_normalized, right_normalized).ratio()
 
 
+def has_keyword_or_similar(text_value: Optional[str], keywords: list[str], threshold: float = 0.84):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    if any(keyword in normalized for keyword in keywords):
+        return True
+    tokens = re.findall(r"[a-z0-9.-]+", normalized)
+    for token in tokens:
+        for keyword in keywords:
+            if SequenceMatcher(None, token, normalize_text_value(keyword)).ratio() >= threshold:
+                return True
+    return False
+
+
 def get_presentation_label(unit_value: Optional[str], quantity_value: Optional[float] = None):
     if not unit_value:
         return ""
@@ -1245,7 +1259,7 @@ def extract_document_candidate(text_value: Optional[str]):
 def is_sensitive_intent_message(text_value: Optional[str]):
     if not text_value:
         return False
-    lowered = text_value.lower()
+    lowered = normalize_text_value(text_value)
     sensitive_keywords = [
         "cartera",
         "saldo",
@@ -1253,7 +1267,7 @@ def is_sensitive_intent_message(text_value: Optional[str]):
         "deuda",
         "cupo",
         "credito",
-        "vencido",
+        "vencid",
         "factura",
         "facturas",
         "pago",
@@ -1263,7 +1277,7 @@ def is_sensitive_intent_message(text_value: Optional[str]):
         "compras",
         "recaudo",
     ]
-    return any(keyword in lowered for keyword in sensitive_keywords)
+    return any(keyword in lowered for keyword in sensitive_keywords) or has_keyword_or_similar(lowered, ["factura", "facturas", "vencida", "vencidas"])
 
 
 def is_product_intent_message(text_value: Optional[str]):
@@ -1329,7 +1343,9 @@ def detect_business_intent(text_value: Optional[str]):
         return "consulta_general"
 
     lowered = normalize_text_value(text_value)
-    if any(keyword in lowered for keyword in ["cartera", "saldo", "deuda", "debo", "vencido", "estado de cuenta", "cupo", "credito", "cuanto debo", "cuánto debo"]):
+    if any(keyword in lowered for keyword in ["cartera", "saldo", "deuda", "debo", "vencid", "estado de cuenta", "cupo", "credito", "cuanto debo", "cuánto debo", "documentos"]):
+        return "consulta_cartera"
+    if has_keyword_or_similar(text_value, ["factura", "facturas", "vencida", "vencidas"]):
         return "consulta_cartera"
     if any(
         keyword in lowered
@@ -1382,6 +1398,21 @@ def format_quantity(value):
     return f"{int(number)}" if float(number).is_integer() else f"{number:g}"
 
 
+def format_days(value):
+    total_days = int(parse_numeric_value(value) or 0)
+    return f"{total_days} día" if total_days == 1 else f"{total_days} días"
+
+
+def format_stock_by_store(stock_by_store: Optional[str]):
+    if not stock_by_store:
+        return stock_by_store
+    return re.sub(
+        r":\s*(-?\d+(?:\.\d+)?)",
+        lambda match: f": {format_quantity(match.group(1))}",
+        str(stock_by_store),
+    )
+
+
 def extract_product_request(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     if not normalized:
@@ -1402,7 +1433,7 @@ def extract_product_request(text_value: Optional[str]):
     requested_unit = None
     quantity_expression = None
 
-    quantity_match = re.search(r"\b(\d+(?:[.,]\d+)?)\s*(galones?|galon|cuartos?|cunetes?|cuñetes?|canecas?|cubetas?)\b", normalized)
+    quantity_match = re.search(r"(?<![a-z0-9-])(\d+(?:[.,]\d+)?)\s*(galones?|galon|cuartos?|cunetes?|cuñetes?|canecas?|cubetas?)\b", normalized)
     if quantity_match:
         requested_quantity = parse_numeric_value(quantity_match.group(1))
         raw_unit = quantity_match.group(2)
@@ -1551,8 +1582,8 @@ def extract_purchase_query(text_value: Optional[str]):
 def extract_cartera_query(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     return {
-        "wants_overdue_only": "vencid" in normalized,
-        "wants_invoice_list": any(keyword in normalized for keyword in ["factura", "facturas", "cuales", "cuáles", "que facturas", "qué facturas", "documentos"]),
+        "wants_overdue_only": "vencid" in normalized or has_keyword_or_similar(normalized, ["vencida", "vencidas", "vencido", "vencidos"]),
+        "wants_invoice_list": any(keyword in normalized for keyword in ["cuales", "cuáles", "que facturas", "qué facturas", "documentos"]) or has_keyword_or_similar(normalized, ["factura", "facturas", "facrura", "facruras"]),
     }
 
 
@@ -1811,17 +1842,17 @@ def build_direct_reply(
             documents = overdue_info.get("documents") or []
             if cartera_query.get("wants_invoice_list") and documents:
                 doc_lines = "; ".join(
-                    f"factura {row['numero_documento']} por {format_currency(row['importe_normalizado'])}, vencida {row['dias_vencido']} días"
+                    f"factura {row['numero_documento']} por {format_currency(row['importe_normalizado'])}, vence {row['fecha_vencimiento']}, {format_days(row['dias_vencido'])} vencida"
                     for row in documents[:5]
                 )
                 response_text = (
-                    f"Hola, {nombre}. Tu cartera vencida suma {overdue_total} en {int(overdue_info['totals'].get('documentos_vencidos') or 0)} facturas. "
-                    f"Las principales son: {doc_lines}."
+                    f"Hola, {nombre}. Tienes {int(overdue_info['totals'].get('documentos_vencidos') or 0)} facturas vencidas por {overdue_total}. "
+                    f"Estas son las principales: {doc_lines}."
                 )
             else:
                 response_text = (
-                    f"Hola, {nombre}. Tu cartera vencida actual es {overdue_total}. "
-                    f"Tienes {int(overdue_info['totals'].get('documentos_vencidos') or 0)} documentos vencidos y el máximo atraso es de {int(overdue_info['totals'].get('max_dias_vencido') or 0)} días."
+                    f"Hola, {nombre}. Tu cartera vencida es {overdue_total}. "
+                    f"Tienes {int(overdue_info['totals'].get('documentos_vencidos') or 0)} documentos vencidos y el mayor atraso es de {format_days(overdue_info['totals'].get('max_dias_vencido'))}."
                 )
             return {
                 "tono": "informativo",
@@ -1842,8 +1873,8 @@ def build_direct_reply(
             "summary": f"Consulta de cartera de {cliente_contexto.get('cliente_codigo')}",
             "response_text": (
                 f"Hola, {nombre}. Tu saldo de cartera actual es {saldo}. "
-                f"Documentos vencidos: {vencidos}. Máximo de días vencidos: {dias}. "
-                f"Tu asesor asociado es {vendedor}. Si quieres, también puedo resumirte tus compras del último año."
+                f"Tienes {vencidos} documentos vencidos y el mayor atraso es de {format_days(dias)}. "
+                f"Tu asesor asignado es {vendedor}."
             ),
             "should_create_task": bool(dias and int(dias) > 30),
             "task_type": "seguimiento_cartera" if dias and int(dias) > 30 else "seguimiento_cliente",
@@ -1888,9 +1919,9 @@ def build_direct_reply(
                 "priority": "media",
                 "summary": f"Consulta de ultima compra de {cliente_contexto.get('cliente_codigo')}",
                 "response_text": (
-                    f"Hola, {nombre}. Tu última compra fue el {latest_purchase.get('fecha_venta')} por {format_currency(totals.get('valor_total'))}, "
-                    f"con {int(totals.get('lineas') or 0)} líneas y {int(float(totals.get('unidades_totales') or 0))} unidades. "
-                    f"Los productos fueron: {product_summary}."
+                    f"Hola, {nombre}. Tu última compra fue el {latest_purchase.get('fecha_venta')} por {format_currency(totals.get('valor_total'))}. "
+                    f"Incluyó {int(totals.get('lineas') or 0)} líneas y {int(float(totals.get('unidades_totales') or 0))} unidades. "
+                    f"Productos principales: {product_summary}."
                 ),
                 "should_create_task": False,
                 "task_type": "seguimiento_cliente",
@@ -1914,14 +1945,14 @@ def build_direct_reply(
             ) or "sin productos destacados"
             if purchase_query.get("has_time_filter"):
                 response_text = (
-                    f"Hola, {nombre}. En {purchase_query.get('label')} compraste {format_currency(totals.get('valor_total'))} "
-                    f"en {int(totals.get('lineas') or 0)} líneas, con {int(float(totals.get('unidades_totales') or 0))} unidades. "
-                    f"Los productos registrados fueron: {top_summary}."
+                    f"Hola, {nombre}. En {purchase_query.get('label')} compraste {format_currency(totals.get('valor_total'))}. "
+                    f"Fueron {int(totals.get('lineas') or 0)} líneas y {int(float(totals.get('unidades_totales') or 0))} unidades. "
+                    f"Productos principales: {top_summary}."
                 )
             else:
                 response_text = (
-                    f"Hola, {nombre}. En los últimos 12 meses registras compras por {format_currency(totals.get('valor_total'))} "
-                    f"en {int(totals.get('lineas') or 0)} líneas de venta, con {int(float(totals.get('unidades_totales') or 0))} unidades. "
+                    f"Hola, {nombre}. En los últimos 12 meses registras compras por {format_currency(totals.get('valor_total'))}. "
+                    f"Acumulas {int(totals.get('lineas') or 0)} líneas y {int(float(totals.get('unidades_totales') or 0))} unidades. "
                     f"Tu última compra fue el {totals.get('ultima_compra')}. Productos destacados: {top_summary}."
                 )
         return {
@@ -1964,14 +1995,11 @@ def build_direct_reply(
             top_reference = top_row.get("referencia") or top_row.get("codigo_articulo") or "sin referencia"
             top_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or top_reference
             top_stock = top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")
-            top_cost = top_row.get("costo_promedio_und")
             direct_response = f"Hola, {nombre}. Encontré esta referencia para tu consulta: {top_description} ({top_reference})."
             if top_stock is not None:
                 direct_response += f" Stock total aproximado: {format_quantity(top_stock)} unidades."
-            if top_cost is not None:
-                direct_response += f" Costo promedio: {format_currency(top_cost)}."
             if top_row.get("stock_por_tienda"):
-                direct_response += f" Disponible en: {top_row.get('stock_por_tienda')}."
+                direct_response += f" Disponible en: {format_stock_by_store(top_row.get('stock_por_tienda'))}."
             return {
                 "tono": "informativo",
                 "intent": intent,
@@ -2039,15 +2067,12 @@ def build_direct_reply(
             top_reference = top_row.get("referencia") or top_row.get("codigo_articulo") or "sin referencia"
             top_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or top_reference
             top_stock = top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")
-            top_cost = top_row.get("costo_promedio_und")
             top_presentation = infer_product_presentation_from_row(top_row)
             store_response = (
                 f"Hola, {nombre}. "
                 f"Sí, en {requested_store_label} hay {format_quantity(top_stock)} unidades de {top_description} ({top_reference})"
                 f"{f', presentación {get_presentation_label(top_presentation, 1)}' if top_presentation else ''}."
             )
-            if top_cost is not None:
-                store_response += f" Costo promedio: {format_currency(top_cost)}."
             if quantity_note:
                 store_response += f" {quantity_note}."
             return {
@@ -2067,17 +2092,14 @@ def build_direct_reply(
             referencia = row.get("referencia") or row.get("codigo_articulo") or "sin referencia"
             stock = row.get("stock_total") if row.get("stock_total") is not None else row.get("stock")
             stock_value = parse_numeric_value(stock)
-            costo_promedio = row.get("costo_promedio_und")
             line = f"{descripcion} ({referencia})"
             if stock is not None:
-                line += f", stock total aproximado {stock}"
-            if costo_promedio is not None:
-                line += f", costo promedio {format_currency(costo_promedio)}"
+                line += f", stock total aproximado {format_quantity(stock)}"
             category_value = row.get("departamentos") or row.get("categoria_producto")
             if category_value and str(category_value).strip().upper() != "NULL":
                 line += f", categoria {category_value}"
             if row.get("stock_por_tienda"):
-                line += f", disponible en {row.get('stock_por_tienda')}"
+                line += f", disponible en {format_stock_by_store(row.get('stock_por_tienda'))}"
             if product_request and product_request.get("requested_quantity") and stock_value is not None:
                 requested_quantity = float(product_request["requested_quantity"])
                 availability = "si alcanza" if stock_value >= requested_quantity else "stock insuficiente"
