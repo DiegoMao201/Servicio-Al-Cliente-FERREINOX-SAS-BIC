@@ -99,11 +99,14 @@ PORTFOLIO_ALIASES = {
     "vinilico": ["vinilico", "viniltex", "vinilo", "vinilica", "viniloco", "vinilico blanco", "viniltex blanco"],
     "viniloco": ["viniloco", "vinilico", "viniltex", "vinilo", "vinilico blanco", "viniltex blanco"],
     "viniltex": ["viniltex", "vinilico", "vinilo", "vtx"],
+    "pintulux": ["pintulux", "pintulux 3en1", "pintulux 3 en 1", "pintulux 3-en-1", "3en1", "3 en 1", "3-en-1"],
     "domestico": ["domestico", "doméstico", "vinilico", "viniltex", "economico", "económico"],
     "pintuco": ["pintuco", "viniltex", "p11", "p-11", "p 11"],
     "p11": ["p11", "p-11", "p 11", "pintuco 11"],
+    "t11": ["t11", "t-11", "t 11", "pintulux 3en1", "pintulux 3 en 1", "3en1 br blanco 11", "br blanco 11"],
     "p53": ["p53", "p-53", "p 53", "verde esmeral", "verde esmer"],
     "mega": ["mega", "cerradura mega", "sobreponer"],
+    "cerradura": ["cerradura", "cerradur", "chapa", "lock"],
     "derecha": ["derecha", "derecho", "der", "derc"],
     "izquierda": ["izquierda", "izquierdo", "izq"],
     "brocha": ["brocha", "brochas", "pincel"],
@@ -111,6 +114,12 @@ PORTFOLIO_ALIASES = {
     "abracol": ["abracol"],
     "yale": ["yale"],
     "goya": ["goya"],
+}
+
+
+DIRECTION_ALIASES = {
+    "derecha": ["derecha", "derecho", "der", "derc"],
+    "izquierda": ["izquierda", "izquierdo", "izq"],
 }
 
 
@@ -580,11 +589,12 @@ def extract_product_codes(text_value: Optional[str]):
     if not normalized:
         return []
 
+    excluded_codes = {"3en1", "p11", "t11", "p53", "1gl", "5gl"}
     codes = []
     seen_codes = set()
     for raw_code in re.findall(r"\b[a-z]?\d[a-z0-9-]{1,14}\b|\b\d{4,10}\b", normalized):
         cleaned_code = normalize_reference_value(raw_code)
-        if len(cleaned_code) < 3 or cleaned_code in seen_codes:
+        if len(cleaned_code) < 3 or cleaned_code in seen_codes or cleaned_code in excluded_codes:
             continue
         seen_codes.add(cleaned_code)
         codes.append(cleaned_code)
@@ -625,6 +635,17 @@ def extract_store_filters(text_value: Optional[str]):
     return matched_codes
 
 
+def is_store_alias_term(term_value: Optional[str]):
+    normalized = normalize_text_value(term_value)
+    if not normalized:
+        return False
+    for store_aliases in STORE_ALIASES.values():
+        for alias in store_aliases:
+            if normalize_text_value(alias) == normalized:
+                return True
+    return False
+
+
 def extract_brand_filters(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     if not normalized:
@@ -639,6 +660,21 @@ def extract_brand_filters(text_value: Optional[str]):
                     matched_brands.append(brand_name)
                 break
     return matched_brands
+
+
+def extract_direction_filters(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return []
+
+    matched_directions = []
+    for direction_name, aliases in DIRECTION_ALIASES.items():
+        for alias in aliases:
+            alias_normalized = normalize_text_value(alias)
+            if alias_normalized and re.search(rf"\b{re.escape(alias_normalized)}\b", normalized):
+                matched_directions.append(direction_name)
+                break
+    return matched_directions
 
 
 def infer_product_presentation_from_row(product_row: dict):
@@ -676,6 +712,14 @@ def infer_product_size_from_row(product_row: dict):
     standalone_match = re.search(r"\b(\d+(?:\s+\d/\d)?)\b", normalized_description)
     if standalone_match and any(keyword in normalized_description for keyword in ["brocha", "rodillo", "cerradura", "bisagra", "pasador", "portacandado"]):
         return standalone_match.group(1)
+    return None
+
+
+def infer_product_direction_from_row(product_row: dict):
+    description_value = normalize_text_value(product_row.get("descripcion") or product_row.get("nombre_articulo"))
+    for direction_name, aliases in DIRECTION_ALIASES.items():
+        if any(normalize_text_value(alias) in description_value for alias in aliases):
+            return direction_name
     return None
 
 
@@ -721,12 +765,16 @@ def should_ask_product_clarification(product_request: Optional[dict], product_co
 
     presentation_values = {infer_product_presentation_from_row(row) for row in top_candidates}
     brand_values = {infer_product_brand_from_row(row) for row in top_candidates}
+    direction_values = {infer_product_direction_from_row(row) for row in top_candidates}
     presentation_values.discard(None)
     brand_values.discard(None)
+    direction_values.discard(None)
 
     if not product_request.get("requested_unit") and len(presentation_values) >= 2:
         return True
     if len(brand_values) >= 2:
+        return True
+    if not (product_request.get("direction_filters") or []) and len(direction_values) >= 2:
         return True
     return False
 
@@ -816,6 +864,18 @@ def get_specific_product_terms(product_request: Optional[dict]):
             continue
         if normalized_term not in specific_terms:
             specific_terms.append(normalized_term)
+        normalized_key = normalize_reference_value(term)
+        if normalized_key in PORTFOLIO_ALIASES:
+            for alias_term in PORTFOLIO_ALIASES[normalized_key]:
+                normalized_alias = normalize_text_value(alias_term)
+                if (
+                    normalized_alias
+                    and normalized_alias not in generic_terms
+                    and normalized_alias not in PRODUCT_STOPWORDS
+                    and len(normalized_alias) >= 4
+                    and normalized_alias not in specific_terms
+                ):
+                    specific_terms.append(normalized_alias)
     return specific_terms[:5]
 
 
@@ -1296,6 +1356,14 @@ def is_product_intent_message(text_value: Optional[str]):
         "viniltex",
         "vinilico",
         "vinilux",
+        "pintulux",
+        "3en1",
+        "cerradura",
+        "cerradur",
+        "brocha",
+        "rodillo",
+        "bisagra",
+        "pasador",
         "domestico",
         "pintuco",
         "abracol",
@@ -1315,12 +1383,15 @@ def is_product_intent_message(text_value: Optional[str]):
         "cubetas",
         "p-11",
         "p11",
+        "t-11",
+        "t11",
     ]
     has_keyword = any(keyword in lowered for keyword in product_keywords)
     quantity_format = bool(re.search(r"\b\d+(?:[.,]\d+)?\s*(galones?|galon|cuartos?|cunetes?|cuñetes?|canecas?|cubetas?)\b", lowered))
     shorthand_format = bool(re.search(r"\b\d+\s*/\s*\d+\b", lowered))
     code_with_stock = bool(re.search(r"\b\d{4,10}\b", lowered)) and any(kw in lowered for kw in ["stock", "inventario", "hay", "precio", "cuanto", "producto"])
-    return has_keyword or quantity_format or shorthand_format or code_with_stock
+    fuzzy_keyword = has_keyword_or_similar(lowered, ["pintulux", "cerradura", "brocha", "rodillo", "domestico", "vinilico", "viniltex", "pintulux", "goya", "p11", "t11", "mega"], threshold=0.78)
+    return has_keyword or quantity_format or shorthand_format or code_with_stock or fuzzy_keyword
 
 
 def is_greeting_message(text_value: Optional[str]):
@@ -1424,6 +1495,7 @@ def extract_product_request(text_value: Optional[str]):
             "quantity_expression": None,
             "product_codes": [],
             "brand_filters": [],
+            "direction_filters": [],
             "size_filters": [],
             "store_filters": [],
             "original_query": "",
@@ -1474,6 +1546,8 @@ def extract_product_request(text_value: Optional[str]):
     for token in tokens:
         if token in PRODUCT_STOPWORDS:
             continue
+        if is_store_alias_term(token):
+            continue
         if re.fullmatch(r"\d+(?:[./]\d+)?", token):
             continue
         search_terms.append(token)
@@ -1512,6 +1586,7 @@ def extract_product_request(text_value: Optional[str]):
         "quantity_expression": quantity_expression,
         "product_codes": product_codes,
         "brand_filters": extract_brand_filters(text_value),
+        "direction_filters": extract_direction_filters(text_value),
         "size_filters": extract_size_filters(text_value),
         "store_filters": extract_store_filters(text_value),
         "original_query": text_value or "",
@@ -1590,6 +1665,18 @@ def extract_cartera_query(text_value: Optional[str]):
 def has_temporal_reference(text_value: Optional[str]):
     purchase_query = extract_purchase_query(text_value)
     return bool(purchase_query.get("has_time_filter"))
+
+
+def looks_like_product_query(text_value: Optional[str], product_request: Optional[dict]):
+    if is_product_intent_message(text_value):
+        return True
+    request = product_request or extract_product_request(text_value)
+    if request.get("product_codes"):
+        return True
+    if request.get("brand_filters") or request.get("requested_unit") or request.get("size_filters"):
+        return True
+    meaningful_terms = [term for term in (request.get("core_terms") or []) if not is_store_alias_term(term)]
+    return len(meaningful_terms) >= 2
 
 
 def is_purchase_followup_message(text_value: Optional[str], conversation_context: Optional[dict]):
@@ -2301,15 +2388,18 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     candidate_presentation = infer_product_presentation_from_row(candidate)
                     candidate_brand = infer_product_brand_from_row(candidate)
                     candidate_size = infer_product_size_from_row(candidate)
+                    candidate_direction = infer_product_direction_from_row(candidate)
                     candidate["fuzzy_score"] = round(sequence_similarity(normalized_query, candidate_text), 4)
                     candidate["family_score"] = 1 if any(term and term in normalized_candidate_text for term in preferred_family_terms[:5]) else 0
                     candidate["specific_score"] = sum(1 for term in specific_terms if term and term in normalized_candidate_text)
                     candidate["presentation_score"] = 1 if product_request.get("requested_unit") and candidate_presentation == product_request.get("requested_unit") else 0
                     candidate["brand_score"] = 1 if brand_filters and candidate_brand in brand_filters else 0
                     candidate["size_score"] = 1 if (product_request.get("size_filters") or []) and candidate_size in (product_request.get("size_filters") or []) else 0
+                    candidate["direction_score"] = 1 if (product_request.get("direction_filters") or []) and candidate_direction in (product_request.get("direction_filters") or []) else 0
                     ranked_rows.append(candidate)
                 ranked_rows.sort(
                     key=lambda item: (
+                        item.get("direction_score") or 0,
                         item.get("size_score") or 0,
                         item.get("presentation_score") or 0,
                         item.get("brand_score") or 0,
@@ -2660,6 +2750,8 @@ async def receive_whatsapp_webhook(request: Request):
                     if previous_intent in {"consulta_compras", "consulta_cartera"}:
                         detected_intent = previous_intent
                 product_request = extract_product_request(content)
+                if detected_intent == "consulta_general" and looks_like_product_query(content, product_request):
+                    detected_intent = "consulta_productos"
                 pending_product_clarification = conversation_context.get("pending_product_clarification") or []
                 if pending_product_clarification:
                     selected_option = resolve_product_clarification_choice(content, pending_product_clarification)
@@ -3123,7 +3215,7 @@ async def receive_whatsapp_webhook(request: Request):
                     )
                     continue
 
-                product_context = lookup_product_context(content, product_request) if is_product_intent_message(content) else []
+                product_context = lookup_product_context(content, product_request) if looks_like_product_query(content, product_request) else []
 
                 ai_result = None
                 outbound_payload = None
