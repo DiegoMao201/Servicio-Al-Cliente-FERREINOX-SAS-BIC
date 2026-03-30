@@ -2,6 +2,7 @@ import streamlit as st
 
 from frontend import app as dashboard_page
 from frontend import agent_page
+from frontend import ai_agent_page
 from frontend import architecture_page
 from frontend import operations_page
 from frontend import sync_dropbox_streamlit as sync_page
@@ -13,6 +14,7 @@ from frontend import webhook_page
 PAGES = {
     "Centro Operativo": operations_page.main,
     "Webhook WhatsApp": webhook_page.main,
+    "Agente IA": ai_agent_page.main,
     "Centro del Agente": agent_page.main,
     "Estado de Actualización": update_status_page.main,
     "Dashboard Operativo": dashboard_page.main,

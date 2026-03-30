@@ -1,8 +1,10 @@
 import os
+import json
 from typing import Optional
 
 import requests
 from fastapi import FastAPI, HTTPException, Query, Request
+from openai import OpenAI
 from sqlalchemy import create_engine, text
 
 
@@ -22,6 +24,35 @@ def get_database_url():
 
 def get_whatsapp_verify_token():
     return os.getenv("WHATSAPP_VERIFY_TOKEN", "ferreinox-verify-token")
+
+
+def get_openai_api_key():
+    return os.getenv("OPENAI_API_KEY")
+
+
+def get_openai_model():
+    return os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+
+def get_whatsapp_access_token():
+    token = os.getenv("WHATSAPP_ACCESS_TOKEN")
+    if not token:
+        raise RuntimeError("No se encontró WHATSAPP_ACCESS_TOKEN para enviar mensajes.")
+    return token
+
+
+def get_whatsapp_phone_number_id():
+    phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+    if not phone_number_id:
+        raise RuntimeError("No se encontró WHATSAPP_PHONE_NUMBER_ID para enviar mensajes.")
+    return phone_number_id
+
+
+def get_openai_client():
+    api_key = get_openai_api_key()
+    if not api_key:
+        raise RuntimeError("No se encontró OPENAI_API_KEY para generar respuestas del agente.")
+    return OpenAI(api_key=api_key)
 
 
 def get_db_engine():
@@ -101,6 +132,7 @@ def ensure_contact_and_conversation(phone_number: str, profile_name: Optional[st
         "cliente_id": contact_row["cliente_id"],
         "conversation_id": conversation_row["id"],
         "telefono_e164": contact_row["telefono_e164"],
+        "nombre_visible": contact_row["nombre_visible"],
     }
 
 
@@ -144,9 +176,286 @@ def store_inbound_message(
                 "provider_message_id": provider_message_id,
                 "message_type": message_type,
                 "contenido": content,
-                "payload": __import__("json").dumps(payload),
+                "payload": json.dumps(payload),
             },
         )
+
+
+def store_outbound_message(
+    conversation_id: int,
+    provider_message_id: Optional[str],
+    message_type: str,
+    content: Optional[str],
+    payload: dict,
+    intent_detectado: Optional[str] = None,
+):
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                INSERT INTO public.agent_message (
+                    conversation_id,
+                    provider_message_id,
+                    direction,
+                    message_type,
+                    intent_detectado,
+                    contenido,
+                    payload,
+                    estado,
+                    created_at
+                )
+                VALUES (
+                    :conversation_id,
+                    :provider_message_id,
+                    'outbound',
+                    :message_type,
+                    :intent_detectado,
+                    :contenido,
+                    CAST(:payload AS jsonb),
+                    'respondido',
+                    now()
+                )
+                """
+            ),
+            {
+                "conversation_id": conversation_id,
+                "provider_message_id": provider_message_id,
+                "message_type": message_type,
+                "intent_detectado": intent_detectado,
+                "contenido": content,
+                "payload": json.dumps(payload),
+            },
+        )
+
+
+def load_recent_conversation_messages(conversation_id: int, limit: int = 12):
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text(
+                """
+                SELECT direction, message_type, contenido, created_at
+                FROM public.agent_message
+                WHERE conversation_id = :conversation_id
+                ORDER BY created_at DESC
+                LIMIT :limit
+                """
+            ),
+            {"conversation_id": conversation_id, "limit": limit},
+        ).mappings().all()
+    return list(reversed(rows))
+
+
+def find_cliente_contexto_by_phone(phone_number: str):
+    normalized_digits = "".join(character for character in phone_number if character.isdigit())
+    if normalized_digits.startswith("57"):
+        normalized_digits = normalized_digits[2:]
+
+    if not normalized_digits:
+        return None
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT cod_cliente, nombre_cliente, telefono1, telefono2, email
+                FROM public.vw_estado_cartera
+                WHERE regexp_replace(COALESCE(telefono1, ''), '[^0-9]', '', 'g') LIKE :phone_pattern
+                   OR regexp_replace(COALESCE(telefono2, ''), '[^0-9]', '', 'g') LIKE :phone_pattern
+                ORDER BY dias_vencido DESC NULLS LAST, fecha_documento DESC NULLS LAST
+                LIMIT 1
+                """
+            ),
+            {"phone_pattern": f"%{normalized_digits}"},
+        ).mappings().one_or_none()
+
+    if not row or not row["cod_cliente"]:
+        return None
+
+    try:
+        return get_cliente_contexto(row["cod_cliente"])
+    except HTTPException:
+        return {
+            "cliente_codigo": row["cod_cliente"],
+            "nombre_cliente": row["nombre_cliente"],
+        }
+
+
+def update_contact_cliente(contact_id: int, cliente_codigo: Optional[str]):
+    if not cliente_codigo:
+        return
+
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        cliente_row = connection.execute(
+            text(
+                """
+                SELECT id
+                FROM public.cliente
+                WHERE codigo = :codigo
+                LIMIT 1
+                """
+            ),
+            {"codigo": cliente_codigo},
+        ).mappings().one_or_none()
+
+        if not cliente_row:
+            return
+
+        connection.execute(
+            text(
+                """
+                UPDATE public.whatsapp_contacto
+                SET cliente_id = :cliente_id, updated_at = now()
+                WHERE id = :contact_id
+                """
+            ),
+            {"cliente_id": cliente_row["id"], "contact_id": contact_id},
+        )
+
+        connection.execute(
+            text(
+                """
+                UPDATE public.agent_conversation
+                SET cliente_id = :cliente_id, updated_at = now()
+                WHERE contacto_id = :contact_id AND estado IN ('abierta', 'pendiente')
+                """
+            ),
+            {"cliente_id": cliente_row["id"], "contact_id": contact_id},
+        )
+
+
+def update_conversation_summary(conversation_id: int, summary: str, context_payload: dict):
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                UPDATE public.agent_conversation
+                SET resumen = :summary,
+                    contexto = CAST(:context_payload AS jsonb),
+                    updated_at = now(),
+                    last_message_at = now()
+                WHERE id = :conversation_id
+                """
+            ),
+            {
+                "summary": summary,
+                "context_payload": json.dumps(context_payload),
+                "conversation_id": conversation_id,
+            },
+        )
+
+
+def upsert_agent_task(conversation_id: int, cliente_id: Optional[int], task_type: str, summary: str, detail: dict, priority: str):
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                INSERT INTO public.agent_task (
+                    conversation_id,
+                    cliente_id,
+                    tipo_tarea,
+                    prioridad,
+                    estado,
+                    resumen,
+                    detalle,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    :conversation_id,
+                    :cliente_id,
+                    :task_type,
+                    :priority,
+                    'pendiente',
+                    :summary,
+                    CAST(:detail AS jsonb),
+                    now(),
+                    now()
+                )
+                """
+            ),
+            {
+                "conversation_id": conversation_id,
+                "cliente_id": cliente_id,
+                "task_type": task_type,
+                "priority": priority,
+                "summary": summary,
+                "detail": json.dumps(detail),
+            },
+        )
+
+
+def build_agent_prompt(profile_name: Optional[str], cliente_contexto: Optional[dict], recent_messages: list[dict], user_message: str):
+    nombre = profile_name or "cliente"
+    contexto_cliente = json.dumps(cliente_contexto or {}, ensure_ascii=False)
+    historial = json.dumps(
+        [
+            {
+                "direction": row["direction"],
+                "message_type": row["message_type"],
+                "content": row["contenido"],
+            }
+            for row in recent_messages
+            if row.get("contenido")
+        ],
+        ensure_ascii=False,
+    )
+
+    return [
+        {
+            "role": "system",
+            "content": (
+                "Eres el agente de servicio al cliente de Ferreinox. Responde en espanol claro, util y profesional. "
+                "Debes detectar tono del cliente, intencion principal y prioridad. Usa el contexto ERP disponible para responder con precision. "
+                "Si no tienes un dato seguro, dilo claramente y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos comerciales. "
+                "Devuelve JSON valido con estas claves exactas: tono, intent, priority, summary, response_text, should_create_task, task_type, task_summary, task_detail."
+            ),
+        },
+        {
+            "role": "user",
+            "content": (
+                f"Nombre visible del contacto: {nombre}\n"
+                f"Contexto ERP del posible cliente: {contexto_cliente}\n"
+                f"Historial reciente: {historial}\n"
+                f"Mensaje actual del cliente: {user_message}"
+            ),
+        },
+    ]
+
+
+def generate_agent_reply(profile_name: Optional[str], cliente_contexto: Optional[dict], recent_messages: list[dict], user_message: str):
+    client = get_openai_client()
+    response = client.responses.create(
+        model=get_openai_model(),
+        input=build_agent_prompt(profile_name, cliente_contexto, recent_messages, user_message),
+        temperature=0.3,
+    )
+    content = response.output_text
+    return json.loads(content)
+
+
+def send_whatsapp_text_message(to_phone: str, body: str):
+    response = requests.post(
+        f"https://graph.facebook.com/v22.0/{get_whatsapp_phone_number_id()}/messages",
+        headers={
+            "Authorization": f"Bearer {get_whatsapp_access_token()}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "messaging_product": "whatsapp",
+            "to": to_phone.lstrip("+"),
+            "type": "text",
+            "text": {"preview_url": False, "body": body},
+        },
+        timeout=20,
+    )
+    response.raise_for_status()
+    return response.json()
 
 
 @app.get("/")
@@ -242,12 +551,72 @@ async def receive_whatsapp_webhook(request: Request):
                     content,
                     message,
                 )
+
+                recent_messages = load_recent_conversation_messages(context["conversation_id"])
+                cliente_contexto = find_cliente_contexto_by_phone(context["telefono_e164"])
+                if cliente_contexto:
+                    update_contact_cliente(context["contact_id"], cliente_contexto.get("cliente_codigo"))
+
+                ai_result = None
+                outbound_payload = None
+                if content and message_type in {"text", "button", "interactive"}:
+                    try:
+                        ai_result = generate_agent_reply(
+                            context.get("nombre_visible"),
+                            cliente_contexto,
+                            recent_messages,
+                            content,
+                        )
+                        response_text = ai_result.get("response_text") or "Gracias por escribirnos. Ya estamos revisando tu caso."
+                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
+                        provider_message_id = None
+                        if outbound_payload.get("messages"):
+                            provider_message_id = outbound_payload["messages"][0].get("id")
+
+                        store_outbound_message(
+                            context["conversation_id"],
+                            provider_message_id,
+                            "text",
+                            response_text,
+                            outbound_payload,
+                            intent_detectado=ai_result.get("intent"),
+                        )
+                        update_conversation_summary(
+                            context["conversation_id"],
+                            ai_result.get("summary") or content,
+                            {
+                                "tone": ai_result.get("tono"),
+                                "intent": ai_result.get("intent"),
+                                "priority": ai_result.get("priority"),
+                                "cliente_contexto": cliente_contexto,
+                            },
+                        )
+
+                        if ai_result.get("should_create_task"):
+                            upsert_agent_task(
+                                context["conversation_id"],
+                                context.get("cliente_id"),
+                                ai_result.get("task_type") or "seguimiento_cliente",
+                                ai_result.get("task_summary") or "Revisar conversacion de WhatsApp",
+                                ai_result.get("task_detail") or {"mensaje": content},
+                                ai_result.get("priority") or "media",
+                            )
+                    except Exception as exc:
+                        store_outbound_message(
+                            context["conversation_id"],
+                            None,
+                            "system",
+                            f"No fue posible generar o enviar respuesta automatica: {exc}",
+                            {"error": str(exc)},
+                        )
+
                 processed_messages.append(
                     {
                         "conversation_id": context["conversation_id"],
                         "telefono": context["telefono_e164"],
                         "message_type": message_type,
                         "provider_message_id": message.get("id"),
+                        "ai_response_sent": bool(outbound_payload),
                     }
                 )
 
