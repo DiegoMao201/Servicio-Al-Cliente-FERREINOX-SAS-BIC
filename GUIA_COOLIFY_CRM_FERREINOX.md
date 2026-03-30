@@ -265,6 +265,75 @@ Recomendación práctica:
 3. Variables exclusivas de backend: backend
 4. Variables exclusivas de PostgREST: postgrest
 
+## 7.1. Opción alternativa: usar secrets.toml en Coolify Storage
+
+No necesitas obligatoriamente `secrets.toml`, porque este proyecto ya fue adaptado para funcionar también con variables de entorno. Esa es la opción más simple y más robusta en servidor.
+
+Pero si quieres mantener el formato clásico de Streamlit Secrets sin subir el archivo al repositorio, entonces hazlo así:
+
+1. No agregues `./secrets.toml` al repositorio.
+2. No uses un bind mount local tipo `- ./secrets.toml:/app/.streamlit/secrets.toml` en GitHub/Coolify, porque ese archivo no existe en el repo y el despliegue se vuelve frágil.
+3. Usa Storage de Coolify para crear un archivo externo fuera del repositorio.
+4. Monta ese archivo en el contenedor `frontend` exactamente en esta ruta:
+
+```text
+/app/.streamlit/secrets.toml
+```
+
+5. Usa como base la plantilla incluida en el repositorio:
+
+```text
+frontend/.streamlit/secrets.template.toml
+```
+
+### Contenido recomendado del archivo secrets.toml en Coolify Storage
+
+```toml
+[postgres]
+db_uri = "postgresql://postgres:TU_PASSWORD_REAL@db:5432/ferreinox_db"
+
+[dropbox_rotacion]
+app_key = "TU_APP_KEY_ROTACION"
+app_secret = "TU_APP_SECRET_ROTACION"
+refresh_token = "TU_REFRESH_TOKEN_ROTACION"
+folder = "/data"
+
+[dropbox_cartera]
+app_key = "TU_APP_KEY_CARTERA"
+app_secret = "TU_APP_SECRET_CARTERA"
+refresh_token = "TU_REFRESH_TOKEN_CARTERA"
+folder = "/data"
+
+[dropbox_ventas]
+app_key = "TU_APP_KEY_VENTAS"
+app_secret = "TU_APP_SECRET_VENTAS"
+refresh_token = "TU_REFRESH_TOKEN_VENTAS"
+folder = "/data"
+```
+
+### Paso a paso dentro de Coolify
+
+1. Abre el servicio `frontend`.
+2. Ve a la sección `Storage` o `Persistent Storage`.
+3. Crea un nuevo archivo o file mount externo.
+4. Pega el contenido del `secrets.toml` con tus valores reales.
+5. Define el mount path como:
+
+```text
+/app/.streamlit/secrets.toml
+```
+
+6. Guarda.
+7. Haz `Redeploy` del servicio `frontend`.
+
+### Recomendación técnica para este proyecto
+
+Para este repo en producción, la mejor práctica es:
+
+1. Usar variables de entorno en Coolify para `DATABASE_URL`, `PGRST_URL` y `DROPBOX_*`.
+2. Usar `secrets.toml` solo si prefieres administrar Dropbox y PostgreSQL con formato Streamlit.
+3. No mezclar un archivo secreto del repo con secretos reales del servidor.
+
 ---
 
 ## 8. Primer despliegue correcto

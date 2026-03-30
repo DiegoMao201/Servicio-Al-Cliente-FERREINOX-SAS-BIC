@@ -55,6 +55,9 @@ services:
     command: streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0
     expose:
       - "8501"
+    # Si prefieres usar archivo de secretos en vez de variables de entorno,
+    # crea el archivo en Coolify Storage y móntalo en esta ruta dentro del contenedor:
+    # /app/.streamlit/secrets.toml
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
       - BACKEND_URL=https://apicrm.datovatenexuspro.com
