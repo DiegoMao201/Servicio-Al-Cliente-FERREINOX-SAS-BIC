@@ -27,6 +27,8 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PGRST_URL=http://postgrest:3000
       - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN}
+      - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
     depends_on:
       - db
     # No expongas el puerto aquí, usa Coolify para mapearlo a tu subdominio (ej: apicrm.datovatenexuspro.com)

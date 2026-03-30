@@ -1542,7 +1542,14 @@ def send_whatsapp_text_message(to_phone: str, body: str):
         },
         timeout=20,
     )
-    response.raise_for_status()
+    if response.status_code >= 400:
+        try:
+            error_payload = response.json()
+        except Exception:
+            error_payload = {"raw": response.text}
+        raise RuntimeError(
+            f"WhatsApp Cloud API devolvió {response.status_code}: {safe_json_dumps(error_payload)}"
+        )
     return response.json()
 
 
