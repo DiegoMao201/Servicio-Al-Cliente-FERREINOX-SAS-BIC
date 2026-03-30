@@ -132,6 +132,14 @@ STORE_ALIASES = {
 }
 
 
+BRAND_ALIASES = {
+    "pintuco": ["pintuco", "viniltex", "viniltex adv", "p11", "p-11", "p 11"],
+    "abracol": ["abracol"],
+    "yale": ["yale"],
+    "goya": ["goya"],
+}
+
+
 MONTH_ALIASES = {
     "enero": 1,
     "febrero": 2,
@@ -489,6 +497,121 @@ def extract_store_filters(text_value: Optional[str]):
                     matched_codes.append(code)
                 break
     return matched_codes
+
+
+def extract_brand_filters(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return []
+
+    matched_brands = []
+    for brand_name, aliases in BRAND_ALIASES.items():
+        for alias in aliases:
+            alias_normalized = normalize_text_value(alias)
+            if alias_normalized and re.search(rf"\b{re.escape(alias_normalized)}\b", normalized):
+                if brand_name not in matched_brands:
+                    matched_brands.append(brand_name)
+                break
+    return matched_brands
+
+
+def infer_product_presentation_from_row(product_row: dict):
+    description_value = normalize_text_value(product_row.get("descripcion") or product_row.get("nombre_articulo"))
+    for size_token, unit_name in PRESENTATION_SIZE_MAP.items():
+        if size_token in description_value:
+            return unit_name
+    return None
+
+
+def infer_product_brand_from_row(product_row: dict):
+    brand_text = normalize_text_value(product_row.get("marca") or product_row.get("marca_producto") or "")
+    description_value = normalize_text_value(product_row.get("descripcion") or product_row.get("nombre_articulo"))
+    combined_value = f"{brand_text} {description_value}".strip()
+    for brand_name, aliases in BRAND_ALIASES.items():
+        if any(alias and normalize_text_value(alias) in combined_value for alias in aliases):
+            return brand_name
+    return brand_text or None
+
+
+def summarize_product_option(product_row: dict):
+    reference_value = product_row.get("referencia") or product_row.get("codigo_articulo") or "sin referencia"
+    description_value = product_row.get("descripcion") or product_row.get("nombre_articulo") or reference_value
+    stock_value = product_row.get("stock_total") if product_row.get("stock_total") is not None else product_row.get("stock")
+    presentation_value = infer_product_presentation_from_row(product_row)
+    brand_value = infer_product_brand_from_row(product_row)
+    department_value = product_row.get("departamentos") or product_row.get("categoria_producto")
+    summary_parts = [description_value]
+    if presentation_value:
+        summary_parts.append(get_presentation_label(presentation_value, 1))
+    if brand_value:
+        summary_parts.append(str(brand_value).upper())
+    if department_value:
+        summary_parts.append(str(department_value))
+    if stock_value is not None:
+        summary_parts.append(f"stock {stock_value}")
+    return f"{reference_value}: {' | '.join(summary_parts)}"
+
+
+def should_ask_product_clarification(product_request: Optional[dict], product_context: list[dict]):
+    if not product_request or not product_context or product_request.get("product_codes"):
+        return False
+
+    top_candidates = product_context[:4]
+    unique_references = {row.get("referencia") or row.get("codigo_articulo") for row in top_candidates if row.get("referencia") or row.get("codigo_articulo")}
+    if len(unique_references) < 2:
+        return False
+
+    presentation_values = {infer_product_presentation_from_row(row) for row in top_candidates}
+    brand_values = {infer_product_brand_from_row(row) for row in top_candidates}
+    presentation_values.discard(None)
+    brand_values.discard(None)
+
+    if not product_request.get("requested_unit") and len(presentation_values) >= 2:
+        return True
+    if len(brand_values) >= 2:
+        return True
+    return False
+
+
+def filter_rows_by_requested_presentation(product_rows: list[dict], product_request: Optional[dict]):
+    if not product_request or not product_request.get("requested_unit"):
+        return product_rows
+    exact_rows = [row for row in product_rows if infer_product_presentation_from_row(row) == product_request.get("requested_unit")]
+    return exact_rows or product_rows
+
+
+def resolve_product_clarification_choice(text_value: Optional[str], clarification_options: list[dict]):
+    normalized = normalize_text_value(text_value)
+    if not normalized or not clarification_options:
+        return None
+
+    ordinal_map = {
+        "1": 0,
+        "uno": 0,
+        "primera": 0,
+        "primer": 0,
+        "primero": 0,
+        "2": 1,
+        "dos": 1,
+        "segunda": 1,
+        "segundo": 1,
+        "3": 2,
+        "tres": 2,
+        "tercera": 2,
+        "tercero": 2,
+        "4": 3,
+        "cuatro": 3,
+        "cuarta": 3,
+        "cuarto": 3,
+    }
+    if normalized in ordinal_map and ordinal_map[normalized] < len(clarification_options):
+        return clarification_options[ordinal_map[normalized]]
+
+    for option in clarification_options:
+        reference_value = normalize_reference_value(option.get("referencia") or option.get("codigo_articulo"))
+        if reference_value and reference_value in normalize_reference_value(normalized):
+            return option
+    return None
 
 
 def expand_product_terms(search_terms: list[str]):
@@ -1086,6 +1209,7 @@ def extract_product_request(text_value: Optional[str]):
             "requested_unit": None,
             "quantity_expression": None,
             "product_codes": [],
+            "brand_filters": [],
             "store_filters": [],
             "original_query": "",
         }
@@ -1172,6 +1296,7 @@ def extract_product_request(text_value: Optional[str]):
         "requested_unit": requested_unit,
         "quantity_expression": quantity_expression,
         "product_codes": product_codes,
+        "brand_filters": extract_brand_filters(text_value),
         "store_filters": extract_store_filters(text_value),
         "original_query": text_value or "",
     }
@@ -1614,6 +1739,43 @@ def build_direct_reply(
                 "task_detail": {"product_request": product_request or {}},
             }
 
+        if should_ask_product_clarification(product_request, product_context):
+            clarification_options = []
+            clarification_lines = []
+            for index, row in enumerate(product_context[:4], start=1):
+                option_payload = {
+                    "referencia": row.get("referencia") or row.get("codigo_articulo"),
+                    "descripcion": row.get("descripcion") or row.get("nombre_articulo"),
+                    "marca": infer_product_brand_from_row(row),
+                    "presentacion": infer_product_presentation_from_row(row),
+                    "departamentos": row.get("departamentos") or row.get("categoria_producto"),
+                    "stock_total": row.get("stock_total") if row.get("stock_total") is not None else row.get("stock"),
+                    "stock_por_tienda": row.get("stock_por_tienda"),
+                }
+                clarification_options.append(option_payload)
+                clarification_lines.append(f"{index}. {summarize_product_option(row)}")
+
+            return {
+                "tono": "consultivo",
+                "intent": intent,
+                "priority": "media",
+                "summary": "Consulta de productos con necesidad de aclaracion",
+                "response_text": (
+                    f"Hola, {nombre}. Encontré varias opciones que podrían ser la que buscas. Responde con el número o la referencia:\n"
+                    + "\n".join(clarification_lines)
+                    + "\nAsí te doy el stock exacto de la opción correcta."
+                ),
+                "should_create_task": False,
+                "task_type": "seguimiento_cliente",
+                "task_summary": "Aclaracion de producto",
+                "task_detail": {
+                    "product_request": product_request or {},
+                    "clarification_options": clarification_options,
+                },
+                "awaiting_product_clarification": True,
+                "clarification_options": clarification_options,
+            }
+
         product_lines = []
         quantity_note = None
         if product_request:
@@ -1636,6 +1798,9 @@ def build_direct_reply(
                 line += f", stock total aproximado {stock}"
             if costo_promedio is not None:
                 line += f", costo promedio {format_currency(costo_promedio)}"
+            category_value = row.get("departamentos") or row.get("categoria_producto")
+            if category_value and str(category_value).strip().upper() != "NULL":
+                line += f", categoria {category_value}"
             if row.get("stock_por_tienda"):
                 line += f", disponible en {row.get('stock_por_tienda')}"
             if product_request and product_request.get("requested_quantity") and stock_value is not None:
@@ -1682,6 +1847,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
     product_codes = product_request.get("product_codes") or []
     learned_references = fetch_learned_product_references(product_request)
     store_filters = product_request.get("store_filters") or []
+    brand_filters = product_request.get("brand_filters") or []
     normalized_query = normalize_text_value(text_value)
 
     if not terms and not product_codes and not learned_references:
@@ -1707,6 +1873,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     text(
                         f"""
                         SELECT referencia, descripcion, marca,
+                               STRING_AGG(DISTINCT departamento, ', ' ORDER BY departamento) AS departamentos,
                                COALESCE(SUM(stock_disponible), 0) AS stock_total,
                                AVG(costo_promedio_und) AS costo_promedio_und,
                                STRING_AGG(
@@ -1725,7 +1892,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     learned_params,
                 ).mappings().all()
                 if learned_rows:
-                    return [dict(row) for row in learned_rows]
+                    return filter_rows_by_requested_presentation([dict(row) for row in learned_rows], product_request)
 
             if product_codes:
                 code_params = {}
@@ -1744,7 +1911,8 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                 code_rows = connection.execute(
                     text(
                         f"""
-                        SELECT referencia, descripcion, marca,
+                           SELECT referencia, descripcion, marca,
+                               STRING_AGG(DISTINCT departamento, ', ' ORDER BY departamento) AS departamentos,
                                COALESCE(SUM(stock_disponible), 0) AS stock_total,
                                AVG(costo_promedio_und) AS costo_promedio_und,
                                STRING_AGG(
@@ -1763,7 +1931,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     code_params,
                 ).mappings().all()
                 if code_rows:
-                    return [dict(row) for row in code_rows]
+                    return filter_rows_by_requested_presentation([dict(row) for row in code_rows], product_request)
 
             if not terms:
                 return []
@@ -1792,7 +1960,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             rows = connection.execute(
                 text(
                     f"""
-                    SELECT referencia, descripcion, marca, stock_total, costo_promedio_und, stock_por_tienda,
+                          SELECT referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
                            ({' + '.join(inventory_scores)}) AS match_score
                     FROM (
                         SELECT
@@ -1830,11 +1998,17 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                         for value in [candidate.get("descripcion"), candidate.get("referencia"), candidate.get("marca")]
                         if value
                     )
+                    candidate_presentation = infer_product_presentation_from_row(candidate)
+                    candidate_brand = infer_product_brand_from_row(candidate)
                     candidate["fuzzy_score"] = round(sequence_similarity(normalized_query, candidate_text), 4)
                     candidate["family_score"] = 1 if any(term and term in normalize_text_value(candidate_text) for term in preferred_family_terms[:5]) else 0
+                    candidate["presentation_score"] = 1 if product_request.get("requested_unit") and candidate_presentation == product_request.get("requested_unit") else 0
+                    candidate["brand_score"] = 1 if brand_filters and candidate_brand in brand_filters else 0
                     ranked_rows.append(candidate)
                 ranked_rows.sort(
                     key=lambda item: (
+                        item.get("presentation_score") or 0,
+                        item.get("brand_score") or 0,
                         item.get("family_score") or 0,
                         item.get("match_score") or 0,
                         item.get("fuzzy_score") or 0,
@@ -1842,6 +2016,13 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     ),
                     reverse=True,
                 )
+                if product_request.get("requested_unit"):
+                    exact_presentation_rows = [
+                        item for item in ranked_rows
+                        if infer_product_presentation_from_row(item) == product_request.get("requested_unit")
+                    ]
+                    if exact_presentation_rows:
+                        ranked_rows = exact_presentation_rows
                 if any((parse_numeric_value(item.get("stock_total")) or 0) > 0 for item in ranked_rows):
                     ranked_rows = [item for item in ranked_rows if (parse_numeric_value(item.get("stock_total")) or 0) > 0]
                 return ranked_rows[:5]
@@ -2159,6 +2340,20 @@ async def receive_whatsapp_webhook(request: Request):
                     if previous_intent in {"consulta_compras", "consulta_cartera"}:
                         detected_intent = previous_intent
                 product_request = extract_product_request(content)
+                pending_product_clarification = conversation_context.get("pending_product_clarification") or []
+                if pending_product_clarification:
+                    selected_option = resolve_product_clarification_choice(content, pending_product_clarification)
+                    if selected_option:
+                        detected_intent = "consulta_productos"
+                        merged_core_terms = list((conversation_context.get("last_product_request") or {}).get("core_terms") or [])
+                        merged_terms = list((conversation_context.get("last_product_request") or {}).get("search_terms") or [])
+                        merged_codes = list(product_request.get("product_codes") or [])
+                        selected_reference = selected_option.get("referencia") or selected_option.get("codigo_articulo")
+                        if selected_reference and normalize_reference_value(selected_reference) not in merged_codes:
+                            merged_codes.append(normalize_reference_value(selected_reference))
+                        product_request["core_terms"] = merged_core_terms[:8]
+                        product_request["search_terms"] = expand_product_terms(merged_terms or merged_core_terms)[:8]
+                        product_request["product_codes"] = merged_codes[:4]
                 if detected_intent == "consulta_productos" and is_product_code_message(content):
                     previous_product_request = conversation_context.get("last_product_request") or {}
                     merged_core_terms = list(previous_product_request.get("core_terms") or [])
@@ -2365,7 +2560,7 @@ async def receive_whatsapp_webhook(request: Request):
                             "task_summary": "Error en consulta de productos",
                             "task_detail": {"mensaje": content},
                         }
-                    if product_context_result:
+                    if product_context_result and not direct_result.get("awaiting_product_clarification"):
                         try:
                             learn_product_resolution(
                                 context["conversation_id"],
@@ -2405,6 +2600,7 @@ async def receive_whatsapp_webhook(request: Request):
                         {
                             "last_direct_intent": direct_result.get("intent"),
                             "last_product_request": product_request,
+                            "pending_product_clarification": direct_result.get("clarification_options") if direct_result.get("awaiting_product_clarification") else None,
                             "awaiting_verification": False,
                         },
                         summary=direct_result.get("summary") or content,
