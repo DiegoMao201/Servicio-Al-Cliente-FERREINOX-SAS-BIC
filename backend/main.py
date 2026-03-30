@@ -292,6 +292,112 @@ def should_store_learning_phrase(text_value: Optional[str]):
     return len(normalized) >= 4
 
 
+def build_learning_phrase_candidates(product_request: Optional[dict]):
+    if not product_request:
+        return []
+
+    generic_terms = set(PRODUCT_STOPWORDS)
+    for alias_group in PRESENTATION_ALIASES.values():
+        generic_terms.update(normalize_text_value(alias) for alias in alias_group)
+    for alias_group in STORE_ALIASES.values():
+        generic_terms.update(normalize_text_value(alias) for alias in alias_group)
+
+    phrases = []
+
+    def add_phrase(raw_phrase: Optional[str]):
+        normalized_phrase = normalize_text_value(raw_phrase)
+        if not normalized_phrase or not should_store_learning_phrase(normalized_phrase):
+            return
+        if normalized_phrase not in phrases:
+            phrases.append(normalized_phrase)
+
+    add_phrase(product_request.get("original_query"))
+    add_phrase(" ".join(product_request.get("core_terms") or []))
+
+    specific_terms = []
+    for term in product_request.get("core_terms") or []:
+        normalized_term = normalize_text_value(term)
+        if not normalized_term or normalized_term in generic_terms:
+            continue
+        if normalized_term not in specific_terms:
+            specific_terms.append(normalized_term)
+
+    if specific_terms:
+        add_phrase(" ".join(specific_terms))
+        if product_request.get("requested_unit"):
+            add_phrase(" ".join(specific_terms + [product_request.get("requested_unit")]))
+        if product_request.get("brand_filters"):
+            for brand_name in product_request.get("brand_filters")[:2]:
+                add_phrase(" ".join(specific_terms + [brand_name]))
+
+    return phrases[:8]
+
+
+def select_reliable_learning_rows(product_request: Optional[dict], product_context: list[dict]):
+    if not product_request or not product_context:
+        return []
+
+    if product_request.get("product_codes"):
+        return product_context[:1]
+
+    if len(product_context) == 1:
+        return product_context[:1]
+
+    top_row = product_context[0]
+    second_row = product_context[1] if len(product_context) > 1 else None
+    top_specific = top_row.get("specific_score") or 0
+    top_match = top_row.get("match_score") or 0
+    top_brand = top_row.get("brand_score") or 0
+    top_size = top_row.get("size_score") or 0
+    second_specific = second_row.get("specific_score") or 0 if second_row else 0
+    second_match = second_row.get("match_score") or 0 if second_row else 0
+
+    if top_size > 0 and top_match >= 2:
+        return [top_row]
+    if top_brand > 0 and top_match >= 2:
+        return [top_row]
+    if top_specific >= 2 and (top_specific > second_specific or top_match > second_match):
+        return [top_row]
+    if top_match >= 3 and top_match > second_match:
+        return [top_row]
+    return []
+
+
+def is_learned_reference_relevant(product_request: Optional[dict], learned_row: dict):
+    if not product_request:
+        return False
+
+    description_text = normalize_text_value(learned_row.get("canonical_description"))
+    brand_text = normalize_text_value(learned_row.get("canonical_brand"))
+    combined_text = f"{description_text} {brand_text}".strip()
+    specific_terms = get_specific_product_terms(product_request)
+    if specific_terms and not any(term in combined_text for term in specific_terms):
+        return False
+
+    requested_unit = product_request.get("requested_unit")
+    learned_presentation = normalize_text_value(learned_row.get("canonical_presentation"))
+    if requested_unit and learned_presentation and requested_unit != learned_presentation:
+        return False
+
+    brand_filters = product_request.get("brand_filters") or []
+    if brand_filters:
+        matches_brand = False
+        for brand_name in brand_filters:
+            if brand_name in combined_text:
+                matches_brand = True
+                break
+            for alias in BRAND_ALIASES.get(brand_name, []):
+                if normalize_text_value(alias) in combined_text:
+                    matches_brand = True
+                    break
+            if matches_brand:
+                break
+        if not matches_brand:
+            return False
+
+    return True
+
+
 def ensure_product_learning_table():
     engine = get_db_engine()
     with engine.begin() as connection:
@@ -331,18 +437,15 @@ def learn_product_resolution(conversation_id: Optional[int], product_request: Op
     if not product_request or not product_context:
         return
 
+    reliable_rows = select_reliable_learning_rows(product_request, product_context)
+    if not reliable_rows:
+        return
+
     phrases = []
     previous_product_request = (conversation_context or {}).get("last_product_request") or {}
-    for candidate_phrase in [
-        product_request.get("original_query"),
-        " ".join(product_request.get("core_terms") or []),
-        previous_product_request.get("original_query"),
-        " ".join(previous_product_request.get("core_terms") or []),
-    ]:
-        if should_store_learning_phrase(candidate_phrase):
-            normalized_phrase = normalize_text_value(candidate_phrase)
-            if normalized_phrase not in phrases:
-                phrases.append(normalized_phrase)
+    for candidate_phrase in build_learning_phrase_candidates(product_request) + build_learning_phrase_candidates(previous_product_request):
+        if candidate_phrase not in phrases:
+            phrases.append(candidate_phrase)
 
     if not phrases:
         return
@@ -351,7 +454,7 @@ def learn_product_resolution(conversation_id: Optional[int], product_request: Op
     engine = get_db_engine()
     with engine.begin() as connection:
         for phrase in phrases[:6]:
-            for row in product_context[:3]:
+            for row in reliable_rows:
                 reference_value = row.get("referencia") or row.get("codigo_articulo")
                 if not reference_value:
                     continue
@@ -422,14 +525,7 @@ def fetch_learned_product_references(product_request: Optional[dict]):
     if not product_request:
         return []
 
-    phrases = []
-    for candidate_phrase in [
-        product_request.get("original_query"),
-        " ".join(product_request.get("core_terms") or []),
-    ]:
-        normalized_phrase = normalize_text_value(candidate_phrase)
-        if normalized_phrase and normalized_phrase not in phrases:
-            phrases.append(normalized_phrase)
+    phrases = build_learning_phrase_candidates(product_request)
 
     if not phrases:
         return []
@@ -442,17 +538,18 @@ def fetch_learned_product_references(product_request: Optional[dict]):
             row_set = connection.execute(
                 text(
                     """
-                    SELECT canonical_reference, MAX(confidence) AS confidence, SUM(usage_count) AS total_hits
+                    SELECT canonical_reference, canonical_description, canonical_brand, canonical_presentation,
+                           MAX(confidence) AS confidence, SUM(usage_count) AS total_hits
                     FROM public.agent_product_learning
                     WHERE normalized_phrase = :normalized_phrase
-                    GROUP BY canonical_reference
+                    GROUP BY canonical_reference, canonical_description, canonical_brand, canonical_presentation
                     ORDER BY MAX(confidence) DESC, SUM(usage_count) DESC
                     LIMIT 5
                     """
                 ),
                 {"normalized_phrase": phrase},
             ).mappings().all()
-            learned_rows.extend(row_set)
+            learned_rows.extend(row for row in row_set if is_learned_reference_relevant(product_request, row))
 
     ordered_references = []
     seen_references = set()
