@@ -113,6 +113,7 @@ def main():
         if snapshot["raw_with_data"] == snapshot["raw_total"]
         else "Todavía faltan tablas raw oficiales o siguen vacías en esta base."
     )
+    using_local_stack_db = db_target["host"] == "db"
 
     metric_1, metric_2, metric_3, metric_4 = st.columns(4)
     metric_1.metric("Tablas raw creadas", f"{snapshot['raw_ready']}/{snapshot['raw_total']}")
@@ -123,6 +124,11 @@ def main():
     st.info(
         f"Base conectada: host {db_target['host']}, puerto {db_target['port']}, base {db_target['database']}. Estado actual: {status_label}. {status_detail}"
     )
+
+    if using_local_stack_db:
+        st.warning(
+            "La app está apuntando a la base local del stack (`db`). Si tu base oficial real vive en otro servidor, todavía no has conectado Coolify a esa base y por eso aquí todo aparece vacío."
+        )
 
     if snapshot["raw_with_data"] < snapshot["raw_total"]:
         st.warning(
@@ -171,7 +177,7 @@ def main():
         """
         1. Si `Tablas raw con datos` es menor a 5, la base oficial aún no está lista.
         2. Si `Vistas PostgREST` es menor al total esperado, falta refrescar la capa SQL.
-        3. Si el host o la base mostrados arriba no son los que esperas, la app está apuntando a la base equivocada.
+        3. Si el host mostrado arriba es `db`, estás en la base local del stack y no en la base oficial remota.
         4. Si Dropbox no aparece configurado, el botón único no podrá ejecutar la actualización.
         """
     )

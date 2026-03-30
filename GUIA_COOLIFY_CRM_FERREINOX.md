@@ -103,8 +103,8 @@ DROPBOX_VENTAS_FOLDER=/data
 Si ves problemas con interpolación, define también estas de forma explícita:
 
 ```dotenv
-DATABASE_URL=postgresql://postgres:TU_PASSWORD_REAL@db:5432/ferreinox_db
-POSTGRES_DB_URI=postgresql://postgres:TU_PASSWORD_REAL@db:5432/ferreinox_db
+DATABASE_URL=postgresql://USUARIO:CLAVE@HOST_REAL:PUERTO_REAL/BASE_REAL
+POSTGRES_DB_URI=postgresql://USUARIO:CLAVE@HOST_REAL:PUERTO_REAL/BASE_REAL
 PGRST_URL=http://postgrest:3000
 PGSSLMODE=prefer
 ```
@@ -114,7 +114,7 @@ PGSSLMODE=prefer
 #### Servicio `frontend`
 
 ```dotenv
-DATABASE_URL=postgresql://postgres:TU_PASSWORD_REAL@db:5432/ferreinox_db
+DATABASE_URL=postgresql://USUARIO:CLAVE@HOST_REAL:PUERTO_REAL/BASE_REAL
 BACKEND_URL=https://apicrm.datovatenexuspro.com
 PGRST_URL=http://postgrest:3000
 STREAMLIT_SECRETS_TOML=
@@ -137,7 +137,7 @@ Si vas a usar una sola variable con el contenido completo de `secrets.toml`, pue
 #### Servicio `backend`
 
 ```dotenv
-DATABASE_URL=postgresql://postgres:TU_PASSWORD_REAL@db:5432/ferreinox_db
+DATABASE_URL=postgresql://USUARIO:CLAVE@HOST_REAL:PUERTO_REAL/BASE_REAL
 PGRST_URL=http://postgrest:3000
 OPENAI_API_KEY=
 WHATSAPP_VERIFY_TOKEN=ferreinox_token_123
@@ -148,7 +148,7 @@ WHATSAPP_PHONE_NUMBER_ID=
 #### Servicio `postgrest`
 
 ```dotenv
-PGRST_DB_URI=postgres://postgres:TU_PASSWORD_REAL@db:5432/ferreinox_db
+PGRST_DB_URI=postgres://USUARIO:CLAVE@HOST_REAL:PUERTO_REAL/BASE_REAL
 PGRST_DB_SCHEMA=public
 PGRST_DB_ANON_ROLE=web_anon
 PGRST_SERVER_HOST=0.0.0.0

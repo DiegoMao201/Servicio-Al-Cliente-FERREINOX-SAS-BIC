@@ -23,7 +23,7 @@ services:
     expose:
       - "8000"
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
+      - DATABASE_URL=${DATABASE_URL}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - PGRST_URL=http://postgrest:3000
       - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN}
@@ -38,7 +38,7 @@ services:
     expose:
       - "3000"
     environment:
-      PGRST_DB_URI: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
+      PGRST_DB_URI: ${POSTGRES_DB_URI}
       PGRST_DB_SCHEMA: public
       PGRST_DB_ANON_ROLE: web_anon
       PGRST_SERVER_HOST: 0.0.0.0
@@ -59,7 +59,7 @@ services:
     # define STREAMLIT_SECRETS_TOML como variable multilinea y este contenedor
     # generará /app/.streamlit/secrets.toml automáticamente al arrancar.
     environment:
-      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
+      - DATABASE_URL=${DATABASE_URL}
       - BACKEND_URL=https://apicrm.datovatenexuspro.com
       - PGRST_URL=http://postgrest:3000
       - STREAMLIT_SECRETS_TOML=${STREAMLIT_SECRETS_TOML}
