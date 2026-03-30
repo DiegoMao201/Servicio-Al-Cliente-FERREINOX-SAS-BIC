@@ -1,11 +1,15 @@
 import os
 import json
 import re
+import time
+import tomllib
 import unicodedata
 from difflib import SequenceMatcher
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Optional
 
+import dropbox
 import requests
 from fastapi import FastAPI, HTTPException, Query, Request
 from openai import OpenAI
@@ -13,6 +17,36 @@ from sqlalchemy import create_engine, text
 
 
 app = FastAPI(title="CRM Ferreinox Backend", version="2026.2")
+
+
+SECRETS_PATH = Path(__file__).resolve().parent.parent / ".streamlit" / "secrets.toml"
+TECHNICAL_DOC_FOLDER = "/data/FICHAS TÉCNICAS Y HOJAS DE SEGURIDAD"
+TECHNICAL_DOC_CACHE_TTL_SECONDS = 600
+TECHNICAL_DOC_STOPWORDS = {
+    "ficha",
+    "fichas",
+    "tecnica",
+    "tecnicas",
+    "tecnico",
+    "tecnico",
+    "hoja",
+    "hojas",
+    "seguridad",
+    "pdf",
+    "envia",
+    "enviame",
+    "enviamelo",
+    "manda",
+    "mandame",
+    "mandamelo",
+    "adjunta",
+    "adjuntame",
+    "anexa",
+    "anexame",
+    "sirve",
+    "sirva",
+}
+TECHNICAL_DOC_CACHE = {"loaded_at": 0.0, "entries": []}
 
 
 PRODUCT_STOPWORDS = {
@@ -231,6 +265,197 @@ def get_db_engine():
 
 def safe_json_dumps(value):
     return json.dumps(value, ensure_ascii=False, default=str)
+
+
+def load_local_secrets():
+    if not SECRETS_PATH.exists():
+        return {}
+    return tomllib.loads(SECRETS_PATH.read_text(encoding="utf-8"))
+
+
+def get_dropbox_ventas_config():
+    env_config = {
+        "app_key": os.getenv("DROPBOX_VENTAS_APP_KEY"),
+        "app_secret": os.getenv("DROPBOX_VENTAS_APP_SECRET"),
+        "refresh_token": os.getenv("DROPBOX_VENTAS_REFRESH_TOKEN"),
+        "folder": os.getenv("DROPBOX_VENTAS_FOLDER") or "/data",
+    }
+    if env_config["app_key"] and env_config["app_secret"] and env_config["refresh_token"]:
+        return env_config
+
+    secrets = load_local_secrets()
+    config = secrets.get("dropbox_ventas") or {}
+    if config.get("app_key") and config.get("app_secret") and config.get("refresh_token"):
+        return config
+    raise RuntimeError("No se encontró configuración válida para Dropbox Ventas.")
+
+
+def get_dropbox_ventas_client():
+    config = get_dropbox_ventas_config()
+    return dropbox.Dropbox(
+        oauth2_refresh_token=config["refresh_token"],
+        app_key=config["app_key"],
+        app_secret=config["app_secret"],
+    )
+
+
+def list_technical_document_entries(force_refresh: bool = False):
+    cache_age = time.time() - float(TECHNICAL_DOC_CACHE.get("loaded_at") or 0)
+    if not force_refresh and TECHNICAL_DOC_CACHE.get("entries") and cache_age < TECHNICAL_DOC_CACHE_TTL_SECONDS:
+        return TECHNICAL_DOC_CACHE["entries"]
+
+    dbx = get_dropbox_ventas_client()
+    entries = []
+    result = dbx.files_list_folder(TECHNICAL_DOC_FOLDER, recursive=True)
+    while True:
+        entries.extend(
+            entry for entry in result.entries
+            if isinstance(entry, dropbox.files.FileMetadata) and entry.name.lower().endswith(".pdf")
+        )
+        if not result.has_more:
+            break
+        result = dbx.files_list_folder_continue(result.cursor)
+
+    TECHNICAL_DOC_CACHE["loaded_at"] = time.time()
+    TECHNICAL_DOC_CACHE["entries"] = entries
+    return entries
+
+
+def is_technical_document_message(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    return any(
+        phrase in normalized
+        for phrase in [
+            "ficha tecnica",
+            "ficha técnicas",
+            "ficha tecnica",
+            "hoja de seguridad",
+            "hoja seguridad",
+            "fds",
+            "msds",
+            "pdf",
+        ]
+    )
+
+
+def extract_technical_document_request(text_value: Optional[str], product_request: Optional[dict] = None, conversation_context: Optional[dict] = None):
+    normalized = normalize_text_value(text_value)
+    request = product_request or extract_product_request(text_value)
+    previous_request = (conversation_context or {}).get("last_product_request") or {}
+
+    terms = []
+    for source_terms in [request.get("core_terms") or [], previous_request.get("core_terms") or []]:
+        for term in source_terms:
+            normalized_term = normalize_text_value(term)
+            if (
+                normalized_term
+                and normalized_term not in TECHNICAL_DOC_STOPWORDS
+                and normalized_term not in PRODUCT_STOPWORDS
+                and not is_store_alias_term(normalized_term)
+                and normalized_term not in terms
+            ):
+                terms.append(normalized_term)
+
+    wants_safety_sheet = any(keyword in normalized for keyword in ["hoja de seguridad", "hoja seguridad", "seguridad", "fds", "msds"])
+    wants_technical_sheet = any(keyword in normalized for keyword in ["ficha tecnica", "ficha técnica", "ficha", "tecnica", "técnica"])
+
+    return {
+        "query": text_value or "",
+        "terms": terms[:8],
+        "wants_safety_sheet": wants_safety_sheet,
+        "wants_technical_sheet": wants_technical_sheet or not wants_safety_sheet,
+    }
+
+
+def search_technical_documents(document_request: dict):
+    terms = document_request.get("terms") or []
+    if not terms:
+        return []
+
+    ranked_documents = []
+    for entry in list_technical_document_entries():
+        path_value = normalize_text_value(entry.path_lower or entry.name)
+        name_value = normalize_text_value(entry.name)
+        exact_hits = sum(1 for term in terms if term in path_value)
+        if exact_hits == 0 and not any(sequence_similarity(term, name_value) >= 0.74 for term in terms):
+            continue
+
+        safety_score = 0
+        if document_request.get("wants_safety_sheet"):
+            safety_score = 1 if any(token in path_value for token in ["hoja", "seguridad", "fds", "msds"]) else 0
+        technical_score = 0
+        if document_request.get("wants_technical_sheet"):
+            technical_score = 1 if not any(token in path_value for token in ["fds", "msds"]) else 0
+
+        ranked_documents.append(
+            {
+                "name": entry.name,
+                "path_lower": entry.path_lower,
+                "exact_hits": exact_hits,
+                "safety_score": safety_score,
+                "technical_score": technical_score,
+                "fuzzy_score": round(max(sequence_similarity(term, name_value) for term in terms), 4),
+            }
+        )
+
+    ranked_documents.sort(
+        key=lambda item: (
+            item.get("safety_score") or 0,
+            item.get("technical_score") or 0,
+            item.get("exact_hits") or 0,
+            item.get("fuzzy_score") or 0,
+            len(item.get("name") or ""),
+        ),
+        reverse=True,
+    )
+    return ranked_documents[:6]
+
+
+def resolve_technical_document_choice(text_value: Optional[str], document_options: list[dict]):
+    normalized = normalize_text_value(text_value)
+    if not normalized or not document_options:
+        return None
+
+    ordinal_map = {
+        "1": 0,
+        "uno": 0,
+        "primera": 0,
+        "primer": 0,
+        "primero": 0,
+        "2": 1,
+        "dos": 1,
+        "segunda": 1,
+        "segundo": 1,
+        "3": 2,
+        "tres": 2,
+        "tercera": 2,
+        "tercero": 2,
+        "4": 3,
+        "cuatro": 3,
+        "cuarta": 3,
+        "cuarto": 3,
+    }
+    if normalized in ordinal_map and ordinal_map[normalized] < len(document_options):
+        return document_options[ordinal_map[normalized]]
+
+    for ordinal_text, option_index in ordinal_map.items():
+        if option_index >= len(document_options):
+            continue
+        if re.fullmatch(rf"(?:la|el|opcion|archivo)?\s*{re.escape(ordinal_text)}", normalized):
+            return document_options[option_index]
+
+    for option in document_options:
+        option_name = normalize_text_value(option.get("name"))
+        if option_name and (option_name in normalized or normalized in option_name):
+            return option
+    return None
+
+
+def get_dropbox_temporary_link(file_path: str):
+    dbx = get_dropbox_ventas_client()
+    return dbx.files_get_temporary_link(file_path).link
 
 
 def normalize_text_value(text_value: Optional[str]):
@@ -1425,7 +1650,38 @@ def is_thanks_or_closing_message(text_value: Optional[str]):
 
 def build_conversation_closing_reply(profile_name: Optional[str]):
     nombre = profile_name or "cliente"
-    return f"Con gusto, {nombre}. Quedo atento si quieres revisar otra referencia, cartera o tus compras." 
+    return f"Con mucho gusto, {nombre}. Desde Ferreinox SAS BIC te deseamos un feliz día y aquí estamos para atenderte cuando lo necesites."
+
+
+def build_technical_document_reply(profile_name: Optional[str], document_request: dict, document_options: list[dict]):
+    nombre = profile_name or "cliente"
+    requested_label = "hoja de seguridad" if document_request.get("wants_safety_sheet") else "ficha técnica"
+    if not document_options:
+        return {
+            "tono": "informativo",
+            "intent": "consulta_documentacion",
+            "priority": "media",
+            "summary": "Consulta de documentación sin coincidencia clara",
+            "response_text": (
+                f"Hola, {nombre}. Revisé la carpeta de {requested_label} y no encontré una coincidencia clara con ese nombre. "
+                "Si quieres, dime la referencia, la línea o el nombre comercial y te muestro las opciones más cercanas."
+            ),
+            "document_options": [],
+            "awaiting_document_choice": False,
+        }
+
+    option_lines = [f"{index}. {row['name']}" for index, row in enumerate(document_options[:4], start=1)]
+    intro = f"Hola, {nombre}. Esto fue lo que encontré en {requested_label}:"
+    outro = "Respóndeme con el número o con el nombre del archivo y te lo envío por WhatsApp."
+    return {
+        "tono": "consultivo",
+        "intent": "consulta_documentacion",
+        "priority": "media",
+        "summary": "Consulta de documentación técnica",
+        "response_text": intro + "\n" + "\n".join(option_lines) + "\n" + outro,
+        "document_options": document_options[:4],
+        "awaiting_document_choice": True,
+    }
 
 
 def detect_business_intent(text_value: Optional[str]):
@@ -1433,6 +1689,8 @@ def detect_business_intent(text_value: Optional[str]):
         return "consulta_general"
 
     lowered = normalize_text_value(text_value)
+    if is_technical_document_message(text_value):
+        return "consulta_documentacion"
     if any(keyword in lowered for keyword in ["cartera", "saldo", "deuda", "debo", "vencid", "estado de cuenta", "cupo", "credito", "cuanto debo", "cuánto debo", "documentos"]):
         return "consulta_cartera"
     if has_keyword_or_similar(text_value, ["factura", "facturas", "vencida", "vencidas"]):
@@ -2649,6 +2907,39 @@ def send_whatsapp_text_message(to_phone: str, body: str):
     return response.json()
 
 
+def send_whatsapp_document_message(to_phone: str, document_link: str, filename: str, caption: Optional[str] = None):
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": to_phone.lstrip("+"),
+        "type": "document",
+        "document": {
+            "link": document_link,
+            "filename": filename,
+        },
+    }
+    if caption:
+        payload["document"]["caption"] = caption
+
+    response = requests.post(
+        f"https://graph.facebook.com/v22.0/{get_whatsapp_phone_number_id()}/messages",
+        headers={
+            "Authorization": f"Bearer {get_whatsapp_access_token()}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=30,
+    )
+    if response.status_code >= 400:
+        try:
+            error_payload = response.json()
+        except Exception:
+            error_payload = {"raw": response.text}
+        raise RuntimeError(
+            f"WhatsApp Cloud API devolvió {response.status_code}: {safe_json_dumps(error_payload)}"
+        )
+    return response.json()
+
+
 @app.get("/")
 def read_root():
     return {
@@ -2774,6 +3065,8 @@ async def receive_whatsapp_webhook(request: Request):
                 if detected_intent == "consulta_general" and looks_like_product_query(content, product_request):
                     detected_intent = "consulta_productos"
                 pending_product_clarification = conversation_context.get("pending_product_clarification") or []
+                pending_document_options = conversation_context.get("pending_document_options") or []
+                selected_document_option = None
                 if pending_product_clarification:
                     selected_option = resolve_product_clarification_choice(content, pending_product_clarification)
                     if selected_option:
@@ -2787,6 +3080,10 @@ async def receive_whatsapp_webhook(request: Request):
                         product_request["core_terms"] = merged_core_terms[:8]
                         product_request["search_terms"] = expand_product_terms(merged_terms or merged_core_terms)[:8]
                         product_request["product_codes"] = merged_codes[:4]
+                if pending_document_options and conversation_context.get("last_direct_intent") == "consulta_documentacion":
+                    selected_document_option = resolve_technical_document_choice(content, pending_document_options)
+                    if selected_document_option:
+                        detected_intent = "consulta_documentacion"
                 if detected_intent == "consulta_productos" and is_product_code_message(content):
                     previous_product_request = conversation_context.get("last_product_request") or {}
                     merged_core_terms = list(previous_product_request.get("core_terms") or [])
@@ -2965,6 +3262,145 @@ async def receive_whatsapp_webhook(request: Request):
                     )
                     continue
 
+                if detected_intent == "consulta_documentacion":
+                    document_request = extract_technical_document_request(content, product_request, conversation_context)
+                    if selected_document_option:
+                        filename = selected_document_option.get("name") or "documento.pdf"
+                        caption_text = (
+                            f"Hola, {context.get('nombre_visible') or 'cliente'}. Te comparto el archivo {filename}."
+                        )
+                        outbound_payload = None
+                        temporary_link = None
+                        try:
+                            temporary_link = get_dropbox_temporary_link(selected_document_option.get("path_lower"))
+                            outbound_payload = send_whatsapp_document_message(
+                                context["telefono_e164"],
+                                temporary_link,
+                                filename,
+                                caption=caption_text,
+                            )
+                            provider_message_id = None
+                            if outbound_payload.get("messages"):
+                                provider_message_id = outbound_payload["messages"][0].get("id")
+                            store_outbound_message(
+                                context["conversation_id"],
+                                provider_message_id,
+                                "document",
+                                caption_text,
+                                outbound_payload,
+                                intent_detectado="consulta_documentacion",
+                            )
+                        except Exception as exc:
+                            fallback_text = (
+                                f"Hola, {context.get('nombre_visible') or 'cliente'}. Encontré el archivo {filename}, "
+                                "pero en este momento no pude adjuntarlo por WhatsApp. Escríbeme de nuevo en un momento y lo intento otra vez."
+                            )
+                            try:
+                                outbound_payload = send_whatsapp_text_message(context["telefono_e164"], fallback_text)
+                                provider_message_id = None
+                                if outbound_payload.get("messages"):
+                                    provider_message_id = outbound_payload["messages"][0].get("id")
+                                store_outbound_message(
+                                    context["conversation_id"],
+                                    provider_message_id,
+                                    "text",
+                                    fallback_text,
+                                    outbound_payload,
+                                    intent_detectado="consulta_documentacion",
+                                )
+                            except Exception as text_exc:
+                                store_outbound_message(
+                                    context["conversation_id"],
+                                    None,
+                                    "system",
+                                    f"No fue posible enviar documento tecnico: {exc}",
+                                    {
+                                        "error": str(exc),
+                                        "fallback_error": str(text_exc),
+                                        "document_name": filename,
+                                        "temporary_link": temporary_link,
+                                    },
+                                    intent_detectado="consulta_documentacion",
+                                )
+
+                        update_conversation_context(
+                            context["conversation_id"],
+                            {
+                                "last_direct_intent": "consulta_documentacion",
+                                "last_document_request": document_request,
+                                "pending_document_options": None,
+                                "pending_product_clarification": None,
+                                "awaiting_verification": False,
+                            },
+                            summary=f"Documento enviado: {filename}",
+                        )
+                        processed_messages.append(
+                            {
+                                "conversation_id": context["conversation_id"],
+                                "telefono": context["telefono_e164"],
+                                "message_type": message_type,
+                                "provider_message_id": message.get("id"),
+                                "ai_response_sent": bool(outbound_payload),
+                                "document_sent": True,
+                            }
+                        )
+                        continue
+
+                    document_options = search_technical_documents(document_request)
+                    direct_result = build_technical_document_reply(
+                        context.get("nombre_visible"),
+                        document_request,
+                        document_options,
+                    )
+                    response_text = direct_result["response_text"]
+                    outbound_payload = None
+                    try:
+                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
+                        provider_message_id = None
+                        if outbound_payload.get("messages"):
+                            provider_message_id = outbound_payload["messages"][0].get("id")
+                        store_outbound_message(
+                            context["conversation_id"],
+                            provider_message_id,
+                            "text",
+                            response_text,
+                            outbound_payload,
+                            intent_detectado=direct_result.get("intent"),
+                        )
+                    except Exception as exc:
+                        store_outbound_message(
+                            context["conversation_id"],
+                            None,
+                            "system",
+                            f"No fue posible enviar respuesta de documentacion: {exc}",
+                            {"error": str(exc), "response_text": response_text},
+                            intent_detectado=direct_result.get("intent"),
+                        )
+
+                    update_conversation_context(
+                        context["conversation_id"],
+                        {
+                            "last_direct_intent": direct_result.get("intent"),
+                            "last_document_request": document_request,
+                            "pending_document_options": direct_result.get("document_options") if direct_result.get("awaiting_document_choice") else None,
+                            "pending_product_clarification": None,
+                            "awaiting_verification": False,
+                        },
+                        summary=direct_result.get("summary") or content,
+                    )
+
+                    processed_messages.append(
+                        {
+                            "conversation_id": context["conversation_id"],
+                            "telefono": context["telefono_e164"],
+                            "message_type": message_type,
+                            "provider_message_id": message.get("id"),
+                            "ai_response_sent": bool(outbound_payload),
+                            "document_reply": True,
+                        }
+                    )
+                    continue
+
                 if is_thanks_or_closing_message(content):
                     response_text = build_conversation_closing_reply(context.get('nombre_visible'))
                     outbound_payload = None
@@ -2997,6 +3433,7 @@ async def receive_whatsapp_webhook(request: Request):
                             "intent": "cierre_conversacion",
                             "last_direct_intent": conversation_context.get("last_direct_intent"),
                             "pending_product_clarification": None,
+                            "pending_document_options": None,
                             "awaiting_verification": False,
                         },
                         summary="Cierre conversacional",
@@ -3083,6 +3520,7 @@ async def receive_whatsapp_webhook(request: Request):
                             "last_direct_intent": direct_result.get("intent"),
                             "last_product_request": product_request,
                             "pending_product_clarification": direct_result.get("clarification_options") if direct_result.get("awaiting_product_clarification") else None,
+                            "pending_document_options": None,
                             "last_purchase_date": (direct_result.get("task_detail") or {}).get("fecha_venta") or ((direct_result.get("task_detail") or {}).get("totals") or {}).get("ultima_compra"),
                             "awaiting_verification": False,
                         },
@@ -3207,6 +3645,7 @@ async def receive_whatsapp_webhook(request: Request):
                                 "verified_document": verification_state.get("verified_document"),
                                 "verified_cliente_codigo": verification_state.get("verified_cliente_codigo"),
                                 "last_direct_intent": direct_result.get("intent"),
+                                "pending_document_options": None,
                                 "last_purchase_date": (direct_result.get("task_detail") or {}).get("fecha_venta") or ((direct_result.get("task_detail") or {}).get("totals") or {}).get("ultima_compra"),
                                 "awaiting_verification": False,
                             },
@@ -3338,6 +3777,7 @@ async def receive_whatsapp_webhook(request: Request):
                             "verified_cliente_codigo": verification_state.get("verified_cliente_codigo"),
                             "cliente_contexto": cliente_contexto,
                             "product_context": product_context,
+                            "pending_document_options": None,
                             "awaiting_verification": False,
                         },
                         summary=ai_result.get("summary") or content,

@@ -5,6 +5,7 @@ sqlalchemy
 openai
 python-dotenv
 requests
+dropbox
 pandas
 openpyxl
 xlrd
