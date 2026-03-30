@@ -663,6 +663,13 @@ def is_product_intent_message(text_value: Optional[str]):
     return has_keyword or quantity_format or shorthand_format
 
 
+def is_greeting_message(text_value: Optional[str]):
+    lowered = normalize_text_value(text_value)
+    if not lowered:
+        return False
+    return lowered in {"hola", "buen dia", "buenos dias", "buenas tardes", "buenas noches", "hello", "hi"}
+
+
 def detect_business_intent(text_value: Optional[str]):
     if not text_value:
         return "consulta_general"
@@ -752,6 +759,13 @@ def extract_product_request(text_value: Optional[str]):
 
     if requested_unit in PRESENTATION_ALIASES:
         search_terms.extend(PRESENTATION_ALIASES[requested_unit])
+
+    if requested_unit is None:
+        for candidate_unit, aliases in PRESENTATION_ALIASES.items():
+            if any(term in search_terms for term in aliases):
+                requested_unit = candidate_unit
+                search_terms.extend(aliases)
+                break
 
     deduped_terms = []
     seen_terms = set()
@@ -1293,11 +1307,11 @@ def lookup_product_context(text_value: Optional[str]):
                         stock,
                         costo_promedio_und,
                         ({' + '.join(inventory_scores)}) AS match_score,
-                        lower(
+                        unaccent(lower(
                             COALESCE(descripcion, '') || ' ' ||
                             COALESCE(referencia, '') || ' ' ||
                             COALESCE(marca, '')
-                        ) AS search_blob
+                        )) AS search_blob
                     FROM public.raw_rotacion_inventarios
                 ) inventory
                 WHERE {' OR '.join(inventory_filters)}
@@ -1327,12 +1341,12 @@ def lookup_product_context(text_value: Optional[str]):
                         unidades_vendidas_netas,
                         valor_venta_neto,
                         ({' + '.join(sales_scores)}) AS match_score,
-                        lower(
+                        unaccent(lower(
                             COALESCE(nombre_articulo, '') || ' ' ||
                             COALESCE(codigo_articulo, '') || ' ' ||
                             COALESCE(marca_producto, '') || ' ' ||
                             COALESCE(categoria_producto, '')
-                        ) AS search_blob
+                        )) AS search_blob
                     FROM public.vw_ventas_netas
                 ) sales
                 WHERE {' OR '.join(sales_filters)}
@@ -1688,6 +1702,49 @@ async def receive_whatsapp_webhook(request: Request):
                     "verified_cliente_codigo": verified_cliente_codigo,
                     "sensitive_request": sensitive_request,
                 }
+
+                if is_greeting_message(content):
+                    response_text = f"Hola, {context.get('nombre_visible') or 'cliente'}. ¿En qué puedo ayudarte hoy?"
+                    outbound_payload = None
+                    try:
+                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
+                        provider_message_id = None
+                        if outbound_payload.get("messages"):
+                            provider_message_id = outbound_payload["messages"][0].get("id")
+                        store_outbound_message(
+                            context["conversation_id"],
+                            provider_message_id,
+                            "text",
+                            response_text,
+                            outbound_payload,
+                            intent_detectado="saludo",
+                        )
+                    except Exception as exc:
+                        store_outbound_message(
+                            context["conversation_id"],
+                            None,
+                            "system",
+                            f"No fue posible enviar saludo: {exc}",
+                            {"error": str(exc), "response_text": response_text},
+                            intent_detectado="saludo",
+                        )
+
+                    update_conversation_context(
+                        context["conversation_id"],
+                        {"intent": "saludo", "awaiting_verification": False},
+                        summary="Saludo inicial",
+                    )
+                    processed_messages.append(
+                        {
+                            "conversation_id": context["conversation_id"],
+                            "telefono": context["telefono_e164"],
+                            "message_type": message_type,
+                            "provider_message_id": message.get("id"),
+                            "ai_response_sent": bool(outbound_payload),
+                            "greeting_reply": True,
+                        }
+                    )
+                    continue
 
                 if detected_intent == "consulta_productos":
                     direct_result = build_direct_reply(
