@@ -60,12 +60,38 @@ PRODUCT_STOPWORDS = {
     "refer",
     "es",
     "producto",
+    "marca",
 }
 
 
 PRESENTATION_ALIASES = {
-    "cuñete": ["cunete", "cunetes", "cuenete", "cuenetes", "cuñete", "cuñetes", "caneca", "canecas", "cubeta", "cubetas", "18.93l", "18.93", "5gl"],
-    "galon": ["galon", "galones", "gal", "3.79l", "3.79", "1gl"],
+    "cuñete": ["cunete", "cunetes", "cuenete", "cuenetes", "cuñete", "cuñetes", "caneca", "canecas", "cubeta", "cubetas", "18.93l", "18.93", "1/5", "5gl"],
+    "galon": ["galon", "galones", "gal", "3.79l", "3.79", "1/1", "1gl"],
+    "cuarto": ["cuarto", "cuartos", "0.95l", "0.95", "1/4"],
+}
+
+
+PRESENTATION_LABELS = {
+    "cuñete": ("cuñete", "cuñetes"),
+    "galon": ("galón", "galones"),
+    "cuarto": ("cuarto", "cuartos"),
+}
+
+
+PRESENTATION_SHORTCUTS = {
+    "1": "galon",
+    "4": "cuarto",
+    "5": "cuñete",
+}
+
+
+PRESENTATION_SIZE_MAP = {
+    "18.93": "cuñete",
+    "18.93l": "cuñete",
+    "3.79": "galon",
+    "3.79l": "galon",
+    "0.95": "cuarto",
+    "0.95l": "cuarto",
 }
 
 
@@ -74,9 +100,11 @@ PORTFOLIO_ALIASES = {
     "viniloco": ["viniloco", "vinilico", "viniltex", "vinilo", "vinilico blanco", "viniltex blanco"],
     "viniltex": ["viniltex", "vinilico", "vinilo", "vtx"],
     "domestico": ["domestico", "doméstico", "vinilico", "viniltex", "economico", "económico"],
-    "corona": ["corona", "corona arquitectonico", "corona tradicional"],
     "pintuco": ["pintuco", "viniltex", "p11", "p-11", "p 11"],
     "p11": ["p11", "p-11", "p 11", "pintuco 11"],
+    "abracol": ["abracol"],
+    "yale": ["yale"],
+    "goya": ["goya"],
 }
 
 
@@ -221,6 +249,196 @@ def sequence_similarity(left_value: Optional[str], right_value: Optional[str]):
     if not left_normalized or not right_normalized:
         return 0.0
     return SequenceMatcher(None, left_normalized, right_normalized).ratio()
+
+
+def get_presentation_label(unit_value: Optional[str], quantity_value: Optional[float] = None):
+    if not unit_value:
+        return ""
+    singular_label, plural_label = PRESENTATION_LABELS.get(unit_value, (unit_value, f"{unit_value}s"))
+    if quantity_value is not None and float(quantity_value) == 1:
+        return singular_label
+    return plural_label
+
+
+def should_store_learning_phrase(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    if is_product_code_message(normalized):
+        return False
+    return len(normalized) >= 4
+
+
+def ensure_product_learning_table():
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS public.agent_product_learning (
+                    id bigserial PRIMARY KEY,
+                    normalized_phrase text NOT NULL,
+                    raw_phrase text NOT NULL,
+                    canonical_reference text NOT NULL,
+                    canonical_description text,
+                    canonical_brand text,
+                    canonical_presentation text,
+                    source_conversation_id bigint REFERENCES public.agent_conversation(id) ON DELETE SET NULL,
+                    source_message text,
+                    confidence numeric(5,4) NOT NULL DEFAULT 0.7500,
+                    usage_count integer NOT NULL DEFAULT 1,
+                    created_at timestamptz NOT NULL DEFAULT now(),
+                    updated_at timestamptz NOT NULL DEFAULT now(),
+                    CONSTRAINT uq_agent_product_learning UNIQUE (normalized_phrase, canonical_reference)
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_agent_product_learning_phrase
+                ON public.agent_product_learning(normalized_phrase)
+                """
+            )
+        )
+
+
+def learn_product_resolution(conversation_id: Optional[int], product_request: Optional[dict], product_context: list[dict], conversation_context: Optional[dict] = None):
+    if not product_request or not product_context:
+        return
+
+    phrases = []
+    previous_product_request = (conversation_context or {}).get("last_product_request") or {}
+    for candidate_phrase in [
+        product_request.get("original_query"),
+        " ".join(product_request.get("core_terms") or []),
+        previous_product_request.get("original_query"),
+        " ".join(previous_product_request.get("core_terms") or []),
+    ]:
+        if should_store_learning_phrase(candidate_phrase):
+            normalized_phrase = normalize_text_value(candidate_phrase)
+            if normalized_phrase not in phrases:
+                phrases.append(normalized_phrase)
+
+    if not phrases:
+        return
+
+    ensure_product_learning_table()
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        for phrase in phrases[:6]:
+            for row in product_context[:3]:
+                reference_value = row.get("referencia") or row.get("codigo_articulo")
+                if not reference_value:
+                    continue
+                canonical_presentation = None
+                description_value = normalize_text_value(row.get("descripcion") or row.get("nombre_articulo"))
+                for size_token, unit_name in PRESENTATION_SIZE_MAP.items():
+                    if size_token in description_value:
+                        canonical_presentation = unit_name
+                        break
+                connection.execute(
+                    text(
+                        """
+                        INSERT INTO public.agent_product_learning (
+                            normalized_phrase,
+                            raw_phrase,
+                            canonical_reference,
+                            canonical_description,
+                            canonical_brand,
+                            canonical_presentation,
+                            source_conversation_id,
+                            source_message,
+                            confidence,
+                            usage_count,
+                            created_at,
+                            updated_at
+                        )
+                        VALUES (
+                            :normalized_phrase,
+                            :raw_phrase,
+                            :canonical_reference,
+                            :canonical_description,
+                            :canonical_brand,
+                            :canonical_presentation,
+                            :source_conversation_id,
+                            :source_message,
+                            :confidence,
+                            1,
+                            now(),
+                            now()
+                        )
+                        ON CONFLICT (normalized_phrase, canonical_reference)
+                        DO UPDATE SET
+                            canonical_description = COALESCE(EXCLUDED.canonical_description, public.agent_product_learning.canonical_description),
+                            canonical_brand = COALESCE(EXCLUDED.canonical_brand, public.agent_product_learning.canonical_brand),
+                            canonical_presentation = COALESCE(EXCLUDED.canonical_presentation, public.agent_product_learning.canonical_presentation),
+                            source_conversation_id = COALESCE(EXCLUDED.source_conversation_id, public.agent_product_learning.source_conversation_id),
+                            source_message = COALESCE(EXCLUDED.source_message, public.agent_product_learning.source_message),
+                            confidence = GREATEST(public.agent_product_learning.confidence, EXCLUDED.confidence),
+                            usage_count = public.agent_product_learning.usage_count + 1,
+                            updated_at = now()
+                        """
+                    ),
+                    {
+                        "normalized_phrase": phrase,
+                        "raw_phrase": phrase,
+                        "canonical_reference": str(reference_value),
+                        "canonical_description": row.get("descripcion") or row.get("nombre_articulo"),
+                        "canonical_brand": row.get("marca") or row.get("marca_producto"),
+                        "canonical_presentation": canonical_presentation,
+                        "source_conversation_id": conversation_id,
+                        "source_message": product_request.get("original_query"),
+                        "confidence": 0.95 if product_request.get("product_codes") else 0.82,
+                    },
+                )
+
+
+def fetch_learned_product_references(product_request: Optional[dict]):
+    if not product_request:
+        return []
+
+    phrases = []
+    for candidate_phrase in [
+        product_request.get("original_query"),
+        " ".join(product_request.get("core_terms") or []),
+    ]:
+        normalized_phrase = normalize_text_value(candidate_phrase)
+        if normalized_phrase and normalized_phrase not in phrases:
+            phrases.append(normalized_phrase)
+
+    if not phrases:
+        return []
+
+    ensure_product_learning_table()
+    engine = get_db_engine()
+    learned_rows = []
+    with engine.connect() as connection:
+        for index, phrase in enumerate(phrases[:4]):
+            row_set = connection.execute(
+                text(
+                    """
+                    SELECT canonical_reference, MAX(confidence) AS confidence, SUM(usage_count) AS total_hits
+                    FROM public.agent_product_learning
+                    WHERE normalized_phrase = :normalized_phrase
+                    GROUP BY canonical_reference
+                    ORDER BY MAX(confidence) DESC, SUM(usage_count) DESC
+                    LIMIT 5
+                    """
+                ),
+                {"normalized_phrase": phrase},
+            ).mappings().all()
+            learned_rows.extend(row_set)
+
+    ordered_references = []
+    seen_references = set()
+    for row in learned_rows:
+        reference_value = row.get("canonical_reference")
+        if reference_value and reference_value not in seen_references:
+            seen_references.add(reference_value)
+            ordered_references.append(reference_value)
+    return ordered_references[:5]
 
 
 def extract_product_codes(text_value: Optional[str]):
@@ -772,8 +990,14 @@ def is_product_intent_message(text_value: Optional[str]):
         "vinilico",
         "vinilux",
         "domestico",
+        "pintuco",
+        "abracol",
+        "yale",
+        "goya",
         "galon",
         "galones",
+        "cuarto",
+        "cuartos",
         "cunete",
         "cunetes",
         "cuñete",
@@ -786,7 +1010,7 @@ def is_product_intent_message(text_value: Optional[str]):
         "p11",
     ]
     has_keyword = any(keyword in lowered for keyword in product_keywords)
-    quantity_format = bool(re.search(r"\b\d+(?:[.,]\d+)?\s*(galones?|galon|cunetes?|cuñetes?|canecas?|cubetas?)\b", lowered))
+    quantity_format = bool(re.search(r"\b\d+(?:[.,]\d+)?\s*(galones?|galon|cuartos?|cunetes?|cuñetes?|canecas?|cubetas?)\b", lowered))
     shorthand_format = bool(re.search(r"\b\d+\s*/\s*\d+\b", lowered))
     code_with_stock = bool(re.search(r"\b\d{4,10}\b", lowered)) and any(kw in lowered for kw in ["stock", "inventario", "hay", "precio", "cuanto", "producto"])
     return has_keyword or quantity_format or shorthand_format or code_with_stock
@@ -856,6 +1080,7 @@ def extract_product_request(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     if not normalized:
         return {
+            "core_terms": [],
             "search_terms": [],
             "requested_quantity": None,
             "requested_unit": None,
@@ -869,7 +1094,7 @@ def extract_product_request(text_value: Optional[str]):
     requested_unit = None
     quantity_expression = None
 
-    quantity_match = re.search(r"\b(\d+(?:[.,]\d+)?)\s*(galones?|galon|cunetes?|cuñetes?|canecas?|cubetas?)\b", normalized)
+    quantity_match = re.search(r"\b(\d+(?:[.,]\d+)?)\s*(galones?|galon|cuartos?|cunetes?|cuñetes?|canecas?|cubetas?)\b", normalized)
     if quantity_match:
         requested_quantity = parse_numeric_value(quantity_match.group(1))
         raw_unit = quantity_match.group(2)
@@ -877,8 +1102,10 @@ def extract_product_request(text_value: Optional[str]):
             requested_unit = "galon"
         elif raw_unit in PRESENTATION_ALIASES["cuñete"]:
             requested_unit = "cuñete"
+        elif raw_unit in PRESENTATION_ALIASES["cuarto"]:
+            requested_unit = "cuarto"
 
-    quantity_match_reversed = re.search(r"\b(galones?|galon|cunetes?|cuñetes?|canecas?|cubetas?)\s*(\d+(?:[.,]\d+)?)\b", normalized)
+    quantity_match_reversed = re.search(r"\b(galones?|galon|cuartos?|cunetes?|cuñetes?|canecas?|cubetas?)\s*(\d+(?:[.,]\d+)?)\b", normalized)
     if quantity_match_reversed and requested_quantity is None:
         raw_unit = quantity_match_reversed.group(1)
         requested_quantity = parse_numeric_value(quantity_match_reversed.group(2))
@@ -886,12 +1113,22 @@ def extract_product_request(text_value: Optional[str]):
             requested_unit = "galon"
         elif raw_unit in PRESENTATION_ALIASES["cuñete"]:
             requested_unit = "cuñete"
+        elif raw_unit in PRESENTATION_ALIASES["cuarto"]:
+            requested_unit = "cuarto"
 
-    shorthand_match = re.search(r"\b(\d+)\s*/\s*(\d+)\b", normalized)
+    shorthand_match = re.search(r"\b(\d+(?:[.,]\d+)?)\s*/\s*(1|4|5)\b", normalized)
     if shorthand_match:
         quantity_expression = f"{shorthand_match.group(1)}/{shorthand_match.group(2)}"
         if requested_quantity is None:
             requested_quantity = parse_numeric_value(shorthand_match.group(1))
+        if requested_unit is None:
+            requested_unit = PRESENTATION_SHORTCUTS.get(shorthand_match.group(2))
+
+    if requested_unit is None:
+        for size_token, unit_name in PRESENTATION_SIZE_MAP.items():
+            if re.search(rf"\b{re.escape(size_token)}\b", normalized):
+                requested_unit = unit_name
+                break
 
     tokens = [token for token in re.findall(r"[a-z0-9.-]+", normalized) if len(token) >= 2]
     search_terms = []
@@ -1366,8 +1603,8 @@ def build_direct_reply(
                     f"Hola, {nombre}. Busqué *{referencia_solicitada or 'esa referencia'}* pero no encontré una coincidencia en el inventario. "
                     "¿Podrías darme más detalles? Por ejemplo:\n"
                     "• La referencia o código del producto\n"
-                    "• La marca o línea del portafolio Ferreinox o Tiendas Pintuco\n"
-                    "• La presentación (galón, cuñete)\n"
+                    "• La marca o línea del portafolio Ferreinox: Pintuco, Abracol, Yale o Goya\n"
+                    "• La presentación (galón, cuñete, cuarto, 1/1, 1/5, 1/4)\n"
                     "• La tienda que te interesa (CEDI, Armenia, Manizales, Opalo, Pereira, Laures, Cerritos o Ferrebox)\n"
                     "Así puedo buscarlo con más precisión."
                 ),
@@ -1384,7 +1621,7 @@ def build_direct_reply(
             requested_unit = product_request.get("requested_unit")
             quantity_expression = product_request.get("quantity_expression")
             if requested_quantity and requested_unit:
-                quantity_note = f"Entendí una solicitud de {requested_quantity:g} {requested_unit}{'es' if requested_quantity != 1 else ''}"
+                quantity_note = f"Entendí una solicitud de {requested_quantity:g} {get_presentation_label(requested_unit, requested_quantity)}"
             elif quantity_expression:
                 quantity_note = f"Tomé la referencia de cantidad {quantity_expression} para orientarte mejor"
 
@@ -1443,15 +1680,53 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
     core_terms = product_request.get("core_terms") or []
     terms = product_request.get("search_terms") or []
     product_codes = product_request.get("product_codes") or []
+    learned_references = fetch_learned_product_references(product_request)
     store_filters = product_request.get("store_filters") or []
     normalized_query = normalize_text_value(text_value)
 
-    if not terms and not product_codes:
+    if not terms and not product_codes and not learned_references:
         return []
 
     try:
         engine = get_db_engine()
         with engine.connect() as connection:
+            if learned_references:
+                learned_params = {}
+                learned_filters = []
+                for index, reference_value in enumerate(learned_references[:5]):
+                    learned_params[f"learned_ref_{index}"] = normalize_reference_value(reference_value)
+                    learned_filters.append(f"referencia_normalizada = :learned_ref_{index}")
+                learned_store_clause = ""
+                if store_filters:
+                    learned_store_predicates = []
+                    for store_index, store_code in enumerate(store_filters):
+                        learned_params[f"learned_store_{store_index}"] = store_code
+                        learned_store_predicates.append(f"cod_almacen = :learned_store_{store_index}")
+                    learned_store_clause = f" AND ({' OR '.join(learned_store_predicates)})"
+                learned_rows = connection.execute(
+                    text(
+                        f"""
+                        SELECT referencia, descripcion, marca,
+                               COALESCE(SUM(stock_disponible), 0) AS stock_total,
+                               AVG(costo_promedio_und) AS costo_promedio_und,
+                               STRING_AGG(
+                                   almacen_nombre || ': ' || COALESCE(stock_disponible::text, '0'),
+                                   '; '
+                                   ORDER BY almacen_nombre
+                               ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
+                               90 AS match_score
+                        FROM public.vw_inventario_agente
+                        WHERE ({' OR '.join(learned_filters)}){learned_store_clause}
+                        GROUP BY referencia, descripcion, marca
+                        ORDER BY COALESCE(SUM(stock_disponible), 0) DESC NULLS LAST
+                        LIMIT 5
+                        """
+                    ),
+                    learned_params,
+                ).mappings().all()
+                if learned_rows:
+                    return [dict(row) for row in learned_rows]
+
             if product_codes:
                 code_params = {}
                 code_filters = []
@@ -1653,6 +1928,9 @@ def build_agent_prompt(
             "content": (
                 "Eres el agente de servicio al cliente de Ferreinox. Responde en espanol claro, util y profesional. "
                 "Debes detectar tono del cliente, intencion principal y prioridad. Usa el contexto ERP disponible para responder con precision. "
+                "El portafolio comercial valido para orientar respuestas incluye principalmente Pintuco, Abracol, Yale, Goya y las categorias reales del ERP. "
+                "No inventes marcas fuera del portafolio y no sugieras Corona como marca comercial de Ferreinox. "
+                "Interpreta lenguaje ferretero y comercial como: 18.93 = cuñete, 3.79 = galon, 0.95 = cuarto, 1/1 = galon, 1/5 = cuñete, 1/4 = cuarto, 5/1 = cinco galones. "
                 "Nunca reveles cartera, saldos, ventas historicas o datos privados si verification_state.verified es falso. En ese caso pide cedula o NIT. "
                 "Si no tienes un dato seguro, dilo claramente y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos comerciales. "
                 "Devuelve JSON valido con estas claves exactas: tono, intent, priority, summary, response_text, should_create_task, task_type, task_summary, task_detail."
@@ -2061,15 +2339,17 @@ async def receive_whatsapp_webhook(request: Request):
 
                 if detected_intent == "consulta_productos":
                     try:
+                        product_context_result = lookup_product_context(content, product_request)
                         direct_result = build_direct_reply(
                             detected_intent,
                             cliente_contexto,
-                            lookup_product_context(content, product_request),
+                            product_context_result,
                             context.get("nombre_visible"),
                             product_request,
                             content,
                         )
                     except Exception:
+                        product_context_result = []
                         direct_result = {
                             "tono": "informativo",
                             "intent": "consulta_productos",
@@ -2085,6 +2365,16 @@ async def receive_whatsapp_webhook(request: Request):
                             "task_summary": "Error en consulta de productos",
                             "task_detail": {"mensaje": content},
                         }
+                    if product_context_result:
+                        try:
+                            learn_product_resolution(
+                                context["conversation_id"],
+                                product_request,
+                                product_context_result,
+                                conversation_context,
+                            )
+                        except Exception:
+                            pass
                     outbound_payload = None
                     response_text = direct_result["response_text"]
                     try:

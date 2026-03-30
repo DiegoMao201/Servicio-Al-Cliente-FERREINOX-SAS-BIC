@@ -58,6 +58,23 @@ CREATE TABLE IF NOT EXISTS public.agent_task (
     CONSTRAINT chk_agent_task_estado CHECK (estado IN ('pendiente', 'en_progreso', 'resuelta', 'cancelada'))
 );
 
+CREATE TABLE IF NOT EXISTS public.agent_product_learning (
+    id bigserial PRIMARY KEY,
+    normalized_phrase text NOT NULL,
+    raw_phrase text NOT NULL,
+    canonical_reference text NOT NULL,
+    canonical_description text,
+    canonical_brand text,
+    canonical_presentation text,
+    source_conversation_id bigint REFERENCES public.agent_conversation(id) ON DELETE SET NULL,
+    source_message text,
+    confidence numeric(5,4) NOT NULL DEFAULT 0.7500,
+    usage_count integer NOT NULL DEFAULT 1,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT uq_agent_product_learning UNIQUE (normalized_phrase, canonical_reference)
+);
+
 CREATE INDEX IF NOT EXISTS idx_whatsapp_contacto_cliente ON public.whatsapp_contacto(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_agent_conversation_contacto ON public.agent_conversation(contacto_id);
 CREATE INDEX IF NOT EXISTS idx_agent_conversation_estado ON public.agent_conversation(estado);
@@ -65,5 +82,6 @@ CREATE INDEX IF NOT EXISTS idx_agent_message_conversation ON public.agent_messag
 CREATE INDEX IF NOT EXISTS idx_agent_message_provider ON public.agent_message(provider_message_id);
 CREATE INDEX IF NOT EXISTS idx_agent_task_conversation ON public.agent_task(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_agent_task_estado ON public.agent_task(estado);
+CREATE INDEX IF NOT EXISTS idx_agent_product_learning_phrase ON public.agent_product_learning(normalized_phrase);
 
 COMMIT;
