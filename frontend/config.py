@@ -38,8 +38,8 @@ DROPBOX_ENV_MAP = {
 def get_streamlit_secrets():
     """Devuelve los secretos de Streamlit si existen; si no, retorna un dict vacío."""
     try:
-        return st.secrets
-    except StreamlitSecretNotFoundError:
+        return dict(st.secrets)
+    except (StreamlitSecretNotFoundError, Exception):
         return {}
 
 
