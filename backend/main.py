@@ -45,6 +45,35 @@ TECHNICAL_DOC_STOPWORDS = {
     "anexame",
     "sirve",
     "sirva",
+    "puedes",
+    "puede",
+    "podrias",
+    "podria",
+    "quiero",
+    "quieres",
+    "necesito",
+    "enviar",
+    "envies",
+    "mandar",
+    "mandes",
+    "archivo",
+    "documento",
+    "documentacion",
+    "tecnica",
+    "tecnico",
+    "segun",
+    "saber",
+    "tienes",
+    "tiene",
+    "tengo",
+    "si",
+    "es",
+    "que",
+    "del",
+    "de",
+    "me",
+    "la",
+    "el",
 }
 TECHNICAL_DOC_CACHE = {"loaded_at": 0.0, "entries": []}
 
@@ -343,10 +372,11 @@ def is_technical_document_message(text_value: Optional[str]):
 def extract_technical_document_request(text_value: Optional[str], product_request: Optional[dict] = None, conversation_context: Optional[dict] = None):
     normalized = normalize_text_value(text_value)
     request = product_request or extract_product_request(text_value)
+    previous_document_request = (conversation_context or {}).get("last_document_request") or {}
     previous_request = (conversation_context or {}).get("last_product_request") or {}
 
-    terms = []
-    for source_terms in [request.get("core_terms") or [], previous_request.get("core_terms") or []]:
+    def collect_terms(source_terms: list[str]):
+        collected_terms = []
         for term in source_terms:
             normalized_term = normalize_text_value(term)
             if (
@@ -354,9 +384,22 @@ def extract_technical_document_request(text_value: Optional[str], product_reques
                 and normalized_term not in TECHNICAL_DOC_STOPWORDS
                 and normalized_term not in PRODUCT_STOPWORDS
                 and not is_store_alias_term(normalized_term)
-                and normalized_term not in terms
+                and len(normalized_term) >= 3
+                and normalized_term not in collected_terms
             ):
-                terms.append(normalized_term)
+                collected_terms.append(normalized_term)
+        return collected_terms
+
+    current_terms = collect_terms(request.get("core_terms") or [])
+    previous_document_terms = collect_terms(previous_document_request.get("terms") or [])
+    previous_product_terms = collect_terms(previous_request.get("core_terms") or [])
+
+    if current_terms:
+        terms = current_terms
+    elif previous_document_terms:
+        terms = previous_document_terms
+    else:
+        terms = previous_product_terms
 
     wants_safety_sheet = any(keyword in normalized for keyword in ["hoja de seguridad", "hoja seguridad", "seguridad", "fds", "msds"])
     wants_technical_sheet = any(keyword in normalized for keyword in ["ficha tecnica", "ficha técnica", "ficha", "tecnica", "técnica"])
@@ -3178,6 +3221,10 @@ async def receive_whatsapp_webhook(request: Request):
                     selected_document_option = resolve_technical_document_choice(content, pending_document_options)
                     if selected_document_option:
                         detected_intent = "consulta_documentacion"
+                    else:
+                        pending_document_request = extract_technical_document_request(content, product_request, conversation_context)
+                        if pending_document_request.get("terms"):
+                            detected_intent = "consulta_documentacion"
                 if detected_intent == "consulta_productos" and is_product_code_message(content):
                     previous_product_request = conversation_context.get("last_product_request") or {}
                     merged_core_terms = list(previous_product_request.get("core_terms") or [])

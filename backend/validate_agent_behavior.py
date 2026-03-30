@@ -20,12 +20,14 @@ def main() -> None:
 
     from backend.main import (
         build_direct_reply,
+        extract_technical_document_request,
         extract_product_request,
         fetch_latest_purchase_detail,
         find_cliente_contexto_by_document,
         is_greeting_message,
         is_identity_verification_message,
         lookup_product_context,
+        search_technical_documents,
     )
 
     print("GREETING TYPO CHECK:")
@@ -39,6 +41,19 @@ def main() -> None:
     }
     print("VERIFICATION ROUTING CHECK:")
     print("1053774777 =>", is_identity_verification_message("1053774777", verification_context))
+
+    document_context = {
+        "last_product_request": extract_product_request("necesito saber si tienes inventario de 1501 viniltex en pereira")
+    }
+    document_request = extract_technical_document_request(
+        "pintulux es la ficha tecnica que necesito",
+        extract_product_request("pintulux es la ficha tecnica que necesito"),
+        document_context,
+    )
+    document_matches = search_technical_documents(document_request)
+    print("DOCUMENT REFINEMENT CHECK:")
+    print(document_request)
+    print([row["name"] for row in document_matches[:4]])
 
     product_message = "1501 en cuñete en pereira hay ?"
     product_request = extract_product_request(product_message)
