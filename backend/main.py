@@ -15,6 +15,7 @@ app = FastAPI(title="CRM Ferreinox Backend", version="2026.2")
 
 
 PRODUCT_STOPWORDS = {
+    "ay",
     "de",
     "del",
     "la",
@@ -43,6 +44,9 @@ PRODUCT_STOPWORDS = {
     "sobre",
     "tengo",
     "hay",
+    "tienen",
+    "inventario",
+    "stock",
     "en",
     "este",
     "ano",
@@ -53,7 +57,7 @@ PRODUCT_STOPWORDS = {
 
 
 PRESENTATION_ALIASES = {
-    "cuñete": ["cunete", "cunetes", "cuñete", "cuñetes", "caneca", "canecas", "cubeta", "cubetas", "18.93l", "18.93", "5gl"],
+    "cuñete": ["cunete", "cunetes", "cuenete", "cuenetes", "cuñete", "cuñetes", "caneca", "canecas", "cubeta", "cubetas", "18.93l", "18.93", "5gl"],
     "galon": ["galon", "galones", "gal", "3.79l", "3.79", "1gl"],
 }
 
@@ -282,6 +286,27 @@ def store_inbound_message(
                 "payload": safe_json_dumps(payload),
             },
         )
+
+
+def inbound_message_already_processed(provider_message_id: Optional[str]):
+    if not provider_message_id:
+        return False
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT id
+                FROM public.agent_message
+                WHERE provider_message_id = :provider_message_id
+                  AND direction = 'inbound'
+                LIMIT 1
+                """
+            ),
+            {"provider_message_id": provider_message_id},
+        ).mappings().one_or_none()
+    return row is not None
 
 
 def store_outbound_message(
@@ -648,6 +673,11 @@ def detect_business_intent(text_value: Optional[str]):
     if any(
         keyword in lowered
         for keyword in [
+            "ultima compra",
+            "última compra",
+            "ultimo pedido",
+            "último pedido",
+            "compra",
             "que he comprado",
             "qué he comprado",
             "he comprado",
@@ -754,6 +784,7 @@ def extract_purchase_query(text_value: Optional[str]):
         "start_date": None,
         "end_date": None,
         "label": "los ultimos 12 meses",
+        "wants_last_purchase": any(keyword in normalized for keyword in ["ultima compra", "última compra", "ultimo pedido", "último pedido"]),
         "wants_products": any(keyword in normalized for keyword in ["producto", "productos", "que compre", "que productos", "qué compré", "qué productos"]),
         "has_time_filter": False,
     }
@@ -910,6 +941,62 @@ def fetch_purchase_summary(
     return {"totals": dict(totals), "products": [dict(row) for row in product_rows]}
 
 
+def fetch_latest_purchase_detail(cliente_codigo: Optional[str]):
+    if not cliente_codigo:
+        return None
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        latest_row = connection.execute(
+            text(
+                """
+                SELECT MAX(fecha_venta) AS fecha_venta
+                FROM public.vw_ventas_netas
+                WHERE cliente_id = :cliente_codigo
+                """
+            ),
+            {"cliente_codigo": cliente_codigo},
+        ).mappings().one()
+
+        latest_date = latest_row.get("fecha_venta")
+        if not latest_date:
+            return None
+
+        totals = connection.execute(
+            text(
+                """
+                SELECT
+                    COUNT(*) AS lineas,
+                    COALESCE(SUM(valor_venta_neto), 0) AS valor_total,
+                    COALESCE(SUM(unidades_vendidas_netas), 0) AS unidades_totales
+                FROM public.vw_ventas_netas
+                WHERE cliente_id = :cliente_codigo
+                  AND fecha_venta = :latest_date
+                """
+            ),
+            {"cliente_codigo": cliente_codigo, "latest_date": latest_date},
+        ).mappings().one()
+
+        products = connection.execute(
+            text(
+                """
+                SELECT codigo_articulo, nombre_articulo,
+                       COALESCE(SUM(unidades_vendidas_netas), 0) AS unidades,
+                       COALESCE(SUM(valor_venta_neto), 0) AS valor
+                FROM public.vw_ventas_netas
+                WHERE cliente_id = :cliente_codigo
+                  AND fecha_venta = :latest_date
+                GROUP BY 1, 2
+                ORDER BY valor DESC NULLS LAST
+                LIMIT 10
+                """
+            ),
+            {"cliente_codigo": cliente_codigo, "latest_date": latest_date},
+        ).mappings().all()
+
+    return {"fecha_venta": latest_date, "totals": dict(totals), "products": [dict(row) for row in products]}
+
+
 def fetch_overdue_documents(cliente_codigo: Optional[str]):
     if not cliente_codigo:
         return None
@@ -1021,6 +1108,42 @@ def build_direct_reply(
         if not cliente_contexto or not cliente_contexto.get("cliente_codigo"):
             return None
         purchase_query = extract_purchase_query(user_message)
+        if purchase_query.get("wants_last_purchase"):
+            latest_purchase = fetch_latest_purchase_detail(cliente_contexto.get("cliente_codigo"))
+            if not latest_purchase or not latest_purchase.get("fecha_venta"):
+                return {
+                    "tono": "informativo",
+                    "intent": intent,
+                    "priority": "media",
+                    "summary": f"Consulta de ultima compra de {cliente_contexto.get('cliente_codigo')}",
+                    "response_text": f"Hola, {nombre}. No encontré una compra registrada para este cliente.",
+                    "should_create_task": False,
+                    "task_type": "seguimiento_cliente",
+                    "task_summary": "Consulta de ultima compra",
+                    "task_detail": {},
+                }
+
+            product_summary = "; ".join(
+                f"{row['nombre_articulo']} ({format_currency(row['valor'])}, {int(float(row['unidades'] or 0))} unidades)"
+                for row in latest_purchase.get("products", [])[:6]
+            ) or "sin detalle de productos"
+            totals = latest_purchase.get("totals") or {}
+            return {
+                "tono": "informativo",
+                "intent": intent,
+                "priority": "media",
+                "summary": f"Consulta de ultima compra de {cliente_contexto.get('cliente_codigo')}",
+                "response_text": (
+                    f"Hola, {nombre}. Tu última compra fue el {latest_purchase.get('fecha_venta')} por {format_currency(totals.get('valor_total'))}, "
+                    f"con {int(totals.get('lineas') or 0)} líneas y {int(float(totals.get('unidades_totales') or 0))} unidades. "
+                    f"Los productos fueron: {product_summary}."
+                ),
+                "should_create_task": False,
+                "task_type": "seguimiento_cliente",
+                "task_summary": "Consulta de ultima compra",
+                "task_detail": latest_purchase,
+            }
+
         purchases = fetch_purchase_summary(
             cliente_contexto.get("cliente_codigo"),
             purchase_query.get("start_date"),
@@ -1059,7 +1182,24 @@ def build_direct_reply(
             "task_detail": purchases or {},
         }
 
-    if intent == "consulta_productos" and product_context:
+    if intent == "consulta_productos":
+        if not product_context:
+            referencia_solicitada = ", ".join((product_request or {}).get("search_terms") or [])
+            return {
+                "tono": "informativo",
+                "intent": intent,
+                "priority": "media",
+                "summary": "Consulta de productos sin coincidencia exacta",
+                "response_text": (
+                    f"Hola, {nombre}. No encontré una coincidencia exacta para {referencia_solicitada or 'esa referencia'}. "
+                    "Si quieres, envíame la referencia exacta, la marca o la presentación y te respondo el stock disponible."
+                ),
+                "should_create_task": False,
+                "task_type": "seguimiento_cliente",
+                "task_summary": "Consulta de productos sin match exacto",
+                "task_detail": {"product_request": product_request or {}},
+            }
+
         product_lines = []
         quantity_note = None
         if product_request:
@@ -1424,6 +1564,18 @@ async def receive_whatsapp_webhook(request: Request):
                 from_number = message.get("from") or wa_id
                 context = ensure_contact_and_conversation(from_number, profile_name)
                 message_type = message.get("type", "text")
+                if inbound_message_already_processed(message.get("id")):
+                    processed_messages.append(
+                        {
+                            "conversation_id": context["conversation_id"],
+                            "telefono": context["telefono_e164"],
+                            "message_type": message_type,
+                            "provider_message_id": message.get("id"),
+                            "duplicate_skipped": True,
+                        }
+                    )
+                    continue
+
                 content = None
                 if message_type == "text":
                     content = message.get("text", {}).get("body")
@@ -1536,6 +1688,62 @@ async def receive_whatsapp_webhook(request: Request):
                     "verified_cliente_codigo": verified_cliente_codigo,
                     "sensitive_request": sensitive_request,
                 }
+
+                if detected_intent == "consulta_productos":
+                    direct_result = build_direct_reply(
+                        detected_intent,
+                        cliente_contexto,
+                        lookup_product_context(content),
+                        context.get("nombre_visible"),
+                        product_request,
+                        content,
+                    )
+                    outbound_payload = None
+                    response_text = direct_result["response_text"]
+                    try:
+                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
+                        provider_message_id = None
+                        if outbound_payload.get("messages"):
+                            provider_message_id = outbound_payload["messages"][0].get("id")
+                        store_outbound_message(
+                            context["conversation_id"],
+                            provider_message_id,
+                            "text",
+                            response_text,
+                            outbound_payload,
+                            intent_detectado=direct_result.get("intent"),
+                        )
+                    except Exception as exc:
+                        store_outbound_message(
+                            context["conversation_id"],
+                            None,
+                            "system",
+                            f"No fue posible enviar respuesta de producto: {exc}",
+                            {"error": str(exc), "response_text": response_text},
+                            intent_detectado=direct_result.get("intent"),
+                        )
+
+                    update_conversation_context(
+                        context["conversation_id"],
+                        {
+                            "last_direct_intent": direct_result.get("intent"),
+                            "last_product_request": product_request,
+                            "awaiting_verification": False,
+                        },
+                        summary=direct_result.get("summary") or content,
+                    )
+
+                    processed_messages.append(
+                        {
+                            "conversation_id": context["conversation_id"],
+                            "telefono": context["telefono_e164"],
+                            "message_type": message_type,
+                            "provider_message_id": message.get("id"),
+                            "ai_response_sent": bool(outbound_payload),
+                            "direct_reply": True,
+                        }
+                    )
+                    continue
 
                 if verified_context and conversation_context.get("pending_intent") in {"consulta_cartera", "consulta_compras"}:
                     direct_result = build_direct_reply(
