@@ -56,6 +56,7 @@ services:
     expose:
       - "8501"
     environment:
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
       - BACKEND_URL=https://apicrm.datovatenexuspro.com
       - PGRST_URL=http://postgrest:3000
     depends_on:
