@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import unicodedata
 from typing import Optional
 
 import requests
@@ -10,6 +11,50 @@ from sqlalchemy import create_engine, text
 
 
 app = FastAPI(title="CRM Ferreinox Backend", version="2026.2")
+
+
+PRODUCT_STOPWORDS = {
+    "de",
+    "del",
+    "la",
+    "el",
+    "los",
+    "las",
+    "un",
+    "una",
+    "unos",
+    "unas",
+    "para",
+    "por",
+    "con",
+    "sin",
+    "que",
+    "me",
+    "mi",
+    "necesito",
+    "quiero",
+    "cotizar",
+    "comprar",
+    "pedido",
+    "favor",
+    "informacion",
+    "información",
+    "sobre",
+    "tengo",
+    "hay",
+    "en",
+    "este",
+    "ano",
+    "año",
+    "cuanto",
+    "debo",
+}
+
+
+PRESENTATION_ALIASES = {
+    "cuñete": ["cunete", "cunetes", "cuñete", "cuñetes", "caneca", "canecas", "cubeta", "cubetas", "18.93l", "18.93", "5gl"],
+    "galon": ["galon", "galones", "gal", "3.79l", "3.79", "1gl"],
+}
 
 
 def get_postgrest_url():
@@ -58,6 +103,45 @@ def get_openai_client():
 
 def get_db_engine():
     return create_engine(get_database_url())
+
+
+def safe_json_dumps(value):
+    return json.dumps(value, ensure_ascii=False, default=str)
+
+
+def normalize_text_value(text_value: Optional[str]):
+    if not text_value:
+        return ""
+    normalized = unicodedata.normalize("NFKD", text_value)
+    normalized = "".join(character for character in normalized if not unicodedata.combining(character))
+    normalized = normalized.lower()
+    normalized = re.sub(r"[^a-z0-9./+-]+", " ", normalized)
+    return re.sub(r"\s+", " ", normalized).strip()
+
+
+def parse_numeric_value(raw_value):
+    if raw_value is None:
+        return None
+    if isinstance(raw_value, (int, float)):
+        return float(raw_value)
+
+    cleaned = str(raw_value).strip()
+    if not cleaned:
+        return None
+
+    cleaned = re.sub(r"[^0-9,.-]", "", cleaned)
+    if not cleaned:
+        return None
+
+    if "," in cleaned and "." in cleaned:
+        cleaned = cleaned.replace(".", "").replace(",", ".")
+    elif "," in cleaned:
+        cleaned = cleaned.replace(",", ".")
+
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
 
 
 def normalize_phone(phone_number: Optional[str]):
@@ -177,7 +261,7 @@ def store_inbound_message(
                 "provider_message_id": provider_message_id,
                 "message_type": message_type,
                 "contenido": content,
-                "payload": json.dumps(payload),
+                "payload": safe_json_dumps(payload),
             },
         )
 
@@ -225,7 +309,7 @@ def store_outbound_message(
                 "message_type": message_type,
                 "intent_detectado": intent_detectado,
                 "contenido": content,
-                "payload": json.dumps(payload),
+                "payload": safe_json_dumps(payload),
             },
         )
 
@@ -422,7 +506,7 @@ def update_conversation_context(conversation_id: int, context_updates: dict, sum
             ),
             {
                 "summary": summary if summary is not None else existing_row["resumen"],
-                "context_payload": json.dumps(merged_context),
+                "context_payload": safe_json_dumps(merged_context),
                 "conversation_id": conversation_id,
             },
         )
@@ -464,7 +548,7 @@ def upsert_agent_task(conversation_id: int, cliente_id: Optional[int], task_type
                 "task_type": task_type,
                 "priority": priority,
                 "summary": summary,
-                "detail": json.dumps(detail),
+                "detail": safe_json_dumps(detail),
             },
         )
 
@@ -503,17 +587,45 @@ def is_sensitive_intent_message(text_value: Optional[str]):
 def is_product_intent_message(text_value: Optional[str]):
     if not text_value:
         return False
-    lowered = text_value.lower()
-    product_keywords = ["producto", "productos", "referencia", "inventario", "stock", "marca", "articulo", "precio"]
-    return any(keyword in lowered for keyword in product_keywords)
+    lowered = normalize_text_value(text_value)
+    product_keywords = [
+        "producto",
+        "productos",
+        "referencia",
+        "inventario",
+        "stock",
+        "marca",
+        "articulo",
+        "precio",
+        "viniltex",
+        "vinilico",
+        "vinilux",
+        "domestico",
+        "galon",
+        "galones",
+        "cunete",
+        "cunetes",
+        "cuñete",
+        "cuñetes",
+        "caneca",
+        "canecas",
+        "cubeta",
+        "cubetas",
+        "p-11",
+        "p11",
+    ]
+    has_keyword = any(keyword in lowered for keyword in product_keywords)
+    quantity_format = bool(re.search(r"\b\d+(?:[.,]\d+)?\s*(galones?|galon|cunetes?|cuñetes?|canecas?|cubetas?)\b", lowered))
+    shorthand_format = bool(re.search(r"\b\d+\s*/\s*\d+\b", lowered))
+    return has_keyword or quantity_format or shorthand_format
 
 
 def detect_business_intent(text_value: Optional[str]):
     if not text_value:
         return "consulta_general"
 
-    lowered = text_value.lower()
-    if any(keyword in lowered for keyword in ["cartera", "saldo", "deuda", "vencido", "estado de cuenta", "cupo", "credito"]):
+    lowered = normalize_text_value(text_value)
+    if any(keyword in lowered for keyword in ["cartera", "saldo", "deuda", "debo", "vencido", "estado de cuenta", "cupo", "credito", "cuanto debo", "cuánto debo"]):
         return "consulta_cartera"
     if any(
         keyword in lowered
@@ -546,6 +658,66 @@ def format_currency(value):
     except Exception:
         number = 0.0
     return f"${number:,.0f}".replace(",", ".")
+
+
+def extract_product_request(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return {"search_terms": [], "requested_quantity": None, "requested_unit": None, "quantity_expression": None}
+
+    requested_quantity = None
+    requested_unit = None
+    quantity_expression = None
+
+    quantity_match = re.search(r"\b(\d+(?:[.,]\d+)?)\s*(galones?|galon|cunetes?|cuñetes?|canecas?|cubetas?)\b", normalized)
+    if quantity_match:
+        requested_quantity = parse_numeric_value(quantity_match.group(1))
+        raw_unit = quantity_match.group(2)
+        if raw_unit in PRESENTATION_ALIASES["galon"]:
+            requested_unit = "galon"
+        elif raw_unit in PRESENTATION_ALIASES["cuñete"]:
+            requested_unit = "cuñete"
+
+    quantity_match_reversed = re.search(r"\b(galones?|galon|cunetes?|cuñetes?|canecas?|cubetas?)\s*(\d+(?:[.,]\d+)?)\b", normalized)
+    if quantity_match_reversed and requested_quantity is None:
+        raw_unit = quantity_match_reversed.group(1)
+        requested_quantity = parse_numeric_value(quantity_match_reversed.group(2))
+        if raw_unit in PRESENTATION_ALIASES["galon"]:
+            requested_unit = "galon"
+        elif raw_unit in PRESENTATION_ALIASES["cuñete"]:
+            requested_unit = "cuñete"
+
+    shorthand_match = re.search(r"\b(\d+)\s*/\s*(\d+)\b", normalized)
+    if shorthand_match:
+        quantity_expression = f"{shorthand_match.group(1)}/{shorthand_match.group(2)}"
+        if requested_quantity is None:
+            requested_quantity = parse_numeric_value(shorthand_match.group(1))
+
+    tokens = [token for token in re.findall(r"[a-z0-9.-]+", normalized) if len(token) >= 2]
+    search_terms = []
+    for token in tokens:
+        if token in PRODUCT_STOPWORDS:
+            continue
+        if re.fullmatch(r"\d+(?:[./]\d+)?", token):
+            continue
+        search_terms.append(token)
+
+    if requested_unit in PRESENTATION_ALIASES:
+        search_terms.extend(PRESENTATION_ALIASES[requested_unit])
+
+    deduped_terms = []
+    seen_terms = set()
+    for term in search_terms:
+        if term not in seen_terms:
+            deduped_terms.append(term)
+            seen_terms.add(term)
+
+    return {
+        "search_terms": deduped_terms[:8],
+        "requested_quantity": requested_quantity,
+        "requested_unit": requested_unit,
+        "quantity_expression": quantity_expression,
+    }
 
 
 def fetch_last_year_purchase_summary(cliente_codigo: Optional[str]):
@@ -590,7 +762,13 @@ def fetch_last_year_purchase_summary(cliente_codigo: Optional[str]):
     return {"totals": dict(totals), "top_products": [dict(row) for row in top_products]}
 
 
-def build_direct_reply(intent: str, cliente_contexto: Optional[dict], product_context: list[dict], profile_name: Optional[str]):
+def build_direct_reply(
+    intent: str,
+    cliente_contexto: Optional[dict],
+    product_context: list[dict],
+    profile_name: Optional[str],
+    product_request: Optional[dict] = None,
+):
     nombre = profile_name or "cliente"
 
     if intent == "consulta_cartera":
@@ -647,24 +825,47 @@ def build_direct_reply(intent: str, cliente_contexto: Optional[dict], product_co
 
     if intent == "consulta_productos" and product_context:
         product_lines = []
+        quantity_note = None
+        if product_request:
+            requested_quantity = product_request.get("requested_quantity")
+            requested_unit = product_request.get("requested_unit")
+            quantity_expression = product_request.get("quantity_expression")
+            if requested_quantity and requested_unit:
+                quantity_note = f"Entendí una solicitud de {requested_quantity:g} {requested_unit}{'es' if requested_quantity != 1 else ''}"
+            elif quantity_expression:
+                quantity_note = f"Tomé la referencia de cantidad {quantity_expression} para orientarte mejor"
+
         for row in product_context[:3]:
             descripcion = row.get("descripcion") or row.get("nombre_articulo") or row.get("referencia") or row.get("codigo_articulo")
             referencia = row.get("referencia") or row.get("codigo_articulo") or "sin referencia"
             stock = row.get("stock")
+            stock_value = parse_numeric_value(stock)
+            costo_promedio = row.get("costo_promedio_und")
+            line = f"{descripcion} ({referencia})"
             if stock is not None:
-                product_lines.append(f"{descripcion} ({referencia}), stock aproximado {stock}")
-            else:
-                product_lines.append(f"{descripcion} ({referencia})")
+                line += f", stock aproximado {stock}"
+            if costo_promedio is not None:
+                line += f", costo promedio {format_currency(costo_promedio)}"
+            if product_request and product_request.get("requested_quantity") and stock_value is not None:
+                requested_quantity = float(product_request["requested_quantity"])
+                availability = "si alcanza" if stock_value >= requested_quantity else "stock insuficiente"
+                line += f", para {requested_quantity:g} unidades {availability}"
+            product_lines.append(line)
         return {
             "tono": "informativo",
             "intent": intent,
             "priority": "media",
             "summary": "Consulta de productos",
-            "response_text": f"Hola, {nombre}. Encontré estas referencias relacionadas: {'; '.join(product_lines)}. Si quieres, te detallo una referencia específica.",
+            "response_text": (
+                f"Hola, {nombre}. "
+                f"{quantity_note + '. ' if quantity_note else ''}"
+                f"Encontré estas referencias relacionadas: {'; '.join(product_lines)}. "
+                "Si quieres, en el siguiente paso puedo ayudarte a convertir esto en una pre-solicitud de pedido."
+            ),
             "should_create_task": False,
             "task_type": "seguimiento_cliente",
             "task_summary": "Consulta de productos",
-            "task_detail": {"products": product_context},
+            "task_detail": {"products": product_context, "product_request": product_request or {}},
         }
 
     return None
@@ -673,36 +874,62 @@ def build_direct_reply(intent: str, cliente_contexto: Optional[dict], product_co
 def build_verification_success_reply(profile_name: Optional[str], cliente_contexto: Optional[dict]):
     nombre = profile_name or "cliente"
     cliente_codigo = (cliente_contexto or {}).get("cliente_codigo")
+    cliente_nombre = (cliente_contexto or {}).get("nombre_cliente")
     return (
         f"Gracias, {nombre}. Tu identidad quedó validada"
-        f"{' para el cliente ' + str(cliente_codigo) if cliente_codigo else ''}. "
+        f"{' para el cliente ' + str(cliente_nombre or cliente_codigo) if (cliente_nombre or cliente_codigo) else ''}"
+        f"{' (' + str(cliente_codigo) + ')' if cliente_nombre and cliente_codigo else ''}. "
         "Ahora ya puedo ayudarte con cartera, compras del último año y consultas relacionadas con tu historial comercial."
     )
 
 
 def lookup_product_context(text_value: Optional[str]):
-    if not text_value:
-        return []
-
-    terms = [term for term in re.findall(r"[a-zA-Z0-9]+", text_value.lower()) if len(term) >= 3]
+    product_request = extract_product_request(text_value)
+    terms = product_request.get("search_terms") or []
     if not terms:
         return []
 
-    search_term = max(terms, key=len)
+    query_terms = terms[:5]
+    inventory_filters = []
+    inventory_scores = []
+    sales_filters = []
+    sales_scores = []
+    params = {}
+
+    for index, term in enumerate(query_terms):
+        params[f"pattern_{index}"] = f"%{term}%"
+        inventory_filters.append(f"search_blob LIKE :pattern_{index}")
+        inventory_scores.append(f"CASE WHEN search_blob LIKE :pattern_{index} THEN 1 ELSE 0 END")
+        sales_filters.append(f"search_blob LIKE :pattern_{index}")
+        sales_scores.append(f"CASE WHEN search_blob LIKE :pattern_{index} THEN 1 ELSE 0 END")
+
     engine = get_db_engine()
     with engine.connect() as connection:
         rows = connection.execute(
             text(
-                """
-                SELECT referencia, descripcion, marca, stock, costo_promedio_und
-                FROM public.raw_rotacion_inventarios
-                WHERE lower(COALESCE(descripcion, '')) LIKE :pattern
-                   OR lower(COALESCE(referencia, '')) LIKE :pattern
-                   OR lower(COALESCE(marca, '')) LIKE :pattern
+                f"""
+                SELECT referencia, descripcion, marca, stock, costo_promedio_und, match_score
+                FROM (
+                    SELECT
+                        referencia,
+                        descripcion,
+                        marca,
+                        stock,
+                        costo_promedio_und,
+                        ({' + '.join(inventory_scores)}) AS match_score,
+                        lower(
+                            COALESCE(descripcion, '') || ' ' ||
+                            COALESCE(referencia, '') || ' ' ||
+                            COALESCE(marca, '')
+                        ) AS search_blob
+                    FROM public.raw_rotacion_inventarios
+                ) inventory
+                WHERE {' OR '.join(inventory_filters)}
+                ORDER BY match_score DESC, descripcion ASC NULLS LAST
                 LIMIT 5
                 """
             ),
-            {"pattern": f"%{search_term}%"},
+            params,
         ).mappings().all()
 
         if rows:
@@ -710,19 +937,35 @@ def lookup_product_context(text_value: Optional[str]):
 
         sales_rows = connection.execute(
             text(
-                """
+                f"""
                 SELECT codigo_articulo, nombre_articulo, marca_producto, categoria_producto,
                        SUM(unidades_vendidas_netas) AS unidades_vendidas,
-                       SUM(valor_venta_neto) AS valor_vendido
-                FROM public.vw_ventas_netas
-                WHERE lower(COALESCE(nombre_articulo, '')) LIKE :pattern
-                   OR lower(COALESCE(codigo_articulo, '')) LIKE :pattern
+                       SUM(valor_venta_neto) AS valor_vendido,
+                       MAX(match_score) AS match_score
+                FROM (
+                    SELECT
+                        codigo_articulo,
+                        nombre_articulo,
+                        marca_producto,
+                        categoria_producto,
+                        unidades_vendidas_netas,
+                        valor_venta_neto,
+                        ({' + '.join(sales_scores)}) AS match_score,
+                        lower(
+                            COALESCE(nombre_articulo, '') || ' ' ||
+                            COALESCE(codigo_articulo, '') || ' ' ||
+                            COALESCE(marca_producto, '') || ' ' ||
+                            COALESCE(categoria_producto, '')
+                        ) AS search_blob
+                    FROM public.vw_ventas_netas
+                ) sales
+                WHERE {' OR '.join(sales_filters)}
                 GROUP BY 1, 2, 3, 4
-                ORDER BY valor_vendido DESC NULLS LAST
+                ORDER BY match_score DESC, valor_vendido DESC NULLS LAST
                 LIMIT 5
                 """
             ),
-            {"pattern": f"%{search_term}%"},
+            params,
         ).mappings().all()
 
     return [dict(row) for row in sales_rows]
@@ -744,7 +987,7 @@ def build_agent_prompt(
     product_context: list[dict],
 ):
     nombre = profile_name or "cliente"
-    contexto_cliente = json.dumps(cliente_contexto or {}, ensure_ascii=False)
+    contexto_cliente = safe_json_dumps(cliente_contexto or {})
     historial = json.dumps(
         [
             {
@@ -757,8 +1000,8 @@ def build_agent_prompt(
         ],
         ensure_ascii=False,
     )
-    verification_json = json.dumps(verification_state or {}, ensure_ascii=False)
-    product_json = json.dumps(product_context or [], ensure_ascii=False)
+    verification_json = safe_json_dumps(verification_state or {})
+    product_json = safe_json_dumps(product_context or [])
 
     return [
         {
@@ -966,6 +1209,7 @@ async def receive_whatsapp_webhook(request: Request):
                 conversation_context = dict(conversation_snapshot.get("contexto") or {})
                 verified_context = None
                 detected_intent = detect_business_intent(content)
+                product_request = extract_product_request(content)
 
                 document_candidate = extract_document_candidate(content)
                 if document_candidate:
@@ -1043,10 +1287,13 @@ async def receive_whatsapp_webhook(request: Request):
                     context["cliente_id"] = cliente_id
 
                 sensitive_request = is_sensitive_intent_message(content)
+                verified_cliente_codigo = conversation_context.get("verified_cliente_codigo")
+                if not verified_cliente_codigo and verified_context:
+                    verified_cliente_codigo = verified_context.get("cliente_codigo")
                 verification_state = {
-                    "verified": bool(conversation_context.get("verified")),
+                    "verified": bool(conversation_context.get("verified") or verified_context),
                     "verified_document": conversation_context.get("verified_document"),
-                    "verified_cliente_codigo": conversation_context.get("verified_cliente_codigo"),
+                    "verified_cliente_codigo": verified_cliente_codigo,
                     "sensitive_request": sensitive_request,
                 }
 
@@ -1056,6 +1303,7 @@ async def receive_whatsapp_webhook(request: Request):
                         cliente_contexto,
                         [],
                         context.get("nombre_visible"),
+                        product_request,
                     )
                     response_text = build_verification_success_reply(context.get("nombre_visible"), cliente_contexto)
                     if direct_result:
@@ -1111,7 +1359,13 @@ async def receive_whatsapp_webhook(request: Request):
                     continue
 
                 if verification_state["verified"]:
-                    direct_result = build_direct_reply(detected_intent, cliente_contexto, lookup_product_context(content) if detected_intent == "consulta_productos" else [], context.get("nombre_visible"))
+                    direct_result = build_direct_reply(
+                        detected_intent,
+                        cliente_contexto,
+                        lookup_product_context(content) if detected_intent == "consulta_productos" else [],
+                        context.get("nombre_visible"),
+                        product_request,
+                    )
                     if direct_result:
                         outbound_payload = None
                         response_text = direct_result["response_text"]
