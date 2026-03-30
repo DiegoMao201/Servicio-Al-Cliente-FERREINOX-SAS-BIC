@@ -299,4 +299,47 @@ SELECT
     ) AS search_blob
 FROM public.raw_rotacion_inventarios;
 
+CREATE OR REPLACE VIEW public.productos AS
+SELECT
+    referencia_normalizada AS producto_codigo,
+    referencia,
+    descripcion,
+    descripcion_normalizada,
+    marca,
+    marca_normalizada,
+    STRING_AGG(DISTINCT departamento, ', ' ORDER BY departamento) AS departamentos,
+    COALESCE(SUM(stock_disponible), 0) AS stock_total,
+    AVG(costo_promedio_und) AS costo_promedio_und,
+    COALESCE(SUM(unidades_vendidas), 0) AS unidades_vendidas,
+    AVG(lead_time_proveedor) AS lead_time_proveedor,
+    AVG(historial_ventas) AS historial_ventas,
+    STRING_AGG(
+        almacen_nombre || ': ' || COALESCE(stock_disponible::text, '0'),
+        '; '
+        ORDER BY almacen_nombre
+    ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
+    public.fn_normalize_text(
+        COALESCE(descripcion, '') || ' ' ||
+        COALESCE(referencia, '') || ' ' ||
+        COALESCE(marca, '') || ' ' ||
+        COALESCE(STRING_AGG(DISTINCT departamento, ' ' ORDER BY departamento), '') || ' ' ||
+        REPLACE(COALESCE(descripcion, ''), '-', ' ') || ' ' ||
+        REPLACE(COALESCE(referencia, ''), '-', ' ') || ' ' ||
+        REPLACE(COALESCE(descripcion, ''), '/', ' ') || ' ' ||
+        REPLACE(COALESCE(referencia, ''), '/', ' ')
+    ) AS search_blob,
+    public.fn_keep_alnum(
+        COALESCE(descripcion, '') || ' ' ||
+        COALESCE(referencia, '') || ' ' ||
+        COALESCE(marca, '')
+    ) AS search_compact
+FROM public.vw_inventario_agente
+GROUP BY
+    referencia_normalizada,
+    referencia,
+    descripcion,
+    descripcion_normalizada,
+    marca,
+    marca_normalizada;
+
 COMMIT;

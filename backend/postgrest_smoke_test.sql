@@ -25,6 +25,7 @@ SELECT table_name
 FROM information_schema.views
 WHERE table_schema = 'public'
   AND table_name IN (
+    'productos',
     'vw_ventas_netas',
     'vw_albaranes_pendientes',
     'vw_estado_cartera',
