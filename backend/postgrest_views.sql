@@ -112,6 +112,24 @@ AS $$
     END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.fn_map_almacen_nombre(cod_almacen_value text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $$
+    SELECT CASE public.fn_digits_only(cod_almacen_value)
+        WHEN '155' THEN 'CEDI'
+        WHEN '156' THEN 'TIENDA ARMENIA'
+        WHEN '157' THEN 'TIENDA MANIZALES'
+        WHEN '158' THEN 'TIENDA OPALO'
+        WHEN '189' THEN 'TIENDA PEREIRA'
+        WHEN '238' THEN 'TIENDA LAURES'
+        WHEN '439' THEN 'TIENDA FERREBOX'
+        WHEN '463' THEN 'TIENDA CERRITOS'
+        ELSE COALESCE(public.fn_digits_only(cod_almacen_value), 'SIN_ALMACEN')
+    END;
+$$;
+
 CREATE OR REPLACE VIEW public.vw_ventas_netas AS
 SELECT
     public.fn_parse_integer(anio) AS anio,
@@ -255,5 +273,30 @@ SELECT
     COALESCE(cartera.documentos_vencidos, 0) AS documentos_vencidos
 FROM ventas
 FULL OUTER JOIN cartera ON ventas.cliente_codigo = cartera.cliente_codigo;
+
+CREATE OR REPLACE VIEW public.vw_inventario_agente AS
+SELECT
+    public.fn_digits_only(cod_almacen) AS cod_almacen,
+    public.fn_map_almacen_nombre(cod_almacen) AS almacen_nombre,
+    public.fn_normalize_text(departamento) AS departamento,
+    public.fn_keep_alnum(referencia) AS referencia_normalizada,
+    TRIM(COALESCE(referencia, '')) AS referencia,
+    public.fn_normalize_text(descripcion) AS descripcion_normalizada,
+    TRIM(COALESCE(descripcion, '')) AS descripcion,
+    public.fn_keep_alnum(marca) AS marca_normalizada,
+    public.fn_normalize_text(marca) AS marca,
+    public.fn_parse_numeric(stock) AS stock_disponible,
+    public.fn_parse_numeric(costo_promedio_und) AS costo_promedio_und,
+    public.fn_parse_numeric(unidades_vendidas) AS unidades_vendidas,
+    public.fn_parse_numeric(lead_time_proveedor) AS lead_time_proveedor,
+    public.fn_parse_numeric(historial_ventas) AS historial_ventas,
+    public.fn_normalize_text(
+        COALESCE(descripcion, '') || ' ' ||
+        COALESCE(referencia, '') || ' ' ||
+        COALESCE(marca, '') || ' ' ||
+        COALESCE(departamento, '') || ' ' ||
+        COALESCE(public.fn_map_almacen_nombre(cod_almacen), '')
+    ) AS search_blob
+FROM public.raw_rotacion_inventarios;
 
 COMMIT;

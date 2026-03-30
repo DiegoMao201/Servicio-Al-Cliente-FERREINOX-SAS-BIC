@@ -2,6 +2,7 @@ import os
 import json
 import re
 import unicodedata
+from difflib import SequenceMatcher
 from datetime import date, timedelta
 from typing import Optional
 
@@ -53,12 +54,53 @@ PRODUCT_STOPWORDS = {
     "año",
     "cuanto",
     "debo",
+    "codigo",
+    "cod",
+    "ref",
+    "refer",
+    "es",
+    "producto",
 }
 
 
 PRESENTATION_ALIASES = {
     "cuñete": ["cunete", "cunetes", "cuenete", "cuenetes", "cuñete", "cuñetes", "caneca", "canecas", "cubeta", "cubetas", "18.93l", "18.93", "5gl"],
     "galon": ["galon", "galones", "gal", "3.79l", "3.79", "1gl"],
+}
+
+
+PORTFOLIO_ALIASES = {
+    "vinilico": ["vinilico", "viniltex", "vinilo", "vinilica", "viniloco", "vinilico blanco", "viniltex blanco"],
+    "viniloco": ["viniloco", "vinilico", "viniltex", "vinilo", "vinilico blanco", "viniltex blanco"],
+    "viniltex": ["viniltex", "vinilico", "vinilo", "vtx"],
+    "domestico": ["domestico", "doméstico", "vinilico", "viniltex", "economico", "económico"],
+    "corona": ["corona", "corona arquitectonico", "corona tradicional"],
+    "pintuco": ["pintuco", "viniltex", "p11", "p-11", "p 11"],
+    "p11": ["p11", "p-11", "p 11", "pintuco 11"],
+}
+
+
+STORE_CODE_LABELS = {
+    "155": "CEDI",
+    "156": "Tienda Armenia",
+    "157": "Tienda Manizales",
+    "158": "Tienda Opalo",
+    "189": "Tienda Pereira",
+    "238": "Tienda Laures",
+    "439": "Tienda Ferrebox",
+    "463": "Tienda Cerritos",
+}
+
+
+STORE_ALIASES = {
+    "cedi": ["155", "cedi", "centro de distribucion", "centro de distribución"],
+    "armenia": ["156", "armenia", "tienda armenia"],
+    "manizales": ["157", "manizales", "tienda manizales"],
+    "opalo": ["158", "opalo", "ópalo", "tienda opalo", "tienda ópalo"],
+    "pereira": ["189", "pereira", "tienda pereira"],
+    "laures": ["238", "laures", "laureles", "tienda laures", "tienda laureles"],
+    "cerritos": ["463", "cerritos", "tienda cerritos"],
+    "ferrebox": ["439", "ferrebox", "tienda ferrebox"],
 }
 
 
@@ -141,6 +183,13 @@ def normalize_text_value(text_value: Optional[str]):
     return re.sub(r"\s+", " ", normalized).strip()
 
 
+def normalize_reference_value(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return ""
+    return re.sub(r"[^a-z0-9]+", "", normalized)
+
+
 def parse_numeric_value(raw_value):
     if raw_value is None:
         return None
@@ -164,6 +213,85 @@ def parse_numeric_value(raw_value):
         return float(cleaned)
     except ValueError:
         return None
+
+
+def sequence_similarity(left_value: Optional[str], right_value: Optional[str]):
+    left_normalized = normalize_text_value(left_value)
+    right_normalized = normalize_text_value(right_value)
+    if not left_normalized or not right_normalized:
+        return 0.0
+    return SequenceMatcher(None, left_normalized, right_normalized).ratio()
+
+
+def extract_product_codes(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return []
+
+    codes = []
+    seen_codes = set()
+    for raw_code in re.findall(r"\b[a-z]?\d[a-z0-9-]{1,14}\b|\b\d{4,10}\b", normalized):
+        cleaned_code = normalize_reference_value(raw_code)
+        if len(cleaned_code) < 3 or cleaned_code in seen_codes:
+            continue
+        seen_codes.add(cleaned_code)
+        codes.append(cleaned_code)
+    return codes
+
+
+def is_product_code_message(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    if re.fullmatch(r"[a-z]?\d[a-z0-9-]{1,14}", normalized):
+        return True
+    return bool(re.fullmatch(r"\d{4,10}", normalized))
+
+
+def extract_store_filters(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return []
+
+    matched_codes = []
+    seen_codes = set()
+    for store_aliases in STORE_ALIASES.values():
+        for alias in store_aliases:
+            alias_normalized = normalize_text_value(alias)
+            if not alias_normalized:
+                continue
+            if alias_normalized.isdigit():
+                matched = bool(re.search(rf"\b{re.escape(alias_normalized)}\b", normalized))
+            else:
+                matched = bool(re.search(rf"\b{re.escape(alias_normalized)}\b", normalized))
+            if matched:
+                code = next((candidate for candidate in store_aliases if candidate.isdigit()), None)
+                if code and code not in seen_codes:
+                    seen_codes.add(code)
+                    matched_codes.append(code)
+                break
+    return matched_codes
+
+
+def expand_product_terms(search_terms: list[str]):
+    expanded_terms = []
+    seen_terms = set()
+
+    def add_term(raw_term: Optional[str]):
+        normalized_term = normalize_text_value(raw_term)
+        if not normalized_term or normalized_term in seen_terms:
+            return
+        seen_terms.add(normalized_term)
+        expanded_terms.append(normalized_term)
+
+    for term in search_terms:
+        add_term(term)
+        normalized_key = normalize_reference_value(term)
+        if normalized_key in PORTFOLIO_ALIASES:
+            for alias_term in PORTFOLIO_ALIASES[normalized_key]:
+                add_term(alias_term)
+
+    return expanded_terms
 
 
 def normalize_phone(phone_number: Optional[str]):
@@ -727,7 +855,15 @@ def format_currency(value):
 def extract_product_request(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     if not normalized:
-        return {"search_terms": [], "requested_quantity": None, "requested_unit": None, "quantity_expression": None}
+        return {
+            "search_terms": [],
+            "requested_quantity": None,
+            "requested_unit": None,
+            "quantity_expression": None,
+            "product_codes": [],
+            "store_filters": [],
+            "original_query": "",
+        }
 
     requested_quantity = None
     requested_unit = None
@@ -776,18 +912,31 @@ def extract_product_request(text_value: Optional[str]):
                 search_terms.extend(aliases)
                 break
 
-    deduped_terms = []
-    seen_terms = set()
+    product_codes = extract_product_codes(text_value)
+    if requested_quantity and requested_quantity >= 1000 and product_codes:
+        requested_quantity = None
+        quantity_expression = None
+
+    core_terms = []
+    seen_core_terms = set()
     for term in search_terms:
-        if term not in seen_terms:
-            deduped_terms.append(term)
-            seen_terms.add(term)
+        normalized_term = normalize_text_value(term)
+        if not normalized_term or normalized_term in seen_core_terms:
+            continue
+        seen_core_terms.add(normalized_term)
+        core_terms.append(normalized_term)
+
+    deduped_terms = expand_product_terms(core_terms)
 
     return {
+        "core_terms": core_terms[:8],
         "search_terms": deduped_terms[:8],
         "requested_quantity": requested_quantity,
         "requested_unit": requested_unit,
         "quantity_expression": quantity_expression,
+        "product_codes": product_codes,
+        "store_filters": extract_store_filters(text_value),
+        "original_query": text_value or "",
     }
 
 
@@ -1217,8 +1366,9 @@ def build_direct_reply(
                     f"Hola, {nombre}. Busqué *{referencia_solicitada or 'esa referencia'}* pero no encontré una coincidencia en el inventario. "
                     "¿Podrías darme más detalles? Por ejemplo:\n"
                     "• La referencia o código del producto\n"
-                    "• La marca (ej. Pintuco, Corona, etc.)\n"
+                    "• La marca o línea del portafolio Ferreinox o Tiendas Pintuco\n"
                     "• La presentación (galón, cuñete)\n"
+                    "• La tienda que te interesa (CEDI, Armenia, Manizales, Opalo, Pereira, Laures, Cerritos o Ferrebox)\n"
                     "Así puedo buscarlo con más precisión."
                 ),
                 "should_create_task": False,
@@ -1241,14 +1391,16 @@ def build_direct_reply(
         for row in product_context[:3]:
             descripcion = row.get("descripcion") or row.get("nombre_articulo") or row.get("referencia") or row.get("codigo_articulo")
             referencia = row.get("referencia") or row.get("codigo_articulo") or "sin referencia"
-            stock = row.get("stock")
+            stock = row.get("stock_total") if row.get("stock_total") is not None else row.get("stock")
             stock_value = parse_numeric_value(stock)
             costo_promedio = row.get("costo_promedio_und")
             line = f"{descripcion} ({referencia})"
             if stock is not None:
-                line += f", stock aproximado {stock}"
+                line += f", stock total aproximado {stock}"
             if costo_promedio is not None:
                 line += f", costo promedio {format_currency(costo_promedio)}"
+            if row.get("stock_por_tienda"):
+                line += f", disponible en {row.get('stock_por_tienda')}"
             if product_request and product_request.get("requested_quantity") and stock_value is not None:
                 requested_quantity = float(product_request["requested_quantity"])
                 availability = "si alcanza" if stock_value >= requested_quantity else "stock insuficiente"
@@ -1286,12 +1438,13 @@ def build_verification_success_reply(profile_name: Optional[str], cliente_contex
     )
 
 
-def lookup_product_context(text_value: Optional[str]):
-    product_request = extract_product_request(text_value)
+def lookup_product_context(text_value: Optional[str], product_request: Optional[dict] = None):
+    product_request = product_request or extract_product_request(text_value)
+    core_terms = product_request.get("core_terms") or []
     terms = product_request.get("search_terms") or []
-
-    normalized = normalize_text_value(text_value)
-    product_codes = re.findall(r"\b\d{4,10}\b", normalized)
+    product_codes = product_request.get("product_codes") or []
+    store_filters = product_request.get("store_filters") or []
+    normalized_query = normalize_text_value(text_value)
 
     if not terms and not product_codes:
         return []
@@ -1304,15 +1457,31 @@ def lookup_product_context(text_value: Optional[str]):
                 code_filters = []
                 for i, code in enumerate(product_codes[:3]):
                     code_params[f"code_{i}"] = f"%{code}%"
-                    code_filters.append(f"COALESCE(referencia,'') LIKE :code_{i}")
+                    code_filters.append(f"referencia_normalizada LIKE :code_{i}")
+                    code_filters.append(f"search_blob ILIKE :code_{i}")
+                store_clause = ""
+                if store_filters:
+                    store_predicates = []
+                    for store_index, store_code in enumerate(store_filters):
+                        code_params[f"store_{store_index}"] = store_code
+                        store_predicates.append(f"cod_almacen = :store_{store_index}")
+                    store_clause = f" AND ({' OR '.join(store_predicates)})"
                 code_rows = connection.execute(
                     text(
                         f"""
-                        SELECT referencia, descripcion, marca, stock, costo_promedio_und,
+                        SELECT referencia, descripcion, marca,
+                               COALESCE(SUM(stock_disponible), 0) AS stock_total,
+                               AVG(costo_promedio_und) AS costo_promedio_und,
+                               STRING_AGG(
+                                   almacen_nombre || ': ' || COALESCE(stock_disponible::text, '0'),
+                                   '; '
+                                   ORDER BY almacen_nombre
+                               ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
                                100 AS match_score
-                        FROM public.raw_rotacion_inventarios
-                        WHERE {' OR '.join(code_filters)}
-                        ORDER BY stock DESC NULLS LAST
+                        FROM public.vw_inventario_agente
+                        WHERE ({' OR '.join(code_filters)}){store_clause}
+                        GROUP BY referencia, descripcion, marca
+                        ORDER BY COALESCE(SUM(stock_disponible), 0) DESC NULLS LAST
                         LIMIT 5
                         """
                     ),
@@ -1324,50 +1493,89 @@ def lookup_product_context(text_value: Optional[str]):
             if not terms:
                 return []
 
-            query_terms = terms[:5]
+            query_terms = []
+            for term in list(core_terms) + list(terms):
+                if term not in query_terms:
+                    query_terms.append(term)
+                if len(query_terms) == 5:
+                    break
             params = {}
             inventory_filters = []
             inventory_scores = []
             for index, term in enumerate(query_terms):
                 params[f"pattern_{index}"] = f"%{term}%"
-                inventory_filters.append(f"search_blob LIKE :pattern_{index}")
-                inventory_scores.append(f"CASE WHEN search_blob LIKE :pattern_{index} THEN 1 ELSE 0 END")
+                inventory_filters.append(f"search_blob ILIKE :pattern_{index}")
+                inventory_scores.append(f"CASE WHEN search_blob ILIKE :pattern_{index} THEN 1 ELSE 0 END")
+            base_store_clause = ""
+            if store_filters:
+                store_predicates = []
+                for store_index, store_code in enumerate(store_filters):
+                    params[f"store_{store_index}"] = store_code
+                    store_predicates.append(f"cod_almacen = :store_{store_index}")
+                base_store_clause = f"WHERE {' OR '.join(store_predicates)}"
 
             rows = connection.execute(
                 text(
                     f"""
-                    SELECT referencia, descripcion, marca, stock, costo_promedio_und, match_score
+                    SELECT referencia, descripcion, marca, stock_total, costo_promedio_und, stock_por_tienda,
+                           ({' + '.join(inventory_scores)}) AS match_score
                     FROM (
                         SELECT
                             referencia,
                             descripcion,
                             marca,
-                            stock,
-                            costo_promedio_und,
-                            ({' + '.join(inventory_scores)}) AS match_score,
-                            translate(lower(
-                                COALESCE(descripcion, '') || ' ' ||
-                                COALESCE(referencia, '') || ' ' ||
-                                COALESCE(marca, '')
-                            ), 'áéíóúàèìòùâêîôûäëïöüñ', 'aeiouaeiouaeiouaeioun') AS search_blob
-                        FROM public.raw_rotacion_inventarios
+                            COALESCE(SUM(stock_disponible), 0) AS stock_total,
+                            AVG(costo_promedio_und) AS costo_promedio_und,
+                            STRING_AGG(
+                                almacen_nombre || ': ' || COALESCE(stock_disponible::text, '0'),
+                                '; '
+                                ORDER BY almacen_nombre
+                            ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
+                            MAX(search_blob) AS search_blob
+                        FROM public.vw_inventario_agente
+                        {base_store_clause}
+                        GROUP BY referencia, descripcion, marca
                     ) inventory
-                    WHERE {' OR '.join(inventory_filters)}
-                    ORDER BY match_score DESC, descripcion ASC NULLS LAST
-                    LIMIT 5
+                    WHERE ({' OR '.join(inventory_filters)})
+                    ORDER BY match_score DESC, stock_total DESC NULLS LAST, descripcion ASC NULLS LAST
+                    LIMIT 25
                     """
                 ),
                 params,
             ).mappings().all()
 
             if rows:
-                return [dict(row) for row in rows]
+                ranked_rows = []
+                primary_term = normalize_reference_value(core_terms[0]) if core_terms else ""
+                preferred_family_terms = expand_product_terms([primary_term]) if primary_term else []
+                for row in rows:
+                    candidate = dict(row)
+                    candidate_text = " ".join(
+                        value
+                        for value in [candidate.get("descripcion"), candidate.get("referencia"), candidate.get("marca")]
+                        if value
+                    )
+                    candidate["fuzzy_score"] = round(sequence_similarity(normalized_query, candidate_text), 4)
+                    candidate["family_score"] = 1 if any(term and term in normalize_text_value(candidate_text) for term in preferred_family_terms[:5]) else 0
+                    ranked_rows.append(candidate)
+                ranked_rows.sort(
+                    key=lambda item: (
+                        item.get("family_score") or 0,
+                        item.get("match_score") or 0,
+                        item.get("fuzzy_score") or 0,
+                        parse_numeric_value(item.get("stock_total")) or 0,
+                    ),
+                    reverse=True,
+                )
+                if any((parse_numeric_value(item.get("stock_total")) or 0) > 0 for item in ranked_rows):
+                    ranked_rows = [item for item in ranked_rows if (parse_numeric_value(item.get("stock_total")) or 0) > 0]
+                return ranked_rows[:5]
 
             sales_filters = []
             sales_scores = []
             for index, term in enumerate(query_terms):
-                sales_filters.append(f"search_blob LIKE :pattern_{index}")
-                sales_scores.append(f"CASE WHEN search_blob LIKE :pattern_{index} THEN 1 ELSE 0 END")
+                sales_filters.append(f"search_blob ILIKE :pattern_{index}")
+                sales_scores.append(f"CASE WHEN search_blob ILIKE :pattern_{index} THEN 1 ELSE 0 END")
 
             sales_rows = connection.execute(
                 text(
@@ -1664,11 +1872,32 @@ async def receive_whatsapp_webhook(request: Request):
                 conversation_context = dict(conversation_snapshot.get("contexto") or {})
                 verified_context = None
                 detected_intent = detect_business_intent(content)
+                if detected_intent == "consulta_general" and is_product_code_message(content):
+                    previous_product_request = conversation_context.get("last_product_request") or {}
+                    if conversation_context.get("last_direct_intent") == "consulta_productos" or previous_product_request.get("search_terms"):
+                        detected_intent = "consulta_productos"
                 if detected_intent == "consulta_general" and has_temporal_reference(content):
                     previous_intent = conversation_context.get("last_direct_intent") or conversation_context.get("intent")
                     if previous_intent in {"consulta_compras", "consulta_cartera"}:
                         detected_intent = previous_intent
                 product_request = extract_product_request(content)
+                if detected_intent == "consulta_productos" and is_product_code_message(content):
+                    previous_product_request = conversation_context.get("last_product_request") or {}
+                    merged_core_terms = list(previous_product_request.get("core_terms") or [])
+                    merged_terms = list(previous_product_request.get("search_terms") or [])
+                    merged_codes = list(previous_product_request.get("product_codes") or [])
+                    for term in product_request.get("core_terms") or []:
+                        if term not in merged_core_terms:
+                            merged_core_terms.append(term)
+                    for term in product_request.get("search_terms") or []:
+                        if term not in merged_terms:
+                            merged_terms.append(term)
+                    for code in product_request.get("product_codes") or []:
+                        if code not in merged_codes:
+                            merged_codes.append(code)
+                    product_request["core_terms"] = merged_core_terms[:8]
+                    product_request["search_terms"] = expand_product_terms(merged_terms)[:8]
+                    product_request["product_codes"] = merged_codes[:4]
 
                 document_candidate = None
                 if detected_intent != "consulta_productos":
@@ -1835,7 +2064,7 @@ async def receive_whatsapp_webhook(request: Request):
                         direct_result = build_direct_reply(
                             detected_intent,
                             cliente_contexto,
-                            lookup_product_context(content),
+                            lookup_product_context(content, product_request),
                             context.get("nombre_visible"),
                             product_request,
                             content,
@@ -1969,7 +2198,7 @@ async def receive_whatsapp_webhook(request: Request):
                     direct_result = build_direct_reply(
                         detected_intent,
                         cliente_contexto,
-                        lookup_product_context(content) if detected_intent == "consulta_productos" else [],
+                        lookup_product_context(content, product_request) if detected_intent == "consulta_productos" else [],
                         context.get("nombre_visible"),
                         product_request,
                         content,
@@ -2083,7 +2312,7 @@ async def receive_whatsapp_webhook(request: Request):
                     )
                     continue
 
-                product_context = lookup_product_context(content) if is_product_intent_message(content) else []
+                product_context = lookup_product_context(content, product_request) if is_product_intent_message(content) else []
 
                 ai_result = None
                 outbound_payload = None
