@@ -2,6 +2,7 @@ import os
 import json
 import re
 import unicodedata
+from datetime import date, timedelta
 from typing import Optional
 
 import requests
@@ -54,6 +55,23 @@ PRODUCT_STOPWORDS = {
 PRESENTATION_ALIASES = {
     "cuñete": ["cunete", "cunetes", "cuñete", "cuñetes", "caneca", "canecas", "cubeta", "cubetas", "18.93l", "18.93", "5gl"],
     "galon": ["galon", "galones", "gal", "3.79l", "3.79", "1gl"],
+}
+
+
+MONTH_ALIASES = {
+    "enero": 1,
+    "febrero": 2,
+    "marzo": 3,
+    "abril": 4,
+    "mayo": 5,
+    "junio": 6,
+    "julio": 7,
+    "agosto": 8,
+    "septiembre": 9,
+    "setiembre": 9,
+    "octubre": 10,
+    "noviembre": 11,
+    "diciembre": 12,
 }
 
 
@@ -720,6 +738,79 @@ def extract_product_request(text_value: Optional[str]):
     }
 
 
+def month_date_range(year: int, month: int):
+    start_date = date(year, month, 1)
+    if month == 12:
+        end_date = date(year + 1, 1, 1) - timedelta(days=1)
+    else:
+        end_date = date(year, month + 1, 1) - timedelta(days=1)
+    return start_date, end_date
+
+
+def extract_purchase_query(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    today = date.today()
+    result = {
+        "start_date": None,
+        "end_date": None,
+        "label": "los ultimos 12 meses",
+        "wants_products": any(keyword in normalized for keyword in ["producto", "productos", "que compre", "que productos", "qué compré", "qué productos"]),
+        "has_time_filter": False,
+    }
+
+    exact_match = re.search(r"\b(\d{1,2})\s+de\s+([a-záéíóú]+)\s+de\s+(\d{4}|este ano|este año)\b", normalized)
+    if exact_match:
+        day_value = int(exact_match.group(1))
+        month_value = MONTH_ALIASES.get(exact_match.group(2))
+        year_token = exact_match.group(3)
+        year_value = today.year if year_token in {"este ano", "este año"} else int(year_token)
+        if month_value:
+            exact_date = date(year_value, month_value, day_value)
+            result.update(
+                {
+                    "start_date": exact_date,
+                    "end_date": exact_date,
+                    "label": exact_date.isoformat(),
+                    "wants_products": True,
+                    "has_time_filter": True,
+                }
+            )
+            return result
+
+    for month_name, month_value in MONTH_ALIASES.items():
+        if month_name in normalized:
+            year_value = today.year
+            year_match = re.search(rf"{month_name}\s+de\s+(\d{{4}}|este ano|este año)", normalized)
+            if year_match:
+                year_token = year_match.group(1)
+                year_value = today.year if year_token in {"este ano", "este año"} else int(year_token)
+            start_date, end_date = month_date_range(year_value, month_value)
+            result.update(
+                {
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "label": f"{month_name} de {year_value}",
+                    "has_time_filter": True,
+                }
+            )
+            return result
+
+    return result
+
+
+def extract_cartera_query(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    return {
+        "wants_overdue_only": "vencid" in normalized,
+        "wants_invoice_list": any(keyword in normalized for keyword in ["factura", "facturas", "cuales", "cuáles", "que facturas", "qué facturas", "documentos"]),
+    }
+
+
+def has_temporal_reference(text_value: Optional[str]):
+    purchase_query = extract_purchase_query(text_value)
+    return bool(purchase_query.get("has_time_filter"))
+
+
 def fetch_last_year_purchase_summary(cliente_codigo: Optional[str]):
     if not cliente_codigo:
         return None
@@ -762,22 +853,154 @@ def fetch_last_year_purchase_summary(cliente_codigo: Optional[str]):
     return {"totals": dict(totals), "top_products": [dict(row) for row in top_products]}
 
 
+def fetch_purchase_summary(
+    cliente_codigo: Optional[str],
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None,
+):
+    if not cliente_codigo:
+        return None
+
+    if start_date and end_date:
+        where_clause = "fecha_venta BETWEEN :start_date AND :end_date"
+        params = {"cliente_codigo": cliente_codigo, "start_date": start_date, "end_date": end_date}
+    else:
+        where_clause = "fecha_venta >= CURRENT_DATE - INTERVAL '365 days'"
+        params = {"cliente_codigo": cliente_codigo}
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        totals = connection.execute(
+            text(
+                f"""
+                SELECT
+                    COUNT(*) AS lineas,
+                    COALESCE(SUM(valor_venta_neto), 0) AS valor_total,
+                    COALESCE(SUM(unidades_vendidas_netas), 0) AS unidades_totales,
+                    MIN(fecha_venta) AS primera_compra,
+                    MAX(fecha_venta) AS ultima_compra
+                FROM public.vw_ventas_netas
+                WHERE cliente_id = :cliente_codigo
+                  AND {where_clause}
+                """
+            ),
+            params,
+        ).mappings().one()
+
+        product_rows = connection.execute(
+            text(
+                f"""
+                SELECT
+                    fecha_venta,
+                    codigo_articulo,
+                    nombre_articulo,
+                    COALESCE(SUM(unidades_vendidas_netas), 0) AS unidades,
+                    COALESCE(SUM(valor_venta_neto), 0) AS valor
+                FROM public.vw_ventas_netas
+                WHERE cliente_id = :cliente_codigo
+                  AND {where_clause}
+                GROUP BY 1, 2, 3
+                ORDER BY fecha_venta DESC, valor DESC NULLS LAST
+                LIMIT 12
+                """
+            ),
+            params,
+        ).mappings().all()
+
+    return {"totals": dict(totals), "products": [dict(row) for row in product_rows]}
+
+
+def fetch_overdue_documents(cliente_codigo: Optional[str]):
+    if not cliente_codigo:
+        return None
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        totals = connection.execute(
+            text(
+                """
+                SELECT
+                    COALESCE(SUM(importe_normalizado), 0) AS saldo_vencido,
+                    COUNT(*) AS documentos_vencidos,
+                    COALESCE(MAX(dias_vencido), 0) AS max_dias_vencido
+                FROM public.vw_estado_cartera
+                WHERE cod_cliente = :cliente_codigo
+                  AND COALESCE(dias_vencido, 0) > 0
+                  AND COALESCE(importe_normalizado, 0) > 0
+                """
+            ),
+            {"cliente_codigo": cliente_codigo},
+        ).mappings().one()
+
+        documents = connection.execute(
+            text(
+                """
+                SELECT numero_documento, fecha_documento, fecha_vencimiento, importe_normalizado, dias_vencido
+                FROM public.vw_estado_cartera
+                WHERE cod_cliente = :cliente_codigo
+                  AND COALESCE(dias_vencido, 0) > 0
+                  AND COALESCE(importe_normalizado, 0) > 0
+                ORDER BY dias_vencido DESC NULLS LAST, fecha_vencimiento ASC NULLS LAST
+                LIMIT 8
+                """
+            ),
+            {"cliente_codigo": cliente_codigo},
+        ).mappings().all()
+
+    return {"totals": dict(totals), "documents": [dict(row) for row in documents]}
+
+
 def build_direct_reply(
     intent: str,
     cliente_contexto: Optional[dict],
     product_context: list[dict],
     profile_name: Optional[str],
     product_request: Optional[dict] = None,
+    user_message: Optional[str] = None,
 ):
     nombre = profile_name or "cliente"
 
     if intent == "consulta_cartera":
         if not cliente_contexto:
             return None
+        cartera_query = extract_cartera_query(user_message)
         saldo = format_currency(cliente_contexto.get("saldo_cartera"))
         dias = cliente_contexto.get("max_dias_vencido") or 0
         vencidos = cliente_contexto.get("documentos_vencidos") or 0
         vendedor = cliente_contexto.get("vendedor") or "tu asesor comercial"
+        overdue_info = None
+        if cartera_query.get("wants_overdue_only") or cartera_query.get("wants_invoice_list"):
+            overdue_info = fetch_overdue_documents(cliente_contexto.get("cliente_codigo"))
+
+        if overdue_info and (cartera_query.get("wants_overdue_only") or cartera_query.get("wants_invoice_list")):
+            overdue_total = format_currency(overdue_info["totals"].get("saldo_vencido"))
+            documents = overdue_info.get("documents") or []
+            if cartera_query.get("wants_invoice_list") and documents:
+                doc_lines = "; ".join(
+                    f"factura {row['numero_documento']} por {format_currency(row['importe_normalizado'])}, vencida {row['dias_vencido']} días"
+                    for row in documents[:5]
+                )
+                response_text = (
+                    f"Hola, {nombre}. Tu cartera vencida suma {overdue_total} en {int(overdue_info['totals'].get('documentos_vencidos') or 0)} facturas. "
+                    f"Las principales son: {doc_lines}."
+                )
+            else:
+                response_text = (
+                    f"Hola, {nombre}. Tu cartera vencida actual es {overdue_total}. "
+                    f"Tienes {int(overdue_info['totals'].get('documentos_vencidos') or 0)} documentos vencidos y el máximo atraso es de {int(overdue_info['totals'].get('max_dias_vencido') or 0)} días."
+                )
+            return {
+                "tono": "informativo",
+                "intent": intent,
+                "priority": "alta",
+                "summary": f"Consulta de cartera vencida de {cliente_contexto.get('cliente_codigo')}",
+                "response_text": response_text,
+                "should_create_task": bool(int(overdue_info['totals'].get('max_dias_vencido') or 0) > 30),
+                "task_type": "seguimiento_cartera",
+                "task_summary": "Revisar cliente con cartera vencida",
+                "task_detail": overdue_info,
+            }
+
         return {
             "tono": "informativo",
             "intent": intent,
@@ -797,25 +1020,38 @@ def build_direct_reply(
     if intent == "consulta_compras":
         if not cliente_contexto or not cliente_contexto.get("cliente_codigo"):
             return None
-        purchases = fetch_last_year_purchase_summary(cliente_contexto.get("cliente_codigo"))
+        purchase_query = extract_purchase_query(user_message)
+        purchases = fetch_purchase_summary(
+            cliente_contexto.get("cliente_codigo"),
+            purchase_query.get("start_date"),
+            purchase_query.get("end_date"),
+        )
         totals = purchases["totals"] if purchases else {}
-        top_products = purchases["top_products"] if purchases else []
+        product_rows = purchases["products"] if purchases else []
         if not totals or not totals.get("ultima_compra"):
             response_text = f"Hola, {nombre}. No encontré compras registradas en los últimos 12 meses para este cliente."
         else:
             top_summary = "; ".join(
-                f"{row['nombre_articulo']} ({format_currency(row['valor'])})" for row in top_products[:3]
+                f"{row['nombre_articulo']} ({format_currency(row['valor'])}, {int(float(row['unidades'] or 0))} unidades)"
+                for row in product_rows[:5]
             ) or "sin productos destacados"
-            response_text = (
-                f"Hola, {nombre}. En los últimos 12 meses registras compras por {format_currency(totals.get('valor_total'))} "
-                f"en {int(totals.get('lineas') or 0)} líneas de venta, con {int(float(totals.get('unidades_totales') or 0))} unidades. "
-                f"Tu última compra fue el {totals.get('ultima_compra')}. Productos destacados: {top_summary}."
-            )
+            if purchase_query.get("has_time_filter"):
+                response_text = (
+                    f"Hola, {nombre}. En {purchase_query.get('label')} compraste {format_currency(totals.get('valor_total'))} "
+                    f"en {int(totals.get('lineas') or 0)} líneas, con {int(float(totals.get('unidades_totales') or 0))} unidades. "
+                    f"Los productos registrados fueron: {top_summary}."
+                )
+            else:
+                response_text = (
+                    f"Hola, {nombre}. En los últimos 12 meses registras compras por {format_currency(totals.get('valor_total'))} "
+                    f"en {int(totals.get('lineas') or 0)} líneas de venta, con {int(float(totals.get('unidades_totales') or 0))} unidades. "
+                    f"Tu última compra fue el {totals.get('ultima_compra')}. Productos destacados: {top_summary}."
+                )
         return {
             "tono": "informativo",
             "intent": intent,
             "priority": "media",
-            "summary": f"Consulta de compras del último año de {cliente_contexto.get('cliente_codigo')}",
+            "summary": f"Consulta de compras de {purchase_query.get('label')} para {cliente_contexto.get('cliente_codigo')}",
             "response_text": response_text,
             "should_create_task": False,
             "task_type": "seguimiento_cliente",
@@ -1209,6 +1445,10 @@ async def receive_whatsapp_webhook(request: Request):
                 conversation_context = dict(conversation_snapshot.get("contexto") or {})
                 verified_context = None
                 detected_intent = detect_business_intent(content)
+                if detected_intent == "consulta_general" and has_temporal_reference(content):
+                    previous_intent = conversation_context.get("last_direct_intent") or conversation_context.get("intent")
+                    if previous_intent in {"consulta_compras", "consulta_cartera"}:
+                        detected_intent = previous_intent
                 product_request = extract_product_request(content)
 
                 document_candidate = extract_document_candidate(content)
@@ -1304,6 +1544,7 @@ async def receive_whatsapp_webhook(request: Request):
                         [],
                         context.get("nombre_visible"),
                         product_request,
+                        content,
                     )
                     response_text = build_verification_success_reply(context.get("nombre_visible"), cliente_contexto)
                     if direct_result:
@@ -1365,6 +1606,7 @@ async def receive_whatsapp_webhook(request: Request):
                         lookup_product_context(content) if detected_intent == "consulta_productos" else [],
                         context.get("nombre_visible"),
                         product_request,
+                        content,
                     )
                     if direct_result:
                         outbound_payload = None
