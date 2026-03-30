@@ -102,6 +102,12 @@ PORTFOLIO_ALIASES = {
     "domestico": ["domestico", "doméstico", "vinilico", "viniltex", "economico", "económico"],
     "pintuco": ["pintuco", "viniltex", "p11", "p-11", "p 11"],
     "p11": ["p11", "p-11", "p 11", "pintuco 11"],
+    "p53": ["p53", "p-53", "p 53", "verde esmeral", "verde esmer"],
+    "mega": ["mega", "cerradura mega", "sobreponer"],
+    "derecha": ["derecha", "derecho", "der", "derc"],
+    "izquierda": ["izquierda", "izquierdo", "izq"],
+    "brocha": ["brocha", "brochas", "pincel"],
+    "popular": ["popular", "pop"],
     "abracol": ["abracol"],
     "yale": ["yale"],
     "goya": ["goya"],
@@ -532,8 +538,40 @@ def infer_product_presentation_from_row(product_row: dict):
     return None
 
 
+def extract_size_filters(text_value: Optional[str]):
+    if not text_value:
+        return []
+
+    normalized_sizes = []
+    seen_sizes = set()
+    for raw_match in re.findall(r"\b(\d+(?:\s+\d/\d)?)(?=\s*(?:\"|pulgadas?|pulg))", text_value, flags=re.IGNORECASE):
+        size_value = re.sub(r"\s+", " ", raw_match.strip())
+        if size_value and size_value not in seen_sizes:
+            seen_sizes.add(size_value)
+            normalized_sizes.append(size_value)
+    return normalized_sizes
+
+
+def infer_product_size_from_row(product_row: dict):
+    raw_description = str(product_row.get("descripcion") or product_row.get("nombre_articulo") or "")
+    size_match = re.search(r"\b(\d+(?:/\d+)?(?:\s+\d/\d+)?)(?=\")", raw_description)
+    if size_match:
+        return re.sub(r"\s+", " ", size_match.group(1).strip())
+
+    normalized_description = normalize_text_value(raw_description)
+    for size_value in ["2 1/2", "1 1/2", "3 1/2", "4 1/2", "1/2"]:
+        if size_value in normalized_description:
+            return size_value
+    standalone_match = re.search(r"\b(\d+(?:\s+\d/\d)?)\b", normalized_description)
+    if standalone_match and any(keyword in normalized_description for keyword in ["brocha", "rodillo", "cerradura", "bisagra", "pasador", "portacandado"]):
+        return standalone_match.group(1)
+    return None
+
+
 def infer_product_brand_from_row(product_row: dict):
     brand_text = normalize_text_value(product_row.get("marca") or product_row.get("marca_producto") or "")
+    if re.fullmatch(r"\d+", brand_text or ""):
+        brand_text = ""
     description_value = normalize_text_value(product_row.get("descripcion") or product_row.get("nombre_articulo"))
     combined_value = f"{brand_text} {description_value}".strip()
     for brand_name, aliases in BRAND_ALIASES.items():
@@ -554,10 +592,10 @@ def summarize_product_option(product_row: dict):
         summary_parts.append(get_presentation_label(presentation_value, 1))
     if brand_value:
         summary_parts.append(str(brand_value).upper())
-    if department_value:
+    if department_value and str(department_value).strip().upper() != "NULL":
         summary_parts.append(str(department_value))
     if stock_value is not None:
-        summary_parts.append(f"stock {stock_value}")
+        summary_parts.append(f"stock {format_quantity(stock_value)}")
     return f"{reference_value}: {' | '.join(summary_parts)}"
 
 
@@ -586,6 +624,14 @@ def filter_rows_by_requested_presentation(product_rows: list[dict], product_requ
     if not product_request or not product_request.get("requested_unit"):
         return product_rows
     exact_rows = [row for row in product_rows if infer_product_presentation_from_row(row) == product_request.get("requested_unit")]
+    return exact_rows or product_rows
+
+
+def filter_rows_by_requested_size(product_rows: list[dict], product_request: Optional[dict]):
+    requested_sizes = (product_request or {}).get("size_filters") or []
+    if not requested_sizes:
+        return product_rows
+    exact_rows = [row for row in product_rows if infer_product_size_from_row(row) in requested_sizes]
     return exact_rows or product_rows
 
 
@@ -642,6 +688,24 @@ def expand_product_terms(search_terms: list[str]):
                 add_term(alias_term)
 
     return expanded_terms
+
+
+def get_specific_product_terms(product_request: Optional[dict]):
+    if not product_request:
+        return []
+
+    generic_terms = set()
+    for aliases in PRESENTATION_ALIASES.values():
+        generic_terms.update(normalize_text_value(alias) for alias in aliases)
+
+    specific_terms = []
+    for term in product_request.get("core_terms") or []:
+        normalized_term = normalize_text_value(term)
+        if not normalized_term or normalized_term in generic_terms or normalized_term in PRODUCT_STOPWORDS:
+            continue
+        if normalized_term not in specific_terms:
+            specific_terms.append(normalized_term)
+    return specific_terms[:5]
 
 
 def normalize_phone(phone_number: Optional[str]):
@@ -1232,6 +1296,7 @@ def extract_product_request(text_value: Optional[str]):
             "quantity_expression": None,
             "product_codes": [],
             "brand_filters": [],
+            "size_filters": [],
             "store_filters": [],
             "original_query": "",
         }
@@ -1319,6 +1384,7 @@ def extract_product_request(text_value: Optional[str]):
         "quantity_expression": quantity_expression,
         "product_codes": product_codes,
         "brand_filters": extract_brand_filters(text_value),
+        "size_filters": extract_size_filters(text_value),
         "store_filters": extract_store_filters(text_value),
         "original_query": text_value or "",
     }
@@ -1796,6 +1862,31 @@ def build_direct_reply(
                 "task_detail": {"product_request": product_request or {}},
             }
 
+        if len(product_context) == 1:
+            top_row = product_context[0]
+            top_reference = top_row.get("referencia") or top_row.get("codigo_articulo") or "sin referencia"
+            top_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or top_reference
+            top_stock = top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")
+            top_cost = top_row.get("costo_promedio_und")
+            direct_response = f"Hola, {nombre}. Encontré esta referencia para tu consulta: {top_description} ({top_reference})."
+            if top_stock is not None:
+                direct_response += f" Stock total aproximado: {format_quantity(top_stock)} unidades."
+            if top_cost is not None:
+                direct_response += f" Costo promedio: {format_currency(top_cost)}."
+            if top_row.get("stock_por_tienda"):
+                direct_response += f" Disponible en: {top_row.get('stock_por_tienda')}."
+            return {
+                "tono": "informativo",
+                "intent": intent,
+                "priority": "media",
+                "summary": "Consulta de producto con coincidencia directa",
+                "response_text": direct_response,
+                "should_create_task": False,
+                "task_type": "seguimiento_cliente",
+                "task_summary": "Consulta de producto resuelta",
+                "task_detail": {"products": product_context, "product_request": product_request or {}},
+            }
+
         if should_ask_product_clarification(product_request, product_context):
             clarification_options = []
             clarification_lines = []
@@ -2054,6 +2145,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                             referencia,
                             descripcion,
                             marca,
+                            STRING_AGG(DISTINCT departamento, ', ' ORDER BY departamento) AS departamentos,
                             COALESCE(SUM(stock_disponible), 0) AS stock_total,
                             AVG(costo_promedio_und) AS costo_promedio_und,
                             STRING_AGG(
@@ -2078,6 +2170,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                 ranked_rows = []
                 primary_term = normalize_reference_value(core_terms[0]) if core_terms else ""
                 preferred_family_terms = expand_product_terms([primary_term]) if primary_term else []
+                specific_terms = get_specific_product_terms(product_request)
                 for row in rows:
                     candidate = dict(row)
                     candidate_text = " ".join(
@@ -2085,17 +2178,23 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                         for value in [candidate.get("descripcion"), candidate.get("referencia"), candidate.get("marca")]
                         if value
                     )
+                    normalized_candidate_text = normalize_text_value(candidate_text)
                     candidate_presentation = infer_product_presentation_from_row(candidate)
                     candidate_brand = infer_product_brand_from_row(candidate)
+                    candidate_size = infer_product_size_from_row(candidate)
                     candidate["fuzzy_score"] = round(sequence_similarity(normalized_query, candidate_text), 4)
-                    candidate["family_score"] = 1 if any(term and term in normalize_text_value(candidate_text) for term in preferred_family_terms[:5]) else 0
+                    candidate["family_score"] = 1 if any(term and term in normalized_candidate_text for term in preferred_family_terms[:5]) else 0
+                    candidate["specific_score"] = sum(1 for term in specific_terms if term and term in normalized_candidate_text)
                     candidate["presentation_score"] = 1 if product_request.get("requested_unit") and candidate_presentation == product_request.get("requested_unit") else 0
                     candidate["brand_score"] = 1 if brand_filters and candidate_brand in brand_filters else 0
+                    candidate["size_score"] = 1 if (product_request.get("size_filters") or []) and candidate_size in (product_request.get("size_filters") or []) else 0
                     ranked_rows.append(candidate)
                 ranked_rows.sort(
                     key=lambda item: (
+                        item.get("size_score") or 0,
                         item.get("presentation_score") or 0,
                         item.get("brand_score") or 0,
+                        item.get("specific_score") or 0,
                         item.get("family_score") or 0,
                         item.get("match_score") or 0,
                         item.get("fuzzy_score") or 0,
@@ -2103,6 +2202,18 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     ),
                     reverse=True,
                 )
+                top_specific_score = ranked_rows[0].get("specific_score") or 0 if ranked_rows else 0
+                if top_specific_score > 0:
+                    ranked_rows = [item for item in ranked_rows if (item.get("specific_score") or 0) > 0]
+                top_match_score = ranked_rows[0].get("match_score") or 0 if ranked_rows else 0
+                if top_match_score >= 2:
+                    ranked_rows = [
+                        item for item in ranked_rows
+                        if (item.get("match_score") or 0) >= max(2, top_match_score - 1)
+                        or (item.get("size_score") or 0) > 0
+                        or (item.get("brand_score") or 0) > 0
+                        or (item.get("family_score") or 0) > 0
+                    ]
                 if product_request.get("requested_unit"):
                     exact_presentation_rows = [
                         item for item in ranked_rows
@@ -2110,6 +2221,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     ]
                     if exact_presentation_rows:
                         ranked_rows = exact_presentation_rows
+                ranked_rows = filter_rows_by_requested_size(ranked_rows, product_request)
                 if any((parse_numeric_value(item.get("stock_total")) or 0) > 0 for item in ranked_rows):
                     ranked_rows = [item for item in ranked_rows if (parse_numeric_value(item.get("stock_total")) or 0) > 0]
                 return ranked_rows[:5]
