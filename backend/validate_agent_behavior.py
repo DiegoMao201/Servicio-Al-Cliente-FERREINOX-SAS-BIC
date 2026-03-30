@@ -23,8 +23,22 @@ def main() -> None:
         extract_product_request,
         fetch_latest_purchase_detail,
         find_cliente_contexto_by_document,
+        is_greeting_message,
+        is_identity_verification_message,
         lookup_product_context,
     )
+
+    print("GREETING TYPO CHECK:")
+    print("hola buena stardes =>", is_greeting_message("hola buena stardes"))
+
+    verification_context = {
+        "awaiting_verification": True,
+        "pending_intent": "consulta_cartera",
+        "last_direct_intent": "consulta_productos",
+        "last_product_request": {"search_terms": ["t11"]},
+    }
+    print("VERIFICATION ROUTING CHECK:")
+    print("1053774777 =>", is_identity_verification_message("1053774777", verification_context))
 
     product_message = "1501 en cuñete en pereira hay ?"
     product_request = extract_product_request(product_message)

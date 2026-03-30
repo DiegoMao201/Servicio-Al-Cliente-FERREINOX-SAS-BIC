@@ -773,6 +773,9 @@ def fetch_learned_product_references(product_request: Optional[dict]):
     if not product_request:
         return []
 
+    if product_request.get("product_codes"):
+        return []
+
     phrases = build_learning_phrase_candidates(product_request)
 
     if not phrases:
@@ -2528,6 +2531,178 @@ def build_verification_success_reply(profile_name: Optional[str], cliente_contex
     )
 
 
+def fetch_products_from_catalog(connection, where_clause: str, params: dict, match_score_sql: str, limit: int = 25):
+    return connection.execute(
+        text(
+            f"""
+            SELECT producto_codigo, referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
+                   ({match_score_sql}) AS match_score
+            FROM public.productos
+            WHERE {where_clause}
+            ORDER BY match_score DESC, stock_total DESC NULLS LAST, descripcion ASC NULLS LAST
+            LIMIT {int(limit)}
+            """
+        ),
+        params,
+    ).mappings().all()
+
+
+def fetch_products_from_store_inventory(connection, where_clause: str, params: dict, match_score_sql: str, limit: int = 25):
+    return connection.execute(
+        text(
+            f"""
+            SELECT referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
+                   ({match_score_sql}) AS match_score
+            FROM (
+                SELECT
+                    referencia,
+                    descripcion,
+                    marca,
+                    STRING_AGG(DISTINCT departamento, ', ' ORDER BY departamento) AS departamentos,
+                    COALESCE(SUM(stock_disponible), 0) AS stock_total,
+                    AVG(costo_promedio_und) AS costo_promedio_und,
+                    STRING_AGG(
+                        almacen_nombre || ': ' || COALESCE(stock_disponible::text, '0'),
+                        '; '
+                        ORDER BY almacen_nombre
+                    ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
+                    MAX(search_blob) AS search_blob,
+                    public.fn_keep_alnum(
+                        COALESCE(MAX(descripcion), '') || ' ' ||
+                        COALESCE(MAX(referencia), '') || ' ' ||
+                        COALESCE(MAX(marca), '')
+                    ) AS search_compact,
+                    MAX(referencia_normalizada) AS referencia_normalizada
+                FROM public.vw_inventario_agente
+                WHERE {where_clause}
+                GROUP BY referencia, descripcion, marca
+            ) inventory
+            ORDER BY match_score DESC, stock_total DESC NULLS LAST, descripcion ASC NULLS LAST
+            LIMIT {int(limit)}
+            """
+        ),
+        params,
+    ).mappings().all()
+
+
+def fetch_reference_product_rows(connection, references: list[str], store_filters: list[str], match_score: int):
+    if not references:
+        return []
+
+    params = {}
+    catalog_reference_filters = []
+    inventory_reference_filters = []
+    for index, reference_value in enumerate(references[:5]):
+        params[f"reference_{index}"] = normalize_reference_value(reference_value)
+        catalog_reference_filters.append(f"producto_codigo = :reference_{index}")
+        inventory_reference_filters.append(f"referencia_normalizada = :reference_{index}")
+
+    if store_filters:
+        store_filters_sql = []
+        for store_index, store_code in enumerate(store_filters):
+            params[f"store_{store_index}"] = store_code
+            store_filters_sql.append(f"cod_almacen = :store_{store_index}")
+        return fetch_products_from_store_inventory(
+            connection,
+            f"({' OR '.join(inventory_reference_filters)}) AND ({' OR '.join(store_filters_sql)})",
+            params,
+            str(match_score),
+            limit=5,
+        )
+
+    return fetch_products_from_catalog(
+        connection,
+        f"({' OR '.join(catalog_reference_filters)})",
+        params,
+        str(match_score),
+        limit=5,
+    )
+
+
+def fetch_code_product_rows(connection, product_codes: list[str], store_filters: list[str]):
+    if not product_codes:
+        return []
+
+    params = {}
+    code_filters = []
+    score_terms = []
+    for index, code in enumerate(product_codes[:3]):
+        params[f"code_like_{index}"] = f"%{code}%"
+        params[f"code_compact_{index}"] = f"%{normalize_reference_value(code)}%"
+        code_filters.append(f"producto_codigo LIKE :code_like_{index}")
+        code_filters.append(f"search_blob ILIKE :code_like_{index}")
+        code_filters.append(f"search_compact LIKE :code_compact_{index}")
+        score_terms.append(
+            f"CASE WHEN producto_codigo LIKE :code_like_{index} OR search_blob ILIKE :code_like_{index} OR search_compact LIKE :code_compact_{index} THEN 1 ELSE 0 END"
+        )
+
+    if store_filters:
+        store_code_filters = []
+        store_score_terms = []
+        for index, code in enumerate(product_codes[:3]):
+            store_code_filters.append(f"referencia_normalizada LIKE :code_like_{index}")
+            store_code_filters.append(f"search_blob ILIKE :code_like_{index}")
+            store_score_terms.append(
+                f"CASE WHEN referencia_normalizada LIKE :code_like_{index} OR search_blob ILIKE :code_like_{index} THEN 1 ELSE 0 END"
+            )
+        store_filters_sql = []
+        for store_index, store_code in enumerate(store_filters):
+            params[f"store_{store_index}"] = store_code
+            store_filters_sql.append(f"cod_almacen = :store_{store_index}")
+        return fetch_products_from_store_inventory(
+            connection,
+            f"({' OR '.join(store_code_filters)}) AND ({' OR '.join(store_filters_sql)})",
+            params,
+            " + ".join(store_score_terms) if store_score_terms else "0",
+            limit=5,
+        )
+
+    where_clause = f"({' OR '.join(code_filters)})"
+    match_score_sql = " + ".join(score_terms) if score_terms else "0"
+    return fetch_products_from_catalog(connection, where_clause, params, match_score_sql, limit=5)
+
+
+def fetch_term_product_rows(connection, query_terms: list[str], store_filters: list[str]):
+    if not query_terms:
+        return []
+
+    params = {}
+    search_filters = []
+    score_terms = []
+    for index, term in enumerate(query_terms[:5]):
+        params[f"pattern_{index}"] = f"%{term}%"
+        compact_term = normalize_reference_value(term)
+        params[f"compact_{index}"] = f"%{compact_term}%"
+        search_filters.append(f"search_blob ILIKE :pattern_{index}")
+        if compact_term:
+            search_filters.append(f"search_compact LIKE :compact_{index}")
+        score_terms.append(
+            f"CASE WHEN search_blob ILIKE :pattern_{index} OR search_compact LIKE :compact_{index} THEN 1 ELSE 0 END"
+        )
+
+    if store_filters:
+        store_search_filters = []
+        store_score_terms = []
+        for index, term in enumerate(query_terms[:5]):
+            store_search_filters.append(f"search_blob ILIKE :pattern_{index}")
+            store_score_terms.append(f"CASE WHEN search_blob ILIKE :pattern_{index} THEN 1 ELSE 0 END")
+        store_filters_sql = []
+        for store_index, store_code in enumerate(store_filters):
+            params[f"store_{store_index}"] = store_code
+            store_filters_sql.append(f"cod_almacen = :store_{store_index}")
+        return fetch_products_from_store_inventory(
+            connection,
+            f"({' OR '.join(store_search_filters)}) AND ({' OR '.join(store_filters_sql)})",
+            params,
+            " + ".join(store_score_terms) if store_score_terms else "0",
+            limit=25,
+        )
+
+    where_clause = f"({' OR '.join(search_filters)})"
+    match_score_sql = " + ".join(score_terms) if score_terms else "0"
+    return fetch_products_from_catalog(connection, where_clause, params, match_score_sql, limit=25)
+
+
 def lookup_product_context(text_value: Optional[str], product_request: Optional[dict] = None):
     product_request = product_request or extract_product_request(text_value)
     core_terms = product_request.get("core_terms") or []
@@ -2545,79 +2720,12 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
         engine = get_db_engine()
         with engine.connect() as connection:
             if learned_references:
-                learned_params = {}
-                learned_filters = []
-                for index, reference_value in enumerate(learned_references[:5]):
-                    learned_params[f"learned_ref_{index}"] = normalize_reference_value(reference_value)
-                    learned_filters.append(f"referencia_normalizada = :learned_ref_{index}")
-                learned_store_clause = ""
-                if store_filters:
-                    learned_store_predicates = []
-                    for store_index, store_code in enumerate(store_filters):
-                        learned_params[f"learned_store_{store_index}"] = store_code
-                        learned_store_predicates.append(f"cod_almacen = :learned_store_{store_index}")
-                    learned_store_clause = f" AND ({' OR '.join(learned_store_predicates)})"
-                learned_rows = connection.execute(
-                    text(
-                        f"""
-                        SELECT referencia, descripcion, marca,
-                               STRING_AGG(DISTINCT departamento, ', ' ORDER BY departamento) AS departamentos,
-                               COALESCE(SUM(stock_disponible), 0) AS stock_total,
-                               AVG(costo_promedio_und) AS costo_promedio_und,
-                               STRING_AGG(
-                                   almacen_nombre || ': ' || COALESCE(stock_disponible::text, '0'),
-                                   '; '
-                                   ORDER BY almacen_nombre
-                               ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
-                               90 AS match_score
-                        FROM public.vw_inventario_agente
-                        WHERE ({' OR '.join(learned_filters)}){learned_store_clause}
-                        GROUP BY referencia, descripcion, marca
-                        ORDER BY COALESCE(SUM(stock_disponible), 0) DESC NULLS LAST
-                        LIMIT 5
-                        """
-                    ),
-                    learned_params,
-                ).mappings().all()
+                learned_rows = fetch_reference_product_rows(connection, learned_references, store_filters, 90)
                 if learned_rows:
                     return filter_rows_by_requested_presentation([dict(row) for row in learned_rows], product_request)
 
             if product_codes:
-                code_params = {}
-                code_filters = []
-                for i, code in enumerate(product_codes[:3]):
-                    code_params[f"code_{i}"] = f"%{code}%"
-                    code_filters.append(f"referencia_normalizada LIKE :code_{i}")
-                    code_filters.append(f"search_blob ILIKE :code_{i}")
-                store_clause = ""
-                if store_filters:
-                    store_predicates = []
-                    for store_index, store_code in enumerate(store_filters):
-                        code_params[f"store_{store_index}"] = store_code
-                        store_predicates.append(f"cod_almacen = :store_{store_index}")
-                    store_clause = f" AND ({' OR '.join(store_predicates)})"
-                code_rows = connection.execute(
-                    text(
-                        f"""
-                           SELECT referencia, descripcion, marca,
-                               STRING_AGG(DISTINCT departamento, ', ' ORDER BY departamento) AS departamentos,
-                               COALESCE(SUM(stock_disponible), 0) AS stock_total,
-                               AVG(costo_promedio_und) AS costo_promedio_und,
-                               STRING_AGG(
-                                   almacen_nombre || ': ' || COALESCE(stock_disponible::text, '0'),
-                                   '; '
-                                   ORDER BY almacen_nombre
-                               ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
-                               100 AS match_score
-                        FROM public.vw_inventario_agente
-                        WHERE ({' OR '.join(code_filters)}){store_clause}
-                        GROUP BY referencia, descripcion, marca
-                        ORDER BY COALESCE(SUM(stock_disponible), 0) DESC NULLS LAST
-                        LIMIT 5
-                        """
-                    ),
-                    code_params,
-                ).mappings().all()
+                code_rows = fetch_code_product_rows(connection, product_codes, store_filters)
                 if code_rows:
                     return filter_rows_by_requested_presentation([dict(row) for row in code_rows], product_request)
 
@@ -2630,51 +2738,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     query_terms.append(term)
                 if len(query_terms) == 5:
                     break
-            params = {}
-            inventory_filters = []
-            inventory_scores = []
-            for index, term in enumerate(query_terms):
-                params[f"pattern_{index}"] = f"%{term}%"
-                inventory_filters.append(f"search_blob ILIKE :pattern_{index}")
-                inventory_scores.append(f"CASE WHEN search_blob ILIKE :pattern_{index} THEN 1 ELSE 0 END")
-            base_store_clause = ""
-            if store_filters:
-                store_predicates = []
-                for store_index, store_code in enumerate(store_filters):
-                    params[f"store_{store_index}"] = store_code
-                    store_predicates.append(f"cod_almacen = :store_{store_index}")
-                base_store_clause = f"WHERE {' OR '.join(store_predicates)}"
-
-            rows = connection.execute(
-                text(
-                    f"""
-                          SELECT referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
-                           ({' + '.join(inventory_scores)}) AS match_score
-                    FROM (
-                        SELECT
-                            referencia,
-                            descripcion,
-                            marca,
-                            STRING_AGG(DISTINCT departamento, ', ' ORDER BY departamento) AS departamentos,
-                            COALESCE(SUM(stock_disponible), 0) AS stock_total,
-                            AVG(costo_promedio_und) AS costo_promedio_und,
-                            STRING_AGG(
-                                almacen_nombre || ': ' || COALESCE(stock_disponible::text, '0'),
-                                '; '
-                                ORDER BY almacen_nombre
-                            ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
-                            MAX(search_blob) AS search_blob
-                        FROM public.vw_inventario_agente
-                        {base_store_clause}
-                        GROUP BY referencia, descripcion, marca
-                    ) inventory
-                    WHERE ({' OR '.join(inventory_filters)})
-                    ORDER BY match_score DESC, stock_total DESC NULLS LAST, descripcion ASC NULLS LAST
-                    LIMIT 25
-                    """
-                ),
-                params,
-            ).mappings().all()
+            rows = fetch_term_product_rows(connection, query_terms, store_filters)
 
             if rows:
                 ranked_rows = []
@@ -2741,7 +2805,9 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
 
             sales_filters = []
             sales_scores = []
+            sales_params = {}
             for index, term in enumerate(query_terms):
+                sales_params[f"pattern_{index}"] = f"%{term}%"
                 sales_filters.append(f"search_blob ILIKE :pattern_{index}")
                 sales_scores.append(f"CASE WHEN search_blob ILIKE :pattern_{index} THEN 1 ELSE 0 END")
 
@@ -2775,7 +2841,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     LIMIT 5
                     """
                 ),
-                params,
+                sales_params,
             ).mappings().all()
 
             return [dict(row) for row in sales_rows]
