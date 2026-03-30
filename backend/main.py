@@ -157,6 +157,15 @@ MONTH_ALIASES = {
 }
 
 
+PURCHASE_LINE_FILTER = """
+COALESCE(valor_venta_neto, 0) > 0
+AND COALESCE(unidades_vendidas_netas, 0) > 0
+AND COALESCE(nombre_articulo, '') <> ''
+AND COALESCE(nombre_articulo, '') NOT ILIKE '%TOTAL%'
+AND COALESCE(nombre_articulo, '') NOT ILIKE '%NOTA CREDITO%'
+"""
+
+
 def get_postgrest_url():
     return os.getenv("PGRST_URL", "http://localhost:3000").rstrip("/")
 
@@ -1171,6 +1180,12 @@ def detect_business_intent(text_value: Optional[str]):
             "compra",
             "que he comprado",
             "qué he comprado",
+            "que productos compre",
+            "qué productos compré",
+            "que compre ese dia",
+            "qué compré ese día",
+            "ese pedido",
+            "esa compra",
             "he comprado",
             "comprado",
             "compras",
@@ -1197,6 +1212,13 @@ def format_currency(value):
     except Exception:
         number = 0.0
     return f"${number:,.0f}".replace(",", ".")
+
+
+def format_quantity(value):
+    number = parse_numeric_value(value)
+    if number is None:
+        return str(value)
+    return f"{int(number)}" if float(number).is_integer() else f"{number:g}"
 
 
 def extract_product_request(text_value: Optional[str]):
@@ -1376,6 +1398,28 @@ def has_temporal_reference(text_value: Optional[str]):
     return bool(purchase_query.get("has_time_filter"))
 
 
+def is_purchase_followup_message(text_value: Optional[str], conversation_context: Optional[dict]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    if (conversation_context or {}).get("last_direct_intent") != "consulta_compras":
+        return False
+
+    followup_phrases = [
+        "ese dia",
+        "ese pedido",
+        "esa compra",
+        "esa fecha",
+        "que productos compre",
+        "que productos compre ese dia",
+        "que compre ese dia",
+        "que compre ese pedido",
+        "productos compre",
+        "productos comprados",
+    ]
+    return any(phrase in normalized for phrase in followup_phrases)
+
+
 def fetch_last_year_purchase_summary(cliente_codigo: Optional[str]):
     if not cliente_codigo:
         return None
@@ -1446,7 +1490,8 @@ def fetch_purchase_summary(
                     MAX(fecha_venta) AS ultima_compra
                 FROM public.vw_ventas_netas
                 WHERE cliente_id = :cliente_codigo
-                  AND {where_clause}
+                                    AND {where_clause}
+                                    AND {PURCHASE_LINE_FILTER}
                 """
             ),
             params,
@@ -1463,7 +1508,8 @@ def fetch_purchase_summary(
                     COALESCE(SUM(valor_venta_neto), 0) AS valor
                 FROM public.vw_ventas_netas
                 WHERE cliente_id = :cliente_codigo
-                  AND {where_clause}
+                                    AND {where_clause}
+                                    AND {PURCHASE_LINE_FILTER}
                 GROUP BY 1, 2, 3
                 ORDER BY fecha_venta DESC, valor DESC NULLS LAST
                 LIMIT 12
@@ -1483,10 +1529,11 @@ def fetch_latest_purchase_detail(cliente_codigo: Optional[str]):
     with engine.connect() as connection:
         latest_row = connection.execute(
             text(
-                """
+                f"""
                 SELECT MAX(fecha_venta) AS fecha_venta
                 FROM public.vw_ventas_netas
                 WHERE cliente_id = :cliente_codigo
+                  AND {PURCHASE_LINE_FILTER}
                 """
             ),
             {"cliente_codigo": cliente_codigo},
@@ -1498,7 +1545,7 @@ def fetch_latest_purchase_detail(cliente_codigo: Optional[str]):
 
         totals = connection.execute(
             text(
-                """
+                f"""
                 SELECT
                     COUNT(*) AS lineas,
                     COALESCE(SUM(valor_venta_neto), 0) AS valor_total,
@@ -1506,6 +1553,7 @@ def fetch_latest_purchase_detail(cliente_codigo: Optional[str]):
                 FROM public.vw_ventas_netas
                 WHERE cliente_id = :cliente_codigo
                   AND fecha_venta = :latest_date
+                                    AND {PURCHASE_LINE_FILTER}
                 """
             ),
             {"cliente_codigo": cliente_codigo, "latest_date": latest_date},
@@ -1513,13 +1561,14 @@ def fetch_latest_purchase_detail(cliente_codigo: Optional[str]):
 
         products = connection.execute(
             text(
-                """
+                f"""
                 SELECT codigo_articulo, nombre_articulo,
                        COALESCE(SUM(unidades_vendidas_netas), 0) AS unidades,
                        COALESCE(SUM(valor_venta_neto), 0) AS valor
                 FROM public.vw_ventas_netas
                 WHERE cliente_id = :cliente_codigo
                   AND fecha_venta = :latest_date
+                                    AND {PURCHASE_LINE_FILTER}
                 GROUP BY 1, 2
                 ORDER BY valor DESC NULLS LAST
                 LIMIT 10
@@ -1578,6 +1627,7 @@ def build_direct_reply(
     profile_name: Optional[str],
     product_request: Optional[dict] = None,
     user_message: Optional[str] = None,
+    conversation_context: Optional[dict] = None,
 ):
     nombre = profile_name or "cliente"
 
@@ -1642,6 +1692,13 @@ def build_direct_reply(
         if not cliente_contexto or not cliente_contexto.get("cliente_codigo"):
             return None
         purchase_query = extract_purchase_query(user_message)
+        if not purchase_query.get("has_time_filter") and purchase_query.get("wants_products"):
+            context_purchase_date = (conversation_context or {}).get("last_purchase_date")
+            if context_purchase_date:
+                purchase_query["start_date"] = context_purchase_date
+                purchase_query["end_date"] = context_purchase_date
+                purchase_query["label"] = str(context_purchase_date)
+                purchase_query["has_time_filter"] = True
         if purchase_query.get("wants_last_purchase"):
             latest_purchase = fetch_latest_purchase_detail(cliente_contexto.get("cliente_codigo"))
             if not latest_purchase or not latest_purchase.get("fecha_venta"):
@@ -1778,6 +1835,8 @@ def build_direct_reply(
 
         product_lines = []
         quantity_note = None
+        requested_store_codes = (product_request or {}).get("store_filters") or []
+        requested_store_label = STORE_CODE_LABELS.get(requested_store_codes[0]) if len(requested_store_codes) == 1 else None
         if product_request:
             requested_quantity = product_request.get("requested_quantity")
             requested_unit = product_request.get("requested_unit")
@@ -1786,6 +1845,34 @@ def build_direct_reply(
                 quantity_note = f"Entendí una solicitud de {requested_quantity:g} {get_presentation_label(requested_unit, requested_quantity)}"
             elif quantity_expression:
                 quantity_note = f"Tomé la referencia de cantidad {quantity_expression} para orientarte mejor"
+
+        if requested_store_label and product_context:
+            top_row = product_context[0]
+            top_reference = top_row.get("referencia") or top_row.get("codigo_articulo") or "sin referencia"
+            top_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or top_reference
+            top_stock = top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")
+            top_cost = top_row.get("costo_promedio_und")
+            top_presentation = infer_product_presentation_from_row(top_row)
+            store_response = (
+                f"Hola, {nombre}. "
+                f"Sí, en {requested_store_label} hay {format_quantity(top_stock)} unidades de {top_description} ({top_reference})"
+                f"{f', presentación {get_presentation_label(top_presentation, 1)}' if top_presentation else ''}."
+            )
+            if top_cost is not None:
+                store_response += f" Costo promedio: {format_currency(top_cost)}."
+            if quantity_note:
+                store_response += f" {quantity_note}."
+            return {
+                "tono": "informativo",
+                "intent": intent,
+                "priority": "media",
+                "summary": "Consulta de producto con tienda especifica",
+                "response_text": store_response,
+                "should_create_task": False,
+                "task_type": "seguimiento_cliente",
+                "task_summary": "Consulta de producto por tienda",
+                "task_detail": {"products": product_context, "product_request": product_request or {}},
+            }
 
         for row in product_context[:3]:
             descripcion = row.get("descripcion") or row.get("nombre_articulo") or row.get("referencia") or row.get("codigo_articulo")
@@ -2335,6 +2422,8 @@ async def receive_whatsapp_webhook(request: Request):
                     previous_product_request = conversation_context.get("last_product_request") or {}
                     if conversation_context.get("last_direct_intent") == "consulta_productos" or previous_product_request.get("search_terms"):
                         detected_intent = "consulta_productos"
+                if detected_intent in {"consulta_general", "consulta_productos"} and is_purchase_followup_message(content, conversation_context):
+                    detected_intent = "consulta_compras"
                 if detected_intent == "consulta_general" and has_temporal_reference(content):
                     previous_intent = conversation_context.get("last_direct_intent") or conversation_context.get("intent")
                     if previous_intent in {"consulta_compras", "consulta_cartera"}:
@@ -2542,6 +2631,7 @@ async def receive_whatsapp_webhook(request: Request):
                             context.get("nombre_visible"),
                             product_request,
                             content,
+                            conversation_context,
                         )
                     except Exception:
                         product_context_result = []
@@ -2601,6 +2691,7 @@ async def receive_whatsapp_webhook(request: Request):
                             "last_direct_intent": direct_result.get("intent"),
                             "last_product_request": product_request,
                             "pending_product_clarification": direct_result.get("clarification_options") if direct_result.get("awaiting_product_clarification") else None,
+                            "last_purchase_date": (direct_result.get("task_detail") or {}).get("fecha_venta") or ((direct_result.get("task_detail") or {}).get("totals") or {}).get("ultima_compra"),
                             "awaiting_verification": False,
                         },
                         summary=direct_result.get("summary") or content,
@@ -2626,6 +2717,7 @@ async def receive_whatsapp_webhook(request: Request):
                         context.get("nombre_visible"),
                         product_request,
                         content,
+                        conversation_context,
                     )
                     response_text = build_verification_success_reply(context.get("nombre_visible"), cliente_contexto)
                     if direct_result:
@@ -2688,6 +2780,7 @@ async def receive_whatsapp_webhook(request: Request):
                         context.get("nombre_visible"),
                         product_request,
                         content,
+                        conversation_context,
                     )
                     if direct_result:
                         outbound_payload = None
@@ -2722,6 +2815,7 @@ async def receive_whatsapp_webhook(request: Request):
                                 "verified_document": verification_state.get("verified_document"),
                                 "verified_cliente_codigo": verification_state.get("verified_cliente_codigo"),
                                 "last_direct_intent": direct_result.get("intent"),
+                                "last_purchase_date": (direct_result.get("task_detail") or {}).get("fecha_venta") or ((direct_result.get("task_detail") or {}).get("totals") or {}).get("ultima_compra"),
                                 "awaiting_verification": False,
                             },
                             summary=direct_result.get("summary") or content,
