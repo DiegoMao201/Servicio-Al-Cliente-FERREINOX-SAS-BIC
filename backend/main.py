@@ -508,6 +508,178 @@ def is_product_intent_message(text_value: Optional[str]):
     return any(keyword in lowered for keyword in product_keywords)
 
 
+def detect_business_intent(text_value: Optional[str]):
+    if not text_value:
+        return "consulta_general"
+
+    lowered = text_value.lower()
+    if any(keyword in lowered for keyword in ["cartera", "saldo", "deuda", "vencido", "estado de cuenta", "cupo", "credito"]):
+        return "consulta_cartera"
+    if any(
+        keyword in lowered
+        for keyword in [
+            "que he comprado",
+            "qué he comprado",
+            "he comprado",
+            "comprado",
+            "compras",
+            "historial de compras",
+            "este ano",
+            "este año",
+            "ultimo ano",
+            "ultimo año",
+            "último año",
+            "ultimos 12 meses",
+            "últimos 12 meses",
+            "ventas",
+        ]
+    ):
+        return "consulta_compras"
+    if is_product_intent_message(text_value):
+        return "consulta_productos"
+    return "consulta_general"
+
+
+def format_currency(value):
+    try:
+        number = float(value or 0)
+    except Exception:
+        number = 0.0
+    return f"${number:,.0f}".replace(",", ".")
+
+
+def fetch_last_year_purchase_summary(cliente_codigo: Optional[str]):
+    if not cliente_codigo:
+        return None
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        totals = connection.execute(
+            text(
+                """
+                SELECT
+                    COUNT(*) AS lineas,
+                    COALESCE(SUM(valor_venta_neto), 0) AS valor_total,
+                    COALESCE(SUM(unidades_vendidas_netas), 0) AS unidades_totales,
+                    MAX(fecha_venta) AS ultima_compra
+                FROM public.vw_ventas_netas
+                WHERE cliente_id = :cliente_codigo
+                  AND fecha_venta >= CURRENT_DATE - INTERVAL '365 days'
+                """
+            ),
+            {"cliente_codigo": cliente_codigo},
+        ).mappings().one()
+
+        top_products = connection.execute(
+            text(
+                """
+                SELECT nombre_articulo, codigo_articulo,
+                       COALESCE(SUM(unidades_vendidas_netas), 0) AS unidades,
+                       COALESCE(SUM(valor_venta_neto), 0) AS valor
+                FROM public.vw_ventas_netas
+                WHERE cliente_id = :cliente_codigo
+                  AND fecha_venta >= CURRENT_DATE - INTERVAL '365 days'
+                GROUP BY 1, 2
+                ORDER BY valor DESC NULLS LAST
+                LIMIT 5
+                """
+            ),
+            {"cliente_codigo": cliente_codigo},
+        ).mappings().all()
+
+    return {"totals": dict(totals), "top_products": [dict(row) for row in top_products]}
+
+
+def build_direct_reply(intent: str, cliente_contexto: Optional[dict], product_context: list[dict], profile_name: Optional[str]):
+    nombre = profile_name or "cliente"
+
+    if intent == "consulta_cartera":
+        if not cliente_contexto:
+            return None
+        saldo = format_currency(cliente_contexto.get("saldo_cartera"))
+        dias = cliente_contexto.get("max_dias_vencido") or 0
+        vencidos = cliente_contexto.get("documentos_vencidos") or 0
+        vendedor = cliente_contexto.get("vendedor") or "tu asesor comercial"
+        return {
+            "tono": "informativo",
+            "intent": intent,
+            "priority": "alta" if dias and int(dias) > 0 else "media",
+            "summary": f"Consulta de cartera de {cliente_contexto.get('cliente_codigo')}",
+            "response_text": (
+                f"Hola, {nombre}. Tu saldo de cartera actual es {saldo}. "
+                f"Documentos vencidos: {vencidos}. Máximo de días vencidos: {dias}. "
+                f"Tu asesor asociado es {vendedor}. Si quieres, también puedo resumirte tus compras del último año."
+            ),
+            "should_create_task": bool(dias and int(dias) > 30),
+            "task_type": "seguimiento_cartera" if dias and int(dias) > 30 else "seguimiento_cliente",
+            "task_summary": "Revisar cliente con cartera vencida" if dias and int(dias) > 30 else "Seguimiento a consulta de cartera",
+            "task_detail": cliente_contexto,
+        }
+
+    if intent == "consulta_compras":
+        if not cliente_contexto or not cliente_contexto.get("cliente_codigo"):
+            return None
+        purchases = fetch_last_year_purchase_summary(cliente_contexto.get("cliente_codigo"))
+        totals = purchases["totals"] if purchases else {}
+        top_products = purchases["top_products"] if purchases else []
+        if not totals or not totals.get("ultima_compra"):
+            response_text = f"Hola, {nombre}. No encontré compras registradas en los últimos 12 meses para este cliente."
+        else:
+            top_summary = "; ".join(
+                f"{row['nombre_articulo']} ({format_currency(row['valor'])})" for row in top_products[:3]
+            ) or "sin productos destacados"
+            response_text = (
+                f"Hola, {nombre}. En los últimos 12 meses registras compras por {format_currency(totals.get('valor_total'))} "
+                f"en {int(totals.get('lineas') or 0)} líneas de venta, con {int(float(totals.get('unidades_totales') or 0))} unidades. "
+                f"Tu última compra fue el {totals.get('ultima_compra')}. Productos destacados: {top_summary}."
+            )
+        return {
+            "tono": "informativo",
+            "intent": intent,
+            "priority": "media",
+            "summary": f"Consulta de compras del último año de {cliente_contexto.get('cliente_codigo')}",
+            "response_text": response_text,
+            "should_create_task": False,
+            "task_type": "seguimiento_cliente",
+            "task_summary": "Consulta de compras recientes",
+            "task_detail": purchases or {},
+        }
+
+    if intent == "consulta_productos" and product_context:
+        product_lines = []
+        for row in product_context[:3]:
+            descripcion = row.get("descripcion") or row.get("nombre_articulo") or row.get("referencia") or row.get("codigo_articulo")
+            referencia = row.get("referencia") or row.get("codigo_articulo") or "sin referencia"
+            stock = row.get("stock")
+            if stock is not None:
+                product_lines.append(f"{descripcion} ({referencia}), stock aproximado {stock}")
+            else:
+                product_lines.append(f"{descripcion} ({referencia})")
+        return {
+            "tono": "informativo",
+            "intent": intent,
+            "priority": "media",
+            "summary": "Consulta de productos",
+            "response_text": f"Hola, {nombre}. Encontré estas referencias relacionadas: {'; '.join(product_lines)}. Si quieres, te detallo una referencia específica.",
+            "should_create_task": False,
+            "task_type": "seguimiento_cliente",
+            "task_summary": "Consulta de productos",
+            "task_detail": {"products": product_context},
+        }
+
+    return None
+
+
+def build_verification_success_reply(profile_name: Optional[str], cliente_contexto: Optional[dict]):
+    nombre = profile_name or "cliente"
+    cliente_codigo = (cliente_contexto or {}).get("cliente_codigo")
+    return (
+        f"Gracias, {nombre}. Tu identidad quedó validada"
+        f"{' para el cliente ' + str(cliente_codigo) if cliente_codigo else ''}. "
+        "Ahora ya puedo ayudarte con cartera, compras del último año y consultas relacionadas con tu historial comercial."
+    )
+
+
 def lookup_product_context(text_value: Optional[str]):
     if not text_value:
         return []
@@ -793,6 +965,7 @@ async def receive_whatsapp_webhook(request: Request):
                 conversation_snapshot = get_conversation_snapshot(context["conversation_id"])
                 conversation_context = dict(conversation_snapshot.get("contexto") or {})
                 verified_context = None
+                detected_intent = detect_business_intent(content)
 
                 document_candidate = extract_document_candidate(content)
                 if document_candidate:
@@ -813,8 +986,45 @@ async def receive_whatsapp_webhook(request: Request):
                                 "verified": True,
                                 "verified_document": document_candidate,
                                 "verified_cliente_codigo": verified_context.get("cliente_codigo"),
+                                "awaiting_verification": False,
                             }
                         )
+                    else:
+                        invalid_doc_text = "No pude validar ese documento. Por favor envíame tu cédula o NIT exactamente como aparece en el sistema, sin puntos ni comas."
+                        outbound_payload = None
+                        try:
+                            outbound_payload = send_whatsapp_text_message(context["telefono_e164"], invalid_doc_text)
+                            provider_message_id = None
+                            if outbound_payload.get("messages"):
+                                provider_message_id = outbound_payload["messages"][0].get("id")
+                            store_outbound_message(
+                                context["conversation_id"],
+                                provider_message_id,
+                                "text",
+                                invalid_doc_text,
+                                outbound_payload,
+                                intent_detectado="documento_no_validado",
+                            )
+                        except Exception as exc:
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"No fue posible enviar respuesta de documento no validado: {exc}",
+                                {"error": str(exc), "response_text": invalid_doc_text},
+                                intent_detectado="documento_no_validado",
+                            )
+                        processed_messages.append(
+                            {
+                                "conversation_id": context["conversation_id"],
+                                "telefono": context["telefono_e164"],
+                                "message_type": message_type,
+                                "provider_message_id": message.get("id"),
+                                "ai_response_sent": bool(outbound_payload),
+                                "verification_required": True,
+                            }
+                        )
+                        continue
 
                 cliente_contexto = verified_context
                 if cliente_contexto is None:
@@ -839,6 +1049,128 @@ async def receive_whatsapp_webhook(request: Request):
                     "verified_cliente_codigo": conversation_context.get("verified_cliente_codigo"),
                     "sensitive_request": sensitive_request,
                 }
+
+                if verified_context and conversation_context.get("pending_intent") in {"consulta_cartera", "consulta_compras"}:
+                    direct_result = build_direct_reply(
+                        conversation_context.get("pending_intent"),
+                        cliente_contexto,
+                        [],
+                        context.get("nombre_visible"),
+                    )
+                    response_text = build_verification_success_reply(context.get("nombre_visible"), cliente_contexto)
+                    if direct_result:
+                        response_text = f"{response_text} {direct_result['response_text']}"
+                    outbound_payload = None
+                    try:
+                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
+                        provider_message_id = None
+                        if outbound_payload.get("messages"):
+                            provider_message_id = outbound_payload["messages"][0].get("id")
+                        store_outbound_message(
+                            context["conversation_id"],
+                            provider_message_id,
+                            "text",
+                            response_text,
+                            outbound_payload,
+                            intent_detectado=conversation_context.get("pending_intent"),
+                        )
+                    except Exception as exc:
+                        store_outbound_message(
+                            context["conversation_id"],
+                            None,
+                            "system",
+                            f"No fue posible enviar respuesta tras validacion: {exc}",
+                            {"error": str(exc), "response_text": response_text},
+                            intent_detectado=conversation_context.get("pending_intent"),
+                        )
+
+                    update_conversation_context(
+                        context["conversation_id"],
+                        {
+                            "verified": True,
+                            "verified_document": conversation_context.get("verified_document") or document_candidate,
+                            "verified_cliente_codigo": cliente_contexto.get("cliente_codigo") if cliente_contexto else None,
+                            "awaiting_verification": False,
+                            "pending_intent": None,
+                            "pending_question": None,
+                            "last_direct_intent": conversation_context.get("pending_intent"),
+                            "cliente_contexto": cliente_contexto,
+                        },
+                        summary="Cliente validado y respuesta directa entregada",
+                    )
+                    processed_messages.append(
+                        {
+                            "conversation_id": context["conversation_id"],
+                            "telefono": context["telefono_e164"],
+                            "message_type": message_type,
+                            "provider_message_id": message.get("id"),
+                            "ai_response_sent": bool(outbound_payload),
+                            "verified_now": True,
+                        }
+                    )
+                    continue
+
+                if verification_state["verified"]:
+                    direct_result = build_direct_reply(detected_intent, cliente_contexto, lookup_product_context(content) if detected_intent == "consulta_productos" else [], context.get("nombre_visible"))
+                    if direct_result:
+                        outbound_payload = None
+                        response_text = direct_result["response_text"]
+                        try:
+                            outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
+                            provider_message_id = None
+                            if outbound_payload.get("messages"):
+                                provider_message_id = outbound_payload["messages"][0].get("id")
+                            store_outbound_message(
+                                context["conversation_id"],
+                                provider_message_id,
+                                "text",
+                                response_text,
+                                outbound_payload,
+                                intent_detectado=direct_result.get("intent"),
+                            )
+                        except Exception as exc:
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"No fue posible enviar respuesta directa: {exc}",
+                                {"error": str(exc), "response_text": response_text},
+                                intent_detectado=direct_result.get("intent"),
+                            )
+
+                        update_conversation_context(
+                            context["conversation_id"],
+                            {
+                                "verified": True,
+                                "verified_document": verification_state.get("verified_document"),
+                                "verified_cliente_codigo": verification_state.get("verified_cliente_codigo"),
+                                "last_direct_intent": direct_result.get("intent"),
+                                "awaiting_verification": False,
+                            },
+                            summary=direct_result.get("summary") or content,
+                        )
+
+                        if direct_result.get("should_create_task"):
+                            upsert_agent_task(
+                                context["conversation_id"],
+                                context.get("cliente_id"),
+                                direct_result.get("task_type") or "seguimiento_cliente",
+                                direct_result.get("task_summary") or "Revisar conversacion de WhatsApp",
+                                direct_result.get("task_detail") or {"mensaje": content},
+                                direct_result.get("priority") or "media",
+                            )
+
+                        processed_messages.append(
+                            {
+                                "conversation_id": context["conversation_id"],
+                                "telefono": context["telefono_e164"],
+                                "message_type": message_type,
+                                "provider_message_id": message.get("id"),
+                                "ai_response_sent": bool(outbound_payload),
+                                "direct_reply": True,
+                            }
+                        )
+                        continue
 
                 if sensitive_request and not verification_state["verified"]:
                     challenge_text = build_verification_challenge()
@@ -872,6 +1204,8 @@ async def receive_whatsapp_webhook(request: Request):
                             "awaiting_verification": True,
                             "verified": False,
                             "last_requested_verification_at": "now",
+                            "pending_intent": detected_intent,
+                            "pending_question": content,
                         },
                         summary="Pendiente verificacion de identidad",
                     )
