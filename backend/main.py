@@ -1409,6 +1409,25 @@ def is_greeting_message(text_value: Optional[str]):
     ))
 
 
+def is_thanks_or_closing_message(text_value: Optional[str]):
+    lowered = normalize_text_value(text_value)
+    if not lowered:
+        return False
+
+    gratitude_patterns = [
+        r"^(gracias|muchas gracias|mil gracias|genial gracias|super gracias|perfecto gracias)[.!?,\s]*$",
+        r"^(genial|perfecto|listo|excelente|super|buenisimo|buenisima)(\s+(muchas\s+)?gracias)?[.!?,\s]*$",
+        r"^(ok|okay|vale|dale|entendido|comprendido)(\s+(muchas\s+)?gracias)?[.!?,\s]*$",
+        r"^(quedo atento|quedo atenta|te aviso|te escribo luego|eso era|nada mas|nada mas gracias)[.!?,\s]*$",
+    ]
+    return any(re.match(pattern, lowered) for pattern in gratitude_patterns)
+
+
+def build_conversation_closing_reply(profile_name: Optional[str]):
+    nombre = profile_name or "cliente"
+    return f"Con gusto, {nombre}. Quedo atento si quieres revisar otra referencia, cartera o tus compras." 
+
+
 def detect_business_intent(text_value: Optional[str]):
     if not text_value:
         return "consulta_general"
@@ -2063,13 +2082,13 @@ def build_direct_reply(
                 "priority": "media",
                 "summary": "Consulta de productos sin coincidencia exacta",
                 "response_text": (
-                    f"Hola, {nombre}. Busqué *{referencia_solicitada or 'esa referencia'}* pero no encontré una coincidencia en el inventario. "
-                    "¿Podrías darme más detalles? Por ejemplo:\n"
+                    f"Hola, {nombre}. Revisé *{referencia_solicitada or 'esa referencia'}* y no la pude amarrar con una referencia clara en inventario. "
+                    "Si quieres, dame uno de estos datos y te la ubico mejor:\n"
                     "• La referencia o código del producto\n"
                     "• La marca o línea del portafolio Ferreinox: Pintuco, Abracol, Yale o Goya\n"
                     "• La presentación (galón, cuñete, cuarto, 1/1, 1/5, 1/4)\n"
                     "• La tienda que te interesa (CEDI, Armenia, Manizales, Opalo, Pereira, Laures, Cerritos o Ferrebox)\n"
-                    "Así puedo buscarlo con más precisión."
+                    "Con eso te respondo más fino."
                 ),
                 "should_create_task": False,
                 "task_type": "seguimiento_cliente",
@@ -2087,6 +2106,7 @@ def build_direct_reply(
                 direct_response += f" Stock total aproximado: {format_quantity(top_stock)} unidades."
             if top_row.get("stock_por_tienda"):
                 direct_response += f" Disponible en: {format_stock_by_store(top_row.get('stock_por_tienda'))}."
+            direct_response += " Si quieres, te ayudo a revisar otra presentación o una tienda específica."
             return {
                 "tono": "informativo",
                 "intent": intent,
@@ -2121,9 +2141,9 @@ def build_direct_reply(
                 "priority": "media",
                 "summary": "Consulta de productos con necesidad de aclaracion",
                 "response_text": (
-                    f"Hola, {nombre}. Encontré varias opciones que podrían ser la que buscas. Responde con el número o la referencia:\n"
+                    f"Hola, {nombre}. Veo varias opciones muy cercanas. Respóndeme con el número o la referencia y te confirmo la exacta:\n"
                     + "\n".join(clarification_lines)
-                    + "\nAsí te doy el stock exacto de la opción correcta."
+                    + "\nAsí te confirmo la correcta sin hacerte dar más vueltas."
                 ),
                 "should_create_task": False,
                 "task_type": "seguimiento_cliente",
@@ -2162,6 +2182,7 @@ def build_direct_reply(
             )
             if quantity_note:
                 store_response += f" {quantity_note}."
+            store_response += " Si quieres, también te reviso otra presentación o otra tienda."
             return {
                 "tono": "informativo",
                 "intent": intent,
@@ -2200,8 +2221,8 @@ def build_direct_reply(
             "response_text": (
                 f"Hola, {nombre}. "
                 f"{quantity_note + '. ' if quantity_note else ''}"
-                f"Encontré estas referencias relacionadas: {'; '.join(product_lines)}. "
-                "Si quieres, en el siguiente paso puedo ayudarte a convertir esto en una pre-solicitud de pedido."
+                f"Te encontré estas opciones relacionadas: {'; '.join(product_lines)}. "
+                "Si quieres, te cierro la búsqueda con la más probable o te reviso una tienda puntual."
             ),
             "should_create_task": False,
             "task_type": "seguimiento_cliente",
@@ -2940,6 +2961,54 @@ async def receive_whatsapp_webhook(request: Request):
                             "provider_message_id": message.get("id"),
                             "ai_response_sent": bool(outbound_payload),
                             "greeting_reply": True,
+                        }
+                    )
+                    continue
+
+                if is_thanks_or_closing_message(content):
+                    response_text = build_conversation_closing_reply(context.get('nombre_visible'))
+                    outbound_payload = None
+                    try:
+                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
+                        provider_message_id = None
+                        if outbound_payload.get("messages"):
+                            provider_message_id = outbound_payload["messages"][0].get("id")
+                        store_outbound_message(
+                            context["conversation_id"],
+                            provider_message_id,
+                            "text",
+                            response_text,
+                            outbound_payload,
+                            intent_detectado="cierre_conversacion",
+                        )
+                    except Exception as exc:
+                        store_outbound_message(
+                            context["conversation_id"],
+                            None,
+                            "system",
+                            f"No fue posible enviar cierre de conversacion: {exc}",
+                            {"error": str(exc), "response_text": response_text},
+                            intent_detectado="cierre_conversacion",
+                        )
+
+                    update_conversation_context(
+                        context["conversation_id"],
+                        {
+                            "intent": "cierre_conversacion",
+                            "last_direct_intent": conversation_context.get("last_direct_intent"),
+                            "pending_product_clarification": None,
+                            "awaiting_verification": False,
+                        },
+                        summary="Cierre conversacional",
+                    )
+                    processed_messages.append(
+                        {
+                            "conversation_id": context["conversation_id"],
+                            "telefono": context["telefono_e164"],
+                            "message_type": message_type,
+                            "provider_message_id": message.get("id"),
+                            "ai_response_sent": bool(outbound_payload),
+                            "closing_reply": True,
                         }
                     )
                     continue
