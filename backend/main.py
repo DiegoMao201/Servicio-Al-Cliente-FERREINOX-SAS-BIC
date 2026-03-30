@@ -660,14 +660,23 @@ def is_product_intent_message(text_value: Optional[str]):
     has_keyword = any(keyword in lowered for keyword in product_keywords)
     quantity_format = bool(re.search(r"\b\d+(?:[.,]\d+)?\s*(galones?|galon|cunetes?|cuñetes?|canecas?|cubetas?)\b", lowered))
     shorthand_format = bool(re.search(r"\b\d+\s*/\s*\d+\b", lowered))
-    return has_keyword or quantity_format or shorthand_format
+    code_with_stock = bool(re.search(r"\b\d{4,10}\b", lowered)) and any(kw in lowered for kw in ["stock", "inventario", "hay", "precio", "cuanto", "producto"])
+    return has_keyword or quantity_format or shorthand_format or code_with_stock
 
 
 def is_greeting_message(text_value: Optional[str]):
     lowered = normalize_text_value(text_value)
     if not lowered:
         return False
-    return lowered in {"hola", "buen dia", "buenos dias", "buenas tardes", "buenas noches", "hello", "hi"}
+    exact_greetings = {"hola", "buen dia", "buenos dias", "buenas tardes", "buenas noches", "hello", "hi", "hey"}
+    if lowered in exact_greetings:
+        return True
+    return bool(re.match(
+        r"^(hola|hey|buenas?|buenos?\s+dias?|buenas?\s+tardes?|buenas?\s+noches?)"
+        r"(\s+(como estas|como esta|que tal|buen dia|buenos dias|buenas tardes|buenas noches))?"
+        r"[.!?,\s]*$",
+        lowered,
+    ))
 
 
 def detect_business_intent(text_value: Optional[str]):
@@ -1205,8 +1214,12 @@ def build_direct_reply(
                 "priority": "media",
                 "summary": "Consulta de productos sin coincidencia exacta",
                 "response_text": (
-                    f"Hola, {nombre}. No encontré una coincidencia exacta para {referencia_solicitada or 'esa referencia'}. "
-                    "Si quieres, envíame la referencia exacta, la marca o la presentación y te respondo el stock disponible."
+                    f"Hola, {nombre}. Busqué *{referencia_solicitada or 'esa referencia'}* pero no encontré una coincidencia en el inventario. "
+                    "¿Podrías darme más detalles? Por ejemplo:\n"
+                    "• La referencia o código del producto\n"
+                    "• La marca (ej. Pintuco, Corona, etc.)\n"
+                    "• La presentación (galón, cuñete)\n"
+                    "Así puedo buscarlo con más precisión."
                 ),
                 "should_create_task": False,
                 "task_type": "seguimiento_cliente",
@@ -1276,89 +1289,122 @@ def build_verification_success_reply(profile_name: Optional[str], cliente_contex
 def lookup_product_context(text_value: Optional[str]):
     product_request = extract_product_request(text_value)
     terms = product_request.get("search_terms") or []
-    if not terms:
+
+    normalized = normalize_text_value(text_value)
+    product_codes = re.findall(r"\b\d{4,10}\b", normalized)
+
+    if not terms and not product_codes:
         return []
 
-    query_terms = terms[:5]
-    inventory_filters = []
-    inventory_scores = []
-    sales_filters = []
-    sales_scores = []
-    params = {}
+    try:
+        engine = get_db_engine()
+        with engine.connect() as connection:
+            if product_codes:
+                code_params = {}
+                code_filters = []
+                for i, code in enumerate(product_codes[:3]):
+                    code_params[f"code_{i}"] = f"%{code}%"
+                    code_filters.append(f"COALESCE(referencia,'') LIKE :code_{i}")
+                code_rows = connection.execute(
+                    text(
+                        f"""
+                        SELECT referencia, descripcion, marca, stock, costo_promedio_und,
+                               100 AS match_score
+                        FROM public.raw_rotacion_inventarios
+                        WHERE {' OR '.join(code_filters)}
+                        ORDER BY stock DESC NULLS LAST
+                        LIMIT 5
+                        """
+                    ),
+                    code_params,
+                ).mappings().all()
+                if code_rows:
+                    return [dict(row) for row in code_rows]
 
-    for index, term in enumerate(query_terms):
-        params[f"pattern_{index}"] = f"%{term}%"
-        inventory_filters.append(f"search_blob LIKE :pattern_{index}")
-        inventory_scores.append(f"CASE WHEN search_blob LIKE :pattern_{index} THEN 1 ELSE 0 END")
-        sales_filters.append(f"search_blob LIKE :pattern_{index}")
-        sales_scores.append(f"CASE WHEN search_blob LIKE :pattern_{index} THEN 1 ELSE 0 END")
+            if not terms:
+                return []
 
-    engine = get_db_engine()
-    with engine.connect() as connection:
-        rows = connection.execute(
-            text(
-                f"""
-                SELECT referencia, descripcion, marca, stock, costo_promedio_und, match_score
-                FROM (
-                    SELECT
-                        referencia,
-                        descripcion,
-                        marca,
-                        stock,
-                        costo_promedio_und,
-                        ({' + '.join(inventory_scores)}) AS match_score,
-                        unaccent(lower(
-                            COALESCE(descripcion, '') || ' ' ||
-                            COALESCE(referencia, '') || ' ' ||
-                            COALESCE(marca, '')
-                        )) AS search_blob
-                    FROM public.raw_rotacion_inventarios
-                ) inventory
-                WHERE {' OR '.join(inventory_filters)}
-                ORDER BY match_score DESC, descripcion ASC NULLS LAST
-                LIMIT 5
-                """
-            ),
-            params,
-        ).mappings().all()
+            query_terms = terms[:5]
+            params = {}
+            inventory_filters = []
+            inventory_scores = []
+            for index, term in enumerate(query_terms):
+                params[f"pattern_{index}"] = f"%{term}%"
+                inventory_filters.append(f"search_blob LIKE :pattern_{index}")
+                inventory_scores.append(f"CASE WHEN search_blob LIKE :pattern_{index} THEN 1 ELSE 0 END")
 
-        if rows:
-            return [dict(row) for row in rows]
+            rows = connection.execute(
+                text(
+                    f"""
+                    SELECT referencia, descripcion, marca, stock, costo_promedio_und, match_score
+                    FROM (
+                        SELECT
+                            referencia,
+                            descripcion,
+                            marca,
+                            stock,
+                            costo_promedio_und,
+                            ({' + '.join(inventory_scores)}) AS match_score,
+                            translate(lower(
+                                COALESCE(descripcion, '') || ' ' ||
+                                COALESCE(referencia, '') || ' ' ||
+                                COALESCE(marca, '')
+                            ), 'áéíóúàèìòùâêîôûäëïöüñ', 'aeiouaeiouaeiouaeioun') AS search_blob
+                        FROM public.raw_rotacion_inventarios
+                    ) inventory
+                    WHERE {' OR '.join(inventory_filters)}
+                    ORDER BY match_score DESC, descripcion ASC NULLS LAST
+                    LIMIT 5
+                    """
+                ),
+                params,
+            ).mappings().all()
 
-        sales_rows = connection.execute(
-            text(
-                f"""
-                SELECT codigo_articulo, nombre_articulo, marca_producto, categoria_producto,
-                       SUM(unidades_vendidas_netas) AS unidades_vendidas,
-                       SUM(valor_venta_neto) AS valor_vendido,
-                       MAX(match_score) AS match_score
-                FROM (
-                    SELECT
-                        codigo_articulo,
-                        nombre_articulo,
-                        marca_producto,
-                        categoria_producto,
-                        unidades_vendidas_netas,
-                        valor_venta_neto,
-                        ({' + '.join(sales_scores)}) AS match_score,
-                        unaccent(lower(
-                            COALESCE(nombre_articulo, '') || ' ' ||
-                            COALESCE(codigo_articulo, '') || ' ' ||
-                            COALESCE(marca_producto, '') || ' ' ||
-                            COALESCE(categoria_producto, '')
-                        )) AS search_blob
-                    FROM public.vw_ventas_netas
-                ) sales
-                WHERE {' OR '.join(sales_filters)}
-                GROUP BY 1, 2, 3, 4
-                ORDER BY match_score DESC, valor_vendido DESC NULLS LAST
-                LIMIT 5
-                """
-            ),
-            params,
-        ).mappings().all()
+            if rows:
+                return [dict(row) for row in rows]
 
-    return [dict(row) for row in sales_rows]
+            sales_filters = []
+            sales_scores = []
+            for index, term in enumerate(query_terms):
+                sales_filters.append(f"search_blob LIKE :pattern_{index}")
+                sales_scores.append(f"CASE WHEN search_blob LIKE :pattern_{index} THEN 1 ELSE 0 END")
+
+            sales_rows = connection.execute(
+                text(
+                    f"""
+                    SELECT codigo_articulo, nombre_articulo, marca_producto, categoria_producto,
+                           SUM(unidades_vendidas_netas) AS unidades_vendidas,
+                           SUM(valor_venta_neto) AS valor_vendido,
+                           MAX(match_score) AS match_score
+                    FROM (
+                        SELECT
+                            codigo_articulo,
+                            nombre_articulo,
+                            marca_producto,
+                            categoria_producto,
+                            unidades_vendidas_netas,
+                            valor_venta_neto,
+                            ({' + '.join(sales_scores)}) AS match_score,
+                            translate(lower(
+                                COALESCE(nombre_articulo, '') || ' ' ||
+                                COALESCE(codigo_articulo, '') || ' ' ||
+                                COALESCE(marca_producto, '') || ' ' ||
+                                COALESCE(categoria_producto, '')
+                            ), 'áéíóúàèìòùâêîôûäëïöüñ', 'aeiouaeiouaeiouaeioun') AS search_blob
+                        FROM public.vw_ventas_netas
+                    ) sales
+                    WHERE {' OR '.join(sales_filters)}
+                    GROUP BY 1, 2, 3, 4
+                    ORDER BY match_score DESC, valor_vendido DESC NULLS LAST
+                    LIMIT 5
+                    """
+                ),
+                params,
+            ).mappings().all()
+
+            return [dict(row) for row in sales_rows]
+    except Exception:
+        return []
 
 
 def build_verification_challenge():
@@ -1617,9 +1663,14 @@ async def receive_whatsapp_webhook(request: Request):
                         detected_intent = previous_intent
                 product_request = extract_product_request(content)
 
-                document_candidate = extract_document_candidate(content)
+                document_candidate = None
+                if detected_intent != "consulta_productos":
+                    document_candidate = extract_document_candidate(content)
                 if document_candidate:
-                    verified_context = find_cliente_contexto_by_document(document_candidate)
+                    try:
+                        verified_context = find_cliente_contexto_by_document(document_candidate)
+                    except Exception:
+                        verified_context = None
                     if verified_context:
                         cliente_id = update_contact_cliente(context["contact_id"], verified_context.get("cliente_codigo"))
                         context["cliente_id"] = cliente_id
@@ -1640,41 +1691,67 @@ async def receive_whatsapp_webhook(request: Request):
                             }
                         )
                     else:
-                        invalid_doc_text = "No pude validar ese documento. Por favor envíame tu cédula o NIT exactamente como aparece en el sistema, sin puntos ni comas."
-                        outbound_payload = None
-                        try:
-                            outbound_payload = send_whatsapp_text_message(context["telefono_e164"], invalid_doc_text)
-                            provider_message_id = None
-                            if outbound_payload.get("messages"):
-                                provider_message_id = outbound_payload["messages"][0].get("id")
-                            store_outbound_message(
+                        phone_fallback = find_cliente_contexto_by_phone(context["telefono_e164"])
+                        if phone_fallback:
+                            verified_context = phone_fallback
+                            cliente_id = update_contact_cliente(context["contact_id"], phone_fallback.get("cliente_codigo"))
+                            context["cliente_id"] = cliente_id
+                            update_conversation_context(
                                 context["conversation_id"],
-                                provider_message_id,
-                                "text",
-                                invalid_doc_text,
-                                outbound_payload,
-                                intent_detectado="documento_no_validado",
+                                {
+                                    "verified": True,
+                                    "verified_by": "phone",
+                                    "verified_cliente_codigo": phone_fallback.get("cliente_codigo"),
+                                },
                             )
-                        except Exception as exc:
-                            store_outbound_message(
-                                context["conversation_id"],
-                                None,
-                                "system",
-                                f"No fue posible enviar respuesta de documento no validado: {exc}",
-                                {"error": str(exc), "response_text": invalid_doc_text},
-                                intent_detectado="documento_no_validado",
+                            conversation_context.update(
+                                {
+                                    "verified": True,
+                                    "verified_cliente_codigo": phone_fallback.get("cliente_codigo"),
+                                    "awaiting_verification": False,
+                                }
                             )
-                        processed_messages.append(
-                            {
-                                "conversation_id": context["conversation_id"],
-                                "telefono": context["telefono_e164"],
-                                "message_type": message_type,
-                                "provider_message_id": message.get("id"),
-                                "ai_response_sent": bool(outbound_payload),
-                                "verification_required": True,
-                            }
-                        )
-                        continue
+                        else:
+                            invalid_doc_text = (
+                                f"No encontré el documento {document_candidate} en nuestro sistema. "
+                                "Verifica que sea tu cédula o NIT registrado, sin puntos ni comas. "
+                                "Si no estás seguro, dime tu nombre y te ayudo a buscarlo. "
+                                "Mientras tanto, puedo ayudarte con consultas de inventario y productos."
+                            )
+                            outbound_payload = None
+                            try:
+                                outbound_payload = send_whatsapp_text_message(context["telefono_e164"], invalid_doc_text)
+                                provider_message_id = None
+                                if outbound_payload.get("messages"):
+                                    provider_message_id = outbound_payload["messages"][0].get("id")
+                                store_outbound_message(
+                                    context["conversation_id"],
+                                    provider_message_id,
+                                    "text",
+                                    invalid_doc_text,
+                                    outbound_payload,
+                                    intent_detectado="documento_no_validado",
+                                )
+                            except Exception as exc:
+                                store_outbound_message(
+                                    context["conversation_id"],
+                                    None,
+                                    "system",
+                                    f"No fue posible enviar respuesta de documento no validado: {exc}",
+                                    {"error": str(exc), "response_text": invalid_doc_text},
+                                    intent_detectado="documento_no_validado",
+                                )
+                            processed_messages.append(
+                                {
+                                    "conversation_id": context["conversation_id"],
+                                    "telefono": context["telefono_e164"],
+                                    "message_type": message_type,
+                                    "provider_message_id": message.get("id"),
+                                    "ai_response_sent": bool(outbound_payload),
+                                    "verification_required": True,
+                                }
+                            )
+                            continue
 
                 cliente_contexto = verified_context
                 if cliente_contexto is None:
@@ -1747,14 +1824,31 @@ async def receive_whatsapp_webhook(request: Request):
                     continue
 
                 if detected_intent == "consulta_productos":
-                    direct_result = build_direct_reply(
-                        detected_intent,
-                        cliente_contexto,
-                        lookup_product_context(content),
-                        context.get("nombre_visible"),
-                        product_request,
-                        content,
-                    )
+                    try:
+                        direct_result = build_direct_reply(
+                            detected_intent,
+                            cliente_contexto,
+                            lookup_product_context(content),
+                            context.get("nombre_visible"),
+                            product_request,
+                            content,
+                        )
+                    except Exception:
+                        direct_result = {
+                            "tono": "informativo",
+                            "intent": "consulta_productos",
+                            "priority": "media",
+                            "summary": "Consulta de productos con error interno",
+                            "response_text": (
+                                f"Hola, {context.get('nombre_visible') or 'cliente'}. "
+                                "Tuve un problema buscando ese producto en el sistema. "
+                                "¿Podrías darme la referencia exacta, el código o la marca para intentar de nuevo?"
+                            ),
+                            "should_create_task": False,
+                            "task_type": "seguimiento_cliente",
+                            "task_summary": "Error en consulta de productos",
+                            "task_detail": {"mensaje": content},
+                        }
                     outbound_payload = None
                     response_text = direct_result["response_text"]
                     try:
