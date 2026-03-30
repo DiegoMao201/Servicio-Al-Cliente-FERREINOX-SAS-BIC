@@ -117,6 +117,7 @@ PGSSLMODE=prefer
 DATABASE_URL=postgresql://postgres:TU_PASSWORD_REAL@db:5432/ferreinox_db
 BACKEND_URL=https://apicrm.datovatenexuspro.com
 PGRST_URL=http://postgrest:3000
+STREAMLIT_SECRETS_TOML=
 DROPBOX_ROTACION_APP_KEY=...
 DROPBOX_ROTACION_APP_SECRET=...
 DROPBOX_ROTACION_REFRESH_TOKEN=...
@@ -130,6 +131,8 @@ DROPBOX_VENTAS_APP_SECRET=...
 DROPBOX_VENTAS_REFRESH_TOKEN=...
 DROPBOX_VENTAS_FOLDER=/data
 ```
+
+Si vas a usar una sola variable con el contenido completo de `secrets.toml`, puedes usar `STREAMLIT_SECRETS_TOML` y dejar las `DROPBOX_*` vacías.
 
 #### Servicio `backend`
 

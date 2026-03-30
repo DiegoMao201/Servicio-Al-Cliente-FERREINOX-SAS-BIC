@@ -52,16 +52,17 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile
-    command: streamlit run streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    command: /app/start_streamlit.sh
     expose:
       - "8501"
-    # Si prefieres usar archivo de secretos en vez de variables de entorno,
-    # crea el archivo en Coolify Storage y móntalo en esta ruta dentro del contenedor:
-    # /app/.streamlit/secrets.toml
+    # Si Coolify no te deja crear files en Storage para este stack,
+    # define STREAMLIT_SECRETS_TOML como variable multilinea y este contenedor
+    # generará /app/.streamlit/secrets.toml automáticamente al arrancar.
     environment:
       - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/ferreinox_db
       - BACKEND_URL=https://apicrm.datovatenexuspro.com
       - PGRST_URL=http://postgrest:3000
+      - STREAMLIT_SECRETS_TOML=${STREAMLIT_SECRETS_TOML}
       - DROPBOX_ROTACION_APP_KEY=${DROPBOX_ROTACION_APP_KEY}
       - DROPBOX_ROTACION_APP_SECRET=${DROPBOX_ROTACION_APP_SECRET}
       - DROPBOX_ROTACION_REFRESH_TOKEN=${DROPBOX_ROTACION_REFRESH_TOKEN}
