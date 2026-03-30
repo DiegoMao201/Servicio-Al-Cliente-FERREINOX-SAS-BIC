@@ -26,12 +26,14 @@ def main():
         """
         1. Recibe el mensaje entrante desde WhatsApp.
         2. Guarda el mensaje y la conversación en PostgreSQL.
-        3. Busca contexto comercial del cliente en PostgREST cuando puede relacionarlo.
-        4. Envía el historial reciente y el contexto ERP al modelo de OpenAI.
-        5. Detecta tono, intención y prioridad.
-        6. Genera una respuesta y la envía de vuelta por WhatsApp.
-        7. Guarda también la respuesta saliente en `agent_message`.
-        8. Puede crear tareas básicas de seguimiento cuando el modelo lo indique.
+        3. Pide cédula o NIT antes de responder cartera, ventas u otros datos sensibles.
+        4. Busca contexto comercial del cliente en PostgREST cuando puede relacionarlo.
+        5. Busca contexto de productos cuando la conversación habla de referencias, artículos o inventario.
+        6. Envía el historial reciente y el contexto ERP al modelo de OpenAI.
+        7. Detecta tono, intención y prioridad.
+        8. Genera una respuesta y la envía de vuelta por WhatsApp.
+        9. Guarda también la respuesta saliente en `agent_message`.
+        10. Puede crear tareas básicas de seguimiento cuando el modelo lo indique.
         """
     )
 
