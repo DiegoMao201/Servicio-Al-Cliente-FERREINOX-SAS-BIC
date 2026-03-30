@@ -428,15 +428,60 @@ def build_agent_prompt(profile_name: Optional[str], cliente_contexto: Optional[d
     ]
 
 
+def normalize_agent_result(agent_result: dict, user_message: str):
+    return {
+        "tono": agent_result.get("tono") or "neutral",
+        "intent": agent_result.get("intent") or "consulta_general",
+        "priority": agent_result.get("priority") or "media",
+        "summary": agent_result.get("summary") or user_message[:200],
+        "response_text": agent_result.get("response_text") or "Gracias por escribirnos. Ya estamos revisando tu mensaje.",
+        "should_create_task": bool(agent_result.get("should_create_task")),
+        "task_type": agent_result.get("task_type") or "seguimiento_cliente",
+        "task_summary": agent_result.get("task_summary") or "Revisar conversacion de WhatsApp",
+        "task_detail": agent_result.get("task_detail") or {"mensaje": user_message},
+    }
+
+
+def extract_json_object(raw_text: str):
+    if not raw_text:
+        raise ValueError("La respuesta del modelo llegó vacía.")
+
+    raw_text = raw_text.strip()
+    try:
+        return json.loads(raw_text)
+    except json.JSONDecodeError:
+        start = raw_text.find("{")
+        end = raw_text.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            return json.loads(raw_text[start : end + 1])
+        raise
+
+
 def generate_agent_reply(profile_name: Optional[str], cliente_contexto: Optional[dict], recent_messages: list[dict], user_message: str):
     client = get_openai_client()
     response = client.responses.create(
         model=get_openai_model(),
         input=build_agent_prompt(profile_name, cliente_contexto, recent_messages, user_message),
         temperature=0.3,
+        text={"format": {"type": "json_object"}},
     )
     content = response.output_text
-    return json.loads(content)
+    parsed = extract_json_object(content)
+    return normalize_agent_result(parsed, user_message)
+
+
+def build_fallback_agent_result(user_message: str, error_message: str):
+    return {
+        "tono": "neutral",
+        "intent": "consulta_general",
+        "priority": "media",
+        "summary": user_message[:200] if user_message else "Consulta entrante",
+        "response_text": "Gracias por escribirnos. Recibimos tu mensaje y un asesor lo revisará en breve.",
+        "should_create_task": True,
+        "task_type": "revision_manual",
+        "task_summary": "Revisar conversacion con falla en respuesta automatica",
+        "task_detail": {"mensaje": user_message, "error": error_message},
+    }
 
 
 def send_whatsapp_text_message(to_phone: str, body: str):
@@ -567,7 +612,12 @@ async def receive_whatsapp_webhook(request: Request):
                             recent_messages,
                             content,
                         )
-                        response_text = ai_result.get("response_text") or "Gracias por escribirnos. Ya estamos revisando tu caso."
+                    except Exception as exc:
+                        ai_result = build_fallback_agent_result(content, str(exc))
+
+                    response_text = ai_result.get("response_text") or "Gracias por escribirnos. Ya estamos revisando tu caso."
+
+                    try:
                         outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
                         provider_message_id = None
                         if outbound_payload.get("messages"):
@@ -581,33 +631,35 @@ async def receive_whatsapp_webhook(request: Request):
                             outbound_payload,
                             intent_detectado=ai_result.get("intent"),
                         )
-                        update_conversation_summary(
-                            context["conversation_id"],
-                            ai_result.get("summary") or content,
-                            {
-                                "tone": ai_result.get("tono"),
-                                "intent": ai_result.get("intent"),
-                                "priority": ai_result.get("priority"),
-                                "cliente_contexto": cliente_contexto,
-                            },
-                        )
-
-                        if ai_result.get("should_create_task"):
-                            upsert_agent_task(
-                                context["conversation_id"],
-                                context.get("cliente_id"),
-                                ai_result.get("task_type") or "seguimiento_cliente",
-                                ai_result.get("task_summary") or "Revisar conversacion de WhatsApp",
-                                ai_result.get("task_detail") or {"mensaje": content},
-                                ai_result.get("priority") or "media",
-                            )
                     except Exception as exc:
                         store_outbound_message(
                             context["conversation_id"],
                             None,
                             "system",
-                            f"No fue posible generar o enviar respuesta automatica: {exc}",
-                            {"error": str(exc)},
+                            f"No fue posible enviar respuesta automatica: {exc}",
+                            {"error": str(exc), "response_text": response_text},
+                            intent_detectado=ai_result.get("intent"),
+                        )
+
+                    update_conversation_summary(
+                        context["conversation_id"],
+                        ai_result.get("summary") or content,
+                        {
+                            "tone": ai_result.get("tono"),
+                            "intent": ai_result.get("intent"),
+                            "priority": ai_result.get("priority"),
+                            "cliente_contexto": cliente_contexto,
+                        },
+                    )
+
+                    if ai_result.get("should_create_task"):
+                        upsert_agent_task(
+                            context["conversation_id"],
+                            context.get("cliente_id"),
+                            ai_result.get("task_type") or "seguimiento_cliente",
+                            ai_result.get("task_summary") or "Revisar conversacion de WhatsApp",
+                            ai_result.get("task_detail") or {"mensaje": content},
+                            ai_result.get("priority") or "media",
                         )
 
                 processed_messages.append(
