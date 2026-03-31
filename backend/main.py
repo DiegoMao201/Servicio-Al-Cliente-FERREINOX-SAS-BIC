@@ -6,6 +6,7 @@ import tomllib
 import unicodedata
 from difflib import SequenceMatcher
 from datetime import date, timedelta
+from html import escape
 from pathlib import Path
 from typing import Optional
 
@@ -76,6 +77,76 @@ TECHNICAL_DOC_STOPWORDS = {
     "el",
 }
 TECHNICAL_DOC_CACHE = {"loaded_at": 0.0, "entries": []}
+
+
+CLAIM_KEYWORDS = [
+    "reclamo",
+    "reclamacion",
+    "reclamación",
+    "garantia",
+    "garantía",
+    "calidad",
+    "no funcion",
+    "no funciono",
+    "no funcionó",
+    "no cubre",
+    "no cubrio",
+    "no cubrió",
+    "defecto",
+    "falla",
+    "dañado",
+    "danado",
+    "problema con",
+]
+
+
+QUOTE_KEYWORDS = [
+    "cotizacion",
+    "cotización",
+    "cotizar",
+    "presupuesto",
+    "propuesta comercial",
+]
+
+
+ORDER_KEYWORDS = [
+    "montar pedido",
+    "montar un pedido",
+    "hacer pedido",
+    "hacer un pedido",
+    "generar pedido",
+    "generar un pedido",
+    "realizar pedido",
+    "realizar un pedido",
+    "orden de compra",
+    "confirmar pedido",
+]
+
+
+NON_PRODUCT_SERVICE_KEYWORDS = [
+    "cartera",
+    "saldo",
+    "deuda",
+    "debo",
+    "compras",
+    "compra",
+    "estado de cuenta",
+    "factura",
+    "facturas",
+    "reclamo",
+    "garantia",
+    "garantía",
+    "calidad",
+    "cotizacion",
+    "cotización",
+    "cotizar",
+    "pedido",
+    "correo",
+    "email",
+    "ficha tecnica",
+    "ficha técnica",
+    "hoja de seguridad",
+]
 
 
 PRODUCT_STOPWORDS = {
@@ -326,6 +397,69 @@ def get_dropbox_ventas_client():
         app_key=config["app_key"],
         app_secret=config["app_secret"],
     )
+
+
+def get_sendgrid_config():
+    env_config = {
+        "api_key": os.getenv("SENDGRID_API_KEY"),
+        "from_email": os.getenv("SENDGRID_FROM_EMAIL"),
+        "from_name": os.getenv("SENDGRID_FROM_NAME") or "Ferreinox S.A.S. BIC",
+        "reclamos_to_email": os.getenv("SENDGRID_RECLAMOS_TO_EMAIL") or os.getenv("SENDGRID_QUALITY_TO_EMAIL"),
+        "ventas_to_email": os.getenv("SENDGRID_VENTAS_TO_EMAIL"),
+        "contabilidad_to_email": os.getenv("SENDGRID_CONTABILIDAD_TO_EMAIL"),
+    }
+    if env_config["api_key"] and env_config["from_email"]:
+        return env_config
+
+    secrets = load_local_secrets()
+    config = secrets.get("sendgrid") or {}
+    if config.get("api_key") and config.get("from_email"):
+        return {
+            "api_key": config.get("api_key"),
+            "from_email": config.get("from_email"),
+            "from_name": config.get("from_name") or "Ferreinox S.A.S. BIC",
+            "reclamos_to_email": config.get("reclamos_to_email") or config.get("quality_to_email") or config.get("from_email"),
+            "ventas_to_email": config.get("ventas_to_email"),
+            "contabilidad_to_email": config.get("contabilidad_to_email"),
+        }
+    return None
+
+
+def send_sendgrid_email(to_email: str, subject: str, html_content: str, text_content: str, reply_to: Optional[str] = None):
+    config = get_sendgrid_config()
+    if not config:
+        raise RuntimeError("SendGrid no está configurado.")
+
+    payload = {
+        "personalizations": [{"to": [{"email": to_email}], "subject": subject}],
+        "from": {
+            "email": config["from_email"],
+            "name": config.get("from_name") or "Ferreinox S.A.S. BIC",
+        },
+        "content": [
+            {"type": "text/plain", "value": text_content},
+            {"type": "text/html", "value": html_content},
+        ],
+    }
+    if reply_to:
+        payload["reply_to"] = {"email": reply_to}
+
+    response = requests.post(
+        "https://api.sendgrid.com/v3/mail/send",
+        headers={
+            "Authorization": f"Bearer {config['api_key']}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=20,
+    )
+    if response.status_code >= 400:
+        try:
+            error_payload = response.json()
+        except Exception:
+            error_payload = {"raw": response.text}
+        raise RuntimeError(f"SendGrid devolvió {response.status_code}: {safe_json_dumps(error_payload)}")
+    return True
 
 
 def list_technical_document_entries(force_refresh: bool = False):
@@ -1858,6 +1992,7 @@ def extract_identity_lookup_candidate(text_value: Optional[str], conversation_co
     if any(character.isalpha() for character in text_value):
         product_request = extract_product_request(text_value)
         tokens = [token for token in normalized_text.split() if len(token) >= 3]
+        candidate_intent = detect_business_intent(text_value)
         strong_product_signal = bool(
             product_request.get("product_codes")
             or product_request.get("requested_unit")
@@ -1865,9 +2000,11 @@ def extract_identity_lookup_candidate(text_value: Optional[str], conversation_co
             or product_request.get("store_filters")
             or product_request.get("brand_filters")
         )
-        if 2 <= len(tokens) <= 6 and not strong_product_signal:
+        if candidate_intent not in {"consulta_general", "consulta_cartera", "consulta_compras"}:
+            return None
+        if 2 <= len(tokens) <= 6 and not strong_product_signal and candidate_intent == "consulta_general":
             return {"type": "name_lookup", "value": text_value.strip()}
-        if not looks_like_product_query(text_value, product_request) and 2 <= len(tokens) <= 6:
+        if candidate_intent == "consulta_general" and not looks_like_product_query(text_value, product_request) and 2 <= len(tokens) <= 6:
             return {"type": "name_lookup", "value": text_value.strip()}
 
     return None
@@ -1943,6 +2080,13 @@ def is_sensitive_intent_message(text_value: Optional[str]):
         "recaudo",
     ]
     return any(keyword in lowered for keyword in sensitive_keywords) or has_keyword_or_similar(lowered, ["factura", "facturas", "vencida", "vencidas"])
+
+
+def has_non_product_business_signal(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    return any(keyword in normalized for keyword in NON_PRODUCT_SERVICE_KEYWORDS)
 
 
 def is_product_intent_message(text_value: Optional[str]):
@@ -2081,6 +2225,12 @@ def detect_business_intent(text_value: Optional[str]):
     lowered = normalize_text_value(text_value)
     if is_technical_document_message(text_value):
         return "consulta_documentacion"
+    if any(keyword in lowered for keyword in CLAIM_KEYWORDS):
+        return "reclamo_servicio"
+    if any(keyword in lowered for keyword in QUOTE_KEYWORDS):
+        return "cotizacion"
+    if any(keyword in lowered for keyword in ORDER_KEYWORDS):
+        return "pedido"
     if any(keyword in lowered for keyword in ["cartera", "saldo", "deuda", "debo", "vencid", "estado de cuenta", "cupo", "credito", "cuanto debo", "cuánto debo", "documentos"]):
         return "consulta_cartera"
     if has_keyword_or_similar(text_value, ["factura", "facturas", "vencida", "vencidas"]):
@@ -2338,12 +2488,270 @@ def looks_like_product_query(text_value: Optional[str], product_request: Optiona
     if is_product_intent_message(text_value):
         return True
     request = product_request or extract_product_request(text_value)
+    if has_non_product_business_signal(text_value) and not (
+        request.get("product_codes")
+        or request.get("brand_filters")
+        or request.get("requested_unit")
+        or request.get("requested_quantity")
+        or request.get("store_filters")
+    ):
+        return False
     if request.get("product_codes"):
         return True
     if request.get("brand_filters") or request.get("requested_unit") or request.get("size_filters"):
         return True
     meaningful_terms = [term for term in (request.get("core_terms") or []) if not is_store_alias_term(term)]
     return len(meaningful_terms) >= 2
+
+
+def detect_context_switch(conversation_context: Optional[dict], detected_intent: Optional[str], identity_verification_message: bool):
+    context = conversation_context or {}
+    previous_intent = context.get("last_direct_intent") or context.get("intent")
+    if identity_verification_message or context.get("awaiting_verification"):
+        return False
+    if not previous_intent or not detected_intent or detected_intent == "consulta_general":
+        return False
+    if previous_intent == detected_intent:
+        return False
+    tracked_intents = {
+        "consulta_productos",
+        "consulta_documentacion",
+        "consulta_cartera",
+        "consulta_compras",
+        "reclamo_servicio",
+        "cotizacion",
+        "pedido",
+    }
+    return previous_intent in tracked_intents and detected_intent in tracked_intents
+
+
+def summarize_claim_product(product_request: Optional[dict], conversation_context: Optional[dict]):
+    request = product_request or {}
+    previous_request = (conversation_context or {}).get("last_product_request") or {}
+    search_terms = list(request.get("core_terms") or request.get("search_terms") or [])
+    if not search_terms:
+        search_terms = list(previous_request.get("core_terms") or previous_request.get("search_terms") or [])
+    claim_noise = {
+        "pintura",
+        "no",
+        "bien",
+        "cubrio",
+        "cubrió",
+        "funciono",
+        "funcionó",
+        "reclamo",
+        "problema",
+        "falla",
+        "montar",
+        "poner",
+        "quiero",
+        "necesito",
+        "caso",
+        "ayuda",
+        "cunete",
+        "cunetes",
+        "cuñete",
+        "cuñetes",
+    }
+    filtered_terms = []
+    for term in search_terms:
+        normalized_term = normalize_text_value(term)
+        if (
+            normalized_term
+            and normalized_term not in PRODUCT_STOPWORDS
+            and normalized_term not in NON_PRODUCT_SERVICE_KEYWORDS
+            and normalized_term not in claim_noise
+            and normalized_term not in filtered_terms
+        ):
+            filtered_terms.append(normalized_term)
+    if not filtered_terms:
+        return None
+    product_label = " ".join(filtered_terms[:4])
+    quantity_expression = request.get("quantity_expression") or previous_request.get("quantity_expression")
+    if quantity_expression and quantity_expression not in product_label:
+        product_label = f"{product_label} {quantity_expression}".strip()
+    return product_label
+
+
+def extract_claim_case_details(text_value: Optional[str], conversation_context: Optional[dict], product_request: Optional[dict]):
+    existing_case = dict((conversation_context or {}).get("claim_case") or {})
+    normalized = normalize_text_value(text_value)
+    raw_text = (text_value or "").strip()
+    notes = list(existing_case.get("notes") or [])
+    if raw_text and raw_text not in notes and not is_greeting_message(text_value):
+        notes.append(raw_text[:600])
+
+    product_label = existing_case.get("product_label") or summarize_claim_product(product_request, conversation_context)
+    issue_summary = existing_case.get("issue_summary")
+    generic_openers = {
+        "necesito montar un reclamo",
+        "quiero montar un reclamo",
+        "quiero poner un reclamo",
+        "necesito poner un reclamo",
+        "tengo un reclamo",
+        "montar un reclamo",
+    }
+    if raw_text and normalized not in generic_openers:
+        has_claim_signal = any(keyword in normalized for keyword in CLAIM_KEYWORDS)
+        if has_claim_signal or existing_case.get("active"):
+            issue_summary = raw_text[:600]
+
+    store_name = existing_case.get("store_name")
+    store_filters = (product_request or {}).get("store_filters") or []
+    if store_filters:
+        store_name = STORE_CODE_LABELS.get(store_filters[0]) or store_filters[0]
+
+    missing_fields = []
+    if not product_label:
+        missing_fields.append("producto")
+    if not issue_summary:
+        missing_fields.append("detalle")
+
+    severity = existing_case.get("severity") or (
+        "critica" if any(keyword in normalized for keyword in ["no funciono", "no funcionó", "dañado", "danado", "garantia", "garantía"]) else "alta"
+    )
+
+    return {
+        **existing_case,
+        "active": True,
+        "product_label": product_label,
+        "issue_summary": issue_summary,
+        "store_name": store_name,
+        "notes": notes[-8:],
+        "severity": severity,
+        "missing_fields": missing_fields,
+        "ready_to_submit": not missing_fields,
+    }
+
+
+def build_claim_reply(profile_name: Optional[str], claim_case: dict, cliente_contexto: Optional[dict]):
+    nombre = profile_name or "cliente"
+    if claim_case.get("submitted"):
+        return {
+            "tono": "empatico",
+            "intent": "reclamo_servicio",
+            "priority": claim_case.get("severity") or "alta",
+            "summary": f"Seguimiento a reclamo de {claim_case.get('product_label') or 'cliente'}",
+            "response_text": (
+                f"Hola, {nombre}. Tu reclamo ya quedó radicado y sigue en seguimiento. "
+                "Si quieres complementar el caso, envíame más detalle, fotos, lote o la tienda donde ocurrió y lo agrego a la gestión."
+            ),
+            "should_create_task": False,
+            "task_type": "reclamo_calidad",
+            "task_summary": "Seguimiento a reclamo existente",
+            "task_detail": claim_case,
+            "conversation_context_updates": {"claim_case": claim_case},
+        }
+    if claim_case.get("ready_to_submit"):
+        cliente_label = None
+        if cliente_contexto:
+            cliente_label = cliente_contexto.get("nombre_cliente") or cliente_contexto.get("cliente_codigo")
+        response_text = (
+            f"Hola, {nombre}. Ya dejé radicado tu reclamo sobre {claim_case.get('product_label')}. "
+            f"Resumen del caso: {claim_case.get('issue_summary')}. "
+            "Lo escalo al área encargada para revisión y seguimiento. "
+            "Si quieres, en el siguiente paso también te tomo un correo para enviarte la constancia del caso."
+        )
+        return {
+            "tono": "empatico",
+            "intent": "reclamo_servicio",
+            "priority": claim_case.get("severity") or "alta",
+            "summary": f"Reclamo radicado de {claim_case.get('product_label')}",
+            "response_text": response_text,
+            "should_create_task": True,
+            "task_type": "reclamo_calidad",
+            "task_summary": f"Reclamo de calidad o funcionamiento: {claim_case.get('product_label')}",
+            "task_detail": {**claim_case, "cliente": cliente_label},
+            "conversation_context_updates": {"claim_case": {**claim_case, "submitted": True}},
+            "email_route": "reclamos",
+            "email_detail": {**claim_case, "cliente": cliente_label},
+        }
+
+    missing_fields = claim_case.get("missing_fields") or []
+    prompts = []
+    if "producto" in missing_fields:
+        prompts.append("qué producto, referencia o presentación fue la afectada")
+    if "detalle" in missing_fields:
+        prompts.append("qué pasó exactamente, por ejemplo si no cubrió, cambió el tono, presentó falla o venía defectuoso")
+
+    prompt_text = "; ".join(prompts)
+    return {
+        "tono": "empatico",
+        "intent": "reclamo_servicio",
+        "priority": claim_case.get("severity") or "alta",
+        "summary": "Toma de datos para reclamo",
+        "response_text": (
+            f"Hola, {nombre}. Claro que sí, te ayudo a radicar el reclamo y a dejarlo bien documentado. "
+            f"Cuéntame por favor {prompt_text}. "
+            "Si además me compartes tienda o ciudad, fecha aproximada de compra y lote si lo tienes, dejo el caso mucho más completo desde el inicio."
+        ),
+        "should_create_task": False,
+        "task_type": "reclamo_calidad",
+        "task_summary": "Toma inicial de reclamo",
+        "task_detail": claim_case,
+        "conversation_context_updates": {"claim_case": claim_case},
+    }
+
+
+def build_operational_email_payload(intent: str, profile_name: Optional[str], cliente_contexto: Optional[dict], detail: dict, recent_messages: list[dict]):
+    config = get_sendgrid_config()
+    if not config:
+        return None
+
+    route_map = {
+        "reclamos": config.get("reclamos_to_email") or config.get("from_email"),
+        "ventas": config.get("ventas_to_email") or config.get("from_email"),
+        "contabilidad": config.get("contabilidad_to_email") or config.get("from_email"),
+    }
+    to_email = route_map.get(intent)
+    if not to_email:
+        return None
+
+    cliente_label = (cliente_contexto or {}).get("nombre_cliente") or profile_name or "Cliente Ferreinox"
+    cliente_codigo = (cliente_contexto or {}).get("cliente_codigo") or "sin_codigo"
+    transcript_rows = []
+    for row in recent_messages[-8:]:
+        direction = "Cliente" if row.get("direction") == "inbound" else "Agente"
+        contenido = (row.get("contenido") or "").strip()
+        if contenido:
+            transcript_rows.append((direction, contenido[:1200]))
+
+    transcript_html = "".join(
+        f"<tr><td style='padding:8px;border-bottom:1px solid #e5e7eb;font-weight:600'>{escape(direction)}</td><td style='padding:8px;border-bottom:1px solid #e5e7eb'>{escape(contenido)}</td></tr>"
+        for direction, contenido in transcript_rows
+    ) or "<tr><td colspan='2' style='padding:8px'>Sin historial disponible.</td></tr>"
+    transcript_text = "\n".join(f"{direction}: {contenido}" for direction, contenido in transcript_rows) or "Sin historial disponible."
+
+    subject = f"Ferreinox CRM | Reclamo cliente {cliente_label} | {detail.get('product_label') or 'sin producto'}"
+    html_content = (
+        "<div style='font-family:Segoe UI,Arial,sans-serif;color:#111827;background:#f3f4f6;padding:24px'>"
+        "<div style='max-width:900px;margin:0 auto;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e5e7eb'>"
+        "<div style='background:#111827;color:#ffffff;padding:24px 28px'>"
+        "<h1 style='margin:0;font-size:24px'>Caso radicado desde CRM Ferreinox</h1>"
+        "<p style='margin:8px 0 0 0;color:#d1d5db'>Reclamo de calidad o funcionamiento generado por el agente conversacional.</p>"
+        "</div>"
+        "<div style='padding:28px'>"
+        f"<p><strong>Cliente:</strong> {escape(cliente_label)}</p>"
+        f"<p><strong>Código cliente:</strong> {escape(str(cliente_codigo))}</p>"
+        f"<p><strong>Producto reportado:</strong> {escape(detail.get('product_label') or 'Pendiente')}</p>"
+        f"<p><strong>Tienda/Ciudad:</strong> {escape(detail.get('store_name') or 'Pendiente')}</p>"
+        f"<p><strong>Resumen:</strong> {escape(detail.get('issue_summary') or 'Pendiente de ampliar')}</p>"
+        "<h2 style='margin-top:28px;font-size:18px'>Historial reciente</h2>"
+        "<table style='width:100%;border-collapse:collapse;font-size:14px'>"
+        f"{transcript_html}"
+        "</table>"
+        "</div></div></div>"
+    )
+    text_content = (
+        f"Caso radicado desde CRM Ferreinox\n\n"
+        f"Cliente: {cliente_label}\n"
+        f"Código cliente: {cliente_codigo}\n"
+        f"Producto reportado: {detail.get('product_label') or 'Pendiente'}\n"
+        f"Tienda/Ciudad: {detail.get('store_name') or 'Pendiente'}\n"
+        f"Resumen: {detail.get('issue_summary') or 'Pendiente de ampliar'}\n\n"
+        f"Historial reciente:\n{transcript_text}"
+    )
+    return {"to_email": to_email, "subject": subject, "html_content": html_content, "text_content": text_content}
 
 
 def is_purchase_followup_message(text_value: Optional[str], conversation_context: Optional[dict]):
@@ -2737,6 +3145,42 @@ def build_direct_reply(
             "task_type": "seguimiento_cliente",
             "task_summary": "Consulta de compras recientes",
             "task_detail": purchases or {},
+        }
+
+    if intent == "reclamo_servicio":
+        claim_case = extract_claim_case_details(user_message, conversation_context, product_request)
+        return build_claim_reply(profile_name, claim_case, cliente_contexto)
+
+    if intent == "cotizacion":
+        return {
+            "tono": "consultivo",
+            "intent": intent,
+            "priority": "media",
+            "summary": "Inicio de cotización",
+            "response_text": (
+                f"Hola, {nombre}. Con mucho gusto te ayudo con la cotización. "
+                "Envíame por favor el producto o referencia, la cantidad, la ciudad o tienda que te interesa y dime si prefieres que te la entregue aquí por WhatsApp o también por correo."
+            ),
+            "should_create_task": True,
+            "task_type": "cotizacion",
+            "task_summary": "Solicitud de cotización iniciada por WhatsApp",
+            "task_detail": {"mensaje": user_message, "cliente": (cliente_contexto or {}).get("cliente_codigo")},
+        }
+
+    if intent == "pedido":
+        return {
+            "tono": "consultivo",
+            "intent": intent,
+            "priority": "alta",
+            "summary": "Inicio de pedido",
+            "response_text": (
+                f"Hola, {nombre}. Perfecto, te ayudo a montar el pedido. "
+                "Compárteme la referencia o producto, cantidades, tienda o ciudad de entrega y si quieres la confirmación por WhatsApp o por correo para dejarlo listo."
+            ),
+            "should_create_task": True,
+            "task_type": "pedido",
+            "task_summary": "Solicitud de pedido iniciada por WhatsApp",
+            "task_detail": {"mensaje": user_message, "cliente": (cliente_contexto or {}).get("cliente_codigo")},
         }
 
     if intent == "consulta_productos":
@@ -3266,6 +3710,7 @@ def build_agent_prompt(
             "role": "system",
             "content": (
                 "Eres el agente de servicio al cliente de Ferreinox. Responde en espanol claro, util y profesional. "
+                "Mantén una sola intención activa por turno: si el cliente cambia de tema, responde solo sobre el tema nuevo y no mezcles cartera, compras, productos o reclamos en el mismo mensaje. "
                 "Debes detectar tono del cliente, intencion principal y prioridad. Usa el contexto ERP disponible para responder con precision. "
                 "El portafolio comercial valido para orientar respuestas incluye principalmente Pintuco, Abracol, Yale, Goya y las categorias reales del ERP. "
                 "No inventes marcas fuera del portafolio y no sugieras Corona como marca comercial de Ferreinox. "
@@ -3584,6 +4029,20 @@ async def receive_whatsapp_webhook(request: Request):
                     product_request["core_terms"] = merged_core_terms[:8]
                     product_request["search_terms"] = expand_product_terms(merged_terms)[:8]
                     product_request["product_codes"] = merged_codes[:4]
+
+                if detect_context_switch(conversation_context, detected_intent, identity_verification_message):
+                    reset_updates = {
+                        "pending_product_clarification": None,
+                        "pending_document_options": None,
+                    }
+                    if detected_intent != "reclamo_servicio":
+                        reset_updates["claim_case"] = None
+                    update_conversation_context(
+                        context["conversation_id"],
+                        reset_updates,
+                        summary=f"Cambio de contexto hacia {detected_intent}",
+                    )
+                    conversation_context.update(reset_updates)
 
                 if identity_candidate:
                     try:
@@ -3905,6 +4364,112 @@ async def receive_whatsapp_webhook(request: Request):
                             "provider_message_id": message.get("id"),
                             "ai_response_sent": bool(outbound_payload),
                             "closing_reply": True,
+                        }
+                    )
+                    continue
+
+                if detected_intent in {"reclamo_servicio", "cotizacion", "pedido"}:
+                    direct_result = build_direct_reply(
+                        detected_intent,
+                        cliente_contexto,
+                        [],
+                        context.get("nombre_visible"),
+                        product_request,
+                        content,
+                        conversation_context,
+                    )
+                    response_text = direct_result["response_text"]
+                    outbound_payload = None
+                    try:
+                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
+                        provider_message_id = None
+                        if outbound_payload.get("messages"):
+                            provider_message_id = outbound_payload["messages"][0].get("id")
+                        store_outbound_message(
+                            context["conversation_id"],
+                            provider_message_id,
+                            "text",
+                            response_text,
+                            outbound_payload,
+                            intent_detectado=direct_result.get("intent"),
+                        )
+                    except Exception as exc:
+                        store_outbound_message(
+                            context["conversation_id"],
+                            None,
+                            "system",
+                            f"No fue posible enviar respuesta operativa: {exc}",
+                            {"error": str(exc), "response_text": response_text},
+                            intent_detectado=direct_result.get("intent"),
+                        )
+
+                    context_updates = {
+                        "last_direct_intent": direct_result.get("intent"),
+                        "pending_document_options": None,
+                        "pending_product_clarification": None,
+                        "awaiting_verification": False,
+                    }
+                    context_updates.update(direct_result.get("conversation_context_updates") or {})
+                    update_conversation_context(
+                        context["conversation_id"],
+                        context_updates,
+                        summary=direct_result.get("summary") or content,
+                    )
+
+                    if direct_result.get("should_create_task"):
+                        upsert_agent_task(
+                            context["conversation_id"],
+                            context.get("cliente_id"),
+                            direct_result.get("task_type") or "seguimiento_cliente",
+                            direct_result.get("task_summary") or "Revisar conversacion de WhatsApp",
+                            direct_result.get("task_detail") or {"mensaje": content},
+                            direct_result.get("priority") or "media",
+                        )
+
+                    email_payload = None
+                    if direct_result.get("email_route") and not (conversation_context.get("claim_case") or {}).get("submitted"):
+                        email_payload = build_operational_email_payload(
+                            direct_result.get("email_route"),
+                            context.get("nombre_visible"),
+                            cliente_contexto,
+                            direct_result.get("email_detail") or {},
+                            recent_messages,
+                        )
+                    if email_payload:
+                        try:
+                            send_sendgrid_email(
+                                email_payload["to_email"],
+                                email_payload["subject"],
+                                email_payload["html_content"],
+                                email_payload["text_content"],
+                                reply_to=(cliente_contexto or {}).get("email"),
+                            )
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"Correo operativo enviado a {email_payload['to_email']}",
+                                {"email_to": email_payload["to_email"], "subject": email_payload["subject"]},
+                                intent_detectado=f"correo_{direct_result.get('intent')}",
+                            )
+                        except Exception as exc:
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"No fue posible enviar correo operativo: {exc}",
+                                {"error": str(exc), "email_to": email_payload["to_email"], "subject": email_payload["subject"]},
+                                intent_detectado=f"correo_{direct_result.get('intent')}",
+                            )
+
+                    processed_messages.append(
+                        {
+                            "conversation_id": context["conversation_id"],
+                            "telefono": context["telefono_e164"],
+                            "message_type": message_type,
+                            "provider_message_id": message.get("id"),
+                            "ai_response_sent": bool(outbound_payload),
+                            "direct_reply": True,
                         }
                     )
                     continue

@@ -15,11 +15,14 @@ def main():
     openai_model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
     whatsapp_access_token = os.getenv("WHATSAPP_ACCESS_TOKEN")
     whatsapp_phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
+    sendgrid_api_key = os.getenv("SENDGRID_API_KEY")
+    sendgrid_from_email = os.getenv("SENDGRID_FROM_EMAIL")
 
-    metric_1, metric_2, metric_3 = st.columns(3)
+    metric_1, metric_2, metric_3, metric_4 = st.columns(4)
     metric_1.metric("OpenAI configurado", is_configured(openai_key))
     metric_2.metric("Modelo activo", openai_model)
     metric_3.metric("WhatsApp salida listo", "Si" if whatsapp_access_token and whatsapp_phone_number_id else "No")
+    metric_4.metric("SendGrid listo", "Si" if sendgrid_api_key and sendgrid_from_email else "No")
 
     st.subheader("Qué hace ya el agente")
     st.markdown(
@@ -34,6 +37,8 @@ def main():
         8. Genera una respuesta y la envía de vuelta por WhatsApp.
         9. Guarda también la respuesta saliente en `agent_message`.
         10. Puede crear tareas básicas de seguimiento cuando el modelo lo indique.
+        11. Ya detecta mejor cambios de tema entre cartera, compras, productos, cotizaciones, pedidos y reclamos.
+        12. Ya puede radicar reclamos guiados y, si SendGrid está configurado, enviar el caso al correo operativo.
         """
     )
 
@@ -45,8 +50,23 @@ def main():
         3. `WHATSAPP_PHONE_NUMBER_ID`
         4. `DATABASE_URL`
         5. `PGRST_URL`
+        6. `SENDGRID_API_KEY`
+        7. `SENDGRID_FROM_EMAIL`
+        8. `SENDGRID_FROM_NAME`
+        9. `SENDGRID_RECLAMOS_TO_EMAIL`
         """
     )
+
+    st.subheader("Configuración de correo operativo")
+    st.code(
+        """[sendgrid]
+api_key = \"SG.xxxxxxxxxxxxxxxxx\"
+from_email = \"tiendapintucopereira@ferreinox.co\"
+from_name = \"Ferreinox S.A.S. BIC\"
+reclamos_to_email = \"tiendapintucopereira@ferreinox.co\""" ,
+        language="toml",
+    )
+    st.caption("En producción conviene cargar estas mismas variables en Coolify como variables de entorno y no dejar la llave en archivos locales.")
 
     st.subheader("Modelo recomendado ahora")
     st.info(
