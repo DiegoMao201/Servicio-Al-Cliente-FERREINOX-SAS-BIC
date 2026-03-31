@@ -26,7 +26,7 @@ def main():
         """
         1. Recibe el mensaje entrante desde WhatsApp.
         2. Guarda el mensaje y la conversación en PostgreSQL.
-        3. Pide cédula o NIT antes de responder cartera, ventas u otros datos sensibles.
+        3. Pide cédula, NIT, código de cliente o nombre registrado antes de responder cartera, ventas u otros datos sensibles.
         4. Busca contexto comercial del cliente en PostgREST cuando puede relacionarlo.
         5. Busca contexto de productos cuando la conversación habla de referencias, artículos o inventario.
         6. Envía el historial reciente y el contexto ERP al modelo de OpenAI.

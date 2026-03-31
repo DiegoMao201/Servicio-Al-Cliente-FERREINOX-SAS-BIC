@@ -1458,6 +1458,210 @@ def find_cliente_contexto_by_document(document_number: str):
     return contexto
 
 
+def find_cliente_contexto_in_sales(customer_code: Optional[str] = None, name_value: Optional[str] = None):
+    engine = get_db_engine()
+
+    if customer_code:
+        normalized_code = normalize_reference_value(customer_code)
+        if not normalized_code:
+            return None
+        with engine.connect() as connection:
+            row = connection.execute(
+                text(
+                    """
+                    SELECT cliente_id AS cod_cliente, nombre_cliente
+                    FROM public.raw_ventas_detalle
+                    WHERE regexp_replace(lower(COALESCE(cliente_id, '')), '[^a-z0-9]', '', 'g') = :customer_code
+                    GROUP BY 1, 2
+                    ORDER BY COUNT(*) DESC, nombre_cliente ASC
+                    LIMIT 1
+                    """
+                ),
+                {"customer_code": normalized_code},
+            ).mappings().one_or_none()
+        if not row:
+            return None
+        return {
+            "cliente_codigo": row["cod_cliente"],
+            "nombre_cliente": row["nombre_cliente"],
+            "verified_cliente_codigo": row["cod_cliente"],
+            "verified_source": "raw_sales",
+        }
+
+    normalized_name = normalize_text_value(name_value)
+    tokens = [token for token in normalized_name.split() if len(token) >= 3]
+    if len(tokens) < 2:
+        return None
+
+    primary_pattern = f"%{tokens[0]}%"
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text(
+                """
+                SELECT cliente_id AS cod_cliente, nombre_cliente
+                FROM public.raw_ventas_detalle
+                WHERE regexp_replace(lower(COALESCE(nombre_cliente, '')), '[^a-z0-9 ]', '', 'g') ILIKE :pattern
+                GROUP BY 1, 2
+                ORDER BY COUNT(*) DESC, nombre_cliente ASC
+                LIMIT 20
+                """
+            ),
+            {"pattern": primary_pattern},
+        ).mappings().all()
+
+    candidates = []
+    for row in rows:
+        candidate_name = normalize_text_value(row.get("nombre_cliente"))
+        if not candidate_name:
+            continue
+        token_hits = sum(1 for token in tokens if token in candidate_name)
+        similarity = sequence_similarity(normalized_name, candidate_name)
+        exact_phrase = 1 if normalized_name in candidate_name or candidate_name in normalized_name else 0
+        if token_hits < max(2, len(tokens) - 1) and similarity < 0.82:
+            continue
+        candidates.append(
+            {
+                "cod_cliente": row["cod_cliente"],
+                "nombre_cliente": row.get("nombre_cliente"),
+                "score": token_hits * 2 + exact_phrase * 3 + similarity,
+            }
+        )
+
+    if not candidates:
+        return None
+
+    best_match = sorted(candidates, key=lambda item: item["score"], reverse=True)[0]
+    return {
+        "cliente_codigo": best_match["cod_cliente"],
+        "nombre_cliente": best_match.get("nombre_cliente"),
+        "verified_cliente_codigo": best_match["cod_cliente"],
+        "verified_source": "raw_sales",
+    }
+
+
+def find_cliente_contexto_by_customer_code(customer_code: str):
+    normalized_code = normalize_reference_value(customer_code)
+    if not normalized_code:
+        return None
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT cod_cliente, nombre_cliente, nit
+                FROM public.vw_estado_cartera
+                WHERE regexp_replace(lower(COALESCE(cod_cliente::text, '')), '[^a-z0-9]', '', 'g') = :customer_code
+                LIMIT 1
+                """
+            ),
+            {"customer_code": normalized_code},
+        ).mappings().one_or_none()
+
+        if row is None:
+            row = connection.execute(
+                text(
+                    """
+                    SELECT codigo AS cod_cliente, nombre_legal AS nombre_cliente, numero_documento AS nit
+                    FROM public.cliente
+                    WHERE regexp_replace(lower(COALESCE(codigo::text, '')), '[^a-z0-9]', '', 'g') = :customer_code
+                    LIMIT 1
+                    """
+                ),
+                {"customer_code": normalized_code},
+            ).mappings().one_or_none()
+
+    if not row or not row["cod_cliente"]:
+        return find_cliente_contexto_in_sales(customer_code=normalized_code)
+
+    try:
+        contexto = get_cliente_contexto(row["cod_cliente"])
+    except HTTPException:
+        contexto = {
+            "cliente_codigo": row["cod_cliente"],
+            "nombre_cliente": row["nombre_cliente"],
+        }
+
+    contexto["verified_cliente_codigo"] = row["cod_cliente"]
+    return contexto
+
+
+def find_cliente_contexto_by_name(name_value: str):
+    normalized_name = normalize_text_value(name_value)
+    tokens = [token for token in normalized_name.split() if len(token) >= 3]
+    if len(tokens) < 2:
+        return None
+
+    primary_pattern = f"%{tokens[0]}%"
+    engine = get_db_engine()
+    candidates = []
+    with engine.connect() as connection:
+        cartera_rows = connection.execute(
+            text(
+                """
+                SELECT cod_cliente, nombre_cliente, nit
+                FROM public.vw_estado_cartera
+                WHERE regexp_replace(lower(COALESCE(nombre_cliente, '')), '[^a-z0-9 ]', '', 'g') ILIKE :pattern
+                ORDER BY fecha_documento DESC NULLS LAST
+                LIMIT 20
+                """
+            ),
+            {"pattern": primary_pattern},
+        ).mappings().all()
+
+        client_rows = connection.execute(
+            text(
+                """
+                SELECT codigo AS cod_cliente, nombre_legal AS nombre_cliente, numero_documento AS nit
+                FROM public.cliente
+                WHERE regexp_replace(lower(COALESCE(nombre_legal, '')), '[^a-z0-9 ]', '', 'g') ILIKE :pattern
+                LIMIT 20
+                """
+            ),
+            {"pattern": primary_pattern},
+        ).mappings().all()
+
+    seen_codes = set()
+    for row in list(cartera_rows) + list(client_rows):
+        customer_code = row.get("cod_cliente")
+        if not customer_code or customer_code in seen_codes:
+            continue
+        seen_codes.add(customer_code)
+
+        candidate_name = normalize_text_value(row.get("nombre_cliente"))
+        if not candidate_name:
+            continue
+
+        token_hits = sum(1 for token in tokens if token in candidate_name)
+        similarity = sequence_similarity(normalized_name, candidate_name)
+        exact_phrase = 1 if normalized_name in candidate_name or candidate_name in normalized_name else 0
+        if token_hits < max(2, len(tokens) - 1) and similarity < 0.82:
+            continue
+
+        candidates.append(
+            {
+                "cod_cliente": customer_code,
+                "nombre_cliente": row.get("nombre_cliente"),
+                "score": token_hits * 2 + exact_phrase * 3 + similarity,
+            }
+        )
+
+    if not candidates:
+        return find_cliente_contexto_in_sales(name_value=name_value)
+
+    best_match = sorted(candidates, key=lambda item: item["score"], reverse=True)[0]
+    try:
+        contexto = get_cliente_contexto(best_match["cod_cliente"])
+    except HTTPException:
+        contexto = {
+            "cliente_codigo": best_match["cod_cliente"],
+            "nombre_cliente": best_match.get("nombre_cliente"),
+        }
+
+    contexto["verified_cliente_codigo"] = best_match["cod_cliente"]
+    return contexto
+
+
 def update_contact_cliente(contact_id: int, cliente_codigo: Optional[str]):
     if not cliente_codigo:
         return
@@ -1625,19 +1829,96 @@ def extract_document_candidate(text_value: Optional[str]):
     return matches[0] if matches else None
 
 
-def is_identity_verification_message(text_value: Optional[str], conversation_context: Optional[dict]):
+def extract_identity_lookup_candidate(text_value: Optional[str], conversation_context: Optional[dict], allow_unprompted: bool = False):
     if not text_value:
-        return False
+        return None
+
     context = conversation_context or {}
-    if not (context.get("awaiting_verification") or context.get("pending_intent") in {"consulta_cartera", "consulta_compras"}):
-        return False
-    document_candidate = extract_document_candidate(text_value)
-    if not document_candidate:
-        return False
-    stripped_text = re.sub(r"[^0-9]", "", text_value)
-    if not stripped_text or stripped_text != document_candidate:
-        return False
-    return True
+    verification_flow_active = bool(
+        context.get("awaiting_verification")
+        or context.get("pending_intent") in {"consulta_cartera", "consulta_compras"}
+    )
+    if not verification_flow_active and not allow_unprompted:
+        return None
+
+    normalized_text = normalize_text_value(text_value)
+    if not normalized_text:
+        return None
+
+    numeric_matches = re.findall(r"\b\d{4,15}\b", normalized_text)
+    remaining_text = re.sub(r"\b\d{4,15}\b", " ", normalized_text)
+    remaining_tokens = [token for token in remaining_text.split() if token]
+    allowed_code_tokens = {"mi", "codigo", "cod", "cliente", "es", "el", "del", "de"}
+    if numeric_matches and len(numeric_matches) == 1 and all(token in allowed_code_tokens for token in remaining_tokens):
+        return {"type": "numeric_lookup", "value": numeric_matches[0]}
+
+    if not verification_flow_active:
+        return None
+
+    if any(character.isalpha() for character in text_value):
+        product_request = extract_product_request(text_value)
+        tokens = [token for token in normalized_text.split() if len(token) >= 3]
+        strong_product_signal = bool(
+            product_request.get("product_codes")
+            or product_request.get("requested_unit")
+            or product_request.get("requested_quantity")
+            or product_request.get("store_filters")
+            or product_request.get("brand_filters")
+        )
+        if 2 <= len(tokens) <= 6 and not strong_product_signal:
+            return {"type": "name_lookup", "value": text_value.strip()}
+        if not looks_like_product_query(text_value, product_request) and 2 <= len(tokens) <= 6:
+            return {"type": "name_lookup", "value": text_value.strip()}
+
+    return None
+
+
+def resolve_identity_candidate(identity_candidate: Optional[dict], phone_number: Optional[str] = None):
+    if not identity_candidate:
+        return None, None
+
+    candidate_type = identity_candidate.get("type")
+    candidate_value = identity_candidate.get("value")
+    verified_context = None
+    verified_by = None
+
+    if candidate_type == "numeric_lookup":
+        verified_context = find_cliente_contexto_by_document(candidate_value)
+        if verified_context:
+            verified_by = "document"
+        else:
+            verified_context = find_cliente_contexto_by_customer_code(candidate_value)
+            if verified_context:
+                verified_by = "customer_code"
+    elif candidate_type == "name_lookup":
+        verified_context = find_cliente_contexto_by_name(candidate_value)
+        if verified_context:
+            verified_by = "name"
+
+    if not verified_context and phone_number:
+        verified_context = find_cliente_contexto_by_phone(phone_number)
+        if verified_context:
+            verified_by = "phone"
+
+    return verified_context, verified_by
+
+
+def build_identity_not_found_reply(identity_candidate: Optional[dict]):
+    candidate_value = (identity_candidate or {}).get("value") or "ese dato"
+    candidate_type = (identity_candidate or {}).get("type")
+    if candidate_type == "name_lookup":
+        return (
+            f"No pude ubicar el nombre {candidate_value} en nuestro registro. "
+            "Envíame por favor tu cédula, NIT o código de cliente y con eso te valido de una vez."
+        )
+    return (
+        f"No pude validar {candidate_value} ni como cédula/NIT ni como código de cliente. "
+        "Si quieres, envíame tu nombre completo registrado y te ayudo a ubicarlo."
+    )
+
+
+def is_identity_verification_message(text_value: Optional[str], conversation_context: Optional[dict]):
+    return extract_identity_lookup_candidate(text_value, conversation_context) is not None
 
 
 def is_sensitive_intent_message(text_value: Optional[str]):
@@ -2301,6 +2582,24 @@ def build_direct_reply(
     if intent == "consulta_cartera":
         if not cliente_contexto:
             return None
+        if cliente_contexto.get("verified_source") == "raw_sales" and not any(
+            cliente_contexto.get(field_name) is not None for field_name in ["saldo_cartera", "documentos_vencidos", "max_dias_vencido"]
+        ):
+            return {
+                "tono": "informativo",
+                "intent": intent,
+                "priority": "media",
+                "summary": f"Cliente identificado sin cartera consolidada para {cliente_contexto.get('cliente_codigo')}",
+                "response_text": (
+                    f"Hola, {nombre}. Ya te identifiqué como {cliente_contexto.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}, "
+                    "pero en la base actual no veo cartera consolidada para ese cliente. "
+                    "Si quieres, te reviso compras recientes o dejo el caso escalado a contabilidad para validarlo."
+                ),
+                "should_create_task": True,
+                "task_type": "validacion_cartera",
+                "task_summary": "Validar cliente sin cartera consolidada en CRM",
+                "task_detail": cliente_contexto,
+            }
         cartera_query = extract_cartera_query(user_message)
         saldo = format_currency(cliente_contexto.get("saldo_cartera"))
         dias = cliente_contexto.get("max_dias_vencido") or 0
@@ -2605,7 +2904,7 @@ def build_verification_success_reply(profile_name: Optional[str], cliente_contex
     cliente_codigo = (cliente_contexto or {}).get("cliente_codigo")
     cliente_nombre = (cliente_contexto or {}).get("nombre_cliente")
     return (
-        f"Gracias, {nombre}. Tu identidad quedó validada"
+        f"Perfecto, {nombre}. Tu identidad quedó validada"
         f"{' para el cliente ' + str(cliente_nombre or cliente_codigo) if (cliente_nombre or cliente_codigo) else ''}"
         f"{' (' + str(cliente_codigo) + ')' if cliente_nombre and cliente_codigo else ''}. "
         "Ahora ya puedo ayudarte con cartera, compras del último año y consultas relacionadas con tu historial comercial."
@@ -2933,7 +3232,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
 def build_verification_challenge():
     return (
         "Para revisar cartera, ventas u otra informacion sensible necesito validar tu identidad. "
-        "Por favor enviame tu cedula o NIT sin puntos ni comas para continuar."
+        "Por favor enviame tu cedula, NIT o codigo de cliente. Si prefieres, tambien puedes escribirme el nombre registrado."
     )
 
 
@@ -2971,7 +3270,7 @@ def build_agent_prompt(
                 "El portafolio comercial valido para orientar respuestas incluye principalmente Pintuco, Abracol, Yale, Goya y las categorias reales del ERP. "
                 "No inventes marcas fuera del portafolio y no sugieras Corona como marca comercial de Ferreinox. "
                 "Interpreta lenguaje ferretero y comercial como: 18.93 = cuñete, 3.79 = galon, 0.95 = cuarto, 1/1 = galon, 1/5 = cuñete, 1/4 = cuarto, 5/1 = cinco galones. "
-                "Nunca reveles cartera, saldos, ventas historicas o datos privados si verification_state.verified es falso. En ese caso pide cedula o NIT. "
+                "Nunca reveles cartera, saldos, ventas historicas o datos privados si verification_state.verified es falso. En ese caso pide cedula, NIT, codigo de cliente o nombre registrado. "
                 "Si no tienes un dato seguro, dilo claramente y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos comerciales. "
                 "Devuelve JSON valido con estas claves exactas: tono, intent, priority, summary, response_text, should_create_task, task_type, task_summary, task_detail."
             ),
@@ -3223,7 +3522,12 @@ async def receive_whatsapp_webhook(request: Request):
                 conversation_context = dict(conversation_snapshot.get("contexto") or {})
                 verified_context = None
                 detected_intent = detect_business_intent(content)
-                identity_verification_message = is_identity_verification_message(content, conversation_context)
+                identity_candidate = extract_identity_lookup_candidate(
+                    content,
+                    conversation_context,
+                    allow_unprompted=detected_intent != "consulta_productos",
+                )
+                identity_verification_message = identity_candidate is not None
                 if identity_verification_message:
                     detected_intent = conversation_context.get("pending_intent") or detected_intent
                 if detected_intent == "consulta_general" and is_product_code_message(content):
@@ -3281,14 +3585,11 @@ async def receive_whatsapp_webhook(request: Request):
                     product_request["search_terms"] = expand_product_terms(merged_terms)[:8]
                     product_request["product_codes"] = merged_codes[:4]
 
-                document_candidate = None
-                if identity_verification_message or detected_intent != "consulta_productos":
-                    document_candidate = extract_document_candidate(content)
-                if document_candidate:
+                if identity_candidate:
                     try:
-                        verified_context = find_cliente_contexto_by_document(document_candidate)
+                        verified_context, verified_by = resolve_identity_candidate(identity_candidate, context["telefono_e164"])
                     except Exception:
-                        verified_context = None
+                        verified_context, verified_by = None, None
                     if verified_context:
                         cliente_id = update_contact_cliente(context["contact_id"], verified_context.get("cliente_codigo"))
                         context["cliente_id"] = cliente_id
@@ -3296,80 +3597,59 @@ async def receive_whatsapp_webhook(request: Request):
                             context["conversation_id"],
                             {
                                 "verified": True,
-                                "verified_document": document_candidate,
+                                "verified_document": identity_candidate.get("value") if verified_by == "document" else None,
+                                "verified_by": verified_by,
                                 "verified_cliente_codigo": verified_context.get("cliente_codigo"),
                             },
                         )
                         conversation_context.update(
                             {
                                 "verified": True,
-                                "verified_document": document_candidate,
+                                "verified_document": identity_candidate.get("value") if verified_by == "document" else None,
+                                "verified_by": verified_by,
                                 "verified_cliente_codigo": verified_context.get("cliente_codigo"),
                                 "awaiting_verification": False,
                             }
                         )
                     else:
-                        phone_fallback = find_cliente_contexto_by_phone(context["telefono_e164"])
-                        if phone_fallback:
-                            verified_context = phone_fallback
-                            cliente_id = update_contact_cliente(context["contact_id"], phone_fallback.get("cliente_codigo"))
-                            context["cliente_id"] = cliente_id
-                            update_conversation_context(
+                        invalid_identity_text = (
+                            build_identity_not_found_reply(identity_candidate)
+                            + " Mientras tanto, puedo ayudarte con inventario, productos y documentación técnica."
+                        )
+                        outbound_payload = None
+                        try:
+                            outbound_payload = send_whatsapp_text_message(context["telefono_e164"], invalid_identity_text)
+                            provider_message_id = None
+                            if outbound_payload.get("messages"):
+                                provider_message_id = outbound_payload["messages"][0].get("id")
+                            store_outbound_message(
                                 context["conversation_id"],
-                                {
-                                    "verified": True,
-                                    "verified_by": "phone",
-                                    "verified_cliente_codigo": phone_fallback.get("cliente_codigo"),
-                                },
+                                provider_message_id,
+                                "text",
+                                invalid_identity_text,
+                                outbound_payload,
+                                intent_detectado="identidad_no_validada",
                             )
-                            conversation_context.update(
-                                {
-                                    "verified": True,
-                                    "verified_cliente_codigo": phone_fallback.get("cliente_codigo"),
-                                    "awaiting_verification": False,
-                                }
+                        except Exception as exc:
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"No fue posible enviar respuesta de identidad no validada: {exc}",
+                                {"error": str(exc), "response_text": invalid_identity_text},
+                                intent_detectado="identidad_no_validada",
                             )
-                        else:
-                            invalid_doc_text = (
-                                f"No encontré el documento {document_candidate} en nuestro sistema. "
-                                "Verifica que sea tu cédula o NIT registrado, sin puntos ni comas. "
-                                "Si no estás seguro, dime tu nombre y te ayudo a buscarlo. "
-                                "Mientras tanto, puedo ayudarte con consultas de inventario y productos."
-                            )
-                            outbound_payload = None
-                            try:
-                                outbound_payload = send_whatsapp_text_message(context["telefono_e164"], invalid_doc_text)
-                                provider_message_id = None
-                                if outbound_payload.get("messages"):
-                                    provider_message_id = outbound_payload["messages"][0].get("id")
-                                store_outbound_message(
-                                    context["conversation_id"],
-                                    provider_message_id,
-                                    "text",
-                                    invalid_doc_text,
-                                    outbound_payload,
-                                    intent_detectado="documento_no_validado",
-                                )
-                            except Exception as exc:
-                                store_outbound_message(
-                                    context["conversation_id"],
-                                    None,
-                                    "system",
-                                    f"No fue posible enviar respuesta de documento no validado: {exc}",
-                                    {"error": str(exc), "response_text": invalid_doc_text},
-                                    intent_detectado="documento_no_validado",
-                                )
-                            processed_messages.append(
-                                {
-                                    "conversation_id": context["conversation_id"],
-                                    "telefono": context["telefono_e164"],
-                                    "message_type": message_type,
-                                    "provider_message_id": message.get("id"),
-                                    "ai_response_sent": bool(outbound_payload),
-                                    "verification_required": True,
-                                }
-                            )
-                            continue
+                        processed_messages.append(
+                            {
+                                "conversation_id": context["conversation_id"],
+                                "telefono": context["telefono_e164"],
+                                "message_type": message_type,
+                                "provider_message_id": message.get("id"),
+                                "ai_response_sent": bool(outbound_payload),
+                                "verification_required": True,
+                            }
+                        )
+                        continue
 
                 cliente_contexto = verified_context
                 if cliente_contexto is None:
@@ -3728,9 +4008,24 @@ async def receive_whatsapp_webhook(request: Request):
                         content,
                         conversation_context,
                     )
+                    product_followup_result = None
+                    pending_product_question = conversation_context.get("pending_product_question")
+                    pending_product_request = conversation_context.get("pending_product_request") or {}
+                    if pending_product_question and looks_like_product_query(pending_product_question, pending_product_request):
+                        product_followup_result = build_direct_reply(
+                            "consulta_productos",
+                            cliente_contexto,
+                            lookup_product_context(pending_product_question, pending_product_request),
+                            context.get("nombre_visible"),
+                            pending_product_request,
+                            pending_product_question,
+                            conversation_context,
+                        )
                     response_text = build_verification_success_reply(context.get("nombre_visible"), cliente_contexto)
                     if direct_result:
                         response_text = f"{response_text} {direct_result['response_text']}"
+                    if product_followup_result:
+                        response_text = f"{response_text} {product_followup_result['response_text']}"
                     outbound_payload = None
                     try:
                         outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
@@ -3759,11 +4054,13 @@ async def receive_whatsapp_webhook(request: Request):
                         context["conversation_id"],
                         {
                             "verified": True,
-                            "verified_document": conversation_context.get("verified_document") or document_candidate,
+                            "verified_document": conversation_context.get("verified_document"),
                             "verified_cliente_codigo": cliente_contexto.get("cliente_codigo") if cliente_contexto else None,
                             "awaiting_verification": False,
                             "pending_intent": None,
                             "pending_question": None,
+                            "pending_product_question": None,
+                            "pending_product_request": None,
                             "last_direct_intent": conversation_context.get("pending_intent"),
                             "cliente_contexto": cliente_contexto,
                         },
@@ -3887,6 +4184,8 @@ async def receive_whatsapp_webhook(request: Request):
                             "last_requested_verification_at": "now",
                             "pending_intent": detected_intent,
                             "pending_question": content,
+                            "pending_product_question": content if looks_like_product_query(content, product_request) else None,
+                            "pending_product_request": product_request if looks_like_product_query(content, product_request) else None,
                         },
                         summary="Pendiente verificacion de identidad",
                     )
