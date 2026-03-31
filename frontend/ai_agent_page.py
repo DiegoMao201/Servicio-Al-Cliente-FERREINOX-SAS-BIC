@@ -38,7 +38,9 @@ def main():
         9. Guarda también la respuesta saliente en `agent_message`.
         10. Puede crear tareas básicas de seguimiento cuando el modelo lo indique.
         11. Ya detecta mejor cambios de tema entre cartera, compras, productos, cotizaciones, pedidos y reclamos.
-        12. Ya puede radicar reclamos guiados y, si SendGrid está configurado, enviar el caso al correo operativo.
+        12. Ya guía reclamos paso a paso: producto, detalle del problema y correo antes de radicar el caso.
+        13. Ya consolida listas de pedido o cotización en un solo mensaje y guarda borradores reales en `agent_order` o `agent_quote`.
+        14. Si SendGrid está configurado, puede escalar reclamos al correo operativo con mejor trazabilidad.
         """
     )
 
@@ -63,7 +65,8 @@ def main():
 api_key = \"SG.xxxxxxxxxxxxxxxxx\"
 from_email = \"tiendapintucopereira@ferreinox.co\"
 from_name = \"Ferreinox S.A.S. BIC\"
-reclamos_to_email = \"tiendapintucopereira@ferreinox.co\""" ,
+reclamos_to_email = \"tiendapintucopereira@ferreinox.co\"
+""",
         language="toml",
     )
     st.caption("En producción conviene cargar estas mismas variables en Coolify como variables de entorno y no dejar la llave en archivos locales.")
@@ -90,9 +93,9 @@ reclamos_to_email = \"tiendapintucopereira@ferreinox.co\""" ,
     st.markdown(
         """
         1. Añadir reglas de negocio por intención: cartera, pedidos, inventario, pagos.
-        2. Crear tareas automáticas con más criterio y prioridad real.
-        3. Añadir escalamiento a humano.
-        4. Añadir plantillas y límites para respuestas sensibles.
-        5. Integrar Google Workspace para agenda, correo y cotizaciones.
+        2. Convertir borradores de cotización y pedido en documentos finales con PDF y envío por WhatsApp o correo.
+        3. Crear tareas automáticas con más criterio y prioridad real.
+        4. Añadir escalamiento a humano.
+        5. Añadir plantillas y límites para respuestas sensibles.
         """
     )

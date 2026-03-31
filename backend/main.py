@@ -1956,11 +1956,168 @@ def upsert_agent_task(conversation_id: int, cliente_id: Optional[int], task_type
         )
 
 
+def upsert_commercial_draft(
+    intent: str,
+    conversation_id: int,
+    contact_id: Optional[int],
+    cliente_id: Optional[int],
+    commercial_draft: dict,
+):
+    if intent not in {"pedido", "cotizacion"}:
+        return None
+
+    matched_items = [item for item in (commercial_draft.get("items") or []) if item.get("status") == "matched" and item.get("matched_product")]
+    store_filters = commercial_draft.get("store_filters") or []
+    store_code = store_filters[0] if store_filters else None
+    store_name = STORE_CODE_LABELS.get(store_code) if store_code else None
+    summary = f"Borrador de {'pedido' if intent == 'pedido' else 'cotización'} con {len(commercial_draft.get('items') or [])} líneas conversacionales"
+    header_table = "agent_order" if intent == "pedido" else "agent_quote"
+    line_table = "agent_order_line" if intent == "pedido" else "agent_quote_line"
+    foreign_key = "order_id" if intent == "pedido" else "quote_id"
+    draft_id = commercial_draft.get("draft_id")
+
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        if draft_id:
+            connection.execute(
+                text(
+                    f"""
+                    UPDATE public.{header_table}
+                    SET contacto_id = :contact_id,
+                        cliente_id = :cliente_id,
+                        almacen_codigo = :store_code,
+                        almacen_nombre = :store_name,
+                        resumen = :summary,
+                        metadata = CAST(:metadata AS jsonb),
+                        updated_at = now()
+                    WHERE id = :draft_id
+                    """
+                ),
+                {
+                    "draft_id": draft_id,
+                    "contact_id": contact_id,
+                    "cliente_id": cliente_id,
+                    "store_code": store_code,
+                    "store_name": store_name,
+                    "summary": summary,
+                    "metadata": safe_json_dumps(commercial_draft),
+                },
+            )
+        else:
+            draft_id = connection.execute(
+                text(
+                    f"""
+                    INSERT INTO public.{header_table} (
+                        conversation_id,
+                        contacto_id,
+                        cliente_id,
+                        almacen_codigo,
+                        almacen_nombre,
+                        resumen,
+                        metadata,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES (
+                        :conversation_id,
+                        :contact_id,
+                        :cliente_id,
+                        :store_code,
+                        :store_name,
+                        :summary,
+                        CAST(:metadata AS jsonb),
+                        now(),
+                        now()
+                    )
+                    RETURNING id
+                    """
+                ),
+                {
+                    "conversation_id": conversation_id,
+                    "contact_id": contact_id,
+                    "cliente_id": cliente_id,
+                    "store_code": store_code,
+                    "store_name": store_name,
+                    "summary": summary,
+                    "metadata": safe_json_dumps(commercial_draft),
+                },
+            ).scalar_one()
+
+        connection.execute(text(f"DELETE FROM public.{line_table} WHERE {foreign_key} = :draft_id"), {"draft_id": draft_id})
+
+        for line_number, item in enumerate(matched_items, start=1):
+            product = item.get("matched_product") or {}
+            product_request = item.get("product_request") or {}
+            quantity_value = parse_numeric_value(product_request.get("requested_quantity")) or 1
+            stock_value = parse_numeric_value(product.get("stock_total") if product.get("stock_total") is not None else product.get("stock"))
+            connection.execute(
+                text(
+                    f"""
+                    INSERT INTO public.{line_table} (
+                        {foreign_key},
+                        line_number,
+                        producto_codigo,
+                        referencia,
+                        descripcion,
+                        marca,
+                        presentacion,
+                        almacen_codigo,
+                        almacen_nombre,
+                        cantidad,
+                        stock_confirmado,
+                        metadata,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES (
+                        :draft_id,
+                        :line_number,
+                        :producto_codigo,
+                        :referencia,
+                        :descripcion,
+                        :marca,
+                        :presentacion,
+                        :almacen_codigo,
+                        :almacen_nombre,
+                        :cantidad,
+                        :stock_confirmado,
+                        CAST(:metadata AS jsonb),
+                        now(),
+                        now()
+                    )
+                    """
+                ),
+                {
+                    "draft_id": draft_id,
+                    "line_number": line_number,
+                    "producto_codigo": product.get("producto_codigo") or product.get("codigo_articulo"),
+                    "referencia": product.get("referencia") or product.get("codigo_articulo"),
+                    "descripcion": product.get("descripcion") or product.get("nombre_articulo") or item.get("original_text"),
+                    "marca": infer_product_brand_from_row(product),
+                    "presentacion": infer_product_presentation_from_row(product),
+                    "almacen_codigo": store_code,
+                    "almacen_nombre": store_name,
+                    "cantidad": quantity_value,
+                    "stock_confirmado": stock_value,
+                    "metadata": safe_json_dumps(item),
+                },
+            )
+
+    return draft_id
+
+
 def extract_document_candidate(text_value: Optional[str]):
     if not text_value:
         return None
     matches = re.findall(r"\b\d{6,15}\b", text_value)
     return matches[0] if matches else None
+
+
+def extract_email_address(text_value: Optional[str]):
+    if not text_value:
+        return None
+    match = re.search(r"[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}", text_value, flags=re.IGNORECASE)
+    return match.group(0).strip() if match else None
 
 
 def extract_identity_lookup_candidate(text_value: Optional[str], conversation_context: Optional[dict], allow_unprompted: bool = False):
@@ -2185,6 +2342,267 @@ def is_thanks_or_closing_message(text_value: Optional[str]):
 def build_conversation_closing_reply(profile_name: Optional[str]):
     nombre = profile_name or "cliente"
     return f"Con mucho gusto, {nombre}. Desde Ferreinox SAS BIC te deseamos un feliz día y aquí estamos para atenderte cuando lo necesites."
+
+
+def should_continue_claim_flow(conversation_context: Optional[dict], detected_intent: Optional[str], text_value: Optional[str]):
+    claim_case = dict((conversation_context or {}).get("claim_case") or {})
+    if not claim_case.get("active") or claim_case.get("submitted"):
+        return False
+
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+
+    if extract_email_address(text_value):
+        return True
+    if detected_intent in {"pedido", "cotizacion", "consulta_cartera", "consulta_compras", "consulta_documentacion"}:
+        return False
+    if any(keyword in normalized for keyword in ["inventario", "stock", "precio", "cotizar", "cotizacion", "pedido", "cartera", "compras"]):
+        return False
+    return True
+
+
+def should_continue_commercial_flow(conversation_context: Optional[dict], detected_intent: Optional[str], text_value: Optional[str]):
+    context = conversation_context or {}
+    active_intent = context.get("last_direct_intent")
+    commercial_draft = dict(context.get("commercial_draft") or {})
+    if active_intent not in {"pedido", "cotizacion"}:
+        return False
+    if commercial_draft and commercial_draft.get("intent") not in {None, active_intent}:
+        return False
+    if detected_intent in {"consulta_cartera", "consulta_compras", "consulta_documentacion", "reclamo_servicio"}:
+        return False
+
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+
+    if extract_store_filters(text_value) or extract_email_address(text_value):
+        return True
+    if is_product_intent_message(text_value):
+        return True
+    if len(split_commercial_line_items(text_value)) >= 2:
+        return True
+    return bool(re.search(r"\b\d+\s*/\s*(1|4|5)\b", normalized))
+
+
+def split_commercial_line_items(text_value: Optional[str]):
+    if not text_value:
+        return []
+
+    prepared_text = re.sub(r"[;|]+", "\n", text_value)
+    raw_lines = [line.strip(" -*•\t") for line in prepared_text.splitlines()]
+    lines = [line for line in raw_lines if line]
+    if len(lines) >= 2:
+        return lines
+
+    normalized = normalize_text_value(text_value)
+    if re.search(r"\b\d+\s*/\s*(1|4|5)\b", normalized):
+        split_candidates = [segment.strip() for segment in re.split(r"\s{2,}|,(?=\s*\d)|(?<=\")\s+(?=\d)", text_value) if segment.strip()]
+        if len(split_candidates) >= 2:
+            return split_candidates
+
+    return lines if lines else [text_value.strip()]
+
+
+def merge_store_filters(product_request: dict, inherited_store_filters: list[str]):
+    merged_request = dict(product_request or {})
+    if inherited_store_filters and not merged_request.get("store_filters"):
+        merged_request["store_filters"] = list(inherited_store_filters)
+    return merged_request
+
+
+def describe_commercial_item_need(item: dict):
+    request = item.get("product_request") or {}
+    if request.get("product_codes"):
+        return request["product_codes"][0]
+    if request.get("core_terms"):
+        return " ".join(request.get("core_terms")[:4])
+    return item.get("original_text") or "ese producto"
+
+
+def build_commercial_item_result(raw_line: str, inherited_store_filters: list[str], mode: str):
+    product_request = merge_store_filters(extract_product_request(raw_line), inherited_store_filters)
+    product_rows = lookup_product_context(raw_line, product_request)
+    requested_store_codes = product_request.get("store_filters") or []
+    requested_store_label = STORE_CODE_LABELS.get(requested_store_codes[0]) if len(requested_store_codes) == 1 else None
+
+    item_result = {
+        "original_text": raw_line,
+        "product_request": product_request,
+        "matches": product_rows,
+        "status": "missing",
+        "message": "",
+        "matched_product": None,
+    }
+
+    if not product_rows:
+        item_result["message"] = f"{describe_commercial_item_need(item_result)}: necesito una referencia más precisa o la presentación exacta para dejarlo bien." 
+        return item_result
+
+    if should_ask_product_clarification(product_request, product_rows):
+        options = []
+        for row in product_rows[:3]:
+            options.append(f"{row.get('referencia') or row.get('codigo_articulo')}: {row.get('descripcion') or row.get('nombre_articulo')}")
+        item_result["status"] = "ambiguous"
+        item_result["message"] = (
+            f"{describe_commercial_item_need(item_result)}: necesito confirmarte cuál es la correcta. "
+            f"Las más cercanas son {', '.join(options)}."
+        )
+        return item_result
+
+    top_row = dict(product_rows[0])
+    item_result["status"] = "matched"
+    item_result["matched_product"] = top_row
+    description_value = top_row.get("descripcion") or top_row.get("nombre_articulo") or top_row.get("referencia") or top_row.get("codigo_articulo")
+    reference_value = top_row.get("referencia") or top_row.get("codigo_articulo") or "sin referencia"
+    stock_value = parse_numeric_value(top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")) or 0
+    requested_quantity = parse_numeric_value(product_request.get("requested_quantity"))
+    requested_unit = product_request.get("requested_unit")
+    quantity_label = None
+    if requested_quantity and requested_unit:
+        quantity_label = f"{format_quantity(requested_quantity)} {get_presentation_label(requested_unit, requested_quantity)}"
+
+    if requested_store_label:
+        if stock_value <= 0:
+            item_result["message"] = f"{description_value} ({reference_value}): en {requested_store_label} no lo veo disponible en este momento."
+        else:
+            item_result["message"] = f"{description_value} ({reference_value}): sí lo tengo disponible en {requested_store_label}"
+            if quantity_label:
+                availability = "y te alcanza para lo que pides" if stock_value >= requested_quantity else "pero no alcanza para toda la cantidad"
+                item_result["message"] += f", con {format_quantity(stock_value)} unidades confirmadas {availability}"
+            item_result["message"] += "."
+    else:
+        if stock_value <= 0:
+            item_result["message"] = f"{description_value} ({reference_value}): en este momento no veo existencias disponibles."
+        else:
+            item_result["message"] = f"{description_value} ({reference_value}): sí lo tengo disponible"
+            if quantity_label:
+                availability = "y sí alcanza para lo que pides" if stock_value >= requested_quantity else "pero la cantidad disponible no alcanza para todo"
+                item_result["message"] += f", {availability}"
+            elif top_row.get("stock_por_tienda"):
+                item_result["message"] += ", con existencias en varias sedes"
+            item_result["message"] += "."
+
+    return item_result
+
+
+def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_message: Optional[str], conversation_context: Optional[dict]):
+    nombre = profile_name or "cliente"
+    context = conversation_context or {}
+    existing_draft = dict(context.get("commercial_draft") or {})
+    last_intent = context.get("last_direct_intent")
+    incoming_store_filters = extract_store_filters(user_message)
+    inherited_store_filters = incoming_store_filters or existing_draft.get("store_filters") or []
+    current_lines = split_commercial_line_items(user_message)
+
+    has_explicit_items = any(
+        extract_product_request(line).get("product_codes")
+        or extract_product_request(line).get("core_terms")
+        or extract_product_request(line).get("requested_unit")
+        for line in current_lines
+    )
+
+    if not has_explicit_items:
+        summary_label = "cotización" if intent == "cotizacion" else "pedido"
+        return {
+            "tono": "consultivo",
+            "intent": intent,
+            "priority": "alta" if intent == "pedido" else "media",
+            "summary": f"Inicio de {summary_label}",
+            "response_text": (
+                f"Claro, te ayudo con el {summary_label}. Envíame la lista de productos tal como la manejas normalmente, "
+                "y si ya sabes la tienda o ciudad de entrega me la dejas de una vez para cerrarlo mucho más rápido."
+            ),
+            "should_create_task": last_intent != intent,
+            "task_type": intent,
+            "task_summary": f"Solicitud de {summary_label} iniciada por WhatsApp",
+            "task_detail": {"mensaje": user_message, "mode": intent},
+            "conversation_context_updates": {
+                "commercial_draft": {
+                    "intent": intent,
+                    "store_filters": inherited_store_filters,
+                    "items": existing_draft.get("items") or [],
+                }
+            },
+        }
+
+    draft_items = []
+    if existing_draft.get("intent") == intent:
+        draft_items = list(existing_draft.get("items") or [])
+
+    if draft_items and len(current_lines) == 1 and (incoming_store_filters or extract_product_request(user_message).get("product_codes")):
+        base_lines = [item.get("original_text") for item in draft_items if item.get("original_text")]
+        if base_lines:
+            refined_lines = list(base_lines)
+            incoming_codes = extract_product_request(user_message).get("product_codes") or []
+            if incoming_codes:
+                refined_lines[0] = f"{refined_lines[0]} {user_message}".strip()
+            current_lines = refined_lines
+            draft_items = []
+
+    if draft_items and len(current_lines) == 1 and extract_product_request(user_message).get("product_codes"):
+        unresolved_index = next((index for index, item in enumerate(draft_items) if item.get("status") != "matched"), None)
+        if unresolved_index is not None:
+            base_text = draft_items[unresolved_index].get("original_text") or ""
+            current_lines = [f"{base_text} {user_message}".strip()]
+            draft_items = [item for index, item in enumerate(draft_items) if index != unresolved_index]
+
+    resolved_items = list(draft_items)
+    for raw_line in current_lines:
+        if not raw_line:
+            continue
+        resolved_items.append(build_commercial_item_result(raw_line, inherited_store_filters, intent))
+
+    matched_items = [item for item in resolved_items if item.get("status") == "matched"]
+    ambiguous_items = [item for item in resolved_items if item.get("status") == "ambiguous"]
+    missing_items = [item for item in resolved_items if item.get("status") == "missing"]
+
+    intro = "Ya revisé toda la lista."
+    matched_text = " ".join(item.get("message") for item in matched_items[:8] if item.get("message"))
+    pending_text_parts = [item.get("message") for item in ambiguous_items[:4] if item.get("message")] + [item.get("message") for item in missing_items[:4] if item.get("message")]
+    pending_text = " ".join(pending_text_parts)
+
+    closing_parts = []
+    if not inherited_store_filters:
+        closing_parts.append("Confírmame la tienda o ciudad de entrega y te lo cierro sin darte más vueltas.")
+    elif pending_text_parts:
+        closing_parts.append("Apenas me confirmes esos puntos que faltan, te dejo el consolidado completo.")
+    else:
+        closing_parts.append(
+            "Si quieres, te lo dejo confirmado por aquí mismo o también te lo mando al correo para que quede formalizado."
+        )
+
+    response_parts = [intro]
+    if matched_text:
+        response_parts.append(matched_text)
+    if pending_text:
+        response_parts.append(pending_text)
+    response_parts.extend(closing_parts)
+
+    return {
+        "tono": "consultivo",
+        "intent": intent,
+        "priority": "alta" if intent == "pedido" else "media",
+        "summary": "Consolidado comercial multiproducto",
+        "response_text": " ".join(part for part in response_parts if part).strip(),
+        "should_create_task": last_intent != intent,
+        "task_type": intent,
+        "task_summary": "Seguimiento a solicitud comercial por WhatsApp",
+        "task_detail": {"items": resolved_items, "store_filters": inherited_store_filters, "mode": intent},
+        "conversation_context_updates": {
+            "commercial_draft": {
+                "intent": intent,
+                "store_filters": inherited_store_filters,
+                "items": resolved_items,
+            }
+        },
+        "commercial_draft": {
+            "intent": intent,
+            "store_filters": inherited_store_filters,
+            "items": resolved_items,
+        },
+    }
 
 
 def build_technical_document_reply(profile_name: Optional[str], document_request: dict, document_options: list[dict]):
@@ -2532,7 +2950,15 @@ def summarize_claim_product(product_request: Optional[dict], conversation_contex
     if not search_terms:
         search_terms = list(previous_request.get("core_terms") or previous_request.get("search_terms") or [])
     claim_noise = {
+        "hacer",
         "pintura",
+        "tenia",
+        "tenía",
+        "cubrimiento",
+        "bajo",
+        "su",
+        "alcanzo",
+        "alcanzó",
         "no",
         "bien",
         "cubrio",
@@ -2573,15 +2999,24 @@ def summarize_claim_product(product_request: Optional[dict], conversation_contex
     return product_label
 
 
+def is_weak_claim_product_label(product_label: Optional[str]):
+    normalized = normalize_text_value(product_label)
+    return normalized in {"", "hacer", "reclamo", "problema", "caso", "ayuda"}
+
+
 def extract_claim_case_details(text_value: Optional[str], conversation_context: Optional[dict], product_request: Optional[dict]):
     existing_case = dict((conversation_context or {}).get("claim_case") or {})
     normalized = normalize_text_value(text_value)
     raw_text = (text_value or "").strip()
+    email_address = extract_email_address(text_value) or existing_case.get("contact_email")
     notes = list(existing_case.get("notes") or [])
     if raw_text and raw_text not in notes and not is_greeting_message(text_value):
         notes.append(raw_text[:600])
 
-    product_label = existing_case.get("product_label") or summarize_claim_product(product_request, conversation_context)
+    detected_product_label = summarize_claim_product(product_request, conversation_context)
+    product_label = existing_case.get("product_label")
+    if detected_product_label and (not product_label or is_weak_claim_product_label(product_label)):
+        product_label = detected_product_label
     issue_summary = existing_case.get("issue_summary")
     generic_openers = {
         "necesito montar un reclamo",
@@ -2591,7 +3026,7 @@ def extract_claim_case_details(text_value: Optional[str], conversation_context: 
         "tengo un reclamo",
         "montar un reclamo",
     }
-    if raw_text and normalized not in generic_openers:
+    if raw_text and normalized not in generic_openers and not extract_email_address(text_value):
         has_claim_signal = any(keyword in normalized for keyword in CLAIM_KEYWORDS)
         if has_claim_signal or existing_case.get("active"):
             issue_summary = raw_text[:600]
@@ -2606,6 +3041,8 @@ def extract_claim_case_details(text_value: Optional[str], conversation_context: 
         missing_fields.append("producto")
     if not issue_summary:
         missing_fields.append("detalle")
+    if not email_address:
+        missing_fields.append("correo")
 
     severity = existing_case.get("severity") or (
         "critica" if any(keyword in normalized for keyword in ["no funciono", "no funcionó", "dañado", "danado", "garantia", "garantía"]) else "alta"
@@ -2616,6 +3053,7 @@ def extract_claim_case_details(text_value: Optional[str], conversation_context: 
         "active": True,
         "product_label": product_label,
         "issue_summary": issue_summary,
+        "contact_email": email_address,
         "store_name": store_name,
         "notes": notes[-8:],
         "severity": severity,
@@ -2625,7 +3063,6 @@ def extract_claim_case_details(text_value: Optional[str], conversation_context: 
 
 
 def build_claim_reply(profile_name: Optional[str], claim_case: dict, cliente_contexto: Optional[dict]):
-    nombre = profile_name or "cliente"
     if claim_case.get("submitted"):
         return {
             "tono": "empatico",
@@ -2633,8 +3070,8 @@ def build_claim_reply(profile_name: Optional[str], claim_case: dict, cliente_con
             "priority": claim_case.get("severity") or "alta",
             "summary": f"Seguimiento a reclamo de {claim_case.get('product_label') or 'cliente'}",
             "response_text": (
-                f"Hola, {nombre}. Tu reclamo ya quedó radicado y sigue en seguimiento. "
-                "Si quieres complementar el caso, envíame más detalle, fotos, lote o la tienda donde ocurrió y lo agrego a la gestión."
+                "Tu caso ya quedó radicado y sigue en seguimiento. "
+                "Si quieres, todavía puedo agregar más detalle, fotos, lote o la tienda donde ocurrió para que el área técnica lo reciba mejor documentado."
             ),
             "should_create_task": False,
             "task_type": "reclamo_calidad",
@@ -2647,10 +3084,9 @@ def build_claim_reply(profile_name: Optional[str], claim_case: dict, cliente_con
         if cliente_contexto:
             cliente_label = cliente_contexto.get("nombre_cliente") or cliente_contexto.get("cliente_codigo")
         response_text = (
-            f"Hola, {nombre}. Ya dejé radicado tu reclamo sobre {claim_case.get('product_label')}. "
-            f"Resumen del caso: {claim_case.get('issue_summary')}. "
-            "Lo escalo al área encargada para revisión y seguimiento. "
-            "Si quieres, en el siguiente paso también te tomo un correo para enviarte la constancia del caso."
+            f"Listo, ya dejé radicado el caso de {claim_case.get('product_label')}. "
+            f"Quedó registrado con este detalle: {claim_case.get('issue_summary')}. "
+            f"Voy a escalarlo al área encargada y la constancia te la enviaré al correo {claim_case.get('contact_email')}."
         )
         return {
             "tono": "empatico",
@@ -2668,23 +3104,25 @@ def build_claim_reply(profile_name: Optional[str], claim_case: dict, cliente_con
         }
 
     missing_fields = claim_case.get("missing_fields") or []
-    prompts = []
     if "producto" in missing_fields:
-        prompts.append("qué producto, referencia o presentación fue la afectada")
-    if "detalle" in missing_fields:
-        prompts.append("qué pasó exactamente, por ejemplo si no cubrió, cambió el tono, presentó falla o venía defectuoso")
+        response_text = "Lamento mucho el inconveniente. Cuéntame, ¿con qué producto tuviste el problema?"
+    elif "detalle" in missing_fields:
+        response_text = (
+            f"Entiendo. Ya ubiqué que el caso es sobre {claim_case.get('product_label')}. "
+            "Cuéntame qué pasó exactamente para dejarlo bien sustentado, por ejemplo si no cubrió, cambió el tono o presentó alguna falla."
+        )
+    else:
+        response_text = (
+            f"Entiendo, lo de {claim_case.get('product_label')} sí merece revisión. "
+            "Regálame un correo electrónico y te envío allí la constancia mientras lo escalo con el área técnica."
+        )
 
-    prompt_text = "; ".join(prompts)
     return {
         "tono": "empatico",
         "intent": "reclamo_servicio",
         "priority": claim_case.get("severity") or "alta",
         "summary": "Toma de datos para reclamo",
-        "response_text": (
-            f"Hola, {nombre}. Claro que sí, te ayudo a radicar el reclamo y a dejarlo bien documentado. "
-            f"Cuéntame por favor {prompt_text}. "
-            "Si además me compartes tienda o ciudad, fecha aproximada de compra y lote si lo tienes, dejo el caso mucho más completo desde el inicio."
-        ),
+        "response_text": response_text,
         "should_create_task": False,
         "task_type": "reclamo_calidad",
         "task_summary": "Toma inicial de reclamo",
@@ -2985,8 +3423,6 @@ def build_direct_reply(
     user_message: Optional[str] = None,
     conversation_context: Optional[dict] = None,
 ):
-    nombre = profile_name or "cliente"
-
     if intent == "consulta_cartera":
         if not cliente_contexto:
             return None
@@ -2999,7 +3435,7 @@ def build_direct_reply(
                 "priority": "media",
                 "summary": f"Cliente identificado sin cartera consolidada para {cliente_contexto.get('cliente_codigo')}",
                 "response_text": (
-                    f"Hola, {nombre}. Ya te identifiqué como {cliente_contexto.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}, "
+                    f"Ya te identifiqué como {cliente_contexto.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}, "
                     "pero en la base actual no veo cartera consolidada para ese cliente. "
                     "Si quieres, te reviso compras recientes o dejo el caso escalado a contabilidad para validarlo."
                 ),
@@ -3026,12 +3462,12 @@ def build_direct_reply(
                     for row in documents[:5]
                 )
                 response_text = (
-                    f"Hola, {nombre}. Tienes {int(overdue_info['totals'].get('documentos_vencidos') or 0)} facturas vencidas por {overdue_total}. "
+                    f"Tienes {int(overdue_info['totals'].get('documentos_vencidos') or 0)} facturas vencidas por {overdue_total}. "
                     f"Estas son las principales: {doc_lines}."
                 )
             else:
                 response_text = (
-                    f"Hola, {nombre}. Tu cartera vencida es {overdue_total}. "
+                    f"Tu cartera vencida es {overdue_total}. "
                     f"Tienes {int(overdue_info['totals'].get('documentos_vencidos') or 0)} documentos vencidos y el mayor atraso es de {format_days(overdue_info['totals'].get('max_dias_vencido'))}."
                 )
             return {
@@ -3052,7 +3488,7 @@ def build_direct_reply(
             "priority": "alta" if dias and int(dias) > 0 else "media",
             "summary": f"Consulta de cartera de {cliente_contexto.get('cliente_codigo')}",
             "response_text": (
-                f"Hola, {nombre}. Tu saldo de cartera actual es {saldo}. "
+                f"Tu saldo de cartera actual es {saldo}. "
                 f"Tienes {vencidos} documentos vencidos y el mayor atraso es de {format_days(dias)}. "
                 f"Tu asesor asignado es {vendedor}."
             ),
@@ -3081,7 +3517,7 @@ def build_direct_reply(
                     "intent": intent,
                     "priority": "media",
                     "summary": f"Consulta de ultima compra de {cliente_contexto.get('cliente_codigo')}",
-                    "response_text": f"Hola, {nombre}. No encontré una compra registrada para este cliente.",
+                    "response_text": "No encontré una compra registrada para este cliente.",
                     "should_create_task": False,
                     "task_type": "seguimiento_cliente",
                     "task_summary": "Consulta de ultima compra",
@@ -3099,7 +3535,7 @@ def build_direct_reply(
                 "priority": "media",
                 "summary": f"Consulta de ultima compra de {cliente_contexto.get('cliente_codigo')}",
                 "response_text": (
-                    f"Hola, {nombre}. Tu última compra fue el {latest_purchase.get('fecha_venta')} por {format_currency(totals.get('valor_total'))}. "
+                    f"Tu última compra fue el {latest_purchase.get('fecha_venta')} por {format_currency(totals.get('valor_total'))}. "
                     f"Incluyó {int(totals.get('lineas') or 0)} líneas y {int(float(totals.get('unidades_totales') or 0))} unidades. "
                     f"Productos principales: {product_summary}."
                 ),
@@ -3117,7 +3553,7 @@ def build_direct_reply(
         totals = purchases["totals"] if purchases else {}
         product_rows = purchases["products"] if purchases else []
         if not totals or not totals.get("ultima_compra"):
-            response_text = f"Hola, {nombre}. No encontré compras registradas en los últimos 12 meses para este cliente."
+            response_text = "No encontré compras registradas en los últimos 12 meses para este cliente."
         else:
             top_summary = "; ".join(
                 f"{row['nombre_articulo']} ({format_currency(row['valor'])}, {int(float(row['unidades'] or 0))} unidades)"
@@ -3125,13 +3561,13 @@ def build_direct_reply(
             ) or "sin productos destacados"
             if purchase_query.get("has_time_filter"):
                 response_text = (
-                    f"Hola, {nombre}. En {purchase_query.get('label')} compraste {format_currency(totals.get('valor_total'))}. "
+                    f"En {purchase_query.get('label')} compraste {format_currency(totals.get('valor_total'))}. "
                     f"Fueron {int(totals.get('lineas') or 0)} líneas y {int(float(totals.get('unidades_totales') or 0))} unidades. "
                     f"Productos principales: {top_summary}."
                 )
             else:
                 response_text = (
-                    f"Hola, {nombre}. En los últimos 12 meses registras compras por {format_currency(totals.get('valor_total'))}. "
+                    f"En los últimos 12 meses registras compras por {format_currency(totals.get('valor_total'))}. "
                     f"Acumulas {int(totals.get('lineas') or 0)} líneas y {int(float(totals.get('unidades_totales') or 0))} unidades. "
                     f"Tu última compra fue el {totals.get('ultima_compra')}. Productos destacados: {top_summary}."
                 )
@@ -3152,36 +3588,10 @@ def build_direct_reply(
         return build_claim_reply(profile_name, claim_case, cliente_contexto)
 
     if intent == "cotizacion":
-        return {
-            "tono": "consultivo",
-            "intent": intent,
-            "priority": "media",
-            "summary": "Inicio de cotización",
-            "response_text": (
-                f"Hola, {nombre}. Con mucho gusto te ayudo con la cotización. "
-                "Envíame por favor el producto o referencia, la cantidad, la ciudad o tienda que te interesa y dime si prefieres que te la entregue aquí por WhatsApp o también por correo."
-            ),
-            "should_create_task": True,
-            "task_type": "cotizacion",
-            "task_summary": "Solicitud de cotización iniciada por WhatsApp",
-            "task_detail": {"mensaje": user_message, "cliente": (cliente_contexto or {}).get("cliente_codigo")},
-        }
+        return build_commercial_flow_reply(intent, profile_name, user_message, conversation_context)
 
     if intent == "pedido":
-        return {
-            "tono": "consultivo",
-            "intent": intent,
-            "priority": "alta",
-            "summary": "Inicio de pedido",
-            "response_text": (
-                f"Hola, {nombre}. Perfecto, te ayudo a montar el pedido. "
-                "Compárteme la referencia o producto, cantidades, tienda o ciudad de entrega y si quieres la confirmación por WhatsApp o por correo para dejarlo listo."
-            ),
-            "should_create_task": True,
-            "task_type": "pedido",
-            "task_summary": "Solicitud de pedido iniciada por WhatsApp",
-            "task_detail": {"mensaje": user_message, "cliente": (cliente_contexto or {}).get("cliente_codigo")},
-        }
+        return build_commercial_flow_reply(intent, profile_name, user_message, conversation_context)
 
     if intent == "consulta_productos":
         if not product_context:
@@ -3192,7 +3602,7 @@ def build_direct_reply(
                 "priority": "media",
                 "summary": "Consulta de productos sin coincidencia exacta",
                 "response_text": (
-                    f"Hola, {nombre}. Revisé *{referencia_solicitada or 'esa referencia'}* y no la pude amarrar con una referencia clara en inventario. "
+                    f"Revisé {referencia_solicitada or 'esa referencia'} y no la pude amarrar con una coincidencia clara en inventario. "
                     "Si quieres, dame uno de estos datos y te la ubico mejor:\n"
                     "• La referencia o código del producto\n"
                     "• La marca o línea del portafolio Ferreinox: Pintuco, Abracol, Yale o Goya\n"
@@ -3211,12 +3621,15 @@ def build_direct_reply(
             top_reference = top_row.get("referencia") or top_row.get("codigo_articulo") or "sin referencia"
             top_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or top_reference
             top_stock = top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")
-            direct_response = f"Hola, {nombre}. Encontré esta referencia para tu consulta: {top_description} ({top_reference})."
-            if top_stock is not None:
-                direct_response += f" Stock total aproximado: {format_quantity(top_stock)} unidades."
-            if top_row.get("stock_por_tienda"):
-                direct_response += f" Disponible en: {format_stock_by_store(top_row.get('stock_por_tienda'))}."
-            direct_response += " Si quieres, te ayudo a revisar otra presentación o una tienda específica."
+            direct_response = f"Te confirmé esta referencia: {top_description} ({top_reference})."
+            if top_stock is not None and parse_numeric_value(top_stock) and parse_numeric_value(top_stock) > 0:
+                direct_response += " La veo disponible"
+                if top_row.get("stock_por_tienda"):
+                    direct_response += " y con existencias en tienda"
+                direct_response += "."
+            else:
+                direct_response += " En este momento no la veo con existencias disponibles."
+            direct_response += " Si quieres, también te reviso otra presentación o una sede puntual."
             return {
                 "tono": "informativo",
                 "intent": intent,
@@ -3251,7 +3664,7 @@ def build_direct_reply(
                 "priority": "media",
                 "summary": "Consulta de productos con necesidad de aclaracion",
                 "response_text": (
-                    f"Hola, {nombre}. Veo varias opciones muy cercanas. Respóndeme con el número o la referencia y te confirmo la exacta:\n"
+                    "Veo varias opciones muy cercanas. Respóndeme con el número o la referencia y te confirmo la exacta:\n"
                     + "\n".join(clarification_lines)
                     + "\nAsí te confirmo la correcta sin hacerte dar más vueltas."
                 ),
@@ -3286,7 +3699,6 @@ def build_direct_reply(
             top_stock = top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")
             top_presentation = infer_product_presentation_from_row(top_row)
             store_response = (
-                f"Hola, {nombre}. "
                 f"Sí, en {requested_store_label} hay {format_quantity(top_stock)} unidades de {top_description} ({top_reference})"
                 f"{f', presentación {get_presentation_label(top_presentation, 1)}' if top_presentation else ''}."
             )
@@ -3329,7 +3741,6 @@ def build_direct_reply(
             "priority": "media",
             "summary": "Consulta de productos",
             "response_text": (
-                f"Hola, {nombre}. "
                 f"{quantity_note + '. ' if quantity_note else ''}"
                 f"Te encontré estas opciones relacionadas: {'; '.join(product_lines)}. "
                 "Si quieres, te cierro la búsqueda con la más probable o te reviso una tienda puntual."
@@ -3344,11 +3755,10 @@ def build_direct_reply(
 
 
 def build_verification_success_reply(profile_name: Optional[str], cliente_contexto: Optional[dict]):
-    nombre = profile_name or "cliente"
     cliente_codigo = (cliente_contexto or {}).get("cliente_codigo")
     cliente_nombre = (cliente_contexto or {}).get("nombre_cliente")
     return (
-        f"Perfecto, {nombre}. Tu identidad quedó validada"
+        "Perfecto. Tu identidad quedó validada"
         f"{' para el cliente ' + str(cliente_nombre or cliente_codigo) if (cliente_nombre or cliente_codigo) else ''}"
         f"{' (' + str(cliente_codigo) + ')' if cliente_nombre and cliente_codigo else ''}. "
         "Ahora ya puedo ayudarte con cartera, compras del último año y consultas relacionadas con tu historial comercial."
@@ -3709,9 +4119,13 @@ def build_agent_prompt(
         {
             "role": "system",
             "content": (
-                "Eres el agente de servicio al cliente de Ferreinox. Responde en espanol claro, util y profesional. "
+                "Eres el asesor comercial y de servicio al cliente de Ferreinox. Responde en espanol claro, humano, comercial y resolutivo. "
+                "Saluda solo en el primer mensaje de la conversacion. Despues conversa con naturalidad, sin repetir el nombre del cliente en cada turno ni usar frases roboticas como 'Resumen del caso' o 'Si necesitas algo mas'. "
                 "Mantén una sola intención activa por turno: si el cliente cambia de tema, responde solo sobre el tema nuevo y no mezcles cartera, compras, productos o reclamos en el mismo mensaje. "
                 "Debes detectar tono del cliente, intencion principal y prioridad. Usa el contexto ERP disponible para responder con precision. "
+                "Si el cliente envía varios productos o una lista, debes procesarlos todos antes de responder y devolver un solo mensaje consolidado. "
+                "Nunca vomites la base de datos ni enumeres stock de todas las tiendas si el cliente ya dijo una sede; responde con lenguaje humano y conciso. "
+                "En reclamos actua con empatia, pide los datos faltantes uno por uno y solo confirma el radicado cuando ya tengas producto, problema y correo. "
                 "El portafolio comercial valido para orientar respuestas incluye principalmente Pintuco, Abracol, Yale, Goya y las categorias reales del ERP. "
                 "No inventes marcas fuera del portafolio y no sugieras Corona como marca comercial de Ferreinox. "
                 "Interpreta lenguaje ferretero y comercial como: 18.93 = cuñete, 3.79 = galon, 0.95 = cuarto, 1/1 = galon, 1/5 = cuñete, 1/4 = cuarto, 5/1 = cinco galones. "
@@ -3986,6 +4400,10 @@ async def receive_whatsapp_webhook(request: Request):
                     if previous_intent in {"consulta_compras", "consulta_cartera"}:
                         detected_intent = previous_intent
                 product_request = extract_product_request(content)
+                if should_continue_claim_flow(conversation_context, detected_intent, content):
+                    detected_intent = "reclamo_servicio"
+                if should_continue_commercial_flow(conversation_context, detected_intent, content):
+                    detected_intent = conversation_context.get("last_direct_intent")
                 if detected_intent == "consulta_general" and looks_like_product_query(content, product_request):
                     detected_intent = "consulta_productos"
                 pending_product_clarification = conversation_context.get("pending_product_clarification") or []
@@ -4037,6 +4455,8 @@ async def receive_whatsapp_webhook(request: Request):
                     }
                     if detected_intent != "reclamo_servicio":
                         reset_updates["claim_case"] = None
+                    if detected_intent not in {"pedido", "cotizacion"}:
+                        reset_updates["commercial_draft"] = None
                     update_conversation_context(
                         context["conversation_id"],
                         reset_updates,
@@ -4410,6 +4830,31 @@ async def receive_whatsapp_webhook(request: Request):
                         "awaiting_verification": False,
                     }
                     context_updates.update(direct_result.get("conversation_context_updates") or {})
+
+                    commercial_draft = direct_result.get("commercial_draft")
+                    if commercial_draft:
+                        try:
+                            draft_id = upsert_commercial_draft(
+                                direct_result.get("intent"),
+                                context["conversation_id"],
+                                context.get("contact_id"),
+                                context.get("cliente_id"),
+                                commercial_draft,
+                            )
+                            context_updates["commercial_draft"] = {
+                                **commercial_draft,
+                                "draft_id": draft_id,
+                            }
+                        except Exception as exc:
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"No fue posible guardar borrador comercial: {exc}",
+                                {"error": str(exc), "intent": direct_result.get("intent")},
+                                intent_detectado=f"borrador_{direct_result.get('intent')}_error",
+                            )
+
                     update_conversation_context(
                         context["conversation_id"],
                         context_updates,
@@ -4442,7 +4887,7 @@ async def receive_whatsapp_webhook(request: Request):
                                 email_payload["subject"],
                                 email_payload["html_content"],
                                 email_payload["text_content"],
-                                reply_to=(cliente_contexto or {}).get("email"),
+                                reply_to=(direct_result.get("email_detail") or {}).get("contact_email") or (cliente_contexto or {}).get("email"),
                             )
                             store_outbound_message(
                                 context["conversation_id"],
