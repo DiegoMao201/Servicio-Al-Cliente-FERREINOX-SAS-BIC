@@ -38,9 +38,9 @@ def main():
         9. Guarda también la respuesta saliente en `agent_message`.
         10. Puede crear tareas básicas de seguimiento cuando el modelo lo indique.
         11. Ya detecta mejor cambios de tema entre cartera, compras, productos, cotizaciones, pedidos y reclamos.
-        12. Ya guía reclamos paso a paso: producto, detalle del problema y correo antes de radicar el caso.
-        13. Ya consolida listas de pedido o cotización en un solo mensaje y guarda borradores reales en `agent_order` o `agent_quote`.
-        14. Si SendGrid está configurado, puede escalar reclamos al correo operativo con mejor trazabilidad.
+        12. Ya guía reclamos paso a paso: producto, detalle del problema, evidencia o lote y correo antes de radicar el caso.
+        13. Ya consolida listas de pedido o cotización en un solo mensaje, pide tienda y canal de entrega, y guarda borradores reales en `agent_order` o `agent_quote`.
+        14. Si SendGrid está configurado, puede escalar reclamos al correo operativo, enviar constancia elegante al cliente y mandar resumen comercial por correo cuando el cliente lo prefiera.
         """
     )
 
@@ -56,6 +56,7 @@ def main():
         7. `SENDGRID_FROM_EMAIL`
         8. `SENDGRID_FROM_NAME`
         9. `SENDGRID_RECLAMOS_TO_EMAIL`
+        10. `SENDGRID_VENTAS_TO_EMAIL`
         """
     )
 
@@ -65,7 +66,8 @@ def main():
 api_key = \"SG.xxxxxxxxxxxxxxxxx\"
 from_email = \"tiendapintucopereira@ferreinox.co\"
 from_name = \"Ferreinox S.A.S. BIC\"
-reclamos_to_email = \"tiendapintucopereira@ferreinox.co\"
+reclamos_to_email = "tiendapintucopereira@ferreinox.co"
+ventas_to_email = "tiendapintucopereira@ferreinox.co"
 """,
         language="toml",
     )

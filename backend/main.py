@@ -151,6 +151,8 @@ NON_PRODUCT_SERVICE_KEYWORDS = [
 
 PRODUCT_STOPWORDS = {
     "ay",
+    "ahi",
+    "alli",
     "de",
     "del",
     "la",
@@ -172,7 +174,32 @@ PRODUCT_STOPWORDS = {
     "quiero",
     "cotizar",
     "comprar",
+    "compro",
+    "compras",
+    "hacer",
+    "hace",
+    "hago",
+    "montar",
+    "monto",
+    "armar",
+    "armo",
+    "pasar",
+    "pasame",
+    "pasarme",
+    "enviar",
+    "enviame",
+    "enviarme",
+    "mandar",
+    "mandame",
+    "mandamelo",
+    "mandarmelo",
+    "pedir",
     "pedido",
+    "correo",
+    "email",
+    "mail",
+    "aqui",
+    "aca",
     "favor",
     "informacion",
     "información",
@@ -2120,6 +2147,43 @@ def extract_email_address(text_value: Optional[str]):
     return match.group(0).strip() if match else None
 
 
+def extract_delivery_channel(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return None
+    if extract_email_address(text_value) or re.search(r"\b(correo|email|mail)\b", normalized):
+        return "email"
+    if any(phrase in normalized for phrase in ["whatsapp", "wpp", "chat", "por aqui", "por aquí", "aca", "acá"]):
+        return "chat"
+    return None
+
+
+def summarize_commercial_item(item: dict):
+    product_request = item.get("product_request") or {}
+    matched_product = item.get("matched_product") or {}
+    description_value = matched_product.get("descripcion") or matched_product.get("nombre_articulo") or item.get("original_text") or "producto"
+    requested_quantity = parse_numeric_value(product_request.get("requested_quantity")) or 1
+    requested_unit = product_request.get("requested_unit")
+    if requested_unit:
+        quantity_label = f"{format_quantity(requested_quantity)} {get_presentation_label(requested_unit, requested_quantity)} de "
+    elif requested_quantity > 1:
+        quantity_label = f"{format_quantity(requested_quantity)} unidades de "
+    else:
+        quantity_label = ""
+    return f"{quantity_label}{description_value}".strip()
+
+
+def summarize_commercial_items(items: list[dict]):
+    labels = [summarize_commercial_item(item) for item in items[:6] if item.get("status") == "matched"]
+    if not labels:
+        return ""
+    if len(labels) == 1:
+        return labels[0]
+    if len(labels) == 2:
+        return f"{labels[0]} y {labels[1]}"
+    return ", ".join(labels[:-1]) + f" y {labels[-1]}"
+
+
 def extract_identity_lookup_candidate(text_value: Optional[str], conversation_context: Optional[dict], allow_unprompted: bool = False):
     if not text_value:
         return None
@@ -2340,8 +2404,7 @@ def is_thanks_or_closing_message(text_value: Optional[str]):
 
 
 def build_conversation_closing_reply(profile_name: Optional[str]):
-    nombre = profile_name or "cliente"
-    return f"Con mucho gusto, {nombre}. Desde Ferreinox SAS BIC te deseamos un feliz día y aquí estamos para atenderte cuando lo necesites."
+    return "Con mucho gusto. Quedo atento por aquí para lo que necesites de Ferreinox."
 
 
 def should_continue_claim_flow(conversation_context: Optional[dict], detected_intent: Optional[str], text_value: Optional[str]):
@@ -2488,13 +2551,16 @@ def build_commercial_item_result(raw_line: str, inherited_store_filters: list[st
 
 
 def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_message: Optional[str], conversation_context: Optional[dict]):
-    nombre = profile_name or "cliente"
     context = conversation_context or {}
     existing_draft = dict(context.get("commercial_draft") or {})
     last_intent = context.get("last_direct_intent")
     incoming_store_filters = extract_store_filters(user_message)
+    incoming_email = extract_email_address(user_message)
+    incoming_delivery_channel = extract_delivery_channel(user_message)
     inherited_store_filters = incoming_store_filters or existing_draft.get("store_filters") or []
     current_lines = split_commercial_line_items(user_message)
+    has_existing_items = bool(existing_draft.get("items"))
+    has_contextual_followup = bool(incoming_store_filters or incoming_email or incoming_delivery_channel)
 
     has_explicit_items = any(
         extract_product_request(line).get("product_codes")
@@ -2503,16 +2569,21 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         for line in current_lines
     )
 
-    if not has_explicit_items:
+    if has_existing_items and (incoming_email or incoming_delivery_channel) and not incoming_store_filters:
+        current_lines = []
+        has_explicit_items = False
+
+    if not has_explicit_items and not has_existing_items and not has_contextual_followup:
         summary_label = "cotización" if intent == "cotizacion" else "pedido"
+        intro_label = "la cotización" if intent == "cotizacion" else "el pedido"
         return {
             "tono": "consultivo",
             "intent": intent,
             "priority": "alta" if intent == "pedido" else "media",
             "summary": f"Inicio de {summary_label}",
             "response_text": (
-                f"Claro, te ayudo con el {summary_label}. Envíame la lista de productos tal como la manejas normalmente, "
-                "y si ya sabes la tienda o ciudad de entrega me la dejas de una vez para cerrarlo mucho más rápido."
+                f"Con mucho gusto te ayudo con {intro_label}. "
+                "Pásame las referencias o productos como los manejas normalmente y, si ya sabes la tienda o ciudad de entrega, me la dejas de una vez."
             ),
             "should_create_task": last_intent != intent,
             "task_type": intent,
@@ -2522,6 +2593,8 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
                 "commercial_draft": {
                     "intent": intent,
                     "store_filters": inherited_store_filters,
+                    "delivery_channel": incoming_delivery_channel,
+                    "contact_email": incoming_email,
                     "items": existing_draft.get("items") or [],
                 }
             },
@@ -2530,6 +2603,12 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     draft_items = []
     if existing_draft.get("intent") == intent:
         draft_items = list(existing_draft.get("items") or [])
+
+    if draft_items and incoming_store_filters and not has_explicit_items:
+        current_lines = [item.get("original_text") for item in draft_items if item.get("original_text")]
+        draft_items = []
+    elif draft_items and not has_explicit_items and has_contextual_followup:
+        current_lines = []
 
     if draft_items and len(current_lines) == 1 and (incoming_store_filters or extract_product_request(user_message).get("product_codes")):
         base_lines = [item.get("original_text") for item in draft_items if item.get("original_text")]
@@ -2557,56 +2636,115 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     matched_items = [item for item in resolved_items if item.get("status") == "matched"]
     ambiguous_items = [item for item in resolved_items if item.get("status") == "ambiguous"]
     missing_items = [item for item in resolved_items if item.get("status") == "missing"]
+    store_label = STORE_CODE_LABELS.get(inherited_store_filters[0]) if len(inherited_store_filters) == 1 else None
+    delivery_channel = incoming_delivery_channel or existing_draft.get("delivery_channel")
+    contact_email = incoming_email or existing_draft.get("contact_email")
+    internal_notified = bool(existing_draft.get("internal_notified"))
+    customer_email_sent = bool(existing_draft.get("customer_email_sent"))
 
-    intro = "Ya revisé toda la lista."
     matched_text = " ".join(item.get("message") for item in matched_items[:8] if item.get("message"))
     pending_text_parts = [item.get("message") for item in ambiguous_items[:4] if item.get("message")] + [item.get("message") for item in missing_items[:4] if item.get("message")]
     pending_text = " ".join(pending_text_parts)
+    compact_summary = summarize_commercial_items(matched_items)
+    has_store = bool(inherited_store_filters)
+    ready_to_close = bool(matched_items) and not ambiguous_items and not missing_items and has_store
 
-    closing_parts = []
-    if not inherited_store_filters:
-        closing_parts.append("Confírmame la tienda o ciudad de entrega y te lo cierro sin darte más vueltas.")
-    elif pending_text_parts:
-        closing_parts.append("Apenas me confirmes esos puntos que faltan, te dejo el consolidado completo.")
+    if not ready_to_close:
+        closing_parts = []
+        if not has_store:
+            closing_parts.append("¿En qué tienda o ciudad lo necesitas para cerrarte todo bien?")
+        elif pending_text_parts:
+            closing_parts.append("Apenas me confirmes esos puntos te dejo el consolidado completo.")
+        else:
+            closing_parts.append("Si quieres, cuando lo dejemos cerrado te lo confirmo por aquí o te lo mando al correo.")
+
+        response_parts = []
+        if matched_text:
+            response_parts.append(matched_text)
+        if pending_text:
+            response_parts.append(pending_text)
+        response_parts.extend(closing_parts)
+
+        draft_state = {
+            "intent": intent,
+            "store_filters": inherited_store_filters,
+            "delivery_channel": delivery_channel,
+            "contact_email": contact_email,
+            "internal_notified": internal_notified,
+            "customer_email_sent": customer_email_sent,
+            "items": resolved_items,
+        }
+
+        return {
+            "tono": "consultivo",
+            "intent": intent,
+            "priority": "alta" if intent == "pedido" else "media",
+            "summary": "Consolidado comercial multiproducto",
+            "response_text": " ".join(part for part in response_parts if part).strip(),
+            "should_create_task": last_intent != intent,
+            "task_type": intent,
+            "task_summary": "Seguimiento a solicitud comercial por WhatsApp",
+            "task_detail": {"items": resolved_items, "store_filters": inherited_store_filters, "mode": intent},
+            "conversation_context_updates": {"commercial_draft": draft_state},
+            "commercial_draft": draft_state,
+        }
+
+    request_label = "cotización" if intent == "cotizacion" else "pedido"
+    destination_label = store_label or "la sede indicada"
+    if not delivery_channel:
+        response_text = (
+            f"Perfecto, ya te dejé organizada la solicitud de {request_label} para {destination_label} con {compact_summary}. "
+            "¿Prefieres que te la confirme por aquí o que te la envíe al correo?"
+        )
+    elif delivery_channel == "email" and not contact_email:
+        response_text = (
+            f"Perfecto, ya tengo lista la solicitud de {request_label} para {destination_label} con {compact_summary}. "
+            "Regálame el correo y te la envío bien presentada."
+        )
+    elif delivery_channel == "email":
+        response_text = (
+            f"Perfecto, ya te dejé lista la solicitud de {request_label} para {destination_label} con {compact_summary}. "
+            f"Te la envío al correo {contact_email} para que te quede formalizada."
+        )
     else:
-        closing_parts.append(
-            "Si quieres, te lo dejo confirmado por aquí mismo o también te lo mando al correo para que quede formalizado."
+        response_text = (
+            f"Perfecto, ya te dejé lista la solicitud de {request_label} para {destination_label} con {compact_summary}. "
+            "Te queda confirmada por aquí y si luego quieres también te la mando al correo."
         )
 
-    response_parts = [intro]
-    if matched_text:
-        response_parts.append(matched_text)
-    if pending_text:
-        response_parts.append(pending_text)
-    response_parts.extend(closing_parts)
+    final_confirmation_ready = ready_to_close and (delivery_channel == "chat" or (delivery_channel == "email" and bool(contact_email)))
+    should_notify_internal = final_confirmation_ready and not internal_notified
+    should_send_customer_email = final_confirmation_ready and delivery_channel == "email" and bool(contact_email) and not customer_email_sent
+    draft_state = {
+        "intent": intent,
+        "store_filters": inherited_store_filters,
+        "delivery_channel": delivery_channel,
+        "contact_email": contact_email,
+        "ready_to_close": ready_to_close,
+        "internal_notified": internal_notified or should_notify_internal,
+        "customer_email_sent": customer_email_sent or should_send_customer_email,
+        "items": resolved_items,
+    }
 
     return {
         "tono": "consultivo",
         "intent": intent,
         "priority": "alta" if intent == "pedido" else "media",
         "summary": "Consolidado comercial multiproducto",
-        "response_text": " ".join(part for part in response_parts if part).strip(),
-        "should_create_task": last_intent != intent,
+        "response_text": response_text,
+        "should_create_task": last_intent != intent or should_notify_internal,
         "task_type": intent,
-        "task_summary": "Seguimiento a solicitud comercial por WhatsApp",
-        "task_detail": {"items": resolved_items, "store_filters": inherited_store_filters, "mode": intent},
-        "conversation_context_updates": {
-            "commercial_draft": {
-                "intent": intent,
-                "store_filters": inherited_store_filters,
-                "items": resolved_items,
-            }
-        },
-        "commercial_draft": {
-            "intent": intent,
-            "store_filters": inherited_store_filters,
-            "items": resolved_items,
-        },
+        "task_summary": f"Solicitud de {request_label} lista para seguimiento",
+        "task_detail": {"items": resolved_items, "store_filters": inherited_store_filters, "mode": intent, "delivery_channel": delivery_channel, "contact_email": contact_email},
+        "conversation_context_updates": {"commercial_draft": draft_state},
+        "commercial_draft": draft_state,
+        "email_route": "ventas" if should_notify_internal else None,
+        "email_detail": draft_state if should_notify_internal else None,
+        "commercial_customer_email_confirmation": draft_state if should_send_customer_email else None,
     }
 
 
 def build_technical_document_reply(profile_name: Optional[str], document_request: dict, document_options: list[dict]):
-    nombre = profile_name or "cliente"
     requested_label = "hoja de seguridad" if document_request.get("wants_safety_sheet") else "ficha técnica"
     if not document_options:
         return {
@@ -2615,7 +2753,7 @@ def build_technical_document_reply(profile_name: Optional[str], document_request
             "priority": "media",
             "summary": "Consulta de documentación sin coincidencia clara",
             "response_text": (
-                f"Hola, {nombre}. Revisé la carpeta de {requested_label} y no encontré una coincidencia clara con ese nombre. "
+                f"Revisé la carpeta de {requested_label} y no encontré una coincidencia clara con ese nombre. "
                 "Si quieres, dime la referencia, la línea o el nombre comercial y te muestro las opciones más cercanas."
             ),
             "document_options": [],
@@ -2623,7 +2761,7 @@ def build_technical_document_reply(profile_name: Optional[str], document_request
         }
 
     option_lines = [f"{index}. {row['name']}" for index, row in enumerate(document_options[:4], start=1)]
-    intro = f"Hola, {nombre}. Esto fue lo que encontré en {requested_label}:"
+    intro = f"Esto fue lo que encontré en {requested_label}:"
     outro = "Respóndeme con el número o con el nombre del archivo y te lo envío por WhatsApp."
     return {
         "tono": "consultivo",
@@ -3009,6 +3147,8 @@ def extract_claim_case_details(text_value: Optional[str], conversation_context: 
     normalized = normalize_text_value(text_value)
     raw_text = (text_value or "").strip()
     email_address = extract_email_address(text_value) or existing_case.get("contact_email")
+    evidence_note = existing_case.get("evidence_note")
+    current_step = existing_case.get("step") or "awaiting_product"
     notes = list(existing_case.get("notes") or [])
     if raw_text and raw_text not in notes and not is_greeting_message(text_value):
         notes.append(raw_text[:600])
@@ -3020,16 +3160,26 @@ def extract_claim_case_details(text_value: Optional[str], conversation_context: 
     issue_summary = existing_case.get("issue_summary")
     generic_openers = {
         "necesito montar un reclamo",
+        "necesito hacer un reclamo",
         "quiero montar un reclamo",
+        "quiero hacer un reclamo",
         "quiero poner un reclamo",
         "necesito poner un reclamo",
         "tengo un reclamo",
         "montar un reclamo",
+        "hacer un reclamo",
+        "quiero abrir un reclamo",
+        "necesito abrir un reclamo",
     }
     if raw_text and normalized not in generic_openers and not extract_email_address(text_value):
         has_claim_signal = any(keyword in normalized for keyword in CLAIM_KEYWORDS)
-        if has_claim_signal or existing_case.get("active"):
+        if current_step in {"awaiting_product", "awaiting_detail"} and (has_claim_signal or existing_case.get("active")):
             issue_summary = raw_text[:600]
+        elif current_step == "awaiting_evidence":
+            evidence_note = raw_text[:600]
+
+    if not evidence_note and re.search(r"\b(lote|foto|fotos|adjunto|adjunta|imagen|imagenes)\b", normalized):
+        evidence_note = raw_text[:600]
 
     store_name = existing_case.get("store_name")
     store_filters = (product_request or {}).get("store_filters") or []
@@ -3041,8 +3191,22 @@ def extract_claim_case_details(text_value: Optional[str], conversation_context: 
         missing_fields.append("producto")
     if not issue_summary:
         missing_fields.append("detalle")
+    if not evidence_note:
+        missing_fields.append("evidencia")
     if not email_address:
         missing_fields.append("correo")
+
+    if missing_fields:
+        if "producto" in missing_fields:
+            next_step = "awaiting_product"
+        elif "detalle" in missing_fields:
+            next_step = "awaiting_detail"
+        elif "evidencia" in missing_fields:
+            next_step = "awaiting_evidence"
+        else:
+            next_step = "awaiting_email"
+    else:
+        next_step = "ready_to_submit"
 
     severity = existing_case.get("severity") or (
         "critica" if any(keyword in normalized for keyword in ["no funciono", "no funcionó", "dañado", "danado", "garantia", "garantía"]) else "alta"
@@ -3053,10 +3217,12 @@ def extract_claim_case_details(text_value: Optional[str], conversation_context: 
         "active": True,
         "product_label": product_label,
         "issue_summary": issue_summary,
+        "evidence_note": evidence_note,
         "contact_email": email_address,
         "store_name": store_name,
         "notes": notes[-8:],
         "severity": severity,
+        "step": next_step,
         "missing_fields": missing_fields,
         "ready_to_submit": not missing_fields,
     }
@@ -3084,9 +3250,8 @@ def build_claim_reply(profile_name: Optional[str], claim_case: dict, cliente_con
         if cliente_contexto:
             cliente_label = cliente_contexto.get("nombre_cliente") or cliente_contexto.get("cliente_codigo")
         response_text = (
-            f"Listo, ya dejé radicado el caso de {claim_case.get('product_label')}. "
-            f"Quedó registrado con este detalle: {claim_case.get('issue_summary')}. "
-            f"Voy a escalarlo al área encargada y la constancia te la enviaré al correo {claim_case.get('contact_email')}."
+            f"Perfecto. Ya dejé radicado el caso de {claim_case.get('product_label')}. "
+            "Lo voy a escalar con el área técnica y en unos minutos te llegará al correo la constancia con el detalle para que tengas seguimiento."
         )
         return {
             "tono": "empatico",
@@ -3098,24 +3263,24 @@ def build_claim_reply(profile_name: Optional[str], claim_case: dict, cliente_con
             "task_type": "reclamo_calidad",
             "task_summary": f"Reclamo de calidad o funcionamiento: {claim_case.get('product_label')}",
             "task_detail": {**claim_case, "cliente": cliente_label},
-            "conversation_context_updates": {"claim_case": {**claim_case, "submitted": True}},
+            "conversation_context_updates": {"claim_case": {**claim_case, "submitted": True, "active": False, "step": "submitted"}},
             "email_route": "reclamos",
             "email_detail": {**claim_case, "cliente": cliente_label},
+            "customer_email_confirmation": {**claim_case, "cliente": cliente_label},
         }
 
     missing_fields = claim_case.get("missing_fields") or []
     if "producto" in missing_fields:
-        response_text = "Lamento mucho el inconveniente. Cuéntame, ¿con qué producto tuviste el problema?"
+        response_text = "Claro que sí, lamento el inconveniente. Cuéntame, ¿con qué producto tuviste el problema y qué pasó exactamente?"
     elif "detalle" in missing_fields:
         response_text = (
-            f"Entiendo. Ya ubiqué que el caso es sobre {claim_case.get('product_label')}. "
+            f"Entiendo, el caso va sobre {claim_case.get('product_label')}. "
             "Cuéntame qué pasó exactamente para dejarlo bien sustentado, por ejemplo si no cubrió, cambió el tono o presentó alguna falla."
         )
+    elif "evidencia" in missing_fields:
+        response_text = "Entiendo. ¿De casualidad tienes el número de lote o alguna foto que me puedas compartir?"
     else:
-        response_text = (
-            f"Entiendo, lo de {claim_case.get('product_label')} sí merece revisión. "
-            "Regálame un correo electrónico y te envío allí la constancia mientras lo escalo con el área técnica."
-        )
+        response_text = "Perfecto. Por favor regálame un correo electrónico para enviarte el número de radicado y hacerle seguimiento."
 
     return {
         "tono": "empatico",
@@ -3160,6 +3325,56 @@ def build_operational_email_payload(intent: str, profile_name: Optional[str], cl
     ) or "<tr><td colspan='2' style='padding:8px'>Sin historial disponible.</td></tr>"
     transcript_text = "\n".join(f"{direction}: {contenido}" for direction, contenido in transcript_rows) or "Sin historial disponible."
 
+    if intent == "ventas":
+        request_label = "Pedido" if detail.get("intent") == "pedido" else "Cotización"
+        store_filters = detail.get("store_filters") or []
+        store_name = STORE_CODE_LABELS.get(store_filters[0]) if len(store_filters) == 1 else (", ".join(STORE_CODE_LABELS.get(code, code) for code in store_filters) if store_filters else "Pendiente")
+        items_html = "".join(
+            f"<li style='margin:0 0 8px 0'>{escape(summarize_commercial_item(item))}</li>"
+            for item in (detail.get("items") or [])
+            if item.get("status") == "matched"
+        ) or "<li>Sin líneas confirmadas.</li>"
+        items_text = "\n".join(
+            f"- {summarize_commercial_item(item)}"
+            for item in (detail.get("items") or [])
+            if item.get("status") == "matched"
+        ) or "- Sin líneas confirmadas."
+        subject = f"Ferreinox CRM | {request_label} cliente {cliente_label}"
+        html_content = (
+            "<div style='font-family:Segoe UI,Arial,sans-serif;color:#111827;background:#f3f4f6;padding:24px'>"
+            "<div style='max-width:900px;margin:0 auto;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e5e7eb'>"
+            "<div style='background:#111827;color:#ffffff;padding:24px 28px'>"
+            f"<h1 style='margin:0;font-size:24px'>{request_label} preparado desde CRM Ferreinox</h1>"
+            "<p style='margin:8px 0 0 0;color:#d1d5db'>Solicitud comercial consolidada desde el agente conversacional.</p>"
+            "</div>"
+            "<div style='padding:28px'>"
+            f"<p><strong>Cliente:</strong> {escape(cliente_label)}</p>"
+            f"<p><strong>Código cliente:</strong> {escape(str(cliente_codigo))}</p>"
+            f"<p><strong>Tienda/Ciudad:</strong> {escape(store_name)}</p>"
+            f"<p><strong>Canal solicitado:</strong> {escape(detail.get('delivery_channel') or 'chat')}</p>"
+            f"<p><strong>Correo cliente:</strong> {escape(detail.get('contact_email') or (cliente_contexto or {}).get('email') or 'Pendiente')}</p>"
+            "<h2 style='margin-top:28px;font-size:18px'>Líneas consolidadas</h2>"
+            f"<ul style='padding-left:20px'>{items_html}</ul>"
+            "<p style='margin-top:20px;color:#4b5563'>Esta solicitud quedó lista para revisión comercial. Por ahora no incluye precios automáticos desde PostgREST.</p>"
+            "<h2 style='margin-top:28px;font-size:18px'>Historial reciente</h2>"
+            "<table style='width:100%;border-collapse:collapse;font-size:14px'>"
+            f"{transcript_html}"
+            "</table>"
+            "</div></div></div>"
+        )
+        text_content = (
+            f"{request_label} preparado desde CRM Ferreinox\n\n"
+            f"Cliente: {cliente_label}\n"
+            f"Código cliente: {cliente_codigo}\n"
+            f"Tienda/Ciudad: {store_name}\n"
+            f"Canal solicitado: {detail.get('delivery_channel') or 'chat'}\n"
+            f"Correo cliente: {detail.get('contact_email') or (cliente_contexto or {}).get('email') or 'Pendiente'}\n\n"
+            f"Líneas consolidadas:\n{items_text}\n\n"
+            "Esta solicitud quedó lista para revisión comercial. Por ahora no incluye precios automáticos desde PostgREST.\n\n"
+            f"Historial reciente:\n{transcript_text}"
+        )
+        return {"to_email": to_email, "subject": subject, "html_content": html_content, "text_content": text_content}
+
     subject = f"Ferreinox CRM | Reclamo cliente {cliente_label} | {detail.get('product_label') or 'sin producto'}"
     html_content = (
         "<div style='font-family:Segoe UI,Arial,sans-serif;color:#111827;background:#f3f4f6;padding:24px'>"
@@ -3188,6 +3403,120 @@ def build_operational_email_payload(intent: str, profile_name: Optional[str], cl
         f"Tienda/Ciudad: {detail.get('store_name') or 'Pendiente'}\n"
         f"Resumen: {detail.get('issue_summary') or 'Pendiente de ampliar'}\n\n"
         f"Historial reciente:\n{transcript_text}"
+    )
+    return {"to_email": to_email, "subject": subject, "html_content": html_content, "text_content": text_content}
+
+
+def build_customer_claim_confirmation_email(conversation_id: int, profile_name: Optional[str], cliente_contexto: Optional[dict], detail: dict):
+    to_email = detail.get("contact_email")
+    if not to_email:
+        return None
+
+    cliente_label = (cliente_contexto or {}).get("nombre_cliente") or detail.get("cliente") or profile_name or "Cliente Ferreinox"
+    cliente_codigo = (cliente_contexto or {}).get("cliente_codigo") or "sin_codigo"
+    case_reference = detail.get("case_reference") or f"CRM-{conversation_id}"
+    product_label = detail.get("product_label") or "Producto pendiente"
+    issue_summary = detail.get("issue_summary") or "Pendiente de ampliar"
+    evidence_note = detail.get("evidence_note") or "Pendiente de recibir"
+    store_name = detail.get("store_name") or "Pendiente"
+
+    subject = f"Ferreinox | Solicitud radicada {case_reference}"
+    html_content = (
+        "<div style='font-family:Segoe UI,Arial,sans-serif;background:#f4f6f8;padding:32px;color:#111827'>"
+        "<div style='max-width:760px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:22px;overflow:hidden'>"
+        "<div style='background:#111827;padding:28px 32px;color:#ffffff'>"
+        "<div style='font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#d1d5db'>Ferreinox S.A.S. BIC</div>"
+        "<h1 style='margin:10px 0 0 0;font-size:28px;line-height:1.2'>Tu solicitud ya quedó radicada</h1>"
+        f"<p style='margin:10px 0 0 0;color:#d1d5db'>Radicado {escape(case_reference)} | Área técnica y servicio</p>"
+        "</div>"
+        "<div style='padding:32px'>"
+        f"<p style='margin:0 0 18px 0'>Hola, {escape(str(cliente_label))}. Ya registramos tu solicitud y nuestro equipo hará seguimiento con esta información:</p>"
+        "<div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:16px;padding:20px'>"
+        f"<p style='margin:0 0 10px 0'><strong>Cliente:</strong> {escape(str(cliente_label))}</p>"
+        f"<p style='margin:0 0 10px 0'><strong>Código cliente:</strong> {escape(str(cliente_codigo))}</p>"
+        f"<p style='margin:0 0 10px 0'><strong>Producto reportado:</strong> {escape(str(product_label))}</p>"
+        f"<p style='margin:0 0 10px 0'><strong>Tienda o ciudad:</strong> {escape(str(store_name))}</p>"
+        f"<p style='margin:0 0 10px 0'><strong>Detalle del caso:</strong> {escape(str(issue_summary))}</p>"
+        f"<p style='margin:0'><strong>Evidencia recibida:</strong> {escape(str(evidence_note))}</p>"
+        "</div>"
+        "<p style='margin:22px 0 0 0'>Si necesitas ampliar el caso, responde a este correo o escríbenos por WhatsApp y lo anexamos al mismo radicado.</p>"
+        "<p style='margin:22px 0 0 0'>Gracias por confiar en Ferreinox.</p>"
+        "</div>"
+        "</div>"
+        "</div>"
+    )
+    text_content = (
+        f"Tu solicitud ya quedó radicada en Ferreinox.\n\n"
+        f"Radicado: {case_reference}\n"
+        f"Cliente: {cliente_label}\n"
+        f"Código cliente: {cliente_codigo}\n"
+        f"Producto reportado: {product_label}\n"
+        f"Tienda o ciudad: {store_name}\n"
+        f"Detalle del caso: {issue_summary}\n"
+        f"Evidencia recibida: {evidence_note}\n\n"
+        "Si necesitas ampliar el caso, responde este correo o escríbenos por WhatsApp y lo anexamos al mismo radicado."
+    )
+    return {"to_email": to_email, "subject": subject, "html_content": html_content, "text_content": text_content}
+
+
+def build_customer_commercial_confirmation_email(conversation_id: int, profile_name: Optional[str], cliente_contexto: Optional[dict], detail: dict):
+    to_email = detail.get("contact_email") or (cliente_contexto or {}).get("email")
+    if not to_email:
+        return None
+
+    request_label = "pedido" if detail.get("intent") == "pedido" else "cotización"
+    request_label_title = "Pedido" if detail.get("intent") == "pedido" else "Cotización"
+    cliente_label = (cliente_contexto or {}).get("nombre_cliente") or profile_name or "Cliente Ferreinox"
+    cliente_codigo = (cliente_contexto or {}).get("cliente_codigo") or "sin_codigo"
+    case_reference = f"CRM-{conversation_id}"
+    store_filters = detail.get("store_filters") or []
+    store_name = STORE_CODE_LABELS.get(store_filters[0]) if len(store_filters) == 1 else (", ".join(STORE_CODE_LABELS.get(code, code) for code in store_filters) if store_filters else "Pendiente")
+    items_html = "".join(
+        f"<li style='margin:0 0 8px 0'>{escape(summarize_commercial_item(item))}</li>"
+        for item in (detail.get("items") or [])
+        if item.get("status") == "matched"
+    ) or "<li>Sin líneas confirmadas.</li>"
+    items_text = "\n".join(
+        f"- {summarize_commercial_item(item)}"
+        for item in (detail.get("items") or [])
+        if item.get("status") == "matched"
+    ) or "- Sin líneas confirmadas."
+
+    subject = f"Ferreinox | {request_label_title} preparado {case_reference}"
+    html_content = (
+        "<div style='font-family:Segoe UI,Arial,sans-serif;background:#f4f6f8;padding:32px;color:#111827'>"
+        "<div style='max-width:760px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:22px;overflow:hidden'>"
+        "<div style='background:#111827;padding:28px 32px;color:#ffffff'>"
+        "<div style='font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#d1d5db'>Ferreinox S.A.S. BIC</div>"
+        f"<h1 style='margin:10px 0 0 0;font-size:28px;line-height:1.2'>{request_label_title} preparado</h1>"
+        f"<p style='margin:10px 0 0 0;color:#d1d5db'>Solicitud {case_reference}</p>"
+        "</div>"
+        "<div style='padding:32px'>"
+        f"<p style='margin:0 0 18px 0'>Te comparto el resumen de la solicitud de {request_label} que dejamos lista para seguimiento comercial.</p>"
+        "<div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:16px;padding:20px'>"
+        f"<p style='margin:0 0 10px 0'><strong>Cliente:</strong> {escape(str(cliente_label))}</p>"
+        f"<p style='margin:0 0 10px 0'><strong>Código cliente:</strong> {escape(str(cliente_codigo))}</p>"
+        f"<p style='margin:0 0 10px 0'><strong>Tienda o ciudad:</strong> {escape(store_name)}</p>"
+        f"<p style='margin:0 0 10px 0'><strong>Canal solicitado:</strong> {escape(detail.get('delivery_channel') or 'chat')}</p>"
+        "<div style='margin-top:16px'><strong>Líneas solicitadas:</strong><ul style='margin:10px 0 0 0;padding-left:20px'>"
+        f"{items_html}"
+        "</ul></div>"
+        "</div>"
+        "<p style='margin:22px 0 0 0'>Nuestro equipo comercial revisará esta solicitud y continuará el proceso contigo. Por ahora este resumen no incluye precios automáticos.</p>"
+        "<p style='margin:22px 0 0 0'>Gracias por confiar en Ferreinox.</p>"
+        "</div>"
+        "</div>"
+        "</div>"
+    )
+    text_content = (
+        f"Ferreinox | {request_label_title} preparado\n\n"
+        f"Solicitud: {case_reference}\n"
+        f"Cliente: {cliente_label}\n"
+        f"Código cliente: {cliente_codigo}\n"
+        f"Tienda o ciudad: {store_name}\n"
+        f"Canal solicitado: {detail.get('delivery_channel') or 'chat'}\n\n"
+        f"Líneas solicitadas:\n{items_text}\n\n"
+        "Nuestro equipo comercial revisará esta solicitud y continuará el proceso contigo. Por ahora este resumen no incluye precios automáticos."
     )
     return {"to_email": to_email, "subject": subject, "html_content": html_content, "text_content": text_content}
 
@@ -3758,7 +4087,7 @@ def build_verification_success_reply(profile_name: Optional[str], cliente_contex
     cliente_codigo = (cliente_contexto or {}).get("cliente_codigo")
     cliente_nombre = (cliente_contexto or {}).get("nombre_cliente")
     return (
-        "Perfecto. Tu identidad quedó validada"
+        "Perfecto, ya te pude ubicar"
         f"{' para el cliente ' + str(cliente_nombre or cliente_codigo) if (cliente_nombre or cliente_codigo) else ''}"
         f"{' (' + str(cliente_codigo) + ')' if cliente_nombre and cliente_codigo else ''}. "
         "Ahora ya puedo ayudarte con cartera, compras del último año y consultas relacionadas con tu historial comercial."
@@ -4558,7 +4887,7 @@ async def receive_whatsapp_webhook(request: Request):
                 }
 
                 if is_greeting_message(content):
-                    response_text = f"Hola, {context.get('nombre_visible') or 'cliente'}. ¿En qué puedo ayudarte hoy?"
+                    response_text = "Hola, ¿en qué te puedo ayudar hoy?"
                     outbound_payload = None
                     try:
                         outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
@@ -4604,9 +4933,7 @@ async def receive_whatsapp_webhook(request: Request):
                     document_request = extract_technical_document_request(content, product_request, conversation_context)
                     if selected_document_option:
                         filename = selected_document_option.get("name") or "documento.pdf"
-                        caption_text = (
-                            f"Hola, {context.get('nombre_visible') or 'cliente'}. Te comparto el archivo {filename}."
-                        )
+                        caption_text = f"Te comparto el archivo {filename}."
                         outbound_payload = None
                         temporary_link = None
                         try:
@@ -4630,7 +4957,7 @@ async def receive_whatsapp_webhook(request: Request):
                             )
                         except Exception as exc:
                             fallback_text = (
-                                f"Hola, {context.get('nombre_visible') or 'cliente'}. Encontré el archivo {filename}, "
+                                f"Encontré el archivo {filename}, "
                                 "pero en este momento no pude adjuntarlo por WhatsApp. Escríbeme de nuevo en un momento y lo intento otra vez."
                             )
                             try:
@@ -4907,6 +5234,50 @@ async def receive_whatsapp_webhook(request: Request):
                                 intent_detectado=f"correo_{direct_result.get('intent')}",
                             )
 
+                    customer_email_payload = None
+                    if direct_result.get("customer_email_confirmation"):
+                        customer_email_payload = build_customer_claim_confirmation_email(
+                            context["conversation_id"],
+                            context.get("nombre_visible"),
+                            cliente_contexto,
+                            {
+                                **(direct_result.get("customer_email_confirmation") or {}),
+                                "case_reference": f"CRM-{context['conversation_id']}",
+                            },
+                        )
+                    elif direct_result.get("commercial_customer_email_confirmation"):
+                        customer_email_payload = build_customer_commercial_confirmation_email(
+                            context["conversation_id"],
+                            context.get("nombre_visible"),
+                            cliente_contexto,
+                            direct_result.get("commercial_customer_email_confirmation") or {},
+                        )
+                    if customer_email_payload:
+                        try:
+                            send_sendgrid_email(
+                                customer_email_payload["to_email"],
+                                customer_email_payload["subject"],
+                                customer_email_payload["html_content"],
+                                customer_email_payload["text_content"],
+                            )
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"Correo de constancia enviado a {customer_email_payload['to_email']}",
+                                {"email_to": customer_email_payload["to_email"], "subject": customer_email_payload["subject"]},
+                                intent_detectado="correo_constancia_reclamo",
+                            )
+                        except Exception as exc:
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"No fue posible enviar constancia al cliente: {exc}",
+                                {"error": str(exc), "email_to": customer_email_payload["to_email"], "subject": customer_email_payload["subject"]},
+                                intent_detectado="correo_constancia_reclamo",
+                            )
+
                     processed_messages.append(
                         {
                             "conversation_id": context["conversation_id"],
@@ -4939,7 +5310,6 @@ async def receive_whatsapp_webhook(request: Request):
                             "priority": "media",
                             "summary": "Consulta de productos con error interno",
                             "response_text": (
-                                f"Hola, {context.get('nombre_visible') or 'cliente'}. "
                                 "Tuve un problema buscando ese producto en el sistema. "
                                 "¿Podrías darme la referencia exacta, el código o la marca para intentar de nuevo?"
                             ),
