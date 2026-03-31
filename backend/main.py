@@ -1539,6 +1539,44 @@ def update_conversation_context(conversation_id: int, context_updates: dict, sum
         )
 
 
+def close_conversation(conversation_id: int, context_updates: dict, summary: Optional[str] = None):
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        existing_row = connection.execute(
+            text(
+                """
+                SELECT contexto, resumen
+                FROM public.agent_conversation
+                WHERE id = :conversation_id
+                """
+            ),
+            {"conversation_id": conversation_id},
+        ).mappings().one()
+
+        merged_context = dict(existing_row["contexto"] or {})
+        merged_context.update(context_updates or {})
+        merged_context["final_status"] = "gestionado"
+
+        connection.execute(
+            text(
+                """
+                UPDATE public.agent_conversation
+                SET estado = 'cerrada',
+                    resumen = :summary,
+                    contexto = CAST(:context_payload AS jsonb),
+                    updated_at = now(),
+                    last_message_at = now()
+                WHERE id = :conversation_id
+                """
+            ),
+            {
+                "summary": summary if summary is not None else existing_row["resumen"],
+                "context_payload": safe_json_dumps(merged_context),
+                "conversation_id": conversation_id,
+            },
+        )
+
+
 def upsert_agent_task(conversation_id: int, cliente_id: Optional[int], task_type: str, summary: str, detail: dict, priority: str):
     engine = get_db_engine()
     with engine.begin() as connection:
@@ -3568,7 +3606,7 @@ async def receive_whatsapp_webhook(request: Request):
                             intent_detectado="cierre_conversacion",
                         )
 
-                    update_conversation_context(
+                    close_conversation(
                         context["conversation_id"],
                         {
                             "intent": "cierre_conversacion",

@@ -1,8 +1,48 @@
+import json
+import re
+
 import pandas as pd
 import streamlit as st
 from sqlalchemy import create_engine, text
 
 from frontend.data_catalog import CATALOG_SPECS
+
+
+CLOSING_PATTERNS = [
+    r"^(gracias|muchas gracias|mil gracias|genial gracias|super gracias|perfecto gracias)[.!?,\s]*$",
+    r"^(genial|perfecto|listo|excelente|super|buenisimo|buenisima)(\s+(muchas\s+)?gracias)?[.!?,\s]*$",
+    r"^(ok|okay|vale|dale|entendido|comprendido)(\s+(muchas\s+)?gracias)?[.!?,\s]*$",
+    r"^(quedo atento|quedo atenta|te aviso|te escribo luego|eso era|nada mas|nada mas gracias)[.!?,\s]*$",
+]
+
+
+def normalize_text_value(text_value):
+    return re.sub(r"\s+", " ", str(text_value or "").strip().lower())
+
+
+def is_closing_message(text_value):
+    lowered = normalize_text_value(text_value)
+    if not lowered:
+        return False
+    return any(re.match(pattern, lowered) for pattern in CLOSING_PATTERNS)
+
+
+def conversation_display_state(raw_state):
+    return {
+        "abierta": "Activa",
+        "pendiente": "En seguimiento",
+        "escalada": "Escalada",
+        "cerrada": "Gestionada",
+    }.get(raw_state or "", "Sin estado")
+
+
+def task_display_state(raw_state):
+    return {
+        "pendiente": "Pendiente",
+        "en_progreso": "En ejecución",
+        "resuelta": "Gestionada",
+        "cancelada": "Cancelada",
+    }.get(raw_state or "", "Sin estado")
 
 
 def task_area_expression(alias="agent_task"):
@@ -57,6 +97,179 @@ def build_routing_rules_dataframe():
             },
         ]
     )
+
+
+def annotate_conversations(conversations_df):
+    if conversations_df.empty:
+        return conversations_df
+
+    annotated_df = conversations_df.copy()
+    annotated_df["estado_operativo"] = annotated_df["estado"].apply(conversation_display_state)
+    annotated_df["necesita_cierre"] = annotated_df.apply(
+        lambda row: bool(
+            row.get("estado") != "cerrada"
+            and (
+                row.get("intent") == "cierre_conversacion"
+                or row.get("last_intent") == "cierre_conversacion"
+                or is_closing_message(row.get("last_content"))
+            )
+        ),
+        axis=1,
+    )
+    annotated_df["pendientes_operativos"] = annotated_df.get("pending_tasks", 0).fillna(0).astype(int)
+    annotated_df["resueltas_operativas"] = annotated_df.get("resolved_tasks", 0).fillna(0).astype(int)
+    return annotated_df
+
+
+def build_closure_recommendation(conversation, messages_df, tasks_df):
+    pending_tasks = int(tasks_df["estado"].isin(["pendiente", "en_progreso"]).sum()) if not tasks_df.empty else 0
+    latest_customer_message = None
+    latest_agent_intent = None
+
+    if not messages_df.empty:
+        inbound_messages = messages_df[messages_df["direction"] == "inbound"]
+        outbound_messages = messages_df[messages_df["direction"] == "outbound"]
+        if not inbound_messages.empty:
+            latest_customer_message = inbound_messages.iloc[-1]["contenido"]
+        if not outbound_messages.empty:
+            latest_agent_intent = outbound_messages.iloc[-1]["intent_detectado"]
+
+    detected_reasons = []
+    if conversation.get("estado") == "cerrada":
+        return {
+            "already_managed": True,
+            "should_close": False,
+            "pending_tasks": pending_tasks,
+            "reason": "La conversación ya está cerrada y visible como gestionada.",
+        }
+
+    if conversation.get("intent") == "cierre_conversacion":
+        detected_reasons.append("La IA ya marcó cierre conversacional.")
+    if latest_agent_intent == "cierre_conversacion":
+        detected_reasons.append("El agente ya respondió con mensaje de cierre.")
+    if is_closing_message(latest_customer_message):
+        detected_reasons.append("El último mensaje del cliente es una despedida o agradecimiento.")
+
+    return {
+        "already_managed": False,
+        "should_close": bool(detected_reasons),
+        "pending_tasks": pending_tasks,
+        "reason": " ".join(detected_reasons) if detected_reasons else "No hay señal fuerte de cierre todavía.",
+    }
+
+
+def _merge_conversation_context(existing_context, extra_context):
+    merged_context = dict(existing_context or {})
+    merged_context.update(extra_context or {})
+    return merged_context
+
+
+def mark_conversation_as_managed(db_uri, conversation_id, resolution_note=None, resolve_tasks=True):
+    engine = create_engine(db_uri)
+    with engine.begin() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT contexto, resumen
+                FROM public.agent_conversation
+                WHERE id = :conversation_id
+                """
+            ),
+            {"conversation_id": conversation_id},
+        ).mappings().one()
+
+        merged_context = _merge_conversation_context(
+            row.get("contexto"),
+            {
+                "intent": "cierre_conversacion",
+                "final_status": "gestionado",
+                "managed_from": "frontend_operador",
+                "managed_note": resolution_note or "Cierre gestionado desde el CRM.",
+            },
+        )
+
+        connection.execute(
+            text(
+                """
+                UPDATE public.agent_conversation
+                SET estado = 'cerrada',
+                    resumen = :summary,
+                    contexto = CAST(:context_payload AS jsonb),
+                    updated_at = now(),
+                    last_message_at = now()
+                WHERE id = :conversation_id
+                """
+            ),
+            {
+                "conversation_id": conversation_id,
+                "summary": resolution_note or row.get("resumen") or "Cierre gestionado desde el CRM.",
+                "context_payload": json.dumps(merged_context, ensure_ascii=True),
+            },
+        )
+
+        resolved_tasks = 0
+        if resolve_tasks:
+            task_result = connection.execute(
+                text(
+                    """
+                    UPDATE public.agent_task
+                    SET estado = 'resuelta',
+                        updated_at = now()
+                    WHERE conversation_id = :conversation_id
+                      AND estado IN ('pendiente', 'en_progreso')
+                    """
+                ),
+                {"conversation_id": conversation_id},
+            )
+            resolved_tasks = task_result.rowcount or 0
+
+    load_crm_hub_snapshot.clear()
+    load_conversation_detail.clear()
+    return {"resolved_tasks": resolved_tasks}
+
+
+def reopen_conversation_for_followup(db_uri, conversation_id, note=None):
+    engine = create_engine(db_uri)
+    with engine.begin() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT contexto
+                FROM public.agent_conversation
+                WHERE id = :conversation_id
+                """
+            ),
+            {"conversation_id": conversation_id},
+        ).mappings().one()
+
+        merged_context = _merge_conversation_context(
+            row.get("contexto"),
+            {
+                "final_status": "seguimiento",
+                "managed_from": "frontend_operador",
+                "managed_note": note or "Reabierta desde el CRM para seguimiento.",
+            },
+        )
+
+        connection.execute(
+            text(
+                """
+                UPDATE public.agent_conversation
+                SET estado = 'pendiente',
+                    contexto = CAST(:context_payload AS jsonb),
+                    updated_at = now(),
+                    last_message_at = now()
+                WHERE id = :conversation_id
+                """
+            ),
+            {
+                "conversation_id": conversation_id,
+                "context_payload": json.dumps(merged_context, ensure_ascii=True),
+            },
+        )
+
+    load_crm_hub_snapshot.clear()
+    load_conversation_detail.clear()
 
 
 def _load_existing_objects(connection):
@@ -147,6 +360,9 @@ def load_crm_hub_snapshot(db_uri):
             "conversaciones_activas": connection.execute(
                 text("SELECT COUNT(*) FROM public.agent_conversation WHERE estado IN ('abierta', 'pendiente', 'escalada')")
             ).scalar_one(),
+            "conversaciones_gestionadas": connection.execute(
+                text("SELECT COUNT(*) FROM public.agent_conversation WHERE estado = 'cerrada'")
+            ).scalar_one(),
             "mensajes": connection.execute(text("SELECT COUNT(*) FROM public.agent_message")).scalar_one(),
             "tareas_pendientes": connection.execute(
                 text("SELECT COUNT(*) FROM public.agent_task WHERE estado IN ('pendiente', 'en_progreso')")
@@ -182,7 +398,12 @@ def load_crm_hub_snapshot(db_uri):
                     COALESCE(ac.resumen, 'Sin resumen operativo') AS resumen,
                     ac.started_at,
                     ac.last_message_at,
-                    COALESCE(message_counts.total_messages, 0) AS mensajes
+                    COALESCE(message_counts.total_messages, 0) AS mensajes,
+                    COALESCE(task_counts.pending_tasks, 0) AS pending_tasks,
+                    COALESCE(task_counts.resolved_tasks, 0) AS resolved_tasks,
+                    COALESCE(last_message.last_direction, 'sin_dato') AS last_direction,
+                    COALESCE(last_message.last_intent, 'sin_clasificar') AS last_intent,
+                    COALESCE(last_message.last_content, '') AS last_content
                 FROM public.agent_conversation ac
                 JOIN public.whatsapp_contacto wc ON wc.id = ac.contacto_id
                 LEFT JOIN (
@@ -190,12 +411,30 @@ def load_crm_hub_snapshot(db_uri):
                     FROM public.agent_message
                     GROUP BY conversation_id
                 ) message_counts ON message_counts.conversation_id = ac.id
+                LEFT JOIN (
+                    SELECT
+                        conversation_id,
+                        COUNT(*) FILTER (WHERE estado IN ('pendiente', 'en_progreso')) AS pending_tasks,
+                        COUNT(*) FILTER (WHERE estado = 'resuelta') AS resolved_tasks
+                    FROM public.agent_task
+                    GROUP BY conversation_id
+                ) task_counts ON task_counts.conversation_id = ac.id
+                LEFT JOIN (
+                    SELECT DISTINCT ON (conversation_id)
+                        conversation_id,
+                        direction AS last_direction,
+                        COALESCE(NULLIF(intent_detectado, ''), 'sin_clasificar') AS last_intent,
+                        COALESCE(contenido, '') AS last_content
+                    FROM public.agent_message
+                    ORDER BY conversation_id, created_at DESC, id DESC
+                ) last_message ON last_message.conversation_id = ac.id
                 ORDER BY ac.last_message_at DESC NULLS LAST, ac.updated_at DESC
                 LIMIT 100
                 """
             ),
             connection,
         )
+        conversations_df = annotate_conversations(conversations_df)
 
         tasks_df = pd.read_sql_query(
             text(
@@ -224,6 +463,8 @@ def load_crm_hub_snapshot(db_uri):
             ),
             connection,
         )
+        if not tasks_df.empty:
+            tasks_df["estado_operativo"] = tasks_df["estado"].apply(task_display_state)
 
         messages_df = pd.read_sql_query(
             text(
@@ -253,6 +494,7 @@ def load_crm_hub_snapshot(db_uri):
         if not tasks_df.empty
         else pd.DataFrame(columns=["area_destino", "tareas"])
     )
+    metrics["conversaciones_por_cerrar"] = int(conversations_df["necesita_cierre"].sum()) if not conversations_df.empty else 0
 
     return {
         "available": True,
@@ -283,9 +525,19 @@ def load_conversation_detail(db_uri, conversation_id):
                     ac.resumen,
                     ac.contexto,
                     ac.started_at,
-                    ac.last_message_at
+                    ac.last_message_at,
+                    COALESCE(task_counts.pending_tasks, 0) AS pending_tasks,
+                    COALESCE(task_counts.resolved_tasks, 0) AS resolved_tasks
                 FROM public.agent_conversation ac
                 JOIN public.whatsapp_contacto wc ON wc.id = ac.contacto_id
+                LEFT JOIN (
+                    SELECT
+                        conversation_id,
+                        COUNT(*) FILTER (WHERE estado IN ('pendiente', 'en_progreso')) AS pending_tasks,
+                        COUNT(*) FILTER (WHERE estado = 'resuelta') AS resolved_tasks
+                    FROM public.agent_task
+                    GROUP BY conversation_id
+                ) task_counts ON task_counts.conversation_id = ac.id
                 WHERE ac.id = :conversation_id
                 """
             ),
@@ -321,6 +573,8 @@ def load_conversation_detail(db_uri, conversation_id):
             connection,
             params={"conversation_id": conversation_id},
         )
+        if not tasks_df.empty:
+            tasks_df["estado_operativo"] = tasks_df["estado"].apply(task_display_state)
 
         tables, _ = _load_existing_objects(connection)
         quotes_df = pd.DataFrame()
@@ -352,10 +606,15 @@ def load_conversation_detail(db_uri, conversation_id):
                 params={"conversation_id": conversation_id},
             )
 
+    conversation_payload = dict(conversation)
+    conversation_payload["estado_operativo"] = conversation_display_state(conversation_payload.get("estado"))
+    closure_recommendation = build_closure_recommendation(conversation_payload, messages_df, tasks_df)
+
     return {
-        "conversation": dict(conversation),
+        "conversation": conversation_payload,
         "messages_df": messages_df,
         "tasks_df": tasks_df,
         "quotes_df": quotes_df,
         "orders_df": orders_df,
+        "closure_recommendation": closure_recommendation,
     }

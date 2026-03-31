@@ -50,6 +50,10 @@ def inject_brand_theme():
                 color: #eef4f8;
             }
 
+            [data-testid="stSidebarNav"] * {
+                color: #eef4f8;
+            }
+
             [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
             [data-testid="stSidebar"] label,
             [data-testid="stSidebar"] div {
@@ -183,6 +187,46 @@ def inject_brand_theme():
                 color: var(--fx-ink);
             }
 
+            div[role="tablist"] {
+                gap: 0.4rem;
+            }
+
+            button[role="tab"] {
+                color: #111111 !important;
+                background: rgba(255, 255, 255, 0.86) !important;
+                border: 1px solid rgba(16, 32, 51, 0.10) !important;
+                border-radius: 999px !important;
+                padding: 0.5rem 0.95rem !important;
+            }
+
+            button[role="tab"] p {
+                color: #111111 !important;
+                font-weight: 700;
+            }
+
+            button[role="tab"][aria-selected="true"] {
+                background: #ffffff !important;
+                border-color: rgba(217, 106, 29, 0.55) !important;
+                box-shadow: 0 10px 22px rgba(16, 32, 51, 0.08);
+            }
+
+            .stSelectbox label,
+            .stTextArea label,
+            .stTextInput label,
+            .stRadio label {
+                color: var(--fx-ink) !important;
+                font-weight: 700;
+            }
+
+            .stSelectbox [data-baseweb="select"] > div,
+            .stTextArea textarea,
+            .stTextInput input {
+                color: #111111 !important;
+                background: rgba(255, 255, 255, 0.92) !important;
+                border-radius: 16px !important;
+                border: 1px solid rgba(16, 32, 51, 0.12) !important;
+            }
+
             .fx-pill {
                 display: inline-block;
                 padding: 0.22rem 0.6rem;
@@ -280,6 +324,10 @@ def inject_brand_theme():
                 overflow: hidden;
                 border: 1px solid rgba(16, 32, 51, 0.08);
                 box-shadow: 0 10px 26px rgba(16, 32, 51, 0.04);
+            }
+
+            .stAlert {
+                color: #111111;
             }
         </style>
         """,
