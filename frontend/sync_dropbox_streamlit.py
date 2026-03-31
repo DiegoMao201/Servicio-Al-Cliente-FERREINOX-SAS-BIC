@@ -196,6 +196,7 @@ def refresh_official_base_and_postgrest(db_uri, dropbox_sources):
     if not results:
         return results, preflight_results, None
 
+    execute_sql_script(db_uri, "backend/agent_schema.sql")
     ensure_postgrest_access(db_uri)
     views_path = execute_sql_script(db_uri, "backend/postgrest_views.sql")
     return results, preflight_results, views_path

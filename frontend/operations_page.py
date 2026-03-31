@@ -7,6 +7,7 @@ from sqlalchemy import create_engine, text
 from frontend.config import get_database_uri, get_dropbox_sources
 from frontend.data_catalog import CATALOG_SPECS
 from frontend.sync_dropbox_streamlit import refresh_official_base_and_postgrest
+from frontend.ui import render_flow_step, render_highlight, render_metric_card, render_page_hero, render_section_intro
 
 
 def summarize_db_target(db_uri):
@@ -89,8 +90,12 @@ def load_operational_snapshot(db_uri):
 
 
 def main():
-    st.title("Centro Operativo")
-    st.caption("Una sola vista para entender si la base oficial está lista, si PostgREST está actualizado y cuándo ejecutar la actualización completa.")
+    render_page_hero(
+        "Ferreinox Data Ops",
+        "Base Oficial y PostgREST",
+        "Esta vista deja claro si la base raw oficial está completa, si la capa SQL del agente existe y si PostgREST ya quedó actualizado para alimentar el CRM.",
+        badge="Dropbox -> PostgreSQL raw -> agent schema -> PostgREST",
+    )
 
     try:
         db_uri = get_database_uri()
@@ -116,13 +121,18 @@ def main():
     using_local_stack_db = db_target["host"] == "db"
 
     metric_1, metric_2, metric_3, metric_4 = st.columns(4)
-    metric_1.metric("Tablas raw creadas", f"{snapshot['raw_ready']}/{snapshot['raw_total']}")
-    metric_2.metric("Tablas raw con datos", f"{snapshot['raw_with_data']}/{snapshot['raw_total']}")
-    metric_3.metric("Vistas PostgREST", f"{snapshot['views_ready']}/{snapshot['views_total']}")
-    metric_4.metric("Fuentes Dropbox", len(dropbox_sources))
+    with metric_1:
+        render_metric_card("Tablas raw creadas", f"{snapshot['raw_ready']}/{snapshot['raw_total']}", "Estructuras oficiales creadas en PostgreSQL.")
+    with metric_2:
+        render_metric_card("Tablas con datos", f"{snapshot['raw_with_data']}/{snapshot['raw_total']}", "Fuentes listas para generar la capa operativa.")
+    with metric_3:
+        render_metric_card("Vistas PostgREST", f"{snapshot['views_ready']}/{snapshot['views_total']}", "Objetos SQL ya publicados para consumo del agente.")
+    with metric_4:
+        render_metric_card("Fuentes Dropbox", len(dropbox_sources), "Orígenes configurados para construir la base oficial.")
 
-    st.info(
-        f"Base conectada: host {db_target['host']}, puerto {db_target['port']}, base {db_target['database']}. Estado actual: {status_label}. {status_detail}"
+    render_highlight(
+        f"<strong>Base conectada:</strong> host {db_target['host']}, puerto {db_target['port']}, base {db_target['database']}. "
+        f"<strong>Estado:</strong> {status_label}. {status_detail}"
     )
 
     if using_local_stack_db:
@@ -137,8 +147,25 @@ def main():
     else:
         st.success("La base oficial ya tiene datos cargados. Puedes revisar el detalle abajo o relanzar la actualización oficial cuando Dropbox cambie.")
 
-    st.subheader("Acción única")
-    st.caption("Este botón hace todo el flujo operativo: lee los CSV oficiales desde Dropbox, actualiza las tablas raw y reaplica la capa SQL de PostgREST.")
+    render_section_intro(
+        "Orden correcto de actualización",
+        "Cuando aquí algo falla, todo el CRM se desordena. La regla es actualizar raw, reaplicar esquema del agente y solo después refrescar PostgREST.",
+    )
+    flow_cols = st.columns(4)
+    flow_steps = [
+        (1, "Validar Dropbox", "Confirmar que existen los archivos oficiales y que el ancho de columnas coincide con el catálogo canónico."),
+        (2, "Actualizar raw", "Cargar o reemplazar las tablas raw oficiales en PostgreSQL conservando el esquema textual correcto."),
+        (3, "Reaplicar agente", "Volver a aplicar agent_schema.sql para asegurar tareas, conversaciones y tablas del CRM."),
+        (4, "Refrescar PostgREST", "Ejecutar postgrest_views.sql para publicar la capa SQL que usa el resto del sistema."),
+    ]
+    for column, step in zip(flow_cols, flow_steps):
+        with column:
+            render_flow_step(*step)
+
+    render_section_intro(
+        "Acción única",
+        "Este botón ejecuta el flujo completo de actualización oficial y deja la ruta clara para operación y soporte.",
+    )
 
     if st.button("Actualizar base oficial y PostgREST", disabled=not dropbox_sources):
         with st.spinner("Ejecutando actualización oficial completa..."):
@@ -172,7 +199,10 @@ def main():
         st.error("No hay fuentes Dropbox configuradas. Para operar este botón debes cargar variables DROPBOX_* o usar STREAMLIT_SECRETS_TOML.")
 
     st.markdown("---")
-    st.subheader("Qué mirar")
+    render_section_intro(
+        "Qué revisar cuando algo no cuadra",
+        "Estas cuatro señales te dicen si el problema está en Dropbox, en la base oficial o en la capa SQL que publica PostgREST.",
+    )
     st.markdown(
         """
         1. Si `Tablas raw con datos` es menor a 5, la base oficial aún no está lista.
@@ -182,11 +212,13 @@ def main():
         """
     )
 
-    st.subheader("Detalle actual de la base oficial")
-    st.dataframe(snapshot["raw_df"], use_container_width=True)
+    tab_base, tab_logs = st.tabs(["Detalle actual", "Últimos eventos"])
 
-    st.subheader("Últimos eventos de sincronización")
-    if snapshot["latest_runs_df"].empty:
-        st.info("Aún no hay registros recientes en sync_run_log para esta base.")
-    else:
-        st.dataframe(snapshot["latest_runs_df"], use_container_width=True)
+    with tab_base:
+        st.dataframe(snapshot["raw_df"], use_container_width=True)
+
+    with tab_logs:
+        if snapshot["latest_runs_df"].empty:
+            st.info("Aún no hay registros recientes en sync_run_log para esta base.")
+        else:
+            st.dataframe(snapshot["latest_runs_df"], use_container_width=True)

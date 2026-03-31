@@ -401,9 +401,30 @@ def upload_dataframe(db_uri, dataframe, target_table, mode="truncate_append", ex
         dataframe.to_sql(target_table, connection, schema="public", if_exists="replace", index=False)
 
 
+def resolve_sql_script_path(sql_file_path):
+    """Resuelve rutas SQL relativas al proyecto para ejecución local y en contenedor."""
+    candidate = Path(sql_file_path)
+    if candidate.is_absolute() and candidate.exists():
+        return candidate
+
+    project_root = Path(__file__).resolve().parent.parent
+    search_paths = [
+        Path.cwd() / candidate,
+        project_root / candidate,
+        project_root / "backend" / candidate.name,
+    ]
+
+    for search_path in search_paths:
+        resolved = search_path.resolve()
+        if resolved.exists():
+            return resolved
+
+    return (project_root / candidate).resolve()
+
+
 def execute_sql_script(db_uri, sql_file_path):
     """Ejecuta un archivo SQL completo sobre PostgreSQL."""
-    script_path = Path(sql_file_path).resolve()
+    script_path = resolve_sql_script_path(sql_file_path)
     if not script_path.exists():
         raise FileNotFoundError(f"No se encontró el archivo SQL: {script_path}")
 
