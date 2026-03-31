@@ -44,7 +44,7 @@ def main():
         f"{metrics['conversaciones_por_cerrar']} listas para gestión final, {metrics['tareas_pendientes']} tareas pendientes y {postgrest_status}. Estado de base: <strong>{base_status}</strong>."
     )
 
-    metric_cols = st.columns(6)
+    metric_cols = st.columns(7)
     cards = [
         ("Conversaciones activas", metrics["conversaciones_activas"], "Clientes que hoy siguen abiertos o pendientes."),
         ("Listas para gestionar", metrics["conversaciones_por_cerrar"], "Clientes que ya dieron cierre y solo necesitan gestión final."),
