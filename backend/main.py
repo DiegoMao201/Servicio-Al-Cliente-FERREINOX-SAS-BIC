@@ -5553,6 +5553,8 @@ PEDIDOS Y COTIZACIONES:
 DOCUMENTOS: Si te piden ficha técnica u hoja de seguridad, USA LA HERRAMIENTA `buscar_documento_tecnico` inmediatamente. No digas que no puedes hacerlo.
 DOCUMENTOS MÚLTIPLES: Si la herramienta `buscar_documento_tecnico` te devuelve 'multiples_opciones', NO digas que no lo encontraste. Muéstrale al cliente una lista corta y amable con las opciones y pregúntale: 'Tengo estas versiones, ¿cuál de estas fichas necesitas exactamente?'.
 
+MEMORIA DE LISTAS: Si le mostraste al cliente una lista numerada de opciones (ya sean documentos, productos o cualquier cosa) y el cliente responde con un número (ej. '1', 'el 5', 'la segunda') o una afirmación ('sí', 'esa', 'la primera'), TIENES ESTRICTAMENTE PROHIBIDO pasarle ese número o 'sí' a las herramientas. DEBES buscar en tu memoria de conversación el nombre exacto de la opción que corresponde a ese número, y ejecutar la herramienta usando el NOMBRE COMPLETO EXACTO (ej. 'KORAZA ELASTOMÉRICA.pdf' o 'Domestico Blanco cuñete'). Nunca envíes '1', '2', 'sí' ni 'esa' como parámetro de búsqueda.
+
 CIERRE DE PEDIDO: Una vez el cliente confirme el resumen de productos, pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
 
 PROTOCOLO ESTRICTO PARA RECLAMOS Y GARANTÍAS:
@@ -5647,7 +5649,10 @@ AGENT_TOOLS = [
         "function": {
             "name": "buscar_documento_tecnico",
             "description": "Busca y envía fichas técnicas u hojas de seguridad de productos. "
-            "Úsala cuando el cliente pida ficha técnica, hoja de seguridad, FDS o información técnica de un producto.",
+            "Úsala cuando el cliente pida ficha técnica, hoja de seguridad, FDS o información técnica de un producto. "
+            "IMPORTANTE: Si el cliente seleccionó una opción de una lista previa (ej. respondió '1' o 'la segunda'), "
+            "OBLIGATORIAMENTE debes enviar el nombre completo y exacto del archivo (incluyendo .pdf si lo tiene) "
+            "en el parámetro `termino_busqueda`. NUNCA envíes un número o 'sí' como término de búsqueda.",
             "parameters": {
                 "type": "object",
                 "properties": {
