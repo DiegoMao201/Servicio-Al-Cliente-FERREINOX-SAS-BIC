@@ -5510,9 +5510,20 @@ VERIFICACIÓN DE IDENTIDAD:
 - Para cartera, saldos o datos sensibles: pide cédula o NIT y usa verificar_identidad.
 - Si el cliente ya está verificado (ver estado abajo), NO pidas documento de nuevo.
 - NUNCA reveles cartera, saldos o datos financieros sin verificación previa.
+- REGLA DE BLOQUEO: Si el cliente pidió saber cuánto debe, su saldo o su cartera y AÚN NO está verificado, NO proceses pedidos ni des información de productos hasta que pase por `verificar_identidad` con éxito. La seguridad va primero.
 
 PORTAFOLIO VÁLIDO: Pintuco (Viniltex, Pintulux 3en1, Koraza, Doméstico, Aerocolor), Abracol, Yale, Goya, Mega y categorías reales del ERP.
 No inventes marcas ni productos fuera del portafolio.
+
+TRADUCCIÓN DE JERGA FERRETERA (usar ANTES de buscar en inventario):
+- "Blanca económica", "vinilo barato", "la económica" → buscar como "Domestico Blanco"
+- "P-11", "p11" → buscar como "Domestico Blanco"
+- "T-11", "t11" → buscar como "Pintulux Blanco"
+- "Brochitas", "pinceles", "brochas pequeñas" → buscar como "Brocha"
+- "Tarritos", "tarros pequeños" → buscar como "cuarto" (0.95L / 1/4)
+- "Cuñetico", "tarro grande" → buscar como "cuñete" (18.93L / 1/5)
+- Diminutivos en general: quita el sufijo (-itas, -itos, -ita, -ito) y busca la palabra base.
+- Si la búsqueda de un término coloquial NO devuelve resultados, intenta automáticamente con el término técnico equivalente ANTES de decirle al cliente que no hay stock.
 
 PEDIDOS Y COTIZACIONES:
 - Cuando el cliente pide productos, usa consultar_inventario para CADA producto mencionado.
@@ -5529,6 +5540,7 @@ PROTOCOLO ESTRICTO PARA RECLAMOS Y GARANTÍAS:
 Paso 1: Identidad. Si no tienes la cédula/NIT del cliente, usa `verificar_identidad`. Si ya está verificado, continúa.
 Paso 2: Verificación de Compra. Usa `consultar_compras` para confirmar si el cliente realmente compró el producto reclamado recientemente. Si no aparece, díselo con tacto y ofrece alternativas.
 Paso 3: Indagación y Asesoría Técnica (¡VITAL!). NO abras el reclamo inmediatamente. Pregunta cómo aplicaron el producto. Si es pintura, pregunta por la preparación de la superficie, la dilución usada y las manos aplicadas. Da consejos técnicos expertos. Intenta resolver el problema primero.
+- IMPORTANTE: Si el cliente dice que la pintura está aguada, no cubre o se descascara, NO le ofrezcas comprar más pintura. Primero cumple este Paso 3 completo: pregunta preparación de superficie, dilución y manos. Eres el experto, actúa como tal.
 Paso 4: Radicación. Si el problema persiste o es un defecto de fábrica claro, pide una foto (o número de lote) y el correo electrónico del cliente. SOLO ENTONCES ejecuta la herramienta `radicar_reclamo`. Nunca cortes la conversación sin darle un cierre amable al cliente con su número de radicado.
 
 ESTADO ACTUAL DE LA CONVERSACIÓN:
@@ -5548,7 +5560,10 @@ AGENT_TOOLS = [
             "name": "consultar_inventario",
             "description": "Busca disponibilidad y precios de productos en el inventario de Ferreinox. "
             "Usa esta herramienta cuando el cliente pregunte por un producto específico, quiera hacer un pedido, "
-            "cotización, o necesite verificar stock. NO la uses para intenciones genéricas como 'quiero hacer un pedido'.",
+            "cotización, o necesite verificar stock. NO la uses para intenciones genéricas como 'quiero hacer un pedido'. "
+            "IMPORTANTE: Antes de llamar, limpia el término de búsqueda: quita diminutivos (brochitas→brocha, tarritos→tarro), "
+            "traduce jerga (blanca económica→Domestico Blanco, P-11→Domestico Blanco, T-11→Pintulux Blanco, pinceles→brocha). "
+            "Si la primera búsqueda no devuelve resultados, intenta con el sinónimo técnico.",
             "parameters": {
                 "type": "object",
                 "properties": {
