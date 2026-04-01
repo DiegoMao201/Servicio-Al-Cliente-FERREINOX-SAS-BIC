@@ -5546,6 +5546,40 @@ def serve_commercial_pdf(pdf_id: str):
     )
 
 
+@app.post("/conversations/{conversation_id}/reset")
+def reset_conversation_context(conversation_id: int):
+    """Clear all conversation context so the agent starts fresh."""
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT id
+                FROM public.agent_conversation
+                WHERE id = :conversation_id
+                """
+            ),
+            {"conversation_id": conversation_id},
+        ).mappings().one_or_none()
+        if not row:
+            raise HTTPException(status_code=404, detail="Conversación no encontrada")
+        connection.execute(
+            text(
+                """
+                UPDATE public.agent_conversation
+                SET contexto = '{}'::jsonb,
+                    resumen = 'Contexto reiniciado manualmente',
+                    estado = 'abierta',
+                    updated_at = now(),
+                    last_message_at = now()
+                WHERE id = :conversation_id
+                """
+            ),
+            {"conversation_id": conversation_id},
+        )
+    return {"status": "ok", "conversation_id": conversation_id, "message": "Contexto limpiado"}
+
+
 @app.post("/webhooks/whatsapp")
 async def receive_whatsapp_webhook(request: Request):
     payload = await request.json()

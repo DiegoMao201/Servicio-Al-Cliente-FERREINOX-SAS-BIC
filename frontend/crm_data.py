@@ -228,6 +228,28 @@ def mark_conversation_as_managed(db_uri, conversation_id, resolution_note=None, 
     return {"resolved_tasks": resolved_tasks}
 
 
+def reset_conversation_context(db_uri, conversation_id):
+    """Clear all conversation context so the agent starts fresh."""
+    engine = create_engine(db_uri)
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                UPDATE public.agent_conversation
+                SET contexto = '{}'::jsonb,
+                    resumen = 'Contexto reiniciado manualmente',
+                    estado = 'abierta',
+                    updated_at = now(),
+                    last_message_at = now()
+                WHERE id = :conversation_id
+                """
+            ),
+            {"conversation_id": conversation_id},
+        )
+    load_crm_hub_snapshot.clear()
+    load_conversation_detail.clear()
+
+
 def reopen_conversation_for_followup(db_uri, conversation_id, note=None):
     engine = create_engine(db_uri)
     with engine.begin() as connection:

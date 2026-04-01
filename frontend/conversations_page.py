@@ -7,6 +7,7 @@ from frontend.crm_data import (
     load_crm_hub_snapshot,
     mark_conversation_as_managed,
     reopen_conversation_for_followup,
+    reset_conversation_context,
 )
 from frontend.ui import render_highlight, render_message, render_metric_card, render_page_hero, render_section_intro, render_status_pill
 
@@ -154,7 +155,7 @@ def main():
         height=90,
     )
 
-    action_col_1, action_col_2 = st.columns(2)
+    action_col_1, action_col_2, action_col_3 = st.columns(3)
     with action_col_1:
         close_disabled = bool(closure_recommendation["already_managed"])
         if st.button("Marcar como gestionada y cerrar", use_container_width=True, disabled=close_disabled):
@@ -171,6 +172,11 @@ def main():
         if st.button("Reabrir para seguimiento", use_container_width=True, disabled=reopen_disabled):
             reopen_conversation_for_followup(db_uri, conversation_id, note=resolution_note or None)
             st.success("La conversación volvió a seguimiento.")
+            st.rerun()
+    with action_col_3:
+        if st.button("🔄 Reiniciar conversación", use_container_width=True, type="secondary"):
+            reset_conversation_context(db_uri, conversation_id)
+            st.success("Contexto limpiado. El agente arranca desde cero con este contacto.")
             st.rerun()
 
     context_df = pd.DataFrame(
