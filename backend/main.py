@@ -4,8 +4,10 @@ import re
 import time
 import tomllib
 import unicodedata
+import io
+import uuid
 from difflib import SequenceMatcher
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from html import escape
 from pathlib import Path
 from typing import Optional
@@ -13,6 +15,7 @@ from typing import Optional
 import dropbox
 import requests
 from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from openai import OpenAI
 from sqlalchemy import create_engine, text
 
@@ -187,6 +190,22 @@ ORDER_KEYWORDS = [
     "realizar un pedido",
     "orden de compra",
     "confirmar pedido",
+    "necesito pedido",
+    "necesito un pedido",
+    "quiero pedido",
+    "quiero un pedido",
+    "quiero hacer",
+    "necesito hacer",
+    "a ser un pedido",
+    "aser un pedido",
+    "acer un pedido",
+    "acer pedido",
+    "pedir productos",
+    "pedir producto",
+    "armar pedido",
+    "armar un pedido",
+    "pasar pedido",
+    "pasar un pedido",
 ]
 
 
@@ -2521,6 +2540,55 @@ def build_conversation_closing_reply(profile_name: Optional[str]):
     return "¡Con gusto! Quedo por aquí para lo que necesites 👋"
 
 
+def is_nudge_or_followup(text_value: Optional[str]):
+    """Detects short follow-up nudges like '?', 'y?', 'entonces?', 'hola?'."""
+    lowered = normalize_text_value(text_value)
+    if not lowered:
+        return False
+    return bool(re.match(r"^[?!¿¡.\s]+$", lowered) or re.match(
+        r"^(y|entonces|que paso|qué pasó|que pasa|que hay|hola|ey|oye|bueno|listo|y entonces|y que|y qué|dale|alo|aló|hey)[?!¿¡.\s]*$",
+        lowered,
+    ))
+
+
+def build_nudge_reply(conversation_context: Optional[dict]):
+    """Build a reply for nudge messages based on the active flow."""
+    context = conversation_context or {}
+    active_intent = context.get("last_direct_intent") or context.get("intent")
+    claim_case = context.get("claim_case") or {}
+    commercial_draft = context.get("commercial_draft") or {}
+
+    if claim_case.get("active") and not claim_case.get("submitted"):
+        step = claim_case.get("step")
+        if step == "awaiting_product":
+            return "Disculpa la demora. ¿Me cuentas qué producto es el del reclamo?"
+        elif step == "awaiting_detail":
+            return "Sigo acá. ¿Me cuentas qué pasó con el producto?"
+        elif step == "awaiting_evidence":
+            return "Estoy pendiente. ¿Tienes alguna foto o número de lote para el caso?"
+        elif step == "awaiting_email":
+            return "Solo me falta tu correo para enviarte la constancia del caso. ¿Me lo regalas?"
+        return "Sigo acá pendiente, ¿en qué íbamos?"
+
+    if active_intent in {"pedido", "cotizacion"} or commercial_draft.get("intent"):
+        items = commercial_draft.get("items") or []
+        if items:
+            matched = sum(1 for i in items if i.get("status") == "matched")
+            pending = len(items) - matched
+            if pending > 0:
+                return f"Ya tengo {matched} producto(s) listos y me faltan {pending} por precisar. ¿Me confirmas esos que quedaron pendientes?"
+            if not commercial_draft.get("store_filters"):
+                return "Ya tengo los productos listos. ¿En qué tienda o ciudad los necesitas?"
+            return "Ya tengo todo listo. ¿Te confirmo el pedido por aquí o te lo mando al correo?"
+        label = "cotización" if active_intent == "cotizacion" else "pedido"
+        return f"Claro, seguimos con el {label}. ¿Qué productos necesitas?"
+
+    if context.get("awaiting_verification"):
+        return "Sigo esperando tu número de cédula o NIT para poder revisarte esa info 🔒"
+
+    return None
+
+
 def should_continue_claim_flow(conversation_context: Optional[dict], detected_intent: Optional[str], text_value: Optional[str]):
     claim_case = dict((conversation_context or {}).get("claim_case") or {})
     if not claim_case.get("active") or claim_case.get("submitted"):
@@ -2539,9 +2607,20 @@ def should_continue_claim_flow(conversation_context: Optional[dict], detected_in
     return True
 
 
+QUANTITY_WORD_MAP = {
+    "un": 1, "una": 1, "uno": 1,
+    "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5,
+    "seis": 6, "siete": 7, "ocho": 8, "nueve": 9, "diez": 10,
+    "once": 11, "doce": 12, "quince": 15, "veinte": 20,
+    "medio": 0.5, "media": 0.5,
+}
+
+
 def should_continue_commercial_flow(conversation_context: Optional[dict], detected_intent: Optional[str], text_value: Optional[str]):
     context = conversation_context or {}
     active_intent = context.get("last_direct_intent")
+    if not active_intent and context.get("intent") in {"pedido", "cotizacion"}:
+        active_intent = context.get("intent")
     commercial_draft = dict(context.get("commercial_draft") or {})
     if active_intent not in {"pedido", "cotizacion"}:
         return False
@@ -2560,7 +2639,16 @@ def should_continue_commercial_flow(conversation_context: Optional[dict], detect
         return True
     if len(split_commercial_line_items(text_value)) >= 2:
         return True
-    return bool(re.search(r"\b\d+\s*/\s*(1|4|5)\b", normalized))
+    if bool(re.search(r"\b\d+\s*/\s*(1|4|5)\b", normalized)):
+        return True
+
+    quantity_words_pattern = "|".join(QUANTITY_WORD_MAP.keys())
+    if re.search(r"(?:\d+|(?:" + quantity_words_pattern + r"))\s+\w+", normalized):
+        extracted = extract_product_request(text_value)
+        if extracted.get("core_terms") and (extracted.get("requested_quantity") or extracted.get("requested_unit")):
+            return True
+
+    return False
 
 
 def split_commercial_line_items(text_value: Optional[str]):
@@ -2578,6 +2666,27 @@ def split_commercial_line_items(text_value: Optional[str]):
         split_candidates = [segment.strip() for segment in re.split(r"\s{2,}|,(?=\s*\d)|(?<=\")\s+(?=\d)", text_value) if segment.strip()]
         if len(split_candidates) >= 2:
             return split_candidates
+
+    quantity_words_pattern = "|".join(QUANTITY_WORD_MAP.keys())
+    qty_boundary = re.compile(
+        r"(?<=\S)\s+(?=(?:\d+|" + quantity_words_pattern + r")\s+(?:cunetes?|cuñetes?|galones?|galon|cuartos?|canecas?|cubetas?|rodillos?|brochas?|bochas?|lijas?|cintas?|bultos?|kilos?|metros?|rollos?|tubos?|tarros?|cajas?|paquetes?|unidades?)\b)",
+        re.IGNORECASE,
+    )
+    split_candidates = [segment.strip() for segment in qty_boundary.split(text_value) if segment.strip()]
+    if len(split_candidates) >= 2:
+        return split_candidates
+
+    comma_split = [segment.strip() for segment in re.split(r",\s*", text_value) if segment.strip()]
+    if len(comma_split) >= 2:
+        product_like = sum(1 for seg in comma_split if re.search(r"\d|" + quantity_words_pattern, seg.lower()))
+        if product_like >= 2:
+            return comma_split
+
+    y_split = [segment.strip() for segment in re.split(r"\by\b", text_value, flags=re.IGNORECASE) if segment.strip()]
+    if len(y_split) >= 2:
+        product_like = sum(1 for seg in y_split if re.search(r"\d|" + quantity_words_pattern, seg.lower()))
+        if product_like >= 2:
+            return y_split
 
     return lines if lines else [text_value.strip()]
 
@@ -2808,23 +2917,23 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     destination_label = store_label or "la sede indicada"
     if not delivery_channel:
         response_text = (
-            f"Perfecto, ya te dejé organizada la solicitud de {request_label} para {destination_label} con {compact_summary}. "
-            "¿Prefieres que te la confirme por aquí o que te la envíe al correo?"
+            f"¡Listo! Ya te dejé montado el {request_label} para {destination_label} con {compact_summary}. "
+            "¿Te lo confirmo por aquí o prefieres que te envíe un PDF al correo?"
         )
     elif delivery_channel == "email" and not contact_email:
         response_text = (
-            f"Perfecto, ya tengo lista la solicitud de {request_label} para {destination_label} con {compact_summary}. "
-            "Regálame el correo y te la envío bien presentada."
+            f"¡Listo! Ya tengo el {request_label} para {destination_label} con {compact_summary}. "
+            "Regálame tu correo y te mando el PDF con todo el detalle."
         )
     elif delivery_channel == "email":
         response_text = (
-            f"Perfecto, ya te dejé lista la solicitud de {request_label} para {destination_label} con {compact_summary}. "
-            f"Te la envío al correo {contact_email} para que te quede formalizada."
+            f"¡Listo! Ya te dejé montado el {request_label} para {destination_label} con {compact_summary}. "
+            f"Te va a llegar al correo {contact_email} un PDF con el detalle de las referencias y cantidades."
         )
     else:
         response_text = (
-            f"Perfecto, ya te dejé lista la solicitud de {request_label} para {destination_label} con {compact_summary}. "
-            "Te queda confirmada por aquí y si luego quieres también te la mando al correo."
+            f"¡Listo! Ya te dejé montado el {request_label} para {destination_label} con {compact_summary}. "
+            "Te envío el PDF por aquí mismo para que lo tengas de referencia 📄"
         )
 
     final_confirmation_ready = ready_to_close and (delivery_channel == "chat" or (delivery_channel == "email" and bool(contact_email)))
@@ -2901,6 +3010,8 @@ def detect_business_intent(text_value: Optional[str]):
     if any(keyword in lowered for keyword in QUOTE_KEYWORDS):
         return "cotizacion"
     if any(keyword in lowered for keyword in ORDER_KEYWORDS):
+        return "pedido"
+    if re.search(r"\b(necesito|quiero|quisiera|me gustaria|podria|puedo)\b.*\bpedido\b", lowered):
         return "pedido"
     if is_technical_advisory_message(text_value):
         return "asesoria_tecnica"
@@ -3658,6 +3769,205 @@ def is_purchase_followup_message(text_value: Optional[str], conversation_context
         "productos comprados",
     ]
     return any(phrase in normalized for phrase in followup_phrases)
+
+
+PDF_STORAGE: dict[str, dict] = {}
+
+
+def generate_commercial_pdf(
+    conversation_id: int,
+    request_type: str,
+    profile_name: Optional[str],
+    cliente_contexto: Optional[dict],
+    detail: dict,
+):
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.units import mm, inch
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=20 * mm, bottomMargin=20 * mm, leftMargin=20 * mm, rightMargin=20 * mm)
+    styles = getSampleStyleSheet()
+
+    brand_dark = colors.HexColor("#111827")
+    brand_accent = colors.HexColor("#F59E0B")
+    brand_light_bg = colors.HexColor("#F9FAFB")
+    brand_border = colors.HexColor("#E5E7EB")
+    white = colors.white
+
+    title_style = ParagraphStyle("Title", parent=styles["Title"], fontSize=22, textColor=white, alignment=TA_LEFT, spaceAfter=4)
+    subtitle_style = ParagraphStyle("Subtitle", parent=styles["Normal"], fontSize=10, textColor=colors.HexColor("#D1D5DB"), alignment=TA_LEFT)
+    heading_style = ParagraphStyle("Heading", parent=styles["Heading2"], fontSize=13, textColor=brand_dark, spaceBefore=14, spaceAfter=6)
+    normal_style = ParagraphStyle("Body", parent=styles["Normal"], fontSize=10, textColor=brand_dark, leading=14)
+    small_style = ParagraphStyle("Small", parent=styles["Normal"], fontSize=8, textColor=colors.HexColor("#6B7280"), leading=11)
+    right_style = ParagraphStyle("Right", parent=styles["Normal"], fontSize=10, textColor=brand_dark, alignment=TA_RIGHT)
+
+    request_label = "Pedido" if request_type == "pedido" else "Cotización"
+    case_ref = f"CRM-{conversation_id}"
+    now = datetime.now()
+    date_str = now.strftime("%d/%m/%Y")
+    time_str = now.strftime("%I:%M %p")
+    cliente_label = (cliente_contexto or {}).get("nombre_cliente") or profile_name or "Cliente Ferreinox"
+    cliente_codigo = (cliente_contexto or {}).get("cliente_codigo") or ""
+    cliente_nit = (cliente_contexto or {}).get("nit") or (cliente_contexto or {}).get("documento") or ""
+    store_filters = detail.get("store_filters") or []
+    store_name = STORE_CODE_LABELS.get(store_filters[0]) if len(store_filters) == 1 else (", ".join(STORE_CODE_LABELS.get(c, c) for c in store_filters) if store_filters else "Por definir")
+    delivery_channel = detail.get("delivery_channel") or "chat"
+    contact_email = detail.get("contact_email") or (cliente_contexto or {}).get("email") or ""
+
+    elements = []
+
+    header_data = [
+        [
+            Paragraph(f"<b>FERREINOX S.A.S. BIC</b>", title_style),
+            Paragraph(f"<b>{request_label}</b>", ParagraphStyle("RightTitle", parent=title_style, alignment=TA_RIGHT)),
+        ],
+        [
+            Paragraph("NIT 900.123.456-7 | Pereira, Colombia", subtitle_style),
+            Paragraph(f"Ref: {case_ref} | {date_str}", ParagraphStyle("RightSub", parent=subtitle_style, alignment=TA_RIGHT)),
+        ],
+    ]
+    header_table = Table(header_data, colWidths=[doc.width * 0.55, doc.width * 0.45])
+    header_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), brand_dark),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, 0), 16),
+        ("BOTTOMPADDING", (0, -1), (-1, -1), 14),
+        ("LEFTPADDING", (0, 0), (-1, -1), 16),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 16),
+        ("ROUNDEDCORNERS", [8, 8, 0, 0]),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 4 * mm))
+
+    info_data = [
+        [Paragraph("<b>Cliente</b>", normal_style), Paragraph(str(cliente_label), normal_style)],
+        [Paragraph("<b>Cód. Cliente</b>", normal_style), Paragraph(str(cliente_codigo) if cliente_codigo else "—", normal_style)],
+        [Paragraph("<b>NIT / Cédula</b>", normal_style), Paragraph(str(cliente_nit) if cliente_nit else "—", normal_style)],
+        [Paragraph("<b>Tienda / Ciudad</b>", normal_style), Paragraph(str(store_name), normal_style)],
+        [Paragraph("<b>Canal</b>", normal_style), Paragraph(str(delivery_channel).title(), normal_style)],
+        [Paragraph("<b>Correo</b>", normal_style), Paragraph(str(contact_email) if contact_email else "—", normal_style)],
+        [Paragraph("<b>Fecha</b>", normal_style), Paragraph(f"{date_str} - {time_str}", normal_style)],
+    ]
+    info_table = Table(info_data, colWidths=[doc.width * 0.28, doc.width * 0.72])
+    info_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), brand_light_bg),
+        ("BOX", (0, 0), (-1, -1), 0.5, brand_border),
+        ("INNERGRID", (0, 0), (-1, -1), 0.3, brand_border),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 6 * mm))
+
+    elements.append(Paragraph(f"Detalle del {request_label}", heading_style))
+    elements.append(HRFlowable(width="100%", thickness=1, color=brand_accent, spaceBefore=2, spaceAfter=4))
+
+    items = detail.get("items") or []
+    matched_items = [item for item in items if item.get("status") == "matched"]
+    table_header = [
+        Paragraph("<b>#</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
+        Paragraph("<b>Producto</b>", ParagraphStyle("TH", parent=normal_style, textColor=white)),
+        Paragraph("<b>Referencia</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
+        Paragraph("<b>Cantidad</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
+        Paragraph("<b>Disponibilidad</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
+    ]
+    table_data = [table_header]
+
+    for idx, item in enumerate(matched_items, start=1):
+        matched_product = item.get("matched_product") or {}
+        raw_desc = matched_product.get("descripcion") or matched_product.get("nombre_articulo") or item.get("original_text") or "Producto"
+        presentation = infer_product_presentation_from_row(matched_product)
+        brand = infer_product_brand_from_row(matched_product)
+        commercial_name = translate_product_to_commercial(raw_desc, presentation, brand)
+        ref_code = matched_product.get("referencia") or matched_product.get("codigo_articulo") or "—"
+        req = item.get("product_request") or {}
+        qty_val = req.get("requested_quantity")
+        qty_unit = req.get("requested_unit")
+        if qty_val and qty_unit:
+            qty_label = f"{format_quantity(qty_val)} {qty_unit}"
+        elif qty_val:
+            qty_label = format_quantity(qty_val)
+        else:
+            qty_label = "Por confirmar"
+        stock_val = parse_numeric_value(matched_product.get("stock_total") if matched_product.get("stock_total") is not None else matched_product.get("stock")) or 0
+        availability = "✅ Disponible" if stock_val > 0 else "⚠️ Agotado"
+
+        row_bg = white if idx % 2 == 1 else brand_light_bg
+        table_data.append([
+            Paragraph(str(idx), ParagraphStyle("Cell", parent=normal_style, alignment=TA_CENTER)),
+            Paragraph(commercial_name, normal_style),
+            Paragraph(str(ref_code), ParagraphStyle("Cell", parent=normal_style, alignment=TA_CENTER)),
+            Paragraph(qty_label, ParagraphStyle("Cell", parent=normal_style, alignment=TA_CENTER)),
+            Paragraph(availability, ParagraphStyle("Cell", parent=normal_style, alignment=TA_CENTER)),
+        ])
+
+    if not matched_items:
+        table_data.append([Paragraph("—", normal_style)] * 5)
+
+    col_widths = [doc.width * 0.06, doc.width * 0.38, doc.width * 0.18, doc.width * 0.18, doc.width * 0.20]
+    items_table = Table(table_data, colWidths=col_widths, repeatRows=1)
+    table_style_cmds = [
+        ("BACKGROUND", (0, 0), (-1, 0), brand_dark),
+        ("TEXTCOLOR", (0, 0), (-1, 0), white),
+        ("BOX", (0, 0), (-1, -1), 0.5, brand_border),
+        ("INNERGRID", (0, 0), (-1, -1), 0.3, brand_border),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+    ]
+    for row_idx in range(1, len(table_data)):
+        bg = white if row_idx % 2 == 1 else brand_light_bg
+        table_style_cmds.append(("BACKGROUND", (0, row_idx), (-1, row_idx), bg))
+    items_table.setStyle(TableStyle(table_style_cmds))
+    elements.append(items_table)
+    elements.append(Spacer(1, 6 * mm))
+
+    total_items = len(matched_items)
+    pending_items = len([i for i in items if i.get("status") != "matched"])
+    summary_text = f"<b>Total productos confirmados:</b> {total_items}"
+    if pending_items > 0:
+        summary_text += f" — <i>{pending_items} pendiente(s) por precisar</i>"
+    elements.append(Paragraph(summary_text, normal_style))
+    elements.append(Spacer(1, 8 * mm))
+
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=brand_border, spaceBefore=4, spaceAfter=4))
+    elements.append(Paragraph(
+        "Este documento es un resumen de la solicitud generada desde el CRM Ferreinox. "
+        "No incluye precios. Un asesor comercial completará el proceso de facturación.",
+        small_style,
+    ))
+    elements.append(Spacer(1, 3 * mm))
+    elements.append(Paragraph(
+        f"Ferreinox S.A.S. BIC | Pereira, Colombia | {date_str}",
+        ParagraphStyle("Footer", parent=small_style, alignment=TA_CENTER),
+    ))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
+
+
+def store_commercial_pdf(conversation_id: int, request_type: str, profile_name: Optional[str], cliente_contexto: Optional[dict], detail: dict):
+    pdf_buffer = generate_commercial_pdf(conversation_id, request_type, profile_name, cliente_contexto, detail)
+    pdf_id = uuid.uuid4().hex[:12]
+    request_label = "Pedido" if request_type == "pedido" else "Cotizacion"
+    filename = f"Ferreinox_{request_label}_CRM-{conversation_id}_{pdf_id}.pdf"
+    PDF_STORAGE[pdf_id] = {
+        "buffer": pdf_buffer.getvalue(),
+        "filename": filename,
+        "created_at": datetime.now().isoformat(),
+        "conversation_id": conversation_id,
+    }
+    return pdf_id, filename
 
 
 def fetch_last_year_purchase_summary(cliente_codigo: Optional[str]):
@@ -4578,7 +4888,12 @@ def build_agent_prompt(
                 "   - Si dice reclamo, queja, garantía → RECLAMO, activa empatía y protocolo paso a paso. NO crees ticket hasta tener producto, problema y correo.\n"
                 "   - Si pide cartera, saldos → CARTERA, valida identidad primero.\n"
                 "6. NUNCA busques verbos o intenciones como parámetro de inventario. 'necesito hacer un pedido' es una INTENCIÓN, no un producto.\n"
-                "7. TÚ GUÍAS AL CLIENTE. Siempre termina con una pregunta amable que lleve al siguiente paso.\n\n"
+                "7. TÚ GUÍAS AL CLIENTE. Siempre termina con una pregunta amable que lleve al siguiente paso.\n"
+                "8. PREGUNTAS CASUALES O FUERA DE TEMA: Si el cliente pregunta algo que NO es del negocio (ej. 'cuánto es 10+10', un chiste, el clima), "
+                "responde brevemente con naturalidad y luego redirige: 'Jaja, son 20 😄 Bueno, ¿seguimos con el pedido?' NO ignores la pregunta, pero tampoco te quedes en ella.\n"
+                "9. FLUJO ACTIVO: Si hay un pedido, cotización o reclamo en curso (revisa el historial reciente), NO lo abandones. "
+                "Si el cliente cambia de tema brevemente, contesta y retoma el flujo activo. Solo abandona el flujo si el cliente explícitamente dice que ya no lo quiere.\n"
+                "10. NUNCA digas 'Un momento, por favor', 'Voy a verificar', 'Déjame revisar' como respuesta final. Tú ya tienes la info o no la tienes. Responde directamente.\n\n"
                 "PORTAFOLIO VÁLIDO: Pintuco (Viniltex, Doméstico, Pintulux 3en1, Koraza, Aerocolor), Abracol, Yale, Goya, Mega y las categorías reales del ERP. "
                 "No inventes marcas fuera del portafolio.\n\n"
                 "JERGA FERRETERA: 18.93L o 1/5 = cuñete, 3.79L o 1/1 = galón, 0.95L o 1/4 = cuarto, 2/5 = 2 cuñetes, 3/1 = 3 galones.\n\n"
@@ -4656,7 +4971,7 @@ def build_fallback_agent_result(user_message: str, error_message: str):
         "intent": "consulta_general",
         "priority": "media",
         "summary": user_message[:200] if user_message else "Consulta entrante",
-        "response_text": "Gracias por escribirnos. Recibimos tu mensaje y un asesor lo revisará en breve.",
+        "response_text": "Recibimos tu mensaje. Un asesor te contactará pronto.",
         "should_create_task": True,
         "task_type": "revision_manual",
         "task_summary": "Revisar conversacion con falla en respuesta automatica",
@@ -4777,6 +5092,18 @@ def verify_whatsapp_webhook(
     if hub_mode == "subscribe" and hub_verify_token == get_whatsapp_verify_token():
         return int(hub_challenge)
     raise HTTPException(status_code=403, detail="Token de verificación inválido")
+
+
+@app.get("/pdf/{pdf_id}")
+def serve_commercial_pdf(pdf_id: str):
+    entry = PDF_STORAGE.get(pdf_id)
+    if not entry:
+        raise HTTPException(status_code=404, detail="PDF no encontrado o expirado")
+    return StreamingResponse(
+        io.BytesIO(entry["buffer"]),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"inline; filename=\"{entry['filename']}\""},
+    )
 
 
 @app.post("/webhooks/whatsapp")
@@ -5010,6 +5337,44 @@ async def receive_whatsapp_webhook(request: Request):
                     "sensitive_request": sensitive_request,
                 }
 
+                if is_nudge_or_followup(content):
+                    nudge_reply = build_nudge_reply(conversation_context)
+                    if nudge_reply:
+                        outbound_payload = None
+                        try:
+                            outbound_payload = send_whatsapp_text_message(context["telefono_e164"], nudge_reply)
+                            provider_message_id = None
+                            if outbound_payload.get("messages"):
+                                provider_message_id = outbound_payload["messages"][0].get("id")
+                            store_outbound_message(
+                                context["conversation_id"],
+                                provider_message_id,
+                                "text",
+                                nudge_reply,
+                                outbound_payload,
+                                intent_detectado="nudge_followup",
+                            )
+                        except Exception as exc:
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"No fue posible enviar respuesta de seguimiento: {exc}",
+                                {"error": str(exc), "response_text": nudge_reply},
+                                intent_detectado="nudge_followup",
+                            )
+                        processed_messages.append(
+                            {
+                                "conversation_id": context["conversation_id"],
+                                "telefono": context["telefono_e164"],
+                                "message_type": message_type,
+                                "provider_message_id": message.get("id"),
+                                "ai_response_sent": bool(outbound_payload),
+                                "nudge_reply": True,
+                            }
+                        )
+                        continue
+
                 if is_greeting_message(content):
                     response_text = "¡Buenas! 👋 ¿En qué te puedo ayudar hoy?"
                     outbound_payload = None
@@ -5070,7 +5435,7 @@ async def receive_whatsapp_webhook(request: Request):
                     except Exception as exc:
                         ai_result = build_fallback_agent_result(content, str(exc))
 
-                    response_text = ai_result.get("response_text") or "Dame un momento para revisar eso."
+                    response_text = ai_result.get("response_text") or "¿En qué te puedo ayudar?"
                     try:
                         outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
                         provider_message_id = None
@@ -5463,6 +5828,62 @@ async def receive_whatsapp_webhook(request: Request):
                                 f"No fue posible enviar constancia al cliente: {exc}",
                                 {"error": str(exc), "email_to": customer_email_payload["to_email"], "subject": customer_email_payload["subject"]},
                                 intent_detectado="correo_constancia_reclamo",
+                            )
+
+                    commercial_draft_for_pdf = direct_result.get("commercial_draft") or {}
+                    if commercial_draft_for_pdf.get("ready_to_close") and commercial_draft_for_pdf.get("items"):
+                        try:
+                            pdf_id, pdf_filename = store_commercial_pdf(
+                                context["conversation_id"],
+                                direct_result.get("intent") or "pedido",
+                                context.get("nombre_visible"),
+                                cliente_contexto,
+                                commercial_draft_for_pdf,
+                            )
+                            backend_base_url = os.environ.get("BACKEND_PUBLIC_URL", "").rstrip("/")
+                            if backend_base_url:
+                                pdf_url = f"{backend_base_url}/pdf/{pdf_id}"
+                                try:
+                                    send_whatsapp_document_message(
+                                        context["telefono_e164"],
+                                        pdf_url,
+                                        pdf_filename,
+                                        caption=f"📄 Aquí te dejo el PDF de tu {direct_result.get('intent') or 'pedido'} para que lo tengas de referencia.",
+                                    )
+                                    store_outbound_message(
+                                        context["conversation_id"],
+                                        None,
+                                        "system",
+                                        f"PDF comercial enviado por WhatsApp: {pdf_filename}",
+                                        {"pdf_id": pdf_id, "pdf_url": pdf_url, "filename": pdf_filename},
+                                        intent_detectado=f"pdf_{direct_result.get('intent')}",
+                                    )
+                                except Exception as pdf_wa_exc:
+                                    store_outbound_message(
+                                        context["conversation_id"],
+                                        None,
+                                        "system",
+                                        f"PDF generado pero no se pudo enviar por WhatsApp: {pdf_wa_exc}",
+                                        {"error": str(pdf_wa_exc), "pdf_id": pdf_id, "pdf_url": pdf_url},
+                                        intent_detectado=f"pdf_{direct_result.get('intent')}_error",
+                                    )
+                            else:
+                                store_outbound_message(
+                                    context["conversation_id"],
+                                    None,
+                                    "system",
+                                    f"PDF generado (ID: {pdf_id}) pero BACKEND_PUBLIC_URL no configurada para envío",
+                                    {"pdf_id": pdf_id, "filename": pdf_filename},
+                                    intent_detectado=f"pdf_{direct_result.get('intent')}_sin_url",
+                                )
+                        except Exception as pdf_exc:
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"No fue posible generar PDF comercial: {pdf_exc}",
+                                {"error": str(pdf_exc)},
+                                intent_detectado=f"pdf_{direct_result.get('intent')}_error",
                             )
 
                     processed_messages.append(
