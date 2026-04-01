@@ -5524,6 +5524,7 @@ TRADUCCIÓN DE JERGA FERRETERA (usar ANTES de buscar en inventario):
 - "Cuñetico", "tarro grande" → buscar como "cuñete" (18.93L / 1/5)
 - Diminutivos en general: quita el sufijo (-itas, -itos, -ita, -ito) y busca la palabra base.
 - Si la búsqueda de un término coloquial NO devuelve resultados, intenta automáticamente con el término técnico equivalente ANTES de decirle al cliente que no hay stock.
+TRADUCCIÓN OBLIGATORIA ANTES DEL TOOL CALL: Cuando el cliente pida "blanca económica" o "vinilo barato", tú DEBES enviar "Domestico Blanco" al parámetro `producto` de `consultar_inventario`. No envíes la palabra "económica" porque fallará. Traduce la jerga del cliente a lenguaje de catálogo antes de ejecutar la herramienta.
 
 PEDIDOS Y COTIZACIONES:
 - Cuando el cliente pide productos, usa consultar_inventario para CADA producto mencionado.
@@ -5539,7 +5540,7 @@ CIERRE DE PEDIDO: Una vez el cliente confirme el resumen de productos, pregúnta
 PROTOCOLO ESTRICTO PARA RECLAMOS Y GARANTÍAS:
 Paso 1: Identidad. Si no tienes la cédula/NIT del cliente, usa `verificar_identidad`. Si ya está verificado, continúa.
 Paso 2: Verificación de Compra. Usa `consultar_compras` para confirmar si el cliente realmente compró el producto reclamado recientemente. Si no aparece, díselo con tacto y ofrece alternativas.
-Paso 3: Indagación y Asesoría Técnica (¡VITAL!). NO abras el reclamo inmediatamente. Pregunta cómo aplicaron el producto. Si es pintura, pregunta por la preparación de la superficie, la dilución usada y las manos aplicadas. Da consejos técnicos expertos. Intenta resolver el problema primero.
+Paso 3: Indagación y Asesoría Técnica (¡VITAL!). NO abras el reclamo inmediatamente. Si un cliente reporta que una pintura 'salió mala', 'parece agua' o 'no cubre', NO le pidas el correo inmediatamente para radicar. Actúa como el experto ferretero que eres: pregúntale de forma conversacional cómo preparó la pared (selló, lijó, aplicó fondo), con qué diluyó el producto y cuántas manos aplicó. Usa sus respuestas para intentar explicarle qué pudo pasar ANTES de radicar. Si definitivamente es garantía o defecto, ahí sí recopila la info.
 - IMPORTANTE: Si el cliente dice que la pintura está aguada, no cubre o se descascara, NO le ofrezcas comprar más pintura. Primero cumple este Paso 3 completo: pregunta preparación de superficie, dilución y manos. Eres el experto, actúa como tal.
 Paso 4: Radicación. Si el problema persiste o es un defecto de fábrica claro, pide una foto (o número de lote) y el correo electrónico del cliente. SOLO ENTONCES ejecuta la herramienta `radicar_reclamo`. Nunca cortes la conversación sin darle un cierre amable al cliente con su número de radicado.
 
@@ -5649,8 +5650,10 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "radicar_reclamo",
-            "description": "Radica formalmente un reclamo o caso de garantía. Envía correos al área técnica y al cliente con el número de caso. "
-            "Úsala SOLO después de haber verificado identidad, consultado compras, dado asesoría técnica, y obtenido el correo y descripción del problema.",
+            "description": "ESTRICTAMENTE PROHIBIDO llamar a esta herramienta de inmediato. "
+            "Úsala ÚNICAMENTE DESPUÉS de haber actuado como asesor técnico: debes haberle hecho al menos 1 o 2 preguntas al cliente "
+            "sobre cómo aplicó el producto (dilución, preparación de la superficie, herramientas usadas) Y el cliente debe haberte respondido. "
+            "Solo cuando tengas ese diagnóstico técnico claro, además del producto, la falla y el correo, puedes ejecutar esta herramienta.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -5662,6 +5665,10 @@ AGENT_TOOLS = [
                         "type": "string",
                         "description": "Resumen claro del problema reportado por el cliente.",
                     },
+                    "diagnostico_previo": {
+                        "type": "string",
+                        "description": "Resumen de la indagación técnica: qué le preguntaste al cliente sobre la aplicación y qué te respondió (preparación, dilución, manos, herramientas).",
+                    },
                     "correo_cliente": {
                         "type": "string",
                         "description": "Correo electrónico del cliente para enviarle la constancia del radicado.",
@@ -5671,7 +5678,7 @@ AGENT_TOOLS = [
                         "description": "Descripción de la evidencia proporcionada: número de lote, foto enviada, etc. Si no hay, indicar 'Pendiente'.",
                     }
                 },
-                "required": ["producto_reclamado", "descripcion_problema", "correo_cliente"],
+                "required": ["producto_reclamado", "descripcion_problema", "diagnostico_previo", "correo_cliente"],
             },
         },
     },
@@ -5931,6 +5938,7 @@ def _handle_tool_buscar_documento_tecnico(args, context, conversation_context):
 def _handle_tool_radicar_reclamo(args, context, conversation_context):
     producto_reclamado = args.get("producto_reclamado", "")
     descripcion_problema = args.get("descripcion_problema", "")
+    diagnostico_previo = args.get("diagnostico_previo", "")
     correo_cliente = args.get("correo_cliente", "")
     evidencia = args.get("evidencia", "Pendiente")
 
@@ -5956,6 +5964,7 @@ def _handle_tool_radicar_reclamo(args, context, conversation_context):
     claim_detail = {
         "product_label": producto_reclamado,
         "issue_summary": descripcion_problema,
+        "diagnostico_previo": diagnostico_previo,
         "evidence_note": evidencia,
         "contact_email": correo_cliente,
         "case_reference": numero_caso,
