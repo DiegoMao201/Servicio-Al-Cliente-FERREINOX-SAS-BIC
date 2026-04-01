@@ -308,6 +308,30 @@ PRODUCT_STOPWORDS = {
     "es",
     "producto",
     "marca",
+    "agregale",
+    "agregame",
+    "agregalo",
+    "agrega",
+    "ponle",
+    "ponme",
+    "ponlo",
+    "pon",
+    "sumale",
+    "sumame",
+    "suma",
+    "quitale",
+    "quitame",
+    "quita",
+    "otro",
+    "otra",
+    "otros",
+    "otras",
+    "optro",
+    "optra",
+    "nuevo",
+    "nueva",
+    "nuevos",
+    "nuevas",
 }
 
 
@@ -1406,6 +1430,19 @@ def expand_product_terms(search_terms: list[str]):
         if normalized_key in PORTFOLIO_ALIASES:
             for alias_term in PORTFOLIO_ALIASES[normalized_key]:
                 add_term(alias_term)
+        elif len(normalized_key) >= 4:
+            best_ratio = 0.0
+            best_aliases = None
+            for alias_key, aliases in PORTFOLIO_ALIASES.items():
+                if len(alias_key) < 4:
+                    continue
+                ratio = SequenceMatcher(None, normalized_key, alias_key).ratio()
+                if ratio >= 0.75 and ratio > best_ratio:
+                    best_ratio = ratio
+                    best_aliases = aliases
+            if best_aliases:
+                for alias_term in best_aliases:
+                    add_term(alias_term)
 
     return expanded_terms
 
@@ -2535,6 +2572,34 @@ def is_thanks_or_closing_message(text_value: Optional[str]):
     return any(re.match(pattern, lowered) for pattern in gratitude_patterns)
 
 
+def is_new_order_request(text_value: Optional[str]):
+    """Detect phrases like 'otro pedido', 'nuevo pedido', 'necesito otro pedido', 'otra cotización'."""
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    return bool(re.search(r"\b(otr[oa]s?|nuev[oa]s?)\s+(pedido|cotizaci[oó]n|orden|lista)\b", normalized))
+
+
+def resolve_option_selections(text_value: Optional[str], existing_items: list[dict]):
+    """Parse option selection patterns like '2a', '4b', 'la 1a y la 3b' from the message."""
+    normalized = normalize_text_value(text_value)
+    if not normalized or not existing_items:
+        return {}
+    selections = re.findall(r"(?:^|\s)(\d)\s*([a-c])\b", normalized)
+    if not selections:
+        selections = re.findall(r"(?:la|el)\s+(\d)\s*([a-c])\b", normalized)
+    updates = {}
+    for item_idx_str, letter in selections:
+        item_idx = int(item_idx_str) - 1
+        alt_idx = ord(letter) - 97
+        if 0 <= item_idx < len(existing_items):
+            item = existing_items[item_idx]
+            alternatives = item.get("alternatives") or []
+            if 0 <= alt_idx < len(alternatives):
+                updates[item_idx] = alternatives[alt_idx]
+    return updates
+
+
 def is_affirmative_message(text_value: Optional[str]):
     lowered = normalize_text_value(text_value)
     if not lowered:
@@ -2664,7 +2729,13 @@ def should_continue_commercial_flow(conversation_context: Optional[dict], detect
         return True
     if is_affirmative_message(text_value) or is_negative_message(text_value):
         return True
+    if is_new_order_request(text_value):
+        return True
+    if re.search(r"\b\d\s*[a-c]\b", normalized):
+        return True
     if re.search(r"\b(confirma|confirmame|conf[ií]rmame|conf[ií]rmalo|sep[aá]ralo|separalo|env[ií]ame|enviame|m[aá]ndame|mandame|eso ser[ií]a todo|eso es|as[ií] est[aá])\b", normalized):
+        return True
+    if re.search(r"\b(agregale|agregame|ponle|ponme|sumale|quitale|quitame)\b", normalized):
         return True
     if is_product_intent_message(text_value):
         return True
@@ -2699,6 +2770,17 @@ def split_commercial_line_items(text_value: Optional[str]):
         "y",
         "y tambien necesito",
         "y también necesito",
+        "agregale",
+        "agregame",
+        "agregalo",
+        "agrega",
+        "ponle",
+        "ponme",
+        "ponlo",
+        "sumale",
+        "sumame",
+        "quitale",
+        "quitame",
     }
 
     def clean_split_candidates(candidates: list[str]):
@@ -2738,7 +2820,7 @@ def split_commercial_line_items(text_value: Optional[str]):
 
     quantity_words_pattern = "|".join(QUANTITY_WORD_MAP.keys())
     qty_boundary = re.compile(
-        r"(?<=\S)\s+(?=(?:\d+|" + quantity_words_pattern + r")\s+(?:cunetes?|cuñetes?|galones?|galon|cuartos?|canecas?|cubetas?|rodillos?|brochas?|bochas?|lijas?|cintas?|bultos?|kilos?|metros?|rollos?|tubos?|tarros?|cajas?|paquetes?|unidades?)\b)",
+        r"(?<=\S)\s+(?=(?:\d+\s*/\s*(?:1|4|5)|\d+|" + quantity_words_pattern + r")\s+(?:cunetes?|cuñetes?|galones?|galon|cuartos?|canecas?|cubetas?|rodillos?|brochas?|bochas?|lijas?|cintas?|bultos?|kilos?|metros?|rollos?|tubos?|tarros?|cajas?|paquetes?|unidades?|cerraduras?|candados?|chapas?|selladores?|silicones?|llaves?|bisagras?|manijas?|laminas?|láminas?|tejas?|perfiles?|angulos?|ángulos?|baldes?|de)\b)",
         re.IGNORECASE,
     )
     split_candidates = [segment.strip() for segment in qty_boundary.split(text_value) if segment.strip()]
@@ -2790,26 +2872,40 @@ def build_commercial_item_result(raw_line: str, inherited_store_filters: list[st
         "status": "missing",
         "message": "",
         "matched_product": None,
+        "alternatives": [],
     }
 
     if not product_rows:
-        item_result["message"] = f"{describe_commercial_item_need(item_result)}: necesito la referencia exacta o la presentación para ubicarlo." 
+        item_result["message"] = f"{describe_commercial_item_need(item_result)}: necesito la referencia exacta o la presentación para ubicarlo."
         return item_result
 
-    if should_ask_product_clarification(product_request, product_rows):
-        options = []
-        for row in product_rows[:3]:
-            commercial_name = translate_product_to_commercial(
-                row.get("descripcion") or row.get("nombre_articulo"),
-                infer_product_presentation_from_row(row),
-                infer_product_brand_from_row(row),
-            )
-            options.append(commercial_name)
-        item_result["status"] = "ambiguous"
-        item_result["message"] = (
-            f"{describe_commercial_item_need(item_result)}: ¿cuál de estas es? "
-            f"{', '.join(options)}."
+    # Build alternatives list from all returned product rows
+    seen_refs = set()
+    for row in product_rows[:5]:
+        ref = row.get("referencia") or row.get("codigo_articulo") or ""
+        if ref in seen_refs:
+            continue
+        seen_refs.add(ref)
+        alt_commercial_name = translate_product_to_commercial(
+            row.get("descripcion") or row.get("nombre_articulo"),
+            infer_product_presentation_from_row(row),
+            infer_product_brand_from_row(row),
         )
+        alt_stock = parse_numeric_value(row.get("stock_total") if row.get("stock_total") is not None else row.get("stock")) or 0
+        item_result["alternatives"].append({
+            "commercial_name": alt_commercial_name,
+            "referencia": ref,
+            "stock_total": alt_stock,
+            "row": dict(row),
+        })
+
+    if should_ask_product_clarification(product_request, product_rows):
+        item_result["status"] = "ambiguous"
+        options_text = "\n".join(
+            f"   {chr(97 + idx)}) {alt['commercial_name']}"
+            for idx, alt in enumerate(item_result["alternatives"][:4])
+        )
+        item_result["message"] = f"{describe_commercial_item_need(item_result)} — opciones:\n{options_text}"
         return item_result
 
     top_row = dict(product_rows[0])
@@ -2844,6 +2940,58 @@ def build_commercial_item_result(raw_line: str, inherited_store_filters: list[st
     return item_result
 
 
+def format_draft_as_numbered_list(resolved_items: list[dict], store_label: Optional[str] = None):
+    if not resolved_items:
+        return "", False
+
+    lines = ["📋 *Borrador de pedido:*"]
+    has_options_to_select = False
+
+    for idx, item in enumerate(resolved_items, 1):
+        product_request = item.get("product_request") or {}
+        qty = parse_numeric_value(product_request.get("requested_quantity"))
+        unit = product_request.get("requested_unit")
+        original = (item.get("original_text") or "producto").strip()
+
+        if unit and qty:
+            qty_label = f"{format_quantity(qty)} {get_presentation_label(unit, qty)} de "
+        elif qty and qty > 1:
+            qty_label = f"{format_quantity(qty)} "
+        else:
+            qty_label = ""
+
+        alternatives = item.get("alternatives") or []
+
+        if item["status"] == "matched":
+            matched_product = item.get("matched_product") or {}
+            raw_desc = matched_product.get("descripcion") or matched_product.get("nombre_articulo") or "producto"
+            pres = infer_product_presentation_from_row(matched_product) if matched_product else None
+            brand = infer_product_brand_from_row(matched_product) if matched_product else None
+            commercial_name = translate_product_to_commercial(raw_desc, pres, brand)
+
+            if len(alternatives) > 1:
+                lines.append(f"\n{idx}. {qty_label}*{original}*")
+                for alt_idx, alt in enumerate(alternatives[:4]):
+                    letter = chr(97 + alt_idx)
+                    marker = " ✅" if alt_idx == 0 else ""
+                    lines.append(f"   {letter}) {alt['commercial_name']}{marker}")
+                has_options_to_select = True
+            else:
+                lines.append(f"\n{idx}. {qty_label}*{commercial_name}* ✅")
+
+        elif item["status"] == "ambiguous":
+            lines.append(f"\n{idx}. {qty_label}*{original}* ❓ opciones:")
+            for alt_idx, alt in enumerate(alternatives[:4]):
+                letter = chr(97 + alt_idx)
+                lines.append(f"   {letter}) {alt['commercial_name']}")
+            has_options_to_select = True
+
+        elif item["status"] == "missing":
+            lines.append(f"\n{idx}. {qty_label}*{original}* ❌ no encontrado")
+
+    return "\n".join(lines), has_options_to_select
+
+
 def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_message: Optional[str], conversation_context: Optional[dict]):
     context = conversation_context or {}
     existing_draft = dict(context.get("commercial_draft") or {})
@@ -2860,6 +3008,55 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     is_negative_followup = is_negative_message(user_message)
     wants_order_confirmation = bool(re.search(r"\b(confirma|confirmame|conf[ií]rmame|conf[ií]rmalo|sep[aá]ralo|separalo|env[ií]ame|enviame|mandame|m[aá]ndame)\b", normalized_message))
 
+    # ── Detect new order request ("otro pedido", "nuevo pedido") ──
+    if is_new_order_request(user_message) and has_existing_items:
+        summary_label = "cotización" if intent == "cotizacion" else "pedido"
+        return {
+            "tono": "consultivo",
+            "intent": intent,
+            "priority": "alta" if intent == "pedido" else "media",
+            "summary": f"Nuevo {summary_label}",
+            "response_text": (
+                f"¡Dale! Arrancamos con un nuevo {summary_label}. "
+                "Pásame los productos y la tienda o ciudad de entrega."
+            ),
+            "should_create_task": True,
+            "task_type": intent,
+            "task_summary": f"Nuevo {summary_label} iniciado por WhatsApp",
+            "task_detail": {"mensaje": user_message, "mode": intent},
+            "conversation_context_updates": {
+                "commercial_draft": {
+                    "intent": intent,
+                    "store_filters": [],
+                    "delivery_channel": None,
+                    "contact_email": None,
+                    "items": [],
+                    "items_confirmed": False,
+                }
+            },
+        }
+
+    # ── Process option selections (e.g., "2a y 4b") ──
+    option_updates = resolve_option_selections(user_message, existing_draft.get("items") or [])
+    if option_updates and has_existing_items:
+        draft_items_for_update = list(existing_draft.get("items") or [])
+        for opt_idx, alt in option_updates.items():
+            if 0 <= opt_idx < len(draft_items_for_update):
+                old_item = draft_items_for_update[opt_idx]
+                new_row = alt["row"]
+                old_item["status"] = "matched"
+                old_item["matched_product"] = new_row
+                raw_desc = new_row.get("descripcion") or new_row.get("nombre_articulo") or "producto"
+                pres = infer_product_presentation_from_row(new_row)
+                brand = infer_product_brand_from_row(new_row)
+                commercial_name = translate_product_to_commercial(raw_desc, pres, brand)
+                old_item["message"] = f"{commercial_name}: ✅ seleccionado."
+        existing_draft["items"] = draft_items_for_update
+        has_existing_items = True
+        current_lines = []
+
+    items_confirmed = bool(existing_draft.get("items_confirmed"))
+
     has_explicit_items = any(
         extract_product_request(line).get("product_codes")
         or extract_product_request(line).get("core_terms")
@@ -2867,14 +3064,18 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         for line in current_lines
     )
 
+    # Set items_confirmed when user explicitly confirms
+    if is_affirmative_followup or wants_order_confirmation:
+        items_confirmed = True
+
     if has_existing_items and (incoming_email or incoming_delivery_channel) and not incoming_store_filters:
         current_lines = []
         has_explicit_items = False
 
-    if has_existing_items and (is_affirmative_followup or is_negative_followup or wants_order_confirmation) and not has_explicit_items and not has_contextual_followup:
+    if has_existing_items and (is_affirmative_followup or is_negative_followup or wants_order_confirmation) and not has_explicit_items and not has_contextual_followup and not option_updates:
         current_lines = []
 
-    if not has_explicit_items and not has_existing_items and not has_contextual_followup:
+    if not has_explicit_items and not has_existing_items and not has_contextual_followup and not option_updates:
         summary_label = "cotización" if intent == "cotizacion" else "pedido"
         intro_label = "la cotización" if intent == "cotizacion" else "el pedido"
         return {
@@ -2897,6 +3098,7 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
                     "delivery_channel": incoming_delivery_channel,
                     "contact_email": incoming_email,
                     "items": existing_draft.get("items") or [],
+                    "items_confirmed": False,
                 }
             },
         }
@@ -2904,6 +3106,10 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     draft_items = []
     if existing_draft.get("intent") == intent:
         draft_items = list(existing_draft.get("items") or [])
+
+    # When new explicit items are added, reset confirmation
+    if has_explicit_items:
+        items_confirmed = False
 
     if draft_items and incoming_store_filters and not has_explicit_items:
         current_lines = [item.get("original_text") for item in draft_items if item.get("original_text")]
@@ -2950,32 +3156,43 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     contact_email = incoming_email or existing_draft.get("contact_email")
     internal_notified = bool(existing_draft.get("internal_notified"))
     customer_email_sent = bool(existing_draft.get("customer_email_sent"))
+    destinatario = existing_draft.get("destinatario") or ""
 
-    matched_text = " ".join(item.get("message") for item in matched_items[:8] if item.get("message"))
-    pending_text_parts = [item.get("message") for item in ambiguous_items[:4] if item.get("message")] + [item.get("message") for item in missing_items[:4] if item.get("message")]
-    pending_text = " ".join(pending_text_parts)
+    # Extract destinatario from message like "a nombre de Juan Pérez"
+    nombre_match = re.search(r"\ba\s+nombre\s+de\s+(.+?)(?:\s*[.,;]|$)", normalized_message)
+    if nombre_match:
+        destinatario = nombre_match.group(1).strip().title()
+
     compact_summary = summarize_commercial_items(matched_items)
     has_store = bool(inherited_store_filters)
-    ready_to_close = bool(matched_items) and not ambiguous_items and not missing_items and has_store
+    all_items_resolved = bool(matched_items) and not ambiguous_items and not missing_items
+    ready_to_close = all_items_resolved and has_store and items_confirmed
 
     if ready_to_close and not incoming_delivery_channel and wants_order_confirmation:
         delivery_channel = existing_draft.get("delivery_channel")
 
     if not ready_to_close:
-        closing_parts = []
-        if not has_store:
-            closing_parts.append("¿En qué tienda o ciudad lo necesitas para cerrarte todo bien?")
-        elif pending_text_parts:
-            closing_parts.append("Apenas me confirmes esos puntos te dejo el consolidado completo.")
-        else:
-            closing_parts.append("Si quieres, cuando lo dejemos cerrado te lo confirmo por aquí o te lo mando al correo.")
+        # ── Format response as numbered list ──
+        list_text, has_options = format_draft_as_numbered_list(resolved_items, store_label)
 
-        response_parts = []
-        if matched_text:
-            response_parts.append(matched_text)
-        if pending_text:
-            response_parts.append(pending_text)
-        response_parts.extend(closing_parts)
+        closing_parts = []
+        if has_options:
+            closing_parts.append("Para los ❓, dime cuál opción necesitas (ej: \"1a\", \"3b\").")
+        if missing_items:
+            closing_parts.append("Para los ❌, pásame la referencia exacta o la presentación.")
+        if not has_store:
+            closing_parts.append("¿En qué tienda o ciudad lo necesitas?")
+        if all_items_resolved and has_store and not items_confirmed:
+            request_label = "cotización" if intent == "cotizacion" else "pedido"
+            closing_parts.append(f"¿Te confirmo el {request_label}? ¿A nombre de quién va el despacho?")
+        elif all_items_resolved and not has_store:
+            pass  # Already asked for store
+        elif not has_options and not missing_items:
+            closing_parts.append("Apenas me confirmes te armo el consolidado completo.")
+
+        response_text = list_text
+        if closing_parts:
+            response_text += "\n\n" + " ".join(closing_parts)
 
         draft_state = {
             "intent": intent,
@@ -2984,6 +3201,8 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             "contact_email": contact_email,
             "internal_notified": internal_notified,
             "customer_email_sent": customer_email_sent,
+            "items_confirmed": items_confirmed,
+            "destinatario": destinatario,
             "items": resolved_items,
         }
 
@@ -2992,7 +3211,7 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             "intent": intent,
             "priority": "alta" if intent == "pedido" else "media",
             "summary": "Consolidado comercial multiproducto",
-            "response_text": " ".join(part for part in response_parts if part).strip(),
+            "response_text": response_text.strip(),
             "should_create_task": last_intent != intent,
             "task_type": intent,
             "task_summary": "Seguimiento a solicitud comercial por WhatsApp",
@@ -3001,26 +3220,28 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             "commercial_draft": draft_state,
         }
 
+    # ── Ready to close ──
     request_label = "cotización" if intent == "cotizacion" else "pedido"
     destination_label = store_label or "la sede indicada"
+    destinatario_label = f" a nombre de {destinatario}" if destinatario else ""
     if not delivery_channel:
         response_text = (
-            f"¡Listo! Ya te dejé montado el {request_label} para {destination_label} con {compact_summary}. "
+            f"¡Listo! Ya te dejé montado el {request_label} para {destination_label}{destinatario_label} con {compact_summary}. "
             "¿Te lo confirmo por aquí o prefieres que te envíe un PDF al correo?"
         )
     elif delivery_channel == "email" and not contact_email:
         response_text = (
-            f"¡Listo! Ya tengo el {request_label} para {destination_label} con {compact_summary}. "
+            f"¡Listo! Ya tengo el {request_label} para {destination_label}{destinatario_label} con {compact_summary}. "
             "Regálame tu correo y te mando el PDF con todo el detalle."
         )
     elif delivery_channel == "email":
         response_text = (
-            f"¡Listo! Ya te dejé montado el {request_label} para {destination_label} con {compact_summary}. "
+            f"¡Listo! Ya te dejé montado el {request_label} para {destination_label}{destinatario_label} con {compact_summary}. "
             f"Te va a llegar al correo {contact_email} un PDF con el detalle de las referencias y cantidades."
         )
     else:
         response_text = (
-            f"¡Listo! Ya te dejé montado el {request_label} para {destination_label} con {compact_summary}. "
+            f"¡Listo! Ya te dejé montado el {request_label} para {destination_label}{destinatario_label} con {compact_summary}. "
             "Te envío el PDF por aquí mismo para que lo tengas de referencia 📄"
         )
 
@@ -3035,6 +3256,8 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         "ready_to_close": ready_to_close,
         "internal_notified": internal_notified or should_notify_internal,
         "customer_email_sent": customer_email_sent or should_send_customer_email,
+        "items_confirmed": items_confirmed,
+        "destinatario": destinatario,
         "items": resolved_items,
     }
 
@@ -3047,7 +3270,7 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         "should_create_task": last_intent != intent or should_notify_internal,
         "task_type": intent,
         "task_summary": f"Solicitud de {request_label} lista para seguimiento",
-        "task_detail": {"items": resolved_items, "store_filters": inherited_store_filters, "mode": intent, "delivery_channel": delivery_channel, "contact_email": contact_email},
+        "task_detail": {"items": resolved_items, "store_filters": inherited_store_filters, "mode": intent, "delivery_channel": delivery_channel, "contact_email": contact_email, "destinatario": destinatario},
         "conversation_context_updates": {"commercial_draft": draft_state},
         "commercial_draft": draft_state,
         "email_route": "ventas" if should_notify_internal else None,
@@ -5800,6 +6023,18 @@ async def receive_whatsapp_webhook(request: Request):
 
                     commercial_draft = direct_result.get("commercial_draft")
                     if commercial_draft:
+                        # Learn product associations from matched commercial items
+                        for draft_item in (commercial_draft.get("items") or []):
+                            if draft_item.get("status") == "matched" and draft_item.get("matched_product"):
+                                try:
+                                    learn_product_resolution(
+                                        context["conversation_id"],
+                                        draft_item.get("product_request") or {},
+                                        [draft_item["matched_product"]],
+                                        conversation_context,
+                                    )
+                                except Exception:
+                                    pass
                         try:
                             draft_id = upsert_commercial_draft(
                                 direct_result.get("intent"),
