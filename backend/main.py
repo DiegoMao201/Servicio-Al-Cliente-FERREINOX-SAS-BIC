@@ -79,6 +79,73 @@ TECHNICAL_DOC_STOPWORDS = {
 TECHNICAL_DOC_CACHE = {"loaded_at": 0.0, "entries": []}
 
 
+TECHNICAL_ADVISORY_KEYWORDS = [
+    "como aplicar",
+    "cómo aplicar",
+    "como aplico",
+    "cómo aplico",
+    "como se aplica",
+    "cómo se aplica",
+    "como pinto",
+    "cómo pinto",
+    "como pintar",
+    "cómo pintar",
+    "que rodillo",
+    "qué rodillo",
+    "que brocha",
+    "qué brocha",
+    "tiempo de secado",
+    "cuanto seca",
+    "cuánto seca",
+    "cuanto demora",
+    "cuánto demora",
+    "se puede mezclar",
+    "se puede combinar",
+    "rendimiento",
+    "cuanto rinde",
+    "cuánto rinde",
+    "manos de pintura",
+    "cuantas manos",
+    "cuántas manos",
+    "preparar la pared",
+    "preparar la superficie",
+    "lijado",
+    "lijar",
+    "impermeabilizar",
+    "impermeabilizante",
+    "diluir",
+    "diluyente",
+    "que disolvente",
+    "qué disolvente",
+    "thinner",
+    "estuco",
+    "estucar",
+    "sellar",
+    "sellador",
+    "para exterior",
+    "para interior",
+    "anticorrosivo",
+    "fondo",
+    "imprimante",
+    "para madera",
+    "para metal",
+    "para hierro",
+    "para ladrillo",
+    "para concreto",
+    "diferencia entre",
+    "cual es mejor",
+    "cuál es mejor",
+    "que me recomiendas",
+    "qué me recomiendas",
+    "que sirve para",
+    "qué sirve para",
+    "como proteger",
+    "cómo proteger",
+    "como limpiar",
+    "cómo limpiar",
+]
+
+
 CLAIM_KEYWORDS = [
     "reclamo",
     "reclamacion",
@@ -710,6 +777,50 @@ def sequence_similarity(left_value: Optional[str], right_value: Optional[str]):
     if not left_normalized or not right_normalized:
         return 0.0
     return SequenceMatcher(None, left_normalized, right_normalized).ratio()
+
+
+def translate_product_to_commercial(description: Optional[str], presentation: Optional[str] = None, brand: Optional[str] = None):
+    """Convert raw DB descriptions like 'PQ VINILTEX ADV MAT BLANCO 1501 18.93L' to commercial language."""
+    if not description:
+        return "producto"
+    raw = str(description).strip()
+    # Remove common prefixes
+    for prefix in ["PQ ", "IQ ", "EQ ", "SQ ", "MEG "]:
+        if raw.upper().startswith(prefix):
+            raw = raw[len(prefix):].strip()
+    # Remove size suffixes like 18.93L, 3.79L, 0.95L, 0.22L
+    cleaned = re.sub(r"\s+\d+\.\d+L$", "", raw, flags=re.IGNORECASE)
+    # Remove trailing reference codes like " 1501", " 12286", but only at end
+    cleaned = re.sub(r"\s+\d{3,6}$", "", cleaned)
+    # Clean up double-quoted inches
+    cleaned = cleaned.replace('""', '"').replace('"', '"')
+    # Title case
+    words = cleaned.split()
+    titled_words = []
+    skip_words = {"BR", "MAT", "ADV", "SAT", "SB", "CRE", "DEEP"}
+    for w in words:
+        if w.upper() in skip_words:
+            continue
+        titled_words.append(w.capitalize())
+    commercial_name = " ".join(titled_words).strip()
+    if not commercial_name:
+        commercial_name = raw.title()
+    # Add presentation label
+    pres_label = ""
+    if presentation:
+        pres_map = {"cuñete": "en cuñete", "galon": "en galón", "cuarto": "en cuarto"}
+        pres_label = pres_map.get(presentation, f"en {presentation}")
+    if pres_label:
+        commercial_name = f"{commercial_name} {pres_label}"
+    return commercial_name
+
+
+def is_technical_advisory_message(text_value: Optional[str]):
+    """Detect if the client is asking for product application advice, not a product search."""
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    return any(keyword in normalized for keyword in TECHNICAL_ADVISORY_KEYWORDS)
 
 
 def has_keyword_or_similar(text_value: Optional[str], keywords: list[str], threshold: float = 0.84):
@@ -2161,7 +2272,10 @@ def extract_delivery_channel(text_value: Optional[str]):
 def summarize_commercial_item(item: dict):
     product_request = item.get("product_request") or {}
     matched_product = item.get("matched_product") or {}
-    description_value = matched_product.get("descripcion") or matched_product.get("nombre_articulo") or item.get("original_text") or "producto"
+    raw_description = matched_product.get("descripcion") or matched_product.get("nombre_articulo") or item.get("original_text") or "producto"
+    presentation = infer_product_presentation_from_row(matched_product) if matched_product else None
+    brand = infer_product_brand_from_row(matched_product) if matched_product else None
+    commercial_name = translate_product_to_commercial(raw_description, presentation, brand)
     requested_quantity = parse_numeric_value(product_request.get("requested_quantity")) or 1
     requested_unit = product_request.get("requested_unit")
     if requested_unit:
@@ -2170,7 +2284,7 @@ def summarize_commercial_item(item: dict):
         quantity_label = f"{format_quantity(requested_quantity)} unidades de "
     else:
         quantity_label = ""
-    return f"{quantity_label}{description_value}".strip()
+    return f"{quantity_label}{commercial_name}".strip()
 
 
 def summarize_commercial_items(items: list[dict]):
@@ -2266,12 +2380,12 @@ def build_identity_not_found_reply(identity_candidate: Optional[dict]):
     candidate_type = (identity_candidate or {}).get("type")
     if candidate_type == "name_lookup":
         return (
-            f"No pude ubicar el nombre {candidate_value} en nuestro registro. "
-            "Envíame por favor tu cédula, NIT o código de cliente y con eso te valido de una vez."
+            f"No me aparece {candidate_value} por acá, ¿de pronto está a nombre de otra persona o empresa? "
+            "Envíame la cédula o NIT y con eso te busco."
         )
     return (
-        f"No pude validar {candidate_value} ni como cédula/NIT ni como código de cliente. "
-        "Si quieres, envíame tu nombre completo registrado y te ayudo a ubicarlo."
+        f"No me aparece {candidate_value} en el sistema. "
+        "¿De pronto es otro número? Prueba con tu cédula, NIT o código de cliente."
     )
 
 
@@ -2404,7 +2518,7 @@ def is_thanks_or_closing_message(text_value: Optional[str]):
 
 
 def build_conversation_closing_reply(profile_name: Optional[str]):
-    return "Con mucho gusto. Quedo atento por aquí para lo que necesites de Ferreinox."
+    return "¡Con gusto! Quedo por aquí para lo que necesites 👋"
 
 
 def should_continue_claim_flow(conversation_context: Optional[dict], detected_intent: Optional[str], text_value: Optional[str]):
@@ -2500,51 +2614,52 @@ def build_commercial_item_result(raw_line: str, inherited_store_filters: list[st
     }
 
     if not product_rows:
-        item_result["message"] = f"{describe_commercial_item_need(item_result)}: necesito una referencia más precisa o la presentación exacta para dejarlo bien." 
+        item_result["message"] = f"{describe_commercial_item_need(item_result)}: necesito la referencia exacta o la presentación para ubicarlo." 
         return item_result
 
     if should_ask_product_clarification(product_request, product_rows):
         options = []
         for row in product_rows[:3]:
-            options.append(f"{row.get('referencia') or row.get('codigo_articulo')}: {row.get('descripcion') or row.get('nombre_articulo')}")
+            commercial_name = translate_product_to_commercial(
+                row.get("descripcion") or row.get("nombre_articulo"),
+                infer_product_presentation_from_row(row),
+                infer_product_brand_from_row(row),
+            )
+            options.append(commercial_name)
         item_result["status"] = "ambiguous"
         item_result["message"] = (
-            f"{describe_commercial_item_need(item_result)}: necesito confirmarte cuál es la correcta. "
-            f"Las más cercanas son {', '.join(options)}."
+            f"{describe_commercial_item_need(item_result)}: ¿cuál de estas es? "
+            f"{', '.join(options)}."
         )
         return item_result
 
     top_row = dict(product_rows[0])
     item_result["status"] = "matched"
     item_result["matched_product"] = top_row
-    description_value = top_row.get("descripcion") or top_row.get("nombre_articulo") or top_row.get("referencia") or top_row.get("codigo_articulo")
-    reference_value = top_row.get("referencia") or top_row.get("codigo_articulo") or "sin referencia"
+    raw_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or "producto"
+    top_presentation = infer_product_presentation_from_row(top_row)
+    top_brand = infer_product_brand_from_row(top_row)
+    commercial_name = translate_product_to_commercial(raw_description, top_presentation, top_brand)
     stock_value = parse_numeric_value(top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")) or 0
     requested_quantity = parse_numeric_value(product_request.get("requested_quantity"))
-    requested_unit = product_request.get("requested_unit")
-    quantity_label = None
-    if requested_quantity and requested_unit:
-        quantity_label = f"{format_quantity(requested_quantity)} {get_presentation_label(requested_unit, requested_quantity)}"
 
     if requested_store_label:
         if stock_value <= 0:
-            item_result["message"] = f"{description_value} ({reference_value}): en {requested_store_label} no lo veo disponible en este momento."
+            item_result["message"] = f"{commercial_name}: no disponible en {requested_store_label} en este momento."
         else:
-            item_result["message"] = f"{description_value} ({reference_value}): sí lo tengo disponible en {requested_store_label}"
-            if quantity_label:
-                availability = "y te alcanza para lo que pides" if stock_value >= requested_quantity else "pero no alcanza para toda la cantidad"
-                item_result["message"] += f", con {format_quantity(stock_value)} unidades confirmadas {availability}"
+            item_result["message"] = f"{commercial_name}: ✅ disponible en {requested_store_label}"
+            if requested_quantity:
+                availability = ", te alcanza" if stock_value >= requested_quantity else ", pero no alcanza para toda la cantidad"
+                item_result["message"] += availability
             item_result["message"] += "."
     else:
         if stock_value <= 0:
-            item_result["message"] = f"{description_value} ({reference_value}): en este momento no veo existencias disponibles."
+            item_result["message"] = f"{commercial_name}: agotado en este momento."
         else:
-            item_result["message"] = f"{description_value} ({reference_value}): sí lo tengo disponible"
-            if quantity_label:
-                availability = "y sí alcanza para lo que pides" if stock_value >= requested_quantity else "pero la cantidad disponible no alcanza para todo"
-                item_result["message"] += f", {availability}"
-            elif top_row.get("stock_por_tienda"):
-                item_result["message"] += ", con existencias en varias sedes"
+            item_result["message"] = f"{commercial_name}: ✅ disponible"
+            if requested_quantity:
+                availability = ", sí alcanza" if stock_value >= requested_quantity else ", pero no para toda la cantidad"
+                item_result["message"] += availability
             item_result["message"] += "."
 
     return item_result
@@ -2787,6 +2902,8 @@ def detect_business_intent(text_value: Optional[str]):
         return "cotizacion"
     if any(keyword in lowered for keyword in ORDER_KEYWORDS):
         return "pedido"
+    if is_technical_advisory_message(text_value):
+        return "asesoria_tecnica"
     if any(keyword in lowered for keyword in ["cartera", "saldo", "deuda", "debo", "vencid", "estado de cuenta", "cupo", "credito", "cuanto debo", "cuánto debo", "documentos"]):
         return "consulta_cartera"
     if has_keyword_or_similar(text_value, ["factura", "facturas", "vencida", "vencidas"]):
@@ -3924,20 +4041,15 @@ def build_direct_reply(
 
     if intent == "consulta_productos":
         if not product_context:
-            referencia_solicitada = ", ".join((product_request or {}).get("search_terms") or [])
+            referencia_solicitada = ", ".join((product_request or {}).get("core_terms") or [])
             return {
                 "tono": "informativo",
                 "intent": intent,
                 "priority": "media",
                 "summary": "Consulta de productos sin coincidencia exacta",
                 "response_text": (
-                    f"Revisé {referencia_solicitada or 'esa referencia'} y no la pude amarrar con una coincidencia clara en inventario. "
-                    "Si quieres, dame uno de estos datos y te la ubico mejor:\n"
-                    "• La referencia o código del producto\n"
-                    "• La marca o línea del portafolio Ferreinox: Pintuco, Abracol, Yale o Goya\n"
-                    "• La presentación (galón, cuñete, cuarto, 1/1, 1/5, 1/4)\n"
-                    "• La tienda que te interesa (CEDI, Armenia, Manizales, Opalo, Pereira, Laures, Cerritos o Ferrebox)\n"
-                    "Con eso te respondo más fino."
+                    f"No encontré algo claro con {referencia_solicitada or 'esa referencia'}. "
+                    "Dame la referencia, el código, la marca o la presentación y te ubico lo que necesitas."
                 ),
                 "should_create_task": False,
                 "task_type": "seguimiento_cliente",
@@ -3949,16 +4061,19 @@ def build_direct_reply(
             top_row = product_context[0]
             top_reference = top_row.get("referencia") or top_row.get("codigo_articulo") or "sin referencia"
             top_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or top_reference
+            top_presentation = infer_product_presentation_from_row(top_row)
+            top_brand = infer_product_brand_from_row(top_row)
+            commercial_name = translate_product_to_commercial(top_description, top_presentation, top_brand)
             top_stock = top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")
-            direct_response = f"Te confirmé esta referencia: {top_description} ({top_reference})."
+            requested_store_codes = (product_request or {}).get("store_filters") or []
+            requested_store_label = STORE_CODE_LABELS.get(requested_store_codes[0]) if len(requested_store_codes) == 1 else None
             if top_stock is not None and parse_numeric_value(top_stock) and parse_numeric_value(top_stock) > 0:
-                direct_response += " La veo disponible"
-                if top_row.get("stock_por_tienda"):
-                    direct_response += " y con existencias en tienda"
-                direct_response += "."
+                if requested_store_label:
+                    direct_response = f"Sí tenemos {commercial_name} en {requested_store_label} con {format_quantity(top_stock)} unidades. ¿Te separo alguna cantidad?"
+                else:
+                    direct_response = f"Sí tenemos {commercial_name} disponible. ¿En qué tienda lo necesitas?"
             else:
-                direct_response += " En este momento no la veo con existencias disponibles."
-            direct_response += " Si quieres, también te reviso otra presentación o una sede puntual."
+                direct_response = f"El {commercial_name} lo veo agotado en este momento. ¿Quieres que te revise otra presentación o alternativa?"
             return {
                 "tono": "informativo",
                 "intent": intent,
@@ -3985,7 +4100,14 @@ def build_direct_reply(
                     "stock_por_tienda": row.get("stock_por_tienda"),
                 }
                 clarification_options.append(option_payload)
-                clarification_lines.append(f"{index}. {summarize_product_option(row)}")
+                commercial_label = translate_product_to_commercial(
+                    row.get("descripcion") or row.get("nombre_articulo"),
+                    infer_product_presentation_from_row(row),
+                    infer_product_brand_from_row(row),
+                )
+                stock_val = parse_numeric_value(row.get("stock_total") if row.get("stock_total") is not None else row.get("stock"))
+                stock_note = f" | stock {format_quantity(stock_val)}" if stock_val and stock_val > 0 else " | agotado"
+                clarification_lines.append(f"{index}. {commercial_label}{stock_note}")
 
             return {
                 "tono": "consultivo",
@@ -3993,9 +4115,8 @@ def build_direct_reply(
                 "priority": "media",
                 "summary": "Consulta de productos con necesidad de aclaracion",
                 "response_text": (
-                    "Veo varias opciones muy cercanas. Respóndeme con el número o la referencia y te confirmo la exacta:\n"
+                    "Tengo varias opciones cercanas, dime cuál es:\n"
                     + "\n".join(clarification_lines)
-                    + "\nAsí te confirmo la correcta sin hacerte dar más vueltas."
                 ),
                 "should_create_task": False,
                 "task_type": "seguimiento_cliente",
@@ -4023,17 +4144,23 @@ def build_direct_reply(
 
         if requested_store_label and product_context:
             top_row = product_context[0]
-            top_reference = top_row.get("referencia") or top_row.get("codigo_articulo") or "sin referencia"
-            top_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or top_reference
+            top_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or "producto"
             top_stock = top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")
             top_presentation = infer_product_presentation_from_row(top_row)
-            store_response = (
-                f"Sí, en {requested_store_label} hay {format_quantity(top_stock)} unidades de {top_description} ({top_reference})"
-                f"{f', presentación {get_presentation_label(top_presentation, 1)}' if top_presentation else ''}."
-            )
-            if quantity_note:
-                store_response += f" {quantity_note}."
-            store_response += " Si quieres, también te reviso otra presentación o otra tienda."
+            top_brand = infer_product_brand_from_row(top_row)
+            commercial_name = translate_product_to_commercial(top_description, top_presentation, top_brand)
+            stock_value = parse_numeric_value(top_stock) or 0
+            if stock_value > 0:
+                store_response = f"Sí, en {requested_store_label} tenemos {commercial_name} con {format_quantity(stock_value)} unidades."
+                if product_request and product_request.get("requested_quantity"):
+                    req_qty = float(product_request["requested_quantity"])
+                    if stock_value >= req_qty:
+                        store_response += " Te alcanza perfecto para lo que necesitas."
+                    else:
+                        store_response += " Pero no alcanza para toda la cantidad que pides."
+                store_response += " ¿Te separo alguna cantidad o te reviso otra presentación?"
+            else:
+                store_response = f"El {commercial_name} no lo veo disponible en {requested_store_label} en este momento. ¿Quieres que revise en otra sede?"
             return {
                 "tono": "informativo",
                 "intent": intent,
@@ -4047,22 +4174,16 @@ def build_direct_reply(
             }
 
         for row in product_context[:3]:
-            descripcion = row.get("descripcion") or row.get("nombre_articulo") or row.get("referencia") or row.get("codigo_articulo")
-            referencia = row.get("referencia") or row.get("codigo_articulo") or "sin referencia"
+            raw_desc = row.get("descripcion") or row.get("nombre_articulo") or "producto"
+            row_presentation = infer_product_presentation_from_row(row)
+            row_brand = infer_product_brand_from_row(row)
+            commercial_name = translate_product_to_commercial(raw_desc, row_presentation, row_brand)
             stock = row.get("stock_total") if row.get("stock_total") is not None else row.get("stock")
             stock_value = parse_numeric_value(stock)
-            line = f"{descripcion} ({referencia})"
-            if stock is not None:
-                line += f", stock total aproximado {format_quantity(stock)}"
-            category_value = row.get("departamentos") or row.get("categoria_producto")
-            if category_value and str(category_value).strip().upper() != "NULL":
-                line += f", categoria {category_value}"
-            if row.get("stock_por_tienda"):
-                line += f", disponible en {format_stock_by_store(row.get('stock_por_tienda'))}"
-            if product_request and product_request.get("requested_quantity") and stock_value is not None:
-                requested_quantity = float(product_request["requested_quantity"])
-                availability = "si alcanza" if stock_value >= requested_quantity else "stock insuficiente"
-                line += f", para {requested_quantity:g} unidades {availability}"
+            if stock_value and stock_value > 0:
+                line = f"{commercial_name} — disponible"
+            else:
+                line = f"{commercial_name} — agotado"
             product_lines.append(line)
         return {
             "tono": "informativo",
@@ -4071,8 +4192,8 @@ def build_direct_reply(
             "summary": "Consulta de productos",
             "response_text": (
                 f"{quantity_note + '. ' if quantity_note else ''}"
-                f"Te encontré estas opciones relacionadas: {'; '.join(product_lines)}. "
-                "Si quieres, te cierro la búsqueda con la más probable o te reviso una tienda puntual."
+                f"Encontré estas opciones: {'; '.join(product_lines)}. "
+                "¿Cuál es la que buscas o en qué tienda lo necesitas?"
             ),
             "should_create_task": False,
             "task_type": "seguimiento_cliente",
@@ -4084,13 +4205,10 @@ def build_direct_reply(
 
 
 def build_verification_success_reply(profile_name: Optional[str], cliente_contexto: Optional[dict]):
-    cliente_codigo = (cliente_contexto or {}).get("cliente_codigo")
     cliente_nombre = (cliente_contexto or {}).get("nombre_cliente")
     return (
-        "Perfecto, ya te pude ubicar"
-        f"{' para el cliente ' + str(cliente_nombre or cliente_codigo) if (cliente_nombre or cliente_codigo) else ''}"
-        f"{' (' + str(cliente_codigo) + ')' if cliente_nombre and cliente_codigo else ''}. "
-        "Ahora ya puedo ayudarte con cartera, compras del último año y consultas relacionadas con tu historial comercial."
+        f"¡Listo, ya te ubiqué{', ' + str(cliente_nombre) if cliente_nombre else ''}! "
+        "Ya puedo ayudarte con cartera, compras y todo tu historial comercial."
     )
 
 
@@ -4414,8 +4532,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
 
 def build_verification_challenge():
     return (
-        "Para revisar cartera, ventas u otra informacion sensible necesito validar tu identidad. "
-        "Por favor enviame tu cedula, NIT o codigo de cliente. Si prefieres, tambien puedes escribirme el nombre registrado."
+        "Para darte esa info por tu seguridad, ¿me regalas tu número de cédula o NIT por favor? 🔒"
     )
 
 
@@ -4448,19 +4565,26 @@ def build_agent_prompt(
         {
             "role": "system",
             "content": (
-                "Eres el asesor comercial y de servicio al cliente de Ferreinox. Responde en espanol claro, humano, comercial y resolutivo. "
-                "Saluda solo en el primer mensaje de la conversacion. Despues conversa con naturalidad, sin repetir el nombre del cliente en cada turno ni usar frases roboticas como 'Resumen del caso' o 'Si necesitas algo mas'. "
-                "Mantén una sola intención activa por turno: si el cliente cambia de tema, responde solo sobre el tema nuevo y no mezcles cartera, compras, productos o reclamos en el mismo mensaje. "
-                "Debes detectar tono del cliente, intencion principal y prioridad. Usa el contexto ERP disponible para responder con precision. "
-                "Si el cliente envía varios productos o una lista, debes procesarlos todos antes de responder y devolver un solo mensaje consolidado. "
-                "Nunca vomites la base de datos ni enumeres stock de todas las tiendas si el cliente ya dijo una sede; responde con lenguaje humano y conciso. "
-                "En reclamos actua con empatia, pide los datos faltantes uno por uno y solo confirma el radicado cuando ya tengas producto, problema y correo. "
-                "El portafolio comercial valido para orientar respuestas incluye principalmente Pintuco, Abracol, Yale, Goya y las categorias reales del ERP. "
-                "No inventes marcas fuera del portafolio y no sugieras Corona como marca comercial de Ferreinox. "
-                "Interpreta lenguaje ferretero y comercial como: 18.93 = cuñete, 3.79 = galon, 0.95 = cuarto, 1/1 = galon, 1/5 = cuñete, 1/4 = cuarto, 5/1 = cinco galones. "
-                "Nunca reveles cartera, saldos, ventas historicas o datos privados si verification_state.verified es falso. En ese caso pide cedula, NIT, codigo de cliente o nombre registrado. "
-                "Si no tienes un dato seguro, dilo claramente y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos comerciales. "
-                "Devuelve JSON valido con estas claves exactas: tono, intent, priority, summary, response_text, should_create_task, task_type, task_summary, task_detail."
+                "Eres el Asesor Comercial Senior de Ferreinox SAS BIC. Llevas 13 años atendiendo mostrador, vendiendo pinturas Pintuco, herramientas, cerraduras Yale, brochas Goya y todo el portafolio ferretero. "
+                "Tu tono es 100% conversacional, humano, cordial y comercial. Mensajes CORTOS: máximo 2-3 líneas por turno. NUNCA suenas como robot.\n\n"
+                "REGLAS INQUEBRANTABLES:\n"
+                "1. PROHIBIDO saludar en cada turno. Solo saluda si es el PRIMER mensaje de la conversación. Después conversa fluidamente.\n"
+                "2. PROHIBIDO usar plantillas tipo 'Hola, [Nombre]', 'Resumen del caso:', 'Si necesitas algo más...', 'Encontré esta referencia para tu consulta'.\n"
+                "3. PROHIBIDO vomitar la base de datos. Nunca enumeres stock de todas las tiendas. Si el cliente dijo Pereira, responde SOLO sobre Pereira en lenguaje humano.\n"
+                "4. TRADUCCIÓN OBLIGATORIA de inventario: convierte 'PQ VINILTEX ADV MAT BLANCO 1501 18.93L' a 'Viniltex Blanco en cuñete'. Nunca le muestres al cliente los códigos técnicos crudos.\n"
+                "5. PIENSA ANTES DE ACTUAR: clasifica mentalmente la intención del cliente antes de responder.\n"
+                "   - Si pregunta cómo aplicar, qué rodillo usar, tiempos de secado → ASESORÍA TÉCNICA, responde como experto, NO busques en la base de datos.\n"
+                "   - Si pide comprar o verificar disponibilidad de un producto → INVENTARIO, ahí sí consulta la base.\n"
+                "   - Si dice reclamo, queja, garantía → RECLAMO, activa empatía y protocolo paso a paso. NO crees ticket hasta tener producto, problema y correo.\n"
+                "   - Si pide cartera, saldos → CARTERA, valida identidad primero.\n"
+                "6. NUNCA busques verbos o intenciones como parámetro de inventario. 'necesito hacer un pedido' es una INTENCIÓN, no un producto.\n"
+                "7. TÚ GUÍAS AL CLIENTE. Siempre termina con una pregunta amable que lleve al siguiente paso.\n\n"
+                "PORTAFOLIO VÁLIDO: Pintuco (Viniltex, Doméstico, Pintulux 3en1, Koraza, Aerocolor), Abracol, Yale, Goya, Mega y las categorías reales del ERP. "
+                "No inventes marcas fuera del portafolio.\n\n"
+                "JERGA FERRETERA: 18.93L o 1/5 = cuñete, 3.79L o 1/1 = galón, 0.95L o 1/4 = cuarto, 2/5 = 2 cuñetes, 3/1 = 3 galones.\n\n"
+                "SEGURIDAD: Nunca reveles cartera, saldos o datos privados si verification_state.verified es falso. Pide cédula o NIT primero.\n\n"
+                "Si no tienes un dato seguro, dilo y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos.\n\n"
+                "Devuelve JSON válido con: tono, intent, priority, summary, response_text, should_create_task, task_type, task_summary, task_detail."
             ),
         },
         {
@@ -4887,7 +5011,7 @@ async def receive_whatsapp_webhook(request: Request):
                 }
 
                 if is_greeting_message(content):
-                    response_text = "Hola, ¿en qué te puedo ayudar hoy?"
+                    response_text = "¡Buenas! 👋 ¿En qué te puedo ayudar hoy?"
                     outbound_payload = None
                     try:
                         outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
@@ -4925,6 +5049,69 @@ async def receive_whatsapp_webhook(request: Request):
                             "provider_message_id": message.get("id"),
                             "ai_response_sent": bool(outbound_payload),
                             "greeting_reply": True,
+                        }
+                    )
+                    continue
+
+                if detected_intent == "asesoria_tecnica":
+                    # Let the LLM handle technical advisory with its expert knowledge - NO database search
+                    product_context = []
+                    ai_result = None
+                    outbound_payload = None
+                    try:
+                        ai_result = generate_agent_reply(
+                            context.get("nombre_visible"),
+                            cliente_contexto,
+                            recent_messages,
+                            content,
+                            verification_state,
+                            [],
+                        )
+                    except Exception as exc:
+                        ai_result = build_fallback_agent_result(content, str(exc))
+
+                    response_text = ai_result.get("response_text") or "Dame un momento para revisar eso."
+                    try:
+                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
+                        provider_message_id = None
+                        if outbound_payload.get("messages"):
+                            provider_message_id = outbound_payload["messages"][0].get("id")
+                        store_outbound_message(
+                            context["conversation_id"],
+                            provider_message_id,
+                            "text",
+                            response_text,
+                            outbound_payload,
+                            intent_detectado="asesoria_tecnica",
+                        )
+                    except Exception as exc:
+                        store_outbound_message(
+                            context["conversation_id"],
+                            None,
+                            "system",
+                            f"No fue posible enviar asesoria tecnica: {exc}",
+                            {"error": str(exc), "response_text": response_text},
+                            intent_detectado="asesoria_tecnica",
+                        )
+
+                    update_conversation_context(
+                        context["conversation_id"],
+                        {
+                            "last_direct_intent": "asesoria_tecnica",
+                            "pending_product_clarification": None,
+                            "pending_document_options": None,
+                            "awaiting_verification": False,
+                        },
+                        summary=ai_result.get("summary") or content,
+                    )
+                    processed_messages.append(
+                        {
+                            "conversation_id": context["conversation_id"],
+                            "telefono": context["telefono_e164"],
+                            "message_type": message_type,
+                            "provider_message_id": message.get("id"),
+                            "ai_response_sent": bool(outbound_payload),
+                            "advisory_reply": True,
                         }
                     )
                     continue
