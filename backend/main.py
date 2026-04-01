@@ -1130,10 +1130,13 @@ def fetch_learned_product_references(product_request: Optional[dict]):
     if not product_request:
         return []
 
-    if product_request.get("product_codes"):
-        return []
-
     phrases = build_learning_phrase_candidates(product_request)
+
+    # Also search learning table by product codes (P-53, 17174, etc.)
+    for code in (product_request.get("product_codes") or []):
+        normalized_code = normalize_text_value(str(code))
+        if normalized_code and normalized_code not in phrases:
+            phrases.insert(0, normalized_code)
 
     if not phrases:
         return []
@@ -5530,6 +5533,12 @@ SECRETO COMERCIAL DE STOCK: ESTRICTAMENTE PROHIBIDO decirle al cliente la cantid
 
 DESAMBIGUACIÓN DE PRODUCTOS: Si el cliente pide algo muy genérico (ej. 'Pintura blanca') y la herramienta de inventario te devuelve varias opciones de marcas o líneas diferentes, oblígalo a ser específico. Pregunta: '¿Buscas pintura para interior o exterior? ¿En qué marca y presentación (galón o cuñete)?'. Cuando el cliente aclare, el sistema aprenderá automáticamente su preferencia para la próxima vez.
 
+PROHIBIDO RENDIRSE (VENDEDOR PERSISTENTE): Si la herramienta `consultar_inventario` devuelve vacío para un código corto (ej. P-53, T-40, 17174, 13755), NUNCA digas 'no lo encontré' ni 'no tenemos ese producto'. En su lugar, haz una pregunta de diagnóstico comercial: 'Ese código no lo tengo mapeado todavía, ¿me ayudas diciéndome qué producto es? ¿Es un color específico de Viniltex, una referencia de cerradura o un abrasivo?'. Tu objetivo es que el cliente te dé una pista (ej. 'es el verde esmeralda'). Con esa pista, vuelve a buscar usando el nombre comercial.
+
+CUADERNO DE APRENDIZAJE: Cuando el cliente te aclare qué significa un código corto o referencia interna (ej. el cliente dice 'el P-53 es el Verde Esmeralda de Viniltex'), EJECUTA inmediatamente la herramienta `guardar_aprendizaje_producto` con el código del cliente y la descripción real antes de buscar el inventario. Así la próxima vez que CUALQUIER cliente diga 'P-53', el sistema ya sabrá qué es sin preguntar. No le menciones al cliente que 'estás guardando en memoria', simplemente hazlo silenciosamente y continúa atendiendo.
+
+BÚSQUEDA POR FRAGMENTOS NUMÉRICOS: Si el cliente envía un código numérico puro (ej. 13755, 17174), manda el número limpio a `consultar_inventario`. Si no devuelve resultados, NO digas que no existe. Pregunta: '¿Me ayudas con el nombre del producto de ese código para grabármelo en la memoria?'. Cuando responda, guarda el aprendizaje y busca por nombre.
+
 PEDIDOS Y COTIZACIONES:
 - Cuando el cliente pide productos, usa consultar_inventario para CADA producto mencionado.
 - Presenta resultados en lenguaje natural: nombre comercial, presentación, disponibilidad y precio si hay.
@@ -5712,6 +5721,30 @@ AGENT_TOOLS = [
                     }
                 },
                 "required": ["nombre_despacho", "canal_envio"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "guardar_aprendizaje_producto",
+            "description": "Guarda en la memoria permanente del sistema la asociación entre un código corto o referencia interna del cliente "
+            "y el nombre real del producto en catálogo. Usa esta herramienta SILENCIOSAMENTE cuando el cliente aclare qué "
+            "significa un código (ej. 'P-53 es el Verde Esmeralda'). No necesitas confirmación del cliente para guardar. "
+            "Después de guardar, busca el producto en inventario con el nombre real.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "codigo_cliente": {
+                        "type": "string",
+                        "description": "El código corto o referencia interna que usa el cliente. Ej: 'P-53', 'T-40', '13755', '17174'.",
+                    },
+                    "descripcion_asociada": {
+                        "type": "string",
+                        "description": "El nombre real del producto en lenguaje comercial. Ej: 'Verde Esmeralda Viniltex', 'Koraza Doble Vida', 'Cerradura Yale 170'.",
+                    }
+                },
+                "required": ["codigo_cliente", "descripcion_asociada"],
             },
         },
     },
@@ -6191,6 +6224,67 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             )
 
 
+def _handle_tool_guardar_aprendizaje_producto(args, conversation_context):
+    codigo_cliente = (args.get("codigo_cliente") or "").strip()
+    descripcion_asociada = (args.get("descripcion_asociada") or "").strip()
+    if not codigo_cliente or not descripcion_asociada:
+        return json.dumps(
+            {"guardado": False, "mensaje": "Se requiere código del cliente y descripción asociada."},
+            ensure_ascii=False,
+        )
+
+    normalized_code = normalize_text_value(codigo_cliente)
+    conversation_id = conversation_context.get("conversation_id")
+
+    try:
+        ensure_product_learning_table()
+        engine = get_db_engine()
+        with engine.begin() as connection:
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO public.agent_product_learning (
+                        normalized_phrase, raw_phrase, canonical_reference,
+                        canonical_description, source_conversation_id,
+                        source_message, confidence, usage_count,
+                        created_at, updated_at
+                    ) VALUES (
+                        :normalized_phrase, :raw_phrase, :canonical_reference,
+                        :canonical_description, :source_conversation_id,
+                        :source_message, :confidence, 1, now(), now()
+                    )
+                    ON CONFLICT (normalized_phrase, canonical_reference)
+                    DO UPDATE SET
+                        canonical_description = EXCLUDED.canonical_description,
+                        source_conversation_id = COALESCE(EXCLUDED.source_conversation_id,
+                            public.agent_product_learning.source_conversation_id),
+                        confidence = GREATEST(public.agent_product_learning.confidence, EXCLUDED.confidence),
+                        usage_count = public.agent_product_learning.usage_count + 1,
+                        updated_at = now()
+                    """
+                ),
+                {
+                    "normalized_phrase": normalized_code,
+                    "raw_phrase": codigo_cliente,
+                    "canonical_reference": descripcion_asociada,
+                    "canonical_description": descripcion_asociada,
+                    "source_conversation_id": conversation_id,
+                    "source_message": f"{codigo_cliente} = {descripcion_asociada}",
+                    "confidence": 0.95,
+                },
+            )
+        return json.dumps(
+            {"guardado": True, "mensaje": f"Aprendizaje guardado: '{codigo_cliente}' → '{descripcion_asociada}'. "
+             "La próxima vez que alguien pida este código, el sistema lo reconocerá automáticamente."},
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        return json.dumps(
+            {"guardado": False, "mensaje": f"No se pudo guardar el aprendizaje: {exc}"},
+            ensure_ascii=False,
+        )
+
+
 def _execute_agent_tool(tool_call, context, conversation_context):
     fn_name = tool_call.function.name
     try:
@@ -6212,6 +6306,8 @@ def _execute_agent_tool(tool_call, context, conversation_context):
         result = _handle_tool_radicar_reclamo(fn_args, context, conversation_context)
     elif fn_name == "confirmar_pedido_y_generar_pdf":
         result = _handle_tool_confirmar_pedido(fn_args, context, conversation_context)
+    elif fn_name == "guardar_aprendizaje_producto":
+        result = _handle_tool_guardar_aprendizaje_producto(fn_args, conversation_context)
     else:
         result = json.dumps({"error": f"Herramienta desconocida: {fn_name}"}, ensure_ascii=False)
 
