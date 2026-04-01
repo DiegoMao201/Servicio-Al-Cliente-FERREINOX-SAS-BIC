@@ -5525,6 +5525,12 @@ DOCUMENTOS: Si te piden ficha técnica u hoja de seguridad, USA LA HERRAMIENTA `
 
 CIERRE DE PEDIDO: Una vez el cliente confirme el resumen de productos, pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
 
+PROTOCOLO ESTRICTO PARA RECLAMOS Y GARANTÍAS:
+Paso 1: Identidad. Si no tienes la cédula/NIT del cliente, usa `verificar_identidad`. Si ya está verificado, continúa.
+Paso 2: Verificación de Compra. Usa `consultar_compras` para confirmar si el cliente realmente compró el producto reclamado recientemente. Si no aparece, díselo con tacto y ofrece alternativas.
+Paso 3: Indagación y Asesoría Técnica (¡VITAL!). NO abras el reclamo inmediatamente. Pregunta cómo aplicaron el producto. Si es pintura, pregunta por la preparación de la superficie, la dilución usada y las manos aplicadas. Da consejos técnicos expertos. Intenta resolver el problema primero.
+Paso 4: Radicación. Si el problema persiste o es un defecto de fábrica claro, pide una foto (o número de lote) y el correo electrónico del cliente. SOLO ENTONCES ejecuta la herramienta `radicar_reclamo`. Nunca cortes la conversación sin darle un cierre amable al cliente con su número de radicado.
+
 ESTADO ACTUAL DE LA CONVERSACIÓN:
 - Cliente verificado: {verificado}
 - Código cliente: {cliente_codigo}
@@ -5621,6 +5627,36 @@ AGENT_TOOLS = [
                     }
                 },
                 "required": ["termino_busqueda"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "radicar_reclamo",
+            "description": "Radica formalmente un reclamo o caso de garantía. Envía correos al área técnica y al cliente con el número de caso. "
+            "Úsala SOLO después de haber verificado identidad, consultado compras, dado asesoría técnica, y obtenido el correo y descripción del problema.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "producto_reclamado": {
+                        "type": "string",
+                        "description": "Nombre del producto con el que tiene el problema. Ej: 'Viniltex Blanco en galón'.",
+                    },
+                    "descripcion_problema": {
+                        "type": "string",
+                        "description": "Resumen claro del problema reportado por el cliente.",
+                    },
+                    "correo_cliente": {
+                        "type": "string",
+                        "description": "Correo electrónico del cliente para enviarle la constancia del radicado.",
+                    },
+                    "evidencia": {
+                        "type": "string",
+                        "description": "Descripción de la evidencia proporcionada: número de lote, foto enviada, etc. Si no hay, indicar 'Pendiente'.",
+                    }
+                },
+                "required": ["producto_reclamado", "descripcion_problema", "correo_cliente"],
             },
         },
     },
@@ -5877,6 +5913,146 @@ def _handle_tool_buscar_documento_tecnico(args, context, conversation_context):
         )
 
 
+def _handle_tool_radicar_reclamo(args, context, conversation_context):
+    producto_reclamado = args.get("producto_reclamado", "")
+    descripcion_problema = args.get("descripcion_problema", "")
+    correo_cliente = args.get("correo_cliente", "")
+    evidencia = args.get("evidencia", "Pendiente")
+
+    if not producto_reclamado or not descripcion_problema:
+        return json.dumps(
+            {"status": "error", "mensaje": "Faltan datos: producto y descripción del problema son requeridos."},
+            ensure_ascii=False,
+        )
+
+    conversation_id = context["conversation_id"]
+    numero_caso = f"CRM-{conversation_id}"
+
+    verified_cliente = conversation_context.get("verified_cliente_codigo")
+    cliente_contexto = None
+    if verified_cliente:
+        try:
+            cliente_contexto = get_cliente_contexto(verified_cliente)
+        except Exception:
+            pass
+
+    recent_messages = load_recent_conversation_messages(conversation_id)
+
+    claim_detail = {
+        "product_label": producto_reclamado,
+        "issue_summary": descripcion_problema,
+        "evidence_note": evidencia,
+        "contact_email": correo_cliente,
+        "case_reference": numero_caso,
+        "store_name": (cliente_contexto or {}).get("ciudad") or "Pendiente",
+    }
+
+    # Save claim case in conversation context
+    update_conversation_context(
+        conversation_id,
+        {
+            "claim_case": {
+                "submitted": True,
+                "case_reference": numero_caso,
+                "product_label": producto_reclamado,
+                "issue_summary": descripcion_problema,
+                "contact_email": correo_cliente,
+            },
+        },
+    )
+    conversation_context["claim_case"] = claim_detail
+
+    # Create agent task for tracking
+    try:
+        upsert_agent_task(
+            conversation_id,
+            context.get("cliente_id"),
+            "reclamo_servicio",
+            f"Reclamo radicado: {producto_reclamado}",
+            claim_detail,
+            "alta",
+        )
+    except Exception:
+        pass
+
+    correos_enviados = []
+
+    # 1. Internal email to claims department
+    try:
+        internal_payload = build_operational_email_payload(
+            "reclamos",
+            context.get("nombre_visible"),
+            cliente_contexto,
+            claim_detail,
+            recent_messages,
+        )
+        if internal_payload:
+            send_sendgrid_email(
+                internal_payload["to_email"],
+                internal_payload["subject"],
+                internal_payload["html_content"],
+                internal_payload["text_content"],
+                reply_to=correo_cliente,
+            )
+            correos_enviados.append(f"Área técnica ({internal_payload['to_email']})")
+            store_outbound_message(
+                conversation_id, None, "system",
+                f"Correo reclamo interno enviado a {internal_payload['to_email']}",
+                {"email_to": internal_payload["to_email"], "case": numero_caso},
+                intent_detectado="correo_reclamo_interno",
+            )
+    except Exception as exc:
+        store_outbound_message(
+            conversation_id, None, "system",
+            f"Error enviando correo interno de reclamo: {exc}",
+            {"error": str(exc)},
+            intent_detectado="correo_reclamo_interno_error",
+        )
+
+    # 2. Confirmation email to customer
+    if correo_cliente:
+        try:
+            customer_payload = build_customer_claim_confirmation_email(
+                conversation_id,
+                context.get("nombre_visible"),
+                cliente_contexto,
+                claim_detail,
+            )
+            if customer_payload:
+                send_sendgrid_email(
+                    customer_payload["to_email"],
+                    customer_payload["subject"],
+                    customer_payload["html_content"],
+                    customer_payload["text_content"],
+                )
+                correos_enviados.append(f"Cliente ({correo_cliente})")
+                store_outbound_message(
+                    conversation_id, None, "system",
+                    f"Correo constancia reclamo enviado a {correo_cliente}",
+                    {"email_to": correo_cliente, "case": numero_caso},
+                    intent_detectado="correo_reclamo_cliente",
+                )
+        except Exception as exc:
+            store_outbound_message(
+                conversation_id, None, "system",
+                f"Error enviando constancia al cliente: {exc}",
+                {"error": str(exc)},
+                intent_detectado="correo_reclamo_cliente_error",
+            )
+
+    return json.dumps(
+        {
+            "status": "exito",
+            "numero_caso": numero_caso,
+            "producto": producto_reclamado,
+            "correos_enviados": correos_enviados,
+            "mensaje": f"Reclamo radicado exitosamente con número {numero_caso}. "
+            f"Correos enviados a: {', '.join(correos_enviados) if correos_enviados else 'ninguno (verificar configuración SendGrid)'}.",
+        },
+        ensure_ascii=False,
+    )
+
+
 def _handle_tool_confirmar_pedido(args, context, conversation_context):
     nombre_despacho = args.get("nombre_despacho", "")
     canal_envio = args.get("canal_envio", "whatsapp")
@@ -5995,6 +6171,8 @@ def _execute_agent_tool(tool_call, context, conversation_context):
         result = _handle_tool_consultar_compras(fn_args, conversation_context)
     elif fn_name == "buscar_documento_tecnico":
         result = _handle_tool_buscar_documento_tecnico(fn_args, context, conversation_context)
+    elif fn_name == "radicar_reclamo":
+        result = _handle_tool_radicar_reclamo(fn_args, context, conversation_context)
     elif fn_name == "confirmar_pedido_y_generar_pdf":
         result = _handle_tool_confirmar_pedido(fn_args, context, conversation_context)
     else:
@@ -6093,6 +6271,8 @@ def generate_agent_reply_v2(
             intent = "consulta_compras"
         elif tc["name"] == "buscar_documento_tecnico":
             intent = "consulta_documentacion"
+        elif tc["name"] == "radicar_reclamo":
+            intent = "reclamo_servicio"
         elif tc["name"] == "confirmar_pedido_y_generar_pdf":
             intent = "pedido"
 
