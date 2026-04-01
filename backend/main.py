@@ -5478,6 +5478,399 @@ def send_whatsapp_document_message(to_phone: str, document_link: str, filename: 
     return response.json()
 
 
+# ── Agent v2: Function Calling Architecture ─────────────────────────
+
+AGENT_SYSTEM_PROMPT_V2 = """Eres el Asesor Comercial Senior de Ferreinox SAS BIC, una ferretería con 13 años de experiencia. \
+Atiendes clientes por WhatsApp con tono conversacional, humano, cordial y comercial.
+
+REGLAS FUNDAMENTALES:
+1. Mensajes CORTOS: máximo 3-4 líneas por turno. Nunca suenes como robot.
+2. PROHIBIDO saludar repetidamente. Solo saluda si es el PRIMER mensaje de la conversación.
+3. PROHIBIDO usar plantillas tipo "Hola, [Nombre]", "Resumen del caso:", "Si necesitas algo más...".
+4. TRADUCCIÓN OBLIGATORIA de códigos ERP a lenguaje humano:
+   - "PQ VINILTEX ADV MAT BLANCO 1501 18.93L" → "Viniltex Blanco en cuñete"
+   - 18.93L o 1/5 = cuñete, 3.79L o 1/1 = galón, 0.95L o 1/4 = cuarto
+   - No muestres códigos técnicos ni nombres crudos del ERP.
+5. PIENSA antes de actuar: clasifica la intención del cliente.
+   - Pregunta sobre aplicación, secado, rodillos, dilución → ASESORÍA TÉCNICA: responde como experto SIN buscar inventario.
+   - Pide comprar, cotizar o verificar disponibilidad de un producto → usa consultar_inventario.
+   - Dice reclamo, queja, garantía → empatía y protocolo paso a paso (producto, problema, correo).
+   - Pide cartera, saldos, facturas → usa consultar_cartera (requiere verificación primero).
+   - Pide historial de compras → usa consultar_compras (requiere verificación primero).
+6. NUNCA busques verbos o intenciones como productos. "necesito hacer un pedido" es INTENCIÓN, no producto. Pregunta qué productos necesita.
+7. GUÍA AL CLIENTE: termina con una pregunta amable que lleve al siguiente paso.
+8. Preguntas fuera de tema: responde brevemente con naturalidad y redirige al negocio.
+9. FLUJO ACTIVO: Si hay un pedido o reclamo en curso, no lo abandones a menos que el cliente lo pida explícitamente.
+10. NUNCA digas "Voy a verificar", "Déjame revisar". Responde directamente con lo que sabes.
+11. CIERRE: Si el cliente dice "gracias", "chao", "hasta luego", "no más por ahora", despídete cordialmente y brevemente.
+12. "A nombre de..." durante un pedido = el cliente indica el destinatario/titular del pedido, NO es un producto.
+13. Cuando el cliente confirma un pedido, resume TODOS los productos completos con cantidades. Nunca omitas items.
+
+VERIFICACIÓN DE IDENTIDAD:
+- Para cartera, saldos o datos sensibles: pide cédula o NIT y usa verificar_identidad.
+- Si el cliente ya está verificado (ver estado abajo), NO pidas documento de nuevo.
+- NUNCA reveles cartera, saldos o datos financieros sin verificación previa.
+
+PORTAFOLIO VÁLIDO: Pintuco (Viniltex, Pintulux 3en1, Koraza, Doméstico, Aerocolor), Abracol, Yale, Goya, Mega y categorías reales del ERP.
+No inventes marcas ni productos fuera del portafolio.
+
+PEDIDOS Y COTIZACIONES:
+- Cuando el cliente pide productos, usa consultar_inventario para CADA producto mencionado.
+- Presenta resultados en lenguaje natural: nombre comercial, presentación, disponibilidad y precio si hay.
+- Si el cliente menciona múltiples productos separados por comas o "y", busca CADA UNO por separado.
+- Siempre incluye TODOS los productos que el cliente pidió, nunca dejes ninguno por fuera.
+- Si un producto no se encuentra, informa y sugiere alternativas.
+
+ESTADO ACTUAL DE LA CONVERSACIÓN:
+- Cliente verificado: {verificado}
+- Código cliente: {cliente_codigo}
+- Nombre cliente: {nombre_cliente}
+- Borrador comercial activo: {borrador_activo}
+- Reclamo activo: {reclamo_activo}
+
+Si no tienes un dato seguro, dilo honestamente y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos."""
+
+
+AGENT_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "consultar_inventario",
+            "description": "Busca disponibilidad y precios de productos en el inventario de Ferreinox. "
+            "Usa esta herramienta cuando el cliente pregunte por un producto específico, quiera hacer un pedido, "
+            "cotización, o necesite verificar stock. NO la uses para intenciones genéricas como 'quiero hacer un pedido'.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "producto": {
+                        "type": "string",
+                        "description": "Nombre, descripción o código del producto a buscar. Ej: 'viniltex blanco cuñete', 'koraza rojo', 'cerradura yale'",
+                    }
+                },
+                "required": ["producto"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "verificar_identidad",
+            "description": "Verifica la identidad de un cliente por su número de cédula o NIT. "
+            "Usa esta herramienta SOLO cuando el cliente proporcione voluntariamente un número de documento.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "documento": {
+                        "type": "string",
+                        "description": "Número de cédula o NIT del cliente (solo dígitos)",
+                    }
+                },
+                "required": ["documento"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "consultar_cartera",
+            "description": "Consulta el estado de cartera (saldos pendientes, documentos vencidos) del cliente verificado. "
+            "Solo funciona si el cliente ya está verificado.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "consultar_compras",
+            "description": "Consulta el historial de compras recientes del cliente verificado. "
+            "Solo funciona si el cliente ya está verificado.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "periodo": {
+                        "type": "string",
+                        "description": "Periodo a consultar, ej: 'enero 2024', 'últimos 3 meses'. Por defecto últimos 12 meses.",
+                    }
+                },
+            },
+        },
+    },
+]
+
+
+def _handle_tool_consultar_inventario(args, conversation_context):
+    producto = args.get("producto", "")
+    product_request = extract_product_request(producto)
+    rows = lookup_product_context(producto, product_request)
+    if not rows:
+        return json.dumps(
+            {"encontrados": 0, "mensaje": "No se encontraron productos con esa descripción."},
+            ensure_ascii=False,
+        )
+    results = []
+    for row in rows[:5]:
+        item = {
+            "codigo": row.get("codigo_articulo") or row.get("referencia"),
+            "descripcion": row.get("descripcion") or row.get("nombre_articulo"),
+            "marca": row.get("marca") or row.get("marca_producto"),
+            "presentacion": infer_product_presentation_from_row(row),
+        }
+        stock = parse_numeric_value(row.get("stock_total"))
+        if stock is not None:
+            item["stock_total"] = stock
+        stock_189 = parse_numeric_value(row.get("stock_189"))
+        if stock_189 is not None:
+            item["stock_pereira"] = stock_189
+        precio = row.get("precio_venta")
+        if precio is not None:
+            item["precio"] = precio
+        results.append(item)
+    return json.dumps({"encontrados": len(results), "productos": results}, ensure_ascii=False, default=str)
+
+
+def _handle_tool_verificar_identidad(args, context, conversation_context):
+    documento = args.get("documento", "").strip()
+    if not documento:
+        return json.dumps({"verificado": False, "mensaje": "No se proporcionó documento."}, ensure_ascii=False)
+
+    identity_candidate = {"type": "document", "value": documento}
+    try:
+        verified_context, verified_by = resolve_identity_candidate(
+            identity_candidate, context.get("telefono_e164", "")
+        )
+    except Exception:
+        verified_context, verified_by = None, None
+
+    if verified_context:
+        cliente_codigo = verified_context.get("cliente_codigo")
+        try:
+            cliente_id = update_contact_cliente(context["contact_id"], cliente_codigo)
+            context["cliente_id"] = cliente_id
+        except Exception:
+            pass
+        update_conversation_context(
+            context["conversation_id"],
+            {
+                "verified": True,
+                "verified_document": documento,
+                "verified_by": verified_by,
+                "verified_cliente_codigo": cliente_codigo,
+                "awaiting_verification": False,
+                "awaiting_name_confirmation": False,
+            },
+        )
+        conversation_context.update(
+            {
+                "verified": True,
+                "verified_document": documento,
+                "verified_by": verified_by,
+                "verified_cliente_codigo": cliente_codigo,
+            }
+        )
+        return json.dumps(
+            {
+                "verificado": True,
+                "nombre_cliente": verified_context.get("nombre_cliente"),
+                "cliente_codigo": cliente_codigo,
+                "ciudad": verified_context.get("ciudad"),
+                "nit": verified_context.get("nit"),
+            },
+            ensure_ascii=False,
+            default=str,
+        )
+    else:
+        return json.dumps(
+            {
+                "verificado": False,
+                "mensaje": f"No se encontró un cliente con el documento {documento}. "
+                "Puede ser un número incorrecto o no estar registrado.",
+            },
+            ensure_ascii=False,
+        )
+
+
+def _handle_tool_consultar_cartera(conversation_context):
+    cliente_codigo = conversation_context.get("verified_cliente_codigo")
+    if not cliente_codigo:
+        return json.dumps(
+            {"error": "Cliente no verificado. Pide la cédula o NIT primero."},
+            ensure_ascii=False,
+        )
+
+    result = {}
+    try:
+        contexto = get_cliente_contexto(cliente_codigo)
+        result["nombre_cliente"] = contexto.get("nombre_cliente")
+        result["saldo_cartera"] = contexto.get("saldo_cartera")
+    except Exception:
+        pass
+
+    try:
+        overdue = fetch_overdue_documents(cliente_codigo)
+        if overdue:
+            totals = overdue.get("totals", {})
+            result["documentos_vencidos"] = totals.get("documentos_vencidos", 0)
+            result["saldo_vencido"] = totals.get("saldo_vencido", 0)
+            result["max_dias_vencido"] = totals.get("max_dias_vencido", 0)
+            if overdue.get("documents"):
+                result["detalle_documentos"] = overdue["documents"][:5]
+    except Exception:
+        pass
+
+    if not result:
+        return json.dumps({"error": "No se pudo consultar la cartera."}, ensure_ascii=False)
+    return json.dumps(result, ensure_ascii=False, default=str)
+
+
+def _handle_tool_consultar_compras(args, conversation_context):
+    cliente_codigo = conversation_context.get("verified_cliente_codigo")
+    if not cliente_codigo:
+        return json.dumps(
+            {"error": "Cliente no verificado. Pide la cédula o NIT primero."},
+            ensure_ascii=False,
+        )
+
+    periodo = args.get("periodo", "")
+    purchase_query = extract_purchase_query(periodo) if periodo else {}
+
+    if purchase_query.get("wants_last_purchase"):
+        summary = fetch_latest_purchase_detail(cliente_codigo)
+    else:
+        summary = fetch_purchase_summary(
+            cliente_codigo,
+            purchase_query.get("start_date"),
+            purchase_query.get("end_date"),
+        )
+
+    if not summary:
+        return json.dumps(
+            {"encontrados": 0, "mensaje": "No se encontraron compras en ese periodo."},
+            ensure_ascii=False,
+        )
+    return json.dumps(summary, ensure_ascii=False, default=str)
+
+
+def _execute_agent_tool(tool_call, context, conversation_context):
+    fn_name = tool_call.function.name
+    try:
+        fn_args = json.loads(tool_call.function.arguments)
+    except json.JSONDecodeError:
+        fn_args = {}
+
+    if fn_name == "consultar_inventario":
+        result = _handle_tool_consultar_inventario(fn_args, conversation_context)
+    elif fn_name == "verificar_identidad":
+        result = _handle_tool_verificar_identidad(fn_args, context, conversation_context)
+    elif fn_name == "consultar_cartera":
+        result = _handle_tool_consultar_cartera(conversation_context)
+    elif fn_name == "consultar_compras":
+        result = _handle_tool_consultar_compras(fn_args, conversation_context)
+    else:
+        result = json.dumps({"error": f"Herramienta desconocida: {fn_name}"}, ensure_ascii=False)
+
+    return fn_name, fn_args, result
+
+
+def generate_agent_reply_v2(
+    profile_name: Optional[str],
+    conversation_context: dict,
+    recent_messages: list[dict],
+    user_message: str,
+    context: dict,
+):
+    client = get_openai_client()
+    nombre = profile_name or "cliente"
+
+    verified = bool(conversation_context.get("verified"))
+    verified_cliente = conversation_context.get("verified_cliente_codigo")
+    nombre_cliente = ""
+    if verified and verified_cliente:
+        try:
+            cli = get_cliente_contexto(verified_cliente)
+            nombre_cliente = cli.get("nombre_cliente", "")
+        except Exception:
+            pass
+
+    commercial_draft = conversation_context.get("commercial_draft")
+    claim_case = conversation_context.get("claim_case")
+
+    system_content = AGENT_SYSTEM_PROMPT_V2.format(
+        verificado="SÍ" if verified else "NO",
+        cliente_codigo=verified_cliente or "No identificado",
+        nombre_cliente=nombre_cliente or "No identificado",
+        borrador_activo=safe_json_dumps(commercial_draft) if commercial_draft else "Ninguno",
+        reclamo_activo=safe_json_dumps(claim_case) if claim_case else "Ninguno",
+    )
+
+    messages = [{"role": "system", "content": system_content}]
+
+    for msg in recent_messages[-20:]:
+        role = "assistant" if msg.get("direction") == "outbound" else "user"
+        content_text = msg.get("contenido") or ""
+        if content_text and msg.get("message_type") in ("text", "button", "interactive", None):
+            messages.append({"role": role, "content": content_text})
+
+    messages.append({"role": "user", "content": user_message})
+
+    response = client.chat.completions.create(
+        model=get_openai_model(),
+        messages=messages,
+        tools=AGENT_TOOLS,
+        tool_choice="auto",
+        temperature=0.3,
+    )
+
+    assistant_message = response.choices[0].message
+    tool_calls_made = []
+
+    max_iterations = 5
+    while assistant_message.tool_calls and max_iterations > 0:
+        messages.append(assistant_message)
+        for tc in assistant_message.tool_calls:
+            fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+            tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tc.id,
+                    "content": result,
+                }
+            )
+
+        response = client.chat.completions.create(
+            model=get_openai_model(),
+            messages=messages,
+            tools=AGENT_TOOLS,
+            tool_choice="auto",
+            temperature=0.3,
+        )
+        assistant_message = response.choices[0].message
+        max_iterations -= 1
+
+    response_text = assistant_message.content or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
+
+    intent = "consulta_general"
+    for tc in tool_calls_made:
+        if tc["name"] == "verificar_identidad":
+            intent = "verificacion_identidad"
+        elif tc["name"] == "consultar_inventario":
+            intent = "consulta_productos"
+        elif tc["name"] == "consultar_cartera":
+            intent = "consulta_cartera"
+        elif tc["name"] == "consultar_compras":
+            intent = "consulta_compras"
+
+    return {
+        "response_text": response_text,
+        "intent": intent,
+        "tool_calls": tool_calls_made,
+        "should_create_task": False,
+    }
+
+
 @app.get("/")
 def read_root():
     return {
@@ -5666,1212 +6059,46 @@ async def receive_whatsapp_webhook(request: Request):
                             summary="Contexto reiniciado por inactividad (3h+)",
                         )
 
-                verified_context = None
-                detected_intent = detect_business_intent(content)
-
-                # Handle name confirmation step (yes/no to "¿Confirmas que el titular es X?")
-                if conversation_context.get("awaiting_name_confirmation"):
-                    name_response = is_name_confirmation_response(content)
-                    pending_verified = conversation_context.get("pending_verified_context") or {}
-                    if name_response is True and pending_verified:
-                        verified_context = pending_verified
-                        verified_by = conversation_context.get("pending_verified_by") or "document"
-                        cliente_id = update_contact_cliente(context["contact_id"], verified_context.get("cliente_codigo"))
-                        context["cliente_id"] = cliente_id
-                        update_conversation_context(
-                            context["conversation_id"],
-                            {
-                                "verified": True,
-                                "verified_document": conversation_context.get("pending_verified_document"),
-                                "verified_by": verified_by,
-                                "verified_cliente_codigo": verified_context.get("cliente_codigo"),
-                                "awaiting_name_confirmation": False,
-                                "awaiting_verification": False,
-                                "pending_verified_context": None,
-                                "pending_verified_by": None,
-                                "pending_verified_document": None,
-                            },
-                        )
-                        conversation_context.update(
-                            {
-                                "verified": True,
-                                "verified_document": conversation_context.get("pending_verified_document"),
-                                "verified_by": verified_by,
-                                "verified_cliente_codigo": verified_context.get("cliente_codigo"),
-                                "awaiting_verification": False,
-                                "awaiting_name_confirmation": False,
-                            }
-                        )
-                        # Now proceed to handle the pending intent (cartera, compras, etc.)
-                        detected_intent = conversation_context.get("pending_intent") or detected_intent
-                        identity_candidate = {"type": "confirmed", "value": conversation_context.get("pending_verified_document")}
-                        identity_verification_message = True
-                    elif name_response is False:
-                        reject_text = (
-                            "Entendido, ese no es. ¿Me regalas otra cédula, NIT o código de cliente para buscarte?"
-                        )
-                        outbound_payload = None
-                        try:
-                            outbound_payload = send_whatsapp_text_message(context["telefono_e164"], reject_text)
-                            provider_message_id = None
-                            if outbound_payload.get("messages"):
-                                provider_message_id = outbound_payload["messages"][0].get("id")
-                            store_outbound_message(
-                                context["conversation_id"],
-                                provider_message_id,
-                                "text",
-                                reject_text,
-                                outbound_payload,
-                                intent_detectado="verificacion_nombre_rechazada",
-                            )
-                        except Exception as exc:
-                            store_outbound_message(
-                                context["conversation_id"],
-                                None,
-                                "system",
-                                f"No fue posible enviar rechazo de nombre: {exc}",
-                                {"error": str(exc)},
-                                intent_detectado="verificacion_nombre_rechazada",
-                            )
-                        update_conversation_context(
-                            context["conversation_id"],
-                            {
-                                "awaiting_name_confirmation": False,
-                                "pending_verified_context": None,
-                                "pending_verified_by": None,
-                                "pending_verified_document": None,
-                                "awaiting_verification": True,
-                            },
-                        )
-                        processed_messages.append(
-                            {
-                                "conversation_id": context["conversation_id"],
-                                "telefono": context["telefono_e164"],
-                                "message_type": message_type,
-                                "provider_message_id": message.get("id"),
-                                "ai_response_sent": bool(outbound_payload),
-                                "verification_required": True,
-                            }
-                        )
-                        continue
-                    # If ambiguous response, fall through to normal processing
-
-                if not verified_context:
-                    identity_candidate = extract_identity_lookup_candidate(
-                        content,
-                        conversation_context,
-                        allow_unprompted=detected_intent != "consulta_productos",
-                    )
-                    identity_verification_message = identity_candidate is not None
-                    if identity_verification_message:
-                        detected_intent = conversation_context.get("pending_intent") or detected_intent
-                if detected_intent == "consulta_general" and is_product_code_message(content):
-                    previous_product_request = conversation_context.get("last_product_request") or {}
-                    if conversation_context.get("last_direct_intent") == "consulta_productos" or previous_product_request.get("search_terms"):
-                        detected_intent = "consulta_productos"
-                if detected_intent in {"consulta_general", "consulta_productos"} and is_purchase_followup_message(content, conversation_context):
-                    detected_intent = "consulta_compras"
-                if detected_intent == "consulta_general" and has_temporal_reference(content):
-                    previous_intent = conversation_context.get("last_direct_intent") or conversation_context.get("intent")
-                    if previous_intent in {"consulta_compras", "consulta_cartera"}:
-                        detected_intent = previous_intent
-                product_request = extract_product_request(content)
-                if should_continue_claim_flow(conversation_context, detected_intent, content):
-                    detected_intent = "reclamo_servicio"
-                if should_continue_commercial_flow(conversation_context, detected_intent, content):
-                    detected_intent = conversation_context.get("last_direct_intent")
-                if detected_intent == "consulta_general" and looks_like_product_query(content, product_request):
-                    detected_intent = "consulta_productos"
-                pending_product_clarification = conversation_context.get("pending_product_clarification") or []
-                pending_document_options = conversation_context.get("pending_document_options") or []
-                selected_document_option = None
-                if pending_product_clarification:
-                    selected_option = resolve_product_clarification_choice(content, pending_product_clarification)
-                    if selected_option:
-                        detected_intent = "consulta_productos"
-                        merged_core_terms = list((conversation_context.get("last_product_request") or {}).get("core_terms") or [])
-                        merged_terms = list((conversation_context.get("last_product_request") or {}).get("search_terms") or [])
-                        merged_codes = list(product_request.get("product_codes") or [])
-                        selected_reference = selected_option.get("referencia") or selected_option.get("codigo_articulo")
-                        if selected_reference and normalize_reference_value(selected_reference) not in merged_codes:
-                            merged_codes.append(normalize_reference_value(selected_reference))
-                        product_request["core_terms"] = merged_core_terms[:8]
-                        product_request["search_terms"] = expand_product_terms(merged_terms or merged_core_terms)[:8]
-                        product_request["product_codes"] = merged_codes[:4]
-                if pending_document_options and conversation_context.get("last_direct_intent") == "consulta_documentacion":
-                    selected_document_option = resolve_technical_document_choice(content, pending_document_options)
-                    if selected_document_option:
-                        detected_intent = "consulta_documentacion"
-                    else:
-                        pending_document_request = extract_technical_document_request(content, product_request, conversation_context)
-                        if pending_document_request.get("terms"):
-                            detected_intent = "consulta_documentacion"
-                if detected_intent == "consulta_productos" and is_product_code_message(content):
-                    previous_product_request = conversation_context.get("last_product_request") or {}
-                    merged_core_terms = list(previous_product_request.get("core_terms") or [])
-                    merged_terms = list(previous_product_request.get("search_terms") or [])
-                    merged_codes = list(previous_product_request.get("product_codes") or [])
-                    for term in product_request.get("core_terms") or []:
-                        if term not in merged_core_terms:
-                            merged_core_terms.append(term)
-                    for term in product_request.get("search_terms") or []:
-                        if term not in merged_terms:
-                            merged_terms.append(term)
-                    for code in product_request.get("product_codes") or []:
-                        if code not in merged_codes:
-                            merged_codes.append(code)
-                    product_request["core_terms"] = merged_core_terms[:8]
-                    product_request["search_terms"] = expand_product_terms(merged_terms)[:8]
-                    product_request["product_codes"] = merged_codes[:4]
-
-                if detect_context_switch(conversation_context, detected_intent, identity_verification_message):
-                    reset_updates = {
-                        "pending_product_clarification": None,
-                        "pending_document_options": None,
-                    }
-                    if detected_intent != "reclamo_servicio":
-                        reset_updates["claim_case"] = None
-                    if detected_intent not in {"pedido", "cotizacion"}:
-                        reset_updates["commercial_draft"] = None
-                    update_conversation_context(
-                        context["conversation_id"],
-                        reset_updates,
-                        summary=f"Cambio de contexto hacia {detected_intent}",
-                    )
-                    conversation_context.update(reset_updates)
-
-                if identity_candidate and not verified_context:
-                    # ── Standard identity resolution ──
+                # ── Function Calling routing (v2) ──
+                # Load client context if already verified
+                cliente_contexto = None
+                verified_cliente_codigo = conversation_context.get("verified_cliente_codigo")
+                if verified_cliente_codigo:
                     try:
-                        verified_context, verified_by = resolve_identity_candidate(identity_candidate, context["telefono_e164"])
-                    except Exception:
-                        verified_context, verified_by = None, None
-                    if verified_context:
-                        cliente_nombre = verified_context.get("nombre_cliente") or ""
-                        # Ask name confirmation as second security layer
-                        if verified_by in ("document", "customer_code") and cliente_nombre and not conversation_context.get("awaiting_name_confirmation"):
-                            confirmation_text = build_name_confirmation_challenge(cliente_nombre)
-                            outbound_payload = None
-                            try:
-                                outbound_payload = send_whatsapp_text_message(context["telefono_e164"], confirmation_text)
-                                provider_message_id = None
-                                if outbound_payload.get("messages"):
-                                    provider_message_id = outbound_payload["messages"][0].get("id")
-                                store_outbound_message(
-                                    context["conversation_id"],
-                                    provider_message_id,
-                                    "text",
-                                    confirmation_text,
-                                    outbound_payload,
-                                    intent_detectado="verificacion_nombre_solicitada",
-                                )
-                            except Exception as exc:
-                                store_outbound_message(
-                                    context["conversation_id"],
-                                    None,
-                                    "system",
-                                    f"No fue posible enviar confirmacion de nombre: {exc}",
-                                    {"error": str(exc)},
-                                    intent_detectado="verificacion_nombre_solicitada",
-                                )
-                            update_conversation_context(
-                                context["conversation_id"],
-                                {
-                                    "awaiting_name_confirmation": True,
-                                    "pending_verified_context": verified_context,
-                                    "pending_verified_by": verified_by,
-                                    "pending_verified_document": identity_candidate.get("value") if verified_by == "document" else None,
-                                },
-                            )
-                            conversation_context.update({"awaiting_name_confirmation": True, "awaiting_verification": True})
-                            processed_messages.append(
-                                {
-                                    "conversation_id": context["conversation_id"],
-                                    "telefono": context["telefono_e164"],
-                                    "message_type": message_type,
-                                    "provider_message_id": message.get("id"),
-                                    "ai_response_sent": bool(outbound_payload),
-                                    "verification_required": True,
-                                }
-                            )
-                            continue
-                        # For phone/name-based verification, skip name confirmation
-                        cliente_id = update_contact_cliente(context["contact_id"], verified_context.get("cliente_codigo"))
-                        context["cliente_id"] = cliente_id
-                        update_conversation_context(
-                            context["conversation_id"],
-                            {
-                                "verified": True,
-                                "verified_document": identity_candidate.get("value") if verified_by == "document" else None,
-                                "verified_by": verified_by,
-                                "verified_cliente_codigo": verified_context.get("cliente_codigo"),
-                            },
-                        )
-                        conversation_context.update(
-                            {
-                                "verified": True,
-                                "verified_document": identity_candidate.get("value") if verified_by == "document" else None,
-                                "verified_by": verified_by,
-                                "verified_cliente_codigo": verified_context.get("cliente_codigo"),
-                                "awaiting_verification": False,
-                            }
-                        )
-                    else:
-                        invalid_identity_text = (
-                            build_identity_not_found_reply(identity_candidate)
-                            + " Mientras tanto, puedo ayudarte con inventario, productos y documentación técnica."
-                        )
-                        outbound_payload = None
-                        try:
-                            outbound_payload = send_whatsapp_text_message(context["telefono_e164"], invalid_identity_text)
-                            provider_message_id = None
-                            if outbound_payload.get("messages"):
-                                provider_message_id = outbound_payload["messages"][0].get("id")
-                            store_outbound_message(
-                                context["conversation_id"],
-                                provider_message_id,
-                                "text",
-                                invalid_identity_text,
-                                outbound_payload,
-                                intent_detectado="identidad_no_validada",
-                            )
-                        except Exception as exc:
-                            store_outbound_message(
-                                context["conversation_id"],
-                                None,
-                                "system",
-                                f"No fue posible enviar respuesta de identidad no validada: {exc}",
-                                {"error": str(exc), "response_text": invalid_identity_text},
-                                intent_detectado="identidad_no_validada",
-                            )
-                        processed_messages.append(
-                            {
-                                "conversation_id": context["conversation_id"],
-                                "telefono": context["telefono_e164"],
-                                "message_type": message_type,
-                                "provider_message_id": message.get("id"),
-                                "ai_response_sent": bool(outbound_payload),
-                                "verification_required": True,
-                            }
-                        )
-                        continue
-
-                cliente_contexto = verified_context
-                if cliente_contexto is None:
-                    verified_cliente_codigo = conversation_context.get("verified_cliente_codigo")
-                    if verified_cliente_codigo:
-                        try:
-                            cliente_contexto = get_cliente_contexto(verified_cliente_codigo)
-                        except HTTPException:
-                            cliente_contexto = None
-
+                        cliente_contexto = get_cliente_contexto(verified_cliente_codigo)
+                    except HTTPException:
+                        cliente_contexto = None
                 if cliente_contexto is None:
                     cliente_contexto = find_cliente_contexto_by_phone(context["telefono_e164"])
-
-                if cliente_contexto:
-                    cliente_id = update_contact_cliente(context["contact_id"], cliente_contexto.get("cliente_codigo"))
-                    context["cliente_id"] = cliente_id
-
-                sensitive_request = is_sensitive_intent_message(content)
-                verified_cliente_codigo = conversation_context.get("verified_cliente_codigo")
-                if not verified_cliente_codigo and verified_context:
-                    verified_cliente_codigo = verified_context.get("cliente_codigo")
-                verification_state = {
-                    "verified": bool(conversation_context.get("verified") or verified_context),
-                    "verified_document": conversation_context.get("verified_document"),
-                    "verified_cliente_codigo": verified_cliente_codigo,
-                    "sensitive_request": sensitive_request,
-                }
-
-                if is_nudge_or_followup(content):
-                    nudge_reply = build_nudge_reply(conversation_context)
-                    if nudge_reply:
-                        outbound_payload = None
+                    if cliente_contexto:
                         try:
-                            outbound_payload = send_whatsapp_text_message(context["telefono_e164"], nudge_reply)
-                            provider_message_id = None
-                            if outbound_payload.get("messages"):
-                                provider_message_id = outbound_payload["messages"][0].get("id")
-                            store_outbound_message(
-                                context["conversation_id"],
-                                provider_message_id,
-                                "text",
-                                nudge_reply,
-                                outbound_payload,
-                                intent_detectado="nudge_followup",
-                            )
-                        except Exception as exc:
-                            store_outbound_message(
-                                context["conversation_id"],
-                                None,
-                                "system",
-                                f"No fue posible enviar respuesta de seguimiento: {exc}",
-                                {"error": str(exc), "response_text": nudge_reply},
-                                intent_detectado="nudge_followup",
-                            )
-                        processed_messages.append(
-                            {
-                                "conversation_id": context["conversation_id"],
-                                "telefono": context["telefono_e164"],
-                                "message_type": message_type,
-                                "provider_message_id": message.get("id"),
-                                "ai_response_sent": bool(outbound_payload),
-                                "nudge_reply": True,
-                            }
-                        )
-                        continue
-
-                if is_greeting_message(content):
-                    response_text = "¡Buenas! 👋 ¿En qué te puedo ayudar hoy?"
-                    outbound_payload = None
-                    try:
-                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
-                        provider_message_id = None
-                        if outbound_payload.get("messages"):
-                            provider_message_id = outbound_payload["messages"][0].get("id")
-                        store_outbound_message(
-                            context["conversation_id"],
-                            provider_message_id,
-                            "text",
-                            response_text,
-                            outbound_payload,
-                            intent_detectado="saludo",
-                        )
-                    except Exception as exc:
-                        store_outbound_message(
-                            context["conversation_id"],
-                            None,
-                            "system",
-                            f"No fue posible enviar saludo: {exc}",
-                            {"error": str(exc), "response_text": response_text},
-                            intent_detectado="saludo",
-                        )
-
-                    update_conversation_context(
-                        context["conversation_id"],
-                        {"intent": "saludo", "awaiting_verification": False},
-                        summary="Saludo inicial",
-                    )
-                    processed_messages.append(
-                        {
-                            "conversation_id": context["conversation_id"],
-                            "telefono": context["telefono_e164"],
-                            "message_type": message_type,
-                            "provider_message_id": message.get("id"),
-                            "ai_response_sent": bool(outbound_payload),
-                            "greeting_reply": True,
-                        }
-                    )
-                    continue
-
-                if detected_intent == "asesoria_tecnica":
-                    # Let the LLM handle technical advisory with its expert knowledge - NO database search
-                    product_context = []
-                    ai_result = None
-                    outbound_payload = None
-                    try:
-                        ai_result = generate_agent_reply(
-                            context.get("nombre_visible"),
-                            cliente_contexto,
-                            recent_messages,
-                            content,
-                            verification_state,
-                            [],
-                        )
-                    except Exception as exc:
-                        ai_result = build_fallback_agent_result(content, str(exc))
-
-                    response_text = ai_result.get("response_text") or "¿En qué te puedo ayudar?"
-                    try:
-                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
-                        provider_message_id = None
-                        if outbound_payload.get("messages"):
-                            provider_message_id = outbound_payload["messages"][0].get("id")
-                        store_outbound_message(
-                            context["conversation_id"],
-                            provider_message_id,
-                            "text",
-                            response_text,
-                            outbound_payload,
-                            intent_detectado="asesoria_tecnica",
-                        )
-                    except Exception as exc:
-                        store_outbound_message(
-                            context["conversation_id"],
-                            None,
-                            "system",
-                            f"No fue posible enviar asesoria tecnica: {exc}",
-                            {"error": str(exc), "response_text": response_text},
-                            intent_detectado="asesoria_tecnica",
-                        )
-
-                    update_conversation_context(
-                        context["conversation_id"],
-                        {
-                            "last_direct_intent": "asesoria_tecnica",
-                            "pending_product_clarification": None,
-                            "pending_document_options": None,
-                            "awaiting_verification": False,
-                        },
-                        summary=ai_result.get("summary") or content,
-                    )
-                    processed_messages.append(
-                        {
-                            "conversation_id": context["conversation_id"],
-                            "telefono": context["telefono_e164"],
-                            "message_type": message_type,
-                            "provider_message_id": message.get("id"),
-                            "ai_response_sent": bool(outbound_payload),
-                            "advisory_reply": True,
-                        }
-                    )
-                    continue
-
-                if detected_intent == "consulta_documentacion":
-                    document_request = extract_technical_document_request(content, product_request, conversation_context)
-                    if selected_document_option:
-                        filename = selected_document_option.get("name") or "documento.pdf"
-                        caption_text = f"Te comparto el archivo {filename}."
-                        outbound_payload = None
-                        temporary_link = None
-                        try:
-                            temporary_link = get_dropbox_temporary_link(selected_document_option.get("path_lower"))
-                            outbound_payload = send_whatsapp_document_message(
-                                context["telefono_e164"],
-                                temporary_link,
-                                filename,
-                                caption=caption_text,
-                            )
-                            provider_message_id = None
-                            if outbound_payload.get("messages"):
-                                provider_message_id = outbound_payload["messages"][0].get("id")
-                            store_outbound_message(
-                                context["conversation_id"],
-                                provider_message_id,
-                                "document",
-                                caption_text,
-                                outbound_payload,
-                                intent_detectado="consulta_documentacion",
-                            )
-                        except Exception as exc:
-                            fallback_text = (
-                                f"Encontré el archivo {filename}, "
-                                "pero en este momento no pude adjuntarlo por WhatsApp. Escríbeme de nuevo en un momento y lo intento otra vez."
-                            )
-                            try:
-                                outbound_payload = send_whatsapp_text_message(context["telefono_e164"], fallback_text)
-                                provider_message_id = None
-                                if outbound_payload.get("messages"):
-                                    provider_message_id = outbound_payload["messages"][0].get("id")
-                                store_outbound_message(
-                                    context["conversation_id"],
-                                    provider_message_id,
-                                    "text",
-                                    fallback_text,
-                                    outbound_payload,
-                                    intent_detectado="consulta_documentacion",
-                                )
-                            except Exception as text_exc:
-                                store_outbound_message(
-                                    context["conversation_id"],
-                                    None,
-                                    "system",
-                                    f"No fue posible enviar documento tecnico: {exc}",
-                                    {
-                                        "error": str(exc),
-                                        "fallback_error": str(text_exc),
-                                        "document_name": filename,
-                                        "temporary_link": temporary_link,
-                                    },
-                                    intent_detectado="consulta_documentacion",
-                                )
-
-                        update_conversation_context(
-                            context["conversation_id"],
-                            {
-                                "last_direct_intent": "consulta_documentacion",
-                                "last_document_request": document_request,
-                                "pending_document_options": None,
-                                "pending_product_clarification": None,
-                                "awaiting_verification": False,
-                            },
-                            summary=f"Documento enviado: {filename}",
-                        )
-                        processed_messages.append(
-                            {
-                                "conversation_id": context["conversation_id"],
-                                "telefono": context["telefono_e164"],
-                                "message_type": message_type,
-                                "provider_message_id": message.get("id"),
-                                "ai_response_sent": bool(outbound_payload),
-                                "document_sent": True,
-                            }
-                        )
-                        continue
-
-                    document_options = search_technical_documents(document_request)
-                    direct_result = build_technical_document_reply(
-                        context.get("nombre_visible"),
-                        document_request,
-                        document_options,
-                    )
-                    response_text = direct_result["response_text"]
-                    outbound_payload = None
-                    try:
-                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
-                        provider_message_id = None
-                        if outbound_payload.get("messages"):
-                            provider_message_id = outbound_payload["messages"][0].get("id")
-                        store_outbound_message(
-                            context["conversation_id"],
-                            provider_message_id,
-                            "text",
-                            response_text,
-                            outbound_payload,
-                            intent_detectado=direct_result.get("intent"),
-                        )
-                    except Exception as exc:
-                        store_outbound_message(
-                            context["conversation_id"],
-                            None,
-                            "system",
-                            f"No fue posible enviar respuesta de documentacion: {exc}",
-                            {"error": str(exc), "response_text": response_text},
-                            intent_detectado=direct_result.get("intent"),
-                        )
-
-                    update_conversation_context(
-                        context["conversation_id"],
-                        {
-                            "last_direct_intent": direct_result.get("intent"),
-                            "last_document_request": document_request,
-                            "pending_document_options": direct_result.get("document_options") if direct_result.get("awaiting_document_choice") else None,
-                            "pending_product_clarification": None,
-                            "awaiting_verification": False,
-                        },
-                        summary=direct_result.get("summary") or content,
-                    )
-
-                    processed_messages.append(
-                        {
-                            "conversation_id": context["conversation_id"],
-                            "telefono": context["telefono_e164"],
-                            "message_type": message_type,
-                            "provider_message_id": message.get("id"),
-                            "ai_response_sent": bool(outbound_payload),
-                            "document_reply": True,
-                        }
-                    )
-                    continue
-
-                if is_thanks_or_closing_message(content) and not has_active_commercial_flow(conversation_context):
-                    response_text = build_conversation_closing_reply(context.get('nombre_visible'))
-                    outbound_payload = None
-                    try:
-                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
-                        provider_message_id = None
-                        if outbound_payload.get("messages"):
-                            provider_message_id = outbound_payload["messages"][0].get("id")
-                        store_outbound_message(
-                            context["conversation_id"],
-                            provider_message_id,
-                            "text",
-                            response_text,
-                            outbound_payload,
-                            intent_detectado="cierre_conversacion",
-                        )
-                    except Exception as exc:
-                        store_outbound_message(
-                            context["conversation_id"],
-                            None,
-                            "system",
-                            f"No fue posible enviar cierre de conversacion: {exc}",
-                            {"error": str(exc), "response_text": response_text},
-                            intent_detectado="cierre_conversacion",
-                        )
-
-                    close_conversation(
-                        context["conversation_id"],
-                        {
-                            "intent": "cierre_conversacion",
-                            "last_direct_intent": conversation_context.get("last_direct_intent"),
-                            "pending_product_clarification": None,
-                            "pending_document_options": None,
-                            "awaiting_verification": False,
-                        },
-                        summary="Cierre conversacional",
-                    )
-                    processed_messages.append(
-                        {
-                            "conversation_id": context["conversation_id"],
-                            "telefono": context["telefono_e164"],
-                            "message_type": message_type,
-                            "provider_message_id": message.get("id"),
-                            "ai_response_sent": bool(outbound_payload),
-                            "closing_reply": True,
-                        }
-                    )
-                    continue
-
-                if detected_intent in {"reclamo_servicio", "cotizacion", "pedido"}:
-                    direct_result = build_direct_reply(
-                        detected_intent,
-                        cliente_contexto,
-                        [],
-                        context.get("nombre_visible"),
-                        product_request,
-                        content,
-                        conversation_context,
-                    )
-                    response_text = direct_result["response_text"]
-                    outbound_payload = None
-                    try:
-                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
-                        provider_message_id = None
-                        if outbound_payload.get("messages"):
-                            provider_message_id = outbound_payload["messages"][0].get("id")
-                        store_outbound_message(
-                            context["conversation_id"],
-                            provider_message_id,
-                            "text",
-                            response_text,
-                            outbound_payload,
-                            intent_detectado=direct_result.get("intent"),
-                        )
-                    except Exception as exc:
-                        store_outbound_message(
-                            context["conversation_id"],
-                            None,
-                            "system",
-                            f"No fue posible enviar respuesta operativa: {exc}",
-                            {"error": str(exc), "response_text": response_text},
-                            intent_detectado=direct_result.get("intent"),
-                        )
-
-                    context_updates = {
-                        "last_direct_intent": direct_result.get("intent"),
-                        "pending_document_options": None,
-                        "pending_product_clarification": None,
-                        "awaiting_verification": False,
-                    }
-                    context_updates.update(direct_result.get("conversation_context_updates") or {})
-
-                    commercial_draft = direct_result.get("commercial_draft")
-                    if commercial_draft:
-                        # Learn product associations from matched commercial items
-                        for draft_item in (commercial_draft.get("items") or []):
-                            if draft_item.get("status") == "matched" and draft_item.get("matched_product"):
-                                try:
-                                    learn_product_resolution(
-                                        context["conversation_id"],
-                                        draft_item.get("product_request") or {},
-                                        [draft_item["matched_product"]],
-                                        conversation_context,
-                                    )
-                                except Exception:
-                                    pass
-                        try:
-                            draft_id = upsert_commercial_draft(
-                                direct_result.get("intent"),
-                                context["conversation_id"],
-                                context.get("contact_id"),
-                                context.get("cliente_id"),
-                                commercial_draft,
-                            )
-                            context_updates["commercial_draft"] = {
-                                **commercial_draft,
-                                "draft_id": draft_id,
-                            }
-                        except Exception as exc:
-                            store_outbound_message(
-                                context["conversation_id"],
-                                None,
-                                "system",
-                                f"No fue posible guardar borrador comercial: {exc}",
-                                {"error": str(exc), "intent": direct_result.get("intent")},
-                                intent_detectado=f"borrador_{direct_result.get('intent')}_error",
-                            )
-
-                    update_conversation_context(
-                        context["conversation_id"],
-                        context_updates,
-                        summary=direct_result.get("summary") or content,
-                    )
-
-                    if direct_result.get("should_create_task"):
-                        upsert_agent_task(
-                            context["conversation_id"],
-                            context.get("cliente_id"),
-                            direct_result.get("task_type") or "seguimiento_cliente",
-                            direct_result.get("task_summary") or "Revisar conversacion de WhatsApp",
-                            direct_result.get("task_detail") or {"mensaje": content},
-                            direct_result.get("priority") or "media",
-                        )
-
-                    email_payload = None
-                    if direct_result.get("email_route") and not (conversation_context.get("claim_case") or {}).get("submitted"):
-                        email_payload = build_operational_email_payload(
-                            direct_result.get("email_route"),
-                            context.get("nombre_visible"),
-                            cliente_contexto,
-                            direct_result.get("email_detail") or {},
-                            recent_messages,
-                        )
-                    if email_payload:
-                        try:
-                            send_sendgrid_email(
-                                email_payload["to_email"],
-                                email_payload["subject"],
-                                email_payload["html_content"],
-                                email_payload["text_content"],
-                                reply_to=(direct_result.get("email_detail") or {}).get("contact_email") or (cliente_contexto or {}).get("email"),
-                            )
-                            store_outbound_message(
-                                context["conversation_id"],
-                                None,
-                                "system",
-                                f"Correo operativo enviado a {email_payload['to_email']}",
-                                {"email_to": email_payload["to_email"], "subject": email_payload["subject"]},
-                                intent_detectado=f"correo_{direct_result.get('intent')}",
-                            )
-                        except Exception as exc:
-                            store_outbound_message(
-                                context["conversation_id"],
-                                None,
-                                "system",
-                                f"No fue posible enviar correo operativo: {exc}",
-                                {"error": str(exc), "email_to": email_payload["to_email"], "subject": email_payload["subject"]},
-                                intent_detectado=f"correo_{direct_result.get('intent')}",
-                            )
-
-                    customer_email_payload = None
-                    if direct_result.get("customer_email_confirmation"):
-                        customer_email_payload = build_customer_claim_confirmation_email(
-                            context["conversation_id"],
-                            context.get("nombre_visible"),
-                            cliente_contexto,
-                            {
-                                **(direct_result.get("customer_email_confirmation") or {}),
-                                "case_reference": f"CRM-{context['conversation_id']}",
-                            },
-                        )
-                    elif direct_result.get("commercial_customer_email_confirmation"):
-                        customer_email_payload = build_customer_commercial_confirmation_email(
-                            context["conversation_id"],
-                            context.get("nombre_visible"),
-                            cliente_contexto,
-                            direct_result.get("commercial_customer_email_confirmation") or {},
-                        )
-                    if customer_email_payload:
-                        try:
-                            send_sendgrid_email(
-                                customer_email_payload["to_email"],
-                                customer_email_payload["subject"],
-                                customer_email_payload["html_content"],
-                                customer_email_payload["text_content"],
-                            )
-                            store_outbound_message(
-                                context["conversation_id"],
-                                None,
-                                "system",
-                                f"Correo de constancia enviado a {customer_email_payload['to_email']}",
-                                {"email_to": customer_email_payload["to_email"], "subject": customer_email_payload["subject"]},
-                                intent_detectado="correo_constancia_reclamo",
-                            )
-                        except Exception as exc:
-                            store_outbound_message(
-                                context["conversation_id"],
-                                None,
-                                "system",
-                                f"No fue posible enviar constancia al cliente: {exc}",
-                                {"error": str(exc), "email_to": customer_email_payload["to_email"], "subject": customer_email_payload["subject"]},
-                                intent_detectado="correo_constancia_reclamo",
-                            )
-
-                    commercial_draft_for_pdf = direct_result.get("commercial_draft") or {}
-                    if commercial_draft_for_pdf.get("ready_to_close") and commercial_draft_for_pdf.get("items"):
-                        try:
-                            pdf_id, pdf_filename = store_commercial_pdf(
-                                context["conversation_id"],
-                                direct_result.get("intent") or "pedido",
-                                context.get("nombre_visible"),
-                                cliente_contexto,
-                                commercial_draft_for_pdf,
-                            )
-                            backend_base_url = os.environ.get("BACKEND_PUBLIC_URL", "").rstrip("/")
-                            if backend_base_url:
-                                pdf_url = f"{backend_base_url}/pdf/{pdf_id}"
-                                try:
-                                    send_whatsapp_document_message(
-                                        context["telefono_e164"],
-                                        pdf_url,
-                                        pdf_filename,
-                                        caption=f"📄 Aquí te dejo el PDF de tu {direct_result.get('intent') or 'pedido'} para que lo tengas de referencia.",
-                                    )
-                                    store_outbound_message(
-                                        context["conversation_id"],
-                                        None,
-                                        "system",
-                                        f"PDF comercial enviado por WhatsApp: {pdf_filename}",
-                                        {"pdf_id": pdf_id, "pdf_url": pdf_url, "filename": pdf_filename},
-                                        intent_detectado=f"pdf_{direct_result.get('intent')}",
-                                    )
-                                except Exception as pdf_wa_exc:
-                                    store_outbound_message(
-                                        context["conversation_id"],
-                                        None,
-                                        "system",
-                                        f"PDF generado pero no se pudo enviar por WhatsApp: {pdf_wa_exc}",
-                                        {"error": str(pdf_wa_exc), "pdf_id": pdf_id, "pdf_url": pdf_url},
-                                        intent_detectado=f"pdf_{direct_result.get('intent')}_error",
-                                    )
-                            else:
-                                store_outbound_message(
-                                    context["conversation_id"],
-                                    None,
-                                    "system",
-                                    f"PDF generado (ID: {pdf_id}) pero BACKEND_PUBLIC_URL no configurada para envío",
-                                    {"pdf_id": pdf_id, "filename": pdf_filename},
-                                    intent_detectado=f"pdf_{direct_result.get('intent')}_sin_url",
-                                )
-                        except Exception as pdf_exc:
-                            store_outbound_message(
-                                context["conversation_id"],
-                                None,
-                                "system",
-                                f"No fue posible generar PDF comercial: {pdf_exc}",
-                                {"error": str(pdf_exc)},
-                                intent_detectado=f"pdf_{direct_result.get('intent')}_error",
-                            )
-
-                    processed_messages.append(
-                        {
-                            "conversation_id": context["conversation_id"],
-                            "telefono": context["telefono_e164"],
-                            "message_type": message_type,
-                            "provider_message_id": message.get("id"),
-                            "ai_response_sent": bool(outbound_payload),
-                            "direct_reply": True,
-                        }
-                    )
-                    continue
-
-                if detected_intent == "consulta_productos":
-                    try:
-                        product_context_result = lookup_product_context(content, product_request)
-                        direct_result = build_direct_reply(
-                            detected_intent,
-                            cliente_contexto,
-                            product_context_result,
-                            context.get("nombre_visible"),
-                            product_request,
-                            content,
-                            conversation_context,
-                        )
-                    except Exception:
-                        product_context_result = []
-                        direct_result = {
-                            "tono": "informativo",
-                            "intent": "consulta_productos",
-                            "priority": "media",
-                            "summary": "Consulta de productos con error interno",
-                            "response_text": (
-                                "Tuve un problema buscando ese producto en el sistema. "
-                                "¿Podrías darme la referencia exacta, el código o la marca para intentar de nuevo?"
-                            ),
-                            "should_create_task": False,
-                            "task_type": "seguimiento_cliente",
-                            "task_summary": "Error en consulta de productos",
-                            "task_detail": {"mensaje": content},
-                        }
-                    if product_context_result and not direct_result.get("awaiting_product_clarification"):
-                        try:
-                            learn_product_resolution(
-                                context["conversation_id"],
-                                product_request,
-                                product_context_result,
-                                conversation_context,
-                            )
+                            cliente_id = update_contact_cliente(context["contact_id"], cliente_contexto.get("cliente_codigo"))
+                            context["cliente_id"] = cliente_id
                         except Exception:
                             pass
-                    outbound_payload = None
-                    response_text = direct_result["response_text"]
-                    try:
-                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
-                        provider_message_id = None
-                        if outbound_payload.get("messages"):
-                            provider_message_id = outbound_payload["messages"][0].get("id")
-                        store_outbound_message(
-                            context["conversation_id"],
-                            provider_message_id,
-                            "text",
-                            response_text,
-                            outbound_payload,
-                            intent_detectado=direct_result.get("intent"),
-                        )
-                    except Exception as exc:
-                        store_outbound_message(
-                            context["conversation_id"],
-                            None,
-                            "system",
-                            f"No fue posible enviar respuesta de producto: {exc}",
-                            {"error": str(exc), "response_text": response_text},
-                            intent_detectado=direct_result.get("intent"),
-                        )
 
-                    update_conversation_context(
-                        context["conversation_id"],
-                        {
-                            "last_direct_intent": direct_result.get("intent"),
-                            "last_product_request": product_request,
-                            "pending_product_clarification": direct_result.get("clarification_options") if direct_result.get("awaiting_product_clarification") else None,
-                            "pending_document_options": None,
-                            "last_purchase_date": (direct_result.get("task_detail") or {}).get("fecha_venta") or ((direct_result.get("task_detail") or {}).get("totals") or {}).get("ultima_compra"),
-                            "awaiting_verification": False,
-                        },
-                        summary=direct_result.get("summary") or content,
-                    )
-
-                    processed_messages.append(
-                        {
-                            "conversation_id": context["conversation_id"],
-                            "telefono": context["telefono_e164"],
-                            "message_type": message_type,
-                            "provider_message_id": message.get("id"),
-                            "ai_response_sent": bool(outbound_payload),
-                            "direct_reply": True,
-                        }
-                    )
-                    continue
-
-                if verified_context and conversation_context.get("pending_intent") in {"consulta_cartera", "consulta_compras"}:
-                    direct_result = build_direct_reply(
-                        conversation_context.get("pending_intent"),
-                        cliente_contexto,
-                        [],
-                        context.get("nombre_visible"),
-                        product_request,
-                        content,
-                        conversation_context,
-                    )
-                    product_followup_result = None
-                    pending_product_question = conversation_context.get("pending_product_question")
-                    pending_product_request = conversation_context.get("pending_product_request") or {}
-                    if pending_product_question and looks_like_product_query(pending_product_question, pending_product_request):
-                        product_followup_result = build_direct_reply(
-                            "consulta_productos",
-                            cliente_contexto,
-                            lookup_product_context(pending_product_question, pending_product_request),
-                            context.get("nombre_visible"),
-                            pending_product_request,
-                            pending_product_question,
-                            conversation_context,
-                        )
-                    response_text = build_verification_success_reply(context.get("nombre_visible"), cliente_contexto)
-                    if direct_result:
-                        response_text = f"{response_text} {direct_result['response_text']}"
-                    if product_followup_result:
-                        response_text = f"{response_text} {product_followup_result['response_text']}"
-                    outbound_payload = None
-                    try:
-                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
-                        provider_message_id = None
-                        if outbound_payload.get("messages"):
-                            provider_message_id = outbound_payload["messages"][0].get("id")
-                        store_outbound_message(
-                            context["conversation_id"],
-                            provider_message_id,
-                            "text",
-                            response_text,
-                            outbound_payload,
-                            intent_detectado=conversation_context.get("pending_intent"),
-                        )
-                    except Exception as exc:
-                        store_outbound_message(
-                            context["conversation_id"],
-                            None,
-                            "system",
-                            f"No fue posible enviar respuesta tras validacion: {exc}",
-                            {"error": str(exc), "response_text": response_text},
-                            intent_detectado=conversation_context.get("pending_intent"),
-                        )
-
-                    update_conversation_context(
-                        context["conversation_id"],
-                        {
-                            "verified": True,
-                            "verified_document": conversation_context.get("verified_document"),
-                            "verified_cliente_codigo": cliente_contexto.get("cliente_codigo") if cliente_contexto else None,
-                            "awaiting_verification": False,
-                            "pending_intent": None,
-                            "pending_question": None,
-                            "pending_product_question": None,
-                            "pending_product_request": None,
-                            "last_direct_intent": conversation_context.get("pending_intent"),
-                            "cliente_contexto": cliente_contexto,
-                        },
-                        summary="Cliente validado y respuesta directa entregada",
-                    )
-                    processed_messages.append(
-                        {
-                            "conversation_id": context["conversation_id"],
-                            "telefono": context["telefono_e164"],
-                            "message_type": message_type,
-                            "provider_message_id": message.get("id"),
-                            "ai_response_sent": bool(outbound_payload),
-                            "verified_now": True,
-                        }
-                    )
-                    continue
-
-                if verification_state["verified"]:
-                    direct_result = build_direct_reply(
-                        detected_intent,
-                        cliente_contexto,
-                        lookup_product_context(content, product_request) if detected_intent == "consulta_productos" else [],
-                        context.get("nombre_visible"),
-                        product_request,
-                        content,
-                        conversation_context,
-                    )
-                    if direct_result:
-                        outbound_payload = None
-                        response_text = direct_result["response_text"]
-                        try:
-                            outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
-                            provider_message_id = None
-                            if outbound_payload.get("messages"):
-                                provider_message_id = outbound_payload["messages"][0].get("id")
-                            store_outbound_message(
-                                context["conversation_id"],
-                                provider_message_id,
-                                "text",
-                                response_text,
-                                outbound_payload,
-                                intent_detectado=direct_result.get("intent"),
-                            )
-                        except Exception as exc:
-                            store_outbound_message(
-                                context["conversation_id"],
-                                None,
-                                "system",
-                                f"No fue posible enviar respuesta directa: {exc}",
-                                {"error": str(exc), "response_text": response_text},
-                                intent_detectado=direct_result.get("intent"),
-                            )
-
-                        update_conversation_context(
-                            context["conversation_id"],
-                            {
-                                "verified": True,
-                                "verified_document": verification_state.get("verified_document"),
-                                "verified_cliente_codigo": verification_state.get("verified_cliente_codigo"),
-                                "last_direct_intent": direct_result.get("intent"),
-                                "pending_document_options": None,
-                                "last_purchase_date": (direct_result.get("task_detail") or {}).get("fecha_venta") or ((direct_result.get("task_detail") or {}).get("totals") or {}).get("ultima_compra"),
-                                "awaiting_verification": False,
-                            },
-                            summary=direct_result.get("summary") or content,
-                        )
-
-                        if direct_result.get("should_create_task"):
-                            upsert_agent_task(
-                                context["conversation_id"],
-                                context.get("cliente_id"),
-                                direct_result.get("task_type") or "seguimiento_cliente",
-                                direct_result.get("task_summary") or "Revisar conversacion de WhatsApp",
-                                direct_result.get("task_detail") or {"mensaje": content},
-                                direct_result.get("priority") or "media",
-                            )
-
-                        processed_messages.append(
-                            {
-                                "conversation_id": context["conversation_id"],
-                                "telefono": context["telefono_e164"],
-                                "message_type": message_type,
-                                "provider_message_id": message.get("id"),
-                                "ai_response_sent": bool(outbound_payload),
-                                "direct_reply": True,
-                            }
-                        )
-                        continue
-
-                if sensitive_request and not verification_state["verified"]:
-                    challenge_text = build_verification_challenge()
-                    outbound_payload = None
-                    try:
-                        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], challenge_text)
-                        provider_message_id = None
-                        if outbound_payload.get("messages"):
-                            provider_message_id = outbound_payload["messages"][0].get("id")
-                        store_outbound_message(
-                            context["conversation_id"],
-                            provider_message_id,
-                            "text",
-                            challenge_text,
-                            outbound_payload,
-                            intent_detectado="solicitud_verificacion",
-                        )
-                    except Exception as exc:
-                        store_outbound_message(
-                            context["conversation_id"],
-                            None,
-                            "system",
-                            f"No fue posible enviar solicitud de verificacion: {exc}",
-                            {"error": str(exc), "response_text": challenge_text},
-                            intent_detectado="solicitud_verificacion",
-                        )
-
-                    update_conversation_context(
-                        context["conversation_id"],
-                        {
-                            "awaiting_verification": True,
-                            "verified": False,
-                            "last_requested_verification_at": "now",
-                            "pending_intent": detected_intent,
-                            "pending_question": content,
-                            "pending_product_question": content if looks_like_product_query(content, product_request) else None,
-                            "pending_product_request": product_request if looks_like_product_query(content, product_request) else None,
-                        },
-                        summary="Pendiente verificacion de identidad",
-                    )
-                    processed_messages.append(
-                        {
-                            "conversation_id": context["conversation_id"],
-                            "telefono": context["telefono_e164"],
-                            "message_type": message_type,
-                            "provider_message_id": message.get("id"),
-                            "ai_response_sent": bool(outbound_payload),
-                            "verification_required": True,
-                        }
-                    )
-                    continue
-
-                product_context = lookup_product_context(content, product_request) if looks_like_product_query(content, product_request) else []
-
+                # Generate response using LLM with function calling
                 ai_result = None
                 outbound_payload = None
                 if content and message_type in {"text", "button", "interactive"}:
                     try:
-                        ai_result = generate_agent_reply(
+                        ai_result = generate_agent_reply_v2(
                             context.get("nombre_visible"),
-                            cliente_contexto,
+                            conversation_context,
                             recent_messages,
                             content,
-                            verification_state,
-                            product_context,
+                            context,
                         )
                     except Exception as exc:
                         ai_result = build_fallback_agent_result(content, str(exc))
 
-                    response_text = ai_result.get("response_text") or "Gracias por escribirnos. Ya estamos revisando tu caso."
+                    response_text = ai_result.get("response_text") or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
 
                     try:
                         outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
                         provider_message_id = None
                         if outbound_payload.get("messages"):
                             provider_message_id = outbound_payload["messages"][0].get("id")
-
                         store_outbound_message(
                             context["conversation_id"],
                             provider_message_id,
@@ -6885,26 +6112,24 @@ async def receive_whatsapp_webhook(request: Request):
                             context["conversation_id"],
                             None,
                             "system",
-                            f"No fue posible enviar respuesta automatica: {exc}",
+                            f"No fue posible enviar respuesta: {exc}",
                             {"error": str(exc), "response_text": response_text},
                             intent_detectado=ai_result.get("intent"),
                         )
 
+                    # Update conversation context
+                    context_updates = {
+                        "intent": ai_result.get("intent"),
+                        "last_direct_intent": ai_result.get("intent"),
+                        "verified": conversation_context.get("verified", False),
+                        "verified_document": conversation_context.get("verified_document"),
+                        "verified_cliente_codigo": conversation_context.get("verified_cliente_codigo"),
+                        "awaiting_verification": False,
+                    }
                     update_conversation_context(
                         context["conversation_id"],
-                        {
-                            "tone": ai_result.get("tono"),
-                            "intent": ai_result.get("intent"),
-                            "priority": ai_result.get("priority"),
-                            "verified": verification_state.get("verified", False),
-                            "verified_document": verification_state.get("verified_document"),
-                            "verified_cliente_codigo": verification_state.get("verified_cliente_codigo"),
-                            "cliente_contexto": cliente_contexto,
-                            "product_context": product_context,
-                            "pending_document_options": None,
-                            "awaiting_verification": False,
-                        },
-                        summary=ai_result.get("summary") or content,
+                        context_updates,
+                        summary=content[:200] if content else "Mensaje procesado",
                     )
 
                     if ai_result.get("should_create_task"):
