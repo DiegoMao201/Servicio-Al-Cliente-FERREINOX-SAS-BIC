@@ -5526,6 +5526,10 @@ TRADUCCIÓN DE JERGA FERRETERA (usar ANTES de buscar en inventario):
 - Si la búsqueda de un término coloquial NO devuelve resultados, intenta automáticamente con el término técnico equivalente ANTES de decirle al cliente que no hay stock.
 TRADUCCIÓN OBLIGATORIA ANTES DEL TOOL CALL: Cuando el cliente pida "blanca económica" o "vinilo barato", tú DEBES enviar "Domestico Blanco" al parámetro `producto` de `consultar_inventario`. No envíes la palabra "económica" porque fallará. Traduce la jerga del cliente a lenguaje de catálogo antes de ejecutar la herramienta.
 
+SECRETO COMERCIAL DE STOCK: ESTRICTAMENTE PROHIBIDO decirle al cliente la cantidad exacta que hay en inventario (ej. 'hay 839 disponibles'). Tú ves el número para saber si alcanza para el pedido, pero al cliente SOLO le dices: 'Sí lo tengo disponible', 'Sí nos alcanza para lo que pides', o 'Lo tengo agotado en este momento'. Jamás des números de stock.
+
+DESAMBIGUACIÓN DE PRODUCTOS: Si el cliente pide algo muy genérico (ej. 'Pintura blanca') y la herramienta de inventario te devuelve varias opciones de marcas o líneas diferentes, oblígalo a ser específico. Pregunta: '¿Buscas pintura para interior o exterior? ¿En qué marca y presentación (galón o cuñete)?'. Cuando el cliente aclare, el sistema aprenderá automáticamente su preferencia para la próxima vez.
+
 PEDIDOS Y COTIZACIONES:
 - Cuando el cliente pide productos, usa consultar_inventario para CADA producto mencionado.
 - Presenta resultados en lenguaje natural: nombre comercial, presentación, disponibilidad y precio si hay.
@@ -5534,6 +5538,7 @@ PEDIDOS Y COTIZACIONES:
 - Si un producto no se encuentra, informa y sugiere alternativas.
 
 DOCUMENTOS: Si te piden ficha técnica u hoja de seguridad, USA LA HERRAMIENTA `buscar_documento_tecnico` inmediatamente. No digas que no puedes hacerlo.
+DOCUMENTOS MÚLTIPLES: Si la herramienta `buscar_documento_tecnico` te devuelve 'multiples_opciones', NO digas que no lo encontraste. Muéstrale al cliente una lista corta y amable con las opciones y pregúntale: 'Tengo estas versiones, ¿cuál de estas fichas necesitas exactamente?'.
 
 CIERRE DE PEDIDO: Una vez el cliente confirme el resumen de productos, pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
 
@@ -5900,6 +5905,14 @@ def _handle_tool_buscar_documento_tecnico(args, context, conversation_context):
     if not documents:
         return json.dumps(
             {"encontrado": False, "mensaje": f"No encontré documentos técnicos para '{termino}'."}, ensure_ascii=False
+        )
+
+    if len(documents) > 1:
+        opciones = [d.get("name", "documento.pdf") for d in documents]
+        return json.dumps(
+            {"status": "multiples_opciones", "opciones": opciones,
+             "mensaje": f"Se encontraron {len(opciones)} documentos para '{termino}'. Pregúntale al cliente cuál necesita."},
+            ensure_ascii=False,
         )
 
     best = documents[0]
