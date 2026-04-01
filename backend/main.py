@@ -1046,6 +1046,20 @@ def learn_product_resolution(conversation_id: Optional[int], product_request: Op
     if not reliable_rows:
         return
 
+    # --- Anti-tambor filter: never learn absurd presentations ---
+    BANNED_LEARNING_TOKENS = ["tambor", "50 galones", "55 galones", "200 litros"]
+    original_query_lower = (product_request.get("original_query") or "").lower()
+    filtered_rows = []
+    for row in reliable_rows:
+        desc_lower = ((row.get("descripcion") or row.get("nombre_articulo")) or "").lower()
+        if any(token in desc_lower for token in BANNED_LEARNING_TOKENS):
+            if not any(token in original_query_lower for token in BANNED_LEARNING_TOKENS):
+                continue
+        filtered_rows.append(row)
+    reliable_rows = filtered_rows
+    if not reliable_rows:
+        return
+
     phrases = []
     previous_product_request = (conversation_context or {}).get("last_product_request") or {}
     for candidate_phrase in build_learning_phrase_candidates(product_request) + build_learning_phrase_candidates(previous_product_request):
@@ -5551,6 +5565,8 @@ Cuando veas esta nomenclatura, DEBES entender la cantidad y presentación solici
 
 DESCARTAR BASURA DEL JSON (FILTRO DE PRESENTACIONES): Si el cliente pidió un 'cuarto' (ej. 6/4), y la herramienta de inventario te devuelve un JSON que incluye el cuarto, el galón y el tambor de 50 galones, TIENES ESTRICTAMENTE PROHIBIDO mencionar el galón y el tambor en tu respuesta. Filtra mentalmente el JSON y confírmale al cliente ÚNICAMENTE la presentación que solicitó. Si la presentación específica que pidió no aparece en el JSON, dile amablemente que esa presentación puntual no la tenemos disponible, y ofrécele las que sí hay en presentaciones lógicas (cuñete, galón o cuarto).
 
+FILTRO FRACCIONARIO OBLIGATORIO: Si el cliente pide una presentación específica usando fracciones (ej. '/4' = cuarto, '/1' = galón, '/5' = cuñete) y la herramienta te devuelve múltiples tamaños del mismo producto, TIENES ESTRICTAMENTE PROHIBIDO mostrarle al cliente los tamaños que no pidió. Filtra mentalmente el JSON. Si pidió cuartos, confírmale SOLO los cuartos. Muestra otros tamaños SOLO si el solicitado está agotado.
+
 PROCESAMIENTO LÍNEA POR LÍNEA (BULK ORDERS): Si el cliente te envía una lista de varios productos (ej. 5 líneas), debes confirmar exactamente esos productos con las cantidades y presentaciones solicitadas. NO agregues productos adicionales que la base de datos haya devuelto por coincidencia difusa, ni omitas los que el cliente pidió. Cada línea del pedido se procesa independientemente.
 
 PEDIDOS Y COTIZACIONES:
@@ -5673,6 +5689,11 @@ AGENT_TOOLS = [
                     "es_hoja_de_seguridad": {
                         "type": "boolean",
                         "description": "True si el cliente pide hoja de seguridad (FDS/MSDS), False si pide ficha técnica.",
+                    },
+                    "es_seleccion_final": {
+                        "type": "boolean",
+                        "description": "Envíalo en true ÚNICAMENTE cuando el cliente eligió una opción exacta de una lista previa "
+                        "que tú le mostraste. En ese caso, termino_busqueda DEBE ser el nombre completo del archivo seleccionado.",
                     }
                 },
                 "required": ["termino_busqueda"],
@@ -5937,9 +5958,43 @@ def _handle_tool_consultar_compras(args, conversation_context):
     return json.dumps(summary, ensure_ascii=False, default=str)
 
 
+def _send_document_and_respond(doc, context):
+    """Helper: send a single document via WhatsApp and return success JSON."""
+    filename = doc.get("name") or "documento.pdf"
+    path_lower = doc.get("path_lower")
+    try:
+        temporary_link = get_dropbox_temporary_link(path_lower)
+        send_whatsapp_document_message(
+            context["telefono_e164"],
+            temporary_link,
+            filename,
+            caption=f"Aquí tienes: {filename}",
+        )
+        store_outbound_message(
+            context["conversation_id"],
+            None,
+            "document",
+            f"Documento técnico enviado: {filename}",
+            {"filename": filename, "path": path_lower},
+            intent_detectado="consulta_documentacion",
+        )
+        return json.dumps(
+            {"status": "exito", "encontrado": True, "enviado": True, "archivo": filename,
+             "mensaje": f"El archivo '{filename}' fue enviado exitosamente por WhatsApp."},
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        return json.dumps(
+            {"encontrado": True, "enviado": False, "archivo": filename,
+             "mensaje": f"Encontré el archivo '{filename}' pero no pude enviarlo: {exc}"},
+            ensure_ascii=False,
+        )
+
+
 def _handle_tool_buscar_documento_tecnico(args, context, conversation_context):
     termino = args.get("termino_busqueda", "")
     es_hds = args.get("es_hoja_de_seguridad", False)
+    es_seleccion_final = args.get("es_seleccion_final", False)
     if not termino:
         return json.dumps({"encontrado": False, "mensaje": "No se indicó qué producto buscar."}, ensure_ascii=False)
 
@@ -5959,6 +6014,18 @@ def _handle_tool_buscar_documento_tecnico(args, context, conversation_context):
             {"encontrado": False, "mensaje": f"No encontré documentos técnicos para '{termino}'."}, ensure_ascii=False
         )
 
+    # --- Exact match: if termino matches a filename exactly, send it immediately ---
+    termino_lower = termino.lower().strip()
+    for doc in documents:
+        doc_name = (doc.get("name") or "").lower().strip()
+        if doc_name == termino_lower or doc_name == termino_lower + ".pdf":
+            return _send_document_and_respond(doc, context)
+
+    # --- Final selection mode: client already chose, force-send best match ---
+    if es_seleccion_final:
+        return _send_document_and_respond(documents[0], context)
+
+    # --- Multiple results: ask client to choose ---
     if len(documents) > 1:
         opciones = [d.get("name", "documento.pdf") for d in documents]
         return json.dumps(
@@ -5967,37 +6034,8 @@ def _handle_tool_buscar_documento_tecnico(args, context, conversation_context):
             ensure_ascii=False,
         )
 
-    best = documents[0]
-    filename = best.get("name") or "documento.pdf"
-    path_lower = best.get("path_lower")
-
-    try:
-        temporary_link = get_dropbox_temporary_link(path_lower)
-        send_whatsapp_document_message(
-            context["telefono_e164"],
-            temporary_link,
-            filename,
-            caption=f"Aquí tienes: {filename}",
-        )
-        store_outbound_message(
-            context["conversation_id"],
-            None,
-            "document",
-            f"Documento técnico enviado: {filename}",
-            {"filename": filename, "path": path_lower},
-            intent_detectado="consulta_documentacion",
-        )
-        return json.dumps(
-            {"encontrado": True, "enviado": True, "archivo": filename,
-             "mensaje": f"El archivo '{filename}' fue enviado exitosamente por WhatsApp."},
-            ensure_ascii=False,
-        )
-    except Exception as exc:
-        return json.dumps(
-            {"encontrado": True, "enviado": False, "archivo": filename,
-             "mensaje": f"Encontré el archivo '{filename}' pero no pude enviarlo: {exc}"},
-            ensure_ascii=False,
-        )
+    # --- Single result: send directly ---
+    return _send_document_and_respond(documents[0], context)
 
 
 def _handle_tool_radicar_reclamo(args, context, conversation_context):
@@ -6251,6 +6289,17 @@ def _handle_tool_guardar_aprendizaje_producto(args, conversation_context):
             {"guardado": False, "mensaje": "Se requiere código del cliente y descripción asociada."},
             ensure_ascii=False,
         )
+
+    # --- Anti-tambor filter: block absurd associations ---
+    BANNED_LEARNING_TOKENS = ["tambor", "50 galones", "55 galones", "200 litros"]
+    desc_lower = descripcion_asociada.lower()
+    code_lower = codigo_cliente.lower()
+    if any(token in desc_lower for token in BANNED_LEARNING_TOKENS):
+        if not any(token in code_lower for token in BANNED_LEARNING_TOKENS):
+            return json.dumps(
+                {"guardado": False, "mensaje": "No se guardó: presentación de tambor/industrial no se aprende automáticamente."},
+                ensure_ascii=False,
+            )
 
     normalized_code = normalize_text_value(codigo_cliente)
     conversation_id = conversation_context.get("conversation_id")
