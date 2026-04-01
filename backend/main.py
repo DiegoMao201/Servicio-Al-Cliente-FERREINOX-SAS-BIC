@@ -5521,6 +5521,10 @@ PEDIDOS Y COTIZACIONES:
 - Siempre incluye TODOS los productos que el cliente pidió, nunca dejes ninguno por fuera.
 - Si un producto no se encuentra, informa y sugiere alternativas.
 
+DOCUMENTOS: Si te piden ficha técnica u hoja de seguridad, USA LA HERRAMIENTA `buscar_documento_tecnico` inmediatamente. No digas que no puedes hacerlo.
+
+CIERRE DE PEDIDO: Una vez el cliente confirme el resumen de productos, pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
+
 ESTADO ACTUAL DE LA CONVERSACIÓN:
 - Cliente verificado: {verificado}
 - Código cliente: {cliente_codigo}
@@ -5555,17 +5559,17 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "verificar_identidad",
-            "description": "Verifica la identidad de un cliente por su número de cédula o NIT. "
-            "Usa esta herramienta SOLO cuando el cliente proporcione voluntariamente un número de documento.",
+            "description": "Verifica la identidad de un cliente por su número de cédula, NIT o nombre completo. "
+            "Usa esta herramienta cuando el cliente proporcione voluntariamente un documento o diga su nombre para identificarse.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "documento": {
+                    "criterio_busqueda": {
                         "type": "string",
-                        "description": "Número de cédula o NIT del cliente (solo dígitos)",
+                        "description": "Número de cédula/NIT (solo dígitos) o nombre completo del cliente.",
                     }
                 },
-                "required": ["documento"],
+                "required": ["criterio_busqueda"],
             },
         },
     },
@@ -5595,6 +5599,56 @@ AGENT_TOOLS = [
                         "description": "Periodo a consultar, ej: 'enero 2024', 'últimos 3 meses'. Por defecto últimos 12 meses.",
                     }
                 },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "buscar_documento_tecnico",
+            "description": "Busca y envía fichas técnicas u hojas de seguridad de productos. "
+            "Úsala cuando el cliente pida ficha técnica, hoja de seguridad, FDS o información técnica de un producto.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "termino_busqueda": {
+                        "type": "string",
+                        "description": "Nombre del producto para buscar su ficha técnica. Ej: 'viniltex', 'koraza', 'pintulux'.",
+                    },
+                    "es_hoja_de_seguridad": {
+                        "type": "boolean",
+                        "description": "True si el cliente pide hoja de seguridad (FDS/MSDS), False si pide ficha técnica.",
+                    }
+                },
+                "required": ["termino_busqueda"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "confirmar_pedido_y_generar_pdf",
+            "description": "Genera el PDF del pedido y lo envía al cliente. "
+            "Úsala ÚNICAMENTE cuando el cliente ya revisó el resumen del pedido, confirmó que todo está bien "
+            "y proporcionó el nombre para el despacho. Pregúntale si quiere el soporte por WhatsApp o correo antes de llamarla.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "nombre_despacho": {
+                        "type": "string",
+                        "description": "Nombre de la persona o empresa a cuyo nombre va el despacho.",
+                    },
+                    "canal_envio": {
+                        "type": "string",
+                        "enum": ["whatsapp", "email"],
+                        "description": "Canal por el cual enviar el PDF: 'whatsapp' o 'email'.",
+                    },
+                    "correo_cliente": {
+                        "type": "string",
+                        "description": "Correo electrónico del cliente. Requerido solo si canal_envio es 'email'.",
+                    }
+                },
+                "required": ["nombre_despacho", "canal_envio"],
             },
         },
     },
@@ -5632,17 +5686,31 @@ def _handle_tool_consultar_inventario(args, conversation_context):
 
 
 def _handle_tool_verificar_identidad(args, context, conversation_context):
-    documento = args.get("documento", "").strip()
-    if not documento:
-        return json.dumps({"verificado": False, "mensaje": "No se proporcionó documento."}, ensure_ascii=False)
+    criterio = args.get("criterio_busqueda", "").strip()
+    if not criterio:
+        return json.dumps({"verificado": False, "mensaje": "No se proporcionó criterio de búsqueda."}, ensure_ascii=False)
 
-    identity_candidate = {"type": "document", "value": documento}
-    try:
-        verified_context, verified_by = resolve_identity_candidate(
-            identity_candidate, context.get("telefono_e164", "")
-        )
-    except Exception:
-        verified_context, verified_by = None, None
+    is_numeric = bool(re.fullmatch(r"[\d\-\.]+", criterio.replace(" ", "")))
+
+    verified_context = None
+    verified_by = None
+
+    if is_numeric:
+        identity_candidate = {"type": "document", "value": criterio}
+        try:
+            verified_context, verified_by = resolve_identity_candidate(
+                identity_candidate, context.get("telefono_e164", "")
+            )
+        except Exception:
+            verified_context, verified_by = None, None
+    else:
+        try:
+            name_result = find_cliente_contexto_by_name(criterio)
+            if name_result:
+                verified_context = name_result
+                verified_by = "name"
+        except Exception:
+            verified_context, verified_by = None, None
 
     if verified_context:
         cliente_codigo = verified_context.get("cliente_codigo")
@@ -5655,7 +5723,7 @@ def _handle_tool_verificar_identidad(args, context, conversation_context):
             context["conversation_id"],
             {
                 "verified": True,
-                "verified_document": documento,
+                "verified_document": criterio if is_numeric else None,
                 "verified_by": verified_by,
                 "verified_cliente_codigo": cliente_codigo,
                 "awaiting_verification": False,
@@ -5665,7 +5733,7 @@ def _handle_tool_verificar_identidad(args, context, conversation_context):
         conversation_context.update(
             {
                 "verified": True,
-                "verified_document": documento,
+                "verified_document": criterio if is_numeric else None,
                 "verified_by": verified_by,
                 "verified_cliente_codigo": cliente_codigo,
             }
@@ -5682,11 +5750,12 @@ def _handle_tool_verificar_identidad(args, context, conversation_context):
             default=str,
         )
     else:
+        tipo = "documento" if is_numeric else "nombre"
         return json.dumps(
             {
                 "verificado": False,
-                "mensaje": f"No se encontró un cliente con el documento {documento}. "
-                "Puede ser un número incorrecto o no estar registrado.",
+                "mensaje": f"No se encontró un cliente con ese {tipo}: {criterio}. "
+                "Puede estar incorrecto o no estar registrado.",
             },
             ensure_ascii=False,
         )
@@ -5753,6 +5822,162 @@ def _handle_tool_consultar_compras(args, conversation_context):
     return json.dumps(summary, ensure_ascii=False, default=str)
 
 
+def _handle_tool_buscar_documento_tecnico(args, context, conversation_context):
+    termino = args.get("termino_busqueda", "")
+    es_hds = args.get("es_hoja_de_seguridad", False)
+    if not termino:
+        return json.dumps({"encontrado": False, "mensaje": "No se indicó qué producto buscar."}, ensure_ascii=False)
+
+    product_request = extract_product_request(termino)
+    document_request = extract_technical_document_request(
+        termino, product_request, conversation_context
+    )
+    if es_hds:
+        document_request["wants_safety_sheet"] = True
+        document_request["wants_technical_sheet"] = False
+    else:
+        document_request["wants_technical_sheet"] = True
+
+    documents = search_technical_documents(document_request)
+    if not documents:
+        return json.dumps(
+            {"encontrado": False, "mensaje": f"No encontré documentos técnicos para '{termino}'."}, ensure_ascii=False
+        )
+
+    best = documents[0]
+    filename = best.get("name") or "documento.pdf"
+    path_lower = best.get("path_lower")
+
+    try:
+        temporary_link = get_dropbox_temporary_link(path_lower)
+        send_whatsapp_document_message(
+            context["telefono_e164"],
+            temporary_link,
+            filename,
+            caption=f"Aquí tienes: {filename}",
+        )
+        store_outbound_message(
+            context["conversation_id"],
+            None,
+            "document",
+            f"Documento técnico enviado: {filename}",
+            {"filename": filename, "path": path_lower},
+            intent_detectado="consulta_documentacion",
+        )
+        return json.dumps(
+            {"encontrado": True, "enviado": True, "archivo": filename,
+             "mensaje": f"El archivo '{filename}' fue enviado exitosamente por WhatsApp."},
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        return json.dumps(
+            {"encontrado": True, "enviado": False, "archivo": filename,
+             "mensaje": f"Encontré el archivo '{filename}' pero no pude enviarlo: {exc}"},
+            ensure_ascii=False,
+        )
+
+
+def _handle_tool_confirmar_pedido(args, context, conversation_context):
+    nombre_despacho = args.get("nombre_despacho", "")
+    canal_envio = args.get("canal_envio", "whatsapp")
+    correo_cliente = args.get("correo_cliente", "")
+
+    commercial_draft = conversation_context.get("commercial_draft")
+    if not commercial_draft or not commercial_draft.get("items"):
+        return json.dumps(
+            {"exito": False, "mensaje": "No hay un pedido activo con productos para confirmar."},
+            ensure_ascii=False,
+        )
+
+    commercial_draft["nombre_despacho"] = nombre_despacho
+    commercial_draft["ready_to_close"] = True
+
+    verified_cliente = conversation_context.get("verified_cliente_codigo")
+    cliente_contexto = None
+    if verified_cliente:
+        try:
+            cliente_contexto = get_cliente_contexto(verified_cliente)
+        except Exception:
+            pass
+
+    try:
+        pdf_id, pdf_filename = store_commercial_pdf(
+            context["conversation_id"],
+            "pedido",
+            context.get("nombre_visible"),
+            cliente_contexto,
+            commercial_draft,
+        )
+    except Exception as exc:
+        return json.dumps(
+            {"exito": False, "mensaje": f"Error generando el PDF: {exc}"},
+            ensure_ascii=False,
+        )
+
+    backend_base_url = os.environ.get("BACKEND_PUBLIC_URL", "").rstrip("/")
+    pdf_url = f"{backend_base_url}/pdf/{pdf_id}" if backend_base_url else None
+
+    if canal_envio == "email" and correo_cliente:
+        try:
+            subject = f"Pedido Ferreinox CRM-{context['conversation_id']}"
+            html_content = (
+                f"<p>Estimado/a {nombre_despacho},</p>"
+                f"<p>Adjuntamos el soporte de su pedido.</p>"
+                f"<p>PDF: <a href='{pdf_url}'>{pdf_filename}</a></p>"
+                f"<p>Gracias por su preferencia.<br>Ferreinox SAS BIC</p>"
+            )
+            send_sendgrid_email(
+                correo_cliente, subject, html_content,
+                f"Pedido Ferreinox: {pdf_url or pdf_filename}",
+            )
+            store_outbound_message(
+                context["conversation_id"], None, "system",
+                f"PDF pedido enviado por correo a {correo_cliente}",
+                {"pdf_id": pdf_id, "email": correo_cliente},
+                intent_detectado="pedido_pdf_email",
+            )
+            return json.dumps(
+                {"exito": True, "canal": "email", "correo": correo_cliente,
+                 "archivo": pdf_filename,
+                 "mensaje": f"El PDF del pedido fue enviado al correo {correo_cliente} exitosamente."},
+                ensure_ascii=False,
+            )
+        except Exception as exc:
+            return json.dumps(
+                {"exito": False, "mensaje": f"No se pudo enviar el correo: {exc}"},
+                ensure_ascii=False,
+            )
+    else:
+        if not pdf_url:
+            return json.dumps(
+                {"exito": False, "mensaje": "PDF generado pero no se puede enviar (URL del backend no configurada)."},
+                ensure_ascii=False,
+            )
+        try:
+            send_whatsapp_document_message(
+                context["telefono_e164"],
+                pdf_url,
+                pdf_filename,
+                caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
+            )
+            store_outbound_message(
+                context["conversation_id"], None, "system",
+                f"PDF pedido enviado por WhatsApp: {pdf_filename}",
+                {"pdf_id": pdf_id, "pdf_url": pdf_url},
+                intent_detectado="pedido_pdf_whatsapp",
+            )
+            return json.dumps(
+                {"exito": True, "canal": "whatsapp", "archivo": pdf_filename,
+                 "mensaje": f"El PDF del pedido '{pdf_filename}' fue enviado por WhatsApp exitosamente."},
+                ensure_ascii=False,
+            )
+        except Exception as exc:
+            return json.dumps(
+                {"exito": False, "mensaje": f"PDF generado pero no se pudo enviar por WhatsApp: {exc}"},
+                ensure_ascii=False,
+            )
+
+
 def _execute_agent_tool(tool_call, context, conversation_context):
     fn_name = tool_call.function.name
     try:
@@ -5768,6 +5993,10 @@ def _execute_agent_tool(tool_call, context, conversation_context):
         result = _handle_tool_consultar_cartera(conversation_context)
     elif fn_name == "consultar_compras":
         result = _handle_tool_consultar_compras(fn_args, conversation_context)
+    elif fn_name == "buscar_documento_tecnico":
+        result = _handle_tool_buscar_documento_tecnico(fn_args, context, conversation_context)
+    elif fn_name == "confirmar_pedido_y_generar_pdf":
+        result = _handle_tool_confirmar_pedido(fn_args, context, conversation_context)
     else:
         result = json.dumps({"error": f"Herramienta desconocida: {fn_name}"}, ensure_ascii=False)
 
@@ -5862,6 +6091,10 @@ def generate_agent_reply_v2(
             intent = "consulta_cartera"
         elif tc["name"] == "consultar_compras":
             intent = "consulta_compras"
+        elif tc["name"] == "buscar_documento_tecnico":
+            intent = "consulta_documentacion"
+        elif tc["name"] == "confirmar_pedido_y_generar_pdf":
+            intent = "pedido"
 
     return {
         "response_text": response_text,
