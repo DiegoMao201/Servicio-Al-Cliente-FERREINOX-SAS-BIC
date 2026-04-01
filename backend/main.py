@@ -1692,7 +1692,7 @@ def get_conversation_snapshot(conversation_id: int):
         row = connection.execute(
             text(
                 """
-                SELECT id, cliente_id, resumen, contexto
+                SELECT id, cliente_id, resumen, contexto, last_message_at
                 FROM public.agent_conversation
                 WHERE id = :conversation_id
                 """
@@ -2791,6 +2791,14 @@ def should_continue_commercial_flow(conversation_context: Optional[dict], detect
         if extracted.get("core_terms") and (extracted.get("requested_quantity") or extracted.get("requested_unit")):
             return True
 
+    # If there are ambiguous items in draft, any text with product terms could be a clarification
+    if commercial_draft.get("items"):
+        has_ambiguous = any(item.get("status") == "ambiguous" for item in commercial_draft["items"])
+        if has_ambiguous:
+            extracted = extract_product_request(text_value)
+            if extracted.get("core_terms") or extracted.get("product_codes"):
+                return True
+
     return False
 
 
@@ -2981,56 +2989,114 @@ def build_commercial_item_result(raw_line: str, inherited_store_filters: list[st
     return item_result
 
 
-def format_draft_as_numbered_list(resolved_items: list[dict], store_label: Optional[str] = None):
+def format_draft_conversational(resolved_items: list[dict], store_label: Optional[str] = None):
+    """Format the commercial draft as natural conversational text instead of numbered menus."""
     if not resolved_items:
         return "", False
 
-    lines = ["📋 *Borrador de pedido:*"]
-    has_options_to_select = False
+    matched_labels = []
+    ambiguous_parts = []
+    missing_parts = []
+    needs_input = False
 
-    for idx, item in enumerate(resolved_items, 1):
-        product_request = item.get("product_request") or {}
-        qty = parse_numeric_value(product_request.get("requested_quantity"))
-        unit = product_request.get("requested_unit")
-        original = (item.get("original_text") or "producto").strip()
-
-        if unit and qty:
-            qty_label = f"{format_quantity(qty)} {get_presentation_label(unit, qty)} de "
-        elif qty and qty > 1:
-            qty_label = f"{format_quantity(qty)} "
-        else:
-            qty_label = ""
-
-        alternatives = item.get("alternatives") or []
+    for item in resolved_items:
+        pr = item.get("product_request") or {}
+        qty = parse_numeric_value(pr.get("requested_quantity"))
+        unit = pr.get("requested_unit")
 
         if item["status"] == "matched":
-            matched_product = item.get("matched_product") or {}
-            raw_desc = matched_product.get("descripcion") or matched_product.get("nombre_articulo") or "producto"
-            pres = infer_product_presentation_from_row(matched_product) if matched_product else None
-            brand = infer_product_brand_from_row(matched_product) if matched_product else None
+            mp = item.get("matched_product") or {}
+            raw_desc = mp.get("descripcion") or mp.get("nombre_articulo") or "producto"
+            pres = infer_product_presentation_from_row(mp) if mp else None
+            brand = infer_product_brand_from_row(mp) if mp else None
             commercial_name = translate_product_to_commercial(raw_desc, pres, brand)
-
-            if len(alternatives) > 1:
-                lines.append(f"\n{idx}. {qty_label}*{original}*")
-                for alt_idx, alt in enumerate(alternatives[:4]):
-                    letter = chr(97 + alt_idx)
-                    marker = " ✅" if alt_idx == 0 else ""
-                    lines.append(f"   {letter}) {alt['commercial_name']}{marker}")
-                has_options_to_select = True
+            if qty and unit:
+                matched_labels.append(f"{format_quantity(qty)} {get_presentation_label(unit, qty)} de {commercial_name}")
+            elif qty and qty > 1:
+                matched_labels.append(f"{format_quantity(qty)} {commercial_name}")
             else:
-                lines.append(f"\n{idx}. {qty_label}*{commercial_name}* ✅")
+                matched_labels.append(commercial_name)
 
         elif item["status"] == "ambiguous":
-            lines.append(f"\n{idx}. {qty_label}*{original}* ❓ opciones:")
-            for alt_idx, alt in enumerate(alternatives[:4]):
-                letter = chr(97 + alt_idx)
-                lines.append(f"   {letter}) {alt['commercial_name']}")
-            has_options_to_select = True
+            needs_input = True
+            orig = (item.get("original_text") or "").strip()
+            alts = item.get("alternatives") or []
+            alt_names = [a["commercial_name"] for a in alts[:4]]
+            if len(alt_names) == 1:
+                ambiguous_parts.append(f"Del *{orig}* tengo el {alt_names[0]}, ¿te sirve?")
+            elif len(alt_names) == 2:
+                ambiguous_parts.append(f"Del *{orig}* tengo el {alt_names[0]} y el {alt_names[1]}. ¿Cuál manejas?")
+            else:
+                options_text = ", ".join(alt_names[:-1]) + f" y {alt_names[-1]}"
+                ambiguous_parts.append(f"Del *{orig}* tengo {options_text}. ¿Cuál necesitas?")
 
         elif item["status"] == "missing":
-            lines.append(f"\n{idx}. {qty_label}*{original}* ❌ no encontrado")
+            needs_input = True
+            orig = (item.get("original_text") or "").strip()
+            missing_parts.append(orig)
 
-    return "\n".join(lines), has_options_to_select
+    parts = []
+    if matched_labels:
+        if len(matched_labels) == 1:
+            parts.append(f"✅ Te anoto {matched_labels[0]}.")
+        elif len(matched_labels) == 2:
+            parts.append(f"✅ Te anoto {matched_labels[0]} y {matched_labels[1]}.")
+        else:
+            items_text = ", ".join(matched_labels[:-1]) + f" y {matched_labels[-1]}"
+            parts.append(f"✅ Te anoto {items_text}.")
+
+    for amb in ambiguous_parts:
+        parts.append(amb)
+
+    if missing_parts:
+        if len(missing_parts) == 1:
+            parts.append(f"❌ No ubiqué *{missing_parts[0]}*, ¿me pasas la referencia o el código exacto?")
+        else:
+            items_text = " ni ".join(f"*{m}*" for m in missing_parts)
+            parts.append(f"❌ No ubiqué {items_text}, ¿me pasas las referencias?")
+
+    return "\n\n".join(parts), needs_input
+
+
+def try_resolve_ambiguous_with_clarification(raw_line: str, existing_items: list[dict], inherited_store_filters: list[str], mode: str):
+    """Try to match a clarification message to an existing ambiguous item and resolve it.
+
+    Returns the index of the matched item, or None if no match found.
+    """
+    new_request = extract_product_request(raw_line)
+    new_terms = set(new_request.get("core_terms") or [])
+    new_codes = set(new_request.get("product_codes") or [])
+    if not new_terms and not new_codes:
+        return None
+
+    best_idx = None
+    best_score = 0
+
+    for idx, item in enumerate(existing_items):
+        if item.get("status") != "ambiguous":
+            continue
+        original_terms = set((item.get("product_request") or {}).get("core_terms") or [])
+        # Check term overlap with original request
+        overlap = len(new_terms & original_terms)
+        # Also check if clarification matches any alternative's reference or name
+        for alt in (item.get("alternatives") or []):
+            alt_ref = normalize_text_value(alt.get("referencia") or "")
+            alt_name = normalize_text_value(alt.get("commercial_name") or "")
+            for term in new_terms:
+                if term in alt_name:
+                    overlap += 1
+                    break
+            for code in new_codes:
+                if code == alt_ref or code in alt_ref:
+                    overlap += 2
+                    break
+        if overlap > best_score:
+            best_score = overlap
+            best_idx = idx
+
+    if best_idx is not None and best_score >= 1:
+        return best_idx
+    return None
 
 
 def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_message: Optional[str], conversation_context: Optional[dict]):
@@ -3187,7 +3253,14 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             or is_product_intent_message(raw_line)
         ):
             continue
-        resolved_items.append(build_commercial_item_result(raw_line, inherited_store_filters, intent))
+        # Try to resolve an existing ambiguous item with this clarification
+        matched_idx = try_resolve_ambiguous_with_clarification(raw_line, resolved_items, inherited_store_filters, intent)
+        if matched_idx is not None:
+            original_text = resolved_items[matched_idx].get("original_text")
+            resolved_items[matched_idx] = build_commercial_item_result(raw_line, inherited_store_filters, intent)
+            resolved_items[matched_idx]["original_text"] = original_text or raw_line
+        else:
+            resolved_items.append(build_commercial_item_result(raw_line, inherited_store_filters, intent))
 
     matched_items = [item for item in resolved_items if item.get("status") == "matched"]
     ambiguous_items = [item for item in resolved_items if item.get("status") == "ambiguous"]
@@ -3213,14 +3286,10 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         delivery_channel = existing_draft.get("delivery_channel")
 
     if not ready_to_close:
-        # ── Format response as numbered list ──
-        list_text, has_options = format_draft_as_numbered_list(resolved_items, store_label)
+        # ── Format response conversationally ──
+        list_text, has_options = format_draft_conversational(resolved_items, store_label)
 
         closing_parts = []
-        if has_options:
-            closing_parts.append("Para los ❓, dime cuál opción necesitas (ej: \"1a\", \"3b\").")
-        if missing_items:
-            closing_parts.append("Para los ❌, pásame la referencia exacta o la presentación.")
         if not has_store:
             closing_parts.append("¿En qué tienda o ciudad lo necesitas?")
         if all_items_resolved and has_store and not items_confirmed:
@@ -5530,6 +5599,39 @@ async def receive_whatsapp_webhook(request: Request):
                 recent_messages = load_recent_conversation_messages(context["conversation_id"])
                 conversation_snapshot = get_conversation_snapshot(context["conversation_id"])
                 conversation_context = dict(conversation_snapshot.get("contexto") or {})
+
+                # ── Auto-reset conversation context after 3 hours of inactivity ──
+                last_msg_at = conversation_snapshot.get("last_message_at")
+                if last_msg_at:
+                    if hasattr(last_msg_at, "tzinfo") and last_msg_at.tzinfo is not None:
+                        from datetime import timezone
+                        now_aware = datetime.now(timezone.utc)
+                        elapsed = now_aware - last_msg_at
+                    else:
+                        elapsed = datetime.utcnow() - last_msg_at
+                    if elapsed > timedelta(hours=3):
+                        conversation_context = {}
+                        update_conversation_context(
+                            context["conversation_id"],
+                            {
+                                "verified": None,
+                                "verified_document": None,
+                                "verified_by": None,
+                                "verified_cliente_codigo": None,
+                                "awaiting_verification": None,
+                                "awaiting_name_confirmation": None,
+                                "pending_verified_context": None,
+                                "pending_intent": None,
+                                "commercial_draft": None,
+                                "last_direct_intent": None,
+                                "claim_case": None,
+                                "pending_product_clarification": None,
+                                "pending_document_options": None,
+                                "last_product_request": None,
+                            },
+                            summary="Contexto reiniciado por inactividad (3h+)",
+                        )
+
                 verified_context = None
                 detected_intent = detect_business_intent(content)
 
