@@ -611,7 +611,6 @@ def is_technical_document_message(text_value: Optional[str]):
             "hoja seguridad",
             "fds",
             "msds",
-            "pdf",
         ]
     )
 
@@ -2536,6 +2535,34 @@ def is_thanks_or_closing_message(text_value: Optional[str]):
     return any(re.match(pattern, lowered) for pattern in gratitude_patterns)
 
 
+def is_affirmative_message(text_value: Optional[str]):
+    lowered = normalize_text_value(text_value)
+    if not lowered:
+        return False
+    return bool(re.match(
+        r"^(si|sí|eso es|asi es|as[ií] esta|correcto|exacto|dale|listo|de una|h[aá]gale|ok|okay|perfecto|confirmado)[.!?,\s]*$",
+        lowered,
+    ))
+
+
+def is_negative_message(text_value: Optional[str]):
+    lowered = normalize_text_value(text_value)
+    if not lowered:
+        return False
+    return bool(re.match(r"^(no|nop|negativo|ya no|ya no mas|ya no m[aá]s)[.!?,\s]*$", lowered))
+
+
+def has_active_commercial_flow(conversation_context: Optional[dict]):
+    context = conversation_context or {}
+    draft = dict(context.get("commercial_draft") or {})
+    active_intent = draft.get("intent") or context.get("last_direct_intent") or context.get("intent")
+    if active_intent not in {"pedido", "cotizacion"}:
+        return False
+    if draft.get("items"):
+        return True
+    return bool(active_intent in {"pedido", "cotizacion"} and not draft.get("internal_notified"))
+
+
 def build_conversation_closing_reply(profile_name: Optional[str]):
     return "¡Con gusto! Quedo por aquí para lo que necesites 👋"
 
@@ -2635,6 +2662,10 @@ def should_continue_commercial_flow(conversation_context: Optional[dict], detect
 
     if extract_store_filters(text_value) or extract_email_address(text_value):
         return True
+    if is_affirmative_message(text_value) or is_negative_message(text_value):
+        return True
+    if re.search(r"\b(confirma|confirmame|conf[ií]rmame|conf[ií]rmalo|sep[aá]ralo|separalo|env[ií]ame|enviame|m[aá]ndame|mandame|eso ser[ií]a todo|eso es|as[ií] est[aá])\b", normalized):
+        return True
     if is_product_intent_message(text_value):
         return True
     if len(split_commercial_line_items(text_value)) >= 2:
@@ -2655,6 +2686,44 @@ def split_commercial_line_items(text_value: Optional[str]):
     if not text_value:
         return []
 
+    filler_fragments = {
+        "necesito",
+        "tambien necesito",
+        "también necesito",
+        "tambien",
+        "también",
+        "ademas necesito",
+        "además necesito",
+        "ademas",
+        "además",
+        "y",
+        "y tambien necesito",
+        "y también necesito",
+    }
+
+    def clean_split_candidates(candidates: list[str]):
+        cleaned = []
+        carry_prefix = ""
+        for segment in candidates:
+            stripped_segment = segment.strip()
+            normalized_segment = normalize_text_value(stripped_segment)
+            if not normalized_segment:
+                continue
+            if normalized_segment in filler_fragments:
+                carry_prefix = f"{carry_prefix} {stripped_segment}".strip()
+                continue
+            if carry_prefix:
+                stripped_segment = f"{carry_prefix} {stripped_segment}".strip()
+                carry_prefix = ""
+            stripped_segment = re.sub(
+                r"\s+(?:y|tambien|también|ademas|además|tambien necesito|también necesito|ademas necesito|además necesito)\s*$",
+                "",
+                stripped_segment,
+                flags=re.IGNORECASE,
+            ).strip()
+            cleaned.append(stripped_segment)
+        return cleaned
+
     prepared_text = re.sub(r"[;|]+", "\n", text_value)
     raw_lines = [line.strip(" -*•\t") for line in prepared_text.splitlines()]
     lines = [line for line in raw_lines if line]
@@ -2674,7 +2743,8 @@ def split_commercial_line_items(text_value: Optional[str]):
     )
     split_candidates = [segment.strip() for segment in qty_boundary.split(text_value) if segment.strip()]
     if len(split_candidates) >= 2:
-        return split_candidates
+        cleaned_candidates = clean_split_candidates(split_candidates)
+        return cleaned_candidates or split_candidates
 
     comma_split = [segment.strip() for segment in re.split(r",\s*", text_value) if segment.strip()]
     if len(comma_split) >= 2:
@@ -2778,6 +2848,7 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     context = conversation_context or {}
     existing_draft = dict(context.get("commercial_draft") or {})
     last_intent = context.get("last_direct_intent")
+    normalized_message = normalize_text_value(user_message)
     incoming_store_filters = extract_store_filters(user_message)
     incoming_email = extract_email_address(user_message)
     incoming_delivery_channel = extract_delivery_channel(user_message)
@@ -2785,6 +2856,9 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     current_lines = split_commercial_line_items(user_message)
     has_existing_items = bool(existing_draft.get("items"))
     has_contextual_followup = bool(incoming_store_filters or incoming_email or incoming_delivery_channel)
+    is_affirmative_followup = is_affirmative_message(user_message)
+    is_negative_followup = is_negative_message(user_message)
+    wants_order_confirmation = bool(re.search(r"\b(confirma|confirmame|conf[ií]rmame|conf[ií]rmalo|sep[aá]ralo|separalo|env[ií]ame|enviame|mandame|m[aá]ndame)\b", normalized_message))
 
     has_explicit_items = any(
         extract_product_request(line).get("product_codes")
@@ -2796,6 +2870,9 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     if has_existing_items and (incoming_email or incoming_delivery_channel) and not incoming_store_filters:
         current_lines = []
         has_explicit_items = False
+
+    if has_existing_items and (is_affirmative_followup or is_negative_followup or wants_order_confirmation) and not has_explicit_items and not has_contextual_followup:
+        current_lines = []
 
     if not has_explicit_items and not has_existing_items and not has_contextual_followup:
         summary_label = "cotización" if intent == "cotizacion" else "pedido"
@@ -2855,6 +2932,14 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     for raw_line in current_lines:
         if not raw_line:
             continue
+        raw_request = extract_product_request(raw_line)
+        if not (
+            raw_request.get("product_codes")
+            or raw_request.get("core_terms")
+            or raw_request.get("requested_unit")
+            or is_product_intent_message(raw_line)
+        ):
+            continue
         resolved_items.append(build_commercial_item_result(raw_line, inherited_store_filters, intent))
 
     matched_items = [item for item in resolved_items if item.get("status") == "matched"]
@@ -2872,6 +2957,9 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     compact_summary = summarize_commercial_items(matched_items)
     has_store = bool(inherited_store_filters)
     ready_to_close = bool(matched_items) and not ambiguous_items and not missing_items and has_store
+
+    if ready_to_close and not incoming_delivery_channel and wants_order_confirmation:
+        delivery_channel = existing_draft.get("delivery_channel")
 
     if not ready_to_close:
         closing_parts = []
@@ -5618,7 +5706,7 @@ async def receive_whatsapp_webhook(request: Request):
                     )
                     continue
 
-                if is_thanks_or_closing_message(content):
+                if is_thanks_or_closing_message(content) and not has_active_commercial_flow(conversation_context):
                     response_text = build_conversation_closing_reply(context.get('nombre_visible'))
                     outbound_payload = None
                     try:
