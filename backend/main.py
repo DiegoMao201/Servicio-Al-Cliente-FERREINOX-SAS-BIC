@@ -1745,6 +1745,7 @@ def find_cliente_contexto_by_document(document_number: str):
 
     engine = get_db_engine()
     with engine.connect() as connection:
+        # Exact match first
         row = connection.execute(
             text(
                 """
@@ -1757,6 +1758,21 @@ def find_cliente_contexto_by_document(document_number: str):
             {"document_number": normalized_document},
         ).mappings().one_or_none()
 
+        # Prefix match for NITs with verification digit (e.g. 1088266407 matches 10882664078)
+        if row is None:
+            row = connection.execute(
+                text(
+                    """
+                    SELECT cod_cliente, nombre_cliente, nit
+                    FROM public.vw_estado_cartera
+                    WHERE regexp_replace(COALESCE(nit, ''), '[^0-9]', '', 'g') LIKE :document_prefix
+                    ORDER BY fecha_documento DESC NULLS LAST
+                    LIMIT 1
+                    """
+                ),
+                {"document_prefix": f"{normalized_document}%"},
+            ).mappings().one_or_none()
+
         if row is None:
             row = connection.execute(
                 text(
@@ -1764,6 +1780,21 @@ def find_cliente_contexto_by_document(document_number: str):
                     SELECT codigo AS cod_cliente, nombre_legal AS nombre_cliente, numero_documento AS nit
                     FROM public.cliente
                     WHERE regexp_replace(COALESCE(numero_documento, ''), '[^0-9]', '', 'g') = :document_number
+                       OR regexp_replace(COALESCE(numero_documento, ''), '[^0-9]', '', 'g') LIKE :document_prefix
+                    LIMIT 1
+                    """
+                ),
+                {"document_number": normalized_document, "document_prefix": f"{normalized_document}%"},
+            ).mappings().one_or_none()
+
+        # Also search in cod_cliente (some systems use cédula as client code)
+        if row is None:
+            row = connection.execute(
+                text(
+                    """
+                    SELECT cod_cliente, nombre_cliente, nit
+                    FROM public.vw_estado_cartera
+                    WHERE regexp_replace(COALESCE(cod_cliente::text, ''), '[^0-9]', '', 'g') = :document_number
                     LIMIT 1
                     """
                 ),
@@ -2379,7 +2410,17 @@ def extract_identity_lookup_candidate(text_value: Optional[str], conversation_co
     if not verification_flow_active:
         return None
 
+    # During verification, ignore messages that are clearly questions or commands, not names
     if any(character.isalpha() for character in text_value):
+        # Skip common question patterns that aren't name lookups
+        question_patterns = [
+            r"\b(como|cómo|donde|dónde|cuando|cuándo|cual|cuál|que|qué|por que|por qué|puedo|pueden|hay|tiene)\b",
+            r"\b(pagar|enviar|comprar|hacer|necesito|quiero|ayuda|informacion|información)\b",
+        ]
+        for qp in question_patterns:
+            if re.search(qp, normalized_text):
+                return None
+
         product_request = extract_product_request(text_value)
         tokens = [token for token in normalized_text.split() if len(token) >= 3]
         candidate_intent = detect_business_intent(text_value)
@@ -5157,6 +5198,25 @@ def build_verification_challenge():
     )
 
 
+def build_name_confirmation_challenge(cliente_nombre: str):
+    return (
+        f"Por seguridad, encontré una cuenta asociada. ¿Me confirmas si el titular es *{cliente_nombre}*? "
+        "Respóndeme sí o no."
+    )
+
+
+def is_name_confirmation_response(text_value: Optional[str]):
+    """Check if the message is a yes/no confirmation to the name challenge."""
+    lowered = normalize_text_value(text_value)
+    if not lowered:
+        return None
+    if re.match(r"^(si|sí|eso es|asi es|as[ií] es|correcto|exacto|dale|listo|de una|ok|okay|perfecto|confirmado|ese soy|soy yo|es[ae]? soy|es[ae]? es|ese soy yo|si se[ñn]or|si claro|claro que si|afirmativo|efectivamente)[.!?,\s]*.*$", lowered):
+        return True
+    if re.match(r"^(no|nop|negativo|no soy|no es|ese no|esa no|no es esa?|no soy yo|ese no es|esa no es|no ese no|para nada)[.!?,\s]*.*$", lowered):
+        return False
+    return None
+
+
 def build_agent_prompt(
     profile_name: Optional[str],
     cliente_contexto: Optional[dict],
@@ -5472,14 +5532,103 @@ async def receive_whatsapp_webhook(request: Request):
                 conversation_context = dict(conversation_snapshot.get("contexto") or {})
                 verified_context = None
                 detected_intent = detect_business_intent(content)
-                identity_candidate = extract_identity_lookup_candidate(
-                    content,
-                    conversation_context,
-                    allow_unprompted=detected_intent != "consulta_productos",
-                )
-                identity_verification_message = identity_candidate is not None
-                if identity_verification_message:
-                    detected_intent = conversation_context.get("pending_intent") or detected_intent
+
+                # Handle name confirmation step (yes/no to "¿Confirmas que el titular es X?")
+                if conversation_context.get("awaiting_name_confirmation"):
+                    name_response = is_name_confirmation_response(content)
+                    pending_verified = conversation_context.get("pending_verified_context") or {}
+                    if name_response is True and pending_verified:
+                        verified_context = pending_verified
+                        verified_by = conversation_context.get("pending_verified_by") or "document"
+                        cliente_id = update_contact_cliente(context["contact_id"], verified_context.get("cliente_codigo"))
+                        context["cliente_id"] = cliente_id
+                        update_conversation_context(
+                            context["conversation_id"],
+                            {
+                                "verified": True,
+                                "verified_document": conversation_context.get("pending_verified_document"),
+                                "verified_by": verified_by,
+                                "verified_cliente_codigo": verified_context.get("cliente_codigo"),
+                                "awaiting_name_confirmation": False,
+                                "awaiting_verification": False,
+                                "pending_verified_context": None,
+                                "pending_verified_by": None,
+                                "pending_verified_document": None,
+                            },
+                        )
+                        conversation_context.update(
+                            {
+                                "verified": True,
+                                "verified_document": conversation_context.get("pending_verified_document"),
+                                "verified_by": verified_by,
+                                "verified_cliente_codigo": verified_context.get("cliente_codigo"),
+                                "awaiting_verification": False,
+                                "awaiting_name_confirmation": False,
+                            }
+                        )
+                        # Now proceed to handle the pending intent (cartera, compras, etc.)
+                        detected_intent = conversation_context.get("pending_intent") or detected_intent
+                        identity_candidate = {"type": "confirmed", "value": conversation_context.get("pending_verified_document")}
+                        identity_verification_message = True
+                    elif name_response is False:
+                        reject_text = (
+                            "Entendido, ese no es. ¿Me regalas otra cédula, NIT o código de cliente para buscarte?"
+                        )
+                        outbound_payload = None
+                        try:
+                            outbound_payload = send_whatsapp_text_message(context["telefono_e164"], reject_text)
+                            provider_message_id = None
+                            if outbound_payload.get("messages"):
+                                provider_message_id = outbound_payload["messages"][0].get("id")
+                            store_outbound_message(
+                                context["conversation_id"],
+                                provider_message_id,
+                                "text",
+                                reject_text,
+                                outbound_payload,
+                                intent_detectado="verificacion_nombre_rechazada",
+                            )
+                        except Exception as exc:
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"No fue posible enviar rechazo de nombre: {exc}",
+                                {"error": str(exc)},
+                                intent_detectado="verificacion_nombre_rechazada",
+                            )
+                        update_conversation_context(
+                            context["conversation_id"],
+                            {
+                                "awaiting_name_confirmation": False,
+                                "pending_verified_context": None,
+                                "pending_verified_by": None,
+                                "pending_verified_document": None,
+                                "awaiting_verification": True,
+                            },
+                        )
+                        processed_messages.append(
+                            {
+                                "conversation_id": context["conversation_id"],
+                                "telefono": context["telefono_e164"],
+                                "message_type": message_type,
+                                "provider_message_id": message.get("id"),
+                                "ai_response_sent": bool(outbound_payload),
+                                "verification_required": True,
+                            }
+                        )
+                        continue
+                    # If ambiguous response, fall through to normal processing
+
+                if not verified_context:
+                    identity_candidate = extract_identity_lookup_candidate(
+                        content,
+                        conversation_context,
+                        allow_unprompted=detected_intent != "consulta_productos",
+                    )
+                    identity_verification_message = identity_candidate is not None
+                    if identity_verification_message:
+                        detected_intent = conversation_context.get("pending_intent") or detected_intent
                 if detected_intent == "consulta_general" and is_product_code_message(content):
                     previous_product_request = conversation_context.get("last_product_request") or {}
                     if conversation_context.get("last_direct_intent") == "consulta_productos" or previous_product_request.get("search_terms"):
@@ -5555,12 +5704,62 @@ async def receive_whatsapp_webhook(request: Request):
                     )
                     conversation_context.update(reset_updates)
 
-                if identity_candidate:
+                if identity_candidate and not verified_context:
+                    # ── Standard identity resolution ──
                     try:
                         verified_context, verified_by = resolve_identity_candidate(identity_candidate, context["telefono_e164"])
                     except Exception:
                         verified_context, verified_by = None, None
                     if verified_context:
+                        cliente_nombre = verified_context.get("nombre_cliente") or ""
+                        # Ask name confirmation as second security layer
+                        if verified_by in ("document", "customer_code") and cliente_nombre and not conversation_context.get("awaiting_name_confirmation"):
+                            confirmation_text = build_name_confirmation_challenge(cliente_nombre)
+                            outbound_payload = None
+                            try:
+                                outbound_payload = send_whatsapp_text_message(context["telefono_e164"], confirmation_text)
+                                provider_message_id = None
+                                if outbound_payload.get("messages"):
+                                    provider_message_id = outbound_payload["messages"][0].get("id")
+                                store_outbound_message(
+                                    context["conversation_id"],
+                                    provider_message_id,
+                                    "text",
+                                    confirmation_text,
+                                    outbound_payload,
+                                    intent_detectado="verificacion_nombre_solicitada",
+                                )
+                            except Exception as exc:
+                                store_outbound_message(
+                                    context["conversation_id"],
+                                    None,
+                                    "system",
+                                    f"No fue posible enviar confirmacion de nombre: {exc}",
+                                    {"error": str(exc)},
+                                    intent_detectado="verificacion_nombre_solicitada",
+                                )
+                            update_conversation_context(
+                                context["conversation_id"],
+                                {
+                                    "awaiting_name_confirmation": True,
+                                    "pending_verified_context": verified_context,
+                                    "pending_verified_by": verified_by,
+                                    "pending_verified_document": identity_candidate.get("value") if verified_by == "document" else None,
+                                },
+                            )
+                            conversation_context.update({"awaiting_name_confirmation": True, "awaiting_verification": True})
+                            processed_messages.append(
+                                {
+                                    "conversation_id": context["conversation_id"],
+                                    "telefono": context["telefono_e164"],
+                                    "message_type": message_type,
+                                    "provider_message_id": message.get("id"),
+                                    "ai_response_sent": bool(outbound_payload),
+                                    "verification_required": True,
+                                }
+                            )
+                            continue
+                        # For phone/name-based verification, skip name confirmation
                         cliente_id = update_contact_cliente(context["contact_id"], verified_context.get("cliente_codigo"))
                         context["cliente_id"] = cliente_id
                         update_conversation_context(
