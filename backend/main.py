@@ -6,6 +6,9 @@ import tomllib
 import unicodedata
 import io
 import uuid
+import hmac
+import hashlib
+import secrets
 from difflib import SequenceMatcher
 from datetime import date, timedelta, datetime
 from html import escape
@@ -14,16 +17,59 @@ from typing import Optional
 
 import dropbox
 import requests
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from openai import OpenAI
+from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 
 
 app = FastAPI(title="CRM Ferreinox Backend", version="2026.2")
 
 
+INTERNAL_ROLES = {"vendedor", "gerente", "operador", "administrador"}
+INTERNAL_SCOPE_TYPES = {"cliente", "vendedor_codigo", "vendedor_nombre", "zona", "almacen"}
+INTERNAL_SESSION_TTL_HOURS = int(os.getenv("INTERNAL_AUTH_SESSION_TTL_HOURS", "12"))
+INTERNAL_PASSWORD_ITERATIONS = int(os.getenv("INTERNAL_AUTH_PASSWORD_ITERATIONS", "390000"))
+INTERNAL_LOGIN_PATTERN = re.compile(r"^\s*login\s+([a-z0-9._-]{3,80})\s+(.+?)\s*$", re.IGNORECASE)
+INTERNAL_LOGOUT_PATTERNS = {
+    "logout",
+    "salir",
+    "cerrar sesion",
+    "cerrar sesión",
+    "salir interno",
+    "logout interno",
+}
+
+
+class InternalUserScopeInput(BaseModel):
+    scope_type: str
+    scope_value: str
+    scope_label: Optional[str] = None
+
+
+class InternalBootstrapUserRequest(BaseModel):
+    username: str
+    password: str
+    role: str
+    full_name: str
+    phone_number: Optional[str] = None
+    email: Optional[str] = None
+    scopes: list[InternalUserScopeInput] = Field(default_factory=list)
+
+
+class InternalLoginRequest(BaseModel):
+    username: str
+    password: str
+
+
 SECRETS_PATH = Path(__file__).resolve().parent.parent / ".streamlit" / "secrets.toml"
+ARTIFACTS_PATH = Path(__file__).resolve().parent.parent / "artifacts"
+PRODUCT_NLU_PROMPT_PATH = ARTIFACTS_PATH / "SYSTEM_PROMPT_NLU_EXTRACCION_PRODUCTO.md"
+PRODUCT_NLU_PROMPT_FALLBACK = """Eres un extractor NLU para pedidos ferreteros. Devuelve solo JSON válido con las claves cantidad_inferida, presentacion_canonica_inferida, producto_base, color y acabado. Si no sabes un valor, devuelve null. Interpreta 1/5 como cuñete, 1/1 como galon y 1/4 como cuarto. Conserva colores compuestos como verde bronce y no inventes acabados."""
+PRODUCT_NLU_PROMPT_CACHE: Optional[str] = None
+PRODUCT_NLU_CACHE_MAX_ITEMS = 256
+PRODUCT_NLU_CACHE: dict[str, dict] = {}
 TECHNICAL_DOC_FOLDER = "/data/FICHAS TÉCNICAS Y HOJAS DE SEGURIDAD"
 TECHNICAL_DOC_CACHE_TTL_SECONDS = 600
 TECHNICAL_DOC_STOPWORDS = {
@@ -385,6 +431,11 @@ PORTFOLIO_ALIASES = {
     "abracol": ["abracol"],
     "yale": ["yale"],
     "goya": ["goya"],
+    "smith": ["smith", "cinta smith", "tirro smith"],
+    "afix": ["afix", "silicona afix", "espuma afix", "epoxi afix"],
+    "segurex": ["segurex"],
+    "pl285": ["pl285", "pl 285", "pegante pl285", "pegante madera"],
+    "koraza": ["koraza"],
 }
 
 
@@ -419,10 +470,19 @@ STORE_ALIASES = {
 
 
 BRAND_ALIASES = {
-    "pintuco": ["pintuco", "viniltex", "viniltex adv", "p11", "p-11", "p 11"],
+    "viniltex": ["viniltex", "viniltex adv", "vtx"],
+    "domestico": ["domestico", "doméstico", "blanca economica", "blanca económica", "vinilo barato", "p11", "p-11", "p 11"],
+    "pintulux": ["pintulux", "pintulux 3en1", "pintulux 3 en 1", "t11", "t-11", "t 11"],
+    "koraza": ["koraza"],
+    "pintuco": ["pintuco", "viniltex", "domestico", "doméstico", "pintulux", "koraza"],
     "abracol": ["abracol"],
     "yale": ["yale"],
     "goya": ["goya"],
+    "smith": ["smith"],
+    "afix": ["afix"],
+    "segurex": ["segurex"],
+    "artecola": ["artecola", "pl285", "pl 285"],
+    "montana": ["montana", "montana 94"],
 }
 
 
@@ -496,12 +556,1048 @@ def get_openai_client():
     return OpenAI(api_key=api_key)
 
 
+def get_product_nlu_system_prompt():
+    global PRODUCT_NLU_PROMPT_CACHE
+    if PRODUCT_NLU_PROMPT_CACHE is not None:
+        return PRODUCT_NLU_PROMPT_CACHE
+
+    try:
+        PRODUCT_NLU_PROMPT_CACHE = PRODUCT_NLU_PROMPT_PATH.read_text(encoding="utf-8").strip()
+    except Exception:
+        PRODUCT_NLU_PROMPT_CACHE = PRODUCT_NLU_PROMPT_FALLBACK
+
+    if not PRODUCT_NLU_PROMPT_CACHE:
+        PRODUCT_NLU_PROMPT_CACHE = PRODUCT_NLU_PROMPT_FALLBACK
+    return PRODUCT_NLU_PROMPT_CACHE
+
+
+def normalize_nullable_phrase(raw_value):
+    normalized = normalize_text_value(raw_value)
+    if normalized in {"", "null", "none", "ninguno", "ninguna", "n/a", "na", "sin", "no aplica"}:
+        return None
+    return normalized
+
+
+def canonicalize_presentation_value(raw_value):
+    normalized = normalize_text_value(raw_value)
+    if not normalized:
+        return None
+    for canonical_value, aliases in PRESENTATION_ALIASES.items():
+        alias_values = {normalize_text_value(alias) for alias in aliases}
+        alias_values.add(normalize_text_value(canonical_value))
+        if normalized in alias_values:
+            return canonical_value
+    return None
+
+
+def merge_unique_terms(*term_groups):
+    merged_terms = []
+    seen_terms = set()
+    for group in term_groups:
+        if not group:
+            continue
+        if isinstance(group, str):
+            candidates = [group]
+        else:
+            candidates = list(group)
+        for value in candidates:
+            normalized = normalize_text_value(value)
+            if not normalized or normalized in seen_terms:
+                continue
+            seen_terms.add(normalized)
+            merged_terms.append(normalized)
+    return merged_terms
+
+
+def tokenize_search_phrase(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return []
+    return [
+        token
+        for token in re.findall(r"[a-z0-9.-]+", normalized)
+        if len(token) >= 2 and token not in PRODUCT_STOPWORDS and not is_store_alias_term(token)
+    ]
+
+
+def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_request: dict):
+    normalized = normalize_text_value(text_value)
+    alias_rules = [
+        {
+            "pattern": r"\b(blanca economica|blanca economica|la economica|vinilo barato|p11|p-11|p 11)\b",
+            "canonical_product": "domestico blanco",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico", "blanco"],
+            "color_filters": ["blanco"],
+        },
+        {
+            "pattern": r"\b(t11|t-11|t 11)\b",
+            "canonical_product": "pintulux blanco",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "blanco"],
+            "color_filters": ["blanco"],
+        },
+        {
+            "pattern": r"\b(p53|p-53|p 53)\b",
+            "canonical_product": "domestico verde esmeralda",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico", "verde esmeralda"],
+            "color_filters": ["verde esmeralda"],
+        },
+        {
+            "pattern": r"\b(pl285|pl 285)\b",
+            "canonical_product": "pegante pl285 madera",
+            "brand_filters": ["artecola"],
+            "core_terms": ["pl285", "madera"],
+        },
+        {
+            "pattern": r"\b(pintulux)\b.*\bverde\s+bronce\b|\bverde\s+bronce\b.*\b(pintulux)\b",
+            "canonical_product": "pintulux verde bronce",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "verde bronce"],
+            "color_filters": ["verde bronce"],
+        },
+        {
+            "pattern": r"\b(candado\s+yale)\b",
+            "canonical_product": "candado yale",
+            "brand_filters": ["yale"],
+            "core_terms": ["candado", "yale"],
+        },
+    ]
+
+    for rule in alias_rules:
+        if not re.search(rule["pattern"], normalized):
+            continue
+        if rule.get("canonical_product") and not prepared_request.get("canonical_product"):
+            prepared_request["canonical_product"] = rule["canonical_product"]
+        prepared_request["brand_filters"] = merge_unique_terms(prepared_request.get("brand_filters"), rule.get("brand_filters"))
+        prepared_request["core_terms"] = merge_unique_terms(prepared_request.get("core_terms"), rule.get("core_terms"))
+        prepared_request["color_filters"] = merge_unique_terms(prepared_request.get("color_filters"), rule.get("color_filters"))
+
+    if "verde bronce" in normalized:
+        prepared_request["color_filters"] = merge_unique_terms(prepared_request.get("color_filters"), ["verde bronce"])
+    elif "blanco puro" in normalized:
+        prepared_request["color_filters"] = merge_unique_terms(prepared_request.get("color_filters"), ["blanco puro"])
+    elif "transparente" in normalized:
+        prepared_request["color_filters"] = merge_unique_terms(prepared_request.get("color_filters"), ["transparente"])
+
+    if "mate" in normalized:
+        prepared_request["finish_filters"] = merge_unique_terms(prepared_request.get("finish_filters"), ["mate"])
+    elif "brillante" in normalized:
+        prepared_request["finish_filters"] = merge_unique_terms(prepared_request.get("finish_filters"), ["brillante"])
+
+    yale_size_match = re.search(r"\bcandado\s+yale\b.*?\b(30|40|50|60|70)\s*mm\b", normalized)
+    if yale_size_match:
+        yale_terms = ["candado", "yale", yale_size_match.group(1)]
+        if yale_size_match.group(1) in {"30", "40", "50", "60"}:
+            yale_terms.append("italiano")
+        prepared_request["canonical_product"] = prepared_request.get("canonical_product") or "candado yale"
+        prepared_request["brand_filters"] = merge_unique_terms(prepared_request.get("brand_filters"), ["yale"])
+        prepared_request["core_terms"] = merge_unique_terms(prepared_request.get("core_terms"), yale_terms)
+
+    prepared_request["search_terms"] = expand_product_terms(
+        merge_unique_terms(
+            prepared_request.get("search_terms"),
+            prepared_request.get("core_terms"),
+            prepared_request.get("color_filters"),
+            prepared_request.get("finish_filters"),
+        )
+    )[:14]
+    return prepared_request
+
+
+def should_attempt_product_nlu(text_value: Optional[str], base_request: Optional[dict]):
+    normalized = normalize_text_value(text_value)
+    request = base_request or {}
+    if not normalized or len(normalized) < 3:
+        return False
+    if is_technical_document_message(text_value) or is_technical_advisory_message(text_value):
+        return False
+    if has_non_product_business_signal(text_value) and not (
+        request.get("product_codes")
+        or request.get("brand_filters")
+        or request.get("requested_unit")
+        or request.get("requested_quantity")
+    ):
+        return False
+
+    meaningful_terms = [term for term in (request.get("core_terms") or []) if not is_store_alias_term(term)]
+    if request.get("product_codes"):
+        return True
+    if request.get("brand_filters") or request.get("requested_unit") or request.get("requested_quantity"):
+        return True
+    if len(meaningful_terms) >= 2:
+        return True
+    return bool(re.search(r"\b\d+\s*/\s*(1|4|5)\b", normalized))
+
+
+def extract_product_entities_with_llm(text_value: Optional[str], base_request: Optional[dict] = None):
+    normalized = normalize_text_value(text_value)
+    if not should_attempt_product_nlu(text_value, base_request):
+        return {}
+    if not get_openai_api_key():
+        return {}
+    if normalized in PRODUCT_NLU_CACHE:
+        return dict(PRODUCT_NLU_CACHE[normalized])
+
+    try:
+        response = get_openai_client().responses.create(
+            model=get_openai_model(),
+            input=[
+                {"role": "system", "content": get_product_nlu_system_prompt()},
+                {"role": "user", "content": text_value or ""},
+            ],
+            temperature=0,
+            text={"format": {"type": "json_object"}},
+        )
+        parsed = extract_json_object(response.output_text)
+    except Exception:
+        return {}
+
+    nlu_payload = {
+        "cantidad_inferida": parse_numeric_value(parsed.get("cantidad_inferida")),
+        "presentacion_canonica_inferida": canonicalize_presentation_value(parsed.get("presentacion_canonica_inferida")),
+        "producto_base": normalize_nullable_phrase(parsed.get("producto_base")),
+        "color": normalize_nullable_phrase(parsed.get("color")),
+        "acabado": normalize_nullable_phrase(parsed.get("acabado")),
+    }
+    if not any(nlu_payload.values()):
+        return {}
+
+    if len(PRODUCT_NLU_CACHE) >= PRODUCT_NLU_CACHE_MAX_ITEMS:
+        PRODUCT_NLU_CACHE.pop(next(iter(PRODUCT_NLU_CACHE)))
+    PRODUCT_NLU_CACHE[normalized] = dict(nlu_payload)
+    return nlu_payload
+
+
+def prepare_product_request_for_search(text_value: Optional[str], product_request: Optional[dict] = None):
+    prepared_request = dict(product_request or extract_product_request(text_value))
+    if prepared_request.get("nlu_processed"):
+        return prepared_request
+
+    prepared_request.setdefault("color_filters", [])
+    prepared_request.setdefault("finish_filters", [])
+    prepared_request = apply_deterministic_product_alias_rules(text_value, prepared_request)
+
+    nlu_payload = extract_product_entities_with_llm(text_value, prepared_request)
+    prepared_request["nlu_processed"] = True
+    prepared_request["nlu_extraction"] = nlu_payload or None
+
+    if not nlu_payload:
+        return prepared_request
+
+    canonical_product = nlu_payload.get("producto_base")
+    canonical_color = nlu_payload.get("color")
+    canonical_finish = nlu_payload.get("acabado")
+    canonical_presentation = nlu_payload.get("presentacion_canonica_inferida")
+    inferred_quantity = nlu_payload.get("cantidad_inferida")
+
+    if inferred_quantity is not None and prepared_request.get("requested_quantity") is None:
+        prepared_request["requested_quantity"] = inferred_quantity
+    if canonical_presentation and not prepared_request.get("requested_unit"):
+        prepared_request["requested_unit"] = canonical_presentation
+
+    if canonical_product:
+        prepared_request["canonical_product"] = canonical_product
+    if canonical_color:
+        prepared_request["color_filters"] = merge_unique_terms(prepared_request.get("color_filters"), [canonical_color], tokenize_search_phrase(canonical_color))
+    if canonical_finish:
+        prepared_request["finish_filters"] = merge_unique_terms(prepared_request.get("finish_filters"), [canonical_finish], tokenize_search_phrase(canonical_finish))
+
+    merged_core_terms = merge_unique_terms(
+        prepared_request.get("core_terms"),
+        [canonical_product] if canonical_product else [],
+        tokenize_search_phrase(canonical_product),
+        prepared_request.get("color_filters"),
+        prepared_request.get("finish_filters"),
+    )
+    prepared_request["core_terms"] = merged_core_terms[:10]
+
+    merged_search_terms = merge_unique_terms(
+        prepared_request.get("search_terms"),
+        merged_core_terms,
+        [canonical_presentation] if canonical_presentation else [],
+    )
+    prepared_request["search_terms"] = expand_product_terms(merged_search_terms)[:14]
+
+    derived_brand_filters = extract_brand_filters(
+        " ".join(
+            value
+            for value in [canonical_product, canonical_color, canonical_finish]
+            if value
+        )
+    )
+    prepared_request["brand_filters"] = merge_unique_terms(prepared_request.get("brand_filters"), derived_brand_filters)
+    return prepared_request
+
+
 def get_db_engine():
     return create_engine(get_database_url())
 
 
 def safe_json_dumps(value):
     return json.dumps(value, ensure_ascii=False, default=str)
+
+
+def normalize_internal_username(username: Optional[str]):
+    normalized = (username or "").strip().lower()
+    if not re.fullmatch(r"[a-z0-9._-]{3,80}", normalized):
+        raise HTTPException(status_code=400, detail="El usuario interno debe usar solo letras, números, punto, guion o guion bajo.")
+    return normalized
+
+
+def normalize_phone_e164(phone_number: Optional[str]):
+    digits = "".join(character for character in str(phone_number or "") if character.isdigit())
+    if not digits:
+        return None
+    if digits.startswith("57") and len(digits) >= 12:
+        return f"+{digits}"
+    if len(digits) == 10:
+        return f"+57{digits}"
+    return f"+{digits}"
+
+
+def hash_password_with_salt(password: str, salt_hex: str):
+    return hashlib.pbkdf2_hmac(
+        "sha256",
+        (password or "").encode("utf-8"),
+        bytes.fromhex(salt_hex),
+        INTERNAL_PASSWORD_ITERATIONS,
+    ).hex()
+
+
+def build_password_credentials(password: str):
+    if not password or len(password) < 8:
+        raise HTTPException(status_code=400, detail="La contraseña interna debe tener al menos 8 caracteres.")
+    salt_hex = secrets.token_hex(16)
+    return salt_hex, hash_password_with_salt(password, salt_hex)
+
+
+def verify_password_hash(password: str, salt_hex: str, expected_hash: str):
+    calculated_hash = hash_password_with_salt(password, salt_hex)
+    return hmac.compare_digest(calculated_hash, expected_hash)
+
+
+def hash_session_token(raw_token: str):
+    return hashlib.sha256((raw_token or "").encode("utf-8")).hexdigest()
+
+
+def ensure_internal_auth_tables():
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS public.agent_user (
+                    id bigserial PRIMARY KEY,
+                    username varchar(80) NOT NULL,
+                    full_name varchar(180) NOT NULL,
+                    role varchar(30) NOT NULL,
+                    password_salt varchar(128) NOT NULL,
+                    password_hash varchar(256) NOT NULL,
+                    phone_e164 varchar(30),
+                    email varchar(180),
+                    is_active boolean NOT NULL DEFAULT true,
+                    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+                    created_at timestamptz NOT NULL DEFAULT now(),
+                    updated_at timestamptz NOT NULL DEFAULT now(),
+                    CONSTRAINT uq_agent_user_username UNIQUE (username),
+                    CONSTRAINT uq_agent_user_phone UNIQUE (phone_e164)
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS public.agent_user_scope (
+                    id bigserial PRIMARY KEY,
+                    user_id bigint NOT NULL REFERENCES public.agent_user(id) ON DELETE CASCADE,
+                    scope_type varchar(40) NOT NULL,
+                    scope_value varchar(180) NOT NULL,
+                    scope_label varchar(180),
+                    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+                    created_at timestamptz NOT NULL DEFAULT now(),
+                    updated_at timestamptz NOT NULL DEFAULT now(),
+                    CONSTRAINT uq_agent_user_scope UNIQUE (user_id, scope_type, scope_value)
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS public.agent_user_session (
+                    id bigserial PRIMARY KEY,
+                    user_id bigint NOT NULL REFERENCES public.agent_user(id) ON DELETE CASCADE,
+                    token_hash varchar(128) NOT NULL,
+                    channel varchar(30) NOT NULL DEFAULT 'api',
+                    contact_id bigint REFERENCES public.whatsapp_contacto(id) ON DELETE SET NULL,
+                    phone_e164 varchar(30),
+                    expires_at timestamptz NOT NULL,
+                    last_used_at timestamptz,
+                    revoked_at timestamptz,
+                    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+                    created_at timestamptz NOT NULL DEFAULT now(),
+                    updated_at timestamptz NOT NULL DEFAULT now(),
+                    CONSTRAINT uq_agent_user_session_token UNIQUE (token_hash)
+                )
+                """
+            )
+        )
+
+
+def fetch_internal_user_scopes(user_id: int):
+    ensure_internal_auth_tables()
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text(
+                """
+                SELECT scope_type, scope_value, scope_label
+                FROM public.agent_user_scope
+                WHERE user_id = :user_id
+                ORDER BY scope_type, scope_value
+                """
+            ),
+            {"user_id": user_id},
+        ).mappings().all()
+    return [dict(row) for row in rows]
+
+
+def fetch_internal_user_by_username(username: str):
+    ensure_internal_auth_tables()
+    normalized_username = normalize_internal_username(username)
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT id, username, full_name, role, password_salt, password_hash,
+                       phone_e164, email, is_active, metadata
+                FROM public.agent_user
+                WHERE username = :username
+                LIMIT 1
+                """
+            ),
+            {"username": normalized_username},
+        ).mappings().one_or_none()
+    if not row:
+        return None
+    user_payload = dict(row)
+    user_payload["scopes"] = fetch_internal_user_scopes(user_payload["id"])
+    return user_payload
+
+
+def fetch_internal_user_by_id(user_id: int):
+    ensure_internal_auth_tables()
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT id, username, full_name, role, phone_e164, email, is_active, metadata
+                FROM public.agent_user
+                WHERE id = :user_id
+                LIMIT 1
+                """
+            ),
+            {"user_id": user_id},
+        ).mappings().one_or_none()
+    if not row:
+        return None
+    user_payload = dict(row)
+    user_payload["scopes"] = fetch_internal_user_scopes(user_payload["id"])
+    return user_payload
+
+
+def upsert_internal_user(user_request: InternalBootstrapUserRequest):
+    ensure_internal_auth_tables()
+    role = (user_request.role or "").strip().lower()
+    if role not in INTERNAL_ROLES:
+        raise HTTPException(status_code=400, detail="Rol interno inválido.")
+
+    normalized_username = normalize_internal_username(user_request.username)
+    phone_e164 = normalize_phone_e164(user_request.phone_number)
+    salt_hex, password_hash = build_password_credentials(user_request.password)
+    normalized_scopes = []
+    for scope in user_request.scopes:
+        scope_type = (scope.scope_type or "").strip().lower()
+        if scope_type not in INTERNAL_SCOPE_TYPES:
+            raise HTTPException(status_code=400, detail=f"Tipo de alcance no válido: {scope.scope_type}")
+        scope_value = normalize_text_value(scope.scope_value)
+        if not scope_value:
+            raise HTTPException(status_code=400, detail="Todos los alcances deben tener un valor válido.")
+        normalized_scopes.append(
+            {
+                "scope_type": scope_type,
+                "scope_value": scope_value,
+                "scope_label": scope.scope_label,
+            }
+        )
+
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        existing_row = connection.execute(
+            text(
+                """
+                SELECT id
+                FROM public.agent_user
+                WHERE username = :username
+                LIMIT 1
+                """
+            ),
+            {"username": normalized_username},
+        ).mappings().one_or_none()
+
+        if existing_row:
+            user_id = existing_row["id"]
+            connection.execute(
+                text(
+                    """
+                    UPDATE public.agent_user
+                    SET full_name = :full_name,
+                        role = :role,
+                        password_salt = :password_salt,
+                        password_hash = :password_hash,
+                        phone_e164 = :phone_e164,
+                        email = :email,
+                        is_active = true,
+                        updated_at = now()
+                    WHERE id = :user_id
+                    """
+                ),
+                {
+                    "user_id": user_id,
+                    "full_name": user_request.full_name,
+                    "role": role,
+                    "password_salt": salt_hex,
+                    "password_hash": password_hash,
+                    "phone_e164": phone_e164,
+                    "email": user_request.email,
+                },
+            )
+            connection.execute(text("DELETE FROM public.agent_user_scope WHERE user_id = :user_id"), {"user_id": user_id})
+        else:
+            user_id = connection.execute(
+                text(
+                    """
+                    INSERT INTO public.agent_user (
+                        username, full_name, role, password_salt, password_hash, phone_e164, email, is_active, created_at, updated_at
+                    )
+                    VALUES (
+                        :username, :full_name, :role, :password_salt, :password_hash, :phone_e164, :email, true, now(), now()
+                    )
+                    RETURNING id
+                    """
+                ),
+                {
+                    "username": normalized_username,
+                    "full_name": user_request.full_name,
+                    "role": role,
+                    "password_salt": salt_hex,
+                    "password_hash": password_hash,
+                    "phone_e164": phone_e164,
+                    "email": user_request.email,
+                },
+            ).scalar_one()
+
+        for scope in normalized_scopes:
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO public.agent_user_scope (
+                        user_id, scope_type, scope_value, scope_label, created_at, updated_at
+                    ) VALUES (
+                        :user_id, :scope_type, :scope_value, :scope_label, now(), now()
+                    )
+                    """
+                ),
+                {
+                    "user_id": user_id,
+                    "scope_type": scope["scope_type"],
+                    "scope_value": scope["scope_value"],
+                    "scope_label": scope["scope_label"],
+                },
+            )
+
+    return fetch_internal_user_by_id(user_id)
+
+
+def create_internal_session(user_payload: dict, channel: str = "api", contact_id: Optional[int] = None, phone_e164: Optional[str] = None):
+    ensure_internal_auth_tables()
+    raw_token = secrets.token_urlsafe(32)
+    token_hash = hash_session_token(raw_token)
+    expires_at = datetime.utcnow() + timedelta(hours=INTERNAL_SESSION_TTL_HOURS)
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                INSERT INTO public.agent_user_session (
+                    user_id, token_hash, channel, contact_id, phone_e164, expires_at,
+                    last_used_at, created_at, updated_at
+                ) VALUES (
+                    :user_id, :token_hash, :channel, :contact_id, :phone_e164, :expires_at,
+                    now(), now(), now()
+                )
+                """
+            ),
+            {
+                "user_id": user_payload["id"],
+                "token_hash": token_hash,
+                "channel": channel,
+                "contact_id": contact_id,
+                "phone_e164": phone_e164,
+                "expires_at": expires_at,
+            },
+        )
+    return {"token": raw_token, "expires_at": expires_at.isoformat()}
+
+
+def resolve_internal_session(raw_token: Optional[str]):
+    if not raw_token:
+        return None
+    ensure_internal_auth_tables()
+    token_hash = hash_session_token(raw_token)
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT s.user_id, s.expires_at, s.channel, s.phone_e164, s.contact_id,
+                       u.username, u.full_name, u.role, u.email, u.phone_e164 AS user_phone, u.is_active
+                FROM public.agent_user_session s
+                JOIN public.agent_user u ON u.id = s.user_id
+                WHERE s.token_hash = :token_hash
+                  AND s.revoked_at IS NULL
+                  AND s.expires_at > now()
+                LIMIT 1
+                """
+            ),
+            {"token_hash": token_hash},
+        ).mappings().one_or_none()
+        if not row or not row["is_active"]:
+            return None
+        connection.execute(
+            text(
+                """
+                UPDATE public.agent_user_session
+                SET last_used_at = now(),
+                    updated_at = now()
+                WHERE token_hash = :token_hash
+                """
+            ),
+            {"token_hash": token_hash},
+        )
+    user_payload = {
+        "id": row["user_id"],
+        "username": row["username"],
+        "full_name": row["full_name"],
+        "role": row["role"],
+        "email": row["email"],
+        "phone_e164": row["user_phone"],
+        "session_expires_at": row["expires_at"].isoformat() if row.get("expires_at") else None,
+        "scopes": fetch_internal_user_scopes(row["user_id"]),
+    }
+    return user_payload
+
+
+def revoke_internal_session(raw_token: Optional[str]):
+    if not raw_token:
+        return
+    ensure_internal_auth_tables()
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                UPDATE public.agent_user_session
+                SET revoked_at = now(),
+                    updated_at = now()
+                WHERE token_hash = :token_hash
+                  AND revoked_at IS NULL
+                """
+            ),
+            {"token_hash": hash_session_token(raw_token)},
+        )
+
+
+def authenticate_internal_user(username: str, password: str, phone_number: Optional[str] = None):
+    user_payload = fetch_internal_user_by_username(username)
+    if not user_payload or not user_payload.get("is_active"):
+        return None
+    if not verify_password_hash(password, user_payload["password_salt"], user_payload["password_hash"]):
+        return None
+    registered_phone = normalize_phone_e164(user_payload.get("phone_e164"))
+    incoming_phone = normalize_phone_e164(phone_number)
+    if registered_phone and incoming_phone and registered_phone != incoming_phone:
+        raise HTTPException(status_code=403, detail="Este usuario interno solo puede autenticarse desde su número registrado.")
+    return user_payload
+
+
+def extract_bearer_token(authorization: Optional[str]):
+    if not authorization:
+        return None
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        return None
+    return token.strip()
+
+
+def require_internal_user(authorization: Optional[str]):
+    token = extract_bearer_token(authorization)
+    user_payload = resolve_internal_session(token)
+    if not user_payload:
+        raise HTTPException(status_code=401, detail="Sesión interna inválida o vencida.")
+    return user_payload
+
+
+def fetch_customer_lookup_row(cliente_codigo: str):
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT cliente_codigo, nombre_cliente, nit, numero_documento, telefono1, telefono2, email,
+                       vendedor, vendedor_codigo, zona, ultima_compra, ventas_netas_total,
+                       saldo_cartera, max_dias_vencido, documentos_vencidos
+                FROM public.vw_agente_clientes_lookup
+                WHERE cliente_codigo = :cliente_codigo
+                LIMIT 1
+                """
+            ),
+            {"cliente_codigo": cliente_codigo},
+        ).mappings().one_or_none()
+    return dict(row) if row else None
+
+
+def search_customer_lookup_rows(search_text: str, limit: int = 5):
+    query_text = (search_text or "").strip()
+    if not query_text:
+        return []
+    normalized = normalize_text_value(query_text)
+    digits = re.sub(r"\D", "", query_text)
+    compact = normalize_reference_value(query_text)
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text(
+                """
+                SELECT cliente_codigo, nombre_cliente, nit, numero_documento, telefono1, telefono2, email,
+                       vendedor, vendedor_codigo, zona, ultima_compra, ventas_netas_total,
+                       saldo_cartera, max_dias_vencido, documentos_vencidos
+                FROM public.vw_agente_clientes_lookup
+                WHERE (
+                    :digits <> '' AND (
+                        regexp_replace(COALESCE(nit, ''), '[^0-9]', '', 'g') LIKE :digits_pattern
+                        OR regexp_replace(COALESCE(numero_documento, ''), '[^0-9]', '', 'g') LIKE :digits_pattern
+                        OR regexp_replace(COALESCE(cliente_codigo, ''), '[^0-9]', '', 'g') = :digits
+                    )
+                )
+                OR (
+                    :compact IS NOT NULL AND regexp_replace(lower(COALESCE(cliente_codigo, '')), '[^a-z0-9]', '', 'g') = :compact
+                )
+                OR (
+                    :normalized <> '' AND search_blob ILIKE :name_pattern
+                )
+                ORDER BY
+                    CASE
+                        WHEN regexp_replace(COALESCE(cliente_codigo, ''), '[^0-9]', '', 'g') = :digits THEN 0
+                        WHEN regexp_replace(COALESCE(nit, ''), '[^0-9]', '', 'g') = :digits THEN 1
+                        WHEN search_blob ILIKE :name_pattern THEN 2
+                        ELSE 3
+                    END,
+                    max_dias_vencido DESC NULLS LAST,
+                    ventas_netas_total DESC NULLS LAST,
+                    nombre_cliente ASC
+                LIMIT :limit
+                """
+            ),
+            {
+                "digits": digits,
+                "digits_pattern": f"{digits}%" if digits else "",
+                "compact": compact,
+                "normalized": normalized,
+                "name_pattern": f"%{normalized}%" if normalized else "",
+                "limit": limit,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows]
+
+
+def internal_user_can_access_customer(user_payload: dict, customer_row: Optional[dict]):
+    if not customer_row:
+        return False
+    role = (user_payload or {}).get("role")
+    if role in {"administrador", "gerente", "operador"}:
+        return True
+    if role != "vendedor":
+        return False
+
+    scopes = (user_payload or {}).get("scopes") or []
+    if not scopes:
+        return False
+
+    customer_code = normalize_text_value(customer_row.get("cliente_codigo"))
+    vendor_name = normalize_text_value(customer_row.get("vendedor"))
+    vendor_code = normalize_text_value(customer_row.get("vendedor_codigo"))
+    zone_name = normalize_text_value(customer_row.get("zona"))
+
+    for scope in scopes:
+        scope_type = normalize_text_value(scope.get("scope_type"))
+        scope_value = normalize_text_value(scope.get("scope_value"))
+        if scope_type == "cliente" and scope_value == customer_code:
+            return True
+        if scope_type == "vendedor_nombre" and scope_value and vendor_name and scope_value == vendor_name:
+            return True
+        if scope_type == "vendedor_codigo" and scope_value and vendor_code and scope_value == vendor_code:
+            return True
+        if scope_type == "zona" and scope_value and zone_name and scope_value == zone_name:
+            return True
+    return False
+
+
+def format_internal_customer_summary(customer_row: dict, purchase_summary: Optional[dict] = None):
+    customer_name = customer_row.get("nombre_cliente") or customer_row.get("cliente_codigo") or "Cliente"
+    customer_code = customer_row.get("cliente_codigo") or "sin código"
+    vendor_name = customer_row.get("vendedor") or "sin vendedor asignado"
+    zone_name = customer_row.get("zona") or "sin zona"
+    balance = format_currency(customer_row.get("saldo_cartera"))
+    overdue_docs = customer_row.get("documentos_vencidos") or 0
+    overdue_days = customer_row.get("max_dias_vencido") or 0
+    last_purchase = customer_row.get("ultima_compra")
+    last_purchase_text = str(last_purchase) if last_purchase else "sin compra reciente"
+    response_lines = [
+        f"{customer_name} ({customer_code})",
+        f"Vendedor: {vendor_name}. Zona: {zone_name}.",
+        f"Cartera: {balance}. Vencidos: {overdue_docs} doc(s), {overdue_days} día(s).",
+        f"Última compra: {last_purchase_text}.",
+    ]
+    if purchase_summary and purchase_summary.get("top_products"):
+        top_product = purchase_summary["top_products"][0]
+        response_lines.append(
+            f"Top compra reciente: {top_product.get('nombre_articulo') or top_product.get('descripcion') or 'producto'}.")
+    return "\n".join(response_lines)
+
+
+def build_internal_login_reply(content: str, context: dict):
+    match = INTERNAL_LOGIN_PATTERN.match(content or "")
+    if not match:
+        return None
+    username = match.group(1)
+    password = match.group(2)
+    user_payload = authenticate_internal_user(username, password, context.get("telefono_e164"))
+    if not user_payload:
+        return {
+            "response_text": "No pude autenticarte con ese usuario y contraseña. Revisa el acceso interno.",
+            "intent": "internal_auth_login_failed",
+            "context_updates": {},
+        }
+    session_payload = create_internal_session(
+        user_payload,
+        channel="whatsapp",
+        contact_id=context.get("contact_id"),
+        phone_e164=context.get("telefono_e164"),
+    )
+    return {
+        "response_text": (
+            f"Acceso interno activo para {user_payload.get('full_name')} como {user_payload.get('role')}. "
+            "Ya puedes pedir cartera, compras y contexto de tus clientes."
+        ),
+        "intent": "internal_auth_login",
+        "context_updates": {
+            "internal_auth": {
+                "token": session_payload["token"],
+                "user_id": user_payload.get("id"),
+                "username": user_payload.get("username"),
+                "role": user_payload.get("role"),
+                "expires_at": session_payload["expires_at"],
+            }
+        },
+    }
+
+
+def build_internal_logout_reply(conversation_context: dict):
+    internal_auth = dict((conversation_context or {}).get("internal_auth") or {})
+    if not internal_auth.get("token"):
+        return None
+    revoke_internal_session(internal_auth.get("token"))
+    return {
+        "response_text": "La sesión interna quedó cerrada. Si necesitas entrar de nuevo, envíame login usuario clave.",
+        "intent": "internal_auth_logout",
+        "context_updates": {"internal_auth": None},
+    }
+
+
+def extract_internal_customer_candidate(text_value: Optional[str]):
+    if not text_value:
+        return None
+    normalized = normalize_text_value(text_value)
+    cleaned = normalized
+    for fragment in [
+        "dame",
+        "ver",
+        "mostrar",
+        "muestreme",
+        "muéstrame",
+        "consulta",
+        "consultar",
+        "cartera",
+        "compras",
+        "compra",
+        "cliente",
+        "contexto",
+        "resumen",
+        "del",
+        "de",
+        "por favor",
+        "nit",
+        "cedula",
+        "cédula",
+        "codigo",
+        "código",
+        "cod",
+        "nombre",
+    ]:
+        cleaned = re.sub(rf"\b{re.escape(fragment)}\b", " ", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    candidate = extract_identity_lookup_candidate(cleaned, {}, allow_unprompted=True)
+    if candidate:
+        return candidate
+    digits = re.findall(r"\d{6,15}", text_value or "")
+    if digits:
+        return {"type": "document", "value": digits[0]}
+    tokens = [token for token in cleaned.split() if len(token) >= 3]
+    if len(tokens) >= 2:
+        return {"type": "name", "value": " ".join(tokens[:6])}
+    return None
+
+
+def resolve_internal_customer_context(identity_candidate: Optional[dict], phone_number: Optional[str] = None):
+    if not identity_candidate:
+        return None
+    candidate_type = identity_candidate.get("type")
+    candidate_value = identity_candidate.get("value")
+    if candidate_type == "document":
+        return find_cliente_contexto_by_document(candidate_value)
+    if candidate_type == "customer_code":
+        return find_cliente_contexto_by_customer_code(candidate_value)
+    if candidate_type == "name":
+        return find_cliente_contexto_by_name(candidate_value)
+    if candidate_type == "phone":
+        return find_cliente_contexto_by_phone(phone_number or candidate_value)
+    return None
+
+
+def detect_internal_query_intent(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return None
+    if any(fragment in normalized for fragment in ["cartera", "saldo", "vencid"]):
+        return "consulta_cartera"
+    if any(fragment in normalized for fragment in ["compras", "compra", "ultimo pedido", "último pedido", "ultima compra", "última compra"]):
+        return "consulta_compras"
+    if any(fragment in normalized for fragment in ["contexto", "resumen", "perfil", "todo del cliente", "info del cliente"]):
+        return "consulta_contexto"
+    return None
+
+
+def handle_internal_whatsapp_message(content: Optional[str], context: dict, conversation_context: dict):
+    if not content:
+        return None
+
+    login_reply = build_internal_login_reply(content, context)
+    if login_reply:
+        return login_reply
+
+    normalized = normalize_text_value(content)
+    if normalized in INTERNAL_LOGOUT_PATTERNS:
+        return build_internal_logout_reply(conversation_context)
+
+    internal_auth = dict((conversation_context or {}).get("internal_auth") or {})
+    if not internal_auth.get("token"):
+        if detect_internal_query_intent(content):
+            return {
+                "response_text": "Para consultas internas primero debes iniciar sesión. Escríbeme: login usuario clave",
+                "intent": "internal_auth_required",
+                "context_updates": {},
+            }
+        return None
+
+    internal_user = resolve_internal_session(internal_auth.get("token"))
+    if not internal_user:
+        return {
+            "response_text": "La sesión interna venció. Vuelve a ingresar con login usuario clave.",
+            "intent": "internal_auth_expired",
+            "context_updates": {"internal_auth": None},
+        }
+
+    intent = detect_internal_query_intent(content)
+    if not intent:
+        return None
+
+    candidate = extract_internal_customer_candidate(content)
+    if not candidate:
+        return {
+            "response_text": "Dime el NIT, la cédula, el código o el nombre del cliente y te muestro la información.",
+            "intent": "internal_customer_missing",
+            "context_updates": {},
+        }
+
+    cliente_contexto = resolve_internal_customer_context(candidate, context.get("telefono_e164"))
+    if not cliente_contexto or not cliente_contexto.get("cliente_codigo"):
+        return {
+            "response_text": "No encontré ese cliente con la información enviada. Prueba con NIT, código cliente o nombre completo.",
+            "intent": "internal_customer_not_found",
+            "context_updates": {},
+        }
+
+    customer_row = fetch_customer_lookup_row(cliente_contexto.get("cliente_codigo")) or cliente_contexto
+    if not internal_user_can_access_customer(internal_user, customer_row):
+        return {
+            "response_text": "No tienes permisos para consultar ese cliente con tu rol actual.",
+            "intent": "internal_access_denied",
+            "context_updates": {},
+        }
+
+    if intent == "consulta_cartera":
+        overdue_info = fetch_overdue_documents(cliente_contexto.get("cliente_codigo"))
+        totals = (overdue_info or {}).get("totals") or {}
+        response_text = (
+            f"{customer_row.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}\n"
+            f"Saldo cartera: {format_currency(customer_row.get('saldo_cartera'))}.\n"
+            f"Vencidos: {totals.get('documentos_vencidos', customer_row.get('documentos_vencidos') or 0)} documento(s), "
+            f"máximo {totals.get('max_dias_vencido', customer_row.get('max_dias_vencido') or 0)} día(s)."
+        )
+    elif intent == "consulta_compras":
+        purchase_summary = fetch_latest_purchase_detail(cliente_contexto.get("cliente_codigo"))
+        if not purchase_summary:
+            response_text = f"No encontré compras recientes para {customer_row.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}."
+        else:
+            response_text = (
+                f"{customer_row.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}\n"
+                f"Última compra: {purchase_summary.get('purchase_date') or 'sin fecha'} por {format_currency(purchase_summary.get('purchase_total'))}.\n"
+                f"Productos: {', '.join((item.get('nombre_articulo') or '') for item in (purchase_summary.get('top_products') or [])[:3] if item.get('nombre_articulo')) or 'sin detalle'}"
+            )
+    else:
+        purchase_summary = fetch_latest_purchase_detail(cliente_contexto.get("cliente_codigo"))
+        response_text = format_internal_customer_summary(customer_row, purchase_summary)
+
+    return {
+        "response_text": response_text,
+        "intent": intent,
+        "context_updates": {
+            "internal_auth": {
+                "token": internal_auth.get("token"),
+                "user_id": internal_user.get("id"),
+                "username": internal_user.get("username"),
+                "role": internal_user.get("role"),
+                "expires_at": internal_user.get("session_expires_at"),
+            },
+            "internal_last_cliente_codigo": cliente_contexto.get("cliente_codigo"),
+        },
+    }
 
 
 def load_local_secrets():
@@ -1198,6 +2294,8 @@ def extract_product_codes(text_value: Optional[str]):
         cleaned_code = normalize_reference_value(raw_code)
         if len(cleaned_code) < 3 or cleaned_code in seen_codes or cleaned_code in excluded_codes:
             continue
+        if re.fullmatch(r"\d{1,3}mm", cleaned_code):
+            continue
         seen_codes.add(cleaned_code)
         codes.append(cleaned_code)
     return codes
@@ -1280,7 +2378,13 @@ def extract_direction_filters(text_value: Optional[str]):
 
 
 def infer_product_presentation_from_row(product_row: dict):
+    explicit_presentation = canonicalize_presentation_value(product_row.get("presentacion_canonica"))
+    if explicit_presentation:
+        return explicit_presentation
     description_value = normalize_text_value(product_row.get("descripcion") or product_row.get("nombre_articulo"))
+    for canonical_value, aliases in PRESENTATION_ALIASES.items():
+        if any(normalize_text_value(alias) and normalize_text_value(alias) in description_value for alias in aliases):
+            return canonical_value
     for size_token, unit_name in PRESENTATION_SIZE_MAP.items():
         if size_token in description_value:
             return unit_name
@@ -1323,6 +2427,56 @@ def infer_product_direction_from_row(product_row: dict):
         if any(normalize_text_value(alias) in description_value for alias in aliases):
             return direction_name
     return None
+
+
+def infer_product_color_from_row(product_row: dict):
+    color_value = normalize_nullable_phrase(product_row.get("color_detectado") or product_row.get("color_raiz"))
+    if color_value:
+        return color_value
+    description_value = normalize_text_value(product_row.get("descripcion") or product_row.get("nombre_articulo"))
+    for compound_color in ["verde bronce", "blanco puro", "rojo fiesta", "verde esmeralda"]:
+        if compound_color in description_value:
+            return compound_color
+    for candidate_color in ["blanco", "negro", "gris", "rojo", "verde", "azul", "amarillo", "naranja", "marfil", "crema", "bronce", "transparente"]:
+        if re.search(rf"\b{re.escape(candidate_color)}\b", description_value):
+            return candidate_color
+    return None
+
+
+def infer_product_finish_from_row(product_row: dict):
+    finish_value = normalize_nullable_phrase(product_row.get("acabado_detectado"))
+    if finish_value:
+        return finish_value
+    description_value = normalize_text_value(product_row.get("descripcion") or product_row.get("nombre_articulo"))
+    for candidate_finish in ["mate", "brillante", "satinado", "semibrillante", "semimate", "texturizado"]:
+        if re.search(rf"\b{re.escape(candidate_finish)}\b", description_value):
+            return candidate_finish
+    return None
+
+
+def row_matches_requested_colors(product_row: dict, requested_colors: list[str]):
+    if not requested_colors:
+        return False
+
+    inferred_color = infer_product_color_from_row(product_row)
+    description_value = normalize_text_value(product_row.get("descripcion") or product_row.get("nombre_articulo"))
+    description_tokens = tokenize_search_phrase(description_value)
+    for color_value in requested_colors:
+        normalized_color = normalize_text_value(color_value)
+        if not normalized_color:
+            continue
+        if inferred_color == normalized_color or normalized_color in description_value:
+            return True
+        color_tokens = tokenize_search_phrase(normalized_color)
+        if color_tokens and all(
+            any(
+                desc_token.startswith(color_token[:4]) or color_token.startswith(desc_token[:4])
+                for desc_token in description_tokens
+            )
+            for color_token in color_tokens
+        ):
+            return True
+    return False
 
 
 def infer_product_brand_from_row(product_row: dict):
@@ -1368,9 +2522,13 @@ def should_ask_product_clarification(product_request: Optional[dict], product_co
     presentation_values = {infer_product_presentation_from_row(row) for row in top_candidates}
     brand_values = {infer_product_brand_from_row(row) for row in top_candidates}
     direction_values = {infer_product_direction_from_row(row) for row in top_candidates}
+    color_values = {infer_product_color_from_row(row) for row in top_candidates}
+    finish_values = {infer_product_finish_from_row(row) for row in top_candidates}
     presentation_values.discard(None)
     brand_values.discard(None)
     direction_values.discard(None)
+    color_values.discard(None)
+    finish_values.discard(None)
 
     if not product_request.get("requested_unit") and len(presentation_values) >= 2:
         return True
@@ -1378,7 +2536,40 @@ def should_ask_product_clarification(product_request: Optional[dict], product_co
         return True
     if not (product_request.get("direction_filters") or []) and len(direction_values) >= 2:
         return True
+    if not (product_request.get("color_filters") or []) and len(color_values) >= 2:
+        return True
+    if not (product_request.get("finish_filters") or []) and len(finish_values) >= 2:
+        return True
     return False
+
+
+def build_best_product_clarification_question(product_request: Optional[dict], product_context: list[dict]):
+    top_candidates = product_context[:4]
+    for row in top_candidates:
+        question = (row.get("pregunta_desambiguacion") or "").strip()
+        if question:
+            return question
+
+    presentation_values = {infer_product_presentation_from_row(row) for row in top_candidates}
+    brand_values = {infer_product_brand_from_row(row) for row in top_candidates}
+    color_values = {infer_product_color_from_row(row) for row in top_candidates}
+    finish_values = {infer_product_finish_from_row(row) for row in top_candidates}
+    presentation_values.discard(None)
+    brand_values.discard(None)
+    color_values.discard(None)
+    finish_values.discard(None)
+
+    if not (product_request or {}).get("requested_unit") and len(presentation_values) >= 2:
+        return "¿Lo necesitas en cuarto, galón o cuñete?"
+    if not (product_request or {}).get("brand_filters") and len(brand_values) >= 2:
+        brand_options = ", ".join(sorted(str(value).title() for value in brand_values))
+        return f"Tengo opciones de {brand_options}. ¿Cuál marca buscas?"
+    if not (product_request or {}).get("finish_filters") and len(finish_values) >= 2:
+        finish_options = " y ".join(sorted(str(value) for value in finish_values))
+        return f"Tengo esa línea en acabado {finish_options}. ¿Cuál necesitas?"
+    if not (product_request or {}).get("color_filters") and len(color_values) >= 2:
+        return "Tengo varias opciones de color en esa línea. ¿Cuál color necesitas exactamente?"
+    return "Tengo varias opciones cercanas. ¿Cuál necesitas exactamente?"
 
 
 def filter_rows_by_requested_presentation(product_rows: list[dict], product_request: Optional[dict]):
@@ -2926,7 +4117,7 @@ def describe_commercial_item_need(item: dict):
 
 
 def build_commercial_item_result(raw_line: str, inherited_store_filters: list[str], mode: str):
-    product_request = merge_store_filters(extract_product_request(raw_line), inherited_store_filters)
+    product_request = merge_store_filters(prepare_product_request_for_search(raw_line), inherited_store_filters)
     product_rows = lookup_product_context(raw_line, product_request)
     requested_store_codes = product_request.get("store_filters") or []
     requested_store_label = STORE_CODE_LABELS.get(requested_store_codes[0]) if len(requested_store_codes) == 1 else None
@@ -4862,10 +6053,9 @@ def build_direct_reply(
                 "intent": intent,
                 "priority": "media",
                 "summary": "Consulta de productos con necesidad de aclaracion",
-                "response_text": (
-                    "Tengo varias opciones cercanas, dime cuál es:\n"
-                    + "\n".join(clarification_lines)
-                ),
+                "response_text": build_best_product_clarification_question(product_request, product_context)
+                + "\n"
+                + "\n".join(clarification_lines),
                 "should_create_task": False,
                 "task_type": "seguimiento_cliente",
                 "task_summary": "Aclaracion de producto",
@@ -5132,8 +6322,230 @@ def fetch_term_product_rows(connection, query_terms: list[str], store_filters: l
     return fetch_products_from_catalog(connection, where_clause, params, match_score_sql, limit=25)
 
 
+def build_curated_catalog_search_terms(text_value: Optional[str], product_request: Optional[dict]):
+    request = product_request or {}
+    search_terms = []
+
+    def add_term(value: Optional[str]):
+        normalized = normalize_text_value(value)
+        if normalized and normalized not in search_terms:
+            search_terms.append(normalized)
+
+    add_term(request.get("canonical_product"))
+    for term in get_specific_product_terms(request):
+        add_term(term)
+    for term in request.get("brand_filters") or []:
+        add_term(term)
+    for term in request.get("color_filters") or []:
+        add_term(term)
+    for term in request.get("finish_filters") or []:
+        add_term(term)
+    for code in request.get("product_codes") or []:
+        add_term(code)
+    if not search_terms:
+        for term in request.get("core_terms") or []:
+            add_term(term)
+    add_term(text_value)
+    return search_terms[:8]
+
+
+def fetch_curated_catalog_product_rows(connection, text_value: Optional[str], product_request: Optional[dict], limit: int = 12):
+    request = product_request or {}
+    search_terms = build_curated_catalog_search_terms(text_value, request)
+    if not search_terms:
+        return []
+
+    params = {}
+    search_filters = []
+    score_terms = []
+    for index, term in enumerate(search_terms):
+        params[f"catalog_term_{index}"] = f"%{term}%"
+        search_filters.append(
+            "(" 
+            f"p.search_blob ILIKE :catalog_term_{index} OR "
+            f"a.alias_normalizado ILIKE :catalog_term_{index} OR "
+            f"public.fn_normalize_text(COALESCE(a.producto_padre_busqueda, '')) ILIKE :catalog_term_{index} OR "
+            f"public.fn_normalize_text(COALESCE(a.familia_consulta, '')) ILIKE :catalog_term_{index} OR "
+            f"public.fn_normalize_text(COALESCE(p.producto_padre_busqueda_sugerido, '')) ILIKE :catalog_term_{index} OR "
+            f"public.fn_normalize_text(COALESCE(p.familia_consulta_sugerida, '')) ILIKE :catalog_term_{index})"
+        )
+        score_terms.append(
+            f"MAX(CASE WHEN p.search_blob ILIKE :catalog_term_{index} OR a.alias_normalizado ILIKE :catalog_term_{index} THEN 1 ELSE 0 END)"
+        )
+
+    base_exact = normalize_text_value(
+        request.get("canonical_product")
+        or " ".join(get_specific_product_terms(request)[:4])
+        or " ".join((request.get("core_terms") or [])[:2])
+    )
+    color_exact = normalize_text_value(" ".join(request.get("color_filters") or []))
+    finish_exact = normalize_text_value(" ".join(request.get("finish_filters") or []))
+    params.update(
+        {
+            "base_exact": base_exact,
+            "color_exact": color_exact,
+            "color_like": f"%{color_exact}%" if color_exact else "",
+            "finish_exact": finish_exact,
+            "finish_like": f"%{finish_exact}%" if finish_exact else "",
+            "presentation_exact": normalize_text_value(request.get("requested_unit")),
+        }
+    )
+    where_clause = " OR ".join(search_filters)
+    brand_filters = request.get("brand_filters") or []
+    if brand_filters:
+        brand_clauses = []
+        for index, brand_name in enumerate(brand_filters[:4]):
+            params[f"brand_term_{index}"] = f"%{normalize_text_value(brand_name)}%"
+            brand_clauses.append(
+                f"p.search_blob ILIKE :brand_term_{index} OR "
+                f"public.fn_normalize_text(COALESCE(p.marca, '')) ILIKE :brand_term_{index} OR "
+                f"public.fn_normalize_text(COALESCE(p.producto_padre_busqueda_sugerido, '')) ILIKE :brand_term_{index} OR "
+                f"public.fn_normalize_text(COALESCE(p.familia_consulta_sugerida, '')) ILIKE :brand_term_{index}"
+            )
+        where_clause = f"({where_clause}) AND ({' OR '.join(brand_clauses)})"
+    requested_colors = request.get("color_filters") or []
+    if requested_colors:
+        color_groups = []
+        for color_index, color_value in enumerate(requested_colors[:3]):
+            token_clauses = []
+            for token_index, token in enumerate(tokenize_search_phrase(color_value) or [color_value]):
+                token_prefix = normalize_text_value(token)[:4]
+                if not token_prefix:
+                    continue
+                param_name = f"color_term_{color_index}_{token_index}"
+                params[param_name] = f"%{token_prefix}%"
+                token_clauses.append(
+                    f"p.search_blob ILIKE :{param_name} OR "
+                    f"public.fn_normalize_text(COALESCE(p.color_detectado, '')) ILIKE :{param_name} OR "
+                    f"public.fn_normalize_text(COALESCE(p.color_raiz, '')) ILIKE :{param_name}"
+                )
+            if token_clauses:
+                color_groups.append("(" + " AND ".join(token_clauses) + ")")
+        if color_groups:
+            where_clause = f"({where_clause}) AND ({' OR '.join(color_groups)})"
+    score_clause = " + ".join(score_terms) if score_terms else "0"
+
+    return connection.execute(
+        text(
+            f"""
+            SELECT
+                p.producto_codigo,
+                p.referencia,
+                COALESCE(p.descripcion_inventario, p.descripcion_base) AS descripcion,
+                p.marca,
+                p.departamentos,
+                p.stock_total,
+                p.stock_por_tienda,
+                p.costo_promedio_und,
+                p.ventas_unidades_total,
+                p.ventas_valor_total,
+                p.ultima_venta,
+                p.presentacion_canonica,
+                p.color_detectado,
+                p.color_raiz,
+                p.acabado_detectado,
+                COALESCE(MAX(NULLIF(a.familia_consulta, '')), p.familia_consulta_sugerida) AS familia_consulta,
+                COALESCE(MAX(NULLIF(a.producto_padre_busqueda, '')), p.producto_padre_busqueda_sugerido) AS producto_padre_busqueda,
+                MAX(a.pregunta_desambiguacion) AS pregunta_desambiguacion,
+                MAX(a.terminos_excluir) AS terminos_excluir,
+                ({score_clause}) AS match_score,
+                CASE
+                    WHEN :base_exact <> '' AND (
+                        public.fn_normalize_text(COALESCE(p.producto_padre_busqueda_sugerido, '')) = :base_exact
+                        OR MAX(CASE WHEN public.fn_normalize_text(COALESCE(a.producto_padre_busqueda, '')) = :base_exact THEN 1 ELSE 0 END) = 1
+                        OR MAX(CASE WHEN a.alias_normalizado = :base_exact THEN 1 ELSE 0 END) = 1
+                    ) THEN 2 ELSE 0
+                END AS base_exact_score,
+                CASE
+                    WHEN :presentation_exact <> '' AND public.fn_normalize_text(COALESCE(p.presentacion_canonica, '')) = :presentation_exact THEN 1 ELSE 0
+                END AS presentation_score,
+                CASE
+                    WHEN :color_exact <> '' AND (
+                        public.fn_normalize_text(COALESCE(p.color_detectado, '')) = :color_exact
+                        OR public.fn_normalize_text(COALESCE(p.color_raiz, '')) = :color_exact
+                        OR MAX(CASE WHEN a.alias_type = 'color' AND a.alias_normalizado = :color_exact THEN 1 ELSE 0 END) = 1
+                        OR MAX(CASE WHEN p.search_blob ILIKE :color_like THEN 1 ELSE 0 END) = 1
+                    ) THEN 1 ELSE 0
+                END AS color_score,
+                CASE
+                    WHEN :finish_exact <> '' AND (
+                        public.fn_normalize_text(COALESCE(p.acabado_detectado, '')) = :finish_exact
+                        OR MAX(CASE WHEN p.search_blob ILIKE :finish_like THEN 1 ELSE 0 END) = 1
+                    ) THEN 1 ELSE 0
+                END AS finish_score,
+                CASE WHEN COALESCE(p.stock_total, 0) > 0 THEN 1 ELSE 0 END AS stock_score
+            FROM public.vw_agent_catalog_product_search p
+            LEFT JOIN public.vw_agent_catalog_alias_active a
+                ON a.producto_codigo = p.producto_codigo
+            WHERE {where_clause}
+            GROUP BY
+                p.producto_codigo,
+                p.referencia,
+                COALESCE(p.descripcion_inventario, p.descripcion_base),
+                p.marca,
+                p.departamentos,
+                p.stock_total,
+                p.stock_por_tienda,
+                p.costo_promedio_und,
+                p.ventas_unidades_total,
+                p.ventas_valor_total,
+                p.ultima_venta,
+                p.presentacion_canonica,
+                p.color_detectado,
+                p.color_raiz,
+                p.acabado_detectado,
+                p.familia_consulta_sugerida,
+                p.producto_padre_busqueda_sugerido
+            ORDER BY
+                base_exact_score DESC,
+                presentation_score DESC,
+                color_score DESC,
+                finish_score DESC,
+                stock_score DESC,
+                COALESCE(p.ventas_unidades_total, 0) DESC,
+                COALESCE(p.ultima_venta, DATE '1900-01-01') DESC,
+                COALESCE(p.stock_total, 0) DESC,
+                match_score DESC,
+                descripcion ASC NULLS LAST
+            LIMIT {int(limit)}
+            """
+        ),
+        params,
+    ).mappings().all()
+
+
+def hydrate_curated_rows_with_store_inventory(connection, curated_rows: list[dict], store_filters: list[str]):
+    if not curated_rows or not store_filters:
+        return curated_rows
+
+    reference_values = [str(row.get("referencia")) for row in curated_rows if row.get("referencia")]
+    if not reference_values:
+        return curated_rows
+
+    inventory_rows = fetch_reference_product_rows(connection, reference_values, store_filters, 100)
+    if not inventory_rows:
+        return curated_rows
+
+    inventory_map = {
+        normalize_reference_value(row.get("referencia") or row.get("codigo_articulo")): dict(row)
+        for row in inventory_rows
+    }
+    hydrated_rows = []
+    for curated_row in curated_rows:
+        reference_key = normalize_reference_value(curated_row.get("referencia") or curated_row.get("producto_codigo"))
+        inventory_row = inventory_map.get(reference_key)
+        if not inventory_row:
+            continue
+        merged_row = dict(inventory_row)
+        for key, value in curated_row.items():
+            if value is not None or key not in merged_row:
+                merged_row[key] = value
+        hydrated_rows.append(merged_row)
+    return hydrated_rows or curated_rows
+
+
 def lookup_product_context(text_value: Optional[str], product_request: Optional[dict] = None):
-    product_request = product_request or extract_product_request(text_value)
+    product_request = prepare_product_request_for_search(text_value, product_request)
     core_terms = product_request.get("core_terms") or []
     terms = product_request.get("search_terms") or []
     product_codes = product_request.get("product_codes") or []
@@ -5161,6 +6573,47 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             if not terms:
                 return []
 
+            curated_rows = fetch_curated_catalog_product_rows(connection, text_value, product_request)
+            if curated_rows:
+                ranked_curated_rows = hydrate_curated_rows_with_store_inventory(
+                    connection,
+                    [dict(row) for row in curated_rows],
+                    store_filters,
+                )
+                ranked_curated_rows = filter_rows_by_requested_presentation(ranked_curated_rows, product_request)
+                ranked_curated_rows = filter_rows_by_requested_size(ranked_curated_rows, product_request)
+
+                requested_colors = product_request.get("color_filters") or []
+                if requested_colors:
+                    exact_color_rows = [
+                        row for row in ranked_curated_rows
+                        if row_matches_requested_colors(row, requested_colors)
+                    ]
+                    if exact_color_rows:
+                        ranked_curated_rows = exact_color_rows
+
+                requested_finishes = product_request.get("finish_filters") or []
+                if requested_finishes:
+                    exact_finish_rows = [
+                        row for row in ranked_curated_rows
+                        if infer_product_finish_from_row(row) in requested_finishes
+                    ]
+                    if exact_finish_rows:
+                        ranked_curated_rows = exact_finish_rows
+
+                if brand_filters:
+                    exact_brand_rows = [
+                        row for row in ranked_curated_rows
+                        if infer_product_brand_from_row(row) in brand_filters
+                    ]
+                    if exact_brand_rows:
+                        ranked_curated_rows = exact_brand_rows
+
+                if any((parse_numeric_value(item.get("stock_total")) or 0) > 0 for item in ranked_curated_rows):
+                    ranked_curated_rows = [item for item in ranked_curated_rows if (parse_numeric_value(item.get("stock_total")) or 0) > 0]
+                if ranked_curated_rows:
+                    return ranked_curated_rows[:5]
+
             query_terms = []
             for term in list(core_terms) + list(terms):
                 if term not in query_terms:
@@ -5186,6 +6639,8 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     candidate_brand = infer_product_brand_from_row(candidate)
                     candidate_size = infer_product_size_from_row(candidate)
                     candidate_direction = infer_product_direction_from_row(candidate)
+                    candidate_color = infer_product_color_from_row(candidate)
+                    candidate_finish = infer_product_finish_from_row(candidate)
                     candidate["fuzzy_score"] = round(sequence_similarity(normalized_query, candidate_text), 4)
                     candidate["family_score"] = 1 if any(term and term in normalized_candidate_text for term in preferred_family_terms[:5]) else 0
                     candidate["specific_score"] = sum(1 for term in specific_terms if term and term in normalized_candidate_text)
@@ -5193,12 +6648,16 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     candidate["brand_score"] = 1 if brand_filters and candidate_brand in brand_filters else 0
                     candidate["size_score"] = 1 if (product_request.get("size_filters") or []) and candidate_size in (product_request.get("size_filters") or []) else 0
                     candidate["direction_score"] = 1 if (product_request.get("direction_filters") or []) and candidate_direction in (product_request.get("direction_filters") or []) else 0
+                    candidate["color_score"] = 1 if (product_request.get("color_filters") or []) and candidate_color in (product_request.get("color_filters") or []) else 0
+                    candidate["finish_score"] = 1 if (product_request.get("finish_filters") or []) and candidate_finish in (product_request.get("finish_filters") or []) else 0
                     ranked_rows.append(candidate)
                 ranked_rows.sort(
                     key=lambda item: (
                         item.get("direction_score") or 0,
                         item.get("size_score") or 0,
                         item.get("presentation_score") or 0,
+                        item.get("finish_score") or 0,
+                        item.get("color_score") or 0,
                         item.get("brand_score") or 0,
                         item.get("specific_score") or 0,
                         item.get("family_score") or 0,
@@ -5227,6 +6686,27 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     ]
                     if exact_presentation_rows:
                         ranked_rows = exact_presentation_rows
+                if product_request.get("color_filters"):
+                    exact_color_rows = [
+                        item for item in ranked_rows
+                        if row_matches_requested_colors(item, product_request.get("color_filters") or [])
+                    ]
+                    if exact_color_rows:
+                        ranked_rows = exact_color_rows
+                if product_request.get("finish_filters"):
+                    exact_finish_rows = [
+                        item for item in ranked_rows
+                        if infer_product_finish_from_row(item) in (product_request.get("finish_filters") or [])
+                    ]
+                    if exact_finish_rows:
+                        ranked_rows = exact_finish_rows
+                if brand_filters:
+                    exact_brand_rows = [
+                        item for item in ranked_rows
+                        if infer_product_brand_from_row(item) in brand_filters
+                    ]
+                    if exact_brand_rows:
+                        ranked_rows = exact_brand_rows
                 ranked_rows = filter_rows_by_requested_size(ranked_rows, product_request)
                 if any((parse_numeric_value(item.get("stock_total")) or 0) > 0 for item in ranked_rows):
                     ranked_rows = [item for item in ranked_rows if (parse_numeric_value(item.get("stock_total")) or 0) > 0]
@@ -5547,6 +7027,10 @@ SECRETO COMERCIAL DE STOCK: ESTRICTAMENTE PROHIBIDO decirle al cliente la cantid
 
 DESAMBIGUACIÓN DE PRODUCTOS: Si el cliente pide algo muy genérico (ej. 'Pintura blanca') y la herramienta de inventario te devuelve varias opciones de marcas o líneas diferentes, oblígalo a ser específico. Pregunta: '¿Buscas pintura para interior o exterior? ¿En qué marca y presentación (galón o cuñete)?'. Cuando el cliente aclare, el sistema aprenderá automáticamente su preferencia para la próxima vez.
 
+ORDEN COMERCIAL IMPUESTO POR BACKEND: cuando `consultar_inventario` devuelva productos, ya vienen ordenados por PostgreSQL según coincidencia, familia comercial, stock y rotación. No los reordenes por intuición ni subas una opción peor por sonar más general.
+
+COMPUERTA DE AMBIGÜEDAD OBLIGATORIA: si `consultar_inventario` devuelve `requiere_aclaracion=true`, usa la `pregunta_desambiguacion` como base de tu respuesta y pide esa aclaración antes de avanzar. No cierres el pedido ni des un producto por confirmado mientras la compuerta siga abierta.
+
 PROHIBIDO RENDIRSE (VENDEDOR PERSISTENTE): Si la herramienta `consultar_inventario` devuelve vacío para un código corto (ej. P-53, T-40, 17174, 13755), NUNCA digas 'no lo encontré' ni 'no tenemos ese producto'. En su lugar, haz una pregunta de diagnóstico comercial: 'Ese código no lo tengo mapeado todavía, ¿me ayudas diciéndome qué producto es? ¿Es un color específico de Viniltex, una referencia de cerradura o un abrasivo?'. Tu objetivo es que el cliente te dé una pista (ej. 'es el verde esmeralda'). Con esa pista, vuelve a buscar usando el nombre comercial.
 
 CUADERNO DE APRENDIZAJE: Cuando el cliente te aclare qué significa un código corto o referencia interna (ej. el cliente dice 'el P-53 es el Verde Esmeralda de Viniltex'), EJECUTA inmediatamente la herramienta `guardar_aprendizaje_producto` con el código del cliente y la descripción real antes de buscar el inventario. Así la próxima vez que CUALQUIER cliente diga 'P-53', el sistema ya sabrá qué es sin preguntar. No le menciones al cliente que 'estás guardando en memoria', simplemente hazlo silenciosamente y continúa atendiendo.
@@ -5574,6 +7058,8 @@ DESCARTAR BASURA DEL JSON (FILTRO DE PRESENTACIONES): Si el cliente pidió un 'c
 FILTRO FRACCIONARIO OBLIGATORIO: Si el cliente pide una presentación específica usando fracciones (ej. '/4' = cuarto, '/1' = galón, '/5' = cuñete) y la herramienta te devuelve múltiples tamaños del mismo producto, TIENES ESTRICTAMENTE PROHIBIDO mostrarle al cliente los tamaños que no pidió. Filtra mentalmente el JSON. Si pidió cuartos, confírmale SOLO los cuartos. Muestra otros tamaños SOLO si el solicitado está agotado.
 
 PROCESAMIENTO LÍNEA POR LÍNEA (BULK ORDERS): Si el cliente te envía una lista de varios productos (ej. 5 líneas), debes confirmar exactamente esos productos con las cantidades y presentaciones solicitadas. NO agregues productos adicionales que la base de datos haya devuelto por coincidencia difusa, ni omitas los que el cliente pidió. Cada línea del pedido se procesa independientemente.
+
+CANDADO DE CHECKOUT: Tienes ESTRICTAMENTE PROHIBIDO agregar un producto al resumen final del pedido si no lo has buscado antes con `consultar_inventario` y no tienes su [REFERENCIA] exacta. Si el cliente pide algo que no encuentras (ej. 'pintura para canchas'), no lo anotes en el pedido. Dile que no lo encuentras y pídele la referencia. NUNCA digas 'no puedo verificar el inventario directamente'.
 
 PEDIDOS Y COTIZACIONES:
 - Cuando el cliente pide productos, usa consultar_inventario para CADA producto mencionado.
@@ -5746,9 +7232,9 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "confirmar_pedido_y_generar_pdf",
-            "description": "Genera el PDF del pedido y lo envía al cliente. "
-            "Úsala ÚNICAMENTE cuando el cliente ya revisó el resumen del pedido, confirmó que todo está bien "
-            "y proporcionó el nombre para el despacho. Pregúntale si quiere el soporte por WhatsApp o correo antes de llamarla.",
+            "description": "Úsala SOLO cuando el cliente apruebe el resumen final. "
+            "DEBES pasarle el array exacto de productos. "
+            "ESTRICTAMENTE PROHIBIDO incluir en el array un producto que no tenga una [REFERENCIA] confirmada previamente por la herramienta de inventario.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -5764,9 +7250,31 @@ AGENT_TOOLS = [
                     "correo_cliente": {
                         "type": "string",
                         "description": "Correo electrónico del cliente. Requerido solo si canal_envio es 'email'.",
+                    },
+                    "items_pedido": {
+                        "type": "array",
+                        "description": "Array con TODOS los productos del pedido. Cada producto DEBE tener la referencia exacta obtenida de consultar_inventario.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "referencia": {
+                                    "type": "string",
+                                    "description": "Código de referencia EXACTO devuelto por la herramienta de inventario. PROHIBIDO inventar o aproximar.",
+                                },
+                                "descripcion_comercial": {
+                                    "type": "string",
+                                    "description": "Nombre comercial del producto tal como se lo confirmaste al cliente.",
+                                },
+                                "cantidad": {
+                                    "type": "number",
+                                    "description": "Cantidad solicitada por el cliente.",
+                                }
+                            },
+                            "required": ["referencia", "descripcion_comercial", "cantidad"],
+                        },
                     }
                 },
-                "required": ["nombre_despacho", "canal_envio"],
+                "required": ["nombre_despacho", "canal_envio", "items_pedido"],
             },
         },
     },
@@ -5799,11 +7307,17 @@ AGENT_TOOLS = [
 
 def _handle_tool_consultar_inventario(args, conversation_context):
     producto = args.get("producto", "")
-    product_request = extract_product_request(producto)
+    product_request = prepare_product_request_for_search(producto)
     rows = lookup_product_context(producto, product_request)
     if not rows:
         return json.dumps(
-            {"encontrados": 0, "mensaje": "No se encontraron productos con esa descripción."},
+            {
+                "encontrados": 0,
+                "mensaje": "No se encontraron productos con esa descripción.",
+                "nlu_extraccion": product_request.get("nlu_extraction") or {},
+                "estrategia_ranking": "catalogo_curado_postgresql",
+                "requiere_aclaracion": False,
+            },
             ensure_ascii=False,
         )
     results = []
@@ -5813,6 +7327,9 @@ def _handle_tool_consultar_inventario(args, conversation_context):
             "descripcion": row.get("descripcion") or row.get("nombre_articulo"),
             "marca": row.get("marca") or row.get("marca_producto"),
             "presentacion": infer_product_presentation_from_row(row),
+            "familia_consulta": row.get("familia_consulta"),
+            "producto_padre_busqueda": row.get("producto_padre_busqueda"),
+            "pregunta_desambiguacion": row.get("pregunta_desambiguacion"),
         }
         stock = parse_numeric_value(row.get("stock_total"))
         if stock is not None:
@@ -5824,7 +7341,20 @@ def _handle_tool_consultar_inventario(args, conversation_context):
         if precio is not None:
             item["precio"] = precio
         results.append(item)
-    return json.dumps({"encontrados": len(results), "productos": results}, ensure_ascii=False, default=str)
+    clarification_required = should_ask_product_clarification(product_request, rows)
+    clarification_question = build_best_product_clarification_question(product_request, rows) if clarification_required else None
+    return json.dumps(
+        {
+            "encontrados": len(results),
+            "productos": results,
+            "nlu_extraccion": product_request.get("nlu_extraction") or {},
+            "estrategia_ranking": "catalogo_curado_postgresql",
+            "requiere_aclaracion": clarification_required,
+            "pregunta_desambiguacion": clarification_question,
+        },
+        ensure_ascii=False,
+        default=str,
+    )
 
 
 def _handle_tool_verificar_identidad(args, context, conversation_context):
@@ -6190,9 +7720,48 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     nombre_despacho = args.get("nombre_despacho", "")
     canal_envio = args.get("canal_envio", "whatsapp")
     correo_cliente = args.get("correo_cliente", "")
+    items_pedido = args.get("items_pedido") or []
 
-    commercial_draft = conversation_context.get("commercial_draft")
-    if not commercial_draft or not commercial_draft.get("items"):
+    # --- Validación: el LLM DEBE mandar items_pedido con referencias válidas ---
+    if not items_pedido:
+        return json.dumps(
+            {"exito": False, "mensaje": "No enviaste el array de productos (items_pedido). Vuelve a llamar la herramienta incluyendo los productos."},
+            ensure_ascii=False,
+        )
+
+    productos_sin_ref = [
+        it.get("descripcion_comercial", "Producto desconocido")
+        for it in items_pedido
+        if not (it.get("referencia") or "").strip()
+    ]
+    if productos_sin_ref:
+        nombres = ", ".join(productos_sin_ref)
+        return json.dumps(
+            {"exito": False, "mensaje": f"Error: No puedes facturar productos sin código. Los siguientes no tienen referencia: {nombres}. Pide al cliente que aclare el producto."},
+            ensure_ascii=False,
+        )
+
+    # Construir el commercial_draft a partir de lo que manda el LLM
+    commercial_draft = conversation_context.get("commercial_draft") or {}
+    commercial_draft["items"] = [
+        {
+            "status": "matched",
+            "original_text": it.get("descripcion_comercial", ""),
+            "matched_product": {
+                "referencia": it["referencia"],
+                "descripcion": it.get("descripcion_comercial", ""),
+                "codigo_articulo": it["referencia"],
+            },
+            "product_request": {
+                "requested_quantity": it.get("cantidad"),
+                "requested_unit": "unidad",
+            },
+        }
+        for it in items_pedido
+    ]
+    conversation_context["commercial_draft"] = commercial_draft
+
+    if not commercial_draft.get("items"):
         return json.dumps(
             {"exito": False, "mensaje": "No hay un pedido activo con productos para confirmar."},
             ensure_ascii=False,
@@ -6491,6 +8060,148 @@ def generate_agent_reply_v2(
     }
 
 
+def get_internal_bootstrap_token():
+    return os.getenv("INTERNAL_AUTH_BOOTSTRAP_TOKEN")
+
+
+@app.post("/agent/auth/bootstrap-user")
+def bootstrap_internal_user(
+    payload: InternalBootstrapUserRequest,
+    x_bootstrap_token: Optional[str] = Header(default=None),
+):
+    configured_token = get_internal_bootstrap_token()
+    if not configured_token:
+        raise HTTPException(status_code=503, detail="No se configuró INTERNAL_AUTH_BOOTSTRAP_TOKEN en el backend.")
+    if x_bootstrap_token != configured_token:
+        raise HTTPException(status_code=403, detail="Bootstrap token inválido.")
+    user_payload = upsert_internal_user(payload)
+    return {
+        "status": "ok",
+        "user": {
+            "id": user_payload.get("id"),
+            "username": user_payload.get("username"),
+            "full_name": user_payload.get("full_name"),
+            "role": user_payload.get("role"),
+            "phone_e164": user_payload.get("phone_e164"),
+            "email": user_payload.get("email"),
+            "scopes": user_payload.get("scopes") or [],
+        },
+    }
+
+
+@app.post("/agent/auth/login-internal")
+def login_internal_agent(payload: InternalLoginRequest):
+    user_payload = authenticate_internal_user(payload.username, payload.password)
+    if not user_payload:
+        raise HTTPException(status_code=401, detail="Usuario o contraseña interna inválidos.")
+    session_payload = create_internal_session(user_payload, channel="api")
+    return {
+        "status": "ok",
+        "access_token": session_payload["token"],
+        "token_type": "bearer",
+        "expires_at": session_payload["expires_at"],
+        "user": {
+            "id": user_payload.get("id"),
+            "username": user_payload.get("username"),
+            "full_name": user_payload.get("full_name"),
+            "role": user_payload.get("role"),
+            "phone_e164": user_payload.get("phone_e164"),
+            "email": user_payload.get("email"),
+            "scopes": user_payload.get("scopes") or [],
+        },
+    }
+
+
+@app.post("/agent/auth/logout")
+def logout_internal_agent(authorization: Optional[str] = Header(default=None)):
+    token = extract_bearer_token(authorization)
+    if token:
+        revoke_internal_session(token)
+    return {"status": "ok"}
+
+
+@app.get("/agent/auth/me")
+def get_internal_agent_me(authorization: Optional[str] = Header(default=None)):
+    internal_user = require_internal_user(authorization)
+    return {
+        "id": internal_user.get("id"),
+        "username": internal_user.get("username"),
+        "full_name": internal_user.get("full_name"),
+        "role": internal_user.get("role"),
+        "email": internal_user.get("email"),
+        "phone_e164": internal_user.get("phone_e164"),
+        "session_expires_at": internal_user.get("session_expires_at"),
+        "scopes": internal_user.get("scopes") or [],
+    }
+
+
+@app.get("/agent/internal/clientes/buscar")
+def search_internal_customers(q: str, authorization: Optional[str] = Header(default=None)):
+    internal_user = require_internal_user(authorization)
+    customer_rows = search_customer_lookup_rows(q, limit=10)
+    visible_rows = [row for row in customer_rows if internal_user_can_access_customer(internal_user, row)]
+    return {"items": visible_rows}
+
+
+@app.get("/agent/internal/clientes/{cliente_codigo}/contexto")
+def get_internal_customer_context(cliente_codigo: str, authorization: Optional[str] = Header(default=None)):
+    internal_user = require_internal_user(authorization)
+    customer_row = fetch_customer_lookup_row(cliente_codigo)
+    if not customer_row:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado.")
+    if not internal_user_can_access_customer(internal_user, customer_row):
+        raise HTTPException(status_code=403, detail="No tienes permisos para consultar ese cliente.")
+    contexto = get_cliente_contexto(cliente_codigo)
+    return {"lookup": customer_row, "contexto": contexto}
+
+
+@app.get("/agent/internal/clientes/{cliente_codigo}/cartera")
+def get_internal_customer_portfolio(cliente_codigo: str, authorization: Optional[str] = Header(default=None)):
+    internal_user = require_internal_user(authorization)
+    customer_row = fetch_customer_lookup_row(cliente_codigo)
+    if not customer_row:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado.")
+    if not internal_user_can_access_customer(internal_user, customer_row):
+        raise HTTPException(status_code=403, detail="No tienes permisos para consultar ese cliente.")
+    contexto = get_cliente_contexto(cliente_codigo)
+    overdue_info = fetch_overdue_documents(cliente_codigo)
+    return {
+        "lookup": customer_row,
+        "contexto": contexto,
+        "vencidos": overdue_info,
+    }
+
+
+@app.get("/agent/internal/clientes/{cliente_codigo}/compras")
+def get_internal_customer_purchases(cliente_codigo: str, authorization: Optional[str] = Header(default=None)):
+    internal_user = require_internal_user(authorization)
+    customer_row = fetch_customer_lookup_row(cliente_codigo)
+    if not customer_row:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado.")
+    if not internal_user_can_access_customer(internal_user, customer_row):
+        raise HTTPException(status_code=403, detail="No tienes permisos para consultar ese cliente.")
+    latest_purchase = fetch_latest_purchase_detail(cliente_codigo)
+    purchase_summary = fetch_purchase_summary(cliente_codigo)
+    return {
+        "lookup": customer_row,
+        "ultima_compra": latest_purchase,
+        "resumen": purchase_summary,
+    }
+
+
+@app.get("/agent/internal/productos/buscar")
+def search_internal_products(q: str, store: Optional[str] = None, authorization: Optional[str] = Header(default=None)):
+    require_internal_user(authorization)
+    product_request = prepare_product_request_for_search(q)
+    rows = lookup_product_context(q, product_request)
+    response_rows = []
+    for row in rows[:10]:
+        if store and normalize_text_value(store) not in normalize_text_value(row.get("stock_by_store") or row.get("stock_por_tienda") or ""):
+            continue
+        response_rows.append(row)
+    return {"items": response_rows, "nlu_extraccion": product_request.get("nlu_extraction") or {}}
+
+
 @app.get("/")
 def read_root():
     return {
@@ -6500,6 +8211,9 @@ def read_root():
         "endpoints": [
             "/health",
             "/agent/clientes/{cliente_codigo}/contexto",
+            "/agent/auth/login-internal",
+            "/agent/auth/me",
+            "/agent/internal/clientes/buscar",
             "/webhooks/whatsapp",
         ],
     }
@@ -6635,11 +8349,17 @@ async def receive_whatsapp_webhook(request: Request):
                 elif message_type == "interactive":
                     content = __import__("json").dumps(message.get("interactive", {}), ensure_ascii=False)
 
+                stored_content = content
+                if content:
+                    login_match = INTERNAL_LOGIN_PATTERN.match(content)
+                    if login_match:
+                        stored_content = f"login {login_match.group(1)} ******"
+
                 store_inbound_message(
                     context["conversation_id"],
                     message.get("id"),
                     message_type,
-                    content,
+                    stored_content,
                     message,
                 )
 
@@ -6675,6 +8395,8 @@ async def receive_whatsapp_webhook(request: Request):
                                 "pending_product_clarification": None,
                                 "pending_document_options": None,
                                 "last_product_request": None,
+                                "internal_auth": None,
+                                "internal_last_cliente_codigo": None,
                             },
                             summary="Contexto reiniciado por inactividad (3h+)",
                         )
@@ -6702,13 +8424,15 @@ async def receive_whatsapp_webhook(request: Request):
                 outbound_payload = None
                 if content and message_type in {"text", "button", "interactive"}:
                     try:
-                        ai_result = generate_agent_reply_v2(
-                            context.get("nombre_visible"),
-                            conversation_context,
-                            recent_messages,
-                            content,
-                            context,
-                        )
+                        ai_result = handle_internal_whatsapp_message(content, context, conversation_context)
+                        if ai_result is None:
+                            ai_result = generate_agent_reply_v2(
+                                context.get("nombre_visible"),
+                                conversation_context,
+                                recent_messages,
+                                content,
+                                context,
+                            )
                     except Exception as exc:
                         ai_result = build_fallback_agent_result(content, str(exc))
 
@@ -6746,6 +8470,9 @@ async def receive_whatsapp_webhook(request: Request):
                         "verified_cliente_codigo": conversation_context.get("verified_cliente_codigo"),
                         "awaiting_verification": False,
                     }
+                    extra_context_updates = ai_result.get("context_updates") or {}
+                    if extra_context_updates:
+                        context_updates.update(extra_context_updates)
                     update_conversation_context(
                         context["conversation_id"],
                         context_updates,

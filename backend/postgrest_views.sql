@@ -342,4 +342,183 @@ GROUP BY
     marca,
     marca_normalizada;
 
+CREATE OR REPLACE VIEW public.vw_agente_clientes_lookup AS
+WITH ventas AS (
+    SELECT
+        cliente_id AS cliente_codigo,
+        MAX(nombre_cliente) AS nombre_cliente,
+        MAX(nom_vendedor) AS vendedor,
+        MAX(codigo_vendedor) AS vendedor_codigo,
+        MAX(fecha_venta) AS ultima_compra,
+        COALESCE(SUM(valor_venta_neto), 0) AS ventas_netas_total
+    FROM public.vw_ventas_netas
+    WHERE cliente_id IS NOT NULL
+    GROUP BY cliente_id
+),
+cartera AS (
+    SELECT
+        cod_cliente AS cliente_codigo,
+        MAX(nombre_cliente) AS nombre_cliente,
+        MAX(nit) AS nit,
+        MAX(telefono1) AS telefono1,
+        MAX(telefono2) AS telefono2,
+        MAX(email) AS email,
+        MAX(nom_vendedor) AS vendedor,
+        MAX(zona) AS zona,
+        COALESCE(SUM(importe_normalizado), 0) AS saldo_cartera,
+        COALESCE(MAX(dias_vencido), 0) AS max_dias_vencido,
+        COUNT(*) FILTER (WHERE COALESCE(dias_vencido, 0) > 0) AS documentos_vencidos
+    FROM public.vw_estado_cartera
+    WHERE cod_cliente IS NOT NULL
+    GROUP BY cod_cliente
+),
+clientes AS (
+    SELECT
+        public.fn_keep_alnum(codigo) AS cliente_codigo,
+        public.fn_normalize_text(COALESCE(nombre_comercial, nombre_legal)) AS nombre_cliente,
+        public.fn_keep_alnum(numero_documento) AS numero_documento,
+        LOWER(NULLIF(TRIM(COALESCE(email, '')), '')) AS email,
+        telefono AS telefono1,
+        celular AS telefono2,
+        public.fn_normalize_text(ciudad) AS ciudad
+    FROM public.cliente
+)
+SELECT
+    COALESCE(clientes.cliente_codigo, ventas.cliente_codigo, cartera.cliente_codigo) AS cliente_codigo,
+    COALESCE(cartera.nombre_cliente, ventas.nombre_cliente, clientes.nombre_cliente) AS nombre_cliente,
+    COALESCE(cartera.nit, clientes.numero_documento) AS nit,
+    clientes.numero_documento,
+    COALESCE(cartera.telefono1, clientes.telefono1) AS telefono1,
+    COALESCE(cartera.telefono2, clientes.telefono2) AS telefono2,
+    COALESCE(cartera.email, clientes.email) AS email,
+    COALESCE(ventas.vendedor, cartera.vendedor) AS vendedor,
+    ventas.vendedor_codigo,
+    COALESCE(cartera.zona, clientes.ciudad) AS zona,
+    ventas.ultima_compra,
+    COALESCE(ventas.ventas_netas_total, 0) AS ventas_netas_total,
+    COALESCE(cartera.saldo_cartera, 0) AS saldo_cartera,
+    COALESCE(cartera.max_dias_vencido, 0) AS max_dias_vencido,
+    COALESCE(cartera.documentos_vencidos, 0) AS documentos_vencidos,
+    public.fn_normalize_text(
+        COALESCE(cartera.nombre_cliente, ventas.nombre_cliente, clientes.nombre_cliente, '') || ' ' ||
+        COALESCE(cartera.nit, clientes.numero_documento, '') || ' ' ||
+        COALESCE(COALESCE(clientes.cliente_codigo, ventas.cliente_codigo, cartera.cliente_codigo), '') || ' ' ||
+        COALESCE(ventas.vendedor, cartera.vendedor, '') || ' ' ||
+        COALESCE(cartera.zona, clientes.ciudad, '')
+    ) AS search_blob,
+    public.fn_keep_alnum(
+        COALESCE(cartera.nombre_cliente, ventas.nombre_cliente, clientes.nombre_cliente, '') || ' ' ||
+        COALESCE(cartera.nit, clientes.numero_documento, '') || ' ' ||
+        COALESCE(COALESCE(clientes.cliente_codigo, ventas.cliente_codigo, cartera.cliente_codigo), '')
+    ) AS search_compact
+FROM clientes
+FULL OUTER JOIN ventas
+    ON clientes.cliente_codigo = ventas.cliente_codigo
+FULL OUTER JOIN cartera
+    ON COALESCE(clientes.cliente_codigo, ventas.cliente_codigo) = cartera.cliente_codigo;
+
+CREATE OR REPLACE VIEW public.vw_agente_producto_disponibilidad AS
+SELECT
+    referencia_normalizada AS producto_codigo,
+    referencia,
+    descripcion,
+    marca,
+    cod_almacen,
+    almacen_nombre,
+    departamento,
+    stock_disponible,
+    costo_promedio_und,
+    unidades_vendidas,
+    lead_time_proveedor,
+    historial_ventas,
+    search_blob
+FROM public.vw_inventario_agente;
+
+CREATE OR REPLACE VIEW public.vw_agent_catalog_product_search AS
+SELECT
+    producto_codigo,
+    referencia,
+    descripcion_base,
+    descripcion_inventario,
+    marca,
+    linea_producto,
+    categoria_producto,
+    super_categoria,
+    departamentos,
+    stock_total,
+    stock_por_tienda,
+    costo_promedio_und,
+    inventario_unidades_metric,
+    ventas_unidades_total,
+    ventas_valor_total,
+    ultima_venta,
+    prioridad_origen,
+    tiene_stock,
+    tiene_historial_ventas,
+    color_detectado,
+    color_raiz,
+    acabado_detectado,
+    presentacion_canonica,
+    core_descriptor,
+    producto_padre_busqueda_sugerido,
+    familia_consulta_sugerida,
+    variant_label,
+    workbook_version,
+    public.fn_normalize_text(
+        COALESCE(descripcion_base, '') || ' ' ||
+        COALESCE(descripcion_inventario, '') || ' ' ||
+        COALESCE(marca, '') || ' ' ||
+        COALESCE(linea_producto, '') || ' ' ||
+        COALESCE(categoria_producto, '') || ' ' ||
+        COALESCE(super_categoria, '') || ' ' ||
+        COALESCE(color_detectado, '') || ' ' ||
+        COALESCE(color_raiz, '') || ' ' ||
+        COALESCE(acabado_detectado, '') || ' ' ||
+        COALESCE(presentacion_canonica, '') || ' ' ||
+        COALESCE(core_descriptor, '') || ' ' ||
+        COALESCE(producto_padre_busqueda_sugerido, '') || ' ' ||
+        COALESCE(familia_consulta_sugerida, '') || ' ' ||
+        COALESCE(variant_label, '') || ' ' ||
+        COALESCE(referencia, '') || ' ' ||
+        COALESCE(producto_codigo, '')
+    ) AS search_blob,
+    public.fn_keep_alnum(
+        COALESCE(descripcion_base, '') || ' ' ||
+        COALESCE(descripcion_inventario, '') || ' ' ||
+        COALESCE(marca, '') || ' ' ||
+        COALESCE(referencia, '') || ' ' ||
+        COALESCE(producto_codigo, '')
+    ) AS search_compact
+FROM public.agent_catalog_product;
+
+CREATE OR REPLACE VIEW public.vw_agent_catalog_alias_active AS
+SELECT
+    a.id,
+    a.producto_codigo,
+    p.referencia,
+    p.descripcion_base,
+    p.descripcion_inventario,
+    p.marca,
+    p.presentacion_canonica,
+    p.producto_padre_busqueda_sugerido,
+    p.familia_consulta_sugerida,
+    a.alias_type,
+    a.alias_value,
+    a.alias_order,
+    a.familia_consulta,
+    a.producto_padre_busqueda,
+    a.pregunta_desambiguacion,
+    a.estrategia_busqueda,
+    a.variantes_familia,
+    a.terminos_excluir,
+    a.activo_agente,
+    a.observaciones_equipo,
+    a.workbook_version,
+    public.fn_normalize_text(a.alias_value) AS alias_normalizado,
+    public.fn_keep_alnum(a.alias_value) AS alias_compacto
+FROM public.agent_catalog_alias a
+JOIN public.agent_catalog_product p
+    ON p.producto_codigo = a.producto_codigo
+WHERE a.activo_agente = true;
+
 COMMIT;
