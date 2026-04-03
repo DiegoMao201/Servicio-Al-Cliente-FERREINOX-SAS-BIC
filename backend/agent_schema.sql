@@ -169,6 +169,55 @@ CREATE TABLE IF NOT EXISTS public.agent_order_line (
     CONSTRAINT uq_agent_order_line UNIQUE (order_id, line_number)
 );
 
+CREATE TABLE IF NOT EXISTS public.agent_order_dispatch (
+    id bigserial PRIMARY KEY,
+    order_id bigint NOT NULL REFERENCES public.agent_order(id) ON DELETE CASCADE,
+    conversation_id bigint REFERENCES public.agent_conversation(id) ON DELETE SET NULL,
+    contacto_id bigint REFERENCES public.whatsapp_contacto(id) ON DELETE SET NULL,
+    cliente_id bigint REFERENCES public.cliente(id) ON DELETE SET NULL,
+    exported_by_user_id bigint REFERENCES public.agent_user(id) ON DELETE SET NULL,
+    destination_store_code varchar(20),
+    destination_store_name varchar(120),
+    facturador_name varchar(180),
+    facturador_email varchar(180),
+    facturador_phone varchar(30),
+    export_filename varchar(255) NOT NULL,
+    dropbox_folder varchar(255),
+    dropbox_path varchar(255),
+    status varchar(30) NOT NULL DEFAULT 'pendiente',
+    observations text,
+    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+    exported_at timestamptz,
+    notified_email_at timestamptz,
+    notified_whatsapp_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT uq_agent_order_dispatch_order UNIQUE (order_id),
+    CONSTRAINT chk_agent_order_dispatch_status CHECK (status IN ('pendiente', 'en_transito', 'recibido', 'cancelado'))
+);
+
+CREATE TABLE IF NOT EXISTS public.agent_transfer_request (
+    id bigserial PRIMARY KEY,
+    order_dispatch_id bigint REFERENCES public.agent_order_dispatch(id) ON DELETE SET NULL,
+    order_id bigint REFERENCES public.agent_order(id) ON DELETE SET NULL,
+    requested_by_user_id bigint REFERENCES public.agent_user(id) ON DELETE SET NULL,
+    requested_via varchar(40) NOT NULL DEFAULT 'whatsapp_interno',
+    source_store_code varchar(20),
+    source_store_name varchar(120),
+    destination_store_code varchar(20),
+    destination_store_name varchar(120),
+    referencia varchar(120) NOT NULL,
+    descripcion text,
+    quantity_requested numeric(18,3) NOT NULL DEFAULT 0,
+    status varchar(30) NOT NULL DEFAULT 'pendiente',
+    summary text,
+    notes text,
+    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT chk_agent_transfer_request_status CHECK (status IN ('pendiente', 'aprobado', 'en_transito', 'recibido', 'cancelado'))
+);
+
 CREATE TABLE IF NOT EXISTS public.agent_user (
     id bigserial PRIMARY KEY,
     username varchar(80) NOT NULL,
@@ -339,6 +388,10 @@ CREATE INDEX IF NOT EXISTS idx_agent_order_conversation ON public.agent_order(co
 CREATE INDEX IF NOT EXISTS idx_agent_order_cliente_estado ON public.agent_order(cliente_id, estado);
 CREATE INDEX IF NOT EXISTS idx_agent_order_quote ON public.agent_order(quote_id);
 CREATE INDEX IF NOT EXISTS idx_agent_order_line_order ON public.agent_order_line(order_id);
+CREATE INDEX IF NOT EXISTS idx_agent_order_dispatch_status ON public.agent_order_dispatch(status, destination_store_code);
+CREATE INDEX IF NOT EXISTS idx_agent_order_dispatch_conversation ON public.agent_order_dispatch(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_agent_transfer_request_status ON public.agent_transfer_request(status, destination_store_code);
+CREATE INDEX IF NOT EXISTS idx_agent_transfer_request_order ON public.agent_transfer_request(order_id, order_dispatch_id);
 CREATE INDEX IF NOT EXISTS idx_agent_user_role_active ON public.agent_user(role, is_active);
 CREATE INDEX IF NOT EXISTS idx_agent_user_scope_user ON public.agent_user_scope(user_id);
 CREATE INDEX IF NOT EXISTS idx_agent_user_scope_lookup ON public.agent_user_scope(scope_type, scope_value);

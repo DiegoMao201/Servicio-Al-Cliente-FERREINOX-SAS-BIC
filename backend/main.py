@@ -20,6 +20,7 @@ import requests
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from openai import OpenAI
+from openpyxl import Workbook
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 
@@ -39,6 +40,17 @@ INTERNAL_LOGOUT_PATTERNS = {
     "cerrar sesión",
     "salir interno",
     "logout interno",
+}
+TRANSFER_REQUEST_MUTATING_ROLES = {"gerente", "operador", "administrador"}
+ORDER_DISPATCH_ACTIVE_STATUSES = {"pendiente", "en_transito"}
+DEFAULT_FACTURADOR_ROUTING = {
+    "155": {"name": "Paula", "phone": "+573102368346"},
+    "156": {"name": "Jaime", "phone": "+573165219904"},
+    "157": {"name": "Lorena", "phone": "+573136086232"},
+    "158": {"name": "M. Paula", "phone": "+573108561506"},
+    "189": {"name": "Paula", "phone": "+573102368346"},
+    "439": {"name": "Manuel", "phone": "+573209559031"},
+    "463": {"name": "Jose Aurelio", "phone": "+573104739586"},
 }
 
 
@@ -1494,6 +1506,12 @@ def detect_internal_query_intent(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     if not normalized:
         return None
+    if any(fragment in normalized for fragment in ["pendientes despacho", "pendiente despacho", "pendientes por despachar", "por despachar", "pedidos pendientes", "despachos pendientes"]):
+        return "consulta_despachos"
+    if any(fragment in normalized for fragment in ["genera traslado", "genere traslado", "crear traslado", "crea traslado", "solicita traslado", "traslada", "trasladar"]):
+        return "crear_traslado"
+    if any(fragment in normalized for fragment in ["que hay en", "qué hay en", "que tiene", "qué tiene", "no tenga", "no tiene", "comparar tiendas", "comparar inventario", "cumplir pedidos", "cumplir pedido", "traslados sugeridos", "sugerencia de traslado"]):
+        return "consulta_traslados"
     if any(fragment in normalized for fragment in ["cartera", "saldo", "vencid"]):
         return "consulta_cartera"
     if any(fragment in normalized for fragment in ["compras", "compra", "ultimo pedido", "último pedido", "ultima compra", "última compra"]):
@@ -1501,6 +1519,75 @@ def detect_internal_query_intent(text_value: Optional[str]):
     if any(fragment in normalized for fragment in ["contexto", "resumen", "perfil", "todo del cliente", "info del cliente"]):
         return "consulta_contexto"
     return None
+
+
+def build_pending_dispatches_response(store_code: Optional[str] = None):
+    rows = fetch_pending_dispatches(store_code)
+    if not rows:
+        store_label = get_store_short_label(store_code)
+        if store_label:
+            return f"No veo pedidos pendientes por despachar para {store_label}."
+        return "No veo pedidos pendientes por despachar en este momento."
+
+    response_lines = ["Pedidos pendientes de facturación/despacho:"]
+    for row in rows[:6]:
+        contacto = row.get("contacto_nombre") or "cliente sin nombre"
+        destino = row.get("destination_store_name") or "sede pendiente"
+        archivo = row.get("export_filename") or f"pedido_{row.get('order_id')}"
+        estado = (row.get("status") or "pendiente").replace("_", " ")
+        response_lines.append(
+            f"- Pedido {row.get('order_id')} | {destino} | {contacto} | archivo {archivo} | estado {estado}"
+        )
+    return "\n".join(response_lines)
+
+
+def build_transfer_suggestions_response(content: str, internal_user: dict):
+    store_mentions = extract_store_mentions_in_order(content)
+    normalized = normalize_text_value(content)
+    if len(store_mentions) >= 2:
+        source_store_code, destination_store_code = store_mentions[0], store_mentions[1]
+    elif len(store_mentions) == 1:
+        source_store_code, destination_store_code = None, store_mentions[0]
+    else:
+        source_store_code, destination_store_code = None, None
+
+    if destination_store_code and any(fragment in normalized for fragment in ["cumplir pedidos", "cumplir pedido", "pendiente", "despacho"]):
+        suggestions = build_transfer_suggestions_for_pending_dispatches(destination_store_code, source_store_code)
+        if not suggestions:
+            destination_label = get_store_short_label(destination_store_code) or STORE_CODE_LABELS.get(destination_store_code) or "la sede consultada"
+            return f"No encontré faltantes pendientes con traslado útil hacia {destination_label}.", []
+        response_lines = ["Sugerencias de traslado para cubrir pedidos pendientes:"]
+        for suggestion in suggestions[:6]:
+            response_lines.append(
+                f"- Pedido {suggestion['order_id']} | {suggestion['reference']} | {suggestion['origin_store_name']} -> {suggestion['destination_store_name']} | sugerido {format_quantity(suggestion['suggested_qty'])} und"
+            )
+        return "\n".join(response_lines), suggestions
+
+    if source_store_code and destination_store_code:
+        gaps = fetch_inventory_gap_between_stores(source_store_code, destination_store_code)
+        if not gaps:
+            source_label = get_store_short_label(source_store_code) or STORE_CODE_LABELS.get(source_store_code) or source_store_code
+            destination_label = get_store_short_label(destination_store_code) or STORE_CODE_LABELS.get(destination_store_code) or destination_store_code
+            return f"No veo referencias con stock en {source_label} y quiebre total en {destination_label}.", []
+        response_lines = [
+            f"Referencias que sí están en {get_store_short_label(source_store_code) or STORE_CODE_LABELS.get(source_store_code)} y no están en {get_store_short_label(destination_store_code) or STORE_CODE_LABELS.get(destination_store_code)}:"
+        ]
+        for gap in gaps[:8]:
+            response_lines.append(
+                f"- {gap['referencia']} | {gap.get('descripcion') or 'sin descripción'} | stock origen {format_quantity(gap['stock_origen'])}"
+            )
+        return "\n".join(response_lines), []
+
+    suggestions = build_transfer_suggestions_for_pending_dispatches(destination_store_code, source_store_code)
+    if suggestions:
+        response_lines = ["Traslados sugeridos sobre pedidos pendientes:"]
+        for suggestion in suggestions[:6]:
+            response_lines.append(
+                f"- Pedido {suggestion['order_id']} | {suggestion['reference']} | {suggestion['origin_store_name']} -> {suggestion['destination_store_name']} | sugerido {format_quantity(suggestion['suggested_qty'])} und"
+            )
+        return "\n".join(response_lines), suggestions
+
+    return "Dime la tienda destino o compárame dos tiendas, por ejemplo: 'qué hay en Manizales que Pereira no tenga' o 'traslada a Pereira para cumplir pedidos'.", []
 
 
 def handle_internal_whatsapp_message(content: Optional[str], context: dict, conversation_context: dict):
@@ -1536,6 +1623,72 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
     intent = detect_internal_query_intent(content)
     if not intent:
         return None
+
+    if intent == "consulta_despachos":
+        store_mentions = extract_store_mentions_in_order(content)
+        store_code = store_mentions[0] if store_mentions else None
+        return {
+            "response_text": build_pending_dispatches_response(store_code),
+            "intent": intent,
+            "context_updates": {
+                "internal_auth": {
+                    "token": internal_auth.get("token"),
+                    "user_id": internal_user.get("id"),
+                    "username": internal_user.get("username"),
+                    "role": internal_user.get("role"),
+                    "expires_at": internal_user.get("session_expires_at"),
+                }
+            },
+        }
+
+    if intent in {"consulta_traslados", "crear_traslado"}:
+        response_text, suggestions = build_transfer_suggestions_response(content, internal_user)
+        context_updates = {
+            "internal_auth": {
+                "token": internal_auth.get("token"),
+                "user_id": internal_user.get("id"),
+                "username": internal_user.get("username"),
+                "role": internal_user.get("role"),
+                "expires_at": internal_user.get("session_expires_at"),
+            }
+        }
+        if intent == "crear_traslado":
+            if internal_user.get("role") not in TRANSFER_REQUEST_MUTATING_ROLES:
+                return {
+                    "response_text": "Tu rol actual puede consultar sugerencias, pero no crear solicitudes de traslado. Necesitas perfil gerente, operador o administrador.",
+                    "intent": "internal_transfer_forbidden",
+                    "context_updates": context_updates,
+                }
+            if not suggestions:
+                return {
+                    "response_text": response_text,
+                    "intent": intent,
+                    "context_updates": context_updates,
+                }
+            created_requests = create_transfer_request_records(suggestions[:5], internal_user, notes=content)
+            upsert_agent_task(
+                context["conversation_id"],
+                context.get("cliente_id"),
+                "traslado_interno",
+                "Solicitud interna de traslado generada por WhatsApp",
+                {"solicitudes": created_requests, "mensaje": content},
+                "alta",
+            )
+            response_lines = ["Solicitudes de traslado creadas:"]
+            for request_row in created_requests[:5]:
+                response_lines.append(
+                    f"- Traslado {request_row['id']} | pedido {request_row['order_id']} | {request_row['reference']} | {request_row['origin_store_name']} -> {request_row['destination_store_name']} | {format_quantity(request_row['suggested_qty'])} und"
+                )
+            return {
+                "response_text": "\n".join(response_lines),
+                "intent": intent,
+                "context_updates": context_updates,
+            }
+        return {
+            "response_text": response_text,
+            "intent": intent,
+            "context_updates": context_updates,
+        }
 
     candidate = extract_internal_customer_candidate(content)
     if not candidate:
@@ -1693,6 +1846,456 @@ def send_sendgrid_email(to_email: str, subject: str, html_content: str, text_con
             error_payload = {"raw": response.text}
         raise RuntimeError(f"SendGrid devolvió {response.status_code}: {safe_json_dumps(error_payload)}")
     return True
+
+
+def normalize_store_code(store_value: Optional[str]):
+    normalized = normalize_text_value(store_value)
+    if not normalized:
+        return None
+    if normalized.isdigit() and normalized in STORE_CODE_LABELS:
+        return normalized
+    for aliases in STORE_ALIASES.values():
+        store_code = next((candidate for candidate in aliases if candidate.isdigit()), None)
+        if not store_code:
+            continue
+        for alias in aliases:
+            if normalize_text_value(alias) == normalized:
+                return store_code
+    return None
+
+
+def get_store_short_label(store_code: Optional[str]):
+    store_code = normalize_store_code(store_code)
+    if not store_code:
+        return None
+    label = STORE_CODE_LABELS.get(store_code) or store_code
+    return re.sub(r"^Tienda\s+", "", label, flags=re.IGNORECASE).strip()
+
+
+def extract_store_mentions_in_order(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return []
+
+    found_matches = []
+    for aliases in STORE_ALIASES.values():
+        store_code = next((candidate for candidate in aliases if candidate.isdigit()), None)
+        if not store_code:
+            continue
+        best_pos = None
+        for alias in aliases:
+            alias_normalized = normalize_text_value(alias)
+            if not alias_normalized:
+                continue
+            match = re.search(rf"\b{re.escape(alias_normalized)}\b", normalized)
+            if match and (best_pos is None or match.start() < best_pos):
+                best_pos = match.start()
+        if best_pos is not None:
+            found_matches.append((best_pos, store_code))
+
+    ordered_codes = []
+    seen_codes = set()
+    for _, store_code in sorted(found_matches, key=lambda item: item[0]):
+        if store_code not in seen_codes:
+            seen_codes.add(store_code)
+            ordered_codes.append(store_code)
+    return ordered_codes
+
+
+def get_dropbox_icg_orders_folder():
+    config = get_dropbox_ventas_config()
+    base_folder = (config.get("folder") or "/data").rstrip("/") or "/data"
+    subfolder = (os.getenv("DROPBOX_VENTAS_PEDIDOS_ICG_SUBFOLDER") or "PedidosICG").strip("/")
+    if not subfolder:
+        return base_folder
+    if base_folder.endswith(f"/{subfolder}"):
+        return base_folder
+    return f"{base_folder}/{subfolder}"
+
+
+def sanitize_filename_segment(raw_value: Optional[str], fallback: str):
+    raw_text = str(raw_value or "").strip()
+    sanitized = "".join(character if character.isalnum() or character in {"_", "-", " "} else "_" for character in raw_text)
+    sanitized = re.sub(r"\s+", "_", sanitized).strip("_")
+    return sanitized or fallback
+
+
+def get_facturador_routing_config():
+    configured_map = None
+    raw_json = os.getenv("FACTURADOR_ROUTING_JSON")
+    if raw_json:
+        try:
+            configured_map = json.loads(raw_json)
+        except json.JSONDecodeError:
+            configured_map = None
+    if configured_map is None:
+        secrets = load_local_secrets()
+        configured_map = secrets.get("facturadores") or secrets.get("facturador_routing") or {}
+
+    sendgrid_config = get_sendgrid_config() or {}
+    fallback_email = sendgrid_config.get("ventas_to_email") or sendgrid_config.get("from_email")
+    normalized_map = {}
+    source_map = configured_map or DEFAULT_FACTURADOR_ROUTING
+    for raw_key, raw_entry in source_map.items():
+        store_code = normalize_store_code(raw_key)
+        if not store_code:
+            continue
+        entry = raw_entry or {}
+        normalized_map[store_code] = {
+            "name": entry.get("name") or entry.get("nombre") or DEFAULT_FACTURADOR_ROUTING.get(store_code, {}).get("name") or "Facturación",
+            "email": (entry.get("email") or entry.get("correo") or fallback_email or "").strip() or None,
+            "phone": normalize_phone_e164(entry.get("phone") or entry.get("telefono") or entry.get("whatsapp") or DEFAULT_FACTURADOR_ROUTING.get(store_code, {}).get("phone")),
+        }
+    if fallback_email:
+        for store_code, fallback_entry in DEFAULT_FACTURADOR_ROUTING.items():
+            normalized_map.setdefault(
+                store_code,
+                {
+                    "name": fallback_entry.get("name") or "Facturación",
+                    "email": fallback_email,
+                    "phone": normalize_phone_e164(fallback_entry.get("phone")),
+                },
+            )
+    return normalized_map
+
+
+def get_facturador_route_for_store(store_code: Optional[str]):
+    store_code = normalize_store_code(store_code)
+    if not store_code:
+        return None
+    return get_facturador_routing_config().get(store_code)
+
+
+def upload_bytes_to_dropbox(content_bytes: bytes, dropbox_path: str):
+    dbx = get_dropbox_ventas_client()
+    normalized_path = "/" + str(dropbox_path or "").lstrip("/")
+    metadata = dbx.files_upload(content_bytes, normalized_path, mode=dropbox.files.WriteMode("overwrite"))
+    return metadata.path_display or normalized_path
+
+
+def build_icg_excel_rows_from_draft(commercial_draft: dict):
+    rows = []
+    for item in commercial_draft.get("items") or []:
+        if item.get("status") != "matched":
+            continue
+        matched_product = item.get("matched_product") or {}
+        product_request = item.get("product_request") or {}
+        referencia = matched_product.get("referencia") or matched_product.get("codigo_articulo") or matched_product.get("producto_codigo")
+        if not referencia:
+            continue
+        rows.append(
+            {
+                "REFERENCIA": referencia,
+                "CANTIDAD": parse_numeric_value(product_request.get("requested_quantity")) or 1,
+                "PRECIO": parse_numeric_value(matched_product.get("precio") or matched_product.get("precio_venta") or item.get("precio_unitario")) or 0,
+                "DESCUENTO": parse_numeric_value(matched_product.get("descuento_pct") or item.get("discount_pct")) or 0,
+                "DESCRIPCION": matched_product.get("descripcion") or matched_product.get("nombre_articulo") or item.get("original_text") or referencia,
+            }
+        )
+    return rows
+
+
+def generate_icg_order_excel_bytes(commercial_draft: dict):
+    excel_rows = build_icg_excel_rows_from_draft(commercial_draft)
+    if not excel_rows:
+        raise RuntimeError("No hay líneas confirmadas para exportar a ICG.")
+
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "PedidoICG"
+    worksheet.append(["REFERENCIA", "CANTIDAD", "PRECIO", "DESCUENTO"])
+    for row in excel_rows:
+        worksheet.append([row["REFERENCIA"], row["CANTIDAD"], row["PRECIO"], row["DESCUENTO"]])
+
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    return buffer.getvalue(), excel_rows
+
+
+def build_icg_order_filename(cliente_label: Optional[str], store_code: Optional[str], order_id: int):
+    today_label = datetime.now().strftime("%Y-%m-%d")
+    cliente_safe = sanitize_filename_segment(cliente_label, "SinCliente")
+    tienda_safe = sanitize_filename_segment(get_store_short_label(store_code) or STORE_CODE_LABELS.get(store_code) or store_code or "SinTienda", "SinTienda")
+    return f"pedido_{cliente_safe}_{today_label}_{tienda_safe}_{order_id}.xlsx"
+
+
+def mark_agent_order_status(order_id: int, status: str, metadata_update: Optional[dict] = None, numero_externo: Optional[str] = None):
+    if not order_id:
+        return
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                UPDATE public.agent_order
+                SET estado = :status,
+                    numero_externo = COALESCE(:numero_externo, numero_externo),
+                    submitted_at = COALESCE(submitted_at, now()),
+                    metadata = COALESCE(metadata, '{}'::jsonb) || CAST(:metadata_update AS jsonb),
+                    updated_at = now()
+                WHERE id = :order_id
+                """
+            ),
+            {
+                "order_id": order_id,
+                "status": status,
+                "numero_externo": numero_externo,
+                "metadata_update": safe_json_dumps(metadata_update or {}),
+            },
+        )
+
+
+def upsert_order_dispatch_record(
+    order_id: int,
+    conversation_id: int,
+    contact_id: Optional[int],
+    cliente_id: Optional[int],
+    destination_store_code: Optional[str],
+    destination_store_name: Optional[str],
+    export_filename: str,
+    dropbox_folder: str,
+    dropbox_path: str,
+    facturador_route: Optional[dict],
+    exported_by_user_id: Optional[int],
+    observations: Optional[str],
+    metadata: Optional[dict] = None,
+    status: str = "pendiente",
+    email_sent: bool = False,
+    whatsapp_sent: bool = False,
+):
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        dispatch_id = connection.execute(
+            text(
+                """
+                INSERT INTO public.agent_order_dispatch (
+                    order_id,
+                    conversation_id,
+                    contacto_id,
+                    cliente_id,
+                    destination_store_code,
+                    destination_store_name,
+                    exported_by_user_id,
+                    facturador_name,
+                    facturador_email,
+                    facturador_phone,
+                    export_filename,
+                    dropbox_folder,
+                    dropbox_path,
+                    status,
+                    observations,
+                    metadata,
+                    exported_at,
+                    notified_email_at,
+                    notified_whatsapp_at,
+                    created_at,
+                    updated_at
+                )
+                VALUES (
+                    :order_id,
+                    :conversation_id,
+                    :contact_id,
+                    :cliente_id,
+                    :destination_store_code,
+                    :destination_store_name,
+                    :exported_by_user_id,
+                    :facturador_name,
+                    :facturador_email,
+                    :facturador_phone,
+                    :export_filename,
+                    :dropbox_folder,
+                    :dropbox_path,
+                    :status,
+                    :observations,
+                    CAST(:metadata AS jsonb),
+                    now(),
+                    CASE WHEN :email_sent THEN now() ELSE NULL END,
+                    CASE WHEN :whatsapp_sent THEN now() ELSE NULL END,
+                    now(),
+                    now()
+                )
+                ON CONFLICT (order_id)
+                DO UPDATE SET
+                    conversation_id = EXCLUDED.conversation_id,
+                    contacto_id = EXCLUDED.contacto_id,
+                    cliente_id = EXCLUDED.cliente_id,
+                    destination_store_code = EXCLUDED.destination_store_code,
+                    destination_store_name = EXCLUDED.destination_store_name,
+                    exported_by_user_id = EXCLUDED.exported_by_user_id,
+                    facturador_name = EXCLUDED.facturador_name,
+                    facturador_email = EXCLUDED.facturador_email,
+                    facturador_phone = EXCLUDED.facturador_phone,
+                    export_filename = EXCLUDED.export_filename,
+                    dropbox_folder = EXCLUDED.dropbox_folder,
+                    dropbox_path = EXCLUDED.dropbox_path,
+                    status = EXCLUDED.status,
+                    observations = EXCLUDED.observations,
+                    metadata = COALESCE(public.agent_order_dispatch.metadata, '{}'::jsonb) || EXCLUDED.metadata,
+                    exported_at = now(),
+                    notified_email_at = CASE WHEN :email_sent THEN now() ELSE public.agent_order_dispatch.notified_email_at END,
+                    notified_whatsapp_at = CASE WHEN :whatsapp_sent THEN now() ELSE public.agent_order_dispatch.notified_whatsapp_at END,
+                    updated_at = now()
+                RETURNING id
+                """
+            ),
+            {
+                "order_id": order_id,
+                "conversation_id": conversation_id,
+                "contact_id": contact_id,
+                "cliente_id": cliente_id,
+                "destination_store_code": destination_store_code,
+                "destination_store_name": destination_store_name,
+                "exported_by_user_id": exported_by_user_id,
+                "facturador_name": (facturador_route or {}).get("name"),
+                "facturador_email": (facturador_route or {}).get("email"),
+                "facturador_phone": (facturador_route or {}).get("phone"),
+                "export_filename": export_filename,
+                "dropbox_folder": dropbox_folder,
+                "dropbox_path": dropbox_path,
+                "status": status,
+                "observations": observations,
+                "metadata": safe_json_dumps(metadata or {}),
+                "email_sent": email_sent,
+                "whatsapp_sent": whatsapp_sent,
+            },
+        ).scalar_one()
+    return dispatch_id
+
+
+def notify_facturador_about_order(
+    order_id: int,
+    cliente_label: str,
+    store_code: Optional[str],
+    file_name: str,
+    dropbox_path: str,
+    facturador_route: Optional[dict],
+    observations: Optional[str],
+):
+    route = facturador_route or {}
+    store_label = get_store_short_label(store_code) or STORE_CODE_LABELS.get(store_code) or "sede sin definir"
+    facturador_name = route.get("name") or "equipo de facturación"
+    subject = f"Ferreinox | Pedido ICG listo {file_name}"
+    text_content = (
+        f"Hola {facturador_name}.\n\n"
+        f"Ya quedó exportado un pedido para {store_label}.\n"
+        f"Cliente: {cliente_label}\n"
+        f"Pedido interno: {order_id}\n"
+        f"Archivo: {file_name}\n"
+        f"Ruta Dropbox: {dropbox_path}\n"
+        f"Observación: {observations or 'Sin observación'}\n\n"
+        "Por favor valida la carpeta compartida y continúa la facturación."
+    )
+    html_content = (
+        "<div style='font-family:Segoe UI,Arial,sans-serif;background:#f4f6f8;padding:24px;color:#111827'>"
+        "<div style='max-width:760px;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;padding:28px'>"
+        f"<h1 style='margin-top:0'>Pedido listo para facturación</h1>"
+        f"<p><strong>Facturador:</strong> {escape(facturador_name)}</p>"
+        f"<p><strong>Tienda destino:</strong> {escape(store_label)}</p>"
+        f"<p><strong>Cliente:</strong> {escape(cliente_label)}</p>"
+        f"<p><strong>Pedido interno:</strong> {order_id}</p>"
+        f"<p><strong>Archivo ICG:</strong> {escape(file_name)}</p>"
+        f"<p><strong>Ruta Dropbox:</strong> {escape(dropbox_path)}</p>"
+        f"<p><strong>Observación:</strong> {escape(observations or 'Sin observación')}</p>"
+        "<p>Revisa la carpeta compartida y continúa el proceso en ICG.</p>"
+        "</div></div>"
+    )
+
+    email_sent = False
+    whatsapp_sent = False
+    errors = []
+    if route.get("email"):
+        try:
+            send_sendgrid_email(route["email"], subject, html_content, text_content)
+            email_sent = True
+        except Exception as exc:
+            errors.append(f"email: {exc}")
+    if route.get("phone"):
+        whatsapp_body = (
+            f"Hola {facturador_name}, ya quedó exportado el pedido {order_id} para {store_label}. "
+            f"Cliente: {cliente_label}. Archivo: {file_name}. Ruta: {dropbox_path}."
+        )
+        try:
+            send_whatsapp_text_message(route["phone"], whatsapp_body)
+            whatsapp_sent = True
+        except Exception as exc:
+            errors.append(f"whatsapp: {exc}")
+    return {
+        "email_sent": email_sent,
+        "whatsapp_sent": whatsapp_sent,
+        "email": route.get("email"),
+        "phone": route.get("phone"),
+        "errors": errors,
+    }
+
+
+def export_confirmed_order_to_icg(
+    order_id: int,
+    context: dict,
+    commercial_draft: dict,
+    cliente_contexto: Optional[dict],
+    internal_user: Optional[dict],
+):
+    store_filters = commercial_draft.get("store_filters") or []
+    store_code = normalize_store_code(store_filters[0]) if store_filters else None
+    if not store_code:
+        raise RuntimeError("El pedido no tiene tienda o ciudad definida para exportar a ICG.")
+
+    file_name = build_icg_order_filename(
+        (cliente_contexto or {}).get("nombre_cliente") or context.get("nombre_visible"),
+        store_code,
+        order_id,
+    )
+    excel_bytes, excel_rows = generate_icg_order_excel_bytes(commercial_draft)
+    dropbox_folder = get_dropbox_icg_orders_folder()
+    dropbox_path = upload_bytes_to_dropbox(excel_bytes, f"{dropbox_folder}/{file_name}")
+    facturador_route = get_facturador_route_for_store(store_code)
+    observations = commercial_draft.get("facturador_notes") or commercial_draft.get("observaciones") or commercial_draft.get("nombre_despacho")
+    notification_result = notify_facturador_about_order(
+        order_id,
+        (cliente_contexto or {}).get("nombre_cliente") or context.get("nombre_visible") or "Cliente Ferreinox",
+        store_code,
+        file_name,
+        dropbox_path,
+        facturador_route,
+        observations,
+    )
+    dispatch_id = upsert_order_dispatch_record(
+        order_id=order_id,
+        conversation_id=context["conversation_id"],
+        contact_id=context.get("contact_id"),
+        cliente_id=context.get("cliente_id"),
+        destination_store_code=store_code,
+        destination_store_name=STORE_CODE_LABELS.get(store_code),
+        export_filename=file_name,
+        dropbox_folder=dropbox_folder,
+        dropbox_path=dropbox_path,
+        facturador_route=facturador_route,
+        exported_by_user_id=(internal_user or {}).get("id"),
+        observations=observations,
+        metadata={"excel_rows": excel_rows, "notificacion": notification_result},
+        status="pendiente",
+        email_sent=notification_result.get("email_sent", False),
+        whatsapp_sent=notification_result.get("whatsapp_sent", False),
+    )
+    mark_agent_order_status(
+        order_id,
+        "enviado_erp",
+        metadata_update={
+            "dispatch_id": dispatch_id,
+            "dropbox_path": dropbox_path,
+            "facturador": facturador_route,
+            "icg_filename": file_name,
+        },
+        numero_externo=f"PED-{order_id}",
+    )
+    return {
+        "dispatch_id": dispatch_id,
+        "dropbox_path": dropbox_path,
+        "dropbox_folder": dropbox_folder,
+        "file_name": file_name,
+        "facturador": facturador_route,
+        "notification": notification_result,
+    }
 
 
 def list_technical_document_entries(force_refresh: bool = False):
@@ -3536,6 +4139,278 @@ def upsert_commercial_draft(
             )
 
     return draft_id
+
+
+def fetch_pending_dispatches(destination_store_code: Optional[str] = None, limit: int = 8):
+    where_sql = "WHERE d.status IN ('pendiente', 'en_transito')"
+    params = {"limit": limit}
+    if destination_store_code:
+        where_sql += " AND d.destination_store_code = :destination_store_code"
+        params["destination_store_code"] = normalize_store_code(destination_store_code)
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text(
+                f"""
+                SELECT
+                    d.id,
+                    d.order_id,
+                    d.status,
+                    d.destination_store_code,
+                    d.destination_store_name,
+                    d.facturador_name,
+                    d.facturador_email,
+                    d.export_filename,
+                    d.dropbox_path,
+                    d.exported_at,
+                    o.numero_externo,
+                    o.resumen,
+                    wc.nombre_visible AS contacto_nombre
+                FROM public.agent_order_dispatch d
+                LEFT JOIN public.agent_order o ON o.id = d.order_id
+                LEFT JOIN public.whatsapp_contacto wc ON wc.id = d.contacto_id
+                {where_sql}
+                ORDER BY d.exported_at DESC NULLS LAST, d.id DESC
+                LIMIT :limit
+                """
+            ),
+            params,
+        ).mappings().all()
+    return [dict(row) for row in rows]
+
+
+def fetch_pending_dispatch_shortages(destination_store_code: Optional[str] = None, limit: int = 20):
+    where_sql = "WHERE d.status IN ('pendiente', 'en_transito')"
+    params = {"limit": limit}
+    normalized_destination = normalize_store_code(destination_store_code)
+    if normalized_destination:
+        where_sql += " AND d.destination_store_code = :destination_store_code"
+        params["destination_store_code"] = normalized_destination
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text(
+                f"""
+                WITH pending_lines AS (
+                    SELECT
+                        d.id AS dispatch_id,
+                        d.order_id,
+                        d.destination_store_code,
+                        d.destination_store_name,
+                        ol.referencia,
+                        MAX(ol.descripcion) AS descripcion,
+                        SUM(COALESCE(ol.cantidad, 0)) AS required_qty
+                    FROM public.agent_order_dispatch d
+                    JOIN public.agent_order_line ol ON ol.order_id = d.order_id
+                    {where_sql}
+                    GROUP BY 1, 2, 3, 4, 5
+                ),
+                destination_stock AS (
+                    SELECT
+                        referencia,
+                        cod_almacen,
+                        COALESCE(SUM(stock_disponible), 0) AS stock_destino
+                    FROM public.vw_inventario_agente
+                    GROUP BY 1, 2
+                )
+                SELECT
+                    p.dispatch_id,
+                    p.order_id,
+                    p.destination_store_code,
+                    p.destination_store_name,
+                    p.referencia,
+                    p.descripcion,
+                    p.required_qty,
+                    COALESCE(ds.stock_destino, 0) AS stock_destino,
+                    GREATEST(p.required_qty - COALESCE(ds.stock_destino, 0), 0) AS shortage_qty
+                FROM pending_lines p
+                LEFT JOIN destination_stock ds
+                    ON ds.referencia = p.referencia
+                   AND ds.cod_almacen = p.destination_store_code
+                WHERE GREATEST(p.required_qty - COALESCE(ds.stock_destino, 0), 0) > 0
+                ORDER BY shortage_qty DESC, p.required_qty DESC, p.referencia ASC
+                LIMIT :limit
+                """
+            ),
+            params,
+        ).mappings().all()
+    return [dict(row) for row in rows]
+
+
+def fetch_best_origin_stock_for_reference(referencia: str, destination_store_code: str, preferred_origin_store_code: Optional[str] = None):
+    where_sql = "WHERE referencia = :referencia AND cod_almacen <> :destination_store_code AND COALESCE(stock_disponible, 0) > 0"
+    params = {"referencia": referencia, "destination_store_code": normalize_store_code(destination_store_code)}
+    origin_code = normalize_store_code(preferred_origin_store_code)
+    if origin_code:
+        where_sql += " AND cod_almacen = :origin_store_code"
+        params["origin_store_code"] = origin_code
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                f"""
+                SELECT
+                    cod_almacen AS origin_store_code,
+                    almacen_nombre AS origin_store_name,
+                    referencia,
+                    MAX(descripcion) AS descripcion,
+                    COALESCE(SUM(stock_disponible), 0) AS stock_origen
+                FROM public.vw_inventario_agente
+                {where_sql}
+                GROUP BY 1, 2, 3
+                ORDER BY stock_origen DESC, origin_store_name ASC
+                LIMIT 1
+                """
+            ),
+            params,
+        ).mappings().first()
+    return dict(row) if row else None
+
+
+def build_transfer_suggestions_for_pending_dispatches(destination_store_code: Optional[str], preferred_origin_store_code: Optional[str] = None, limit: int = 6):
+    suggestions = []
+    for shortage in fetch_pending_dispatch_shortages(destination_store_code, limit=limit * 2):
+        origin_stock = fetch_best_origin_stock_for_reference(
+            shortage.get("referencia"),
+            shortage.get("destination_store_code"),
+            preferred_origin_store_code,
+        )
+        if not origin_stock:
+            continue
+        available_qty = parse_numeric_value(origin_stock.get("stock_origen")) or 0
+        shortage_qty = parse_numeric_value(shortage.get("shortage_qty")) or 0
+        suggested_qty = min(available_qty, shortage_qty)
+        if suggested_qty <= 0:
+            continue
+        suggestions.append(
+            {
+                "dispatch_id": shortage.get("dispatch_id"),
+                "order_id": shortage.get("order_id"),
+                "reference": shortage.get("referencia"),
+                "description": shortage.get("descripcion"),
+                "destination_store_code": shortage.get("destination_store_code"),
+                "destination_store_name": shortage.get("destination_store_name"),
+                "destination_stock": shortage.get("stock_destino"),
+                "required_qty": shortage.get("required_qty"),
+                "shortage_qty": shortage_qty,
+                "origin_store_code": origin_stock.get("origin_store_code"),
+                "origin_store_name": origin_stock.get("origin_store_name"),
+                "origin_stock": available_qty,
+                "suggested_qty": suggested_qty,
+            }
+        )
+        if len(suggestions) >= limit:
+            break
+    return suggestions
+
+
+def fetch_inventory_gap_between_stores(source_store_code: str, destination_store_code: str, limit: int = 10):
+    source_store_code = normalize_store_code(source_store_code)
+    destination_store_code = normalize_store_code(destination_store_code)
+    if not source_store_code or not destination_store_code:
+        return []
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text(
+                """
+                SELECT
+                    referencia,
+                    MAX(descripcion) AS descripcion,
+                    MAX(marca) AS marca,
+                    COALESCE(SUM(CASE WHEN cod_almacen = :source_store_code THEN stock_disponible ELSE 0 END), 0) AS stock_origen,
+                    COALESCE(SUM(CASE WHEN cod_almacen = :destination_store_code THEN stock_disponible ELSE 0 END), 0) AS stock_destino
+                FROM public.vw_inventario_agente
+                WHERE cod_almacen = :source_store_code OR cod_almacen = :destination_store_code
+                GROUP BY referencia
+                HAVING COALESCE(SUM(CASE WHEN cod_almacen = :source_store_code THEN stock_disponible ELSE 0 END), 0) > 0
+                   AND COALESCE(SUM(CASE WHEN cod_almacen = :destination_store_code THEN stock_disponible ELSE 0 END), 0) <= 0
+                ORDER BY stock_origen DESC, referencia ASC
+                LIMIT :limit
+                """
+            ),
+            {
+                "source_store_code": source_store_code,
+                "destination_store_code": destination_store_code,
+                "limit": limit,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows]
+
+
+def create_transfer_request_records(suggestions: list[dict], requested_by_user: dict, notes: Optional[str] = None):
+    if not suggestions:
+        return []
+    engine = get_db_engine()
+    created_rows = []
+    with engine.begin() as connection:
+        for suggestion in suggestions:
+            transfer_id = connection.execute(
+                text(
+                    """
+                    INSERT INTO public.agent_transfer_request (
+                        order_dispatch_id,
+                        order_id,
+                        requested_by_user_id,
+                        requested_via,
+                        source_store_code,
+                        source_store_name,
+                        destination_store_code,
+                        destination_store_name,
+                        referencia,
+                        descripcion,
+                        quantity_requested,
+                        status,
+                        summary,
+                        notes,
+                        metadata,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES (
+                        :order_dispatch_id,
+                        :order_id,
+                        :requested_by_user_id,
+                        'whatsapp_interno',
+                        :source_store_code,
+                        :source_store_name,
+                        :destination_store_code,
+                        :destination_store_name,
+                        :referencia,
+                        :descripcion,
+                        :quantity_requested,
+                        'pendiente',
+                        :summary,
+                        :notes,
+                        CAST(:metadata AS jsonb),
+                        now(),
+                        now()
+                    )
+                    RETURNING id
+                    """
+                ),
+                {
+                    "order_dispatch_id": suggestion.get("dispatch_id"),
+                    "order_id": suggestion.get("order_id"),
+                    "requested_by_user_id": requested_by_user.get("id"),
+                    "source_store_code": suggestion.get("origin_store_code"),
+                    "source_store_name": suggestion.get("origin_store_name"),
+                    "destination_store_code": suggestion.get("destination_store_code"),
+                    "destination_store_name": suggestion.get("destination_store_name"),
+                    "referencia": suggestion.get("reference"),
+                    "descripcion": suggestion.get("description"),
+                    "quantity_requested": suggestion.get("suggested_qty"),
+                    "summary": f"Traslado {suggestion.get('reference')} {suggestion.get('origin_store_name')} -> {suggestion.get('destination_store_name')}",
+                    "notes": notes,
+                    "metadata": safe_json_dumps(suggestion),
+                },
+            ).scalar_one()
+            created_rows.append({"id": transfer_id, **suggestion})
+    return created_rows
 
 
 def extract_document_candidate(text_value: Optional[str]):
@@ -7721,6 +8596,8 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     canal_envio = args.get("canal_envio", "whatsapp")
     correo_cliente = args.get("correo_cliente", "")
     items_pedido = args.get("items_pedido") or []
+    internal_auth = dict(conversation_context.get("internal_auth") or {})
+    internal_user = resolve_internal_session(internal_auth.get("token")) if internal_auth.get("token") else None
 
     # --- Validación: el LLM DEBE mandar items_pedido con referencias válidas ---
     if not items_pedido:
@@ -7759,6 +8636,9 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         }
         for it in items_pedido
     ]
+    commercial_draft["delivery_channel"] = "email" if canal_envio == "email" else "chat"
+    commercial_draft["contact_email"] = correo_cliente or commercial_draft.get("contact_email")
+    commercial_draft["items_confirmed"] = True
     conversation_context["commercial_draft"] = commercial_draft
 
     if not commercial_draft.get("items"):
@@ -7779,6 +8659,23 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             pass
 
     try:
+        order_id = upsert_commercial_draft(
+            "pedido",
+            context["conversation_id"],
+            context.get("contact_id"),
+            context.get("cliente_id"),
+            commercial_draft,
+        )
+        commercial_draft["draft_id"] = order_id
+        mark_agent_order_status(order_id, "confirmado", metadata_update={"nombre_despacho": nombre_despacho})
+        update_conversation_context(context["conversation_id"], {"commercial_draft": commercial_draft})
+    except Exception as exc:
+        return json.dumps(
+            {"exito": False, "mensaje": f"No pude persistir el pedido en PostgreSQL: {exc}"},
+            ensure_ascii=False,
+        )
+
+    try:
         pdf_id, pdf_filename = store_commercial_pdf(
             context["conversation_id"],
             "pedido",
@@ -7794,6 +8691,43 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
 
     backend_base_url = os.environ.get("BACKEND_PUBLIC_URL", "").rstrip("/")
     pdf_url = f"{backend_base_url}/pdf/{pdf_id}" if backend_base_url else None
+    export_summary = None
+
+    if internal_user:
+        try:
+            export_summary = export_confirmed_order_to_icg(
+                order_id,
+                context,
+                commercial_draft,
+                cliente_contexto,
+                internal_user,
+            )
+            store_outbound_message(
+                context["conversation_id"],
+                None,
+                "system",
+                f"Pedido {order_id} exportado a ICG: {export_summary['file_name']}",
+                export_summary,
+                intent_detectado="pedido_icg_exportado",
+            )
+        except Exception as exc:
+            store_outbound_message(
+                context["conversation_id"],
+                None,
+                "system",
+                f"Error exportando pedido {order_id} a ICG: {exc}",
+                {"error": str(exc), "order_id": order_id},
+                intent_detectado="pedido_icg_error",
+            )
+            return json.dumps(
+                {
+                    "exito": False,
+                    "mensaje": f"El pedido quedó confirmado y el PDF se generó, pero falló la exportación a ICG/Dropbox: {exc}",
+                    "archivo_pdf": pdf_filename,
+                    "order_id": order_id,
+                },
+                ensure_ascii=False,
+            )
 
     if canal_envio == "email" and correo_cliente:
         try:
@@ -7817,6 +8751,8 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             return json.dumps(
                 {"exito": True, "canal": "email", "correo": correo_cliente,
                  "archivo": pdf_filename,
+                 "order_id": order_id,
+                 "export_icg": export_summary,
                  "mensaje": f"El PDF del pedido fue enviado al correo {correo_cliente} exitosamente."},
                 ensure_ascii=False,
             )
@@ -7846,6 +8782,8 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             )
             return json.dumps(
                 {"exito": True, "canal": "whatsapp", "archivo": pdf_filename,
+                 "order_id": order_id,
+                 "export_icg": export_summary,
                  "mensaje": f"El PDF del pedido '{pdf_filename}' fue enviado por WhatsApp exitosamente."},
                 ensure_ascii=False,
             )

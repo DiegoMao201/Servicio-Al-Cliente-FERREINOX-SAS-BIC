@@ -521,4 +521,56 @@ JOIN public.agent_catalog_product p
     ON p.producto_codigo = a.producto_codigo
 WHERE a.activo_agente = true;
 
+CREATE OR REPLACE VIEW public.vw_agent_order_dispatch_pending AS
+SELECT
+    d.id,
+    d.order_id,
+    d.conversation_id,
+    d.contacto_id,
+    d.cliente_id,
+    d.destination_store_code,
+    d.destination_store_name,
+    d.facturador_name,
+    d.facturador_email,
+    d.facturador_phone,
+    d.export_filename,
+    d.dropbox_folder,
+    d.dropbox_path,
+    d.status,
+    d.observations,
+    d.metadata,
+    d.exported_at,
+    d.notified_email_at,
+    d.notified_whatsapp_at,
+    o.numero_externo,
+    o.resumen AS order_summary,
+    wc.nombre_visible AS contacto_nombre
+FROM public.agent_order_dispatch d
+LEFT JOIN public.agent_order o ON o.id = d.order_id
+LEFT JOIN public.whatsapp_contacto wc ON wc.id = d.contacto_id
+WHERE d.status IN ('pendiente', 'en_transito');
+
+CREATE OR REPLACE VIEW public.vw_agent_transfer_request_active AS
+SELECT
+    tr.id,
+    tr.order_dispatch_id,
+    tr.order_id,
+    tr.requested_by_user_id,
+    tr.requested_via,
+    tr.source_store_code,
+    tr.source_store_name,
+    tr.destination_store_code,
+    tr.destination_store_name,
+    tr.referencia,
+    tr.descripcion,
+    tr.quantity_requested,
+    tr.status,
+    tr.summary,
+    tr.notes,
+    tr.metadata,
+    tr.created_at,
+    tr.updated_at
+FROM public.agent_transfer_request tr
+WHERE tr.status IN ('pendiente', 'aprobado', 'en_transito');
+
 COMMIT;
