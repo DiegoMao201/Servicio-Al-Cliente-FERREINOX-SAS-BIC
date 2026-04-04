@@ -4209,7 +4209,7 @@ def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None
     embedding_literal = "[" + ",".join(str(v) for v in embedding) + "]"
 
     marca_clause = ""
-    params: dict = {"embedding": embedding_literal, "top_k": top_k}
+    params: dict = {"top_k": top_k}
     if marca_filter:
         marca_clause = "AND LOWER(marca) = LOWER(:marca)"
         params["marca"] = marca_filter
@@ -4221,10 +4221,10 @@ def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None
                 text(f"""
                     SELECT doc_filename, doc_path_lower, chunk_index, chunk_text,
                            marca, familia_producto, tipo_documento,
-                           1 - (embedding <=> :embedding::vector) AS similarity
+                           1 - (embedding <=> '{embedding_literal}'::vector) AS similarity
                     FROM public.agent_technical_doc_chunk
                     WHERE 1=1 {marca_clause}
-                    ORDER BY embedding <=> :embedding::vector
+                    ORDER BY embedding <=> '{embedding_literal}'::vector
                     LIMIT :top_k
                 """),
                 params,

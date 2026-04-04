@@ -47,6 +47,14 @@ BRAND_PATTERNS = [
     "aerocolor", "abracol", "yale", "goya", "mega", "international",
     "interseal", "intergard", "interchar", "interzone", "interthane",
 ]
+# Paths/filenames to SKIP (not technical sheets)
+SKIP_PATH_TOKENS = [
+    "socios", "/rut ", "/rut_", "rut ", "cedula", "cédula", "camara de comercio",
+    "cámara de comercio", "redam", "certificado bancario", "carta",
+    "nit ", "factura", "cotizacion", "cotización", "remision", "remisión",
+    "orden de compra", "recibo", "comprobante", "extracto",
+    "contrato", "acta", "poder", "autorizacion", "autorización",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -282,8 +290,8 @@ def insert_chunks(engine, chunks_data: list[dict]):
     with engine.begin() as conn:
         for chunk in chunks_data:
             embedding_literal = "[" + ",".join(str(v) for v in chunk["embedding"]) + "]"
-            conn.execute(
-                text("""
+            # Use string formatting for the vector value (safe: values are floats from OpenAI)
+            sql = text(f"""
                     INSERT INTO public.agent_technical_doc_chunk
                         (doc_filename, doc_path_lower, chunk_index, chunk_text,
                          marca, familia_producto, tipo_documento, metadata,
@@ -291,7 +299,7 @@ def insert_chunks(engine, chunks_data: list[dict]):
                     VALUES
                         (:filename, :path_lower, :chunk_index, :chunk_text,
                          :marca, :familia, :tipo_doc, :metadata::jsonb,
-                         :embedding::vector, :token_count)
+                         '{embedding_literal}'::vector, :token_count)
                     ON CONFLICT (doc_path_lower, chunk_index) DO UPDATE SET
                         chunk_text = EXCLUDED.chunk_text,
                         marca = EXCLUDED.marca,
@@ -301,7 +309,9 @@ def insert_chunks(engine, chunks_data: list[dict]):
                         embedding = EXCLUDED.embedding,
                         token_count = EXCLUDED.token_count,
                         ingested_at = now()
-                """),
+                    """)
+            conn.execute(
+                sql,
                 {
                     "filename": chunk["doc_filename"],
                     "path_lower": chunk["doc_path_lower"],
@@ -311,7 +321,6 @@ def insert_chunks(engine, chunks_data: list[dict]):
                     "familia": chunk["familia_producto"],
                     "tipo_doc": chunk["tipo_documento"],
                     "metadata": json.dumps(chunk.get("metadata") or {}, ensure_ascii=False),
-                    "embedding": embedding_literal,
                     "token_count": chunk.get("token_count"),
                 },
             )
@@ -388,8 +397,18 @@ def run_ingestion(full_mode: bool = False, dry_run: bool = False):
         already_ingested = get_ingested_paths(engine)
         logger.info(f"  Ya ingestados: {len(already_ingested)} documentos")
 
-    pending = [e for e in pdf_entries if e["path_lower"] not in already_ingested]
-    logger.info(f"  Pendientes: {len(pending)} PDFs nuevos")
+    # Filter out non-technical documents
+    def is_technical_doc(entry: dict) -> bool:
+        combined = (entry["name"] + " " + entry["path_lower"]).lower()
+        return not any(token in combined for token in SKIP_PATH_TOKENS)
+
+    technical_entries = [e for e in pdf_entries if is_technical_doc(e)]
+    skipped = len(pdf_entries) - len(technical_entries)
+    if skipped:
+        logger.info(f"  Filtrados: {skipped} documentos no-técnicos (RUTs, cédulas, etc.)")
+
+    pending = [e for e in technical_entries if e["path_lower"] not in already_ingested]
+    logger.info(f"  Pendientes: {len(pending)} PDFs técnicos nuevos")
 
     if dry_run:
         for entry in pending:
