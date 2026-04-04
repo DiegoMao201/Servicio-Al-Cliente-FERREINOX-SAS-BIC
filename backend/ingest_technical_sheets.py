@@ -179,15 +179,53 @@ def download_pdf_bytes(dbx, path_lower: str) -> bytes:
 
 
 # ---------------------------------------------------------------------------
-# PDF → texto
+# PDF → texto (extracción mejorada con soporte para tablas)
 # ---------------------------------------------------------------------------
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
+    """Extract text from PDF preserving table structures using PyMuPDF blocks."""
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     pages = []
     for page in doc:
+        # Try table extraction first (PyMuPDF 1.23+)
+        page_parts = []
+        try:
+            tables = page.find_tables()
+            if tables and tables.tables:
+                # Extract tables as formatted text
+                for table in tables:
+                    table_data = table.extract()
+                    if table_data:
+                        formatted_rows = []
+                        for row in table_data:
+                            clean_cells = [str(cell).strip() if cell else "" for cell in row]
+                            # Format as "key: value" for 2-column tables (common in tech sheets)
+                            if len(clean_cells) == 2 and clean_cells[0] and clean_cells[1]:
+                                formatted_rows.append(f"{clean_cells[0]}: {clean_cells[1]}")
+                            elif any(c for c in clean_cells):
+                                formatted_rows.append(" | ".join(c for c in clean_cells if c))
+                        if formatted_rows:
+                            page_parts.append("\n".join(formatted_rows))
+        except Exception:
+            pass  # find_tables not available or failed, fall back to text
+
+        # Get regular text (non-table content)
         text_content = page.get_text("text")
         if text_content and text_content.strip():
-            pages.append(text_content.strip())
+            # If we got tables, merge them with text, avoiding duplication
+            if page_parts:
+                # Use blocks to get text with position info
+                blocks = page.get_text("blocks")
+                non_table_text = []
+                for block in blocks:
+                    if block[6] == 0:  # text block (not image)
+                        block_text = block[4].strip()
+                        if block_text:
+                            non_table_text.append(block_text)
+                if non_table_text:
+                    page_parts.insert(0, "\n".join(non_table_text))
+                pages.append("\n\n".join(page_parts))
+            else:
+                pages.append(text_content.strip())
     doc.close()
     return "\n\n".join(pages)
 
@@ -200,29 +238,111 @@ def clean_extracted_text(raw_text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Chunking
+# Section-aware chunking
 # ---------------------------------------------------------------------------
-def chunk_text(text: str, max_chars: int = CHUNK_MAX_CHARS, overlap: int = CHUNK_OVERLAP_CHARS) -> list[str]:
+SECTION_HEADER_PATTERNS = [
+    r"^[A-ZÁÉÍÓÚÑ\s/]{5,60}$",         # ALL CAPS lines (common section headers)
+    r"^(?:\d+[\.\)]\s*)?[A-ZÁÉÍÓÚÑ][\w\s/]+:?\s*$",  # Numbered sections
+]
+
+def _is_section_header(line: str) -> bool:
+    """Detect if a line is likely a section header in a technical sheet."""
+    stripped = line.strip()
+    if not stripped or len(stripped) < 4 or len(stripped) > 80:
+        return False
+    for pattern in SECTION_HEADER_PATTERNS:
+        if re.match(pattern, stripped):
+            return True
+    return False
+
+
+def _split_into_sections(text: str) -> list[tuple[str, str]]:
+    """Split text into (section_header, section_body) tuples."""
+    lines = text.split("\n")
+    sections = []
+    current_header = "GENERAL"
+    current_body: list[str] = []
+
+    for line in lines:
+        if _is_section_header(line) and line.strip():
+            # Save previous section
+            if current_body:
+                body_text = "\n".join(current_body).strip()
+                if body_text:
+                    sections.append((current_header, body_text))
+            current_header = line.strip()
+            current_body = []
+        else:
+            current_body.append(line)
+
+    # Last section
+    if current_body:
+        body_text = "\n".join(current_body).strip()
+        if body_text:
+            sections.append((current_header, body_text))
+
+    return sections if sections else [("GENERAL", text)]
+
+
+def chunk_text_with_context(text: str, doc_filename: str, marca: str | None,
+                             max_chars: int = CHUNK_MAX_CHARS,
+                             overlap: int = CHUNK_OVERLAP_CHARS) -> list[str]:
+    """Section-aware chunking with document context header in each chunk."""
     if not text:
         return []
-    if len(text) <= max_chars:
-        return [text]
+
+    # Build document context header
+    product_name = re.sub(r"\.pdf$", "", doc_filename, flags=re.IGNORECASE).strip()
+    product_name = re.sub(r"\s*\(.*?\)\s*", " ", product_name).strip()
+    context_header = f"[PRODUCTO: {product_name}]"
+    if marca:
+        context_header += f" [MARCA: {marca}]"
+
+    # Split into sections
+    sections = _split_into_sections(text)
 
     chunks = []
-    start = 0
-    while start < len(text):
-        end = start + max_chars
-        if end < len(text):
-            # Try to break at paragraph or sentence
-            break_at = text.rfind("\n\n", start + max_chars // 2, end)
-            if break_at == -1:
-                break_at = text.rfind(". ", start + max_chars // 2, end)
-            if break_at > start:
-                end = break_at + 1
-        chunk = text[start:end].strip()
-        if chunk:
-            chunks.append(chunk)
-        start = end - overlap if end < len(text) else len(text)
+    for section_header, section_body in sections:
+        # Prepend context + section header to chunk
+        section_prefix = f"{context_header}\n[SECCIÓN: {section_header}]\n\n"
+        available_chars = max_chars - len(section_prefix)
+
+        if len(section_body) <= available_chars:
+            chunks.append(f"{section_prefix}{section_body}")
+        else:
+            # Sub-chunk within section
+            start = 0
+            while start < len(section_body):
+                end = start + available_chars
+                if end < len(section_body):
+                    break_at = section_body.rfind("\n\n", start + available_chars // 2, end)
+                    if break_at == -1:
+                        break_at = section_body.rfind(". ", start + available_chars // 2, end)
+                    if break_at > start:
+                        end = break_at + 1
+                sub_chunk = section_body[start:end].strip()
+                if sub_chunk:
+                    chunks.append(f"{section_prefix}{sub_chunk}")
+                start = end - overlap if end < len(section_body) else len(section_body)
+
+    # If section splitting produced nothing useful, fall back to simple chunking
+    if not chunks:
+        simple_prefix = f"{context_header}\n\n"
+        available = max_chars - len(simple_prefix)
+        start = 0
+        while start < len(text):
+            end = start + available
+            if end < len(text):
+                break_at = text.rfind("\n\n", start + available // 2, end)
+                if break_at == -1:
+                    break_at = text.rfind(". ", start + available // 2, end)
+                if break_at > start:
+                    end = break_at + 1
+            chunk = text[start:end].strip()
+            if chunk:
+                chunks.append(f"{simple_prefix}{chunk}")
+            start = end - overlap if end < len(text) else len(text)
+
     return chunks
 
 
@@ -344,16 +464,17 @@ def ingest_pdf(dbx, openai_client, engine, pdf_entry: dict) -> int:
         return 0
 
     clean_text = clean_extracted_text(raw_text)
-    chunks = chunk_text(clean_text)
+
+    marca = infer_brand(filename, path_lower)
+    familia = infer_family(filename)
+    tipo_doc = infer_doc_type(filename, path_lower)
+
+    chunks = chunk_text_with_context(clean_text, filename, marca)
     if not chunks:
         return 0
 
     logger.info(f"  {len(chunks)} chunks generados, generando embeddings...")
     embeddings = generate_embeddings(openai_client, chunks)
-
-    marca = infer_brand(filename, path_lower)
-    familia = infer_family(filename)
-    tipo_doc = infer_doc_type(filename, path_lower)
 
     chunks_data = []
     for idx, (chunk_text_val, embedding) in enumerate(zip(chunks, embeddings)):
