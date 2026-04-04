@@ -7656,6 +7656,37 @@ def store_commercial_pdf(conversation_id: int, request_type: str, profile_name: 
     return pdf_id, filename
 
 
+def infer_confirmed_order_store_filters(commercial_draft: dict, context: dict, conversation_context: dict, internal_user: Optional[dict] = None):
+    existing_filters = [normalize_store_code(value) for value in (commercial_draft.get("store_filters") or [])]
+    existing_filters = [value for value in existing_filters if value]
+    if existing_filters:
+        return list(dict.fromkeys(existing_filters))
+
+    candidate_texts = []
+    for item in commercial_draft.get("items") or []:
+        original_text = item.get("original_text")
+        if original_text:
+            candidate_texts.append(str(original_text))
+
+    recent_messages = load_recent_conversation_messages(context["conversation_id"], limit=20)
+    for message in reversed(recent_messages):
+        if message.get("direction") != "inbound":
+            continue
+        content = message.get("contenido") or ""
+        if content:
+            candidate_texts.append(content)
+
+    for text_value in candidate_texts:
+        inferred = [normalize_store_code(value) for value in extract_store_filters(text_value)]
+        inferred = [value for value in inferred if value]
+        if inferred:
+            return list(dict.fromkeys(inferred))
+
+    metadata = dict((internal_user or {}).get("metadata") or {})
+    fallback_store = normalize_store_code(metadata.get("store_code"))
+    return [fallback_store] if fallback_store else []
+
+
 def fetch_last_year_purchase_summary(cliente_codigo: Optional[str]):
     if not cliente_codigo:
         return None
@@ -9032,6 +9063,60 @@ def send_whatsapp_document_message(to_phone: str, document_link: str, filename: 
     return response.json()
 
 
+def send_whatsapp_document_bytes(to_phone: str, document_bytes: bytes, filename: str, caption: Optional[str] = None):
+    upload_response = requests.post(
+        f"https://graph.facebook.com/v22.0/{get_whatsapp_phone_number_id()}/media",
+        headers={"Authorization": f"Bearer {get_whatsapp_access_token()}"},
+        data={"messaging_product": "whatsapp", "type": "application/pdf"},
+        files={"file": (filename, document_bytes, "application/pdf")},
+        timeout=30,
+    )
+    if upload_response.status_code >= 400:
+        try:
+            error_payload = upload_response.json()
+        except Exception:
+            error_payload = {"raw": upload_response.text}
+        raise RuntimeError(
+            f"WhatsApp media upload devolvió {upload_response.status_code}: {safe_json_dumps(error_payload)}"
+        )
+
+    media_payload = upload_response.json()
+    media_id = media_payload.get("id")
+    if not media_id:
+        raise RuntimeError(f"WhatsApp media upload no devolvió id: {safe_json_dumps(media_payload)}")
+
+    payload = {
+        "messaging_product": "whatsapp",
+        "to": to_phone.lstrip("+"),
+        "type": "document",
+        "document": {
+            "id": media_id,
+            "filename": filename,
+        },
+    }
+    if caption:
+        payload["document"]["caption"] = caption
+
+    response = requests.post(
+        f"https://graph.facebook.com/v22.0/{get_whatsapp_phone_number_id()}/messages",
+        headers={
+            "Authorization": f"Bearer {get_whatsapp_access_token()}",
+            "Content-Type": "application/json",
+        },
+        json=payload,
+        timeout=30,
+    )
+    if response.status_code >= 400:
+        try:
+            error_payload = response.json()
+        except Exception:
+            error_payload = {"raw": response.text}
+        raise RuntimeError(
+            f"WhatsApp Cloud API devolvió {response.status_code}: {safe_json_dumps(error_payload)}"
+        )
+    return response.json()
+
+
 # ── Agent v2: Function Calling Architecture ─────────────────────────
 
 AGENT_SYSTEM_PROMPT_V2 = """Eres el Asesor Comercial Senior de Ferreinox SAS BIC, una ferretería con 13 años de experiencia. \
@@ -9815,7 +9900,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
 
     # Construir el commercial_draft a partir de lo que manda el LLM
     commercial_draft = conversation_context.get("commercial_draft") or {}
-    store_filters = list(commercial_draft.get("store_filters") or [])
+    store_filters = infer_confirmed_order_store_filters(commercial_draft, context, conversation_context, internal_user)
     confirmed_items = []
     for it in items_pedido:
         reference_value = (it.get("referencia") or "").strip()
@@ -9849,6 +9934,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         )
 
     commercial_draft["items"] = confirmed_items
+    commercial_draft["store_filters"] = store_filters
     commercial_draft["delivery_channel"] = "email" if canal_envio == "email" else "chat"
     commercial_draft["contact_email"] = correo_cliente or commercial_draft.get("contact_email")
     commercial_draft["items_confirmed"] = True
@@ -9907,6 +9993,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     backend_base_url = os.environ.get("BACKEND_PUBLIC_URL", "").rstrip("/")
     pdf_url = f"{backend_base_url}/pdf/{pdf_id}" if backend_base_url else None
     export_summary = None
+    export_error = None
 
     if internal_user:
         try:
@@ -9926,6 +10013,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                 intent_detectado="pedido_icg_exportado",
             )
         except Exception as exc:
+            export_error = str(exc)
             store_outbound_message(
                 context["conversation_id"],
                 None,
@@ -9933,15 +10021,6 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                 f"Error exportando pedido {order_id} a ICG: {exc}",
                 {"error": str(exc), "order_id": order_id},
                 intent_detectado="pedido_icg_error",
-            )
-            return json.dumps(
-                {
-                    "exito": False,
-                    "mensaje": f"El pedido quedó confirmado y el PDF se generó, pero falló la exportación a ICG/Dropbox: {exc}",
-                    "archivo_pdf": pdf_filename,
-                    "order_id": order_id,
-                },
-                ensure_ascii=False,
             )
 
     if canal_envio == "email" and correo_cliente:
@@ -9968,7 +10047,11 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                  "archivo": pdf_filename,
                  "order_id": order_id,
                  "export_icg": export_summary,
-                 "mensaje": f"El PDF del pedido fue enviado al correo {correo_cliente} exitosamente."},
+                 "export_error": export_error,
+                 "mensaje": (
+                     f"El PDF del pedido fue enviado al correo {correo_cliente} exitosamente."
+                     + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
+                 )},
                 ensure_ascii=False,
             )
         except Exception as exc:
@@ -9977,15 +10060,10 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                 ensure_ascii=False,
             )
     else:
-        if not pdf_url:
-            return json.dumps(
-                {"exito": False, "mensaje": "PDF generado pero no se puede enviar (URL del backend no configurada)."},
-                ensure_ascii=False,
-            )
         try:
-            send_whatsapp_document_message(
+            send_whatsapp_document_bytes(
                 context["telefono_e164"],
-                pdf_url,
+                PDF_STORAGE[pdf_id]["buffer"],
                 pdf_filename,
                 caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
             )
@@ -9999,12 +10077,42 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                 {"exito": True, "canal": "whatsapp", "archivo": pdf_filename,
                  "order_id": order_id,
                  "export_icg": export_summary,
-                 "mensaje": f"El PDF del pedido '{pdf_filename}' fue enviado por WhatsApp exitosamente."},
+                 "export_error": export_error,
+                 "mensaje": (
+                     f"El PDF del pedido '{pdf_filename}' fue enviado por WhatsApp exitosamente."
+                     + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
+                 )},
                 ensure_ascii=False,
             )
         except Exception as exc:
+            if pdf_url:
+                try:
+                    send_whatsapp_document_message(
+                        context["telefono_e164"],
+                        pdf_url,
+                        pdf_filename,
+                        caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
+                    )
+                    return json.dumps(
+                        {"exito": True, "canal": "whatsapp", "archivo": pdf_filename,
+                         "order_id": order_id,
+                         "export_icg": export_summary,
+                         "export_error": export_error,
+                         "mensaje": (
+                             f"El PDF del pedido '{pdf_filename}' fue enviado por WhatsApp exitosamente."
+                             + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
+                         )},
+                        ensure_ascii=False,
+                    )
+                except Exception:
+                    pass
             return json.dumps(
-                {"exito": False, "mensaje": f"PDF generado pero no se pudo enviar por WhatsApp: {exc}"},
+                {"exito": False,
+                 "mensaje": f"PDF generado pero no se pudo enviar por WhatsApp: {exc}",
+                 "archivo_pdf": pdf_filename,
+                 "order_id": order_id,
+                 "export_icg": export_summary,
+                 "export_error": export_error},
                 ensure_ascii=False,
             )
 
