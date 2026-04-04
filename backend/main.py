@@ -2007,6 +2007,8 @@ def extract_internal_customer_candidate(text_value: Optional[str]):
         "nombre",
         "cuanto",
         "cuánto",
+        "compro",
+        "compró",
         "suma",
         "suma lo",
         "sumar",
@@ -2018,9 +2020,15 @@ def extract_internal_customer_candidate(text_value: Optional[str]):
         "deuda",
         "debo",
         "debido",
+        "ano",
+        "año",
+        "en",
+        "el",
     ]:
         cleaned = re.sub(rf"\b{re.escape(fragment)}\b", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
+    if not cleaned:
+        return None
     candidate = extract_identity_lookup_candidate(cleaned, {}, allow_unprompted=True)
     if candidate:
         return candidate
@@ -2067,7 +2075,7 @@ def detect_internal_query_intent(text_value: Optional[str]):
         return "consulta_traslados"
     if any(fragment in normalized for fragment in ["cartera", "saldo", "vencid"]):
         return "consulta_cartera"
-    if any(fragment in normalized for fragment in ["compras", "compra", "ultimo pedido", "último pedido", "ultima compra", "última compra"]):
+    if any(fragment in normalized for fragment in ["compras", "compra", "compro", "compró", "ultimo pedido", "último pedido", "ultima compra", "última compra"]):
         return "consulta_compras"
     if any(fragment in normalized for fragment in ["contexto", "resumen", "perfil", "todo del cliente", "info del cliente"]):
         return "consulta_contexto"
@@ -2625,14 +2633,33 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
                 f"máximo {totals.get('max_dias_vencido', customer_row.get('max_dias_vencido') or 0)} día(s)."
             )
     elif intent == "consulta_compras":
-        purchase_summary = fetch_latest_purchase_detail(cliente_contexto.get("cliente_codigo"))
-        if not purchase_summary:
-            response_text = f"No encontré compras recientes para {customer_row.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}."
+        purchase_query = extract_purchase_query(content)
+        if purchase_query.get("wants_last_purchase"):
+            purchase_summary = fetch_latest_purchase_detail(cliente_contexto.get("cliente_codigo"))
+            if not purchase_summary:
+                response_text = f"No encontré compras recientes para {customer_row.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}."
+            else:
+                totals = purchase_summary.get("totals") or {}
+                top_products = ", ".join(
+                    (item.get("nombre_articulo") or "")
+                    for item in (purchase_summary.get("products") or [])[:3]
+                    if item.get("nombre_articulo")
+                ) or "sin detalle"
+                response_text = (
+                    f"{customer_row.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}\n"
+                    f"Última compra: {purchase_summary.get('fecha_venta') or 'sin fecha'} por {format_currency(totals.get('valor_total'))}.\n"
+                    f"Productos: {top_products}"
+                )
         else:
-            response_text = (
-                f"{customer_row.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}\n"
-                f"Última compra: {purchase_summary.get('purchase_date') or 'sin fecha'} por {format_currency(purchase_summary.get('purchase_total'))}.\n"
-                f"Productos: {', '.join((item.get('nombre_articulo') or '') for item in (purchase_summary.get('top_products') or [])[:3] if item.get('nombre_articulo')) or 'sin detalle'}"
+            purchases = fetch_purchase_summary(
+                cliente_contexto.get("cliente_codigo"),
+                purchase_query.get("start_date"),
+                purchase_query.get("end_date"),
+            )
+            response_text = build_purchase_summary_response_text(
+                customer_row.get("nombre_cliente") or cliente_contexto.get("cliente_codigo"),
+                purchase_query,
+                purchases,
             )
     else:
         purchase_summary = fetch_latest_purchase_detail(cliente_contexto.get("cliente_codigo"))
@@ -6975,6 +7002,8 @@ def detect_business_intent(text_value: Optional[str]):
             "ultimo pedido",
             "último pedido",
             "compra",
+            "compro",
+            "compró",
             "que he comprado",
             "qué he comprado",
             "que productos compre",
@@ -7151,6 +7180,28 @@ def month_date_range(year: int, month: int):
     return start_date, end_date
 
 
+def clamp_purchase_end_date(end_date: date, today: Optional[date] = None):
+    today = today or date.today()
+    return min(end_date, today)
+
+
+def format_purchase_period_label(month_numbers: list[int], year_value: int):
+    unique_months = []
+    for month_number in month_numbers:
+        if month_number not in unique_months:
+            unique_months.append(month_number)
+    month_names = []
+    for month_number in unique_months:
+        month_name = next((name for name, value in MONTH_ALIASES.items() if value == month_number and len(name) > 3), None)
+        if month_name:
+            month_names.append(month_name)
+    if not month_names:
+        return f"{year_value}"
+    if len(month_names) == 1:
+        return f"{month_names[0]} de {year_value}"
+    return f"{month_names[0]} a {month_names[-1]} de {year_value}"
+
+
 def extract_purchase_query(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     today = date.today()
@@ -7182,6 +7233,52 @@ def extract_purchase_query(text_value: Optional[str]):
             )
             return result
 
+    year_match = re.search(r"\b(?:en\s+el\s+)?(?:ano|año)\s+(\d{4}|este ano|este año)\b", normalized)
+    explicit_year = None
+    if year_match:
+        year_token = year_match.group(1)
+        explicit_year = today.year if year_token in {"este ano", "este año"} else int(year_token)
+
+    month_mentions = []
+    for month_name, month_value in MONTH_ALIASES.items():
+        if month_name in normalized:
+            month_mentions.append((normalized.find(month_name), month_value))
+
+    if month_mentions:
+        month_mentions.sort(key=lambda item: item[0])
+        ordered_months = [item[1] for item in month_mentions]
+        year_value = explicit_year or today.year
+        start_month = min(ordered_months)
+        end_month = max(ordered_months)
+        start_date, _ = month_date_range(year_value, start_month)
+        _, end_date = month_date_range(year_value, end_month)
+        if year_value == today.year:
+            end_date = clamp_purchase_end_date(end_date, today)
+        result.update(
+            {
+                "start_date": start_date,
+                "end_date": end_date,
+                "label": format_purchase_period_label(ordered_months, year_value),
+                "has_time_filter": True,
+            }
+        )
+        return result
+
+    if explicit_year is not None:
+        start_date = date(explicit_year, 1, 1)
+        end_date = date(explicit_year, 12, 31)
+        if explicit_year == today.year:
+            end_date = today
+        result.update(
+            {
+                "start_date": start_date,
+                "end_date": end_date,
+                "label": f"{explicit_year}",
+                "has_time_filter": True,
+            }
+        )
+        return result
+
     for month_name, month_value in MONTH_ALIASES.items():
         if month_name in normalized:
             year_value = today.year
@@ -7190,6 +7287,8 @@ def extract_purchase_query(text_value: Optional[str]):
                 year_token = year_match.group(1)
                 year_value = today.year if year_token in {"este ano", "este año"} else int(year_token)
             start_date, end_date = month_date_range(year_value, month_value)
+            if year_value == today.year:
+                end_date = clamp_purchase_end_date(end_date, today)
             result.update(
                 {
                     "start_date": start_date,
@@ -8183,6 +8282,35 @@ def fetch_latest_purchase_detail(cliente_codigo: Optional[str]):
         ).mappings().all()
 
     return {"fecha_venta": latest_date, "totals": dict(totals), "products": [dict(row) for row in products]}
+
+
+def build_purchase_summary_response_text(cliente_label: str, purchase_query: dict, purchases: Optional[dict]):
+    totals = (purchases or {}).get("totals") or {}
+    product_rows = (purchases or {}).get("products") or []
+    if not totals or not totals.get("ultima_compra"):
+        if purchase_query.get("has_time_filter"):
+            return f"No encontré compras registradas para {cliente_label} en {purchase_query.get('label')}."
+        return f"No encontré compras registradas en los últimos 12 meses para {cliente_label}."
+
+    top_summary = "; ".join(
+        f"{row['nombre_articulo']} ({format_currency(row['valor'])}, {int(float(row['unidades'] or 0))} unidades)"
+        for row in product_rows[:5]
+    ) or "sin productos destacados"
+    if purchase_query.get("has_time_filter"):
+        return (
+            f"{cliente_label}\n"
+            f"En {purchase_query.get('label')} compró {format_currency(totals.get('valor_total'))}.\n"
+            f"Fueron {int(totals.get('lineas') or 0)} líneas y {int(float(totals.get('unidades_totales') or 0))} unidades.\n"
+            f"Primera compra del periodo: {totals.get('primera_compra') or 'sin fecha'} | última compra: {totals.get('ultima_compra') or 'sin fecha'}.\n"
+            f"Productos principales: {top_summary}"
+        )
+    return (
+        f"{cliente_label}\n"
+        f"En los últimos 12 meses compró {format_currency(totals.get('valor_total'))}.\n"
+        f"Acumula {int(totals.get('lineas') or 0)} líneas y {int(float(totals.get('unidades_totales') or 0))} unidades.\n"
+        f"Última compra: {totals.get('ultima_compra') or 'sin fecha'}.\n"
+        f"Productos principales: {top_summary}"
+    )
 
 
 def fetch_overdue_documents(cliente_codigo: Optional[str]):
