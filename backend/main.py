@@ -182,6 +182,33 @@ TECHNICAL_DOC_CACHE = {"loaded_at": 0.0, "entries": []}
 
 
 TECHNICAL_ADVISORY_KEYWORDS = [
+    "humedad",
+    "humedo",
+    "húmedo",
+    "goteras",
+    "gotera",
+    "filtracion",
+    "filtración",
+    "capilaridad",
+    "moho",
+    "hongo",
+    "manchas negras",
+    "salitre",
+    "se cae la pintura",
+    "se descascara",
+    "descascaramiento",
+    "ampollamiento",
+    "corrosion",
+    "corrosión",
+    "oxido",
+    "óxido",
+    "barniz",
+    "laca",
+    "madera",
+    "metal",
+    "hierro",
+    "galvanizado",
+    "aluminio",
     "como aplicar",
     "cómo aplicar",
     "como aplico",
@@ -7288,6 +7315,275 @@ def build_technical_document_reply(profile_name: Optional[str], document_request
     }
 
 
+def find_technical_document_entry_by_name(filename: Optional[str]):
+    if not filename:
+        return None
+    normalized_target = normalize_text_value(filename)
+    for entry in list_technical_document_entries():
+        if normalize_text_value(entry.get("name")) == normalized_target:
+            return entry
+    return None
+
+
+def infer_technical_problem_category(text_value: Optional[str], existing_category: Optional[str] = None):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return existing_category or "general"
+    if any(token in normalized for token in ["humedad", "gotera", "goteras", "filtracion", "filtración", "capilaridad", "moho", "salitre", "descascar", "manchas negras", "barranco"]):
+        return "humedad"
+    if any(token in normalized for token in ["madera", "barniz", "laca", "lasur", "protector madera"]):
+        return "madera"
+    if any(token in normalized for token in ["metal", "hierro", "galvanizado", "aluminio", "corrosion", "corrosión", "oxido", "óxido", "anticorrosivo"]):
+        return "metal"
+    return existing_category or "general"
+
+
+def _merge_unique_text_values(existing_values: Optional[list[str]], new_values: list[str]) -> list[str]:
+    merged = list(existing_values or [])
+    for value in new_values:
+        if value and value not in merged:
+            merged.append(value)
+    return merged
+
+
+def extract_technical_advisory_case(text_value: Optional[str], conversation_context: Optional[dict]):
+    case = dict((conversation_context or {}).get("technical_advisory_case") or {})
+    normalized = normalize_text_value(text_value)
+    category = infer_technical_problem_category(text_value, case.get("category"))
+    case.update({
+        "active": True,
+        "category": category,
+        "last_user_message": text_value or "",
+    })
+
+    if category == "humedad":
+        if any(token in normalized for token in ["barranco", "terreno", "talud", "contencion", "contención"]):
+            case["source_context"] = "muro contra terreno o barranco"
+            case["probable_pressure"] = "presion_negativa"
+        elif any(token in normalized for token in ["tuberia", "tubería", "tubo", "fuga"]):
+            case["source_context"] = "posible tuberia o fuga interna"
+        elif any(token in normalized for token in ["fachada", "lluvia", "exterior", "afuera"]):
+            case["source_context"] = "posible filtracion desde fachada o exterior"
+
+        if any(token in normalized for token in ["interior", "adentro", "dentro de la casa", "casa"]):
+            case["wall_location"] = "interior"
+        elif any(token in normalized for token in ["exterior", "fachada", "afuera"]):
+            case["wall_location"] = "exterior"
+
+        if "obra negra" in normalized:
+            case["surface_state"] = "obra negra"
+        elif any(token in normalized for token in ["pintada", "pintado", "pintura"]):
+            case["surface_state"] = "pintada"
+        elif any(token in normalized for token in ["estuco", "estucada", "estucado"]):
+            case["surface_state"] = "estucada"
+
+        symptoms = []
+        if any(token in normalized for token in ["descascar", "se cae la pintura", "pintura caida", "pintura caída"]):
+            symptoms.append("descascaramiento")
+        if any(token in normalized for token in ["manchas negras", "negra", "negras", "moho", "hongo"]):
+            symptoms.append("manchas negras o moho")
+        if any(token in normalized for token in ["humeda", "húmeda", "humedo", "húmedo"]):
+            symptoms.append("superficie humeda")
+        if any(token in normalized for token in ["salitre", "polvillo blanco", "blanquea"]):
+            symptoms.append("salitre")
+        case["symptoms"] = _merge_unique_text_values(case.get("symptoms"), symptoms)
+
+        case["ready"] = bool(case.get("source_context") and case.get("surface_state") and case.get("symptoms"))
+
+    elif category == "madera":
+        if any(token in normalized for token in ["intemperie", "exterior", "sol", "lluvia"]):
+            case["exposure"] = "intemperie"
+        elif any(token in normalized for token in ["interior", "bajo techo", "adentro"]):
+            case["exposure"] = "bajo techo"
+
+        if any(token in normalized for token in ["barniz", "laca", "pintada", "pintado", "tiene recubrimiento", "ya tiene"]):
+            case["previous_coating"] = "con recubrimiento previo"
+        elif any(token in normalized for token in ["virgen", "sin pintar", "sin barniz", "madera nueva"]):
+            case["previous_coating"] = "sin recubrimiento previo"
+
+        case["ready"] = bool(case.get("exposure") and case.get("previous_coating"))
+
+    elif category == "metal":
+        if any(token in normalized for token in ["hierro", "ferroso", "acero al carbon", "acero al carbón"]):
+            case["metal_type"] = "metal ferroso"
+        elif "galvanizado" in normalized:
+            case["metal_type"] = "galvanizado"
+        elif "aluminio" in normalized:
+            case["metal_type"] = "aluminio"
+
+        if any(token in normalized for token in ["marino", "mar", "costa", "playa"]):
+            case["environment"] = "marino"
+        elif any(token in normalized for token in ["industrial", "quimico", "químico", "planta"]):
+            case["environment"] = "industrial"
+        elif any(token in normalized for token in ["urbano", "ciudad", "residencial"]):
+            case["environment"] = "urbano"
+
+        case["ready"] = bool(case.get("metal_type") and case.get("environment"))
+
+    else:
+        case["ready"] = False
+
+    return case
+
+
+def build_technical_diagnostic_questions(technical_case: dict) -> list[str]:
+    category = technical_case.get("category")
+    questions: list[str] = []
+    if category == "humedad":
+        if not technical_case.get("source_context"):
+            questions.append("¿Esa pared te da contra terreno, barranco, fachada o crees que viene de una tubería?")
+        if not technical_case.get("surface_state"):
+            questions.append("¿La pared está pintada, estucada o en obra negra?")
+        if not technical_case.get("symptoms"):
+            questions.append("¿Qué síntoma ves más claro: se descascara, sale moho, blanquea o solo se siente húmeda?")
+        if not technical_case.get("wall_location"):
+            questions.append("¿Eso te está pasando por la cara interior del muro o por la exterior?")
+    elif category == "madera":
+        if not technical_case.get("exposure"):
+            questions.append("¿Esa madera va a quedar a la intemperie o bajo techo?")
+        if not technical_case.get("previous_coating"):
+            questions.append("¿La madera ya tiene barniz/laca encima o está virgen?")
+    elif category == "metal":
+        if not technical_case.get("metal_type"):
+            questions.append("¿Ese metal es hierro/acero, galvanizado o aluminio?")
+        if not technical_case.get("environment"):
+            questions.append("¿Va a trabajar en ambiente urbano, industrial o marino?")
+    else:
+        questions.append("¿Qué material o superficie vas a tratar exactamente?")
+        questions.append("¿Ese problema es interior, exterior o a la intemperie?")
+    return questions[:2]
+
+
+def build_technical_search_query(technical_case: dict, user_message: Optional[str] = None) -> str:
+    category = technical_case.get("category") or "general"
+    parts: list[str] = []
+    if category == "humedad":
+        parts.extend([
+            "humedad en muro",
+            technical_case.get("source_context") or "",
+            "presion negativa" if technical_case.get("probable_pressure") == "presion_negativa" else "",
+            technical_case.get("wall_location") or "",
+            technical_case.get("surface_state") or "",
+            " ".join(technical_case.get("symptoms") or []),
+        ])
+    elif category == "madera":
+        parts.extend([
+            "sistema para madera",
+            technical_case.get("exposure") or "",
+            technical_case.get("previous_coating") or "",
+        ])
+    elif category == "metal":
+        parts.extend([
+            "sistema anticorrosivo",
+            technical_case.get("metal_type") or "",
+            technical_case.get("environment") or "",
+        ])
+    else:
+        parts.append(user_message or technical_case.get("last_user_message") or "")
+    query = " ".join(part for part in parts if part).strip()
+    return query or (user_message or technical_case.get("last_user_message") or "")
+
+
+def generate_grounded_technical_reply(technical_case: dict, rag_context: str, user_message: Optional[str] = None) -> str:
+    client = get_openai_client()
+    case_summary = safe_json_dumps(technical_case)
+    response = client.chat.completions.create(
+        model=get_openai_model(),
+        temperature=0.1,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Eres el asesor técnico senior de Ferreinox. Responde SOLO con base en el contexto recuperado. "
+                    "PROHIBIDO inventar productos, rendimientos, pasos o proporciones que no estén en el texto. "
+                    "No menciones inventario ni listas genéricas. Si falta un dato exacto, dilo claramente. "
+                    "Redacta máximo 6 líneas, en tono colombiano, útil y comercial. "
+                    "Si el contexto menciona un sistema o producto concreto, explícalo. Si no lo menciona, no lo inventes. "
+                    "Cierra preguntando si quiere que le cotices el sistema correcto."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Caso diagnosticado: {case_summary}\n"
+                    f"Mensaje actual del cliente: {user_message or technical_case.get('last_user_message') or ''}\n\n"
+                    f"Contexto recuperado de fichas/FDS:\n{rag_context}"
+                ),
+            },
+        ],
+    )
+    return (response.choices[0].message.content or "").strip()
+
+
+def should_continue_technical_advisory_flow(conversation_context: Optional[dict], detected_intent: Optional[str], text_value: Optional[str]):
+    technical_case = dict((conversation_context or {}).get("technical_advisory_case") or {})
+    if not technical_case.get("active"):
+        return False
+    if detected_intent in {"pedido", "cotizacion", "consulta_cartera", "consulta_compras", "consulta_documentacion", "reclamo_servicio"}:
+        return False
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    return True
+
+
+def build_technical_advisory_flow_reply(profile_name: Optional[str], user_message: Optional[str], conversation_context: Optional[dict]):
+    technical_case = extract_technical_advisory_case(user_message, conversation_context)
+    if not technical_case.get("ready"):
+        questions = build_technical_diagnostic_questions(technical_case)
+        intro_map = {
+            "humedad": "Claro. Para no mandarte a comprar algo que no te sirva, necesito cerrar bien el diagnóstico.",
+            "madera": "Claro. Para recomendarte el sistema correcto para esa madera, primero cierro dos datos clave.",
+            "metal": "Claro. Para llevarte al sistema anticorrosivo correcto, primero necesito ubicar bien el metal y el ambiente.",
+            "general": "Claro. Para recomendarte bien y no adivinar, primero cierro dos datos clave.",
+        }
+        response_text = intro_map.get(technical_case.get("category"), intro_map["general"])
+        if questions:
+            response_text += " " + " ".join(questions)
+        technical_case["stage"] = "diagnosing"
+        return {
+            "response_text": response_text,
+            "intent": "asesoria_tecnica",
+            "context_updates": {"technical_advisory_case": technical_case},
+        }
+
+    search_query = build_technical_search_query(technical_case, user_message)
+    chunks = search_technical_chunks(search_query, top_k=6)
+    rag_context = build_rag_context(chunks, max_chunks=4)
+    source_file = next((chunk.get("doc_filename") for chunk in chunks if chunk.get("similarity", 0) >= 0.25 and chunk.get("doc_filename")), None)
+    technical_case["search_query"] = search_query
+    technical_case["source_file"] = source_file
+
+    if not rag_context:
+        technical_case["stage"] = "diagnosed_without_rag"
+        response_text = (
+            "Con lo que me cuentas ya tengo mejor ubicado el caso, pero no te voy a mandar a comprar un sellador cualquiera sin una ficha que lo respalde. "
+            "En la base técnica no me salió un sistema suficientemente claro para este diagnóstico exacto. "
+            "Si quieres, lo validamos con una ficha puntual del fabricante o te ayudo a aterrizar el sistema antes de cotizar."
+        )
+        return {
+            "response_text": response_text,
+            "intent": "asesoria_tecnica",
+            "context_updates": {"technical_advisory_case": technical_case},
+        }
+
+    try:
+        response_text = generate_grounded_technical_reply(technical_case, rag_context, user_message)
+    except Exception:
+        response_text = (
+            "Ya tengo el diagnóstico y encontré respaldo técnico, pero prefiero no resumírtelo mal en este momento. "
+            "Te ayudo a validarlo con la ficha base correcta para no hacerte comprar algo que no te sirva."
+        )
+
+    technical_case["stage"] = "recommended"
+    return {
+        "response_text": response_text,
+        "intent": "asesoria_tecnica",
+        "context_updates": {"technical_advisory_case": technical_case},
+        "technical_source_filename": source_file,
+    }
+
+
 def detect_business_intent(text_value: Optional[str]):
     if not text_value:
         return "consulta_general"
@@ -7662,6 +7958,7 @@ def detect_context_switch(conversation_context: Optional[dict], detected_intent:
     tracked_intents = {
         "consulta_productos",
         "consulta_documentacion",
+        "asesoria_tecnica",
         "consulta_cartera",
         "consulta_compras",
         "reclamo_servicio",
@@ -11841,6 +12138,7 @@ async def receive_whatsapp_webhook(request: Request):
                                 "pending_product_clarification": None,
                                 "pending_document_options": None,
                                 "last_product_request": None,
+                                "technical_advisory_case": None,
                                 "internal_auth": None,
                                 "internal_last_cliente_codigo": None,
                                 "awaiting_internal_auth_cedula": None,
@@ -11873,6 +12171,16 @@ async def receive_whatsapp_webhook(request: Request):
                 if content and message_type in {"text", "button", "interactive"}:
                     try:
                         ai_result = handle_internal_whatsapp_message(content, context, conversation_context)
+                        detected_intent = detect_business_intent(content)
+                        if ai_result is None and (
+                            detected_intent == "asesoria_tecnica"
+                            or should_continue_technical_advisory_flow(conversation_context, detected_intent, content)
+                        ):
+                            ai_result = build_technical_advisory_flow_reply(
+                                context.get("nombre_visible"),
+                                content,
+                                conversation_context,
+                            )
                         if ai_result is None:
                             ai_result = generate_agent_reply_v2(
                                 context.get("nombre_visible"),
@@ -11908,6 +12216,22 @@ async def receive_whatsapp_webhook(request: Request):
                             {"error": str(exc), "response_text": response_text},
                             intent_detectado=ai_result.get("intent"),
                         )
+
+                    source_filename = ai_result.get("technical_source_filename") if isinstance(ai_result, dict) else None
+                    if source_filename:
+                        try:
+                            doc_entry = find_technical_document_entry_by_name(source_filename)
+                            if doc_entry:
+                                _send_document_and_respond(doc_entry, context)
+                        except Exception as exc:
+                            store_outbound_message(
+                                context["conversation_id"],
+                                None,
+                                "system",
+                                f"No fue posible enviar ficha técnica de respaldo: {exc}",
+                                {"error": str(exc), "filename": source_filename},
+                                intent_detectado="consulta_documentacion",
+                            )
 
                     # Update conversation context
                     context_updates = {
