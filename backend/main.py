@@ -1084,10 +1084,26 @@ def build_employee_username(record: dict):
 
 
 def extract_internal_cedula_candidate(content: Optional[str]):
-    match = INTERNAL_CEDULA_PATTERN.search(content or "")
+    raw_content = (content or "").strip()
+    if not raw_content:
+        return None
+
+    normalized = normalize_text_value(raw_content)
+    if any(fragment in normalized for fragment in ["login ", "pedido", "cotizacion", "cotización", "traslado", "galon", "galón", "cunete", "cuñete"]):
+        labeled_match = re.search(r"(?:cedula|cédula|documento|doc)\s*(?:es|:)?\s*([0-9][0-9.\s-]{5,})", raw_content, re.IGNORECASE)
+        if labeled_match:
+            labeled_digits = parse_employee_document(labeled_match.group(1))
+            if labeled_digits and 6 <= len(labeled_digits) <= 15:
+                return labeled_digits
+        compact_digits = parse_employee_document(raw_content)
+        if compact_digits and 6 <= len(compact_digits) <= 15 and re.fullmatch(r"[0-9.\s-]+", raw_content):
+            return compact_digits
+        return None
+
+    match = INTERNAL_CEDULA_PATTERN.search(raw_content)
     if match:
         return match.group(1)
-    digits = parse_employee_document(content)
+    digits = parse_employee_document(raw_content)
     if digits and 6 <= len(digits) <= 15:
         return digits
     return None
@@ -2222,16 +2238,35 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
     if not content:
         return None
 
-    login_reply = build_internal_login_reply(content, context, conversation_context)
-    if login_reply:
-        return login_reply
+    internal_auth = dict((conversation_context or {}).get("internal_auth") or {})
+    active_internal_user = resolve_internal_session(internal_auth.get("token")) if internal_auth.get("token") else None
+
+    if active_internal_user:
+        internal_auth = build_internal_auth_context(
+            active_internal_user,
+            internal_auth.get("token"),
+            active_internal_user.get("session_expires_at"),
+        )
+        if isinstance(conversation_context, dict):
+            conversation_context["internal_auth"] = internal_auth
+            conversation_context["awaiting_internal_auth_cedula"] = None
+    elif internal_auth.get("token"):
+        return {
+            "response_text": "La sesión interna venció. Vuelve a ingresar con login usuario clave o envíame tu cédula nuevamente.",
+            "intent": "internal_auth_expired",
+            "context_updates": {"internal_auth": None, "awaiting_internal_auth_cedula": None, "internal_transfer_flow": None},
+        }
 
     normalized = normalize_text_value(content)
+    if not active_internal_user:
+        login_reply = build_internal_login_reply(content, context, conversation_context)
+        if login_reply:
+            return login_reply
+
     if normalized in INTERNAL_LOGOUT_PATTERNS:
         return build_internal_logout_reply(conversation_context)
 
     employee_by_phone = find_employee_record_by_phone(context.get("telefono_e164"))
-    internal_auth = dict((conversation_context or {}).get("internal_auth") or {})
     if employee_by_phone and not internal_auth.get("token"):
         return {
             "response_text": "Antes de seguir necesito validar tu acceso interno. Envíame tu cédula para activar la sesión de colaborador.",
@@ -2239,7 +2274,7 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
             "context_updates": {"awaiting_internal_auth_cedula": True},
         }
 
-    if not internal_auth.get("token"):
+    if not active_internal_user:
         if detect_internal_query_intent(content):
             return {
                 "response_text": "Para consultas internas primero debes iniciar sesión. Si eres colaborador, envíame tu cédula. Si eres usuario técnico legado, puedes escribir login usuario clave.",
@@ -2248,13 +2283,7 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
             }
         return None
 
-    internal_user = resolve_internal_session(internal_auth.get("token"))
-    if not internal_user:
-        return {
-            "response_text": "La sesión interna venció. Vuelve a ingresar con login usuario clave.",
-            "intent": "internal_auth_expired",
-            "context_updates": {"internal_auth": None},
-        }
+    internal_user = active_internal_user
 
     pending_transfer_flow_reply = handle_pending_internal_transfer_flow(content, context, conversation_context, internal_user, internal_auth)
     if pending_transfer_flow_reply:
