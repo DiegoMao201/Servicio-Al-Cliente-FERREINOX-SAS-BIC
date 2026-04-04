@@ -4161,9 +4161,18 @@ def extract_product_codes(text_value: Optional[str]):
     excluded_codes = {"3en1", "p11", "t11", "p53", "1gl", "5gl"}
     codes = []
     seen_codes = set()
-    for raw_code in re.findall(r"\b[a-z]?\d[a-z0-9-]{1,14}\b|\b\d{4,10}\b", normalized):
+
+    raw_candidates = re.findall(r"\b[a-z]?\d[a-z0-9-]{1,14}\b|\b\d{4,10}\b|\b[a-z0-9-]{4,16}\b", normalized)
+    for prefix, suffix in re.findall(r"\b(sku|ref|referencia|cod|codigo)\s*[-/]?\s*(\d{3,10}[a-z0-9-]{0,8})\b", normalized):
+        raw_candidates.append(f"{prefix}{suffix}")
+
+    for raw_code in raw_candidates:
         cleaned_code = normalize_reference_value(raw_code)
         if len(cleaned_code) < 3 or cleaned_code in seen_codes or cleaned_code in excluded_codes:
+            continue
+        has_letters = bool(re.search(r"[a-z]", cleaned_code))
+        has_digits = bool(re.search(r"\d", cleaned_code))
+        if not re.fullmatch(r"\d{4,10}", cleaned_code) and not (has_letters and has_digits):
             continue
         if re.fullmatch(r"\d{1,3}mm", cleaned_code):
             continue
@@ -9098,6 +9107,154 @@ def hydrate_curated_rows_with_store_inventory(connection, curated_rows: list[dic
     return hydrated_rows or curated_rows
 
 
+def rank_product_match_rows(product_rows: list[dict], product_request: Optional[dict], normalized_query: Optional[str]):
+    if not product_rows:
+        return []
+
+    request = product_request or {}
+    brand_filters = request.get("brand_filters") or []
+    core_terms = request.get("core_terms") or []
+    preferred_family_terms = expand_product_terms([normalize_reference_value(core_terms[0])]) if core_terms else []
+    specific_terms = get_specific_product_terms(request)
+    code_terms = []
+    seen_code_terms = set()
+    for raw_code in request.get("product_codes") or []:
+        normalized_code = normalize_reference_value(raw_code)
+        if normalized_code and normalized_code not in seen_code_terms:
+            seen_code_terms.add(normalized_code)
+            code_terms.append(normalized_code)
+
+    ranked_rows = []
+    for row in product_rows:
+        candidate = dict(row)
+        candidate_text = " ".join(
+            str(value)
+            for value in [
+                candidate.get("descripcion") or candidate.get("nombre_articulo"),
+                candidate.get("referencia") or candidate.get("codigo_articulo"),
+                candidate.get("producto_codigo"),
+                candidate.get("marca") or candidate.get("marca_producto"),
+                candidate.get("familia_consulta"),
+                candidate.get("producto_padre_busqueda"),
+            ]
+            if value
+        )
+        normalized_candidate_text = normalize_text_value(candidate_text)
+        compact_candidate_text = normalize_reference_value(candidate_text)
+        candidate_reference = normalize_reference_value(
+            candidate.get("referencia") or candidate.get("producto_codigo") or candidate.get("codigo_articulo")
+        )
+        candidate_presentation = infer_product_presentation_from_row(candidate)
+        candidate_brand = infer_product_brand_from_row(candidate)
+        candidate_size = infer_product_size_from_row(candidate)
+        candidate_direction = infer_product_direction_from_row(candidate)
+        candidate_color = infer_product_color_from_row(candidate)
+        candidate_finish = infer_product_finish_from_row(candidate)
+
+        specific_matches = 0
+        for term in specific_terms:
+            normalized_term = normalize_text_value(term)
+            compact_term = normalize_reference_value(term)
+            if (
+                normalized_term and normalized_term in normalized_candidate_text
+            ) or (
+                compact_term and len(compact_term) >= 4 and compact_term in compact_candidate_text
+            ):
+                specific_matches += 1
+
+        exact_code_matches = 0
+        for code_term in code_terms:
+            if not code_term:
+                continue
+            if candidate_reference == code_term or code_term in compact_candidate_text:
+                exact_code_matches += 1
+
+        candidate["exact_code_score"] = exact_code_matches
+        candidate["fuzzy_score"] = round(sequence_similarity(normalized_query, candidate_text), 4)
+        candidate["family_score"] = 1 if any(term and term in normalized_candidate_text for term in preferred_family_terms[:5]) else 0
+        candidate["specific_score"] = specific_matches
+        candidate["presentation_score"] = 1 if request.get("requested_unit") and candidate_presentation == request.get("requested_unit") else 0
+        candidate["brand_score"] = 1 if brand_filters and candidate_brand in brand_filters else 0
+        candidate["size_score"] = 1 if (request.get("size_filters") or []) and candidate_size in (request.get("size_filters") or []) else 0
+        candidate["direction_score"] = 1 if (request.get("direction_filters") or []) and candidate_direction in (request.get("direction_filters") or []) else 0
+        candidate["color_score"] = 1 if (request.get("color_filters") or []) and candidate_color in (request.get("color_filters") or []) else 0
+        candidate["finish_score"] = 1 if (request.get("finish_filters") or []) and candidate_finish in (request.get("finish_filters") or []) else 0
+        ranked_rows.append(candidate)
+
+    ranked_rows.sort(
+        key=lambda item: (
+            item.get("exact_code_score") or 0,
+            item.get("direction_score") or 0,
+            item.get("size_score") or 0,
+            item.get("presentation_score") or 0,
+            item.get("finish_score") or 0,
+            item.get("color_score") or 0,
+            item.get("brand_score") or 0,
+            item.get("specific_score") or 0,
+            item.get("base_exact_score") or 0,
+            item.get("family_score") or 0,
+            item.get("match_score") or 0,
+            item.get("fuzzy_score") or 0,
+            parse_numeric_value(item.get("stock_total")) or 0,
+        ),
+        reverse=True,
+    )
+
+    top_exact_code_score = ranked_rows[0].get("exact_code_score") or 0 if ranked_rows else 0
+    if top_exact_code_score > 0:
+        ranked_rows = [item for item in ranked_rows if (item.get("exact_code_score") or 0) == top_exact_code_score]
+
+    top_specific_score = ranked_rows[0].get("specific_score") or 0 if ranked_rows else 0
+    if top_specific_score >= 2:
+        ranked_rows = [item for item in ranked_rows if (item.get("specific_score") or 0) == top_specific_score]
+    elif top_specific_score > 0 and len(specific_terms) == 1:
+        ranked_rows = [item for item in ranked_rows if (item.get("specific_score") or 0) > 0]
+
+    top_match_score = ranked_rows[0].get("match_score") or 0 if ranked_rows else 0
+    if top_match_score >= 2:
+        ranked_rows = [
+            item for item in ranked_rows
+            if (item.get("match_score") or 0) >= max(2, top_match_score - 1)
+            or (item.get("size_score") or 0) > 0
+            or (item.get("brand_score") or 0) > 0
+            or (item.get("family_score") or 0) > 0
+            or (item.get("exact_code_score") or 0) > 0
+        ]
+
+    if request.get("requested_unit"):
+        exact_presentation_rows = [
+            item for item in ranked_rows
+            if infer_product_presentation_from_row(item) == request.get("requested_unit")
+        ]
+        if exact_presentation_rows:
+            ranked_rows = exact_presentation_rows
+    if request.get("color_filters"):
+        exact_color_rows = [
+            item for item in ranked_rows
+            if row_matches_requested_colors(item, request.get("color_filters") or [])
+        ]
+        if exact_color_rows:
+            ranked_rows = exact_color_rows
+    if request.get("finish_filters"):
+        exact_finish_rows = [
+            item for item in ranked_rows
+            if infer_product_finish_from_row(item) in (request.get("finish_filters") or [])
+        ]
+        if exact_finish_rows:
+            ranked_rows = exact_finish_rows
+    if brand_filters:
+        exact_brand_rows = [
+            item for item in ranked_rows
+            if infer_product_brand_from_row(item) in brand_filters
+        ]
+        if exact_brand_rows:
+            ranked_rows = exact_brand_rows
+    ranked_rows = filter_rows_by_requested_size(ranked_rows, request)
+    if any((parse_numeric_value(item.get("stock_total")) or 0) > 0 for item in ranked_rows):
+        ranked_rows = [item for item in ranked_rows if (parse_numeric_value(item.get("stock_total")) or 0) > 0]
+    return ranked_rows
+
+
 def lookup_product_context(text_value: Optional[str], product_request: Optional[dict] = None):
     product_request = prepare_product_request_for_search(text_value, product_request)
     core_terms = product_request.get("core_terms") or []
@@ -9127,44 +9284,14 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             if not terms:
                 return []
 
-            curated_rows = fetch_curated_catalog_product_rows(connection, text_value, product_request)
+            curated_rows = fetch_curated_catalog_product_rows(connection, text_value, product_request, limit=100)
             if curated_rows:
                 ranked_curated_rows = hydrate_curated_rows_with_store_inventory(
                     connection,
                     [dict(row) for row in curated_rows],
                     store_filters,
                 )
-                ranked_curated_rows = filter_rows_by_requested_presentation(ranked_curated_rows, product_request)
-                ranked_curated_rows = filter_rows_by_requested_size(ranked_curated_rows, product_request)
-
-                requested_colors = product_request.get("color_filters") or []
-                if requested_colors:
-                    exact_color_rows = [
-                        row for row in ranked_curated_rows
-                        if row_matches_requested_colors(row, requested_colors)
-                    ]
-                    if exact_color_rows:
-                        ranked_curated_rows = exact_color_rows
-
-                requested_finishes = product_request.get("finish_filters") or []
-                if requested_finishes:
-                    exact_finish_rows = [
-                        row for row in ranked_curated_rows
-                        if infer_product_finish_from_row(row) in requested_finishes
-                    ]
-                    if exact_finish_rows:
-                        ranked_curated_rows = exact_finish_rows
-
-                if brand_filters:
-                    exact_brand_rows = [
-                        row for row in ranked_curated_rows
-                        if infer_product_brand_from_row(row) in brand_filters
-                    ]
-                    if exact_brand_rows:
-                        ranked_curated_rows = exact_brand_rows
-
-                if any((parse_numeric_value(item.get("stock_total")) or 0) > 0 for item in ranked_curated_rows):
-                    ranked_curated_rows = [item for item in ranked_curated_rows if (parse_numeric_value(item.get("stock_total")) or 0) > 0]
+                ranked_curated_rows = rank_product_match_rows(ranked_curated_rows, product_request, normalized_query)
                 if ranked_curated_rows:
                     return ranked_curated_rows[:5]
 
@@ -9177,93 +9304,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             rows = fetch_term_product_rows(connection, query_terms, store_filters)
 
             if rows:
-                ranked_rows = []
-                primary_term = normalize_reference_value(core_terms[0]) if core_terms else ""
-                preferred_family_terms = expand_product_terms([primary_term]) if primary_term else []
-                specific_terms = get_specific_product_terms(product_request)
-                for row in rows:
-                    candidate = dict(row)
-                    candidate_text = " ".join(
-                        value
-                        for value in [candidate.get("descripcion"), candidate.get("referencia"), candidate.get("marca")]
-                        if value
-                    )
-                    normalized_candidate_text = normalize_text_value(candidate_text)
-                    candidate_presentation = infer_product_presentation_from_row(candidate)
-                    candidate_brand = infer_product_brand_from_row(candidate)
-                    candidate_size = infer_product_size_from_row(candidate)
-                    candidate_direction = infer_product_direction_from_row(candidate)
-                    candidate_color = infer_product_color_from_row(candidate)
-                    candidate_finish = infer_product_finish_from_row(candidate)
-                    candidate["fuzzy_score"] = round(sequence_similarity(normalized_query, candidate_text), 4)
-                    candidate["family_score"] = 1 if any(term and term in normalized_candidate_text for term in preferred_family_terms[:5]) else 0
-                    candidate["specific_score"] = sum(1 for term in specific_terms if term and term in normalized_candidate_text)
-                    candidate["presentation_score"] = 1 if product_request.get("requested_unit") and candidate_presentation == product_request.get("requested_unit") else 0
-                    candidate["brand_score"] = 1 if brand_filters and candidate_brand in brand_filters else 0
-                    candidate["size_score"] = 1 if (product_request.get("size_filters") or []) and candidate_size in (product_request.get("size_filters") or []) else 0
-                    candidate["direction_score"] = 1 if (product_request.get("direction_filters") or []) and candidate_direction in (product_request.get("direction_filters") or []) else 0
-                    candidate["color_score"] = 1 if (product_request.get("color_filters") or []) and candidate_color in (product_request.get("color_filters") or []) else 0
-                    candidate["finish_score"] = 1 if (product_request.get("finish_filters") or []) and candidate_finish in (product_request.get("finish_filters") or []) else 0
-                    ranked_rows.append(candidate)
-                ranked_rows.sort(
-                    key=lambda item: (
-                        item.get("direction_score") or 0,
-                        item.get("size_score") or 0,
-                        item.get("presentation_score") or 0,
-                        item.get("finish_score") or 0,
-                        item.get("color_score") or 0,
-                        item.get("brand_score") or 0,
-                        item.get("specific_score") or 0,
-                        item.get("family_score") or 0,
-                        item.get("match_score") or 0,
-                        item.get("fuzzy_score") or 0,
-                        parse_numeric_value(item.get("stock_total")) or 0,
-                    ),
-                    reverse=True,
-                )
-                top_specific_score = ranked_rows[0].get("specific_score") or 0 if ranked_rows else 0
-                if top_specific_score > 0:
-                    ranked_rows = [item for item in ranked_rows if (item.get("specific_score") or 0) > 0]
-                top_match_score = ranked_rows[0].get("match_score") or 0 if ranked_rows else 0
-                if top_match_score >= 2:
-                    ranked_rows = [
-                        item for item in ranked_rows
-                        if (item.get("match_score") or 0) >= max(2, top_match_score - 1)
-                        or (item.get("size_score") or 0) > 0
-                        or (item.get("brand_score") or 0) > 0
-                        or (item.get("family_score") or 0) > 0
-                    ]
-                if product_request.get("requested_unit"):
-                    exact_presentation_rows = [
-                        item for item in ranked_rows
-                        if infer_product_presentation_from_row(item) == product_request.get("requested_unit")
-                    ]
-                    if exact_presentation_rows:
-                        ranked_rows = exact_presentation_rows
-                if product_request.get("color_filters"):
-                    exact_color_rows = [
-                        item for item in ranked_rows
-                        if row_matches_requested_colors(item, product_request.get("color_filters") or [])
-                    ]
-                    if exact_color_rows:
-                        ranked_rows = exact_color_rows
-                if product_request.get("finish_filters"):
-                    exact_finish_rows = [
-                        item for item in ranked_rows
-                        if infer_product_finish_from_row(item) in (product_request.get("finish_filters") or [])
-                    ]
-                    if exact_finish_rows:
-                        ranked_rows = exact_finish_rows
-                if brand_filters:
-                    exact_brand_rows = [
-                        item for item in ranked_rows
-                        if infer_product_brand_from_row(item) in brand_filters
-                    ]
-                    if exact_brand_rows:
-                        ranked_rows = exact_brand_rows
-                ranked_rows = filter_rows_by_requested_size(ranked_rows, product_request)
-                if any((parse_numeric_value(item.get("stock_total")) or 0) > 0 for item in ranked_rows):
-                    ranked_rows = [item for item in ranked_rows if (parse_numeric_value(item.get("stock_total")) or 0) > 0]
+                ranked_rows = rank_product_match_rows([dict(row) for row in rows], product_request, normalized_query)
                 return ranked_rows[:5]
 
             sales_filters = []
