@@ -2,6 +2,7 @@ import os
 import json
 import re
 import time
+import base64
 import tomllib
 import unicodedata
 import io
@@ -16,6 +17,7 @@ from pathlib import Path
 from typing import Optional
 
 import dropbox
+import pandas as pd
 import requests
 from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -28,11 +30,12 @@ from sqlalchemy import create_engine, text
 app = FastAPI(title="CRM Ferreinox Backend", version="2026.2")
 
 
-INTERNAL_ROLES = {"vendedor", "gerente", "operador", "administrador"}
+INTERNAL_ROLES = {"empleado", "vendedor", "gerente", "operador", "administrador"}
 INTERNAL_SCOPE_TYPES = {"cliente", "vendedor_codigo", "vendedor_nombre", "zona", "almacen"}
 INTERNAL_SESSION_TTL_HOURS = int(os.getenv("INTERNAL_AUTH_SESSION_TTL_HOURS", "12"))
 INTERNAL_PASSWORD_ITERATIONS = int(os.getenv("INTERNAL_AUTH_PASSWORD_ITERATIONS", "390000"))
 INTERNAL_LOGIN_PATTERN = re.compile(r"^\s*login\s+([a-z0-9._-]{3,80})\s+(.+?)\s*$", re.IGNORECASE)
+INTERNAL_CEDULA_PATTERN = re.compile(r"\b(\d{6,15})\b")
 INTERNAL_LOGOUT_PATTERNS = {
     "logout",
     "salir",
@@ -43,6 +46,44 @@ INTERNAL_LOGOUT_PATTERNS = {
 }
 TRANSFER_REQUEST_MUTATING_ROLES = {"gerente", "operador", "administrador"}
 ORDER_DISPATCH_ACTIVE_STATUSES = {"pendiente", "en_transito"}
+EMPLOYEE_DIRECTORY_PATH = Path(__file__).resolve().parent.parent / "datos_empleados.xlsx"
+EMPLOYEE_DIRECTORY_CACHE_TTL_SECONDS = int(os.getenv("EMPLOYEE_DIRECTORY_CACHE_TTL_SECONDS", "300"))
+EMPLOYEE_DIRECTORY_CACHE = {"loaded_at": 0.0, "records": []}
+DEFAULT_EMPLOYEE_SEDE_STORE_MAP = {
+    "cedi": "155",
+    "parque olaya": "189",
+    "san antonio": "157",
+    "san francisco": "156",
+    "opalo": "158",
+    "laureles": "238",
+    "ferrebox": "439",
+    "cerritos": "463",
+}
+DEFAULT_TRANSFER_DESTINATION_EMAILS = {
+    "189": "tiendapintucopereira@ferreinox.co",
+    "157": "tiendapintucomanizales@ferreinox.co",
+    "158": "tiendapintucodosquebradas@ferreinox.co",
+    "156": "tiendapintucoarmenia@ferreinox.co",
+    "463": "tiendapintucocerritos@ferreinox.co",
+    "238": "tiendapintucolaureles@ferreinox.co",
+}
+DEFAULT_TRANSFER_CC_EMAILS = ["compras@ferreinox.co"]
+CORPORATE_BRAND = {
+    "company_name": "FERREINOX S.A.S. BIC",
+    "nit": "800.224.617-8",
+    "address": "CR 13 19-26, Pereira, Risaralda, Colombia",
+    "website": "https://www.ferreinox.co",
+    "service_email": "hola@ferreinox.co",
+    "pqrs_email": "contacto@ferreinox.co",
+    "phone_landline": "(606) 333 0101",
+    "phone_mobile": "+57 310 830 5302",
+    "phone_mobile_alt": "+57 323 232 8249",
+    "brand_dark": "#111827",
+    "brand_accent": "#F59E0B",
+    "brand_light": "#F9FAFB",
+    "brand_border": "#E5E7EB",
+}
+CORPORATE_LOGO_PATH = Path(__file__).resolve().parent.parent / "LOGO FERREINOX SAS BIC 2024.png"
 DEFAULT_FACTURADOR_ROUTING = {
     "155": {"name": "Paula", "phone": "+573102368346"},
     "156": {"name": "Jaime", "phone": "+573165219904"},
@@ -459,25 +500,25 @@ DIRECTION_ALIASES = {
 
 STORE_CODE_LABELS = {
     "155": "CEDI",
-    "156": "Tienda Armenia",
-    "157": "Tienda Manizales",
-    "158": "Tienda Opalo",
-    "189": "Tienda Pereira",
-    "238": "Tienda Laures",
-    "439": "Tienda Ferrebox",
-    "463": "Tienda Cerritos",
+    "156": "San Francisco - Armenia",
+    "157": "San Antonio - Manizales",
+    "158": "Ópalo - Dosquebradas",
+    "189": "Parque Olaya - Pereira",
+    "238": "Laureles",
+    "439": "FerreBOX - Pereira",
+    "463": "Cerritos",
 }
 
 
 STORE_ALIASES = {
-    "cedi": ["155", "cedi", "centro de distribucion", "centro de distribución"],
-    "armenia": ["156", "armenia", "tienda armenia"],
-    "manizales": ["157", "manizales", "tienda manizales"],
-    "opalo": ["158", "opalo", "ópalo", "tienda opalo", "tienda ópalo"],
-    "pereira": ["189", "pereira", "tienda pereira"],
+    "cedi": ["155", "cedi", "centro de distribucion", "centro de distribución", "pereira cedi"],
+    "armenia": ["156", "armenia", "tienda armenia", "san francisco"],
+    "manizales": ["157", "manizales", "tienda manizales", "san antonio"],
+    "opalo": ["158", "opalo", "ópalo", "tienda opalo", "tienda ópalo", "dosquebradas"],
+    "pereira": ["189", "pereira", "tienda pereira", "parque olaya", "olaya"],
     "laures": ["238", "laures", "laureles", "tienda laures", "tienda laureles"],
     "cerritos": ["463", "cerritos", "tienda cerritos"],
-    "ferrebox": ["439", "ferrebox", "tienda ferrebox"],
+    "ferrebox": ["439", "ferrebox", "ferre box", "tienda ferrebox"],
 }
 
 
@@ -869,6 +910,178 @@ def normalize_phone_e164(phone_number: Optional[str]):
     return f"+{digits}"
 
 
+def normalize_employee_header(value: Optional[str]):
+    return normalize_text_value(value).replace("�", "")
+
+
+def parse_employee_document(value: Optional[str]):
+    digits = "".join(character for character in str(value or "") if character.isdigit())
+    return digits or None
+
+
+def parse_employee_phone(value: Optional[str]):
+    return normalize_phone_e164(value)
+
+
+def load_employee_sede_store_map():
+    configured = {}
+    raw_json = os.getenv("EMPLOYEE_SEDE_STORE_MAP_JSON")
+    if raw_json:
+        try:
+            configured = json.loads(raw_json)
+        except Exception as exc:
+            raise RuntimeError(f"EMPLOYEE_SEDE_STORE_MAP_JSON inválido: {exc}")
+    merged = {**DEFAULT_EMPLOYEE_SEDE_STORE_MAP}
+    for raw_key, raw_value in (configured or {}).items():
+        key = normalize_text_value(raw_key)
+        store_code = normalize_store_code(str(raw_value)) or str(raw_value).strip()
+        if key and store_code:
+            merged[key] = store_code
+    return merged
+
+
+def resolve_store_code_from_employee_sede(sede_value: Optional[str]):
+    normalized_sede = normalize_text_value(sede_value)
+    if not normalized_sede:
+        return None
+    mapped_code = load_employee_sede_store_map().get(normalized_sede)
+    if mapped_code:
+        return normalize_store_code(mapped_code) or mapped_code
+    return normalize_store_code(normalized_sede)
+
+
+def derive_internal_role_from_employee(record: dict):
+    cargo = normalize_text_value(record.get("cargo"))
+    if not cargo:
+        return "empleado"
+    if "administr" in cargo or "director" in cargo or ("lider" in cargo and "compras" in cargo):
+        return "administrador"
+    if "gerente" in cargo:
+        return "gerente"
+    if any(token in cargo for token in ["vendedor", "asesor comercial", "representante de ventas", "mostrador"]):
+        return "vendedor"
+    if any(token in cargo for token in ["lider", "líder", "facturacion", "facturación", "logistica", "logística", "inventario", "cartera", "tesoreria", "tesorería", "compras"]):
+        return "operador"
+    return "empleado"
+
+
+def employee_has_advanced_access(record: dict):
+    role = derive_internal_role_from_employee(record)
+    return role in {"vendedor", "gerente", "operador", "administrador"}
+
+
+def employee_can_manage_transfers(record: dict):
+    cargo = normalize_text_value(record.get("cargo"))
+    return any(
+        token in cargo
+        for token in [
+            "lider de tienda",
+            "líder de tienda",
+            "lider logistica",
+            "líder logística",
+            "lider de inventario",
+            "líder de inventario",
+            "facturacion y despachos",
+            "facturación y despachos",
+            "auxiliar de mostrador y facturacion",
+            "auxiliar de mostrador y facturación",
+            "auxiliar logistico",
+            "auxiliar logístico",
+            "gestor logistico",
+            "gestor logístico",
+        ]
+    )
+
+
+def load_employee_directory(force_refresh: bool = False):
+    cache_age = time.time() - float(EMPLOYEE_DIRECTORY_CACHE.get("loaded_at") or 0)
+    if not force_refresh and EMPLOYEE_DIRECTORY_CACHE.get("records") and cache_age < EMPLOYEE_DIRECTORY_CACHE_TTL_SECONDS:
+        return EMPLOYEE_DIRECTORY_CACHE["records"]
+
+    if not EMPLOYEE_DIRECTORY_PATH.exists():
+        EMPLOYEE_DIRECTORY_CACHE.update({"loaded_at": time.time(), "records": []})
+        return []
+
+    dataframe = pd.read_excel(EMPLOYEE_DIRECTORY_PATH)
+    normalized_columns = {normalize_employee_header(column): column for column in dataframe.columns}
+
+    def get_column(*aliases):
+        for alias in aliases:
+            column = normalized_columns.get(normalize_employee_header(alias))
+            if column:
+                return column
+        return None
+
+    full_name_column = get_column("nombre completo", "nombre", "nombre empleado")
+    document_column = get_column("cedula", "cédula")
+    sede_column = get_column("sede")
+    cargo_column = get_column("cargo")
+    phone_column = get_column("telefono", "teléfono")
+    email_column = get_column("correo electronico", "correo electrónico", "correo")
+
+    if not full_name_column or not document_column:
+        raise RuntimeError(f"datos_empleados.xlsx no tiene columnas mínimas esperadas. Columnas detectadas: {list(dataframe.columns)}")
+
+    records = []
+    for _, row in dataframe.iterrows():
+        full_name = str(row.get(full_name_column) or "").strip()
+        cedula = parse_employee_document(row.get(document_column))
+        if not full_name or not cedula:
+            continue
+        sede = str(row.get(sede_column) or "").strip() if sede_column else ""
+        cargo = str(row.get(cargo_column) or "").strip() if cargo_column else ""
+        phone_e164 = parse_employee_phone(row.get(phone_column)) if phone_column else None
+        email = str(row.get(email_column) or "").strip().lower() if email_column else None
+        role = derive_internal_role_from_employee({"cargo": cargo})
+        store_code = resolve_store_code_from_employee_sede(sede)
+        records.append(
+            {
+                "full_name": full_name,
+                "cedula": cedula,
+                "sede": sede,
+                "cargo": cargo,
+                "phone_e164": phone_e164,
+                "email": email,
+                "store_code": store_code,
+                "role": role,
+                "advanced_access": employee_has_advanced_access({"cargo": cargo}),
+                "is_facturador": employee_can_manage_transfers({"cargo": cargo}),
+            }
+        )
+
+    EMPLOYEE_DIRECTORY_CACHE.update({"loaded_at": time.time(), "records": records})
+    return records
+
+
+def find_employee_record_by_phone(phone_e164: Optional[str]):
+    normalized_phone = normalize_phone_e164(phone_e164)
+    if not normalized_phone:
+        return None
+    for record in load_employee_directory():
+        if record.get("phone_e164") == normalized_phone:
+            return record
+    return None
+
+
+def find_employee_record_by_cedula(document_value: Optional[str]):
+    normalized_document = parse_employee_document(document_value)
+    if not normalized_document:
+        return None
+    for record in load_employee_directory():
+        if record.get("cedula") == normalized_document:
+            return record
+    return None
+
+
+def build_employee_username(record: dict):
+    return f"cedula.{record.get('cedula')}"
+
+
+def extract_internal_cedula_candidate(content: Optional[str]):
+    match = INTERNAL_CEDULA_PATTERN.search(content or "")
+    return match.group(1) if match else None
+
+
 def hash_password_with_salt(password: str, salt_hex: str):
     return hashlib.pbkdf2_hmac(
         "sha256",
@@ -1021,6 +1234,141 @@ def fetch_internal_user_by_id(user_id: int):
     user_payload = dict(row)
     user_payload["scopes"] = fetch_internal_user_scopes(user_payload["id"])
     return user_payload
+
+
+def sync_internal_user_from_employee_record(record: dict):
+    ensure_internal_auth_tables()
+    username = build_employee_username(record)
+    metadata = {
+        "auth_source": "datos_empleados.xlsx",
+        "cedula": record.get("cedula"),
+        "sede": record.get("sede"),
+        "cargo": record.get("cargo"),
+        "store_code": record.get("store_code"),
+        "advanced_access": bool(record.get("advanced_access")),
+        "is_facturador": bool(record.get("is_facturador")),
+    }
+
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        existing_row = connection.execute(
+            text(
+                """
+                SELECT id
+                FROM public.agent_user
+                WHERE username = :username
+                LIMIT 1
+                """
+            ),
+            {"username": username},
+        ).mappings().one_or_none()
+
+        if existing_row:
+            user_id = existing_row["id"]
+            connection.execute(
+                text(
+                    """
+                    UPDATE public.agent_user
+                    SET full_name = :full_name,
+                        role = :role,
+                        phone_e164 = :phone_e164,
+                        email = :email,
+                        metadata = CAST(:metadata AS jsonb),
+                        is_active = true,
+                        updated_at = now()
+                    WHERE id = :user_id
+                    """
+                ),
+                {
+                    "user_id": user_id,
+                    "full_name": record.get("full_name"),
+                    "role": record.get("role") or "empleado",
+                    "phone_e164": record.get("phone_e164"),
+                    "email": record.get("email"),
+                    "metadata": safe_json_dumps(metadata),
+                },
+            )
+        else:
+            salt_hex, password_hash = build_password_credentials(f"ExcelAuth-{record.get('cedula')}-Fx")
+            user_id = connection.execute(
+                text(
+                    """
+                    INSERT INTO public.agent_user (
+                        username, full_name, role, password_salt, password_hash, phone_e164, email, is_active, metadata, created_at, updated_at
+                    )
+                    VALUES (
+                        :username, :full_name, :role, :password_salt, :password_hash, :phone_e164, :email, true, CAST(:metadata AS jsonb), now(), now()
+                    )
+                    RETURNING id
+                    """
+                ),
+                {
+                    "username": username,
+                    "full_name": record.get("full_name"),
+                    "role": record.get("role") or "empleado",
+                    "password_salt": salt_hex,
+                    "password_hash": password_hash,
+                    "phone_e164": record.get("phone_e164"),
+                    "email": record.get("email"),
+                    "metadata": safe_json_dumps(metadata),
+                },
+            ).scalar_one()
+
+        connection.execute(text("DELETE FROM public.agent_user_scope WHERE user_id = :user_id"), {"user_id": user_id})
+        if record.get("store_code"):
+            connection.execute(
+                text(
+                    """
+                    INSERT INTO public.agent_user_scope (
+                        user_id, scope_type, scope_value, scope_label, created_at, updated_at
+                    ) VALUES (
+                        :user_id, 'almacen', :scope_value, :scope_label, now(), now()
+                    )
+                    """
+                ),
+                {
+                    "user_id": user_id,
+                    "scope_value": record.get("store_code"),
+                    "scope_label": record.get("sede") or record.get("store_code"),
+                },
+            )
+
+    return fetch_internal_user_by_id(user_id)
+
+
+def build_internal_auth_context(user_payload: dict, token: str, expires_at: Optional[str]):
+    metadata = dict(user_payload.get("metadata") or {})
+    return {
+        "token": token,
+        "user_id": user_payload.get("id"),
+        "username": user_payload.get("username"),
+        "role": user_payload.get("role"),
+        "expires_at": expires_at,
+        "employee_context": {
+            "full_name": user_payload.get("full_name"),
+            "cedula": metadata.get("cedula"),
+            "sede": metadata.get("sede"),
+            "cargo": metadata.get("cargo"),
+            "telefono": user_payload.get("phone_e164"),
+            "store_code": metadata.get("store_code"),
+            "advanced_access": metadata.get("advanced_access", False),
+            "is_facturador": metadata.get("is_facturador", False),
+        },
+    }
+
+
+def internal_user_has_advanced_access(user_payload: dict):
+    if (user_payload or {}).get("role") in {"vendedor", "gerente", "operador", "administrador"}:
+        return True
+    metadata = dict((user_payload or {}).get("metadata") or {})
+    return bool(metadata.get("advanced_access"))
+
+
+def internal_user_can_manage_transfers(user_payload: dict):
+    if (user_payload or {}).get("role") == "administrador":
+        return True
+    metadata = dict((user_payload or {}).get("metadata") or {})
+    return bool(metadata.get("is_facturador"))
 
 
 def upsert_internal_user(user_request: InternalBootstrapUserRequest):
@@ -1178,7 +1526,7 @@ def resolve_internal_session(raw_token: Optional[str]):
             text(
                 """
                 SELECT s.user_id, s.expires_at, s.channel, s.phone_e164, s.contact_id,
-                       u.username, u.full_name, u.role, u.email, u.phone_e164 AS user_phone, u.is_active
+                      u.username, u.full_name, u.role, u.email, u.phone_e164 AS user_phone, u.is_active, u.metadata
                 FROM public.agent_user_session s
                 JOIN public.agent_user u ON u.id = s.user_id
                 WHERE s.token_hash = :token_hash
@@ -1209,6 +1557,7 @@ def resolve_internal_session(raw_token: Optional[str]):
         "role": row["role"],
         "email": row["email"],
         "phone_e164": row["user_phone"],
+        "metadata": row.get("metadata") or {},
         "session_expires_at": row["expires_at"].isoformat() if row.get("expires_at") else None,
         "scopes": fetch_internal_user_scopes(row["user_id"]),
     }
@@ -1393,39 +1742,91 @@ def format_internal_customer_summary(customer_row: dict, purchase_summary: Optio
     return "\n".join(response_lines)
 
 
-def build_internal_login_reply(content: str, context: dict):
+def build_internal_login_reply(content: str, context: dict, conversation_context: dict):
     match = INTERNAL_LOGIN_PATTERN.match(content or "")
-    if not match:
-        return None
-    username = match.group(1)
-    password = match.group(2)
-    user_payload = authenticate_internal_user(username, password, context.get("telefono_e164"))
-    if not user_payload:
+    if match:
+        username = match.group(1)
+        password = match.group(2)
+        user_payload = authenticate_internal_user(username, password, context.get("telefono_e164"))
+        if not user_payload:
+            return {
+                "response_text": "No pude autenticarte con ese usuario y contraseña. Revisa el acceso interno.",
+                "intent": "internal_auth_login_failed",
+                "context_updates": {},
+            }
+        session_payload = create_internal_session(
+            user_payload,
+            channel="whatsapp",
+            contact_id=context.get("contact_id"),
+            phone_e164=context.get("telefono_e164"),
+        )
         return {
-            "response_text": "No pude autenticarte con ese usuario y contraseña. Revisa el acceso interno.",
-            "intent": "internal_auth_login_failed",
-            "context_updates": {},
+            "response_text": (
+                f"Acceso interno activo para {user_payload.get('full_name')} como {user_payload.get('role')}. "
+                "Ya puedes pedir cartera, compras y contexto de tus clientes."
+            ),
+            "intent": "internal_auth_login",
+            "context_updates": {
+                "awaiting_internal_auth_cedula": None,
+                "internal_auth": build_internal_auth_context(user_payload, session_payload["token"], session_payload["expires_at"]),
+            },
         }
+
+    employee_by_phone = find_employee_record_by_phone(context.get("telefono_e164"))
+    awaiting_cedula = bool((conversation_context or {}).get("awaiting_internal_auth_cedula"))
+    cedula = extract_internal_cedula_candidate(content)
+
+    if not employee_by_phone and not awaiting_cedula:
+        return None
+
+    if not cedula:
+        return {
+            "response_text": "Para continuar como colaborador Ferreinox necesito validar tu acceso. Envíame tu número de cédula.",
+            "intent": "internal_auth_request_cedula",
+            "context_updates": {"awaiting_internal_auth_cedula": True},
+        }
+
+    employee_record = find_employee_record_by_cedula(cedula)
+    if not employee_record:
+        return {
+            "response_text": "No encontré esa cédula en la base de colaboradores. Revisa el número o valida con administración.",
+            "intent": "internal_auth_login_failed",
+            "context_updates": {"awaiting_internal_auth_cedula": True},
+        }
+
+    incoming_phone = normalize_phone_e164(context.get("telefono_e164"))
+    registered_phone = employee_record.get("phone_e164")
+    if registered_phone and incoming_phone and registered_phone != incoming_phone:
+        return {
+            "response_text": "La cédula existe, pero el número de WhatsApp no coincide con el registrado en datos_empleados. Debes escribir desde tu número autorizado.",
+            "intent": "internal_auth_phone_mismatch",
+            "context_updates": {"awaiting_internal_auth_cedula": True},
+        }
+
+    if employee_by_phone and employee_by_phone.get("cedula") != employee_record.get("cedula"):
+        return {
+            "response_text": "La cédula enviada no coincide con el colaborador asociado a este número de WhatsApp.",
+            "intent": "internal_auth_phone_mismatch",
+            "context_updates": {"awaiting_internal_auth_cedula": True},
+        }
+
+    user_payload = sync_internal_user_from_employee_record(employee_record)
     session_payload = create_internal_session(
         user_payload,
         channel="whatsapp",
         contact_id=context.get("contact_id"),
         phone_e164=context.get("telefono_e164"),
     )
+    role_label = user_payload.get("role") or "empleado"
     return {
         "response_text": (
-            f"Acceso interno activo para {user_payload.get('full_name')} como {user_payload.get('role')}. "
-            "Ya puedes pedir cartera, compras y contexto de tus clientes."
+            f"Acceso interno activo para {employee_record.get('full_name')}. "
+            f"Cargo: {employee_record.get('cargo') or 'Sin cargo'} | Sede: {employee_record.get('sede') or 'Sin sede'} | Perfil: {role_label}."
         ),
         "intent": "internal_auth_login",
         "context_updates": {
-            "internal_auth": {
-                "token": session_payload["token"],
-                "user_id": user_payload.get("id"),
-                "username": user_payload.get("username"),
-                "role": user_payload.get("role"),
-                "expires_at": session_payload["expires_at"],
-            }
+            "awaiting_internal_auth_cedula": None,
+            "internal_auth": build_internal_auth_context(user_payload, session_payload["token"], session_payload["expires_at"]),
         },
     }
 
@@ -1438,7 +1839,7 @@ def build_internal_logout_reply(conversation_context: dict):
     return {
         "response_text": "La sesión interna quedó cerrada. Si necesitas entrar de nuevo, envíame login usuario clave.",
         "intent": "internal_auth_logout",
-        "context_updates": {"internal_auth": None},
+        "context_updates": {"internal_auth": None, "awaiting_internal_auth_cedula": None, "internal_transfer_flow": None},
     }
 
 
@@ -1544,12 +1945,14 @@ def build_pending_dispatches_response(store_code: Optional[str] = None):
 def build_transfer_suggestions_response(content: str, internal_user: dict):
     store_mentions = extract_store_mentions_in_order(content)
     normalized = normalize_text_value(content)
+    internal_metadata = dict((internal_user or {}).get("metadata") or {})
+    internal_store_code = normalize_store_code(internal_metadata.get("store_code"))
     if len(store_mentions) >= 2:
         source_store_code, destination_store_code = store_mentions[0], store_mentions[1]
     elif len(store_mentions) == 1:
-        source_store_code, destination_store_code = None, store_mentions[0]
+        source_store_code, destination_store_code = internal_store_code, store_mentions[0]
     else:
-        source_store_code, destination_store_code = None, None
+        source_store_code, destination_store_code = internal_store_code, None
 
     if destination_store_code and any(fragment in normalized for fragment in ["cumplir pedidos", "cumplir pedido", "pendiente", "despacho"]):
         suggestions = build_transfer_suggestions_for_pending_dispatches(destination_store_code, source_store_code)
@@ -1590,11 +1993,119 @@ def build_transfer_suggestions_response(content: str, internal_user: dict):
     return "Dime la tienda destino o compárame dos tiendas, por ejemplo: 'qué hay en Manizales que Pereira no tenga' o 'traslada a Pereira para cumplir pedidos'.", []
 
 
+def handle_pending_internal_transfer_flow(content: str, context: dict, conversation_context: dict, internal_user: dict, internal_auth: dict):
+    flow_payload = dict((conversation_context or {}).get("internal_transfer_flow") or {})
+    if not flow_payload:
+        return None
+
+    normalized = normalize_text_value(content)
+    if normalized in {"cancelar", "cancelar traslado", "salir", "no"}:
+        return {
+            "response_text": "Listo, cierro esta guía operativa de traslados y abastecimiento.",
+            "intent": "internal_transfer_flow_cancelled",
+            "context_updates": {
+                "internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at")),
+                "internal_transfer_flow": None,
+            },
+        }
+
+    if flow_payload.get("step") == "awaiting_destination":
+        store_mentions = extract_store_mentions_in_order(content)
+        destination_store_code = store_mentions[-1] if store_mentions else None
+        if not destination_store_code:
+            return {
+                "response_text": "Todavía me falta la sede destino. Dímela como ciudad o tienda, por ejemplo: Manizales, Armenia, Laureles o Cerritos.",
+                "intent": "internal_transfer_flow_destination_missing",
+                "context_updates": {
+                    "internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at")),
+                    "internal_transfer_flow": flow_payload,
+                },
+            }
+        refreshed_payload = build_internal_transfer_flow_payload(destination_store_code, flow_payload.get("origin_store_code"))
+        return {
+            "response_text": build_internal_transfer_guidance_text(refreshed_payload),
+            "intent": "internal_transfer_flow_ready",
+            "context_updates": {
+                "internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at")),
+                "internal_transfer_flow": refreshed_payload,
+            },
+        }
+
+    selected_indexes = parse_internal_selection_indexes(content, len(flow_payload.get("suggestions") or []))
+    suggestions = flow_payload.get("suggestions") or []
+    selected_suggestions = [suggestions[index - 1] for index in selected_indexes] if selected_indexes else suggestions
+    wants_transfer = any(token in normalized for token in ["confirmar", "crear", "traslado", "si", "sí", "listo"])
+    wants_procurement = any(token in normalized for token in ["compras", "abastecimiento", "escalar", "comprar"])
+
+    if wants_transfer and selected_suggestions:
+        created_requests = create_transfer_request_records(selected_suggestions[:5], internal_user, notes=content)
+        if not created_requests:
+            return {
+                "response_text": "Las opciones seleccionadas no pertenecen a tu sede de origen o ya no aplican. Puedo recalcular si me dices nuevamente la sede destino.",
+                "intent": "internal_transfer_origin_mismatch",
+                "context_updates": {
+                    "internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at")),
+                    "internal_transfer_flow": None,
+                },
+            }
+        notification_result = notify_transfer_requests_by_email(created_requests, internal_user, notes=content)
+        upsert_agent_task(
+            context["conversation_id"],
+            context.get("cliente_id"),
+            "traslado_interno",
+            "Solicitud interna de traslado generada por guía conversacional",
+            {"solicitudes": created_requests, "mensaje": content, "notificacion": notification_result},
+            "alta",
+        )
+        response_lines = ["Traslados creados desde la guía operativa:"]
+        response_lines.append(summarize_transfer_candidates(created_requests))
+        if notification_result.get("sent"):
+            for row in notification_result["sent"]:
+                response_lines.append(f"Correo enviado a {row['to_email']} con copia a {', '.join(row.get('cc_emails') or [])}.")
+        if notification_result.get("errors"):
+            response_lines.append("Errores de notificación: " + "; ".join(notification_result["errors"]))
+        return {
+            "response_text": "\n".join(response_lines),
+            "intent": "crear_traslado",
+            "context_updates": {
+                "internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at")),
+                "internal_transfer_flow": None,
+            },
+        }
+
+    unresolved = flow_payload.get("unresolved_shortages") or []
+    if wants_procurement and unresolved:
+        followup = create_procurement_followup(context, internal_user, unresolved[:8], notes=content)
+        response_lines = ["Faltantes escalados a compras para abastecimiento:", summarize_transfer_candidates(unresolved)]
+        notification = followup.get("notification") or {}
+        if notification.get("sent"):
+            response_lines.append(f"Correo enviado a {notification.get('to_email')} con adjunto {notification.get('attachment')}.")
+        if notification.get("errors"):
+            response_lines.append("Errores de notificación: " + "; ".join(notification.get("errors") or []))
+        return {
+            "response_text": "\n".join([line for line in response_lines if line]),
+            "intent": "internal_procurement_escalated",
+            "context_updates": {
+                "internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at")),
+                "internal_transfer_flow": None,
+            },
+        }
+
+    return {
+        "response_text": build_internal_transfer_guidance_text(flow_payload),
+        "intent": "internal_transfer_flow_pending",
+        "context_updates": {
+            "internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at")),
+            "internal_transfer_flow": flow_payload,
+        },
+    }
+
+
 def handle_internal_whatsapp_message(content: Optional[str], context: dict, conversation_context: dict):
     if not content:
         return None
 
-    login_reply = build_internal_login_reply(content, context)
+    login_reply = build_internal_login_reply(content, context, conversation_context)
     if login_reply:
         return login_reply
 
@@ -1602,11 +2113,19 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
     if normalized in INTERNAL_LOGOUT_PATTERNS:
         return build_internal_logout_reply(conversation_context)
 
+    employee_by_phone = find_employee_record_by_phone(context.get("telefono_e164"))
     internal_auth = dict((conversation_context or {}).get("internal_auth") or {})
+    if employee_by_phone and not internal_auth.get("token"):
+        return {
+            "response_text": "Antes de seguir necesito validar tu acceso interno. Envíame tu cédula para activar la sesión de colaborador.",
+            "intent": "internal_auth_request_cedula",
+            "context_updates": {"awaiting_internal_auth_cedula": True},
+        }
+
     if not internal_auth.get("token"):
         if detect_internal_query_intent(content):
             return {
-                "response_text": "Para consultas internas primero debes iniciar sesión. Escríbeme: login usuario clave",
+                "response_text": "Para consultas internas primero debes iniciar sesión. Si eres colaborador, envíame tu cédula. Si eres usuario técnico legado, puedes escribir login usuario clave.",
                 "intent": "internal_auth_required",
                 "context_updates": {},
             }
@@ -1620,72 +2139,75 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
             "context_updates": {"internal_auth": None},
         }
 
+    pending_transfer_flow_reply = handle_pending_internal_transfer_flow(content, context, conversation_context, internal_user, internal_auth)
+    if pending_transfer_flow_reply:
+        return pending_transfer_flow_reply
+
     intent = detect_internal_query_intent(content)
     if not intent:
         return None
 
     if intent == "consulta_despachos":
+        if not internal_user_has_advanced_access(internal_user):
+            return {
+                "response_text": "Tu perfil actual puede crear pedidos, pero no consultar despachos ni operación interna completa.",
+                "intent": "internal_access_denied",
+                "context_updates": {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))},
+            }
         store_mentions = extract_store_mentions_in_order(content)
         store_code = store_mentions[0] if store_mentions else None
         return {
             "response_text": build_pending_dispatches_response(store_code),
             "intent": intent,
-            "context_updates": {
-                "internal_auth": {
-                    "token": internal_auth.get("token"),
-                    "user_id": internal_user.get("id"),
-                    "username": internal_user.get("username"),
-                    "role": internal_user.get("role"),
-                    "expires_at": internal_user.get("session_expires_at"),
-                }
-            },
+            "context_updates": {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))},
         }
 
     if intent in {"consulta_traslados", "crear_traslado"}:
-        response_text, suggestions = build_transfer_suggestions_response(content, internal_user)
-        context_updates = {
-            "internal_auth": {
-                "token": internal_auth.get("token"),
-                "user_id": internal_user.get("id"),
-                "username": internal_user.get("username"),
-                "role": internal_user.get("role"),
-                "expires_at": internal_user.get("session_expires_at"),
+        if not internal_user_has_advanced_access(internal_user):
+            return {
+                "response_text": "Tu perfil actual puede tomar pedidos, pero no consultar ni gestionar traslados internos.",
+                "intent": "internal_access_denied",
+                "context_updates": {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))},
             }
-        }
+        response_text, suggestions = build_transfer_suggestions_response(content, internal_user)
+        context_updates = {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))}
+        store_mentions = extract_store_mentions_in_order(content)
+        requested_destination = store_mentions[-1] if store_mentions else None
+        internal_metadata = dict((internal_user or {}).get("metadata") or {})
+        default_origin_store = normalize_store_code(internal_metadata.get("store_code"))
+        if not requested_destination:
+            context_updates["internal_transfer_flow"] = {
+                "step": "awaiting_destination",
+                "origin_store_code": default_origin_store,
+            }
+            return {
+                "response_text": "¿Para qué sede quieres revisar faltantes o generar traslado? Si no me dices origen, tomaré como origen tu sede autenticada.",
+                "intent": "internal_transfer_flow_destination_missing",
+                "context_updates": context_updates,
+            }
+
+        flow_payload = build_internal_transfer_flow_payload(requested_destination, default_origin_store)
+        context_updates["internal_transfer_flow"] = flow_payload
         if intent == "crear_traslado":
-            if internal_user.get("role") not in TRANSFER_REQUEST_MUTATING_ROLES:
+            if not internal_user_can_manage_transfers(internal_user):
                 return {
-                    "response_text": "Tu rol actual puede consultar sugerencias, pero no crear solicitudes de traslado. Necesitas perfil gerente, operador o administrador.",
+                    "response_text": "Solo el facturador de la sede origen puede crear solicitudes de traslado. Debes tener cargo de líder de tienda, líder logístico/inventario o auxiliar de facturación.",
                     "intent": "internal_transfer_forbidden",
                     "context_updates": context_updates,
                 }
-            if not suggestions:
+            if not flow_payload.get("suggestions") and not flow_payload.get("unresolved_shortages"):
                 return {
                     "response_text": response_text,
                     "intent": intent,
                     "context_updates": context_updates,
                 }
-            created_requests = create_transfer_request_records(suggestions[:5], internal_user, notes=content)
-            upsert_agent_task(
-                context["conversation_id"],
-                context.get("cliente_id"),
-                "traslado_interno",
-                "Solicitud interna de traslado generada por WhatsApp",
-                {"solicitudes": created_requests, "mensaje": content},
-                "alta",
-            )
-            response_lines = ["Solicitudes de traslado creadas:"]
-            for request_row in created_requests[:5]:
-                response_lines.append(
-                    f"- Traslado {request_row['id']} | pedido {request_row['order_id']} | {request_row['reference']} | {request_row['origin_store_name']} -> {request_row['destination_store_name']} | {format_quantity(request_row['suggested_qty'])} und"
-                )
             return {
-                "response_text": "\n".join(response_lines),
-                "intent": intent,
+                "response_text": build_internal_transfer_guidance_text(flow_payload),
+                "intent": "internal_transfer_flow_ready",
                 "context_updates": context_updates,
             }
         return {
-            "response_text": response_text,
+            "response_text": build_internal_transfer_guidance_text(flow_payload) if (flow_payload.get("suggestions") or flow_payload.get("unresolved_shortages")) else response_text,
             "intent": intent,
             "context_updates": context_updates,
         }
@@ -1704,6 +2226,13 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
             "response_text": "No encontré ese cliente con la información enviada. Prueba con NIT, código cliente o nombre completo.",
             "intent": "internal_customer_not_found",
             "context_updates": {},
+        }
+
+    if not internal_user_has_advanced_access(internal_user):
+        return {
+            "response_text": "Tu perfil actual puede crear pedidos, pero no consultar cartera, compras ni CRM interno completo.",
+            "intent": "internal_access_denied",
+            "context_updates": {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))},
         }
 
     customer_row = fetch_customer_lookup_row(cliente_contexto.get("cliente_codigo")) or cliente_contexto
@@ -1741,13 +2270,7 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
         "response_text": response_text,
         "intent": intent,
         "context_updates": {
-            "internal_auth": {
-                "token": internal_auth.get("token"),
-                "user_id": internal_user.get("id"),
-                "username": internal_user.get("username"),
-                "role": internal_user.get("role"),
-                "expires_at": internal_user.get("session_expires_at"),
-            },
+            "internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at")),
             "internal_last_cliente_codigo": cliente_contexto.get("cliente_codigo"),
         },
     }
@@ -1811,13 +2334,26 @@ def get_sendgrid_config():
     return None
 
 
-def send_sendgrid_email(to_email: str, subject: str, html_content: str, text_content: str, reply_to: Optional[str] = None):
+def send_sendgrid_email(
+    to_email: str,
+    subject: str,
+    html_content: str,
+    text_content: str,
+    reply_to: Optional[str] = None,
+    cc_emails: Optional[list[str]] = None,
+    attachments: Optional[list[dict]] = None,
+):
     config = get_sendgrid_config()
     if not config:
         raise RuntimeError("SendGrid no está configurado.")
 
+    personalization = {"to": [{"email": to_email}], "subject": subject}
+    cc_payload = [{"email": email} for email in (cc_emails or []) if email]
+    if cc_payload:
+        personalization["cc"] = cc_payload
+
     payload = {
-        "personalizations": [{"to": [{"email": to_email}], "subject": subject}],
+        "personalizations": [personalization],
         "from": {
             "email": config["from_email"],
             "name": config.get("from_name") or "Ferreinox S.A.S. BIC",
@@ -1829,6 +2365,8 @@ def send_sendgrid_email(to_email: str, subject: str, html_content: str, text_con
     }
     if reply_to:
         payload["reply_to"] = {"email": reply_to}
+    if attachments:
+        payload["attachments"] = attachments
 
     response = requests.post(
         "https://api.sendgrid.com/v3/mail/send",
@@ -1920,6 +2458,255 @@ def sanitize_filename_segment(raw_value: Optional[str], fallback: str):
     return sanitized or fallback
 
 
+def get_employee_facturador_candidates_for_store(store_code: Optional[str]):
+    store_code = normalize_store_code(store_code)
+    if not store_code:
+        return []
+
+    def rank_candidate(record: dict):
+        cargo = normalize_text_value(record.get("cargo"))
+        if "lider de tienda" in cargo or "líder de tienda" in cargo:
+            return 0
+        if "lider logistica" in cargo or "líder logística" in cargo or "lider de inventario" in cargo or "líder de inventario" in cargo:
+            return 1
+        if "facturacion" in cargo or "facturación" in cargo:
+            return 2
+        return 3
+
+    candidates = []
+    for record in load_employee_directory():
+        if record.get("store_code") != store_code or not record.get("is_facturador"):
+            continue
+        if not record.get("email") and not record.get("phone_e164"):
+            continue
+        candidates.append(record)
+    return sorted(candidates, key=rank_candidate)
+
+
+def get_transfer_destination_email_map():
+    configured = {}
+    raw_json = os.getenv("TRANSFER_DESTINATION_EMAILS_JSON")
+    if raw_json:
+        try:
+            configured = json.loads(raw_json)
+        except Exception as exc:
+            raise RuntimeError(f"TRANSFER_DESTINATION_EMAILS_JSON inválido: {exc}")
+    normalized_map = {**DEFAULT_TRANSFER_DESTINATION_EMAILS}
+    for raw_key, raw_value in (configured or {}).items():
+        store_code = normalize_store_code(raw_key)
+        email = str(raw_value or "").strip().lower()
+        if store_code and email:
+            normalized_map[store_code] = email
+    return normalized_map
+
+
+def get_transfer_cc_emails():
+    raw_csv = os.getenv("TRANSFER_NOTIFICATION_CC_EMAILS")
+    if raw_csv:
+        return [email.strip().lower() for email in raw_csv.split(",") if email.strip()]
+    return list(DEFAULT_TRANSFER_CC_EMAILS)
+
+
+def build_brand_email_shell(title: str, body_html: str):
+    dark = CORPORATE_BRAND["brand_dark"]
+    accent = CORPORATE_BRAND["brand_accent"]
+    light = CORPORATE_BRAND["brand_light"]
+    border = CORPORATE_BRAND["brand_border"]
+    return (
+        "<div style='margin:0;padding:24px;background:#f3f4f6;font-family:Segoe UI,Arial,sans-serif;color:#111827;'>"
+        f"<div style='max-width:760px;margin:0 auto;background:#ffffff;border:1px solid {border};border-radius:18px;overflow:hidden;'>"
+        f"<div style='background:{dark};padding:28px 32px;color:#ffffff;'>"
+        f"<div style='font-size:12px;letter-spacing:1.2px;text-transform:uppercase;opacity:.8;'>Ferreinox SAS BIC</div>"
+        f"<div style='font-size:30px;font-weight:700;margin-top:6px;'>{escape(title)}</div>"
+        f"<div style='margin-top:10px;font-size:13px;color:#d1d5db;'>NIT {escape(CORPORATE_BRAND['nit'])} | {escape(CORPORATE_BRAND['address'])}</div>"
+        "</div>"
+        f"<div style='padding:28px 32px;background:{light};'>{body_html}</div>"
+        f"<div style='padding:22px 32px;background:#ffffff;border-top:1px solid {border};font-size:12px;color:#6b7280;'>"
+        f"<strong style='color:#111827;'>{escape(CORPORATE_BRAND['company_name'])}</strong><br>"
+        f"Sitio web: <a href='{escape(CORPORATE_BRAND['website'])}' style='color:{accent};'>{escape(CORPORATE_BRAND['website'])}</a><br>"
+        f"Correo: {escape(CORPORATE_BRAND['service_email'])} | Tel: {escape(CORPORATE_BRAND['phone_landline'])} | Cel: {escape(CORPORATE_BRAND['phone_mobile'])}"
+        "</div></div></div>"
+    )
+
+
+def build_transfer_request_excel_bytes(request_rows: list[dict]):
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Traslado"
+    sheet.append(["Referencia", "Descripción del producto", "Cantidad"])
+    for row in request_rows:
+        sheet.append([
+            row.get("reference") or row.get("referencia") or "",
+            row.get("description") or row.get("descripcion") or "",
+            row.get("suggested_qty") or row.get("quantity_requested") or "",
+        ])
+    buffer = io.BytesIO()
+    workbook.save(buffer)
+    buffer.seek(0)
+    return buffer.getvalue()
+
+
+def notify_transfer_requests_by_email(request_rows: list[dict], requested_by_user: dict, notes: Optional[str] = None):
+    if not request_rows:
+        return {"sent": [], "errors": []}
+
+    grouped_rows = {}
+    for row in request_rows:
+        destination_store_code = normalize_store_code(row.get("destination_store_code"))
+        if not destination_store_code:
+            continue
+        grouped_rows.setdefault(destination_store_code, []).append(row)
+
+    results = {"sent": [], "errors": []}
+    cc_emails = get_transfer_cc_emails()
+    requested_by_name = requested_by_user.get("full_name") or "Colaborador Ferreinox"
+    requested_by_metadata = dict(requested_by_user.get("metadata") or {})
+    requested_by_sede = requested_by_metadata.get("sede") or requested_by_metadata.get("store_code") or "Sede origen"
+    requested_by_cargo = requested_by_metadata.get("cargo") or requested_by_user.get("role") or "Perfil interno"
+    email_map = get_transfer_destination_email_map()
+
+    for destination_store_code, rows in grouped_rows.items():
+        to_email = email_map.get(destination_store_code)
+        if not to_email:
+            results["errors"].append(f"No existe correo configurado para la sede destino {destination_store_code}.")
+            continue
+
+        destination_label = rows[0].get("destination_store_name") or STORE_CODE_LABELS.get(destination_store_code) or destination_store_code
+        origin_label = rows[0].get("origin_store_name") or requested_by_sede
+        attachment_name = f"traslado_{sanitize_filename_segment(origin_label, 'Origen')}_{sanitize_filename_segment(destination_label, 'Destino')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        attachment_bytes = build_transfer_request_excel_bytes(rows)
+        body_html = (
+            "<p style='margin:0 0 14px 0;font-size:15px;'>Se generó una nueva solicitud interna de traslado desde WhatsApp.</p>"
+            f"<div style='background:#ffffff;border:1px solid {CORPORATE_BRAND['brand_border']};border-radius:14px;padding:18px 20px;margin-bottom:18px;'>"
+            f"<p style='margin:0 0 8px 0;'><strong>Solicitante:</strong> {escape(requested_by_name)}</p>"
+            f"<p style='margin:0 0 8px 0;'><strong>Cargo:</strong> {escape(str(requested_by_cargo))}</p>"
+            f"<p style='margin:0 0 8px 0;'><strong>Sede origen:</strong> {escape(str(origin_label))}</p>"
+            f"<p style='margin:0 0 8px 0;'><strong>Sede destino:</strong> {escape(str(destination_label))}</p>"
+            f"<p style='margin:0;'><strong>Referencias solicitadas:</strong> {len(rows)}</p>"
+            "</div>"
+            "<table style='width:100%;border-collapse:collapse;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;'>"
+            "<thead><tr style='background:#111827;color:#ffffff;'>"
+            "<th style='padding:12px;text-align:left;'>Referencia</th>"
+            "<th style='padding:12px;text-align:left;'>Descripción</th>"
+            "<th style='padding:12px;text-align:center;'>Cantidad</th>"
+            "</tr></thead><tbody>"
+            + "".join(
+                f"<tr><td style='padding:10px 12px;border-top:1px solid #e5e7eb;'>{escape(str(row.get('reference') or row.get('referencia') or ''))}</td>"
+                f"<td style='padding:10px 12px;border-top:1px solid #e5e7eb;'>{escape(str(row.get('description') or row.get('descripcion') or ''))}</td>"
+                f"<td style='padding:10px 12px;border-top:1px solid #e5e7eb;text-align:center;'>{escape(str(format_quantity(row.get('suggested_qty') or row.get('quantity_requested') or 0)))}</td></tr>"
+                for row in rows
+            )
+            + "</tbody></table>"
+            + (f"<p style='margin-top:18px;'><strong>Observaciones:</strong> {escape(notes)}</p>" if notes else "")
+            + "<p style='margin-top:18px;'>Se adjunta archivo Excel de control con el detalle exacto del traslado.</p>"
+        )
+        html_content = build_brand_email_shell("Solicitud de traslado entre sedes", body_html)
+        text_content = (
+            f"Solicitud de traslado Ferreinox\n"
+            f"Solicitante: {requested_by_name}\n"
+            f"Cargo: {requested_by_cargo}\n"
+            f"Origen: {origin_label}\n"
+            f"Destino: {destination_label}\n"
+            f"Referencias: {len(rows)}\n"
+            f"Observaciones: {notes or 'Sin observaciones'}"
+        )
+        try:
+            send_sendgrid_email(
+                to_email,
+                f"Solicitud de traslado | {origin_label} -> {destination_label}",
+                html_content,
+                text_content,
+                cc_emails=cc_emails,
+                attachments=[
+                    {
+                        "content": base64.b64encode(attachment_bytes).decode("ascii"),
+                        "filename": attachment_name,
+                        "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "disposition": "attachment",
+                    }
+                ],
+            )
+            results["sent"].append(
+                {
+                    "destination_store_code": destination_store_code,
+                    "destination_store_name": destination_label,
+                    "to_email": to_email,
+                    "cc_emails": cc_emails,
+                    "attachment": attachment_name,
+                    "count": len(rows),
+                }
+            )
+        except Exception as exc:
+            results["errors"].append(f"{destination_label}: {exc}")
+
+    return results
+
+
+def notify_procurement_request_by_email(shortages: list[dict], requested_by_user: dict, notes: Optional[str] = None):
+    if not shortages:
+        return {"sent": False, "errors": []}
+
+    to_email = "compras@ferreinox.co"
+    requested_by_name = requested_by_user.get("full_name") or "Colaborador Ferreinox"
+    requested_by_metadata = dict(requested_by_user.get("metadata") or {})
+    requested_by_sede = requested_by_metadata.get("sede") or requested_by_metadata.get("store_code") or "Sede origen"
+    destination_label = shortages[0].get("destination_store_name") or "Sede destino"
+    attachment_name = f"abastecimiento_{sanitize_filename_segment(destination_label, 'Destino')}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+    attachment_bytes = build_transfer_request_excel_bytes(shortages)
+    body_html = (
+        "<p style='margin:0 0 14px 0;font-size:15px;'>Se detectaron faltantes sin origen interno disponible para cumplir pedidos pendientes.</p>"
+        f"<div style='background:#ffffff;border:1px solid {CORPORATE_BRAND['brand_border']};border-radius:14px;padding:18px 20px;margin-bottom:18px;'>"
+        f"<p style='margin:0 0 8px 0;'><strong>Solicitante:</strong> {escape(requested_by_name)}</p>"
+        f"<p style='margin:0 0 8px 0;'><strong>Sede origen:</strong> {escape(str(requested_by_sede))}</p>"
+        f"<p style='margin:0 0 8px 0;'><strong>Sede que necesita abastecimiento:</strong> {escape(str(destination_label))}</p>"
+        f"<p style='margin:0;'><strong>Referencias sin origen útil:</strong> {len(shortages)}</p>"
+        "</div>"
+        "<table style='width:100%;border-collapse:collapse;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;'>"
+        "<thead><tr style='background:#111827;color:#ffffff;'>"
+        "<th style='padding:12px;text-align:left;'>Referencia</th>"
+        "<th style='padding:12px;text-align:left;'>Descripción</th>"
+        "<th style='padding:12px;text-align:center;'>Faltante</th>"
+        "</tr></thead><tbody>"
+        + "".join(
+            f"<tr><td style='padding:10px 12px;border-top:1px solid #e5e7eb;'>{escape(str(row.get('reference') or ''))}</td>"
+            f"<td style='padding:10px 12px;border-top:1px solid #e5e7eb;'>{escape(str(row.get('description') or ''))}</td>"
+            f"<td style='padding:10px 12px;border-top:1px solid #e5e7eb;text-align:center;'>{escape(str(format_quantity(row.get('shortage_qty') or row.get('required_qty') or 0)))}</td></tr>"
+            for row in shortages
+        )
+        + "</tbody></table>"
+        + (f"<p style='margin-top:18px;'><strong>Observaciones:</strong> {escape(notes)}</p>" if notes else "")
+        + "<p style='margin-top:18px;'>Se adjunta Excel con el detalle para abastecimiento o compra.</p>"
+    )
+    html_content = build_brand_email_shell("Solicitud de abastecimiento / compras", body_html)
+    text_content = (
+        f"Solicitud de abastecimiento Ferreinox\n"
+        f"Solicitante: {requested_by_name}\n"
+        f"Sede origen: {requested_by_sede}\n"
+        f"Sede destino: {destination_label}\n"
+        f"Referencias: {len(shortages)}\n"
+        f"Observaciones: {notes or 'Sin observaciones'}"
+    )
+    try:
+        send_sendgrid_email(
+            to_email,
+            f"Abastecimiento requerido | {destination_label}",
+            html_content,
+            text_content,
+            cc_emails=get_transfer_cc_emails(),
+            attachments=[
+                {
+                    "content": base64.b64encode(attachment_bytes).decode("ascii"),
+                    "filename": attachment_name,
+                    "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    "disposition": "attachment",
+                }
+            ],
+        )
+        return {"sent": True, "to_email": to_email, "attachment": attachment_name, "errors": []}
+    except Exception as exc:
+        return {"sent": False, "errors": [str(exc)]}
+
+
 def get_facturador_routing_config():
     configured_map = None
     raw_json = os.getenv("FACTURADOR_ROUTING_JSON")
@@ -1963,6 +2750,17 @@ def get_facturador_route_for_store(store_code: Optional[str]):
     store_code = normalize_store_code(store_code)
     if not store_code:
         return None
+    employee_candidates = get_employee_facturador_candidates_for_store(store_code)
+    if employee_candidates:
+        top_candidate = employee_candidates[0]
+        return {
+            "name": top_candidate.get("full_name") or top_candidate.get("cargo") or "Facturación",
+            "email": top_candidate.get("email"),
+            "phone": top_candidate.get("phone_e164"),
+            "source": "datos_empleados.xlsx",
+            "cargo": top_candidate.get("cargo"),
+            "sede": top_candidate.get("sede"),
+        }
     return get_facturador_routing_config().get(store_code)
 
 
@@ -4307,6 +5105,111 @@ def build_transfer_suggestions_for_pending_dispatches(destination_store_code: Op
     return suggestions
 
 
+def fetch_shortages_without_internal_origin(destination_store_code: Optional[str], preferred_origin_store_code: Optional[str] = None, limit: int = 6):
+    unresolved = []
+    for shortage in fetch_pending_dispatch_shortages(destination_store_code, limit=limit * 3):
+        origin_stock = fetch_best_origin_stock_for_reference(
+            shortage.get("referencia"),
+            shortage.get("destination_store_code"),
+            preferred_origin_store_code,
+        )
+        if origin_stock:
+            continue
+        unresolved.append(
+            {
+                "dispatch_id": shortage.get("dispatch_id"),
+                "order_id": shortage.get("order_id"),
+                "reference": shortage.get("referencia"),
+                "description": shortage.get("descripcion"),
+                "destination_store_code": shortage.get("destination_store_code"),
+                "destination_store_name": shortage.get("destination_store_name"),
+                "destination_stock": shortage.get("stock_destino"),
+                "required_qty": shortage.get("required_qty"),
+                "shortage_qty": shortage.get("shortage_qty"),
+            }
+        )
+        if len(unresolved) >= limit:
+            break
+    return unresolved
+
+
+def parse_internal_selection_indexes(content: Optional[str], max_items: int):
+    digits = [int(value) for value in re.findall(r"\d+", content or "")]
+    indexes = []
+    for value in digits:
+        if 1 <= value <= max_items and value not in indexes:
+            indexes.append(value)
+    return indexes
+
+
+def summarize_transfer_candidates(items: list[dict], max_items: int = 5):
+    lines = []
+    for idx, item in enumerate(items[:max_items], start=1):
+        origin_label = item.get("origin_store_name") or item.get("source_store_name") or "sin origen"
+        destination_label = item.get("destination_store_name") or "sin destino"
+        qty_value = item.get("suggested_qty") if item.get("suggested_qty") is not None else item.get("shortage_qty")
+        lines.append(
+            f"{idx}. Pedido {item.get('order_id')} | {item.get('reference')} | {origin_label} -> {destination_label} | {format_quantity(qty_value)} und"
+        )
+    return "\n".join(lines)
+
+
+def build_internal_transfer_guidance_text(flow_payload: dict):
+    destination_label = flow_payload.get("destination_store_name") or "la sede destino"
+    suggestions = flow_payload.get("suggestions") or []
+    unresolved = flow_payload.get("unresolved_shortages") or []
+    sections = [f"Revisión operativa para {destination_label}:"]
+    if suggestions:
+        sections.append("Traslados sugeridos listos para crear:")
+        sections.append(summarize_transfer_candidates(suggestions))
+    if unresolved:
+        sections.append("Faltantes sin origen interno útil:")
+        sections.append(summarize_transfer_candidates(unresolved))
+    sections.append(
+        "Responde `confirmar traslado` para crear todos los traslados sugeridos, `1 y 3` para crear solo algunas opciones, `compras` para escalar faltantes sin origen, o `cancelar` para salir."
+    )
+    return "\n".join(section for section in sections if section)
+
+
+def build_internal_transfer_flow_payload(destination_store_code: Optional[str], preferred_origin_store_code: Optional[str] = None):
+    destination_store_code = normalize_store_code(destination_store_code)
+    preferred_origin_store_code = normalize_store_code(preferred_origin_store_code)
+    suggestions = build_transfer_suggestions_for_pending_dispatches(destination_store_code, preferred_origin_store_code)
+    unresolved = fetch_shortages_without_internal_origin(destination_store_code, preferred_origin_store_code)
+    return {
+        "destination_store_code": destination_store_code,
+        "destination_store_name": get_store_short_label(destination_store_code) or STORE_CODE_LABELS.get(destination_store_code) or destination_store_code,
+        "origin_store_code": preferred_origin_store_code,
+        "origin_store_name": get_store_short_label(preferred_origin_store_code) or STORE_CODE_LABELS.get(preferred_origin_store_code) or preferred_origin_store_code,
+        "suggestions": suggestions,
+        "unresolved_shortages": unresolved,
+        "step": "awaiting_confirmation",
+    }
+
+
+def create_procurement_followup(context: dict, requested_by_user: dict, shortages: list[dict], notes: Optional[str] = None):
+    if not shortages:
+        return {"created": False, "task_type": None, "notification": None}
+    destination_label = shortages[0].get("destination_store_name") or "sede destino"
+    detail = {
+        "requested_by": requested_by_user,
+        "destination_store_code": shortages[0].get("destination_store_code"),
+        "destination_store_name": destination_label,
+        "shortages": shortages,
+        "notes": notes,
+    }
+    upsert_agent_task(
+        context["conversation_id"],
+        context.get("cliente_id"),
+        "abastecimiento_compras",
+        f"Faltantes sin origen interno para {destination_label}",
+        detail,
+        "alta",
+    )
+    notification = notify_procurement_request_by_email(shortages, requested_by_user, notes=notes)
+    return {"created": True, "task_type": "abastecimiento_compras", "notification": notification}
+
+
 def fetch_inventory_gap_between_stores(source_store_code: str, destination_store_code: str, limit: int = 10):
     source_store_code = normalize_store_code(source_store_code)
     destination_store_code = normalize_store_code(destination_store_code)
@@ -4345,10 +5248,15 @@ def fetch_inventory_gap_between_stores(source_store_code: str, destination_store
 def create_transfer_request_records(suggestions: list[dict], requested_by_user: dict, notes: Optional[str] = None):
     if not suggestions:
         return []
+    requester_metadata = dict((requested_by_user or {}).get("metadata") or {})
+    requester_store_code = normalize_store_code(requester_metadata.get("store_code"))
     engine = get_db_engine()
     created_rows = []
     with engine.begin() as connection:
         for suggestion in suggestions:
+            origin_store_code = normalize_store_code(suggestion.get("origin_store_code"))
+            if requester_store_code and origin_store_code and requester_store_code != origin_store_code:
+                continue
             transfer_id = connection.execute(
                 text(
                     """
@@ -4397,7 +5305,7 @@ def create_transfer_request_records(suggestions: list[dict], requested_by_user: 
                     "order_dispatch_id": suggestion.get("dispatch_id"),
                     "order_id": suggestion.get("order_id"),
                     "requested_by_user_id": requested_by_user.get("id"),
-                    "source_store_code": suggestion.get("origin_store_code"),
+                    "source_store_code": origin_store_code,
                     "source_store_name": suggestion.get("origin_store_name"),
                     "destination_store_code": suggestion.get("destination_store_code"),
                     "destination_store_name": suggestion.get("destination_store_name"),
@@ -6288,7 +7196,7 @@ def generate_commercial_pdf(
     from reportlab.lib import colors
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.units import mm, inch
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable, Image
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
@@ -6296,10 +7204,10 @@ def generate_commercial_pdf(
     doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=20 * mm, bottomMargin=20 * mm, leftMargin=20 * mm, rightMargin=20 * mm)
     styles = getSampleStyleSheet()
 
-    brand_dark = colors.HexColor("#111827")
-    brand_accent = colors.HexColor("#F59E0B")
-    brand_light_bg = colors.HexColor("#F9FAFB")
-    brand_border = colors.HexColor("#E5E7EB")
+    brand_dark = colors.HexColor(CORPORATE_BRAND["brand_dark"])
+    brand_accent = colors.HexColor(CORPORATE_BRAND["brand_accent"])
+    brand_light_bg = colors.HexColor(CORPORATE_BRAND["brand_light"])
+    brand_border = colors.HexColor(CORPORATE_BRAND["brand_border"])
     white = colors.white
 
     title_style = ParagraphStyle("Title", parent=styles["Title"], fontSize=22, textColor=white, alignment=TA_LEFT, spaceAfter=4)
@@ -6321,16 +7229,25 @@ def generate_commercial_pdf(
     store_name = STORE_CODE_LABELS.get(store_filters[0]) if len(store_filters) == 1 else (", ".join(STORE_CODE_LABELS.get(c, c) for c in store_filters) if store_filters else "Por definir")
     delivery_channel = detail.get("delivery_channel") or "chat"
     contact_email = detail.get("contact_email") or (cliente_contexto or {}).get("email") or ""
+    dispatch_name = detail.get("nombre_despacho") or cliente_label
+    observations = detail.get("facturador_notes") or detail.get("observaciones") or ""
 
     elements = []
 
+    logo_cell = ""
+    if CORPORATE_LOGO_PATH.exists():
+        logo = Image(str(CORPORATE_LOGO_PATH))
+        logo.drawHeight = 18 * mm
+        logo.drawWidth = 42 * mm
+        logo_cell = logo
+
     header_data = [
         [
-            Paragraph(f"<b>FERREINOX S.A.S. BIC</b>", title_style),
+            logo_cell or Paragraph(f"<b>FERREINOX S.A.S. BIC</b>", title_style),
             Paragraph(f"<b>{request_label}</b>", ParagraphStyle("RightTitle", parent=title_style, alignment=TA_RIGHT)),
         ],
         [
-            Paragraph("NIT 900.123.456-7 | Pereira, Colombia", subtitle_style),
+            Paragraph(f"NIT {CORPORATE_BRAND['nit']} | {CORPORATE_BRAND['address']}", subtitle_style),
             Paragraph(f"Ref: {case_ref} | {date_str}", ParagraphStyle("RightSub", parent=subtitle_style, alignment=TA_RIGHT)),
         ],
     ]
@@ -6349,6 +7266,7 @@ def generate_commercial_pdf(
 
     info_data = [
         [Paragraph("<b>Cliente</b>", normal_style), Paragraph(str(cliente_label), normal_style)],
+        [Paragraph("<b>Solicita</b>", normal_style), Paragraph(str(dispatch_name), normal_style)],
         [Paragraph("<b>Cód. Cliente</b>", normal_style), Paragraph(str(cliente_codigo) if cliente_codigo else "—", normal_style)],
         [Paragraph("<b>NIT / Cédula</b>", normal_style), Paragraph(str(cliente_nit) if cliente_nit else "—", normal_style)],
         [Paragraph("<b>Tienda / Ciudad</b>", normal_style), Paragraph(str(store_name), normal_style)],
@@ -6441,17 +7359,20 @@ def generate_commercial_pdf(
     if pending_items > 0:
         summary_text += f" — <i>{pending_items} pendiente(s) por precisar</i>"
     elements.append(Paragraph(summary_text, normal_style))
+    if observations:
+        elements.append(Spacer(1, 3 * mm))
+        elements.append(Paragraph(f"<b>Observaciones operativas:</b> {escape(str(observations))}", normal_style))
     elements.append(Spacer(1, 8 * mm))
 
     elements.append(HRFlowable(width="100%", thickness=0.5, color=brand_border, spaceBefore=4, spaceAfter=4))
     elements.append(Paragraph(
-        "Este documento es un resumen de la solicitud generada desde el CRM Ferreinox. "
-        "No incluye precios. Un asesor comercial completará el proceso de facturación.",
+        "Este documento resume una solicitud comercial generada desde el CRM Ferreinox. "
+        "No constituye factura ni cotización valorada y está sujeto a validación de inventario, alistamiento y confirmación operativa por Ferreinox SAS BIC.",
         small_style,
     ))
     elements.append(Spacer(1, 3 * mm))
     elements.append(Paragraph(
-        f"Ferreinox S.A.S. BIC | Pereira, Colombia | {date_str}",
+        f"{CORPORATE_BRAND['company_name']} | {CORPORATE_BRAND['service_email']} | {CORPORATE_BRAND['phone_landline']} | {CORPORATE_BRAND['website']} | {date_str}",
         ParagraphStyle("Footer", parent=small_style, alignment=TA_CENTER),
     ))
 
@@ -8456,6 +9377,20 @@ def _handle_tool_radicar_reclamo(args, context, conversation_context):
     correo_cliente = args.get("correo_cliente", "")
     evidencia = args.get("evidencia", "Pendiente")
 
+    existing_claim = dict(conversation_context.get("claim_case") or {})
+    existing_product = normalize_text_value(existing_claim.get("product_label"))
+    incoming_product = normalize_text_value(producto_reclamado)
+    if existing_claim.get("submitted") and existing_product and incoming_product and existing_product == incoming_product:
+        return json.dumps(
+            {
+                "status": "ya_radicado",
+                "numero_caso": existing_claim.get("case_reference") or f"CRM-{context['conversation_id']}",
+                "producto": producto_reclamado,
+                "mensaje": "Ese reclamo ya estaba radicado en esta conversación. No lo reenvié para evitar duplicados.",
+            },
+            ensure_ascii=False,
+        )
+
     if not producto_reclamado or not descripcion_problema:
         return json.dumps(
             {"status": "error", "mensaje": "Faltan datos: producto y descripción del problema son requeridos."},
@@ -8620,26 +9555,46 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
 
     # Construir el commercial_draft a partir de lo que manda el LLM
     commercial_draft = conversation_context.get("commercial_draft") or {}
-    commercial_draft["items"] = [
-        {
-            "status": "matched",
-            "original_text": it.get("descripcion_comercial", ""),
-            "matched_product": {
-                "referencia": it["referencia"],
-                "descripcion": it.get("descripcion_comercial", ""),
-                "codigo_articulo": it["referencia"],
-            },
-            "product_request": {
-                "requested_quantity": it.get("cantidad"),
-                "requested_unit": "unidad",
-            },
+    store_filters = list(commercial_draft.get("store_filters") or [])
+    confirmed_items = []
+    for it in items_pedido:
+        reference_value = (it.get("referencia") or "").strip()
+        lookup_request = {
+            "product_codes": [reference_value] if reference_value else [],
+            "store_filters": store_filters,
         }
-        for it in items_pedido
-    ]
+        lookup_rows = lookup_product_context(reference_value, lookup_request) if reference_value else []
+        matched_row = next(
+            (
+                row for row in lookup_rows
+                if normalize_reference_value(row.get("referencia") or row.get("codigo_articulo") or row.get("producto_codigo"))
+                == normalize_reference_value(reference_value)
+            ),
+            lookup_rows[0] if lookup_rows else {},
+        )
+        matched_product = dict(matched_row or {})
+        matched_product.setdefault("referencia", reference_value)
+        matched_product.setdefault("codigo_articulo", reference_value)
+        matched_product.setdefault("descripcion", it.get("descripcion_comercial", ""))
+        confirmed_items.append(
+            {
+                "status": "matched",
+                "original_text": it.get("descripcion_comercial", ""),
+                "matched_product": matched_product,
+                "product_request": {
+                    "requested_quantity": it.get("cantidad"),
+                    "requested_unit": infer_product_presentation_from_row(matched_product) or "unidad",
+                },
+            }
+        )
+
+    commercial_draft["items"] = confirmed_items
     commercial_draft["delivery_channel"] = "email" if canal_envio == "email" else "chat"
     commercial_draft["contact_email"] = correo_cliente or commercial_draft.get("contact_email")
     commercial_draft["items_confirmed"] = True
+    commercial_draft["claim_case"] = None
     conversation_context["commercial_draft"] = commercial_draft
+    conversation_context["claim_case"] = None
 
     if not commercial_draft.get("items"):
         return json.dumps(
@@ -8668,7 +9623,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         )
         commercial_draft["draft_id"] = order_id
         mark_agent_order_status(order_id, "confirmado", metadata_update={"nombre_despacho": nombre_despacho})
-        update_conversation_context(context["conversation_id"], {"commercial_draft": commercial_draft})
+        update_conversation_context(context["conversation_id"], {"commercial_draft": commercial_draft, "claim_case": None})
     except Exception as exc:
         return json.dumps(
             {"exito": False, "mensaje": f"No pude persistir el pedido en PostgreSQL: {exc}"},
@@ -9292,6 +10247,11 @@ async def receive_whatsapp_webhook(request: Request):
                     login_match = INTERNAL_LOGIN_PATTERN.match(content)
                     if login_match:
                         stored_content = f"login {login_match.group(1)} ******"
+                    else:
+                        employee_by_phone = find_employee_record_by_phone(context.get("telefono_e164"))
+                        cedula_match = extract_internal_cedula_candidate(content)
+                        if employee_by_phone and cedula_match:
+                            stored_content = content.replace(cedula_match, f"{cedula_match[:2]}******{cedula_match[-2:]}")
 
                 store_inbound_message(
                     context["conversation_id"],
@@ -9335,6 +10295,8 @@ async def receive_whatsapp_webhook(request: Request):
                                 "last_product_request": None,
                                 "internal_auth": None,
                                 "internal_last_cliente_codigo": None,
+                                "awaiting_internal_auth_cedula": None,
+                                "internal_transfer_flow": None,
                             },
                             summary="Contexto reiniciado por inactividad (3h+)",
                         )

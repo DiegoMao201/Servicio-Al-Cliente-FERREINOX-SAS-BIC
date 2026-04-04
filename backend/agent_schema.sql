@@ -233,7 +233,7 @@ CREATE TABLE IF NOT EXISTS public.agent_user (
     updated_at timestamptz NOT NULL DEFAULT now(),
     CONSTRAINT uq_agent_user_username UNIQUE (username),
     CONSTRAINT uq_agent_user_phone UNIQUE (phone_e164),
-    CONSTRAINT chk_agent_user_role CHECK (role IN ('vendedor', 'gerente', 'operador', 'administrador'))
+        CONSTRAINT chk_agent_user_role CHECK (role IN ('empleado', 'vendedor', 'gerente', 'operador', 'administrador'))
 );
 
 CREATE TABLE IF NOT EXISTS public.agent_user_scope (
