@@ -2005,6 +2005,19 @@ def extract_internal_customer_candidate(text_value: Optional[str]):
         "código",
         "cod",
         "nombre",
+        "cuanto",
+        "cuánto",
+        "suma",
+        "suma lo",
+        "sumar",
+        "total",
+        "vencido",
+        "vencidos",
+        "vencida",
+        "vencidas",
+        "deuda",
+        "debo",
+        "debido",
     ]:
         cleaned = re.sub(rf"\b{re.escape(fragment)}\b", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
@@ -2359,15 +2372,18 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
         }
 
     candidate = extract_internal_customer_candidate(content)
-    if not candidate:
-        return {
-            "response_text": "Dime el NIT, la cédula, el código o el nombre del cliente y te muestro la información.",
-            "intent": "internal_customer_missing",
-            "context_updates": {},
-        }
+    last_cliente_codigo = (conversation_context or {}).get("internal_last_cliente_codigo")
+    cliente_contexto = resolve_internal_customer_context(candidate, context.get("telefono_e164")) if candidate else None
+    if (not cliente_contexto or not cliente_contexto.get("cliente_codigo")) and last_cliente_codigo and not candidate:
+        cliente_contexto = fetch_customer_lookup_row(last_cliente_codigo) or {"cliente_codigo": last_cliente_codigo}
 
-    cliente_contexto = resolve_internal_customer_context(candidate, context.get("telefono_e164"))
     if not cliente_contexto or not cliente_contexto.get("cliente_codigo"):
+        if not candidate:
+            return {
+                "response_text": "Dime el NIT, la cédula, el código o el nombre del cliente y te muestro la información.",
+                "intent": "internal_customer_missing",
+                "context_updates": {},
+            }
         return {
             "response_text": "No encontré ese cliente con la información enviada. Prueba con NIT, código cliente o nombre completo.",
             "intent": "internal_customer_not_found",
@@ -2390,14 +2406,23 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
         }
 
     if intent == "consulta_cartera":
+        cartera_query = extract_cartera_query(content)
         overdue_info = fetch_overdue_documents(cliente_contexto.get("cliente_codigo"))
         totals = (overdue_info or {}).get("totals") or {}
-        response_text = (
-            f"{customer_row.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}\n"
-            f"Saldo cartera: {format_currency(customer_row.get('saldo_cartera'))}.\n"
-            f"Vencidos: {totals.get('documentos_vencidos', customer_row.get('documentos_vencidos') or 0)} documento(s), "
-            f"máximo {totals.get('max_dias_vencido', customer_row.get('max_dias_vencido') or 0)} día(s)."
-        )
+        if cartera_query.get("wants_overdue_only"):
+            response_text = (
+                f"{customer_row.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}\n"
+                f"Cartera vencida: {format_currency(totals.get('saldo_vencido'))}.\n"
+                f"Documentos vencidos: {totals.get('documentos_vencidos', customer_row.get('documentos_vencidos') or 0)} | "
+                f"máximo atraso: {totals.get('max_dias_vencido', customer_row.get('max_dias_vencido') or 0)} día(s)."
+            )
+        else:
+            response_text = (
+                f"{customer_row.get('nombre_cliente') or cliente_contexto.get('cliente_codigo')}\n"
+                f"Saldo cartera: {format_currency(customer_row.get('saldo_cartera'))}.\n"
+                f"Vencidos: {totals.get('documentos_vencidos', customer_row.get('documentos_vencidos') or 0)} documento(s), "
+                f"máximo {totals.get('max_dias_vencido', customer_row.get('max_dias_vencido') or 0)} día(s)."
+            )
     elif intent == "consulta_compras":
         purchase_summary = fetch_latest_purchase_detail(cliente_contexto.get("cliente_codigo"))
         if not purchase_summary:
