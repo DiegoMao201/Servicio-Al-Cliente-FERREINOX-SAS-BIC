@@ -4209,27 +4209,33 @@ def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None
     embedding_literal = "[" + ",".join(str(v) for v in embedding) + "]"
 
     marca_clause = ""
-    params: dict = {"top_k": top_k}
+    params: list = [embedding_literal, embedding_literal, top_k]
     if marca_filter:
-        marca_clause = "AND LOWER(marca) = LOWER(:marca)"
-        params["marca"] = marca_filter
+        marca_clause = "AND LOWER(marca) = LOWER(%s)"
+        params = [embedding_literal, embedding_literal, marca_filter, top_k]
 
     try:
         engine = get_db_engine()
-        with engine.connect() as connection:
-            rows = connection.execute(
-                text(f"""
-                    SELECT doc_filename, doc_path_lower, chunk_index, chunk_text,
-                           marca, familia_producto, tipo_documento,
-                           1 - (embedding <=> '{embedding_literal}'::vector) AS similarity
-                    FROM public.agent_technical_doc_chunk
-                    WHERE 1=1 {marca_clause}
-                    ORDER BY embedding <=> '{embedding_literal}'::vector
-                    LIMIT :top_k
-                """),
+        raw_conn = engine.raw_connection()
+        try:
+            cur = raw_conn.cursor()
+            cur.execute(
+                f"""
+                SELECT doc_filename, doc_path_lower, chunk_index, chunk_text,
+                       marca, familia_producto, tipo_documento,
+                       1 - (embedding <=> %s::vector) AS similarity
+                FROM public.agent_technical_doc_chunk
+                WHERE 1=1 {marca_clause}
+                ORDER BY embedding <=> %s::vector
+                LIMIT %s
+                """,
                 params,
-            ).mappings().all()
-            return [dict(r) for r in rows]
+            )
+            columns = [desc[0] for desc in cur.description]
+            rows = [dict(zip(columns, row)) for row in cur.fetchall()]
+            return rows
+        finally:
+            raw_conn.close()
     except Exception:
         return []
 
