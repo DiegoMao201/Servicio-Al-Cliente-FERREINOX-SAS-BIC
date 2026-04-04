@@ -182,6 +182,18 @@ TECHNICAL_DOC_CACHE = {"loaded_at": 0.0, "entries": []}
 
 
 TECHNICAL_ADVISORY_KEYWORDS = [
+    "piso",
+    "pisos",
+    "pintar un piso",
+    "pintura para piso",
+    "pintura epoxica",
+    "pintura epóxica",
+    "epoxica",
+    "epóxica",
+    "cemento",
+    "concreto",
+    "trafico peatonal",
+    "tráfico peatonal",
     "humedad",
     "humedo",
     "húmedo",
@@ -7329,6 +7341,8 @@ def infer_technical_problem_category(text_value: Optional[str], existing_categor
     normalized = normalize_text_value(text_value)
     if not normalized:
         return existing_category or "general"
+    if any(token in normalized for token in ["piso", "pisos", "cemento", "concreto", "pintura para piso", "epoxica", "epóxica"]):
+        return "piso"
     if any(token in normalized for token in ["humedad", "gotera", "goteras", "filtracion", "filtración", "capilaridad", "moho", "salitre", "descascar", "manchas negras", "barranco"]):
         return "humedad"
     if any(token in normalized for token in ["madera", "barniz", "laca", "lasur", "protector madera"]):
@@ -7390,6 +7404,26 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
 
         case["ready"] = bool(case.get("source_context") and case.get("surface_state") and case.get("symptoms"))
 
+    elif category == "piso":
+        if any(token in normalized for token in ["interior", "adentro", "bajo techo"]):
+            case["floor_location"] = "interior"
+        elif any(token in normalized for token in ["exterior", "afuera", "intemperie"]):
+            case["floor_location"] = "exterior"
+
+        if any(token in normalized for token in ["cemento", "concreto", "mortero"]):
+            case["floor_material"] = "cemento o concreto"
+        elif any(token in normalized for token in ["ceramica", "cerámica", "baldosa", "porcelanato"]):
+            case["floor_material"] = "ceramica o baldosa"
+        elif any(token in normalized for token in ["madera"]):
+            case["floor_material"] = "madera"
+
+        if any(token in normalized for token in ["alto trafico", "alto tráfico", "montacarga", "vehiculo", "vehículo", "carro"]):
+            case["traffic_level"] = "alto trafico"
+        elif any(token in normalized for token in ["peatonal", "residencial", "casa", "habitacion", "habitación"]):
+            case["traffic_level"] = "trafico peatonal o residencial"
+
+        case["ready"] = bool(case.get("floor_location") and case.get("floor_material"))
+
     elif category == "madera":
         if any(token in normalized for token in ["intemperie", "exterior", "sol", "lluvia"]):
             case["exposure"] = "intemperie"
@@ -7438,6 +7472,13 @@ def build_technical_diagnostic_questions(technical_case: dict) -> list[str]:
             questions.append("¿Qué síntoma ves más claro: se descascara, sale moho, blanquea o solo se siente húmeda?")
         if not technical_case.get("wall_location"):
             questions.append("¿Eso te está pasando por la cara interior del muro o por la exterior?")
+    elif category == "piso":
+        if not technical_case.get("floor_location"):
+            questions.append("¿Ese piso es interior o exterior?")
+        if not technical_case.get("floor_material"):
+            questions.append("¿El piso es de cemento, concreto, cerámica o madera?")
+        if technical_case.get("floor_location") and technical_case.get("floor_material") and not technical_case.get("traffic_level"):
+            questions.append("¿Ese piso va a tener tráfico peatonal residencial o un uso más pesado?")
     elif category == "madera":
         if not technical_case.get("exposure"):
             questions.append("¿Esa madera va a quedar a la intemperie o bajo techo?")
@@ -7465,6 +7506,13 @@ def build_technical_search_query(technical_case: dict, user_message: Optional[st
             technical_case.get("wall_location") or "",
             technical_case.get("surface_state") or "",
             " ".join(technical_case.get("symptoms") or []),
+        ])
+    elif category == "piso":
+        parts.extend([
+            "sistema pintura para piso",
+            technical_case.get("floor_location") or "",
+            technical_case.get("floor_material") or "",
+            technical_case.get("traffic_level") or "",
         ])
     elif category == "madera":
         parts.extend([
@@ -7669,6 +7717,8 @@ def should_continue_technical_advisory_flow(conversation_context: Optional[dict]
     normalized = normalize_text_value(text_value)
     if not normalized:
         return False
+    if normalized in {"si", "sí", "ese", "esa", "la epoxica", "la epóxica", "epoxica", "epóxica", "pintura epoxica", "pintura epóxica"}:
+        return True
     return True
 
 
@@ -7709,9 +7759,9 @@ def build_technical_advisory_flow_reply(profile_name: Optional[str], user_messag
     if not rag_context:
         technical_case["stage"] = "diagnosed_without_rag"
         response_text = (
-            "Con lo que me cuentas ya tengo mejor ubicado el caso, pero no te voy a mandar a comprar un sellador cualquiera sin una ficha que lo respalde. "
-            "En la base técnica no me salió un sistema suficientemente claro para este diagnóstico exacto. "
-            "Si quieres, lo validamos con una ficha puntual del fabricante o te ayudo a aterrizar el sistema antes de cotizar."
+            "Con lo que me cuentas ya tengo mejor ubicado el caso, pero no te voy a mandar a comprar un producto cualquiera sin una ficha que lo respalde. "
+            "En la base técnica no me salió un sistema suficientemente claro para este diagnóstico exacto, así que prefiero no alucinar ni improvisarte una recomendación. "
+            "Si quieres, seguimos afinando el caso con el uso exacto y la línea que buscas para aterrizarlo bien dentro del portafolio."
         )
         return {
             "response_text": response_text,
