@@ -2809,6 +2809,55 @@ def get_store_short_label(store_code: Optional[str]):
     return re.sub(r"^Tienda\s+", "", label, flags=re.IGNORECASE).strip()
 
 
+def extract_store_stock_from_summary(stock_summary: Optional[str], store_code: Optional[str]):
+    normalized_code = normalize_store_code(store_code)
+    if not stock_summary or not normalized_code:
+        return None
+
+    match_tokens = set()
+    for alias in STORE_ALIASES.get(next((key for key, aliases in STORE_ALIASES.items() if normalized_code in aliases), ""), []):
+        alias_normalized = normalize_text_value(alias)
+        if alias_normalized and not alias_normalized.isdigit():
+            match_tokens.add(alias_normalized)
+    label_normalized = normalize_text_value(STORE_CODE_LABELS.get(normalized_code) or "")
+    if label_normalized:
+        match_tokens.add(label_normalized)
+
+    for fragment in str(stock_summary).split(";"):
+        left_value, _, right_value = fragment.partition(":")
+        left_normalized = normalize_text_value(left_value)
+        if any(token and token in left_normalized for token in match_tokens):
+            return parse_numeric_value(right_value)
+    return None
+
+
+def filter_previous_product_context(conversation_context: Optional[dict], product_request: Optional[dict]):
+    previous_rows = list((conversation_context or {}).get("last_product_context") or [])
+    if not previous_rows:
+        return []
+
+    filtered_rows = previous_rows
+    requested_unit = (product_request or {}).get("requested_unit")
+    if requested_unit:
+        unit_rows = [row for row in filtered_rows if infer_product_presentation_from_row(row) == requested_unit]
+        if unit_rows:
+            filtered_rows = unit_rows
+
+    requested_store_codes = (product_request or {}).get("store_filters") or []
+    if len(requested_store_codes) == 1:
+        requested_store_code = requested_store_codes[0]
+        visible_rows = []
+        for row in filtered_rows:
+            store_stock = extract_store_stock_from_summary(row.get("stock_por_tienda"), requested_store_code)
+            row_copy = dict(row)
+            row_copy["stock_en_tienda_solicitada"] = store_stock
+            row_copy["visibilidad_tienda_exacta"] = store_stock is not None
+            visible_rows.append(row_copy)
+        filtered_rows = visible_rows
+
+    return filtered_rows[:5]
+
+
 def extract_store_mentions_in_order(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     if not normalized:
@@ -3751,6 +3800,68 @@ def translate_product_to_commercial(description: Optional[str], presentation: Op
     if pres_label:
         commercial_name = f"{commercial_name} {pres_label}"
     return commercial_name
+
+
+def get_exact_product_description(product_row: Optional[dict]):
+    raw_description = (product_row or {}).get("descripcion") or (product_row or {}).get("nombre_articulo") or "producto"
+    return re.sub(r"\s+", " ", str(raw_description).strip())
+
+
+def build_product_audit_label(product_row: Optional[dict]):
+    row = product_row or {}
+    reference_value = row.get("referencia") or row.get("codigo_articulo") or row.get("codigo") or row.get("producto_codigo") or "sin referencia"
+    return f"[{reference_value}] - {get_exact_product_description(row)}"
+
+
+def has_meaningful_product_anchor(product_request: Optional[dict]):
+    request = product_request or {}
+    if request.get("product_codes") or request.get("brand_filters"):
+        return True
+    return bool(get_specific_product_terms(request))
+
+
+def build_followup_inventory_request(text_value: Optional[str], product_request: Optional[dict], conversation_context: Optional[dict]):
+    request = dict(product_request or {})
+    previous_request = dict((conversation_context or {}).get("last_product_request") or {})
+    if not previous_request or has_meaningful_product_anchor(request):
+        return request
+
+    has_followup_filter = any(
+        request.get(field_name)
+        for field_name in [
+            "requested_unit",
+            "store_filters",
+            "direction_filters",
+            "size_filters",
+            "color_filters",
+            "finish_filters",
+        ]
+    )
+    if not has_followup_filter:
+        return request
+
+    # Short follow-ups like 'el de galon en ferrebox' should inherit the last confirmed product anchor.
+    merged_request = dict(previous_request)
+    for field_name in [
+        "requested_quantity",
+        "requested_unit",
+        "quantity_expression",
+        "store_filters",
+        "direction_filters",
+        "size_filters",
+        "color_filters",
+        "finish_filters",
+        "brand_filters",
+    ]:
+        current_value = request.get(field_name)
+        if current_value:
+            if isinstance(current_value, list):
+                merged_request[field_name] = merge_unique_terms(merged_request.get(field_name), current_value)
+            else:
+                merged_request[field_name] = current_value
+    merged_request["original_query"] = text_value or request.get("original_query") or previous_request.get("original_query") or ""
+    merged_request["followup_from_previous_product"] = True
+    return merged_request
 
 
 def is_technical_advisory_message(text_value: Optional[str]):
@@ -8371,6 +8482,22 @@ def build_direct_reply(
     user_message: Optional[str] = None,
     conversation_context: Optional[dict] = None,
 ):
+    product_context_updates = {}
+    if intent == "consulta_productos" and product_context:
+        product_context_updates = {
+            "last_product_request": product_request or {},
+            "last_product_query": user_message or "",
+            "last_product_context": [
+                {
+                    "referencia": row.get("referencia") or row.get("codigo_articulo"),
+                    "descripcion": get_exact_product_description(row),
+                    "presentacion": infer_product_presentation_from_row(row),
+                    "stock_por_tienda": row.get("stock_por_tienda"),
+                }
+                for row in product_context[:5]
+            ],
+        }
+
     if intent == "consulta_cartera":
         if not cliente_contexto:
             return None
@@ -8561,27 +8688,24 @@ def build_direct_reply(
 
         if len(product_context) == 1:
             top_row = product_context[0]
-            top_reference = top_row.get("referencia") or top_row.get("codigo_articulo") or "sin referencia"
-            top_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or top_reference
-            top_presentation = infer_product_presentation_from_row(top_row)
-            top_brand = infer_product_brand_from_row(top_row)
-            commercial_name = translate_product_to_commercial(top_description, top_presentation, top_brand)
+            audit_label = build_product_audit_label(top_row)
             top_stock = top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")
             requested_store_codes = (product_request or {}).get("store_filters") or []
             requested_store_label = STORE_CODE_LABELS.get(requested_store_codes[0]) if len(requested_store_codes) == 1 else None
             if top_stock is not None and parse_numeric_value(top_stock) and parse_numeric_value(top_stock) > 0:
                 if requested_store_label:
-                    direct_response = f"Sí tenemos {commercial_name} en {requested_store_label} con {format_quantity(top_stock)} unidades. ¿Te separo alguna cantidad?"
+                    direct_response = f"Sí tenemos {audit_label} en {requested_store_label}. ¿Te separo alguna cantidad?"
                 else:
-                    direct_response = f"Sí tenemos {commercial_name} disponible. ¿En qué tienda lo necesitas?"
+                    direct_response = f"Sí tenemos {audit_label} disponible. ¿En qué tienda lo necesitas?"
             else:
-                direct_response = f"El {commercial_name} lo veo agotado en este momento. ¿Quieres que te revise otra presentación o alternativa?"
+                direct_response = f"El producto {audit_label} lo veo agotado en este momento. ¿Quieres que te revise otra presentación o alternativa?"
             return {
                 "tono": "informativo",
                 "intent": intent,
                 "priority": "media",
                 "summary": "Consulta de producto con coincidencia directa",
                 "response_text": direct_response,
+                "context_updates": product_context_updates,
                 "should_create_task": False,
                 "task_type": "seguimiento_cliente",
                 "task_summary": "Consulta de producto resuelta",
@@ -8602,11 +8726,7 @@ def build_direct_reply(
                     "stock_por_tienda": row.get("stock_por_tienda"),
                 }
                 clarification_options.append(option_payload)
-                commercial_label = translate_product_to_commercial(
-                    row.get("descripcion") or row.get("nombre_articulo"),
-                    infer_product_presentation_from_row(row),
-                    infer_product_brand_from_row(row),
-                )
+                commercial_label = build_product_audit_label(row)
                 stock_val = parse_numeric_value(row.get("stock_total") if row.get("stock_total") is not None else row.get("stock"))
                 stock_note = f" | stock {format_quantity(stock_val)}" if stock_val and stock_val > 0 else " | agotado"
                 clarification_lines.append(f"{index}. {commercial_label}{stock_note}")
@@ -8619,6 +8739,7 @@ def build_direct_reply(
                 "response_text": build_best_product_clarification_question(product_request, product_context)
                 + "\n"
                 + "\n".join(clarification_lines),
+                "context_updates": product_context_updates,
                 "should_create_task": False,
                 "task_type": "seguimiento_cliente",
                 "task_summary": "Aclaracion de producto",
@@ -8645,14 +8766,11 @@ def build_direct_reply(
 
         if requested_store_label and product_context:
             top_row = product_context[0]
-            top_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or "producto"
             top_stock = top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")
-            top_presentation = infer_product_presentation_from_row(top_row)
-            top_brand = infer_product_brand_from_row(top_row)
-            commercial_name = translate_product_to_commercial(top_description, top_presentation, top_brand)
+            audit_label = build_product_audit_label(top_row)
             stock_value = parse_numeric_value(top_stock) or 0
             if stock_value > 0:
-                store_response = f"Sí, en {requested_store_label} tenemos {commercial_name} con {format_quantity(stock_value)} unidades."
+                store_response = f"Sí, en {requested_store_label} tenemos {audit_label}."
                 if product_request and product_request.get("requested_quantity"):
                     req_qty = float(product_request["requested_quantity"])
                     if stock_value >= req_qty:
@@ -8661,13 +8779,14 @@ def build_direct_reply(
                         store_response += " Pero no alcanza para toda la cantidad que pides."
                 store_response += " ¿Te separo alguna cantidad o te reviso otra presentación?"
             else:
-                store_response = f"El {commercial_name} no lo veo disponible en {requested_store_label} en este momento. ¿Quieres que revise en otra sede?"
+                store_response = f"El producto {audit_label} no lo veo disponible en {requested_store_label} en este momento. ¿Quieres que revise en otra sede?"
             return {
                 "tono": "informativo",
                 "intent": intent,
                 "priority": "media",
                 "summary": "Consulta de producto con tienda especifica",
                 "response_text": store_response,
+                "context_updates": product_context_updates,
                 "should_create_task": False,
                 "task_type": "seguimiento_cliente",
                 "task_summary": "Consulta de producto por tienda",
@@ -8675,10 +8794,7 @@ def build_direct_reply(
             }
 
         for row in product_context[:3]:
-            raw_desc = row.get("descripcion") or row.get("nombre_articulo") or "producto"
-            row_presentation = infer_product_presentation_from_row(row)
-            row_brand = infer_product_brand_from_row(row)
-            commercial_name = translate_product_to_commercial(raw_desc, row_presentation, row_brand)
+            commercial_name = build_product_audit_label(row)
             stock = row.get("stock_total") if row.get("stock_total") is not None else row.get("stock")
             stock_value = parse_numeric_value(stock)
             if stock_value and stock_value > 0:
@@ -8691,6 +8807,7 @@ def build_direct_reply(
             "intent": intent,
             "priority": "media",
             "summary": "Consulta de productos",
+            "context_updates": product_context_updates,
             "response_text": (
                 f"{quantity_note + '. ' if quantity_note else ''}"
                 f"Encontré estas opciones: {'; '.join(product_lines)}. "
@@ -9413,7 +9530,7 @@ def build_agent_prompt(
                 "1. PROHIBIDO saludar en cada turno. Solo saluda si es el PRIMER mensaje de la conversación. Después conversa fluidamente.\n"
                 "2. PROHIBIDO usar plantillas tipo 'Hola, [Nombre]', 'Resumen del caso:', 'Si necesitas algo más...', 'Encontré esta referencia para tu consulta'.\n"
                 "3. PROHIBIDO vomitar la base de datos. Nunca enumeres stock de todas las tiendas. Si el cliente dijo Pereira, responde SOLO sobre Pereira en lenguaje humano.\n"
-                "4. TRADUCCIÓN OBLIGATORIA de inventario: convierte 'PQ VINILTEX ADV MAT BLANCO 1501 18.93L' a 'Viniltex Blanco en cuñete'. Nunca le muestres al cliente los códigos técnicos crudos.\n"
+                "4. REFERENCIA AUDITABLE OBLIGATORIA: cuando confirmes inventario o muestres opciones con referencia, usa la descripción exacta que viene del ERP/backend. No la reescribas ni cambies base, tint, paste, color o modelo. Si el JSON trae `visibilidad_tienda_exacta=false`, no confirmes stock para esa sede: aclara que recuperaste la referencia correcta pero no tienes desglose exacto de esa tienda en la vista actual.\n"
                 "5. PIENSA ANTES DE ACTUAR: clasifica mentalmente la intención del cliente antes de responder.\n"
                 "   - Si pregunta cómo aplicar, qué rodillo usar, tiempos de secado → ASESORÍA TÉCNICA, responde como experto, NO busques en la base de datos.\n"
                 "   - Si pide comprar o verificar disponibilidad de un producto → INVENTARIO, ahí sí consulta la base.\n"
@@ -9633,10 +9750,11 @@ REGLAS FUNDAMENTALES:
 1. Mensajes CORTOS: máximo 3-4 líneas por turno. Nunca suenes como robot.
 2. PROHIBIDO saludar repetidamente. Solo saluda si es el PRIMER mensaje de la conversación.
 3. PROHIBIDO usar plantillas tipo "Hola, [Nombre]", "Resumen del caso:", "Si necesitas algo más...".
-4. TRADUCCIÓN OBLIGATORIA de códigos ERP a lenguaje humano:
-   - "PQ VINILTEX ADV MAT BLANCO 1501 18.93L" → "Viniltex Blanco en cuñete"
-   - 18.93L o 1/5 = cuñete, 3.79L o 1/1 = galón, 0.95L o 1/4 = cuarto
-   - No muestres códigos técnicos ni nombres crudos del ERP.
+4. REFERENCIA AUDITABLE OBLIGATORIA:
+    - Cuando `consultar_inventario` devuelva referencias, muestra la descripción exacta del ERP/backend. No la reescribas ni la resumas si eso cambia base, tint, paste, color o modelo.
+    - 18.93L o 1/5 = cuñete, 3.79L o 1/1 = galón, 0.95L o 1/4 = cuarto.
+    - Puedes explicar la presentación, pero no alteres el nombre real del producto.
+    - Si el JSON trae `visibilidad_tienda_exacta=false`, no confirmes stock de esa sede. Di que recuperaste la referencia correcta, pero que esa tienda no tiene desglose exacto en la vista actual.
 5. PIENSA antes de actuar: clasifica la intención del cliente.
    - Pregunta sobre aplicación, secado, rodillos, dilución → ASESORÍA TÉCNICA: responde como experto SIN buscar inventario.
    - Pide comprar, cotizar o verificar disponibilidad de un producto → usa consultar_inventario.
@@ -9688,7 +9806,7 @@ ACTITUD DE APRENDIZ (ANTI-BLOQUEO): Si el cliente pide un producto con una jerga
 
 GRABAR EN PIEDRA (MEMORIA OBLIGATORIA): Solo cuando el cliente confirme una opción exacta (ej. 'sí, la opción 2', 'exacto, ese', o ya tienes la referencia correcta validada), ejecuta `guardar_aprendizaje_producto` antes de continuar con el pedido. En `codigo_cliente` pon la jerga original del cliente. En `descripcion_asociada` pon la referencia y nombre real ya confirmados. Nunca aprendas desde una suposición, una corrección dudosa ni una referencia improvisada.
 
-CONFIRMACIÓN AUDITABLE: Cada vez que confirmes un producto en el chat (ya sea porque lo encontraste directo o porque el cliente te lo enseñó), DEBES mostrarlo con este formato estricto: '✅ [REFERENCIA] - Nombre Comercial en Presentación: Disponible/Agotado'. (Ej. '✅ [5891101] - Viniltex Blanco en cuñete: Disponible'). Esto le permite al equipo auditar que estás asociando las referencias correctas.
+CONFIRMACIÓN AUDITABLE: Cada vez que confirmes un producto en el chat (ya sea porque lo encontraste directo o porque el cliente te lo enseñó), DEBES mostrarlo con este formato estricto: '✅ [REFERENCIA] - DESCRIPCIÓN EXACTA DEL ERP: Disponible/Agotado'. (Ej. '✅ [5891101] - PQ VINILTEX ADV MAT BLANCO 1501 18.93L: Disponible'). Esto le permite al equipo auditar que estás asociando las referencias correctas.
 
 BÚSQUEDA POR FRAGMENTOS NUMÉRICOS: Si el cliente envía un código numérico puro (ej. 13755, 17174), manda el número limpio a `consultar_inventario`. Si no devuelve resultados, NO digas que no existe. Pregunta: '¿Me ayudas con el nombre del producto de ese código para grabármelo en la memoria?'. Cuando responda, guarda el aprendizaje y busca por nombre.
 
@@ -9955,8 +10073,16 @@ AGENT_TOOLS = [
 
 def _handle_tool_consultar_inventario(args, conversation_context):
     producto = args.get("producto", "")
-    product_request = prepare_product_request_for_search(producto)
+    product_request = build_followup_inventory_request(
+        producto,
+        prepare_product_request_for_search(producto),
+        conversation_context,
+    )
     rows = lookup_product_context(producto, product_request)
+    requested_store_codes = product_request.get("store_filters") or []
+    requested_store_code = requested_store_codes[0] if len(requested_store_codes) == 1 else None
+    if not rows and product_request.get("followup_from_previous_product"):
+        rows = filter_previous_product_context(conversation_context, product_request)
     if not rows:
         return json.dumps(
             {
@@ -9971,8 +10097,10 @@ def _handle_tool_consultar_inventario(args, conversation_context):
     results = []
     for row in rows[:5]:
         item = {
-            "codigo": row.get("codigo_articulo") or row.get("referencia"),
-            "descripcion": row.get("descripcion") or row.get("nombre_articulo"),
+            "codigo": row.get("codigo_articulo") or row.get("referencia") or row.get("codigo"),
+            "descripcion": get_exact_product_description(row),
+            "descripcion_exacta": get_exact_product_description(row),
+            "etiqueta_auditable": build_product_audit_label(row),
             "marca": row.get("marca") or row.get("marca_producto"),
             "presentacion": infer_product_presentation_from_row(row),
             "familia_consulta": row.get("familia_consulta"),
@@ -9982,6 +10110,15 @@ def _handle_tool_consultar_inventario(args, conversation_context):
         stock = parse_numeric_value(row.get("stock_total"))
         if stock is not None:
             item["stock_total"] = stock
+        requested_store_stock = row.get("stock_en_tienda_solicitada")
+        if requested_store_stock is None and requested_store_code:
+            requested_store_stock = extract_store_stock_from_summary(row.get("stock_por_tienda"), requested_store_code)
+        if requested_store_stock is not None:
+            item["stock_tienda_solicitada"] = requested_store_stock
+            item["disponible_tienda_solicitada"] = requested_store_stock > 0
+        if requested_store_code:
+            item["visibilidad_tienda_exacta"] = bool(row.get("visibilidad_tienda_exacta") or requested_store_stock is not None)
+            item["tienda_solicitada"] = STORE_CODE_LABELS.get(requested_store_code) or requested_store_code
         stock_189 = parse_numeric_value(row.get("stock_189"))
         if stock_189 is not None:
             item["stock_pereira"] = stock_189
@@ -9989,16 +10126,25 @@ def _handle_tool_consultar_inventario(args, conversation_context):
         if precio is not None:
             item["precio"] = precio
         results.append(item)
+    if rows:
+        conversation_context["last_product_request"] = product_request
+        conversation_context["last_product_query"] = producto
+        conversation_context["last_product_context"] = results[:5]
     clarification_required = should_ask_product_clarification(product_request, rows)
     clarification_question = build_best_product_clarification_question(product_request, rows) if clarification_required else None
     return json.dumps(
         {
             "encontrados": len(results),
             "productos": results,
+            "seguimiento_producto_previo": bool(product_request.get("followup_from_previous_product")),
             "nlu_extraccion": product_request.get("nlu_extraction") or {},
             "estrategia_ranking": "catalogo_curado_postgresql",
             "requiere_aclaracion": clarification_required,
             "pregunta_desambiguacion": clarification_question,
+            "mensaje": (
+                "Se recuperó el producto del mensaje anterior para resolver este seguimiento."
+                if product_request.get("followup_from_previous_product") else None
+            ),
         },
         ensure_ascii=False,
         default=str,
@@ -10887,6 +11033,11 @@ def generate_agent_reply_v2(
         "response_text": response_text,
         "intent": intent,
         "tool_calls": tool_calls_made,
+        "context_updates": {
+            "last_product_request": conversation_context.get("last_product_request"),
+            "last_product_query": conversation_context.get("last_product_query"),
+            "last_product_context": conversation_context.get("last_product_context"),
+        } if conversation_context.get("last_product_request") else {},
         "should_create_task": False,
     }
 
