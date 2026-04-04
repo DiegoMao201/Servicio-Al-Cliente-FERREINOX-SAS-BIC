@@ -2053,6 +2053,8 @@ def detect_internal_query_intent(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     if not normalized:
         return None
+    if any(fragment in normalized for fragment in ["carro va", "carro para", "van para", "va para", "traemos algo", "traemos mercancia", "traemos mercancía", "mercancia para", "mercancía para", "en ruta"]):
+        return "consulta_ruta_mercancia"
     if any(fragment in normalized for fragment in ["pendientes despacho", "pendiente despacho", "pendientes por despachar", "por despachar", "pedidos pendientes", "despachos pendientes"]):
         return "consulta_despachos"
     if any(fragment in normalized for fragment in ["genera traslado", "genere traslado", "crear traslado", "crea traslado", "solicita traslado", "traslada", "trasladar"]):
@@ -2086,6 +2088,45 @@ def build_pending_dispatches_response(store_code: Optional[str] = None):
             f"- Pedido {row.get('order_id')} | {destino} | {contacto} | archivo {archivo} | estado {estado}"
         )
     return "\n".join(response_lines)
+
+
+def build_internal_route_merchandise_response(content: str, internal_user: dict):
+    store_mentions = extract_store_mentions_in_order(content)
+    if not store_mentions:
+        return "Dime la sede destino del carro o de la ruta y te digo qué pedidos, faltantes o traslados veo para esa ciudad.", None
+
+    destination_store_code = store_mentions[-1]
+    destination_label = get_store_short_label(destination_store_code) or STORE_CODE_LABELS.get(destination_store_code) or destination_store_code
+    internal_metadata = dict((internal_user or {}).get("metadata") or {})
+    preferred_origin_store_code = normalize_store_code(internal_metadata.get("store_code"))
+    dispatches = fetch_pending_dispatches(destination_store_code, limit=6)
+    flow_payload = build_internal_transfer_flow_payload(destination_store_code, preferred_origin_store_code)
+
+    response_lines = [f"Ruta operativa hacia {destination_label}:"]
+    if dispatches:
+        response_lines.append(f"Veo {len(dispatches)} despacho(s) pendientes o en tránsito:")
+        for row in dispatches[:4]:
+            status_label = str(row.get("status") or "pendiente").replace("_", " ")
+            contacto = row.get("contacto_nombre") or "cliente sin nombre"
+            archivo = row.get("export_filename") or f"pedido_{row.get('order_id')}"
+            response_lines.append(
+                f"- Pedido {row.get('order_id')} | {contacto} | archivo {archivo} | estado {status_label}"
+            )
+    else:
+        response_lines.append(f"No veo despachos pendientes o en tránsito hacia {destination_label} en este momento.")
+
+    suggestions = flow_payload.get("suggestions") or []
+    unresolved = flow_payload.get("unresolved_shortages") or []
+    if suggestions:
+        response_lines.append("Además puedo cubrir faltantes con estos traslados sugeridos:")
+        response_lines.append(summarize_transfer_candidates(suggestions, max_items=4))
+    if unresolved:
+        response_lines.append("Y estos faltantes tocaría escalarlos a compras:")
+        response_lines.append(summarize_transfer_candidates(unresolved, max_items=4))
+    if suggestions or unresolved:
+        response_lines.append("Si quieres, responde `confirmar traslado`, `compras` o `cancelar` y sigo la guía operativa contigo.")
+
+    return "\n".join(response_lines), (flow_payload if (suggestions or unresolved) else None)
 
 
 def build_transfer_suggestions_response(content: str, internal_user: dict):
@@ -2319,6 +2360,23 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
             "response_text": build_pending_dispatches_response(store_code),
             "intent": intent,
             "context_updates": {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))},
+        }
+
+    if intent == "consulta_ruta_mercancia":
+        if not internal_user_has_advanced_access(internal_user):
+            return {
+                "response_text": "Tu perfil actual puede crear pedidos, pero no consultar la operación logística interna completa.",
+                "intent": "internal_access_denied",
+                "context_updates": {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))},
+            }
+        response_text, flow_payload = build_internal_route_merchandise_response(content, internal_user)
+        context_updates = {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))}
+        if flow_payload:
+            context_updates["internal_transfer_flow"] = flow_payload
+        return {
+            "response_text": response_text,
+            "intent": intent,
+            "context_updates": context_updates,
         }
 
     if intent in {"consulta_traslados", "crear_traslado"}:
@@ -5718,6 +5776,59 @@ def build_identity_not_found_reply(identity_candidate: Optional[dict]):
     )
 
 
+def build_commercial_customer_snapshot(customer_context: Optional[dict]):
+    if not customer_context:
+        return None
+    return {
+        "cliente_codigo": customer_context.get("cliente_codigo") or customer_context.get("verified_cliente_codigo") or customer_context.get("cod_cliente"),
+        "nombre_cliente": customer_context.get("nombre_cliente"),
+        "nit": customer_context.get("nit") or customer_context.get("numero_documento") or customer_context.get("documento"),
+        "email": customer_context.get("email"),
+        "telefono1": customer_context.get("telefono1"),
+        "telefono2": customer_context.get("telefono2"),
+        "vendedor": customer_context.get("vendedor"),
+        "vendedor_codigo": customer_context.get("vendedor_codigo"),
+        "zona": customer_context.get("zona"),
+    }
+
+
+def resolve_commercial_customer_context(customer_input: Optional[str]):
+    raw_value = (customer_input or "").strip()
+    if not raw_value:
+        return None, None
+
+    identity_candidate = extract_identity_lookup_candidate(
+        raw_value,
+        {"awaiting_verification": True, "pending_intent": "consulta_cartera"},
+        allow_unprompted=True,
+    )
+    if not identity_candidate:
+        normalized = normalize_text_value(raw_value)
+        tokens = [token for token in normalized.split() if len(token) >= 2]
+        if 2 <= len(tokens) <= 8:
+            identity_candidate = {"type": "name_lookup", "value": raw_value}
+
+    verified_context, verified_by = resolve_identity_candidate(identity_candidate)
+    if not verified_context:
+        return None, verified_by
+    return build_commercial_customer_snapshot(verified_context), verified_by
+
+
+def trim_commercial_customer_candidate(raw_value: Optional[str]):
+    text_value = (raw_value or "").strip()
+    if not text_value:
+        return ""
+    quantity_words_pattern = "|".join(QUANTITY_WORD_MAP.keys())
+    split_match = re.search(
+        r"\s+(?=(?:\d+\s*/\s*(?:1|4|5)|\d+|" + quantity_words_pattern + r")\s+(?:cunetes?|cuñetes?|galones?|galon|cuartos?|canecas?|cubetas?|rodillos?|brochas?|bochas?|lijas?|cintas?|bultos?|kilos?|metros?|rollos?|tubos?|tarros?|cajas?|paquetes?|unidades?|cerraduras?|candados?|chapas?|selladores?|silicones?|llaves?|bisagras?|manijas?|laminas?|láminas?|tejas?|perfiles?|angulos?|ángulos?|baldes?|de)\b)",
+        text_value,
+        flags=re.IGNORECASE,
+    )
+    if split_match:
+        text_value = text_value[:split_match.start()].strip(" ,.;:-")
+    return text_value.strip()
+
+
 def is_identity_verification_message(text_value: Optional[str], conversation_context: Optional[dict]):
     return extract_identity_lookup_candidate(text_value, conversation_context) is not None
 
@@ -6088,41 +6199,48 @@ def split_commercial_line_items(text_value: Optional[str]):
             cleaned.append(stripped_segment)
         return cleaned
 
-    prepared_text = re.sub(r"[;|]+", "\n", text_value)
+    quantity_words_pattern = "|".join(QUANTITY_WORD_MAP.keys())
+    quantity_start = re.search(
+        r"(?:\b\d+\s*/\s*(?:1|4|5)\b|\b\d+\b|\b(?:" + quantity_words_pattern + r")\b)\s+(?:cunetes?|cuñetes?|galones?|galon|cuartos?|canecas?|cubetas?|rodillos?|brochas?|bochas?|lijas?|cintas?|bultos?|kilos?|metros?|rollos?|tubos?|tarros?|cajas?|paquetes?|unidades?|cerraduras?|candados?|chapas?|selladores?|silicones?|llaves?|bisagras?|manijas?|laminas?|láminas?|tejas?|perfiles?|angulos?|ángulos?|baldes?|de)\b",
+        text_value,
+        flags=re.IGNORECASE,
+    )
+    text_for_items = text_value[quantity_start.start():].strip() if quantity_start else text_value
+
+    prepared_text = re.sub(r"[;|]+", "\n", text_for_items)
     raw_lines = [line.strip(" -*•\t") for line in prepared_text.splitlines()]
     lines = [line for line in raw_lines if line]
     if len(lines) >= 2:
         return lines
 
-    normalized = normalize_text_value(text_value)
+    normalized = normalize_text_value(text_for_items)
     if re.search(r"\b\d+\s*/\s*(1|4|5)\b", normalized):
-        split_candidates = [segment.strip() for segment in re.split(r"\s{2,}|,(?=\s*\d)|(?<=\")\s+(?=\d)", text_value) if segment.strip()]
+        split_candidates = [segment.strip() for segment in re.split(r"\s{2,}|,(?=\s*\d)|(?<=\")\s+(?=\d)", text_for_items) if segment.strip()]
         if len(split_candidates) >= 2:
             return split_candidates
 
-    quantity_words_pattern = "|".join(QUANTITY_WORD_MAP.keys())
     qty_boundary = re.compile(
         r"(?<=\S)\s+(?=(?:\d+\s*/\s*(?:1|4|5)|\d+|" + quantity_words_pattern + r")\s+(?:cunetes?|cuñetes?|galones?|galon|cuartos?|canecas?|cubetas?|rodillos?|brochas?|bochas?|lijas?|cintas?|bultos?|kilos?|metros?|rollos?|tubos?|tarros?|cajas?|paquetes?|unidades?|cerraduras?|candados?|chapas?|selladores?|silicones?|llaves?|bisagras?|manijas?|laminas?|láminas?|tejas?|perfiles?|angulos?|ángulos?|baldes?|de)\b)",
         re.IGNORECASE,
     )
-    split_candidates = [segment.strip() for segment in qty_boundary.split(text_value) if segment.strip()]
+    split_candidates = [segment.strip() for segment in qty_boundary.split(text_for_items) if segment.strip()]
     if len(split_candidates) >= 2:
         cleaned_candidates = clean_split_candidates(split_candidates)
         return cleaned_candidates or split_candidates
 
-    comma_split = [segment.strip() for segment in re.split(r",\s*", text_value) if segment.strip()]
+    comma_split = [segment.strip() for segment in re.split(r",\s*", text_for_items) if segment.strip()]
     if len(comma_split) >= 2:
         product_like = sum(1 for seg in comma_split if re.search(r"\d|" + quantity_words_pattern, seg.lower()))
         if product_like >= 2:
             return comma_split
 
-    y_split = [segment.strip() for segment in re.split(r"\by\b", text_value, flags=re.IGNORECASE) if segment.strip()]
+    y_split = [segment.strip() for segment in re.split(r"\by\b", text_for_items, flags=re.IGNORECASE) if segment.strip()]
     if len(y_split) >= 2:
         product_like = sum(1 for seg in y_split if re.search(r"\d|" + quantity_words_pattern, seg.lower()))
         if product_like >= 2:
             return y_split
 
-    return lines if lines else [text_value.strip()]
+    return lines if lines else [text_for_items.strip()]
 
 
 def merge_store_filters(product_request: dict, inherited_store_filters: list[str]):
@@ -6504,16 +6622,40 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     internal_notified = bool(existing_draft.get("internal_notified"))
     customer_email_sent = bool(existing_draft.get("customer_email_sent"))
     destinatario = existing_draft.get("destinatario") or ""
+    customer_identity_input = (existing_draft.get("customer_identity_input") or "").strip()
+    customer_context = dict(existing_draft.get("customer_context") or {})
+    customer_resolution_status = existing_draft.get("customer_resolution_status")
 
     # Extract destinatario from message like "a nombre de Juan Pérez"
     nombre_match = re.search(r"\ba\s+nombre\s+de\s+(.+?)(?:\s*[.,;]|$)", normalized_message)
     if nombre_match:
-        destinatario = nombre_match.group(1).strip().title()
+        customer_identity_input = trim_commercial_customer_candidate(nombre_match.group(1))
+        resolved_customer_context, _ = resolve_commercial_customer_context(customer_identity_input)
+        if resolved_customer_context:
+            customer_context = resolved_customer_context
+            customer_resolution_status = "resolved"
+            destinatario = resolved_customer_context.get("nombre_cliente") or customer_identity_input.title()
+        else:
+            customer_context = {}
+            customer_resolution_status = "unresolved"
+            destinatario = customer_identity_input.title()
+    elif customer_identity_input and not customer_context:
+        resolved_customer_context, _ = resolve_commercial_customer_context(customer_identity_input)
+        if resolved_customer_context:
+            customer_context = resolved_customer_context
+            customer_resolution_status = "resolved"
+            destinatario = resolved_customer_context.get("nombre_cliente") or destinatario or customer_identity_input.title()
+        elif customer_resolution_status != "resolved":
+            customer_resolution_status = "unresolved"
+
+    if customer_context and not destinatario:
+        destinatario = customer_context.get("nombre_cliente") or ""
 
     compact_summary = summarize_commercial_items(matched_items)
     has_store = bool(inherited_store_filters)
     all_items_resolved = bool(matched_items) and not ambiguous_items and not missing_items
-    ready_to_close = all_items_resolved and has_store and items_confirmed
+    requires_customer_resolution = bool(customer_identity_input) and customer_resolution_status != "resolved"
+    ready_to_close = all_items_resolved and has_store and items_confirmed and not requires_customer_resolution
 
     if ready_to_close and not incoming_delivery_channel and wants_order_confirmation:
         delivery_channel = existing_draft.get("delivery_channel")
@@ -6525,6 +6667,8 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         closing_parts = []
         if not has_store:
             closing_parts.append("¿En qué tienda o ciudad lo necesitas?")
+        if requires_customer_resolution:
+            closing_parts.append("Antes de cerrarlo necesito validar a nombre de qué cliente va. Envíame NIT, código o nombre completo para no cruzar la facturación.")
         if all_items_resolved and has_store and not items_confirmed:
             request_label = "cotización" if intent == "cotizacion" else "pedido"
             closing_parts.append(f"¿Te confirmo el {request_label}? ¿A nombre de quién va el despacho?")
@@ -6546,6 +6690,9 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             "customer_email_sent": customer_email_sent,
             "items_confirmed": items_confirmed,
             "destinatario": destinatario,
+            "customer_identity_input": customer_identity_input or None,
+            "customer_context": customer_context or None,
+            "customer_resolution_status": customer_resolution_status,
             "items": resolved_items,
         }
 
@@ -6566,7 +6713,8 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     # ── Ready to close ──
     request_label = "cotización" if intent == "cotizacion" else "pedido"
     destination_label = store_label or "la sede indicada"
-    destinatario_label = f" a nombre de {destinatario}" if destinatario else ""
+    display_customer_label = (customer_context or {}).get("nombre_cliente") or destinatario
+    destinatario_label = f" a nombre de {display_customer_label}" if display_customer_label else ""
     if not delivery_channel:
         response_text = (
             f"¡Listo! Ya te dejé montado el {request_label} para {destination_label}{destinatario_label} con {compact_summary}. "
@@ -6601,6 +6749,9 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         "customer_email_sent": customer_email_sent or should_send_customer_email,
         "items_confirmed": items_confirmed,
         "destinatario": destinatario,
+        "customer_identity_input": customer_identity_input or None,
+        "customer_context": customer_context or None,
+        "customer_resolution_status": customer_resolution_status,
         "items": resolved_items,
     }
 
@@ -6613,7 +6764,7 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         "should_create_task": last_intent != intent or should_notify_internal,
         "task_type": intent,
         "task_summary": f"Solicitud de {request_label} lista para seguimiento",
-        "task_detail": {"items": resolved_items, "store_filters": inherited_store_filters, "mode": intent, "delivery_channel": delivery_channel, "contact_email": contact_email, "destinatario": destinatario},
+        "task_detail": {"items": resolved_items, "store_filters": inherited_store_filters, "mode": intent, "delivery_channel": delivery_channel, "contact_email": contact_email, "destinatario": destinatario, "customer_context": customer_context or None},
         "conversation_context_updates": {"commercial_draft": draft_state},
         "commercial_draft": draft_state,
         "email_route": "ventas" if should_notify_internal else None,
@@ -7442,8 +7593,19 @@ def generate_commercial_pdf(
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
+    items = detail.get("items") or []
+    matched_items = [item for item in items if item.get("status") == "matched"]
+    compact_mode = request_type == "cotizacion" and 0 < len(matched_items) <= 8
+
     buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=20 * mm, bottomMargin=20 * mm, leftMargin=20 * mm, rightMargin=20 * mm)
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        topMargin=(12 if compact_mode else 20) * mm,
+        bottomMargin=(12 if compact_mode else 20) * mm,
+        leftMargin=(14 if compact_mode else 20) * mm,
+        rightMargin=(14 if compact_mode else 20) * mm,
+    )
     styles = getSampleStyleSheet()
 
     brand_dark = colors.HexColor(CORPORATE_BRAND["brand_dark"])
@@ -7452,12 +7614,12 @@ def generate_commercial_pdf(
     brand_border = colors.HexColor(CORPORATE_BRAND["brand_border"])
     white = colors.white
 
-    title_style = ParagraphStyle("Title", parent=styles["Title"], fontSize=22, textColor=white, alignment=TA_LEFT, spaceAfter=4)
-    subtitle_style = ParagraphStyle("Subtitle", parent=styles["Normal"], fontSize=10, textColor=colors.HexColor("#D1D5DB"), alignment=TA_LEFT)
-    heading_style = ParagraphStyle("Heading", parent=styles["Heading2"], fontSize=13, textColor=brand_dark, spaceBefore=14, spaceAfter=6)
-    normal_style = ParagraphStyle("Body", parent=styles["Normal"], fontSize=10, textColor=brand_dark, leading=14)
-    small_style = ParagraphStyle("Small", parent=styles["Normal"], fontSize=8, textColor=colors.HexColor("#6B7280"), leading=11)
-    right_style = ParagraphStyle("Right", parent=styles["Normal"], fontSize=10, textColor=brand_dark, alignment=TA_RIGHT)
+    title_style = ParagraphStyle("Title", parent=styles["Title"], fontSize=18 if compact_mode else 22, textColor=white, alignment=TA_LEFT, spaceAfter=3 if compact_mode else 4)
+    subtitle_style = ParagraphStyle("Subtitle", parent=styles["Normal"], fontSize=8.5 if compact_mode else 10, textColor=colors.HexColor("#D1D5DB"), alignment=TA_LEFT, leading=10 if compact_mode else 12)
+    heading_style = ParagraphStyle("Heading", parent=styles["Heading2"], fontSize=11 if compact_mode else 13, textColor=brand_dark, spaceBefore=8 if compact_mode else 14, spaceAfter=4 if compact_mode else 6)
+    normal_style = ParagraphStyle("Body", parent=styles["Normal"], fontSize=8.6 if compact_mode else 10, textColor=brand_dark, leading=10.5 if compact_mode else 14)
+    small_style = ParagraphStyle("Small", parent=styles["Normal"], fontSize=7 if compact_mode else 8, textColor=colors.HexColor("#6B7280"), leading=9 if compact_mode else 11)
+    right_style = ParagraphStyle("Right", parent=styles["Normal"], fontSize=8.6 if compact_mode else 10, textColor=brand_dark, alignment=TA_RIGHT, leading=10.5 if compact_mode else 14)
 
     request_label = "Pedido" if request_type == "pedido" else "Cotización"
     document_version = "Formato CRM 2026.3"
@@ -7465,13 +7627,14 @@ def generate_commercial_pdf(
     now = datetime.now()
     date_str = now.strftime("%d/%m/%Y")
     time_str = now.strftime("%I:%M %p")
-    cliente_label = (cliente_contexto or {}).get("nombre_cliente") or profile_name or "Cliente Ferreinox"
-    cliente_codigo = (cliente_contexto or {}).get("cliente_codigo") or ""
-    cliente_nit = (cliente_contexto or {}).get("nit") or (cliente_contexto or {}).get("documento") or ""
+    commercial_customer_context = dict(detail.get("customer_context") or cliente_contexto or {})
+    cliente_label = commercial_customer_context.get("nombre_cliente") or profile_name or "Cliente Ferreinox"
+    cliente_codigo = commercial_customer_context.get("cliente_codigo") or ""
+    cliente_nit = commercial_customer_context.get("nit") or commercial_customer_context.get("documento") or ""
     store_filters = detail.get("store_filters") or []
     store_name = STORE_CODE_LABELS.get(store_filters[0]) if len(store_filters) == 1 else (", ".join(STORE_CODE_LABELS.get(c, c) for c in store_filters) if store_filters else "Por definir")
     delivery_channel = detail.get("delivery_channel") or "chat"
-    contact_email = detail.get("contact_email") or (cliente_contexto or {}).get("email") or ""
+    contact_email = detail.get("contact_email") or commercial_customer_context.get("email") or ""
     dispatch_name = detail.get("nombre_despacho") or cliente_label
     observations = detail.get("facturador_notes") or detail.get("observaciones") or ""
 
@@ -7498,14 +7661,14 @@ def generate_commercial_pdf(
     header_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), brand_dark),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, 0), 16),
-        ("BOTTOMPADDING", (0, -1), (-1, -1), 14),
-        ("LEFTPADDING", (0, 0), (-1, -1), 16),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 16),
+        ("TOPPADDING", (0, 0), (-1, 0), 12 if compact_mode else 16),
+        ("BOTTOMPADDING", (0, -1), (-1, -1), 10 if compact_mode else 14),
+        ("LEFTPADDING", (0, 0), (-1, -1), 12 if compact_mode else 16),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 12 if compact_mode else 16),
         ("ROUNDEDCORNERS", [8, 8, 0, 0]),
     ]))
     elements.append(header_table)
-    elements.append(Spacer(1, 4 * mm))
+    elements.append(Spacer(1, (2 if compact_mode else 4) * mm))
 
     banner_table = Table(
         [[
@@ -7524,43 +7687,50 @@ def generate_commercial_pdf(
         ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FEF3C7")),
         ("BOX", (0, 0), (-1, -1), 0.6, brand_accent),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 10),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
-        ("LEFTPADDING", (0, 0), (-1, -1), 12),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+        ("TOPPADDING", (0, 0), (-1, -1), 7 if compact_mode else 10),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7 if compact_mode else 10),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10 if compact_mode else 12),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 10 if compact_mode else 12),
     ]))
     elements.append(banner_table)
-    elements.append(Spacer(1, 5 * mm))
+    elements.append(Spacer(1, (3 if compact_mode else 5) * mm))
 
-    info_data = [
-        [Paragraph("<b>Cliente</b>", normal_style), Paragraph(str(cliente_label), normal_style)],
-        [Paragraph("<b>Solicita</b>", normal_style), Paragraph(str(dispatch_name), normal_style)],
-        [Paragraph("<b>Cód. Cliente</b>", normal_style), Paragraph(str(cliente_codigo) if cliente_codigo else "—", normal_style)],
-        [Paragraph("<b>NIT / Cédula</b>", normal_style), Paragraph(str(cliente_nit) if cliente_nit else "—", normal_style)],
-        [Paragraph("<b>Tienda / Ciudad</b>", normal_style), Paragraph(str(store_name), normal_style)],
-        [Paragraph("<b>Canal</b>", normal_style), Paragraph(str(delivery_channel).title(), normal_style)],
-        [Paragraph("<b>Correo</b>", normal_style), Paragraph(str(contact_email) if contact_email else "—", normal_style)],
-        [Paragraph("<b>Fecha</b>", normal_style), Paragraph(f"{date_str} - {time_str}", normal_style)],
-    ]
-    info_table = Table(info_data, colWidths=[doc.width * 0.28, doc.width * 0.72])
+    if compact_mode:
+        info_data = [
+            [Paragraph("<b>Cliente</b>", normal_style), Paragraph(str(cliente_label), normal_style), Paragraph("<b>Cód. Cliente</b>", normal_style), Paragraph(str(cliente_codigo) if cliente_codigo else "—", normal_style)],
+            [Paragraph("<b>Solicita</b>", normal_style), Paragraph(str(dispatch_name), normal_style), Paragraph("<b>NIT / Cédula</b>", normal_style), Paragraph(str(cliente_nit) if cliente_nit else "—", normal_style)],
+            [Paragraph("<b>Tienda / Ciudad</b>", normal_style), Paragraph(str(store_name), normal_style), Paragraph("<b>Canal</b>", normal_style), Paragraph(str(delivery_channel).title(), normal_style)],
+            [Paragraph("<b>Correo</b>", normal_style), Paragraph(str(contact_email) if contact_email else "—", normal_style), Paragraph("<b>Fecha</b>", normal_style), Paragraph(f"{date_str} - {time_str}", normal_style)],
+        ]
+        info_table = Table(info_data, colWidths=[doc.width * 0.14, doc.width * 0.36, doc.width * 0.16, doc.width * 0.34])
+    else:
+        info_data = [
+            [Paragraph("<b>Cliente</b>", normal_style), Paragraph(str(cliente_label), normal_style)],
+            [Paragraph("<b>Solicita</b>", normal_style), Paragraph(str(dispatch_name), normal_style)],
+            [Paragraph("<b>Cód. Cliente</b>", normal_style), Paragraph(str(cliente_codigo) if cliente_codigo else "—", normal_style)],
+            [Paragraph("<b>NIT / Cédula</b>", normal_style), Paragraph(str(cliente_nit) if cliente_nit else "—", normal_style)],
+            [Paragraph("<b>Tienda / Ciudad</b>", normal_style), Paragraph(str(store_name), normal_style)],
+            [Paragraph("<b>Canal</b>", normal_style), Paragraph(str(delivery_channel).title(), normal_style)],
+            [Paragraph("<b>Correo</b>", normal_style), Paragraph(str(contact_email) if contact_email else "—", normal_style)],
+            [Paragraph("<b>Fecha</b>", normal_style), Paragraph(f"{date_str} - {time_str}", normal_style)],
+        ]
+        info_table = Table(info_data, colWidths=[doc.width * 0.28, doc.width * 0.72])
     info_table.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), brand_light_bg),
         ("BOX", (0, 0), (-1, -1), 0.5, brand_border),
         ("INNERGRID", (0, 0), (-1, -1), 0.3, brand_border),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 6),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-        ("LEFTPADDING", (0, 0), (-1, -1), 10),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+        ("TOPPADDING", (0, 0), (-1, -1), 4 if compact_mode else 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4 if compact_mode else 6),
+        ("LEFTPADDING", (0, 0), (-1, -1), 7 if compact_mode else 10),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 7 if compact_mode else 10),
     ]))
     elements.append(info_table)
-    elements.append(Spacer(1, 6 * mm))
+    elements.append(Spacer(1, (3 if compact_mode else 6) * mm))
 
     elements.append(Paragraph(f"Detalle del {request_label}", heading_style))
     elements.append(HRFlowable(width="100%", thickness=1, color=brand_accent, spaceBefore=2, spaceAfter=4))
 
-    items = detail.get("items") or []
-    matched_items = [item for item in items if item.get("status") == "matched"]
     table_header = [
         Paragraph("<b>#</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
         Paragraph("<b>Producto</b>", ParagraphStyle("TH", parent=normal_style, textColor=white)),
@@ -7601,7 +7771,7 @@ def generate_commercial_pdf(
     if not matched_items:
         table_data.append([Paragraph("—", normal_style)] * 5)
 
-    col_widths = [doc.width * 0.06, doc.width * 0.38, doc.width * 0.18, doc.width * 0.18, doc.width * 0.20]
+    col_widths = [doc.width * 0.05, doc.width * 0.41, doc.width * 0.16, doc.width * 0.16, doc.width * 0.22] if compact_mode else [doc.width * 0.06, doc.width * 0.38, doc.width * 0.18, doc.width * 0.18, doc.width * 0.20]
     items_table = Table(table_data, colWidths=col_widths, repeatRows=1)
     table_style_cmds = [
         ("BACKGROUND", (0, 0), (-1, 0), brand_dark),
@@ -7609,17 +7779,17 @@ def generate_commercial_pdf(
         ("BOX", (0, 0), (-1, -1), 0.5, brand_border),
         ("INNERGRID", (0, 0), (-1, -1), 0.3, brand_border),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 7),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
-        ("LEFTPADDING", (0, 0), (-1, -1), 6),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 4 if compact_mode else 7),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4 if compact_mode else 7),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4 if compact_mode else 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4 if compact_mode else 6),
     ]
     for row_idx in range(1, len(table_data)):
         bg = white if row_idx % 2 == 1 else brand_light_bg
         table_style_cmds.append(("BACKGROUND", (0, row_idx), (-1, row_idx), bg))
     items_table.setStyle(TableStyle(table_style_cmds))
     elements.append(items_table)
-    elements.append(Spacer(1, 6 * mm))
+    elements.append(Spacer(1, (3 if compact_mode else 6) * mm))
 
     total_items = len(matched_items)
     pending_items = len([i for i in items if i.get("status") != "matched"])
@@ -7636,19 +7806,19 @@ def generate_commercial_pdf(
         ("BOX", (0, 0), (-1, -1), 0.5, brand_border),
         ("INNERGRID", (0, 0), (-1, -1), 0.3, brand_border),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-        ("TOPPADDING", (0, 0), (-1, -1), 8),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("TOPPADDING", (0, 0), (-1, -1), 5 if compact_mode else 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5 if compact_mode else 8),
     ]))
     elements.append(metrics_table)
-    elements.append(Spacer(1, 5 * mm))
+    elements.append(Spacer(1, (2 if compact_mode else 5) * mm))
     summary_text = f"<b>Total productos confirmados:</b> {total_items}"
     if pending_items > 0:
         summary_text += f" — <i>{pending_items} pendiente(s) por precisar</i>"
     elements.append(Paragraph(summary_text, normal_style))
     if observations:
-        elements.append(Spacer(1, 3 * mm))
+        elements.append(Spacer(1, (2 if compact_mode else 3) * mm))
         elements.append(Paragraph(f"<b>Observaciones operativas:</b> {escape(str(observations))}", normal_style))
-    elements.append(Spacer(1, 8 * mm))
+    elements.append(Spacer(1, (3 if compact_mode else 8) * mm))
 
     elements.append(HRFlowable(width="100%", thickness=0.5, color=brand_border, spaceBefore=4, spaceAfter=4))
     elements.append(Paragraph(
@@ -9924,8 +10094,33 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         )
 
     # Construir el commercial_draft a partir de lo que manda el LLM
-    commercial_draft = conversation_context.get("commercial_draft") or {}
+    commercial_draft = dict(conversation_context.get("commercial_draft") or {})
     store_filters = infer_confirmed_order_store_filters(commercial_draft, context, conversation_context, internal_user)
+    customer_identity_input = (
+        commercial_draft.get("customer_identity_input")
+        or commercial_draft.get("destinatario")
+        or nombre_despacho
+        or ""
+    ).strip()
+    customer_context = dict(commercial_draft.get("customer_context") or {})
+    customer_resolution_status = commercial_draft.get("customer_resolution_status")
+    if customer_identity_input and not customer_context:
+        resolved_customer_context, _ = resolve_commercial_customer_context(customer_identity_input)
+        if resolved_customer_context:
+            customer_context = resolved_customer_context
+            customer_resolution_status = "resolved"
+        else:
+            return json.dumps(
+                {
+                    "exito": False,
+                    "mensaje": f"Antes de confirmar necesito validar el cliente '{customer_identity_input}'. Envíame el NIT, código o nombre completo correcto para no cruzar el pedido.",
+                },
+                ensure_ascii=False,
+            )
+
+    if customer_context and customer_context.get("nombre_cliente"):
+        nombre_despacho = customer_context.get("nombre_cliente")
+
     confirmed_items = []
     for it in items_pedido:
         reference_value = (it.get("referencia") or "").strip()
@@ -9964,6 +10159,9 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     commercial_draft["contact_email"] = correo_cliente or commercial_draft.get("contact_email")
     commercial_draft["items_confirmed"] = True
     commercial_draft["claim_case"] = None
+    commercial_draft["customer_identity_input"] = customer_identity_input or None
+    commercial_draft["customer_context"] = customer_context or None
+    commercial_draft["customer_resolution_status"] = customer_resolution_status
     conversation_context["commercial_draft"] = commercial_draft
     conversation_context["claim_case"] = None
 
@@ -9978,7 +10176,12 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
 
     verified_cliente = conversation_context.get("verified_cliente_codigo")
     cliente_contexto = None
-    if verified_cliente:
+    if customer_context.get("cliente_codigo"):
+        try:
+            cliente_contexto = get_cliente_contexto(customer_context.get("cliente_codigo"))
+        except Exception:
+            cliente_contexto = customer_context
+    elif verified_cliente:
         try:
             cliente_contexto = get_cliente_contexto(verified_cliente)
         except Exception:
