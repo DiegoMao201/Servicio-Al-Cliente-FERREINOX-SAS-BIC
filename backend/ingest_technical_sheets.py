@@ -287,43 +287,46 @@ def delete_doc_chunks(engine, path_lower: str):
 
 
 def insert_chunks(engine, chunks_data: list[dict]):
-    with engine.begin() as conn:
+    """Insert chunks using raw psycopg2 to avoid SQLAlchemy text() issues with ::vector cast."""
+    raw_conn = engine.raw_connection()
+    try:
+        cur = raw_conn.cursor()
         for chunk in chunks_data:
-            embedding_literal = "[" + ",".join(str(v) for v in chunk["embedding"]) + "]"
-            # Use string formatting for the vector value (safe: values are floats from OpenAI)
-            sql = text(f"""
-                    INSERT INTO public.agent_technical_doc_chunk
-                        (doc_filename, doc_path_lower, chunk_index, chunk_text,
-                         marca, familia_producto, tipo_documento, metadata,
-                         embedding, token_count)
-                    VALUES
-                        (:filename, :path_lower, :chunk_index, :chunk_text,
-                         :marca, :familia, :tipo_doc, :metadata::jsonb,
-                         '{embedding_literal}'::vector, :token_count)
-                    ON CONFLICT (doc_path_lower, chunk_index) DO UPDATE SET
-                        chunk_text = EXCLUDED.chunk_text,
-                        marca = EXCLUDED.marca,
-                        familia_producto = EXCLUDED.familia_producto,
-                        tipo_documento = EXCLUDED.tipo_documento,
-                        metadata = EXCLUDED.metadata,
-                        embedding = EXCLUDED.embedding,
-                        token_count = EXCLUDED.token_count,
-                        ingested_at = now()
-                    """)
-            conn.execute(
-                sql,
-                {
-                    "filename": chunk["doc_filename"],
-                    "path_lower": chunk["doc_path_lower"],
-                    "chunk_index": chunk["chunk_index"],
-                    "chunk_text": chunk["chunk_text"],
-                    "marca": chunk["marca"],
-                    "familia": chunk["familia_producto"],
-                    "tipo_doc": chunk["tipo_documento"],
-                    "metadata": json.dumps(chunk.get("metadata") or {}, ensure_ascii=False),
-                    "token_count": chunk.get("token_count"),
-                },
-            )
+            embedding_str = "[" + ",".join(str(v) for v in chunk["embedding"]) + "]"
+            metadata_json = json.dumps(chunk.get("metadata") or {}, ensure_ascii=False)
+            cur.execute("""
+                INSERT INTO public.agent_technical_doc_chunk
+                    (doc_filename, doc_path_lower, chunk_index, chunk_text,
+                     marca, familia_producto, tipo_documento, metadata,
+                     embedding, token_count)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::vector, %s)
+                ON CONFLICT (doc_path_lower, chunk_index) DO UPDATE SET
+                    chunk_text = EXCLUDED.chunk_text,
+                    marca = EXCLUDED.marca,
+                    familia_producto = EXCLUDED.familia_producto,
+                    tipo_documento = EXCLUDED.tipo_documento,
+                    metadata = EXCLUDED.metadata,
+                    embedding = EXCLUDED.embedding,
+                    token_count = EXCLUDED.token_count,
+                    ingested_at = now()
+            """, (
+                chunk["doc_filename"],
+                chunk["doc_path_lower"],
+                chunk["chunk_index"],
+                chunk["chunk_text"],
+                chunk["marca"],
+                chunk["familia_producto"],
+                chunk["tipo_documento"],
+                metadata_json,
+                embedding_str,
+                chunk.get("token_count"),
+            ))
+        raw_conn.commit()
+    except Exception:
+        raw_conn.rollback()
+        raise
+    finally:
+        raw_conn.close()
 
 
 # ---------------------------------------------------------------------------
