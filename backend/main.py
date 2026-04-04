@@ -2053,10 +2053,14 @@ def detect_internal_query_intent(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     if not normalized:
         return None
+    if any(fragment in normalized for fragment in ["reclamos pendientes", "pendientes de reclamos", "crm pendientes de reclamos", "reclamos crm", "garantias pendientes", "garantías pendientes", "casos pendientes de reclamo"]):
+        return "consulta_reclamos_pendientes"
     if any(fragment in normalized for fragment in ["carro va", "carro para", "van para", "va para", "traemos algo", "traemos mercancia", "traemos mercancía", "mercancia para", "mercancía para", "en ruta"]):
         return "consulta_ruta_mercancia"
     if any(fragment in normalized for fragment in ["pendientes despacho", "pendiente despacho", "pendientes por despachar", "por despachar", "pedidos pendientes", "despachos pendientes"]):
         return "consulta_despachos"
+    if any(fragment in normalized for fragment in ["pedir algo a", "mandar algo a", "llevar algo a", "mover algo a", "pasar algo a"]):
+        return "consulta_traslados"
     if any(fragment in normalized for fragment in ["genera traslado", "genere traslado", "crear traslado", "crea traslado", "solicita traslado", "traslada", "trasladar"]):
         return "crear_traslado"
     if any(fragment in normalized for fragment in ["que hay en", "qué hay en", "que tiene", "qué tiene", "no tenga", "no tiene", "comparar tiendas", "comparar inventario", "cumplir pedidos", "cumplir pedido", "traslados sugeridos", "sugerencia de traslado"]):
@@ -2127,6 +2131,108 @@ def build_internal_route_merchandise_response(content: str, internal_user: dict)
         response_lines.append("Si quieres, responde `confirmar traslado`, `compras` o `cancelar` y sigo la guía operativa contigo.")
 
     return "\n".join(response_lines), (flow_payload if (suggestions or unresolved) else None)
+
+
+def fetch_pending_agent_tasks(task_types: list[str], limit: int = 6, destination_store_code: Optional[str] = None):
+    cleaned_task_types = [str(task_type).strip() for task_type in (task_types or []) if str(task_type).strip()]
+    if not cleaned_task_types:
+        return []
+
+    where_clauses = ["estado IN ('pendiente', 'abierta', 'en_proceso')"]
+    params = {"limit": max(1, int(limit or 6))}
+    type_placeholders = []
+    for index, task_type in enumerate(cleaned_task_types):
+        param_name = f"task_type_{index}"
+        params[param_name] = task_type
+        type_placeholders.append(f":{param_name}")
+    where_clauses.append(f"tipo_tarea IN ({', '.join(type_placeholders)})")
+
+    store_code = normalize_store_code(destination_store_code)
+    if store_code:
+        where_clauses.append("COALESCE(detalle->>'destination_store_code', '') = :destination_store_code")
+        params["destination_store_code"] = store_code
+
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text(
+                f"""
+                SELECT
+                    id,
+                    tipo_tarea,
+                    prioridad,
+                    estado,
+                    resumen,
+                    detalle,
+                    created_at,
+                    updated_at
+                FROM public.agent_task
+                WHERE {' AND '.join(where_clauses)}
+                ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST, id DESC
+                LIMIT :limit
+                """
+            ),
+            params,
+        ).mappings().all()
+    return [dict(row) for row in rows]
+
+
+def build_internal_procurement_pending_response(content: str, internal_user: dict):
+    store_mentions = extract_store_mentions_in_order(content)
+    if not store_mentions:
+        return "Dime la sede que quieres revisar para compras pendientes, por ejemplo Pereira o Manizales.", None
+
+    destination_store_code = store_mentions[-1]
+    destination_label = get_store_short_label(destination_store_code) or STORE_CODE_LABELS.get(destination_store_code) or destination_store_code
+    internal_metadata = dict((internal_user or {}).get("metadata") or {})
+    preferred_origin_store_code = normalize_store_code(internal_metadata.get("store_code"))
+    flow_payload = build_internal_transfer_flow_payload(destination_store_code, preferred_origin_store_code)
+    unresolved = flow_payload.get("unresolved_shortages") or []
+    suggestions = flow_payload.get("suggestions") or []
+    pending_tasks = fetch_pending_agent_tasks(["abastecimiento_compras"], limit=5, destination_store_code=destination_store_code)
+
+    response_lines = [f"Compras pendientes para {destination_label}:"]
+    if unresolved:
+        response_lines.append("Estos faltantes no tienen origen interno útil y tocaría gestionarlos por compras:")
+        response_lines.append(summarize_transfer_candidates(unresolved, max_items=5))
+    else:
+        response_lines.append(f"No veo faltantes activos sin origen interno para {destination_label} en este momento.")
+
+    if suggestions:
+        response_lines.append("Antes de comprar, sí veo estos traslados posibles para cubrir parte de la necesidad:")
+        response_lines.append(summarize_transfer_candidates(suggestions, max_items=4))
+
+    if pending_tasks:
+        response_lines.append("Además ya hay seguimientos de compras abiertos:")
+        for task in pending_tasks[:4]:
+            detail = dict(task.get("detalle") or {})
+            shortages = detail.get("shortages") or []
+            note_suffix = f" | {len(shortages)} faltante(s)" if shortages else ""
+            response_lines.append(
+                f"- Caso {task.get('id')} | {task.get('resumen') or 'abastecimiento pendiente'} | prioridad {task.get('prioridad') or 'media'}{note_suffix}"
+            )
+
+    if unresolved or suggestions:
+        response_lines.append("Si quieres, responde `confirmar traslado` para mover lo transferible o `compras` para escalar faltantes sin origen.")
+
+    return "\n".join(response_lines), (flow_payload if (unresolved or suggestions) else None)
+
+
+def build_internal_pending_claims_response(limit: int = 6):
+    tasks = fetch_pending_agent_tasks(["reclamo_calidad"], limit=limit)
+    if not tasks:
+        return "No veo reclamos pendientes abiertos en el CRM en este momento."
+
+    response_lines = ["Reclamos pendientes en CRM:"]
+    for task in tasks[:limit]:
+        detail = dict(task.get("detalle") or {})
+        cliente_label = detail.get("cliente") or detail.get("nombre_cliente") or "cliente sin nombre"
+        product_label = detail.get("product_label") or detail.get("producto_reclamado") or "producto pendiente"
+        store_name = detail.get("store_name") or "sede no indicada"
+        response_lines.append(
+            f"- Caso {task.get('id')} | {cliente_label} | {product_label} | {store_name} | prioridad {task.get('prioridad') or 'media'}"
+        )
+    return "\n".join(response_lines)
 
 
 def build_transfer_suggestions_response(content: str, internal_user: dict):
@@ -2379,6 +2485,19 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
             "context_updates": context_updates,
         }
 
+    if intent == "consulta_reclamos_pendientes":
+        if not internal_user_has_advanced_access(internal_user):
+            return {
+                "response_text": "Tu perfil actual puede crear pedidos, pero no consultar la bandeja interna de reclamos.",
+                "intent": "internal_access_denied",
+                "context_updates": {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))},
+            }
+        return {
+            "response_text": build_internal_pending_claims_response(),
+            "intent": intent,
+            "context_updates": {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))},
+        }
+
     if intent in {"consulta_traslados", "crear_traslado"}:
         if not internal_user_has_advanced_access(internal_user):
             return {
@@ -2428,6 +2547,30 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
             "intent": intent,
             "context_updates": context_updates,
         }
+
+    if intent == "consulta_compras":
+        candidate = extract_internal_customer_candidate(content)
+        store_mentions = extract_store_mentions_in_order(content)
+        normalized_content = normalize_text_value(content)
+        has_explicit_customer_reference = bool(re.search(r"\b\d{6,15}\b", content or "")) or bool(
+            re.search(r"\b(cliente|nit|cedula|cédula|codigo cliente|código cliente)\b", normalized_content)
+        )
+        if store_mentions and not has_explicit_customer_reference:
+            if not internal_user_has_advanced_access(internal_user):
+                return {
+                    "response_text": "Tu perfil actual puede crear pedidos, pero no consultar compras y faltantes internos.",
+                    "intent": "internal_access_denied",
+                    "context_updates": {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))},
+                }
+            response_text, flow_payload = build_internal_procurement_pending_response(content, internal_user)
+            context_updates = {"internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at"))}
+            if flow_payload:
+                context_updates["internal_transfer_flow"] = flow_payload
+            return {
+                "response_text": response_text,
+                "intent": "consulta_compras_pendientes",
+                "context_updates": context_updates,
+            }
 
     candidate = extract_internal_customer_candidate(content)
     last_cliente_codigo = (conversation_context or {}).get("internal_last_cliente_codigo")
