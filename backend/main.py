@@ -284,6 +284,81 @@ TECHNICAL_ADVISORY_KEYWORDS = [
     "cómo proteger",
     "como limpiar",
     "cómo limpiar",
+    "techo",
+    "fachada",
+    "terraza",
+    "piscina",
+    "tanque",
+    "cielo raso",
+    "drywall",
+    "cubierta",
+    "muro",
+    "pared",
+    "columna",
+    "viga",
+    "garaje",
+    "bodega",
+    "parqueadero",
+    "sotano",
+    "sótano",
+    "escalera",
+    "barandal",
+    "reja",
+    "puerta",
+    "portón",
+    "porton",
+    "ventana",
+    "tubería",
+    "tuberia",
+    "cerca",
+    "necesito pintar",
+    "quiero pintar",
+    "voy a pintar",
+    "necesito recubrir",
+    "quiero proteger",
+    "necesito impermeabilizar",
+    "que pintura uso",
+    "qué pintura uso",
+    "que producto necesito",
+    "qué producto necesito",
+    "que sistema",
+    "qué sistema",
+    "se pela",
+    "se ampolla",
+    "se mancha",
+    "se deteriora",
+    "se agrieta",
+    "se fisura",
+    "se oxida",
+    "pintura vieja",
+    "grieta",
+    "grietas",
+    "fisura",
+    "fisuras",
+    "me pueden asesorar",
+    "asesoria",
+    "asesoría",
+    "me recomienda",
+    "me aconsejas",
+    "tengo un problema",
+    "necesito solucionar",
+    "que le echo",
+    "qué le echo",
+    "que le aplico",
+    "qué le aplico",
+    "como soluciono",
+    "cómo soluciono",
+    "poliuretano",
+    "vinilo",
+    "acrilico",
+    "acrílico",
+    "esmalte",
+    "latex",
+    "látex",
+    "epoxico",
+    "epóxico",
+    "alquidico",
+    "alquídico",
 ]
 
 
@@ -3908,7 +3983,19 @@ def is_technical_advisory_message(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     if not normalized:
         return False
-    return any(keyword in normalized for keyword in TECHNICAL_ADVISORY_KEYWORDS)
+    if any(keyword in normalized for keyword in TECHNICAL_ADVISORY_KEYWORDS):
+        return True
+    advisory_patterns = [
+        r"\b(necesito|quiero|voy a|puedo|como|cómo)\b.{0,25}\b(pintar|recubrir|impermeabilizar|sellar|proteger|aplicar|tratar|barnizar|lacar|esmaltar|lijar|resanar)\b",
+        r"\b(que|qué)\s+(pintura|producto|sistema|recubrimiento|impermeabilizante|sellador|esmalte|barniz)\b.{0,25}\b(para|uso|necesito|sirve|recomienda)\b",
+        r"\b(tengo|tiene|hay)\s+(un\s+)?(problema|daño|deterioro|fisura|grieta|filtración|filtracion)\b",
+        r"\b(se\s+)(pela|descascara|ampolla|mancha|deteriora|cae|sale|agrieta|fisura|oxida)\b",
+        r"\b(me\s+)?(recomienda|aconseja|sugiere|asesora)\b.{0,30}\b(para|sobre|con)\b",
+    ]
+    for pattern in advisory_patterns:
+        if re.search(pattern, normalized):
+            return True
+    return False
 
 
 def has_keyword_or_similar(text_value: Optional[str], keywords: list[str], threshold: float = 0.84):
@@ -7364,12 +7451,27 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
     case = dict((conversation_context or {}).get("technical_advisory_case") or {})
     normalized = normalize_text_value(text_value)
     category = infer_technical_problem_category(text_value, case.get("category"))
+
+    # Track conversation history for RAG search context
+    history = list(case.get("conversation_history") or [])
+    if text_value and text_value.strip():
+        history.append(text_value.strip())
+    history = history[-10:]
+
+    # Track diagnostic turns
+    diagnostic_turns = case.get("diagnostic_turns", 0)
+    if case.get("stage") == "diagnosing":
+        diagnostic_turns += 1
+
     case.update({
         "active": True,
         "category": category,
         "last_user_message": text_value or "",
+        "conversation_history": history,
+        "diagnostic_turns": diagnostic_turns,
     })
 
+    # --- Category-specific field extraction (enriches RAG search) ---
     if category == "humedad":
         if any(token in normalized for token in ["barranco", "terreno", "talud", "contencion", "contención"]):
             case["source_context"] = "muro contra terreno o barranco"
@@ -7402,8 +7504,6 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
             symptoms.append("salitre")
         case["symptoms"] = _merge_unique_text_values(case.get("symptoms"), symptoms)
 
-        case["ready"] = bool(case.get("source_context") and case.get("surface_state") and case.get("symptoms"))
-
     elif category == "piso":
         if any(token in normalized for token in ["interior", "adentro", "bajo techo"]):
             case["floor_location"] = "interior"
@@ -7422,8 +7522,6 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         elif any(token in normalized for token in ["peatonal", "residencial", "casa", "habitacion", "habitación"]):
             case["traffic_level"] = "trafico peatonal o residencial"
 
-        case["ready"] = bool(case.get("floor_location") and case.get("floor_material"))
-
     elif category == "madera":
         if any(token in normalized for token in ["intemperie", "exterior", "sol", "lluvia"]):
             case["exposure"] = "intemperie"
@@ -7434,8 +7532,6 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
             case["previous_coating"] = "con recubrimiento previo"
         elif any(token in normalized for token in ["virgen", "sin pintar", "sin barniz", "madera nueva"]):
             case["previous_coating"] = "sin recubrimiento previo"
-
-        case["ready"] = bool(case.get("exposure") and case.get("previous_coating"))
 
     elif category == "metal":
         if any(token in normalized for token in ["hierro", "ferroso", "acero al carbon", "acero al carbón"]):
@@ -7452,10 +7548,20 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         elif any(token in normalized for token in ["urbano", "ciudad", "residencial"]):
             case["environment"] = "urbano"
 
-        case["ready"] = bool(case.get("metal_type") and case.get("environment"))
+    # --- Universal readiness check ---
+    # Known categories: ready when key fields are filled
+    category_fields_ready = False
+    if category == "humedad":
+        category_fields_ready = bool(case.get("source_context") and case.get("surface_state") and case.get("symptoms"))
+    elif category == "piso":
+        category_fields_ready = bool(case.get("floor_location") and case.get("floor_material"))
+    elif category == "madera":
+        category_fields_ready = bool(case.get("exposure") and case.get("previous_coating"))
+    elif category == "metal":
+        category_fields_ready = bool(case.get("metal_type") and case.get("environment"))
 
-    else:
-        case["ready"] = False
+    # Ready if category fields are complete OR at least 1 diagnostic exchange done
+    case["ready"] = category_fields_ready or diagnostic_turns >= 1
 
     return case
 
@@ -7463,6 +7569,8 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
 def build_technical_diagnostic_questions(technical_case: dict) -> list[str]:
     category = technical_case.get("category")
     questions: list[str] = []
+
+    # Fast path for known categories
     if category == "humedad":
         if not technical_case.get("source_context"):
             questions.append("¿Esa pared te da contra terreno, barranco, fachada o crees que viene de una tubería?")
@@ -7489,15 +7597,55 @@ def build_technical_diagnostic_questions(technical_case: dict) -> list[str]:
             questions.append("¿Ese metal es hierro/acero, galvanizado o aluminio?")
         if not technical_case.get("environment"):
             questions.append("¿Va a trabajar en ambiente urbano, industrial o marino?")
-    else:
-        questions.append("¿Qué material o superficie vas a tratar exactamente?")
-        questions.append("¿Ese problema es interior, exterior o a la intemperie?")
-    return questions[:2]
+
+    if questions:
+        return questions[:2]
+
+    # LLM-powered diagnostic questions for general/unknown categories
+    conversation_history = technical_case.get("conversation_history") or []
+    context_text = "\n".join(f"- {msg}" for msg in conversation_history) if conversation_history else technical_case.get("last_user_message", "")
+    try:
+        client = get_openai_client()
+        response = client.chat.completions.create(
+            model=get_openai_model(),
+            temperature=0,
+            max_tokens=200,
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Eres un asesor técnico experto en pinturas, recubrimientos, impermeabilizantes, selladores, esmaltes, barnices, "
+                        "anticorrosivos y productos para construcción y mantenimiento de superficies. "
+                        "Tu tarea: generar EXACTAMENTE 2 preguntas diagnósticas cortas y concretas que te ayuden a recomendar el producto "
+                        "o sistema correcto para el problema del cliente. "
+                        "Las preguntas deben ser específicas al problema descrito, en tono coloquial colombiano directo. "
+                        "Responde SOLO con las 2 preguntas, una por línea, sin numeración, viñetas ni explicación adicional."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": f"El cliente dice:\n{context_text}\n\nGenera 2 preguntas diagnósticas:",
+                },
+            ],
+        )
+        raw = (response.choices[0].message.content or "").strip()
+        llm_questions = [q.strip().lstrip("0123456789.-) ●•→ ") for q in raw.split("\n") if q.strip() and "?" in q]
+        if llm_questions:
+            return llm_questions[:2]
+    except Exception:
+        pass
+
+    return ["¿Qué material o superficie vas a tratar exactamente?", "¿Eso es interior, exterior o a la intemperie?"]
 
 
 def build_technical_search_query(technical_case: dict, user_message: Optional[str] = None) -> str:
     category = technical_case.get("category") or "general"
     parts: list[str] = []
+
+    # Always include conversation history for richer semantic search
+    conversation_history = technical_case.get("conversation_history") or []
+    history_text = " ".join(conversation_history[-5:]) if conversation_history else ""
+
     if category == "humedad":
         parts.extend([
             "humedad en muro",
@@ -7527,8 +7675,13 @@ def build_technical_search_query(technical_case: dict, user_message: Optional[st
             technical_case.get("environment") or "",
         ])
     else:
-        parts.append(user_message or technical_case.get("last_user_message") or "")
+        # General: use full conversation context as semantic query
+        parts.append(history_text or user_message or technical_case.get("last_user_message") or "")
+
     query = " ".join(part for part in parts if part).strip()
+    # Enrich known categories with conversation context too
+    if category != "general" and history_text:
+        query = f"{query} {history_text}".strip()
     return query or (user_message or technical_case.get("last_user_message") or "")
 
 
@@ -7643,6 +7796,8 @@ def generate_grounded_technical_sales_reply(
     client = get_openai_client()
     case_summary = safe_json_dumps(technical_case)
     inventory_summary = safe_json_dumps(inventory_products)
+    conversation_history = technical_case.get("conversation_history") or []
+    history_text = "\n".join(f"- {msg}" for msg in conversation_history) if conversation_history else ""
     area_text = f"Área a cubrir: {area_m2} m2" if area_m2 else "Área a cubrir: no especificada"
     response = client.chat.completions.create(
         model=get_openai_model(),
@@ -7651,21 +7806,25 @@ def generate_grounded_technical_sales_reply(
             {
                 "role": "system",
                 "content": (
-                    "Eres el asesor técnico y comercial senior de Ferreinox. "
-                    "Responde SOLO con base en el contexto recuperado y el inventario suministrado. "
-                    "Objetivo: recomendar un sistema adecuado y cerrar la venta con productos reales del portafolio. "
+                    "Eres el asesor técnico y comercial senior de Ferreinox, experto en pinturas, recubrimientos, "
+                    "impermeabilizantes, selladores, esmaltes, barnices, anticorrosivos y todo producto para "
+                    "construcción y mantenimiento de superficies. "
+                    "Responde SOLO con base en el contexto recuperado de fichas técnicas y el inventario suministrado. "
+                    "Objetivo: recomendar el sistema o producto adecuado según el diagnóstico del cliente y cerrar la venta con productos reales del portafolio. "
                     "REGLAS: "
-                    "1) No inventes rendimientos, número de galones, pasos, manos, catalizadores o productos que no estén en el contexto. "
+                    "1) No inventes rendimientos, número de galones, pasos, manos, catalizadores o productos que no estén en el contexto recuperado. "
                     "2) Si el rendimiento exacto no aparece, dilo de frente y NO calcules cantidades. "
-                    "3) Si sí hay respaldo suficiente, explica el sistema en lenguaje claro y luego termina con una sección final que empiece EXACTAMENTE con: 'Vea, los productos que necesitas son estos:'. "
+                    "3) Si sí hay respaldo suficiente, explica el sistema o solución en lenguaje claro y luego termina con una sección final que empiece EXACTAMENTE con: 'Vea, los productos que necesitas son estos:'. "
                     "4) En esa sección final solo puedes listar productos del inventario suministrado. "
-                    "5) No mandes al cliente a otra parte ni sugieras buscar fuera del portafolio."
+                    "5) PROHIBIDO mandar al cliente a otra parte, sugerir buscar fuera del portafolio, o decir que no tienes el producto sin verificar el inventario. "
+                    "6) Usa tono colombiano, directo, útil y comercial. Máximo 8 líneas antes de la lista de productos."
                 ),
             },
             {
                 "role": "user",
                 "content": (
                     f"Caso diagnosticado: {case_summary}\n"
+                    f"Historial de conversación del caso:\n{history_text}\n"
                     f"Mensaje actual del cliente: {user_message or technical_case.get('last_user_message') or ''}\n"
                     f"{area_text}\n"
                     f"Inventario candidato real: {inventory_summary}\n\n"
@@ -7712,13 +7871,12 @@ def should_continue_technical_advisory_flow(conversation_context: Optional[dict]
     technical_case = dict((conversation_context or {}).get("technical_advisory_case") or {})
     if not technical_case.get("active"):
         return False
+    # Only exit if the user clearly switches to a different structured intent
     if detected_intent in {"pedido", "cotizacion", "consulta_cartera", "consulta_compras", "consulta_documentacion", "reclamo_servicio"}:
         return False
     normalized = normalize_text_value(text_value)
     if not normalized:
         return False
-    if normalized in {"si", "sí", "ese", "esa", "la epoxica", "la epóxica", "epoxica", "epóxica", "pintura epoxica", "pintura epóxica"}:
-        return True
     return True
 
 
@@ -7729,13 +7887,14 @@ def build_technical_advisory_flow_reply(profile_name: Optional[str], user_messag
         technical_case["area_m2"] = area_m2
     if not technical_case.get("ready"):
         questions = build_technical_diagnostic_questions(technical_case)
+        category = technical_case.get("category")
         intro_map = {
             "humedad": "Claro. Para no mandarte a comprar algo que no te sirva, necesito cerrar bien el diagnóstico.",
             "madera": "Claro. Para recomendarte el sistema correcto para esa madera, primero cierro dos datos clave.",
             "metal": "Claro. Para llevarte al sistema anticorrosivo correcto, primero necesito ubicar bien el metal y el ambiente.",
-            "general": "Claro. Para recomendarte bien y no adivinar, primero cierro dos datos clave.",
+            "piso": "Claro. Para recomendarte el sistema correcto para ese piso, necesito cerrar un par de datos.",
         }
-        response_text = intro_map.get(technical_case.get("category"), intro_map["general"])
+        response_text = intro_map.get(category, "Claro, te asesoro. Para recomendarte el producto correcto y no adivinar, necesito cerrar un par de datos clave.")
         if questions:
             response_text += " " + " ".join(questions)
         technical_case["stage"] = "diagnosing"
@@ -10256,7 +10415,7 @@ def build_agent_prompt(
                 "3. PROHIBIDO vomitar la base de datos. Nunca enumeres stock de todas las tiendas. Si el cliente dijo Pereira, responde SOLO sobre Pereira en lenguaje humano.\n"
                 "4. REFERENCIA AUDITABLE OBLIGATORIA: cuando confirmes inventario o muestres opciones con referencia, usa la descripción exacta que viene del ERP/backend. No la reescribas ni cambies base, tint, paste, color o modelo. Si el JSON trae `visibilidad_tienda_exacta=false`, no confirmes stock para esa sede: aclara que recuperaste la referencia correcta pero no tienes desglose exacto de esa tienda en la vista actual.\n"
                 "5. PIENSA ANTES DE ACTUAR: clasifica mentalmente la intención del cliente antes de responder.\n"
-                "   - Si el cliente plantea un PROBLEMA GENERAL (ej. humedad, pintar un techo, proteger un metal, tratar madera), primero activa un EMBUDO DE DIAGNÓSTICO. NO recomiendes nada todavía y NO uses RAG todavía.\n"
+                "   - Si el cliente plantea un PROBLEMA GENERAL (ej. humedad, pintar un techo, proteger un metal, tratar madera, recubrir una fachada, un tanque, una piscina, sellar grietas, o CUALQUIER problema de superficie), primero activa un EMBUDO DE DIAGNÓSTICO. NO recomiendes nada todavía y NO uses RAG todavía.\n"
                 "   - Si pregunta un dato técnico puntual sobre un producto ya identificado (ej. catalizador, tiempo de secado, dilución, rendimiento, preparación de superficie), ahí sí usa `consultar_conocimiento_tecnico` para buscar el dato exacto en las fichas técnicas vectorizadas ANTES de responder. NUNCA respondas preguntas técnicas de memoria.\n"
                 "   - Si pide comprar o verificar disponibilidad de un producto → INVENTARIO, ahí sí consulta la base.\n"
                 "   - Si dice reclamo, queja, garantía → RECLAMO, activa empatía y protocolo paso a paso. NO crees ticket hasta tener producto, problema y correo.\n"
@@ -10483,13 +10642,13 @@ REGLAS FUNDAMENTALES:
     - Puedes explicar la presentación, pero no alteres el nombre real del producto.
     - Si el JSON trae `visibilidad_tienda_exacta=false`, no confirmes stock de esa sede. Di que recuperaste la referencia correcta, pero que esa tienda no tiene desglose exacto en la vista actual.
 5. PIENSA antes de actuar: clasifica la intención del cliente.
-   - Si el cliente plantea un PROBLEMA GENERAL (ej. humedad, goteras, techo, metal, madera, corrosión), activa primero un EMBUDO DE DIAGNÓSTICO. NO recomiendes todavía y NO llames `consultar_conocimiento_tecnico` todavía.
+   - Si el cliente plantea un PROBLEMA GENERAL (ej. humedad, goteras, techo, fachada, terraza, piscina, tanque, metal, madera, corrosión, o CUALQUIER problema de superficie o recubrimiento), activa primero un EMBUDO DE DIAGNÓSTICO. NO recomiendes todavía y NO llames `consultar_conocimiento_tecnico` todavía.
    - Si la pregunta ya es un dato técnico puntual sobre un producto o sistema identificado (aplicación, secado, rodillos, dilución, catalizador, mezcla, preparación, rendimiento), usa `consultar_conocimiento_tecnico` OBLIGATORIAMENTE antes de responder. NUNCA respondas de memoria.
    - Pide comprar, cotizar o verificar disponibilidad de un producto → usa consultar_inventario.
    - Dice reclamo, queja, garantía → empatía y protocolo paso a paso (producto, problema, correo).
    - Pide cartera, saldos, facturas → usa consultar_cartera (requiere verificación primero).
    - Pide historial de compras → usa consultar_compras (requiere verificación primero).
-   - Problema técnico (humedad, goteras, moho, descascaramiento, ampollas) → ASESORÍA TÉCNICA: primero diagnostica y solo después usa `consultar_conocimiento_tecnico` con la necesidad exacta diagnosticada.
+   - Problema técnico (humedad, goteras, moho, pintar un techo, proteger una fachada, tratar un tanque, recubrir una piscina, sellar grietas, o CUALQUIER problema de superficie) → ASESORÍA TÉCNICA: primero diagnostica y solo después usa `consultar_conocimiento_tecnico` con la necesidad exacta diagnosticada.
 6. NUNCA busques verbos o intenciones como productos. "necesito hacer un pedido" es INTENCIÓN, no producto. Pregunta qué productos necesita.
 7. EMBUDO DE DIAGNÓSTICO OBLIGATORIO: cuando el cliente exponga un problema general, haz MÁXIMO 2 preguntas clave por mensaje. Deben ser preguntas de diagnóstico, no relleno. Ejemplos: humedad → interior/exterior y si la pared está pintada o en obra negra; madera → intemperie o bajo techo y si tiene recubrimiento previo; metal → tipo de metal y ambiente (urbano, industrial o marino).
 8. REGLA DE CONVERSACIÓN NATURAL: máximo 2 preguntas clave por turno. No abrumes al cliente ni suenes a formulario.
