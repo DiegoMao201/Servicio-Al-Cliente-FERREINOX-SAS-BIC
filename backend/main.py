@@ -4113,6 +4113,149 @@ def ensure_product_learning_table():
         )
 
 
+def ensure_product_companion_table():
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS public.agent_product_companion (
+                    id bigserial PRIMARY KEY,
+                    producto_referencia text NOT NULL,
+                    producto_descripcion text,
+                    companion_referencia text NOT NULL,
+                    companion_descripcion text,
+                    tipo_relacion varchar(60) NOT NULL,
+                    proporcion text,
+                    notas text,
+                    source_conversation_id bigint REFERENCES public.agent_conversation(id) ON DELETE SET NULL,
+                    confidence numeric(5,4) NOT NULL DEFAULT 0.9500,
+                    activo boolean NOT NULL DEFAULT true,
+                    created_at timestamptz NOT NULL DEFAULT now(),
+                    updated_at timestamptz NOT NULL DEFAULT now(),
+                    CONSTRAINT uq_agent_product_companion UNIQUE (producto_referencia, companion_referencia, tipo_relacion)
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_agent_product_companion_ref
+                ON public.agent_product_companion(producto_referencia)
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_agent_product_companion_companion
+                ON public.agent_product_companion(companion_referencia)
+                """
+            )
+        )
+
+
+def fetch_product_companions(referencia: str) -> list[dict]:
+    """Fetch all active companion/complementary products for a given reference."""
+    if not referencia:
+        return []
+    try:
+        engine = get_db_engine()
+        with engine.connect() as connection:
+            rows = connection.execute(
+                text(
+                    """
+                    SELECT c.companion_referencia, c.companion_descripcion, c.tipo_relacion,
+                           c.proporcion, c.notas, c.confidence,
+                           p.stock_total, p.descripcion AS descripcion_inventario
+                    FROM public.agent_product_companion c
+                    LEFT JOIN public.productos p ON p.referencia = c.companion_referencia
+                    WHERE c.producto_referencia = :ref AND c.activo = true
+                    ORDER BY c.tipo_relacion, c.confidence DESC
+                    """
+                ),
+                {"ref": str(referencia)},
+            ).mappings().all()
+            return [dict(r) for r in rows]
+    except Exception:
+        return []
+
+
+# ---------------------------------------------------------------------------
+# RAG: búsqueda semántica en fichas técnicas vectorizadas
+# ---------------------------------------------------------------------------
+
+def _generate_query_embedding(query_text: str) -> list[float] | None:
+    """Generate embedding vector for a search query using OpenAI."""
+    try:
+        client = get_openai_client()
+        response = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=query_text.strip(),
+            dimensions=1536,
+        )
+        return response.data[0].embedding
+    except Exception:
+        return None
+
+
+def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None = None) -> list[dict]:
+    """Semantic search over vectorized technical sheet chunks using pgvector cosine distance."""
+    embedding = _generate_query_embedding(query)
+    if not embedding:
+        return []
+
+    embedding_literal = "[" + ",".join(str(v) for v in embedding) + "]"
+
+    marca_clause = ""
+    params: dict = {"embedding": embedding_literal, "top_k": top_k}
+    if marca_filter:
+        marca_clause = "AND LOWER(marca) = LOWER(:marca)"
+        params["marca"] = marca_filter
+
+    try:
+        engine = get_db_engine()
+        with engine.connect() as connection:
+            rows = connection.execute(
+                text(f"""
+                    SELECT doc_filename, doc_path_lower, chunk_index, chunk_text,
+                           marca, familia_producto, tipo_documento,
+                           1 - (embedding <=> :embedding::vector) AS similarity
+                    FROM public.agent_technical_doc_chunk
+                    WHERE 1=1 {marca_clause}
+                    ORDER BY embedding <=> :embedding::vector
+                    LIMIT :top_k
+                """),
+                params,
+            ).mappings().all()
+            return [dict(r) for r in rows]
+    except Exception:
+        return []
+
+
+def build_rag_context(chunks: list[dict], max_chunks: int = 4) -> str:
+    """Build a textual context from RAG chunks for injection into the agent prompt."""
+    if not chunks:
+        return ""
+    parts = []
+    seen_files = set()
+    for chunk in chunks[:max_chunks]:
+        similarity = chunk.get("similarity", 0)
+        if similarity < 0.25:
+            continue
+        filename = chunk.get("doc_filename", "desconocido")
+        text_content = (chunk.get("chunk_text") or "").strip()
+        if not text_content:
+            continue
+        header = f"[Fuente: {filename}]"
+        parts.append(f"{header}\n{text_content}")
+        seen_files.add(filename)
+    if not parts:
+        return ""
+    return "\n\n---\n\n".join(parts)
+
+
 def learn_product_resolution(conversation_id: Optional[int], product_request: Optional[dict], product_context: list[dict], conversation_context: Optional[dict] = None):
     if not product_request or not product_context:
         return
@@ -4501,14 +4644,46 @@ def summarize_product_option(product_row: dict):
     return f"{reference_value}: {' | '.join(summary_parts)}"
 
 
+def get_product_variant_signature(product_row: Optional[dict]):
+    row = product_row or {}
+    family_value = normalize_text_value(row.get("producto_padre_busqueda") or row.get("familia_consulta"))
+    if family_value:
+        return family_value
+
+    raw_description = get_exact_product_description(row)
+    cleaned_description = re.sub(r"^\s*(?:PQ|IQ|EQ|SQ|MEG)\s+", "", raw_description, flags=re.IGNORECASE)
+    cleaned_description = re.sub(r"\s+\d+(?:\.\d+)?L\b", "", cleaned_description, flags=re.IGNORECASE)
+    cleaned_description = re.sub(r"\s+", " ", cleaned_description).strip()
+    return normalize_text_value(cleaned_description)
+
+
+def get_product_variant_label(product_row: Optional[dict]):
+    row = product_row or {}
+    family_value = (row.get("producto_padre_busqueda") or row.get("familia_consulta") or "").strip()
+    if family_value:
+        return re.sub(r"\s+", " ", family_value)
+
+    raw_description = get_exact_product_description(row)
+    cleaned_description = re.sub(r"^\s*(?:PQ|IQ|EQ|SQ|MEG)\s+", "", raw_description, flags=re.IGNORECASE)
+    cleaned_description = re.sub(r"\s+\d+(?:\.\d+)?L\b", "", cleaned_description, flags=re.IGNORECASE)
+    return re.sub(r"\s+", " ", cleaned_description).strip()
+
+
 def should_ask_product_clarification(product_request: Optional[dict], product_context: list[dict]):
-    if not product_request or not product_context or product_request.get("product_codes"):
+    if not product_request or not product_context:
         return False
 
     top_candidates = product_context[:4]
     unique_references = {row.get("referencia") or row.get("codigo_articulo") for row in top_candidates if row.get("referencia") or row.get("codigo_articulo")}
     if len(unique_references) < 2:
         return False
+
+    variant_signatures = {get_product_variant_signature(row) for row in top_candidates}
+    variant_signatures.discard(None)
+    variant_signatures.discard("")
+
+    if product_request.get("product_codes") and len(variant_signatures) >= 2:
+        return True
 
     presentation_values = {infer_product_presentation_from_row(row) for row in top_candidates}
     brand_values = {infer_product_brand_from_row(row) for row in top_candidates}
@@ -4541,6 +4716,16 @@ def build_best_product_clarification_question(product_request: Optional[dict], p
         if question:
             return question
 
+    variant_labels = []
+    seen_variant_labels = set()
+    for row in top_candidates:
+        variant_label = get_product_variant_label(row)
+        variant_signature = get_product_variant_signature(row)
+        if not variant_label or not variant_signature or variant_signature in seen_variant_labels:
+            continue
+        seen_variant_labels.add(variant_signature)
+        variant_labels.append(variant_label)
+
     presentation_values = {infer_product_presentation_from_row(row) for row in top_candidates}
     brand_values = {infer_product_brand_from_row(row) for row in top_candidates}
     color_values = {infer_product_color_from_row(row) for row in top_candidates}
@@ -4549,6 +4734,10 @@ def build_best_product_clarification_question(product_request: Optional[dict], p
     brand_values.discard(None)
     color_values.discard(None)
     finish_values.discard(None)
+
+    if (product_request or {}).get("product_codes") and len(variant_labels) >= 2:
+        options_text = ", ".join(variant_labels[:3])
+        return f"Encontré ese código con varias descripciones exactas: {options_text}. ¿Cuál necesitas exactamente?"
 
     if not (product_request or {}).get("requested_unit") and len(presentation_values) >= 2:
         return "¿Lo necesitas en cuarto, galón o cuñete?"
@@ -8926,23 +9115,36 @@ def fetch_code_product_rows(connection, product_codes: list[str], store_filters:
     code_filters = []
     score_terms = []
     for index, code in enumerate(product_codes[:3]):
+        is_numeric_code = bool(re.fullmatch(r"\d{4,10}", str(code or "")))
         params[f"code_like_{index}"] = f"%{code}%"
+        params[f"code_exact_{index}"] = str(code)
         params[f"code_compact_{index}"] = f"%{normalize_reference_value(code)}%"
+        code_filters.append(f"producto_codigo = :code_exact_{index}")
+        code_filters.append(f"referencia = :code_exact_{index}")
         code_filters.append(f"producto_codigo LIKE :code_like_{index}")
         code_filters.append(f"search_blob ILIKE :code_like_{index}")
-        code_filters.append(f"search_compact LIKE :code_compact_{index}")
-        score_terms.append(
-            f"CASE WHEN producto_codigo LIKE :code_like_{index} OR search_blob ILIKE :code_like_{index} OR search_compact LIKE :code_compact_{index} THEN 1 ELSE 0 END"
-        )
+        if not is_numeric_code:
+            code_filters.append(f"search_compact LIKE :code_compact_{index}")
+            score_terms.append(
+                f"CASE WHEN producto_codigo = :code_exact_{index} OR referencia = :code_exact_{index} THEN 100"
+                f" WHEN producto_codigo LIKE :code_like_{index} OR search_blob ILIKE :code_like_{index} OR search_compact LIKE :code_compact_{index} THEN 1 ELSE 0 END"
+            )
+        else:
+            score_terms.append(
+                f"CASE WHEN producto_codigo = :code_exact_{index} OR referencia = :code_exact_{index} THEN 100"
+                f" WHEN producto_codigo LIKE :code_like_{index} OR search_blob ILIKE :code_like_{index} THEN 1 ELSE 0 END"
+            )
 
     if store_filters:
         store_code_filters = []
         store_score_terms = []
         for index, code in enumerate(product_codes[:3]):
+            store_code_filters.append(f"referencia_normalizada = :code_exact_{index}")
             store_code_filters.append(f"referencia_normalizada LIKE :code_like_{index}")
             store_code_filters.append(f"search_blob ILIKE :code_like_{index}")
             store_score_terms.append(
-                f"CASE WHEN referencia_normalizada LIKE :code_like_{index} OR search_blob ILIKE :code_like_{index} THEN 1 ELSE 0 END"
+                f"CASE WHEN referencia_normalizada = :code_exact_{index} THEN 100"
+                f" WHEN referencia_normalizada LIKE :code_like_{index} OR search_blob ILIKE :code_like_{index} THEN 1 ELSE 0 END"
             )
         store_filters_sql = []
         for store_index, store_code in enumerate(store_filters):
@@ -9396,7 +9598,9 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             if product_codes:
                 code_rows = fetch_code_product_rows(connection, product_codes, store_filters)
                 if code_rows:
-                    return filter_rows_by_requested_presentation([dict(row) for row in code_rows], product_request)
+                    ranked_code_rows = rank_product_match_rows([dict(row) for row in code_rows], product_request, normalized_query)
+                    ranked_code_rows = filter_rows_by_requested_presentation(ranked_code_rows, product_request)
+                    return ranked_code_rows[:5]
 
             if not terms:
                 return []
@@ -9532,7 +9736,7 @@ def build_agent_prompt(
                 "3. PROHIBIDO vomitar la base de datos. Nunca enumeres stock de todas las tiendas. Si el cliente dijo Pereira, responde SOLO sobre Pereira en lenguaje humano.\n"
                 "4. REFERENCIA AUDITABLE OBLIGATORIA: cuando confirmes inventario o muestres opciones con referencia, usa la descripción exacta que viene del ERP/backend. No la reescribas ni cambies base, tint, paste, color o modelo. Si el JSON trae `visibilidad_tienda_exacta=false`, no confirmes stock para esa sede: aclara que recuperaste la referencia correcta pero no tienes desglose exacto de esa tienda en la vista actual.\n"
                 "5. PIENSA ANTES DE ACTUAR: clasifica mentalmente la intención del cliente antes de responder.\n"
-                "   - Si pregunta cómo aplicar, qué rodillo usar, tiempos de secado → ASESORÍA TÉCNICA, responde como experto, NO busques en la base de datos.\n"
+                "   - Si pregunta cómo aplicar, qué rodillo usar, tiempos de secado → ASESORÍA TÉCNICA, usa `consultar_conocimiento_tecnico` para buscar el dato exacto en las fichas técnicas vectorizadas ANTES de responder.\n"
                 "   - Si pide comprar o verificar disponibilidad de un producto → INVENTARIO, ahí sí consulta la base.\n"
                 "   - Si dice reclamo, queja, garantía → RECLAMO, activa empatía y protocolo paso a paso. NO crees ticket hasta tener producto, problema y correo.\n"
                 "   - Si pide cartera, saldos → CARTERA, valida identidad primero.\n"
@@ -9838,6 +10042,18 @@ PEDIDOS Y COTIZACIONES:
 DOCUMENTOS: Si te piden ficha técnica u hoja de seguridad, USA LA HERRAMIENTA `buscar_documento_tecnico` inmediatamente. No digas que no puedes hacerlo.
 DOCUMENTOS MÚLTIPLES: Si la herramienta `buscar_documento_tecnico` te devuelve 'multiples_opciones', NO digas que no lo encontraste. Muéstrale al cliente una lista corta y amable con las opciones y pregúntale: 'Tengo estas versiones, ¿cuál de estas fichas necesitas exactamente?'.
 
+ASESORÍA TÉCNICA INTELIGENTE (MODELO HÍBRIDO RAG):
+- PASO 1 — RESPUESTA DIRECTA: Cuando el cliente haga una pregunta técnica (ej. tiempo de secado, relación de mezcla, preparación de superficie, rendimiento, dilución, número de manos, temperatura de aplicación), PRIMERO usa `consultar_conocimiento_tecnico` para buscar la respuesta en las fichas técnicas vectorizadas. Lee la información de 'respuesta_rag' y entrega la respuesta técnica precisa y resumida directamente en el chat. El cliente NO debe verse obligado a abrir un PDF para encontrar un dato simple.
+- PASO 2 — RESPALDO OFICIAL: Inmediatamente después del dato técnico, cita la fuente e invoca `buscar_documento_tecnico` para enviar el PDF completo como respaldo. Di algo como: 'Te envío la ficha técnica oficial para que valides la preparación de la superficie y otros detalles.'
+- EXCEPCIÓN: Si `consultar_conocimiento_tecnico` no encuentra información (encontrado=false), usa directamente `buscar_documento_tecnico` para enviar el PDF y dile al cliente que revise la ficha.
+- PROHIBIDO responder preguntas técnicas de memoria o por intuición cuando tienes la herramienta `consultar_conocimiento_tecnico` disponible. Siempre consulta primero.
+
+PRODUCTOS COMPLEMENTARIOS (CATALIZADORES, DILUYENTES, BASES):
+- Si `consultar_inventario` devuelve un campo `productos_complementarios` en algún producto, DEBES informar al cliente de forma proactiva. Ejemplo: 'Este producto necesita catalizador EGA247 y diluyente Ajustador 21209.'
+- Si un experto o asesor interno (ej. Pablo Mafla) te enseña que un producto requiere un catalizador, diluyente, base, sellador o imprimante, guarda esa relación usando `guardar_producto_complementario`.
+- NUNCA ignores los productos complementarios. Son críticos para que el cliente aplique el producto correctamente.
+- Cuando cierres un pedido que incluya productos con complementarios, recuérdale al cliente si no los ha incluido en el pedido.
+
 MEMORIA DE LISTAS: Si le mostraste al cliente una lista numerada de opciones (ya sean documentos, productos o cualquier cosa) y el cliente responde con un número (ej. '1', 'el 5', 'la segunda') o una afirmación ('sí', 'esa', 'la primera'), TIENES ESTRICTAMENTE PROHIBIDO pasarle ese número o 'sí' a las herramientas. DEBES buscar en tu memoria de conversación el nombre exacto de la opción que corresponde a ese número, y ejecutar la herramienta usando el NOMBRE COMPLETO EXACTO (ej. 'KORAZA ELASTOMÉRICA.pdf' o 'Domestico Blanco cuñete'). Nunca envíes '1', '2', 'sí' ni 'esa' como parámetro de búsqueda.
 
 CIERRE DE PEDIDO: Una vez el cliente confirme el resumen de productos, pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
@@ -9962,6 +10178,36 @@ AGENT_TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "consultar_conocimiento_tecnico",
+            "description": "Busca información técnica detallada en las fichas técnicas vectorizadas (RAG). "
+            "Úsala ANTES de responder preguntas técnicas como: tiempos de secado, relación de mezcla, "
+            "preparación de superficie, rendimiento, temperatura de aplicación, número de manos, dilución, etc. "
+            "Esta herramienta lee el contenido real de las fichas técnicas y te da la respuesta precisa. "
+            "Después de usarla, SIEMPRE envía el PDF con `buscar_documento_tecnico` como respaldo oficial.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "pregunta": {
+                        "type": "string",
+                        "description": "La pregunta técnica específica. Ej: '¿Cuál es el tiempo de secado del Viniltex?', "
+                        "'¿Cómo se prepara la superficie para Koraza?', '¿Cuál es la relación de mezcla del Interseal 670?'",
+                    },
+                    "producto": {
+                        "type": "string",
+                        "description": "Nombre del producto sobre el que se pregunta. Ej: 'Viniltex', 'Koraza', 'Interseal 670'.",
+                    },
+                    "marca": {
+                        "type": "string",
+                        "description": "Filtro opcional de marca para acotar resultados. Ej: 'Pintuco', 'International'.",
+                    },
+                },
+                "required": ["pregunta"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "radicar_reclamo",
             "description": "ESTRICTAMENTE PROHIBIDO llamar a esta herramienta de inmediato. "
             "Úsala ÚNICAMENTE DESPUÉS de haber actuado como asesor técnico: debes haberle hecho al menos 1 o 2 preguntas al cliente "
@@ -10068,6 +10314,50 @@ AGENT_TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "guardar_producto_complementario",
+            "description": "Guarda la relación entre un producto principal y un producto complementario (catalizador, diluyente, base, sellador, imprimante, acabado, complemento). "
+            "Úsala cuando un experto o asesor te enseñe que un producto necesita otro para funcionar correctamente. "
+            "Ejemplo: Interseal 670 necesita catalizador EGA247 (ref 5891355) y diluyente Ajustador 21209.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "producto_referencia": {
+                        "type": "string",
+                        "description": "La referencia del producto principal. Ej: '5890737', 'INT670'.",
+                    },
+                    "producto_descripcion": {
+                        "type": "string",
+                        "description": "Nombre o descripción del producto principal. Ej: 'Interseal 670 Gris'.",
+                    },
+                    "companion_referencia": {
+                        "type": "string",
+                        "description": "La referencia del producto complementario. Ej: '5891355'.",
+                    },
+                    "companion_descripcion": {
+                        "type": "string",
+                        "description": "Nombre o descripción del producto complementario. Ej: 'Interseal 670 Hs EGA 247 Galón'.",
+                    },
+                    "tipo_relacion": {
+                        "type": "string",
+                        "enum": ["catalizador", "diluyente", "base", "complemento", "sellador", "imprimante", "acabado"],
+                        "description": "Tipo de relación: catalizador, diluyente, base, complemento, sellador, imprimante o acabado.",
+                    },
+                    "proporcion": {
+                        "type": "string",
+                        "description": "Proporción de mezcla o uso. Ej: '10%', '1:1', '2 partes base + 1 catalizador'.",
+                    },
+                    "notas": {
+                        "type": "string",
+                        "description": "Notas adicionales sobre la relación. Ej: 'Para sistemas epóxicos marinos'.",
+                    },
+                },
+                "required": ["producto_referencia", "companion_referencia", "tipo_relacion"],
+            },
+        },
+    },
 ]
 
 
@@ -10125,6 +10415,21 @@ def _handle_tool_consultar_inventario(args, conversation_context):
         precio = row.get("precio_venta")
         if precio is not None:
             item["precio"] = precio
+        # --- Companion/complementary products ---
+        ref_for_companion = item.get("codigo") or ""
+        companions = fetch_product_companions(ref_for_companion)
+        if companions:
+            item["productos_complementarios"] = [
+                {
+                    "referencia": c.get("companion_referencia"),
+                    "descripcion": c.get("companion_descripcion") or c.get("descripcion_inventario"),
+                    "tipo": c.get("tipo_relacion"),
+                    "proporcion": c.get("proporcion"),
+                    "notas": c.get("notas"),
+                    "stock_total": c.get("stock_total"),
+                }
+                for c in companions
+            ]
         results.append(item)
     if rows:
         conversation_context["last_product_request"] = product_request
@@ -10905,6 +11210,121 @@ def _handle_tool_guardar_aprendizaje_producto(args, conversation_context):
         )
 
 
+def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_context):
+    pregunta = (args.get("pregunta") or "").strip()
+    producto = (args.get("producto") or "").strip()
+    marca_filter = (args.get("marca") or "").strip() or None
+    if not pregunta:
+        return json.dumps(
+            {"encontrado": False, "mensaje": "Se requiere una pregunta técnica."},
+            ensure_ascii=False,
+        )
+
+    # Build search query combining question + product context
+    search_query = pregunta
+    if producto:
+        search_query = f"{producto}: {pregunta}"
+
+    chunks = search_technical_chunks(search_query, top_k=5, marca_filter=marca_filter)
+    if not chunks:
+        return json.dumps(
+            {"encontrado": False, "respuesta_rag": None,
+             "mensaje": "No encontré información técnica vectorizada para esa consulta. "
+                        "Intenta con `buscar_documento_tecnico` para enviar el PDF completo."},
+            ensure_ascii=False,
+        )
+
+    rag_context = build_rag_context(chunks, max_chunks=4)
+    source_files = list(dict.fromkeys(c.get("doc_filename", "") for c in chunks if c.get("similarity", 0) >= 0.25))
+    best_similarity = max(c.get("similarity", 0) for c in chunks)
+
+    return json.dumps(
+        {
+            "encontrado": True,
+            "respuesta_rag": rag_context,
+            "archivos_fuente": source_files,
+            "mejor_similitud": round(best_similarity, 4),
+            "mensaje": (
+                "Usa la información de 'respuesta_rag' para dar una respuesta técnica precisa y resumida. "
+                "Luego usa `buscar_documento_tecnico` para enviar el PDF fuente como respaldo oficial."
+            ),
+        },
+        ensure_ascii=False,
+    )
+
+
+def _handle_tool_guardar_producto_complementario(args, conversation_context):
+    producto_ref = (args.get("producto_referencia") or "").strip()
+    producto_desc = (args.get("producto_descripcion") or "").strip()
+    companion_ref = (args.get("companion_referencia") or "").strip()
+    companion_desc = (args.get("companion_descripcion") or "").strip()
+    tipo = (args.get("tipo_relacion") or "").strip().lower()
+    proporcion = (args.get("proporcion") or "").strip() or None
+    notas = (args.get("notas") or "").strip() or None
+
+    VALID_TIPOS = ["catalizador", "diluyente", "base", "complemento", "sellador", "imprimante", "acabado"]
+    if not producto_ref or not companion_ref or not tipo:
+        return json.dumps(
+            {"guardado": False, "mensaje": "Se requiere producto_referencia, companion_referencia y tipo_relacion."},
+            ensure_ascii=False,
+        )
+    if tipo not in VALID_TIPOS:
+        return json.dumps(
+            {"guardado": False, "mensaje": f"tipo_relacion debe ser uno de: {', '.join(VALID_TIPOS)}."},
+            ensure_ascii=False,
+        )
+
+    conversation_id = conversation_context.get("conversation_id")
+
+    try:
+        ensure_product_companion_table()
+        engine = get_db_engine()
+        with engine.begin() as connection:
+            connection.execute(
+                text("""
+                    INSERT INTO public.agent_product_companion (
+                        producto_referencia, producto_descripcion,
+                        companion_referencia, companion_descripcion,
+                        tipo_relacion, proporcion, notas,
+                        source_conversation_id, confidence,
+                        created_at, updated_at
+                    ) VALUES (
+                        :producto_ref, :producto_desc,
+                        :companion_ref, :companion_desc,
+                        :tipo, :proporcion, :notas,
+                        :conversation_id, 0.95, now(), now()
+                    )
+                    ON CONFLICT (producto_referencia, companion_referencia, tipo_relacion)
+                    DO UPDATE SET
+                        producto_descripcion = COALESCE(EXCLUDED.producto_descripcion, public.agent_product_companion.producto_descripcion),
+                        companion_descripcion = COALESCE(EXCLUDED.companion_descripcion, public.agent_product_companion.companion_descripcion),
+                        proporcion = COALESCE(EXCLUDED.proporcion, public.agent_product_companion.proporcion),
+                        notas = COALESCE(EXCLUDED.notas, public.agent_product_companion.notas),
+                        confidence = GREATEST(public.agent_product_companion.confidence, EXCLUDED.confidence),
+                        updated_at = now()
+                    """),
+                {
+                    "producto_ref": producto_ref,
+                    "producto_desc": producto_desc or None,
+                    "companion_ref": companion_ref,
+                    "companion_desc": companion_desc or None,
+                    "tipo": tipo,
+                    "proporcion": proporcion,
+                    "notas": notas,
+                    "conversation_id": conversation_id,
+                },
+            )
+        return json.dumps(
+            {"guardado": True, "mensaje": f"Relación guardada: {producto_ref} → {tipo}: {companion_ref} ({companion_desc or 'sin descripción'})."},
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        return json.dumps(
+            {"guardado": False, "mensaje": f"No se pudo guardar la relación: {exc}"},
+            ensure_ascii=False,
+        )
+
+
 def _execute_agent_tool(tool_call, context, conversation_context):
     fn_name = tool_call.function.name
     try:
@@ -10922,12 +11342,16 @@ def _execute_agent_tool(tool_call, context, conversation_context):
         result = _handle_tool_consultar_compras(fn_args, conversation_context)
     elif fn_name == "buscar_documento_tecnico":
         result = _handle_tool_buscar_documento_tecnico(fn_args, context, conversation_context)
+    elif fn_name == "consultar_conocimiento_tecnico":
+        result = _handle_tool_consultar_conocimiento_tecnico(fn_args, context, conversation_context)
     elif fn_name == "radicar_reclamo":
         result = _handle_tool_radicar_reclamo(fn_args, context, conversation_context)
     elif fn_name == "confirmar_pedido_y_generar_pdf":
         result = _handle_tool_confirmar_pedido(fn_args, context, conversation_context)
     elif fn_name == "guardar_aprendizaje_producto":
         result = _handle_tool_guardar_aprendizaje_producto(fn_args, conversation_context)
+    elif fn_name == "guardar_producto_complementario":
+        result = _handle_tool_guardar_producto_complementario(fn_args, conversation_context)
     else:
         result = json.dumps({"error": f"Herramienta desconocida: {fn_name}"}, ensure_ascii=False)
 

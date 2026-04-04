@@ -373,6 +373,65 @@ CREATE TABLE IF NOT EXISTS public.agent_catalog_rule (
     updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- ============================================================
+-- Tabla: agent_product_companion
+-- Relaciones entre productos: catalizadores, diluyentes, bases, etc.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.agent_product_companion (
+    id bigserial PRIMARY KEY,
+    producto_referencia text NOT NULL,
+    producto_descripcion text,
+    companion_referencia text NOT NULL,
+    companion_descripcion text,
+    tipo_relacion varchar(60) NOT NULL,
+    proporcion text,
+    notas text,
+    source_conversation_id bigint REFERENCES public.agent_conversation(id) ON DELETE SET NULL,
+    confidence numeric(5,4) NOT NULL DEFAULT 0.9500,
+    activo boolean NOT NULL DEFAULT true,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT uq_agent_product_companion UNIQUE (producto_referencia, companion_referencia, tipo_relacion)
+);
+CREATE INDEX IF NOT EXISTS idx_agent_product_companion_ref ON public.agent_product_companion(producto_referencia);
+CREATE INDEX IF NOT EXISTS idx_agent_product_companion_companion ON public.agent_product_companion(companion_referencia);
+
+-- ============================================================
+-- Extensión pgvector (requiere instalación en el servidor Docker)
+-- ============================================================
+CREATE EXTENSION IF NOT EXISTS vector;
+
+-- ============================================================
+-- Tabla: agent_technical_doc_chunk
+-- Chunks vectorizados de fichas técnicas para RAG semántico.
+-- Cada fila = un fragmento de ~500-800 tokens de un PDF técnico,
+-- con embedding vector(1536) de text-embedding-3-small de OpenAI.
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.agent_technical_doc_chunk (
+    id bigserial PRIMARY KEY,
+    doc_filename text NOT NULL,
+    doc_path_lower text NOT NULL,
+    chunk_index integer NOT NULL DEFAULT 0,
+    chunk_text text NOT NULL,
+    marca text,
+    familia_producto text,
+    tipo_documento varchar(30) NOT NULL DEFAULT 'ficha_tecnica',
+    metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+    embedding vector(1536) NOT NULL,
+    token_count integer,
+    ingested_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT uq_agent_doc_chunk UNIQUE (doc_path_lower, chunk_index)
+);
+CREATE INDEX IF NOT EXISTS idx_agent_doc_chunk_filename ON public.agent_technical_doc_chunk(doc_filename);
+CREATE INDEX IF NOT EXISTS idx_agent_doc_chunk_marca ON public.agent_technical_doc_chunk(marca);
+CREATE INDEX IF NOT EXISTS idx_agent_doc_chunk_familia ON public.agent_technical_doc_chunk(familia_producto);
+CREATE INDEX IF NOT EXISTS idx_agent_doc_chunk_tipo ON public.agent_technical_doc_chunk(tipo_documento);
+-- Índice vectorial HNSW para búsqueda semántica rápida (cosine distance)
+CREATE INDEX IF NOT EXISTS idx_agent_doc_chunk_embedding
+    ON public.agent_technical_doc_chunk
+    USING hnsw (embedding vector_cosine_ops)
+    WITH (m = 16, ef_construction = 64);
+
 CREATE INDEX IF NOT EXISTS idx_whatsapp_contacto_cliente ON public.whatsapp_contacto(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_agent_conversation_contacto ON public.agent_conversation(contacto_id);
 CREATE INDEX IF NOT EXISTS idx_agent_conversation_estado ON public.agent_conversation(estado);
