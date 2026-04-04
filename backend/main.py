@@ -7484,6 +7484,151 @@ def build_technical_search_query(technical_case: dict, user_message: Optional[st
     return query or (user_message or technical_case.get("last_user_message") or "")
 
 
+def extract_area_square_meters(text_value: Optional[str]) -> Optional[float]:
+    if not text_value:
+        return None
+    normalized = normalize_text_value(text_value).replace(",", ".")
+    match = re.search(r"(\d+(?:\.\d+)?)\s*(m2|m\^2|mts2|mts cuadrados|metros cuadrados)", normalized)
+    if match:
+        try:
+            return float(match.group(1))
+        except Exception:
+            return None
+    return None
+
+
+def is_coverage_followup_question(text_value: Optional[str]) -> bool:
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    return any(
+        phrase in normalized
+        for phrase in [
+            "cuanto necesito",
+            "cuantos necesito",
+            "cuánto necesito",
+            "cuántos necesito",
+            "para cubrir",
+            "para 10 m",
+            "cuanto me alcanza",
+            "cuánto me alcanza",
+        ]
+    )
+
+
+def extract_candidate_products_from_rag_context(rag_context: str, source_file: Optional[str] = None) -> list[str]:
+    candidates: list[str] = []
+    for match in re.finditer(r"\[PRODUCTO:\s*([^\]]+)\]", rag_context or "", flags=re.IGNORECASE):
+        candidate = match.group(1).strip()
+        if candidate and candidate not in candidates:
+            candidates.append(candidate)
+    if source_file:
+        normalized_file = re.sub(r"\.pdf$", "", source_file, flags=re.IGNORECASE).strip()
+        normalized_file = re.sub(r"\s*\(.*?\)\s*", " ", normalized_file).strip()
+        if normalized_file and normalized_file not in candidates:
+            candidates.insert(0, normalized_file)
+    return candidates[:5]
+
+
+def lookup_inventory_candidates_from_terms(terms: list[str], conversation_context: Optional[dict]) -> list[dict]:
+    seen_codes = set()
+    resolved: list[dict] = []
+    local_context = dict(conversation_context or {})
+    for term in terms:
+        if not term:
+            continue
+        rows = lookup_product_context(term, prepare_product_request_for_search(term))
+        for row in rows[:2]:
+            code = row.get("codigo_articulo") or row.get("referencia") or row.get("codigo")
+            if not code or code in seen_codes:
+                continue
+            seen_codes.add(code)
+            resolved.append(
+                {
+                    "codigo": code,
+                    "descripcion": get_exact_product_description(row),
+                    "etiqueta_auditable": build_product_audit_label(row),
+                    "marca": row.get("marca") or row.get("marca_producto"),
+                    "presentacion": infer_product_presentation_from_row(row),
+                    "stock_total": parse_numeric_value(row.get("stock_total")),
+                    "precio": row.get("precio_venta"),
+                    "productos_complementarios": [
+                        {
+                            "referencia": c.get("companion_referencia"),
+                            "descripcion": c.get("companion_descripcion") or c.get("descripcion_inventario"),
+                            "tipo": c.get("tipo_relacion"),
+                            "proporcion": c.get("proporcion"),
+                        }
+                        for c in fetch_product_companions(code)
+                    ],
+                }
+            )
+            local_context["last_product_query"] = term
+        if len(resolved) >= 4:
+            break
+    return resolved[:4]
+
+
+def format_inventory_product_block(products: list[dict]) -> str:
+    if not products:
+        return ""
+    lines = ["Vea, los productos que necesitas son estos:"]
+    for product in products[:4]:
+        lines.append(f"- ✅ {product.get('etiqueta_auditable')}: Disponible")
+        companions = product.get("productos_complementarios") or []
+        for companion in companions[:2]:
+            label = companion.get("descripcion") or companion.get("referencia")
+            companion_type = companion.get("tipo") or "complemento"
+            if label:
+                extra = f" ({companion.get('proporcion')})" if companion.get("proporcion") else ""
+                lines.append(f"- Complementario {companion_type}: {label}{extra}")
+    return "\n".join(lines)
+
+
+def generate_grounded_technical_sales_reply(
+    technical_case: dict,
+    rag_context: str,
+    user_message: Optional[str],
+    inventory_products: list[dict],
+    area_m2: Optional[float] = None,
+) -> str:
+    client = get_openai_client()
+    case_summary = safe_json_dumps(technical_case)
+    inventory_summary = safe_json_dumps(inventory_products)
+    area_text = f"Área a cubrir: {area_m2} m2" if area_m2 else "Área a cubrir: no especificada"
+    response = client.chat.completions.create(
+        model=get_openai_model(),
+        temperature=0.1,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "Eres el asesor técnico y comercial senior de Ferreinox. "
+                    "Responde SOLO con base en el contexto recuperado y el inventario suministrado. "
+                    "Objetivo: recomendar un sistema adecuado y cerrar la venta con productos reales del portafolio. "
+                    "REGLAS: "
+                    "1) No inventes rendimientos, número de galones, pasos, manos, catalizadores o productos que no estén en el contexto. "
+                    "2) Si el rendimiento exacto no aparece, dilo de frente y NO calcules cantidades. "
+                    "3) Si sí hay respaldo suficiente, explica el sistema en lenguaje claro y luego termina con una sección final que empiece EXACTAMENTE con: 'Vea, los productos que necesitas son estos:'. "
+                    "4) En esa sección final solo puedes listar productos del inventario suministrado. "
+                    "5) No mandes al cliente a otra parte ni sugieras buscar fuera del portafolio."
+                ),
+            },
+            {
+                "role": "user",
+                "content": (
+                    f"Caso diagnosticado: {case_summary}\n"
+                    f"Mensaje actual del cliente: {user_message or technical_case.get('last_user_message') or ''}\n"
+                    f"{area_text}\n"
+                    f"Inventario candidato real: {inventory_summary}\n\n"
+                    f"Contexto recuperado de fichas/FDS:\n{rag_context}"
+                ),
+            },
+        ],
+    )
+    return (response.choices[0].message.content or "").strip()
+
+
 def generate_grounded_technical_reply(technical_case: dict, rag_context: str, user_message: Optional[str] = None) -> str:
     client = get_openai_client()
     case_summary = safe_json_dumps(technical_case)
@@ -7529,6 +7674,9 @@ def should_continue_technical_advisory_flow(conversation_context: Optional[dict]
 
 def build_technical_advisory_flow_reply(profile_name: Optional[str], user_message: Optional[str], conversation_context: Optional[dict]):
     technical_case = extract_technical_advisory_case(user_message, conversation_context)
+    area_m2 = extract_area_square_meters(user_message)
+    if area_m2:
+        technical_case["area_m2"] = area_m2
     if not technical_case.get("ready"):
         questions = build_technical_diagnostic_questions(technical_case)
         intro_map = {
@@ -7548,9 +7696,13 @@ def build_technical_advisory_flow_reply(profile_name: Optional[str], user_messag
         }
 
     search_query = build_technical_search_query(technical_case, user_message)
+    if is_coverage_followup_question(user_message) and technical_case.get("source_file"):
+        search_query = f"{technical_case.get('source_file')}: rendimiento cobertura numero de manos consumo {user_message or ''}".strip()
     chunks = search_technical_chunks(search_query, top_k=6)
     rag_context = build_rag_context(chunks, max_chunks=4)
     source_file = next((chunk.get("doc_filename") for chunk in chunks if chunk.get("similarity", 0) >= 0.25 and chunk.get("doc_filename")), None)
+    if not source_file:
+        source_file = technical_case.get("source_file")
     technical_case["search_query"] = search_query
     technical_case["source_file"] = source_file
 
@@ -7567,13 +7719,28 @@ def build_technical_advisory_flow_reply(profile_name: Optional[str], user_messag
             "context_updates": {"technical_advisory_case": technical_case},
         }
 
+    candidate_products = extract_candidate_products_from_rag_context(rag_context, source_file)
+    inventory_products = lookup_inventory_candidates_from_terms(candidate_products, conversation_context)
+    technical_case["candidate_products"] = candidate_products
+    technical_case["inventory_products"] = inventory_products
+
     try:
-        response_text = generate_grounded_technical_reply(technical_case, rag_context, user_message)
+        response_text = generate_grounded_technical_sales_reply(
+            technical_case,
+            rag_context,
+            user_message,
+            inventory_products,
+            area_m2=technical_case.get("area_m2"),
+        )
     except Exception:
         response_text = (
             "Ya tengo el diagnóstico y encontré respaldo técnico, pero prefiero no resumírtelo mal en este momento. "
             "Te ayudo a validarlo con la ficha base correcta para no hacerte comprar algo que no te sirva."
         )
+
+    if inventory_products and "Vea, los productos que necesitas son estos:" not in response_text:
+        inventory_block = format_inventory_product_block(inventory_products)
+        response_text = f"{response_text}\n\n{inventory_block}".strip()
 
     technical_case["stage"] = "recommended"
     return {
