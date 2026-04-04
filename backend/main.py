@@ -27,7 +27,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 
 
-app = FastAPI(title="CRM Ferreinox Backend", version="2026.2")
+app = FastAPI(title="CRM Ferreinox Backend", version="2026.3")
 
 
 INTERNAL_ROLES = {"empleado", "vendedor", "gerente", "operador", "administrador"}
@@ -1060,6 +1060,9 @@ def find_employee_record_by_phone(phone_e164: Optional[str]):
     for record in load_employee_directory():
         if record.get("phone_e164") == normalized_phone:
             return record
+    fallback_record = fetch_internal_employee_record_by_phone(normalized_phone)
+    if fallback_record:
+        return fallback_record
     return None
 
 
@@ -1070,6 +1073,9 @@ def find_employee_record_by_cedula(document_value: Optional[str]):
     for record in load_employee_directory():
         if record.get("cedula") == normalized_document:
             return record
+    fallback_record = fetch_internal_employee_record_by_cedula(normalized_document)
+    if fallback_record:
+        return fallback_record
     return None
 
 
@@ -1079,7 +1085,87 @@ def build_employee_username(record: dict):
 
 def extract_internal_cedula_candidate(content: Optional[str]):
     match = INTERNAL_CEDULA_PATTERN.search(content or "")
-    return match.group(1) if match else None
+    if match:
+        return match.group(1)
+    digits = parse_employee_document(content)
+    if digits and 6 <= len(digits) <= 15:
+        return digits
+    return None
+
+
+def build_employee_record_from_internal_user_row(user_row: Optional[dict]):
+    if not user_row:
+        return None
+    metadata = dict(user_row.get("metadata") or {})
+    cedula = parse_employee_document(metadata.get("cedula"))
+    if not cedula:
+        username_match = re.fullmatch(r"cedula\.(\d{6,15})", str(user_row.get("username") or ""))
+        cedula = username_match.group(1) if username_match else None
+    if not cedula:
+        return None
+    role_value = user_row.get("role") or derive_internal_role_from_employee({"cargo": metadata.get("cargo")})
+    return {
+        "full_name": user_row.get("full_name"),
+        "cedula": cedula,
+        "sede": metadata.get("sede"),
+        "cargo": metadata.get("cargo"),
+        "phone_e164": normalize_phone_e164(user_row.get("phone_e164") or metadata.get("telefono")),
+        "email": (user_row.get("email") or metadata.get("email") or "").strip().lower() or None,
+        "store_code": normalize_store_code(metadata.get("store_code")),
+        "role": role_value,
+        "advanced_access": bool(metadata.get("advanced_access", role_value in {"vendedor", "gerente", "operador", "administrador"})),
+        "is_facturador": bool(metadata.get("is_facturador", role_value == "administrador")),
+        "auth_source": metadata.get("auth_source") or "agent_user",
+    }
+
+
+def fetch_internal_employee_record_by_phone(phone_e164: Optional[str]):
+    normalized_phone = normalize_phone_e164(phone_e164)
+    if not normalized_phone:
+        return None
+    ensure_internal_auth_tables()
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT id, username, full_name, role, phone_e164, email, metadata
+                FROM public.agent_user
+                WHERE is_active = true
+                  AND phone_e164 = :phone_e164
+                ORDER BY updated_at DESC
+                LIMIT 1
+                """
+            ),
+            {"phone_e164": normalized_phone},
+        ).mappings().one_or_none()
+    return build_employee_record_from_internal_user_row(dict(row) if row else None)
+
+
+def fetch_internal_employee_record_by_cedula(document_value: Optional[str]):
+    normalized_document = parse_employee_document(document_value)
+    if not normalized_document:
+        return None
+    ensure_internal_auth_tables()
+    engine = get_db_engine()
+    with engine.connect() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT id, username, full_name, role, phone_e164, email, metadata
+                FROM public.agent_user
+                WHERE is_active = true
+                  AND (
+                    metadata ->> 'cedula' = :cedula
+                    OR username = :username
+                  )
+                ORDER BY updated_at DESC
+                LIMIT 1
+                """
+            ),
+            {"cedula": normalized_document, "username": f"cedula.{normalized_document}"},
+        ).mappings().one_or_none()
+    return build_employee_record_from_internal_user_row(dict(row) if row else None)
 
 
 def hash_password_with_salt(password: str, salt_hex: str):
@@ -1167,6 +1253,36 @@ def ensure_internal_auth_tables():
                     updated_at timestamptz NOT NULL DEFAULT now(),
                     CONSTRAINT uq_agent_user_session_token UNIQUE (token_hash)
                 )
+                """
+            )
+        )
+        connection.execute(text("ALTER TABLE public.agent_user DROP CONSTRAINT IF EXISTS chk_agent_user_role"))
+        connection.execute(
+            text(
+                """
+                ALTER TABLE public.agent_user
+                ADD CONSTRAINT chk_agent_user_role
+                CHECK (role IN ('empleado', 'vendedor', 'gerente', 'operador', 'administrador'))
+                """
+            )
+        )
+        connection.execute(text("ALTER TABLE public.agent_user_scope DROP CONSTRAINT IF EXISTS chk_agent_user_scope_type"))
+        connection.execute(
+            text(
+                """
+                ALTER TABLE public.agent_user_scope
+                ADD CONSTRAINT chk_agent_user_scope_type
+                CHECK (scope_type IN ('cliente', 'vendedor_codigo', 'vendedor_nombre', 'zona', 'almacen'))
+                """
+            )
+        )
+        connection.execute(text("ALTER TABLE public.agent_user_session DROP CONSTRAINT IF EXISTS chk_agent_user_session_channel"))
+        connection.execute(
+            text(
+                """
+                ALTER TABLE public.agent_user_session
+                ADD CONSTRAINT chk_agent_user_session_channel
+                CHECK (channel IN ('api', 'whatsapp'))
                 """
             )
         )
@@ -1775,8 +1891,9 @@ def build_internal_login_reply(content: str, context: dict, conversation_context
     employee_by_phone = find_employee_record_by_phone(context.get("telefono_e164"))
     awaiting_cedula = bool((conversation_context or {}).get("awaiting_internal_auth_cedula"))
     cedula = extract_internal_cedula_candidate(content)
+    employee_by_cedula = find_employee_record_by_cedula(cedula) if cedula else None
 
-    if not employee_by_phone and not awaiting_cedula:
+    if not employee_by_phone and not awaiting_cedula and not employee_by_cedula:
         return None
 
     if not cedula:
@@ -1786,7 +1903,7 @@ def build_internal_login_reply(content: str, context: dict, conversation_context
             "context_updates": {"awaiting_internal_auth_cedula": True},
         }
 
-    employee_record = find_employee_record_by_cedula(cedula)
+    employee_record = employee_by_cedula
     if not employee_record:
         return {
             "response_text": "No encontré esa cédula en la base de colaboradores. Revisa el número o valida con administración.",
@@ -3391,7 +3508,75 @@ def should_store_learning_phrase(text_value: Optional[str]):
         return False
     if is_product_code_message(normalized):
         return False
+    if normalized in {"si", "sí", "esa", "ese", "la primera", "la segunda", "la tercera", "opcion 1", "opcion 2", "opcion 3"}:
+        return False
     return len(normalized) >= 4
+
+
+def contains_product_correction_signal(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    return any(
+        phrase in normalized
+        for phrase in [
+            "no era",
+            "me corrijo",
+            "corrijo",
+            "quise decir",
+            "mas bien",
+            "más bien",
+            "no ese",
+            "no esa",
+            "cambialo",
+            "cámbialo",
+            "cambio la referencia",
+            "la referencia correcta",
+        ]
+    )
+
+
+def should_merge_previous_learning_phrase(current_request: Optional[dict], previous_request: Optional[dict]):
+    if not current_request or not previous_request:
+        return False
+    if contains_product_correction_signal(current_request.get("original_query")):
+        return False
+    current_codes = {normalize_reference_value(value) for value in (current_request.get("product_codes") or []) if value}
+    previous_codes = {normalize_reference_value(value) for value in (previous_request.get("product_codes") or []) if value}
+    if current_codes and previous_codes and current_codes != previous_codes:
+        return False
+    current_terms = set(get_specific_product_terms(current_request) or current_request.get("core_terms") or [])
+    previous_terms = set(get_specific_product_terms(previous_request) or previous_request.get("core_terms") or [])
+    if current_terms and previous_terms and not (current_terms & previous_terms):
+        return False
+    return True
+
+
+def resolve_confirmed_learning_product_row(description_asociada: str, conversation_context: Optional[dict]):
+    clarification_options = list((conversation_context or {}).get("clarification_options") or [])
+    selected_option = resolve_product_clarification_choice(description_asociada, clarification_options)
+    if selected_option:
+        return {
+            "referencia": selected_option.get("reference") or selected_option.get("referencia"),
+            "descripcion": selected_option.get("name") or selected_option.get("descripcion"),
+            "marca": selected_option.get("brand") or selected_option.get("marca"),
+            "presentacion_canonica": selected_option.get("presentation") or selected_option.get("presentacion_canonica"),
+        }
+
+    learning_request = prepare_product_request_for_search(description_asociada)
+    product_rows = lookup_product_context(description_asociada, learning_request)
+    reliable_rows = select_reliable_learning_rows(learning_request, product_rows)
+    if len(reliable_rows) == 1:
+        return reliable_rows[0]
+
+    explicit_codes = extract_product_codes(description_asociada)
+    if explicit_codes and product_rows:
+        normalized_codes = {normalize_reference_value(code) for code in explicit_codes}
+        for row in product_rows:
+            row_code = normalize_reference_value(row.get("referencia") or row.get("codigo_articulo"))
+            if row_code and row_code in normalized_codes:
+                return row
+    return None
 
 
 def build_learning_phrase_candidates(product_request: Optional[dict]):
@@ -3559,7 +3744,10 @@ def learn_product_resolution(conversation_id: Optional[int], product_request: Op
 
     phrases = []
     previous_product_request = (conversation_context or {}).get("last_product_request") or {}
-    for candidate_phrase in build_learning_phrase_candidates(product_request) + build_learning_phrase_candidates(previous_product_request):
+    phrase_groups = [build_learning_phrase_candidates(product_request)]
+    if should_merge_previous_learning_phrase(product_request, previous_product_request):
+        phrase_groups.append(build_learning_phrase_candidates(previous_product_request))
+    for candidate_phrase in [phrase for group in phrase_groups for phrase in group]:
         if candidate_phrase not in phrases:
             phrases.append(candidate_phrase)
 
@@ -7218,6 +7406,7 @@ def generate_commercial_pdf(
     right_style = ParagraphStyle("Right", parent=styles["Normal"], fontSize=10, textColor=brand_dark, alignment=TA_RIGHT)
 
     request_label = "Pedido" if request_type == "pedido" else "Cotización"
+    document_version = "Formato CRM 2026.3"
     case_ref = f"CRM-{conversation_id}"
     now = datetime.now()
     date_str = now.strftime("%d/%m/%Y")
@@ -7244,7 +7433,7 @@ def generate_commercial_pdf(
     header_data = [
         [
             logo_cell or Paragraph(f"<b>FERREINOX S.A.S. BIC</b>", title_style),
-            Paragraph(f"<b>{request_label}</b>", ParagraphStyle("RightTitle", parent=title_style, alignment=TA_RIGHT)),
+            Paragraph(f"<b>{request_label}</b><br/><font size='10'>{document_version}</font>", ParagraphStyle("RightTitle", parent=title_style, alignment=TA_RIGHT)),
         ],
         [
             Paragraph(f"NIT {CORPORATE_BRAND['nit']} | {CORPORATE_BRAND['address']}", subtitle_style),
@@ -7263,6 +7452,31 @@ def generate_commercial_pdf(
     ]))
     elements.append(header_table)
     elements.append(Spacer(1, 4 * mm))
+
+    banner_table = Table(
+        [[
+            Paragraph(
+                f"<b>Solicitud Comercial Digital</b><br/>{request_label} generado por el CRM Ferreinox para seguimiento operativo inmediato.",
+                ParagraphStyle("BannerBody", parent=normal_style),
+            ),
+            Paragraph(
+                f"<b>{document_version}</b><br/>Referencia {case_ref}",
+                ParagraphStyle("BannerRight", parent=right_style),
+            ),
+        ]],
+        colWidths=[doc.width * 0.64, doc.width * 0.36],
+    )
+    banner_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FEF3C7")),
+        ("BOX", (0, 0), (-1, -1), 0.6, brand_accent),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 10),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+        ("LEFTPADDING", (0, 0), (-1, -1), 12),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+    ]))
+    elements.append(banner_table)
+    elements.append(Spacer(1, 5 * mm))
 
     info_data = [
         [Paragraph("<b>Cliente</b>", normal_style), Paragraph(str(cliente_label), normal_style)],
@@ -7355,6 +7569,24 @@ def generate_commercial_pdf(
 
     total_items = len(matched_items)
     pending_items = len([i for i in items if i.get("status") != "matched"])
+    metrics_table = Table(
+        [[
+            Paragraph(f"<b>Confirmados</b><br/>{total_items}", ParagraphStyle("Metric", parent=normal_style, alignment=TA_CENTER)),
+            Paragraph(f"<b>Pendientes</b><br/>{pending_items}", ParagraphStyle("Metric", parent=normal_style, alignment=TA_CENTER)),
+            Paragraph(f"<b>Sede</b><br/>{escape(str(store_name))}", ParagraphStyle("Metric", parent=normal_style, alignment=TA_CENTER)),
+        ]],
+        colWidths=[doc.width / 3.0, doc.width / 3.0, doc.width / 3.0],
+    )
+    metrics_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), brand_light_bg),
+        ("BOX", (0, 0), (-1, -1), 0.5, brand_border),
+        ("INNERGRID", (0, 0), (-1, -1), 0.3, brand_border),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+    ]))
+    elements.append(metrics_table)
+    elements.append(Spacer(1, 5 * mm))
     summary_text = f"<b>Total productos confirmados:</b> {total_items}"
     if pending_items > 0:
         summary_text += f" — <i>{pending_items} pendiente(s) por precisar</i>"
@@ -7372,7 +7604,7 @@ def generate_commercial_pdf(
     ))
     elements.append(Spacer(1, 3 * mm))
     elements.append(Paragraph(
-        f"{CORPORATE_BRAND['company_name']} | {CORPORATE_BRAND['service_email']} | {CORPORATE_BRAND['phone_landline']} | {CORPORATE_BRAND['website']} | {date_str}",
+        f"{CORPORATE_BRAND['company_name']} | {CORPORATE_BRAND['service_email']} | {CORPORATE_BRAND['phone_landline']} | {CORPORATE_BRAND['website']} | {document_version} | {date_str}",
         ParagraphStyle("Footer", parent=small_style, alignment=TA_CENTER),
     ))
 
@@ -8829,11 +9061,11 @@ COMPUERTA DE AMBIGÜEDAD OBLIGATORIA: si `consultar_inventario` devuelve `requie
 
 PROHIBIDO RENDIRSE (VENDEDOR PERSISTENTE): Si la herramienta `consultar_inventario` devuelve vacío para un código corto (ej. P-53, T-40, 17174, 13755), NUNCA digas 'no lo encontré' ni 'no tenemos ese producto'. En su lugar, haz una pregunta de diagnóstico comercial: 'Ese código no lo tengo mapeado todavía, ¿me ayudas diciéndome qué producto es? ¿Es un color específico de Viniltex, una referencia de cerradura o un abrasivo?'. Tu objetivo es que el cliente te dé una pista (ej. 'es el verde esmeralda'). Con esa pista, vuelve a buscar usando el nombre comercial.
 
-CUADERNO DE APRENDIZAJE: Cuando el cliente te aclare qué significa un código corto o referencia interna (ej. el cliente dice 'el P-53 es el Verde Esmeralda de Viniltex'), EJECUTA inmediatamente la herramienta `guardar_aprendizaje_producto` con el código del cliente y la descripción real antes de buscar el inventario. Así la próxima vez que CUALQUIER cliente diga 'P-53', el sistema ya sabrá qué es sin preguntar. No le menciones al cliente que 'estás guardando en memoria', simplemente hazlo silenciosamente y continúa atendiendo.
+CUADERNO DE APRENDIZAJE: Cuando el cliente te aclare qué significa un código corto o referencia interna, solo guarda ese aprendizaje si el producto quedó realmente confirmado. Si el cliente está dudando, corrigiéndose o todavía no tienes la opción exacta con referencia válida, NO guardes memoria todavía. Cuando sí quede confirmado, ejecuta `guardar_aprendizaje_producto` y continúa atendiendo sin mencionarle al cliente que lo guardaste.
 
 ACTITUD DE APRENDIZ (ANTI-BLOQUEO): Si el cliente pide un producto con una jerga o código que la herramienta `consultar_inventario` no encuentra con exactitud pero SÍ devuelve opciones parciales, TIENES ESTRICTAMENTE PROHIBIDO decir 'no lo tengo'. En su lugar, muestra hasta 3 opciones cercanas que devolvió la base de datos y pregunta: 'No tengo mapeado ese término exacto. ¿Es alguna de estas opciones?'. Si ninguna es, pídele al cliente que te dé la referencia correcta o una mejor descripción. Si el inventario devuelve vacío sin opciones, aplica la regla de PROHIBIDO RENDIRSE o EL ESCAPE COMERCIAL según corresponda.
 
-GRABAR EN PIEDRA (MEMORIA OBLIGATORIA): En el momento exacto en que el cliente te confirme a qué producto real corresponde su jerga (ej. 'Sí, la opción 2', 'El P-30 es el Esmalte Pintulux Blanco', 'exacto, ese'), TIENES LA OBLIGACIÓN ABSOLUTA de ejecutar la herramienta `guardar_aprendizaje_producto` ANTES de continuar con el pedido. En `codigo_cliente` pon la jerga original del cliente. En `descripcion_asociada` pon la referencia y nombre real que acaban de confirmar. Esto es vital para que el sistema aprenda y no vuelva a preguntar por ese término en el futuro.
+GRABAR EN PIEDRA (MEMORIA OBLIGATORIA): Solo cuando el cliente confirme una opción exacta (ej. 'sí, la opción 2', 'exacto, ese', o ya tienes la referencia correcta validada), ejecuta `guardar_aprendizaje_producto` antes de continuar con el pedido. En `codigo_cliente` pon la jerga original del cliente. En `descripcion_asociada` pon la referencia y nombre real ya confirmados. Nunca aprendas desde una suposición, una corrección dudosa ni una referencia improvisada.
 
 CONFIRMACIÓN AUDITABLE: Cada vez que confirmes un producto en el chat (ya sea porque lo encontraste directo o porque el cliente te lo enseñó), DEBES mostrarlo con este formato estricto: '✅ [REFERENCIA] - Nombre Comercial en Presentación: Disponible/Agotado'. (Ej. '✅ [5891101] - Viniltex Blanco en cuñete: Disponible'). Esto le permite al equipo auditar que estás asociando las referencias correctas.
 
@@ -9078,10 +9310,9 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "guardar_aprendizaje_producto",
-            "description": "Guarda en la memoria permanente del sistema la asociación entre un código corto o referencia interna del cliente "
-            "y el nombre real del producto en catálogo. Usa esta herramienta SILENCIOSAMENTE cuando el cliente aclare qué "
-            "significa un código (ej. 'P-53 es el Verde Esmeralda'). No necesitas confirmación del cliente para guardar. "
-            "Después de guardar, busca el producto en inventario con el nombre real.",
+            "description": "Guarda en la memoria permanente del sistema la asociación entre una jerga o código corto del cliente "
+            "y un producto real ya confirmado. Úsala solo cuando la conversación ya dejó clara la referencia y el producto exactos. "
+            "Si el cliente sigue dudando, se está corrigiendo o la referencia no quedó validada, no la uses todavía.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -9091,7 +9322,7 @@ AGENT_TOOLS = [
                     },
                     "descripcion_asociada": {
                         "type": "string",
-                        "description": "El nombre real del producto en lenguaje comercial. Ej: 'Verde Esmeralda Viniltex', 'Koraza Doble Vida', 'Cerradura Yale 170'.",
+                        "description": "La opción exacta ya confirmada por el cliente, idealmente con referencia y nombre comercial. Ej: '5891101 Viniltex Verde Esmeralda cuñete', '170123 Cerradura Yale 170'.",
                     }
                 },
                 "required": ["codigo_cliente", "descripcion_asociada"],
@@ -9770,6 +10001,32 @@ def _handle_tool_guardar_aprendizaje_producto(args, conversation_context):
             )
 
     normalized_code = normalize_text_value(codigo_cliente)
+    if not should_store_learning_phrase(normalized_code):
+        return json.dumps(
+            {"guardado": False, "mensaje": "No se guardó: la jerga o frase del cliente es demasiado ambigua para memoria permanente."},
+            ensure_ascii=False,
+        )
+
+    resolved_row = resolve_confirmed_learning_product_row(descripcion_asociada, conversation_context)
+    if not resolved_row:
+        return json.dumps(
+            {
+                "guardado": False,
+                "mensaje": "No se guardó: todavía no tengo un producto confirmado con referencia exacta para esa descripción. Primero aclara o confirma la opción correcta.",
+            },
+            ensure_ascii=False,
+        )
+
+    canonical_reference = resolved_row.get("referencia") or resolved_row.get("codigo_articulo")
+    canonical_description = resolved_row.get("descripcion") or resolved_row.get("nombre_articulo") or descripcion_asociada
+    canonical_brand = resolved_row.get("marca") or resolved_row.get("marca_producto")
+    canonical_presentation = infer_product_presentation_from_row(resolved_row) or normalize_text_value(resolved_row.get("presentacion_canonica")) or None
+    if not canonical_reference:
+        return json.dumps(
+            {"guardado": False, "mensaje": "No se guardó: el producto confirmado todavía no tiene una referencia exacta usable."},
+            ensure_ascii=False,
+        )
+
     conversation_id = conversation_context.get("conversation_id")
 
     try:
@@ -9781,17 +10038,19 @@ def _handle_tool_guardar_aprendizaje_producto(args, conversation_context):
                     """
                     INSERT INTO public.agent_product_learning (
                         normalized_phrase, raw_phrase, canonical_reference,
-                        canonical_description, source_conversation_id,
+                        canonical_description, canonical_brand, canonical_presentation, source_conversation_id,
                         source_message, confidence, usage_count,
                         created_at, updated_at
                     ) VALUES (
                         :normalized_phrase, :raw_phrase, :canonical_reference,
-                        :canonical_description, :source_conversation_id,
+                        :canonical_description, :canonical_brand, :canonical_presentation, :source_conversation_id,
                         :source_message, :confidence, 1, now(), now()
                     )
                     ON CONFLICT (normalized_phrase, canonical_reference)
                     DO UPDATE SET
                         canonical_description = EXCLUDED.canonical_description,
+                        canonical_brand = COALESCE(EXCLUDED.canonical_brand, public.agent_product_learning.canonical_brand),
+                        canonical_presentation = COALESCE(EXCLUDED.canonical_presentation, public.agent_product_learning.canonical_presentation),
                         source_conversation_id = COALESCE(EXCLUDED.source_conversation_id,
                             public.agent_product_learning.source_conversation_id),
                         confidence = GREATEST(public.agent_product_learning.confidence, EXCLUDED.confidence),
@@ -9802,15 +10061,17 @@ def _handle_tool_guardar_aprendizaje_producto(args, conversation_context):
                 {
                     "normalized_phrase": normalized_code,
                     "raw_phrase": codigo_cliente,
-                    "canonical_reference": descripcion_asociada,
-                    "canonical_description": descripcion_asociada,
+                    "canonical_reference": str(canonical_reference),
+                    "canonical_description": canonical_description,
+                    "canonical_brand": canonical_brand,
+                    "canonical_presentation": canonical_presentation,
                     "source_conversation_id": conversation_id,
-                    "source_message": f"{codigo_cliente} = {descripcion_asociada}",
+                    "source_message": f"{codigo_cliente} = {canonical_reference} | {canonical_description}",
                     "confidence": 0.95,
                 },
             )
         return json.dumps(
-            {"guardado": True, "mensaje": f"Aprendizaje guardado: '{codigo_cliente}' → '{descripcion_asociada}'. "
+            {"guardado": True, "mensaje": f"Aprendizaje guardado: '{codigo_cliente}' → '{canonical_reference} | {canonical_description}'. "
              "La próxima vez que alguien pida este código, el sistema lo reconocerá automáticamente."},
             ensure_ascii=False,
         )
@@ -10099,7 +10360,7 @@ def search_internal_products(q: str, store: Optional[str] = None, authorization:
 def read_root():
     return {
         "estado": "Sistema CRM Ferreinox Activo",
-        "version": "2026.2",
+        "version": "2026.3",
         "postgrest_url": get_postgrest_url(),
         "endpoints": [
             "/health",
