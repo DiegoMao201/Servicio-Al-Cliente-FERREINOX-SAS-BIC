@@ -756,89 +756,334 @@ PORTFOLIO_CATEGORY_MAP = {
     "tanque agua": ["__SIN_PRODUCTO_FERREINOX__"],
     "inmersion": ["__SIN_PRODUCTO_FERREINOX__"],
     "inmersion en agua": ["__SIN_PRODUCTO_FERREINOX__"],
-    # ── Pisos ──
-    "pintura piso": ["pintura canchas", "pintucoat", "pintura pisos"],
-    "piso industrial": ["pintucoat", "epoxica pisos"],
-    "piso cemento": ["pintura canchas", "pintura pisos"],
-    "piso trafico": ["pintucoat", "pintura trafico"],
-    "piso concreto": ["pintura canchas", "pintura pisos"],
-    "garaje": ["pintura canchas", "pintura pisos"],
-    "anden": ["pintura canchas", "pintura pisos"],
-    # ── Epóxicas ──
-    "epoxica": ["pintucoat", "interseal", "intergard", "epoxica", "epoxy"],
+
+    # ── HUMEDAD / FILTRACIONES (muros interiores, sótanos, bases) ──
+    "humedad": ["aquablock", "aquablock ultra", "sellamur", "estuco anti humedad", "sika"],
+    "humedad interna": ["aquablock", "aquablock ultra", "sellamur", "estuco anti humedad"],
+    "humedad freatica": ["aquablock", "aquablock ultra", "sellamur"],
+    "humedad ascendente": ["aquablock", "aquablock ultra", "sellamur", "estuco anti humedad"],
+    "filtracion": ["aquablock", "aquablock ultra", "sellamur"],
+    "filtra agua": ["aquablock", "aquablock ultra", "sellamur"],
+    "filtra": ["aquablock", "aquablock ultra", "sellamur"],
+    "mojando": ["aquablock", "aquablock ultra", "sellamur"],
+    "pared mojada": ["aquablock", "aquablock ultra", "sellamur"],
+    "muro mojado": ["aquablock", "aquablock ultra", "sellamur"],
+    "salitre": ["aquablock", "aquablock ultra", "estuco anti humedad", "sellamur"],
+    "eflorescencia": ["aquablock", "aquablock ultra", "estuco anti humedad"],
+    "manchas blancas": ["aquablock", "estuco anti humedad", "sellamur"],
+    "pared suda": ["aquablock", "aquablock ultra", "sellamur"],
+    "sudando": ["aquablock", "aquablock ultra", "sellamur"],
+    "ampollando": ["aquablock", "estuco anti humedad", "sellamur"],
+    "ampollas": ["aquablock", "estuco anti humedad", "sellamur"],
+    "descascarando interior": ["aquablock", "estuco anti humedad", "sellamur"],
+    "presion negativa": ["aquablock", "aquablock ultra"],
+    "capilaridad": ["aquablock", "aquablock ultra", "sellamur"],
+    "sotano": ["aquablock", "aquablock ultra"],
+    "sotano humedo": ["aquablock", "aquablock ultra"],
+    "antihumedad": ["aquablock", "aquablock ultra", "sellamur", "estuco anti humedad"],
+    "anti humedad": ["aquablock", "aquablock ultra", "sellamur", "estuco anti humedad"],
+    "sello humedad": ["aquablock", "aquablock ultra", "sellamur"],
+    "bloquear humedad": ["aquablock", "aquablock ultra", "sellamur"],
+    "hongos pared": ["aquablock", "aquablock ultra", "viniltex"],
+    "moho pared": ["aquablock", "aquablock ultra", "viniltex"],
+    "hongos bano": ["aquablock", "viniltex banos y cocinas"],
+    "bano humedo": ["aquablock", "viniltex banos y cocinas"],
+
+    # ── FACHADAS / EXTERIORES (muros exteriores, lluvia, sol) ──
+    "fachada": ["koraza", "koraza sol y lluvia", "koraza elastomerica"],
+    "fachadas": ["koraza", "koraza sol y lluvia", "koraza elastomerica"],
+    "frente casa": ["koraza", "koraza sol y lluvia"],
+    "exterior casa": ["koraza", "koraza sol y lluvia"],
+    "muro exterior": ["koraza", "koraza sol y lluvia"],
+    "pared exterior": ["koraza", "koraza sol y lluvia"],
+    "pintura exterior": ["koraza", "viniltex", "pintulux"],
+    "exterior lluvia": ["koraza", "koraza sol y lluvia"],
+    "exterior sol": ["koraza", "koraza sol y lluvia"],
+    "aguanta sol": ["koraza", "koraza sol y lluvia"],
+    "aguanta lluvia": ["koraza", "koraza sol y lluvia"],
+    "pelando exterior": ["koraza", "koraza sol y lluvia"],
+    "descascarando fachada": ["koraza", "koraza sol y lluvia"],
+    "descascarando exterior": ["koraza", "koraza sol y lluvia"],
+    "deterioro fachada": ["koraza", "koraza sol y lluvia"],
+    "intemperie": ["koraza", "koraza sol y lluvia", "barnex"],
+    "tierra caliente": ["koraza", "koraza sol y lluvia"],
+    "clima calido": ["koraza", "koraza sol y lluvia"],
+    "cayendo pedazos lluvia": ["koraza", "koraza sol y lluvia"],
+
+    # ── TECHOS / GOTERAS / CUBIERTAS ──
+    "techo": ["pintuco fill", "impercoat", "koraza"],
+    "techos": ["pintuco fill", "impercoat", "koraza"],
+    "goteras": ["pintuco fill", "impercoat", "tela de refuerzo"],
+    "gotera": ["pintuco fill", "impercoat", "tela de refuerzo"],
+    "goteando": ["pintuco fill", "impercoat", "tela de refuerzo"],
+    "terraza": ["pintuco fill", "impercoat", "koraza"],
+    "terraza llueve": ["pintuco fill", "impercoat", "tela de refuerzo"],
+    "cubierta": ["pintuco fill", "impercoat", "koraza"],
+    "plancha": ["pintuco fill", "impercoat"],
+    "plancha concreto": ["pintuco fill", "impercoat"],
+    "losa": ["pintuco fill", "impercoat"],
+    "impermeabilizar techo": ["pintuco fill", "impercoat", "tela de refuerzo"],
+    "impermeabilizar terraza": ["pintuco fill", "impercoat"],
+    "llueve terraza": ["pintuco fill", "impercoat", "tela de refuerzo"],
+    "llueve techo": ["pintuco fill", "impercoat", "tela de refuerzo"],
+    "manto": ["pintuco fill", "impercoat", "tela de refuerzo"],
+    "fibrocemento": ["pintuco fill", "koraza", "impercoat"],
+
+    # ── IMPERMEABILIZANTES (genérico) ──
+    "impermeabilizante": ["pintuco fill", "impercoat", "aquablock", "koraza", "siliconite"],
+    "impermeabilizar": ["pintuco fill", "impercoat", "aquablock", "koraza"],
+
+    # ── PISOS ──
+    "pintura piso": ["pintura canchas", "pintucoat"],
+    "piso": ["pintura canchas", "pintucoat"],
+    "pisos": ["pintura canchas", "pintucoat"],
+    "piso industrial": ["pintucoat"],
+    "piso cemento": ["pintura canchas"],
+    "piso concreto": ["pintura canchas"],
+    "piso trafico": ["pintucoat"],
+    "piso fabrica": ["pintucoat"],
+    "piso bodega": ["pintucoat", "pintura canchas"],
+    "bodega": ["pintucoat", "pintura canchas"],
+    "garaje": ["pintura canchas", "pintucoat"],
+    "anden": ["pintura canchas"],
+    "parqueadero": ["pintura canchas", "pintucoat", "pintura trafico"],
+    "montacargas": ["pintucoat"],
+    "trafico pesado": ["pintucoat"],
+    "piso garaje": ["pintura canchas", "pintucoat"],
+
+    # ── CANCHAS / DEMARCACIÓN ──
+    "cancha": ["pintura canchas"],
+    "canchas": ["pintura canchas"],
+    "microfutbol": ["pintura canchas"],
+    "demarcacion": ["pintura trafico", "demarcacion vial"],
+    "trafico": ["pintura trafico", "pintura canchas"],
+    "senalizacion": ["pintura trafico"],
+    "lineas": ["pintura trafico", "pintura canchas"],
+
+    # ── EPÓXICAS ──
+    "epoxica": ["pintucoat", "interseal", "intergard", "epoxica"],
     "epoxica industrial": ["pintucoat", "interseal", "intergard"],
-    "pintura epoxica": ["pintucoat", "interseal", "intergard", "epoxica"],
+    "pintura epoxica": ["pintucoat", "interseal", "intergard"],
     "recubrimiento epoxica": ["pintucoat", "interseal", "intergard"],
     "dos componentes": ["pintucoat", "interseal", "intergard"],
-    # ── Anticorrosivos / metal ──
+
+    # ── ANTICORROSIVOS / METAL / ÓXIDO ──
     "anticorrosivo": ["corrotec", "anticorrosivo", "wash primer", "intergard"],
-    "metal": ["corrotec", "pintulux", "anticorrosivo", "wash primer", "esmalte"],
+    "metal": ["corrotec", "pintulux", "anticorrosivo", "wash primer"],
+    "metalica": ["corrotec", "pintulux", "anticorrosivo"],
+    "hierro": ["corrotec", "pintoxido", "anticorrosivo", "pintulux"],
+    "acero": ["corrotec", "anticorrosivo", "intergard"],
     "oxidado": ["corrotec", "pintoxido", "anticorrosivo", "wash primer"],
-    "proteccion metalica": ["corrotec", "pintulux", "anticorrosivo"],
-    "reja": ["pintulux", "corrotec", "anticorrosivo", "esmalte"],
-    "estructura metalica": ["corrotec", "intergard", "anticorrosivo", "pintulux"],
+    "oxidada": ["corrotec", "pintoxido", "anticorrosivo", "wash primer"],
+    "oxido": ["corrotec", "pintoxido", "anticorrosivo"],
+    "comiendo oxido": ["corrotec", "pintoxido", "anticorrosivo"],
+    "reja": ["corrotec", "pintulux", "anticorrosivo"],
+    "rejas": ["corrotec", "pintulux", "anticorrosivo"],
+    "reja oxidada": ["corrotec", "pintoxido", "anticorrosivo"],
+    "porton": ["corrotec", "pintulux", "anticorrosivo"],
+    "puerta hierro": ["corrotec", "pintoxido", "anticorrosivo", "pintulux"],
+    "estructura metalica": ["corrotec", "intergard", "anticorrosivo"],
     "tuberia": ["corrotec", "anticorrosivo", "pintulux"],
-    # ── Impermeabilizantes / fachadas / techos ──
-    "impermeabilizante": ["koraza", "pintuco fill", "aquablock", "siliconite", "impermeabilizante"],
-    "fachada": ["koraza", "viniltex", "koraza elastomerica"],
-    "techo": ["koraza", "pintuco fill", "impermeabilizante techo"],
-    "humedad": ["aquablock", "sellamur", "sika", "impermeabilizante", "sellador"],
-    "goteras": ["pintuco fill", "siliconite", "impermeabilizante"],
-    "terraza": ["koraza", "pintuco fill", "impermeabilizante"],
-    "cubierta": ["koraza", "pintuco fill", "impermeabilizante"],
-    # ── Aerosoles ──
-    "aerosol": ["aerocolor", "montana", "spray", "aerosol"],
-    "spray": ["aerocolor", "montana", "spray", "aerosol"],
+    "tubo galvanizado": ["wash primer", "corrotec", "anticorrosivo"],
+    "galvanizado": ["wash primer", "corrotec"],
+    "proteccion metalica": ["corrotec", "pintulux", "anticorrosivo"],
+
+    # ── MADERA ──
+    "barniz": ["barniz", "barnex", "pintulac", "barniz marino"],
+    "madera": ["barnex", "pintulac", "barniz", "wood stain", "madetec"],
+    "madera exterior": ["barnex", "wood stain", "barniz marino"],
+    "madera interior": ["pintulac", "barniz", "madetec"],
+    "laca": ["pintulac", "laca"],
+    "deck": ["barnex", "wood stain", "barniz marino"],
+    "pergola": ["barnex", "wood stain"],
+    "mueble": ["pintulac", "barniz", "madetec"],
+    "puerta madera": ["pintulac", "barniz", "barnex"],
+
+    # ── AEROSOLES ──
+    "aerosol": ["aerocolor", "montana"],
+    "spray": ["aerocolor", "montana"],
     "pintura spray": ["aerocolor", "montana"],
-    "retoque": ["aerocolor", "aerosol"],
-    # ── Madera ──
-    "barniz": ["barniz", "pintulac", "laca", "barniz marino"],
-    "madera": ["pintulac", "barniz", "laca", "sellador madera", "pintulux"],
-    "laca": ["pintulac", "laca", "laca nitrocelulosa"],
-    "deck": ["barniz", "barniz marino", "pintulac"],
-    "mueble": ["pintulac", "barniz", "pintulux"],
-    # ── Poliuretanos ──
-    "poliuretano": ["interthane", "poliuretano", "uretano"],
-    "acabado industrial": ["interthane", "interfine", "pintucoat"],
-    # ── Intumescentes / fuego ──
-    "intumescente": ["interchar", "intumescente", "ignifuga"],
-    "ignifuga": ["interchar", "intumescente", "ignifuga"],
-    "retardante fuego": ["interchar", "intumescente"],
-    "proteccion fuego": ["interchar", "intumescente"],
-    # ── Demarcación vial / canchas ──
-    "demarcacion": ["pintura trafico", "demarcacion", "demarcacion vial"],
-    "trafico": ["pintura trafico", "pintura canchas", "demarcacion"],
-    "cancha": ["pintura canchas", "pintura trafico"],
-    "parqueadero": ["pintura trafico", "pintura canchas"],
-    "señalizacion": ["pintura trafico", "demarcacion"],
-    # ── Selladores / fondos ──
-    "sellador": ["sellador", "imprimante", "fondo", "primer"],
-    "fondo": ["imprimante", "fondo", "sellador", "primer", "wash primer"],
-    "primer": ["imprimante", "primer", "wash primer", "fondo"],
-    "base": ["imprimante", "fondo", "sellador", "primer"],
-    # ── Vinilos genéricos (cuando dicen solo "vinilo" sin marca) ──
-    "vinilo": ["viniltex", "vinilico", "domestico", "intervinil", "vinil latex", "pinturama"],
+    "retoque": ["aerocolor"],
+
+    # ── INTERIORES (muros, salas, cuartos) ──
+    "pintura interior": ["viniltex", "intervinil", "domestico"],
+    "interior": ["viniltex", "intervinil"],
+    "sala": ["viniltex", "intervinil"],
+    "cuarto": ["viniltex", "intervinil"],
+    "habitacion": ["viniltex", "intervinil"],
+    "alcoba": ["viniltex", "intervinil"],
+    "cielo raso": ["viniltex", "pinturama", "pintura cielos"],
+    "cocina": ["viniltex", "viniltex banos y cocinas"],
+    "bano": ["viniltex", "viniltex banos y cocinas", "aquablock"],
+    "lavable": ["viniltex", "viniltex adv"],
+    "pintura lavable": ["viniltex", "viniltex adv"],
+
+    # ── VINILOS genéricos ──
+    "vinilo": ["viniltex", "intervinil", "pinturama", "vinil latex"],
     "vinilo tipo 1": ["viniltex", "viniltex adv", "vinil plus"],
     "vinilo tipo 2": ["intervinil", "vinil latex", "vinilux"],
     "vinilo tipo 3": ["pinturama", "vinil max", "icolatex"],
-    "vinilo economico": ["pinturama", "vinil max", "icolatex", "domestico"],
+    "vinilo economico": ["pinturama", "vinil max", "icolatex"],
     "vinilo bueno": ["viniltex", "viniltex adv", "vinil plus"],
     "vinilo intermedio": ["intervinil", "vinil latex", "vinilux"],
     "vinilo premium": ["viniltex", "viniltex adv", "vinil plus"],
-    "vinilo barato": ["pinturama", "vinil max", "icolatex", "domestico"],
-    # ── Esmaltes genéricos ──
-    "esmalte": ["pintulux", "domestico", "esmalte"],
+    "vinilo barato": ["pinturama", "vinil max", "icolatex"],
+
+    # ── ESMALTES ──
+    "esmalte": ["pintulux", "domestico"],
     "esmalte bueno": ["pintulux", "pintulux 3en1"],
     "esmalte economico": ["domestico"],
     "esmalte interior": ["domestico", "pintulux"],
     "esmalte exterior": ["pintulux", "pintulux 3en1"],
     "esmalte resistente": ["pintulux", "pintulux 3en1"],
-    # ── Pintura genérica ──
-    "pintura interior": ["viniltex", "domestico", "intervinil"],
-    "pintura exterior": ["koraza", "viniltex", "pintulux"],
-    "pintura lavable": ["viniltex", "viniltex adv"],
-    "pintura economica": ["pinturama", "vinil max", "domestico"],
+
+    # ── PINTURA genérica ──
     "pintura buena": ["viniltex", "pintulux"],
+    "pintura economica": ["pinturama", "vinil max", "domestico"],
+
+    # ── POLIURETANOS ──
+    "poliuretano": ["interthane", "poliuretano"],
+    "acabado industrial": ["interthane", "interfine", "pintucoat"],
+
+    # ── INTUMESCENTES / FUEGO ──
+    "intumescente": ["interchar", "intumescente"],
+    "ignifuga": ["interchar", "intumescente"],
+    "retardante fuego": ["interchar"],
+    "proteccion fuego": ["interchar"],
+
+    # ── SELLADORES / FONDOS ──
+    "sellador": ["sellador", "imprimante", "fondo", "primer"],
+    "fondo": ["imprimante", "fondo", "sellador", "wash primer"],
+    "primer": ["imprimante", "primer", "wash primer"],
+    "base": ["imprimante", "fondo", "sellador"],
+
+    # ── JERGA COLOMBIANA / COLOQUIAL (mapear expresiones comunes) ──
+    "pelando": ["koraza", "viniltex", "estuco anti humedad"],
+    "descascarando": ["koraza", "viniltex", "estuco anti humedad"],
+    "cayendo pedazos": ["koraza", "viniltex"],
+    "negro hongos": ["aquablock", "viniltex banos y cocinas"],
+    "verdoso": ["aquablock", "viniltex"],
+    "mohoso": ["aquablock", "viniltex"],
+    "moho": ["aquablock", "viniltex"],
+}
+
+# ── Árbol de preguntas diagnósticas basadas en conocimiento técnico ──────
+# El agente DEBE usar este árbol para formular preguntas inteligentes
+# que le permitan identificar el producto correcto antes de buscar en RAG.
+# Cada síntoma/problema tiene preguntas clave y la sospecha de producto
+# que el agente debe confirmar con las respuestas del cliente.
+DIAGNOSTIC_QUESTION_TREE = {
+    "humedad_filtracion": {
+        "disparadores": ["humedad", "mojado", "mojada", "filtra", "suda", "sudando", "salitre",
+                         "manchas blancas", "ampolla", "ampollando", "descascara", "hongos pared",
+                         "moho", "verdoso", "negro bano", "hongos bano"],
+        "preguntas": [
+            "¿La humedad aparece en muros interiores o en una fachada exterior?",
+            "¿Viene de abajo (base del muro) o se nota en toda la pared?",
+        ],
+        "logica_producto": {
+            "interior + base del muro": {"producto": "aquablock", "confianza": "alta",
+                "razon": "Humedad freática/ascendente en muros interiores → Aquablock Ultra bloquea presión negativa"},
+            "interior + toda la pared": {"producto": "aquablock", "confianza": "alta",
+                "razon": "Filtración interna en muro → Aquablock sella e impermeabiliza por dentro"},
+            "exterior": {"producto": "koraza", "confianza": "alta",
+                "razon": "Fachada exterior deteriorada por lluvia/sol → Koraza impermeabilizante"},
+            "bano/cocina + hongos": {"producto": "viniltex banos y cocinas", "confianza": "media",
+                "razon": "Zona húmeda sin filtración directa → Viniltex Baños y Cocinas (antihongos)"},
+        },
+    },
+    "fachada_exterior": {
+        "disparadores": ["fachada", "frente", "exterior", "pelando exterior", "descascarando",
+                         "intemperie", "lluvia sol", "deterioro exterior", "muro exterior"],
+        "preguntas": [
+            "¿Es una fachada completa o solo un muro pequeño?",
+            "¿La pintura actual se está pelando o es obra nueva?",
+        ],
+        "logica_producto": {
+            "fachada expuesta lluvia/sol": {"producto": "koraza", "confianza": "alta",
+                "razon": "Koraza Sol y Lluvia es la pintura elastomérica #1 para fachadas de Pintuco"},
+            "muro exterior pequeño": {"producto": "koraza", "confianza": "alta",
+                "razon": "Incluso muros pequeños exteriores van con Koraza por su resistencia a intemperie"},
+        },
+    },
+    "techo_gotera": {
+        "disparadores": ["techo", "gotera", "goteras", "goteando", "terraza llueve",
+                         "plancha", "losa", "cubierta", "llueve arriba", "filtra techo"],
+        "preguntas": [
+            "¿Es un techo de concreto (plancha/losa) o de fibrocemento (eternit)?",
+            "¿Tiene grietas visibles o solo se humedece?",
+        ],
+        "logica_producto": {
+            "concreto con grietas": {"producto": "pintuco fill", "confianza": "alta",
+                "razon": "Pintuco Fill 12 es impermeabilizante para techos con refuerzo de tela para grietas"},
+            "concreto sin grietas": {"producto": "pintuco fill", "confianza": "alta",
+                "razon": "Pintuco Fill 7 o Fill 12 como sello preventivo, 2-3 manos"},
+            "fibrocemento": {"producto": "koraza", "confianza": "media",
+                "razon": "Tejas de fibrocemento van con Koraza impermeabilizante o Fill según el caso"},
+        },
+    },
+    "metal_oxido": {
+        "disparadores": ["reja", "rejas", "porton", "hierro", "oxidado", "oxidada", "oxido",
+                         "comiendo", "tubería", "estructura metal", "acero"],
+        "preguntas": [
+            "¿Tiene mucho óxido o es solo superficial?",
+            "¿Es interior o está expuesto a la intemperie?",
+        ],
+        "logica_producto": {
+            "oxido profundo": {"producto": "pintoxido", "confianza": "alta",
+                "razon": "Pintóxido transforma el óxido profundo, luego se aplica Corrotec como anticorrosivo"},
+            "oxido superficial": {"producto": "corrotec", "confianza": "alta",
+                "razon": "Corrotec como anticorrosivo directo, luego acabado con Pintulux"},
+            "metal nuevo/galvanizado": {"producto": "wash primer", "confianza": "alta",
+                "razon": "Wash Primer para adherencia, luego anticorrosivo Corrotec + acabado Pintulux"},
+        },
+    },
+    "piso": {
+        "disparadores": ["piso", "garaje", "bodega", "parqueadero", "cancha", "anden",
+                         "fabrica", "industrial", "montacargas", "trafico"],
+        "preguntas": [
+            "¿Es un piso residencial (garaje, andén) o industrial (bodega, fábrica)?",
+            "¿Habrá tráfico vehicular pesado o solo peatonal?",
+        ],
+        "logica_producto": {
+            "industrial/pesado": {"producto": "pintucoat", "confianza": "alta",
+                "razon": "Pintucoat es epóxica de 2 componentes para tráfico pesado, montacargas, bodegas industriales"},
+            "residencial/liviano": {"producto": "pintura canchas", "confianza": "alta",
+                "razon": "Pintura para Canchas: acrílica para garajes, andenes, canchas deportivas, patios"},
+            "cancha deportiva": {"producto": "pintura canchas", "confianza": "alta",
+                "razon": "Pintura para Canchas: acabado antideslizante, resistente al desgaste y UV"},
+        },
+    },
+    "interior_general": {
+        "disparadores": ["pintar cuarto", "pintar sala", "pintar casa", "pintura interior",
+                         "cielo raso", "habitacion", "alcoba"],
+        "preguntas": [
+            "¿Buscas calidad premium (lavable, durable), intermedia o económica?",
+        ],
+        "logica_producto": {
+            "premium": {"producto": "viniltex", "confianza": "alta",
+                "razon": "Viniltex Advanced: super lavable, alto cubrimiento, la mejor del portafolio"},
+            "intermedia": {"producto": "intervinil", "confianza": "alta",
+                "razon": "Intervinil: buena calidad, precio medio, buen cubrimiento"},
+            "economica": {"producto": "pinturama", "confianza": "alta",
+                "razon": "Pinturama: excelente relación costo/beneficio para grandes áreas"},
+        },
+    },
+    "madera": {
+        "disparadores": ["madera", "barniz", "pergola", "deck", "mueble", "puerta madera"],
+        "preguntas": [
+            "¿La madera está en interior o a la intemperie?",
+            "¿Quieres un acabado transparente (se ve la veta) o de color?",
+        ],
+        "logica_producto": {
+            "exterior/intemperie": {"producto": "barnex", "confianza": "alta",
+                "razon": "Barnex Extra Protección o Wood Stain: protección UV, lluvia, resiste intemperie"},
+            "interior transparente": {"producto": "pintulac", "confianza": "alta",
+                "razon": "Pintulac: acabado brillante o mate transparente para muebles e interiores"},
+            "interior color": {"producto": "pintulux", "confianza": "media",
+                "razon": "Pintulux sobre madera interior cuando se quiere color sólido"},
+        },
+    },
 }
 
 # ── Productos/aplicaciones que Ferreinox NO maneja ────────────────────────
@@ -8101,12 +8346,14 @@ def extract_candidate_products_from_rag_context(rag_context: str, source_file: O
             "viniltex", "pintulux", "domestico", "pinturama", "intervinil", "vinil latex",
             "vinilux", "vinil max", "icolatex", "vinil plus", "pintacrom",
             "pintuco fill", "world color", "wash primer", "imprimante",
-            "pintoxido", "pintura trafico", "barniz marino",
+            "pintoxido", "pintura trafico", "barniz marino", "barnex", "wood stain",
+            "estuco anti humedad", "impercoat", "tela de refuerzo",
+            "pintura cielos", "pintuobra", "aislante", "emulsion asfaltica",
             # International / AkzoNobel
             "interseal", "interthane", "intergard", "interfine", "interchar",
             # Impermeabilizantes / selladores
             "aquablock", "aquablock ultra", "sellamur", "siliconite", "sika",
-            "koraza elastomerica", "koraza xp",
+            "koraza elastomerica", "koraza xp", "koraza sol y lluvia",
         ]
         for product_name in _KNOWN_PRODUCT_NAMES:
             if product_name in rag_lower and product_name not in candidates:
@@ -11138,7 +11385,53 @@ REGLAS FUNDAMENTALES:
    - Pide historial de compras → usa consultar_compras (requiere verificación primero).
    - Problema técnico (humedad, goteras, moho, pintar un techo, proteger una fachada, tratar un tanque, recubrir una piscina, sellar grietas, o CUALQUIER problema de superficie) → ASESORÍA TÉCNICA: primero diagnostica y solo después usa `consultar_conocimiento_tecnico` con la necesidad exacta diagnosticada.
 6. NUNCA busques verbos o intenciones como productos. "necesito hacer un pedido" es INTENCIÓN, no producto. Pregunta qué productos necesita.
-7. EMBUDO DE DIAGNÓSTICO OBLIGATORIO: cuando el cliente exponga un problema general, haz MÁXIMO 2 preguntas clave por mensaje. Deben ser preguntas de diagnóstico, no relleno. Ejemplos: humedad → interior/exterior y si la pared está pintada o en obra negra; madera → intemperie o bajo techo y si tiene recubrimiento previo; metal → tipo de metal y ambiente (urbano, industrial o marino).
+7. EMBUDO DE DIAGNÓSTICO OBLIGATORIO: cuando el cliente exponga un problema general, haz MÁXIMO 2 preguntas clave por mensaje. Deben ser preguntas de diagnóstico inteligentes, basadas en tu conocimiento técnico, para sospechar el producto correcto ANTES de buscar. No preguntes por preguntar, pregunta para confirmar tu sospecha técnica. \
+Usa este árbol de diagnóstico técnico como guía:
+
+HUMEDAD/FILTRACIONES → Sospecha: Aquablock (interior) o Koraza (exterior)
+  Pregunta clave: "¿La humedad aparece por dentro de la pared o por la fachada exterior?"
+  - Si interior (base del muro, salitre, ampollas, suda) → Aquablock Ultra. Pregunta confirmatoria: "¿Viene de la base del muro o toda la pared?"
+  - Si exterior (fachada, lluvia) → Koraza Sol y Lluvia
+  - Si baño/cocina con hongos sin filtración → Viniltex Baños y Cocinas
+  Luego llama consultar_conocimiento_tecnico(pregunta="humedad interna en muros", producto="aquablock") para obtener rendimiento, preparación y sistema completo.
+
+FACHADA/EXTERIOR → Sospecha: Koraza
+  Pregunta clave: "¿Es la fachada la que se está deteriorando?"
+  - Si se pela, descascara, deteriora → Koraza Sol y Lluvia (impermeabilizante)
+  Luego llama consultar_conocimiento_tecnico(producto="koraza", pregunta="preparación superficie fachada exterior") para dar pasos exactos.
+
+TECHO/GOTERAS → Sospecha: Pintuco Fill o Impercoat
+  Pregunta clave: "¿Es un techo de concreto (plancha) o fibrocemento (eternit)? ¿Tiene grietas o solo se humedece?"
+  - Concreto con grietas → Pintuco Fill + Tela de Refuerzo
+  - Concreto sin grietas → Pintuco Fill preventivo
+  - Fibrocemento → Koraza o Pintuco Fill según deterioro
+  Luego llama consultar_conocimiento_tecnico(producto="pintuco fill", pregunta="impermeabilizar techo con goteras") para el sistema completo.
+
+METAL/ÓXIDO → Sospecha: Corrotec + Pintóxido
+  Pregunta clave: "¿El óxido está muy profundo o es solo superficial? ¿Está a la intemperie?"
+  - Óxido profundo → Pintóxido (convertidor) + Corrotec (anticorrosivo) + Pintulux (acabado)
+  - Óxido superficial → lijar + Corrotec + Pintulux
+  - Metal nuevo/galvanizado → Wash Primer + Corrotec + Pintulux
+  Luego llama consultar_conocimiento_tecnico(producto="corrotec", pregunta="sistema anticorrosivo para rejas") para rendimientos y pasos.
+
+PISOS → Sospecha: Pintura Canchas (residencial) o Pintucoat (industrial)
+  Pregunta clave: "¿El piso tiene tráfico pesado (montacargas, camiones) o es peatonal/vehicular liviano?"
+  - Industrial/pesado → Pintucoat (epóxica 2 componentes)
+  - Residencial (garaje, andén, cancha) → Pintura para Canchas (acrílica)
+  Luego llama consultar_conocimiento_tecnico(producto="pintucoat" o "pintura canchas", pregunta="preparación piso concreto") para recomendar sistema.
+
+INTERIORES → Sospecha: Viniltex (premium), Intervinil (intermedio), Pinturama (económico)
+  Pregunta clave: "¿Buscas calidad premium (lavable, durable), intermedia o económica?"
+  - Premium → Viniltex Advanced
+  - Intermedia → Intervinil o Vinil Látex
+  - Económica → Pinturama o Vinil Max
+
+MADERA → Sospecha: Barnex/Wood Stain (exterior) o Pintulac (interior)
+  Pregunta clave: "¿La madera está al aire libre o es un mueble de interior?"
+  - Exterior (pérgola, deck) → Barnex Extra Protección o Wood Stain
+  - Interior → Pintulac (transparente) o Pintulux (color sólido)
+
+FLUJO CORRECTO: 1) Escucha el problema → 2) Sospecha un producto basado en el árbol → 3) Haz 1-2 preguntas para confirmar tu sospecha → 4) Llama consultar_conocimiento_tecnico con el producto sospechado → 5) Da la asesoría técnica con datos de la ficha → 6) Ofrece vender los productos.
 8. REGLA DE CONVERSACIÓN NATURAL: máximo 2 preguntas clave por turno. No abrumes al cliente ni suenes a formulario.
 9. Preguntas fuera de tema: responde brevemente con naturalidad y redirige al negocio.
 10. FLUJO ACTIVO: Si hay un pedido o reclamo en curso, no lo abandones a menos que el cliente lo pida explícitamente.
@@ -11549,6 +11842,10 @@ AGENT_TOOLS = [
             "Si no es apto, tu respuesta debe contradecir la elección del cliente y recomendar el producto correcto según la ficha técnica. "
             "Esta herramienta lee el contenido real de ~1000 fichas técnicas del portafolio y te devuelve la respuesta precisa más los productos reales del inventario relacionados. "
             "NUNCA respondas preguntas técnicas de memoria. SIEMPRE consulta esta herramienta primero. "
+            "REGLA CRÍTICA: SIEMPRE envía el parámetro 'producto' con el nombre del producto que sospechas es el correcto basado en tu diagnóstico. "
+            "Ej: si sospechas humedad interna → producto='aquablock'. Si sospechas piso industrial → producto='pintucoat'. "
+            "Esto mejora DRÁSTICAMENTE la precisión de la búsqueda técnica porque enfoca la ficha técnica correcta. "
+            "Si no tienes sospecha de producto, la herramienta intentará expandir la búsqueda con el portafolio de Ferreinox automáticamente. "
             "Después de usarla, envía el PDF con `buscar_documento_tecnico` como respaldo.",
             "parameters": {
                 "type": "object",
@@ -12650,6 +12947,47 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         search_query = f"{producto}: {pregunta}"
 
     chunks = search_technical_chunks(search_query, top_k=6, marca_filter=marca_filter)
+
+    # ── Portfolio-aware second search pass ──────────────────────────
+    # If the initial RAG search returned weak results (low similarity) AND no
+    # specific product was provided, try again with portfolio-expanded terms.
+    # This catches cases like "pared mojada" where RAG alone doesn't find
+    # Aquablock, but PORTFOLIO_CATEGORY_MAP knows humedad → aquablock.
+    best_sim_initial = max((c.get("similarity", 0) for c in chunks), default=0)
+    if best_sim_initial < 0.55 and not producto:
+        # Extract key terms from the question and expand via portfolio map
+        pregunta_norm = normalize_text_value(pregunta)
+        portfolio_products: list[str] = []
+        # Check full question and individual words against PORTFOLIO_CATEGORY_MAP
+        for category_key, brand_terms in PORTFOLIO_CATEGORY_MAP.items():
+            if category_key in pregunta_norm or pregunta_norm in category_key:
+                for bt in brand_terms:
+                    if bt != "__SIN_PRODUCTO_FERREINOX__" and bt not in portfolio_products:
+                        portfolio_products.append(bt)
+        for word in pregunta_norm.split():
+            if len(word) < 4:
+                continue
+            if word in PORTFOLIO_CATEGORY_MAP:
+                for bt in PORTFOLIO_CATEGORY_MAP[word]:
+                    if bt != "__SIN_PRODUCTO_FERREINOX__" and bt not in portfolio_products:
+                        portfolio_products.append(bt)
+        # Do targeted RAG searches for top portfolio products
+        if portfolio_products:
+            extra_chunks: list[dict] = []
+            for pp in portfolio_products[:3]:  # Top 3 most relevant
+                pp_chunks = search_technical_chunks(f"{pp}: {pregunta}", top_k=3, marca_filter=marca_filter)
+                extra_chunks.extend(pp_chunks)
+            # Merge: keep best chunks from both searches, deduplicate by text
+            seen_texts: set[str] = set()
+            merged: list[dict] = []
+            all_chunks = sorted(chunks + extra_chunks, key=lambda c: c.get("similarity", 0), reverse=True)
+            for ch in all_chunks:
+                txt_key = (ch.get("chunk_text") or "")[:80]
+                if txt_key not in seen_texts:
+                    seen_texts.add(txt_key)
+                    merged.append(ch)
+            chunks = merged[:8]
+
     if not chunks:
         return json.dumps(
             {"encontrado": False, "respuesta_rag": None,
@@ -13118,16 +13456,50 @@ def health_check():
 def admin_rag_buscar(
     q: str = "",
     top_k: int = 6,
+    producto: str = "",
     admin_key: str = Header(None, alias="x-admin-key"),
 ):
-    """Test de búsqueda semántica RAG: envía una pregunta y devuelve los chunks más relevantes."""
+    """Test de búsqueda semántica RAG con expansión de portafolio (simula el agente real)."""
     expected = os.getenv("ADMIN_API_KEY", "ferreinox_admin_2024")
     if admin_key != expected:
         raise HTTPException(status_code=403, detail="Admin key inválida")
     if not q.strip():
         return {"error": "Parámetro q requerido"}
     try:
-        chunks = search_technical_chunks(q.strip(), top_k=top_k)
+        query = q.strip()
+        search_q = f"{producto.strip()}: {query}" if producto.strip() else query
+        chunks = search_technical_chunks(search_q, top_k=top_k)
+
+        # Portfolio-aware expansion (same logic as the real agent handler)
+        best_sim = max((c.get("similarity", 0) for c in chunks), default=0)
+        if best_sim < 0.55 and not producto.strip():
+            q_norm = normalize_text_value(query)
+            portfolio_prods: list[str] = []
+            for cat_key, brand_terms in PORTFOLIO_CATEGORY_MAP.items():
+                if cat_key in q_norm or q_norm in cat_key:
+                    for bt in brand_terms:
+                        if bt != "__SIN_PRODUCTO_FERREINOX__" and bt not in portfolio_prods:
+                            portfolio_prods.append(bt)
+            for word in q_norm.split():
+                if len(word) < 4 or word in ("para", "como", "esto", "esta", "esos", "esas", "unos", "unas", "tiene"):
+                    continue
+                if word in PORTFOLIO_CATEGORY_MAP:
+                    for bt in PORTFOLIO_CATEGORY_MAP[word]:
+                        if bt != "__SIN_PRODUCTO_FERREINOX__" and bt not in portfolio_prods:
+                            portfolio_prods.append(bt)
+            if portfolio_prods:
+                extra: list[dict] = []
+                for pp in portfolio_prods[:3]:
+                    extra.extend(search_technical_chunks(f"{pp}: {query}", top_k=3))
+                seen_t: set[str] = set()
+                merged: list[dict] = []
+                for ch in sorted(chunks + extra, key=lambda c: c.get("similarity", 0), reverse=True):
+                    tk = (ch.get("chunk_text") or "")[:80]
+                    if tk not in seen_t:
+                        seen_t.add(tk)
+                        merged.append(ch)
+                chunks = merged[:top_k + 2]
+
         results = []
         for c in chunks:
             results.append({
@@ -13136,11 +13508,10 @@ def admin_rag_buscar(
                 "similitud": round(c.get("similarity", 0), 4),
                 "texto": (c.get("chunk_text") or "")[:500],
             })
-        # Also extract candidate products
         rag_ctx = build_rag_context(chunks, max_chunks=4)
         candidates = extract_candidate_products_from_rag_context(rag_ctx)
         return {
-            "query": q.strip(),
+            "query": query,
             "resultados": results,
             "productos_candidatos": candidates,
         }
