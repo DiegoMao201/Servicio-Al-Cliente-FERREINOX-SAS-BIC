@@ -13114,6 +13114,40 @@ def health_check():
         return {"backend": "ok", "postgrest": "error", "postgrest_url": postgrest_url, "detail": str(exc)}
 
 
+@app.get("/admin/rag-buscar")
+def admin_rag_buscar(
+    q: str = "",
+    top_k: int = 6,
+    admin_key: str = Header(None, alias="x-admin-key"),
+):
+    """Test de búsqueda semántica RAG: envía una pregunta y devuelve los chunks más relevantes."""
+    expected = os.getenv("ADMIN_API_KEY", "ferreinox_admin_2024")
+    if admin_key != expected:
+        raise HTTPException(status_code=403, detail="Admin key inválida")
+    if not q.strip():
+        return {"error": "Parámetro q requerido"}
+    try:
+        chunks = search_technical_chunks(q.strip(), top_k=top_k)
+        results = []
+        for c in chunks:
+            results.append({
+                "archivo": c.get("doc_filename"),
+                "familia": c.get("familia_producto"),
+                "similitud": round(c.get("similarity", 0), 4),
+                "texto": (c.get("chunk_text") or "")[:500],
+            })
+        # Also extract candidate products
+        rag_ctx = build_rag_context(chunks, max_chunks=4)
+        candidates = extract_candidate_products_from_rag_context(rag_ctx)
+        return {
+            "query": q.strip(),
+            "resultados": results,
+            "productos_candidatos": candidates,
+        }
+    except Exception as exc:
+        return {"error": str(exc)}
+
+
 @app.get("/admin/rag-diagnostico")
 def admin_rag_diagnostico(admin_key: str = Header(None, alias="x-admin-key")):
     """Diagnóstico del RAG: qué fichas técnicas hay indexadas."""
