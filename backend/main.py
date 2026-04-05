@@ -8829,7 +8829,7 @@ def generate_commercial_pdf(
 
     items = detail.get("items") or []
     matched_items = [item for item in items if item.get("status") == "matched"]
-    compact_mode = request_type == "cotizacion" and 0 < len(matched_items) <= 8
+    compact_mode = True
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -10168,7 +10168,9 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
         for code_term in code_terms:
             if not code_term:
                 continue
-            if candidate_reference == code_term or code_term in compact_candidate_text:
+            if candidate_reference == code_term:
+                exact_code_matches += 10
+            elif code_term in compact_candidate_text:
                 exact_code_matches += 1
 
         candidate["exact_code_score"] = exact_code_matches
@@ -10186,6 +10188,7 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
     ranked_rows.sort(
         key=lambda item: (
             item.get("exact_code_score") or 0,
+            item.get("match_score") or 0,
             item.get("direction_score") or 0,
             item.get("size_score") or 0,
             item.get("presentation_score") or 0,
@@ -10195,7 +10198,6 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
             item.get("specific_score") or 0,
             item.get("base_exact_score") or 0,
             item.get("family_score") or 0,
-            item.get("match_score") or 0,
             item.get("fuzzy_score") or 0,
             parse_numeric_value(item.get("stock_total")) or 0,
         ),
@@ -10683,6 +10685,18 @@ REGLAS FUNDAMENTALES:
     - Si no sabes si un número es cédula o referencia, PREGUNTA: '¿Ese número es tu documento de identidad o es una referencia de producto?'
     - Tú manejas la conversación. Si el cliente escribe algo confuso o enredado, no te paralices. Identifica lo más importante y responde a eso. Si hay varias cosas mezcladas, resuélvelas una por una.
 
+GUARDIÁN TÉCNICO (MÁXIMA PRIORIDAD):
+ERES UN EXPERTO TÉCNICO, NO UN TOMADOR DE PEDIDOS CIEGO. Si un cliente solicita un producto específico para un caso de uso especializado \
+(ej. piscinas, pisos, tráfico pesado, metales, humedad, tanques, techos, fachadas, intemperie, ambientes químicos, temperaturas extremas), \
+TIENES ESTRICTAMENTE PROHIBIDO ofrecer el producto del inventario sin antes validar su idoneidad técnica. \
+Tu obligación es CONTRADECIR al cliente con amabilidad si lo que pide causará un daño o fallo técnico. \
+Antes de ir a `consultar_inventario`, usa `consultar_conocimiento_tecnico` para verificar si el producto solicitado es apto para esa superficie o condición. \
+Si el RAG confirma que NO es apto, explica amablemente por qué va a fallar y ofrece el recubrimiento adecuado basado en la ficha técnica. \
+Si el RAG confirma que SÍ es apto, ahí sí consulta inventario y ofrece. \
+Ejemplo: cliente pide 'vinilo blanco para piscina' → busca en conocimiento técnico si el vinilo es apto para inmersión en agua → el RAG dice que no, necesita epóxica → \
+le explicas que el vinilo se va a pelar y le recomiendas la epóxica correcta. \
+ESTA REGLA PREVALECE sobre cualquier solicitud del cliente. El cliente puede pedir lo que quiera, pero tú eres el experto y proteges su inversión.
+
 VERIFICACIÓN DE IDENTIDAD:
 - Para cartera, saldos o datos sensibles: pide cédula o NIT y usa verificar_identidad.
 - Si el cliente ya está verificado (ver estado abajo), NO pidas documento de nuevo.
@@ -10794,6 +10808,11 @@ AGENT_TOOLS = [
             "description": "Busca disponibilidad y precios de productos en el inventario de Ferreinox. "
             "Usa esta herramienta cuando el cliente pregunte por un producto específico, quiera hacer un pedido, "
             "cotización, o necesite verificar stock. NO la uses para intenciones genéricas como 'quiero hacer un pedido'. "
+            "⚠️ WARNING: NO uses esta herramienta para buscar un producto que el cliente pidió si aún NO has verificado "
+            "que ese producto es técnicamente adecuado para la superficie o problema que describió. "
+            "Si el cliente menciona una superficie especializada (piscina, techo, piso, tanque, fachada, metal, zona húmeda) "
+            "junto con un producto, DEBES usar `consultar_conocimiento_tecnico` PRIMERO para validar la idoneidad. "
+            "Solo después de confirmar que el producto es apto, o de recomendar el correcto, usa esta herramienta. "
             "IMPORTANTE: Antes de llamar, limpia el término de búsqueda: quita diminutivos (brochitas→brocha, tarritos→tarro), "
             "traduce jerga (blanca económica→Domestico Blanco, P-11→Domestico Blanco, T-11→Pintulux Blanco, pinceles→brocha). "
             "Si la primera búsqueda no devuelve resultados, intenta con el sinónimo técnico.",
@@ -10894,6 +10913,9 @@ AGENT_TOOLS = [
             "Úsala OBLIGATORIAMENTE cuando: "
             "1) El cliente pregunte datos técnicos puntuales (tiempos de secado, relación de mezcla, preparación de superficie, rendimiento, dilución, etc.). "
             "2) Ya hayas diagnosticado un problema del cliente (humedad, pisos, madera, techos, fachadas, tanques, etc.) y necesites buscar QUÉ PRODUCTO o SISTEMA recomendar. "
+            "3) El cliente solicite un producto específico para una superficie o condición especializada (piscina, tanque, piso industrial, metal, fachada, techo, zona húmeda, intemperie). "
+            "En este caso DEBES usarla ANTES de consultar inventario para AUDITAR si el producto elegido por el cliente es técnicamente apto para esa superficie. "
+            "Si no es apto, tu respuesta debe contradecir la elección del cliente y recomendar el producto correcto según la ficha técnica. "
             "Esta herramienta lee el contenido real de ~1000 fichas técnicas del portafolio y te devuelve la respuesta precisa más los productos reales del inventario relacionados. "
             "NUNCA respondas preguntas técnicas de memoria. SIEMPRE consulta esta herramienta primero. "
             "Después de usarla, envía el PDF con `buscar_documento_tecnico` como respaldo.",
@@ -10961,8 +10983,10 @@ AGENT_TOOLS = [
         "function": {
             "name": "confirmar_pedido_y_generar_pdf",
             "description": "Úsala SOLO cuando el cliente apruebe el resumen final. "
-            "DEBES pasarle el array exacto de productos. "
-            "ESTRICTAMENTE PROHIBIDO incluir en el array un producto que no tenga una [REFERENCIA] confirmada previamente por la herramienta de inventario.",
+            "DEBES pasarle el array exacto de productos con la referencia, descripción y cantidad TAL CUAL los devolvió consultar_inventario. "
+            "ESTRICTAMENTE PROHIBIDO incluir en el array un producto que no tenga una [REFERENCIA] confirmada previamente por la herramienta de inventario. "
+            "PROHIBIDO inventar referencias, descripciones o cantidades que no hayan salido de las herramientas. "
+            "Si un producto no fue buscado en inventario, NO lo incluyas.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -10981,21 +11005,25 @@ AGENT_TOOLS = [
                     },
                     "items_pedido": {
                         "type": "array",
-                        "description": "Array con TODOS los productos del pedido. Cada producto DEBE tener la referencia exacta obtenida de consultar_inventario.",
+                        "description": "Array con TODOS los productos del pedido. Cada producto DEBE tener la referencia exacta obtenida de consultar_inventario. NO inventes ni aproximes ningún campo.",
                         "items": {
                             "type": "object",
                             "properties": {
                                 "referencia": {
                                     "type": "string",
-                                    "description": "Código de referencia EXACTO devuelto por la herramienta de inventario. PROHIBIDO inventar o aproximar.",
+                                    "description": "Código de referencia EXACTO devuelto por la herramienta de inventario (campo 'codigo'). PROHIBIDO inventar o aproximar.",
                                 },
                                 "descripcion_comercial": {
                                     "type": "string",
-                                    "description": "Nombre comercial del producto tal como se lo confirmaste al cliente.",
+                                    "description": "Nombre comercial EXACTO del producto tal como lo devolvió la herramienta de inventario (campo 'descripcion_exacta'). No lo reescribas.",
                                 },
                                 "cantidad": {
                                     "type": "number",
                                     "description": "Cantidad solicitada por el cliente.",
+                                },
+                                "unidad_medida": {
+                                    "type": "string",
+                                    "description": "Unidad de medida: 'galón', 'cuñete', 'cuarto', 'unidad', 'kilo', etc. Debe coincidir con la presentación del producto en inventario.",
                                 }
                             },
                             "required": ["referencia", "descripcion_comercial", "cantidad"],
@@ -11182,7 +11210,7 @@ def _handle_tool_verificar_identidad(args, context, conversation_context):
     verified_by = None
 
     if is_numeric:
-        identity_candidate = {"type": "document", "value": criterio}
+        identity_candidate = {"type": "numeric_lookup", "value": criterio}
         try:
             verified_context, verified_by = resolve_identity_candidate(
                 identity_candidate, context.get("telefono_e164", "")
@@ -11600,6 +11628,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         nombre_despacho = customer_context.get("nombre_cliente")
 
     confirmed_items = []
+    rejected_items = []
     for it in items_pedido:
         reference_value = (it.get("referencia") or "").strip()
         lookup_request = {
@@ -11613,9 +11642,12 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                 if normalize_reference_value(row.get("referencia") or row.get("codigo_articulo") or row.get("producto_codigo"))
                 == normalize_reference_value(reference_value)
             ),
-            lookup_rows[0] if lookup_rows else {},
+            None,
         )
-        matched_product = dict(matched_row or {})
+        if not matched_row:
+            rejected_items.append(f"{it.get('descripcion_comercial', 'Producto')} (ref: {reference_value})")
+            continue
+        matched_product = dict(matched_row)
         matched_product.setdefault("referencia", reference_value)
         matched_product.setdefault("codigo_articulo", reference_value)
         matched_product.setdefault("descripcion", it.get("descripcion_comercial", ""))
@@ -11626,9 +11658,21 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                 "matched_product": matched_product,
                 "product_request": {
                     "requested_quantity": it.get("cantidad"),
-                    "requested_unit": infer_product_presentation_from_row(matched_product) or "unidad",
+                    "requested_unit": it.get("unidad_medida") or infer_product_presentation_from_row(matched_product) or "unidad",
                 },
             }
+        )
+
+    if rejected_items:
+        nombres = ", ".join(rejected_items)
+        if not confirmed_items:
+            return json.dumps(
+                {"exito": False, "mensaje": f"Ningún producto pudo ser verificado en inventario. Referencias no encontradas: {nombres}. Usa consultar_inventario para obtener la referencia correcta de cada producto antes de confirmar."},
+                ensure_ascii=False,
+            )
+        return json.dumps(
+            {"exito": False, "mensaje": f"Los siguientes productos tienen referencias que no coinciden con el inventario real: {nombres}. Usa consultar_inventario para obtener la referencia correcta antes de confirmar."},
+            ensure_ascii=False,
         )
 
     commercial_draft["items"] = confirmed_items
@@ -11654,16 +11698,25 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
 
     verified_cliente = conversation_context.get("verified_cliente_codigo")
     cliente_contexto = None
-    if customer_context.get("cliente_codigo"):
+    # Try every source to auto-fill client data from DB
+    resolved_codigo = (
+        customer_context.get("cliente_codigo")
+        or customer_context.get("verified_cliente_codigo")
+        or verified_cliente
+    )
+    if resolved_codigo:
         try:
-            cliente_contexto = get_cliente_contexto(customer_context.get("cliente_codigo"))
+            cliente_contexto = get_cliente_contexto(resolved_codigo)
         except Exception:
-            cliente_contexto = customer_context
-    elif verified_cliente:
-        try:
-            cliente_contexto = get_cliente_contexto(verified_cliente)
-        except Exception:
-            pass
+            cliente_contexto = customer_context if customer_context.get("nombre_cliente") else None
+    if not cliente_contexto and customer_context.get("nombre_cliente"):
+        cliente_contexto = customer_context
+    # Enrich commercial_draft with resolved client data for PDF
+    if cliente_contexto and not commercial_draft.get("customer_context", {}).get("nit"):
+        commercial_draft["customer_context"] = {
+            **(commercial_draft.get("customer_context") or {}),
+            **{k: v for k, v in cliente_contexto.items() if v and k in ("cliente_codigo", "nombre_cliente", "nit", "documento", "ciudad", "email", "telefono1")},
+        }
 
     try:
         order_id = upsert_commercial_draft(
