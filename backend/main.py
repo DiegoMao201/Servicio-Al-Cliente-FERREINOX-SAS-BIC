@@ -615,7 +615,7 @@ PORTFOLIO_ALIASES = {
     "koraza": ["koraza", "impermeabilizante koraza", "koraza elastomerica", "koraza elastomerico", "pintura fachada", "pintura exterior fachada"],
     "world color": ["world color", "worldcolor", "tinte pintuco", "base tintometrica", "base tintométrica"],
     "imprimante": ["imprimante", "imprimante pintuco", "primer", "fondo", "sellador fondo", "primer pintuco"],
-    "cementos impermeable": ["cementos impermeable", "pintura cementos", "pintura cemento", "pintura piscina", "pintura piscinas", "piscina cemento", "pintura tanque", "cementosa", "impermeabilizante cementos"],
+    "cementos impermeable": ["cementos impermeable", "pintura cementos", "pintura cemento", "cementosa", "impermeabilizante cementos"],
     "pintura trafico": ["pintura trafico", "pintura tráfico", "pintura demarcacion", "pintura demarcación", "demarcacion vial", "pintura vial"],
     "wash primer": ["wash primer", "washprimer", "primer anticorrosivo", "fondo anticorrosivo"],
     "convertidor oxido": ["convertidor oxido", "convertidor óxido", "convertidor de oxido", "convertidor de óxido", "transformador oxido"],
@@ -628,6 +628,7 @@ PORTFOLIO_ALIASES = {
     # ── IMPERMEABILIZANTES / SELLADORES ──
     "igol": ["igol", "igol denso", "igol transparente", "impermeabilizante igol"],
     "sika": ["sika", "sikaflex", "sikaguard", "sikalastic", "impermeabilizante sika"],
+    "aquablock": ["aquablock", "aqua block", "sello humedad", "sellador humedad", "impermeabilizante humedad", "bloqueador humedad"],
     "manto asfaltico": ["manto asfaltico", "manto asfáltico", "manto", "impermeabilizante manto"],
     # ── CERRADURAS / FERRETERÍA ──
     "mega": ["mega", "cerradura mega", "sobreponer"],
@@ -713,7 +714,7 @@ PINTUCO_PRODUCT_TAXONOMY = {
     "epoxicas": {
         "descripcion": "Recubrimientos de alto desempeño, dos componentes (resina + catalizador)",
         "marcas": ["Pintucoat", "Interseal", "Intergard"],
-        "uso": "Pisos industriales, tanques, piscinas, ambientes químicos, tráfico pesado",
+        "uso": "Pisos industriales, ambientes químicos, tráfico pesado. NO sirven para piscinas ni inmersión en agua.",
     },
     "anticorrosivos": {
         "descripcion": "Fondos y primers protectores contra la oxidación del metal",
@@ -747,13 +748,13 @@ PINTUCO_PRODUCT_TAXONOMY = {
 # (ej. "pintura para piscinas"), este mapa expande a los nombres de marca
 # que efectivamente están en el inventario de Ferreinox.
 PORTFOLIO_CATEGORY_MAP = {
-    # ── Piscinas / tanques de agua ──
-    "piscina": ["cementos impermeable", "pintucoat", "epoxica", "pintura piscina", "impermeabilizante"],
-    "piscinas": ["cementos impermeable", "pintucoat", "epoxica", "pintura piscina", "impermeabilizante"],
-    "tanque": ["cementos impermeable", "pintucoat", "epoxica", "tanque", "impermeabilizante"],
-    "tanque agua": ["cementos impermeable", "pintucoat", "epoxica"],
-    "inmersion": ["pintucoat", "epoxica", "cementos impermeable", "interseal"],
-    "inmersion en agua": ["cementos impermeable", "pintucoat", "epoxica"],
+    # ── Piscinas / tanques de agua ──  (Ferreinox NO maneja pintura para piscinas)
+    "piscina": ["__SIN_PRODUCTO_FERREINOX__"],
+    "piscinas": ["__SIN_PRODUCTO_FERREINOX__"],
+    "tanque": ["__SIN_PRODUCTO_FERREINOX__"],
+    "tanque agua": ["__SIN_PRODUCTO_FERREINOX__"],
+    "inmersion": ["__SIN_PRODUCTO_FERREINOX__"],
+    "inmersion en agua": ["__SIN_PRODUCTO_FERREINOX__"],
     # ── Pisos ──
     "pintura piso": ["pintupiso", "pintucoat", "pintura pisos"],
     "piso industrial": ["pintupiso", "pintucoat", "epoxica pisos"],
@@ -780,7 +781,7 @@ PORTFOLIO_CATEGORY_MAP = {
     "impermeabilizante": ["koraza", "igol", "sika", "manto", "impermeabilizante"],
     "fachada": ["koraza", "viniltex", "koraza elastomerica"],
     "techo": ["koraza", "manto", "igol", "impermeabilizante techo"],
-    "humedad": ["koraza", "igol", "sika", "impermeabilizante", "sellador"],
+    "humedad": ["aquablock", "igol", "sika", "impermeabilizante", "sellador"],
     "goteras": ["manto", "igol", "sika", "impermeabilizante"],
     "terraza": ["koraza", "manto", "igol", "impermeabilizante"],
     "cubierta": ["manto", "koraza", "igol", "impermeabilizante"],
@@ -837,6 +838,43 @@ PORTFOLIO_CATEGORY_MAP = {
     "pintura lavable": ["viniltex", "viniltex adv"],
     "pintura economica": ["pinturama", "vinil max", "domestico"],
     "pintura buena": ["viniltex", "pintulux"],
+}
+
+# ── Productos/aplicaciones que Ferreinox NO maneja ────────────────────────
+# Cuando el cliente pida algo de esta lista, el agente DEBE decir que no
+# tenemos un producto con garantía técnica para eso y redirigir a un asesor.
+PORTFOLIO_GAPS = {
+    "piscina": "Ferreinox actualmente no maneja en su portafolio una pintura especializada para piscinas con garantía técnica. Te recomiendo comunicarte con uno de nuestros asesores para que te orienten con el fabricante, o consultar en www.ferreinox.co.",
+    "piscinas": "Ferreinox actualmente no maneja en su portafolio una pintura especializada para piscinas con garantía técnica. Te recomiendo comunicarte con uno de nuestros asesores para que te orienten con el fabricante, o consultar en www.ferreinox.co.",
+    "tanque agua": "Ferreinox actualmente no maneja pintura especializada para tanques de agua potable. Te recomiendo contactar a un asesor para una solución con garantía del fabricante.",
+    "inmersion en agua": "No manejamos recubrimientos certificados para inmersión permanente en agua. Contacta a un asesor para la solución correcta.",
+    "pintura marina": "No manejamos pintura marina anti-incrustante. Contacta a un asesor para orientación especializada.",
+}
+
+# ── Reglas técnicas verificadas por producto ──────────────────────────────
+# Estas reglas PREVALECEN sobre el RAG y sobre el conocimiento general.
+# Si el RAG o la IA sugieren algo que contradice estas reglas, las reglas ganan.
+PRODUCT_TECHNICAL_HARD_RULES = {
+    "koraza": {
+        "es_para": "Pintura elastomérica para FACHADAS exteriores, muros exteriores expuestos a lluvia y sol, terrazas descubiertas.",
+        "no_es_para": "NO es sellador de humedad interna, NO es impermeabilizante de muros con filtración, NO sella grietas con presión de agua. Para humedad interna se necesitan productos como Aquablock, Igol o Sika.",
+    },
+    "pintucoat": {
+        "es_para": "Recubrimiento epóxico para pisos industriales de alto tráfico, superficies de concreto en ambientes industriales y bodegas.",
+        "no_es_para": "NO es para piscinas, NO es para tanques de agua, NO es para inmersión en agua, NO es para superficies sumergidas. Ferreinox no maneja pintura para piscinas.",
+    },
+    "cementos impermeable": {
+        "es_para": "Pintura cementosa para impermeabilizar superficies de concreto en exteriores (muros, fachadas).",
+        "no_es_para": "NO es para piscinas ni para inmersión permanente en agua.",
+    },
+    "viniltex": {
+        "es_para": "Pintura vinílica premium para muros interiores y exteriores. Lavable, buen cubrimiento.",
+        "no_es_para": "NO es para pisos, NO es para piscinas, NO es para metal desnudo, NO es para inmersión en agua.",
+    },
+    "pintupiso": {
+        "es_para": "Pintura para pisos de concreto, andenes, garajes de uso residencial.",
+        "no_es_para": "NO es para tráfico vehicular pesado ni para pisos industriales de alto impacto.",
+    },
 }
 
 
@@ -8096,6 +8134,8 @@ def _expand_terms_with_portfolio_knowledge(terms: list[str]) -> list[str]:
         for category_key, brand_terms in PORTFOLIO_CATEGORY_MAP.items():
             if category_key in norm or norm in category_key:
                 for bt in brand_terms:
+                    if bt == "__SIN_PRODUCTO_FERREINOX__":
+                        continue
                     if bt not in seen:
                         seen.add(bt)
                         expanded.append(bt)
@@ -8105,6 +8145,8 @@ def _expand_terms_with_portfolio_knowledge(terms: list[str]) -> list[str]:
                 continue
             if word in PORTFOLIO_CATEGORY_MAP:
                 for bt in PORTFOLIO_CATEGORY_MAP[word]:
+                    if bt == "__SIN_PRODUCTO_FERREINOX__":
+                        continue
                     if bt not in seen:
                         seen.add(bt)
                         expanded.append(bt)
@@ -11128,14 +11170,34 @@ Tu obligación es CONTRADECIR al cliente con amabilidad si lo que pide causará 
 Antes de ir a `consultar_inventario`, usa `consultar_conocimiento_tecnico` para verificar si el producto solicitado es apto para esa superficie o condición. \
 Si el RAG confirma que NO es apto, explica amablemente por qué va a fallar y ofrece el recubrimiento adecuado basado en la ficha técnica. \
 Si el RAG confirma que SÍ es apto, ahí sí consulta inventario y ofrece. \
-Ejemplo: cliente pide 'vinilo blanco para piscina' → busca en conocimiento técnico si el vinilo es apto para inmersión en agua → el RAG dice que no, necesita epóxica → \
-le explicas que el vinilo se va a pelar y le recomiendas la epóxica correcta. \
+Ejemplo: cliente pide 'vinilo blanco para piscina' → Ferreinox NO maneja pintura para piscinas. Respóndele: \
+"No manejamos un producto con garantía técnica para piscinas. Te recomiendo comunicarte con uno de nuestros asesores para orientación." \
+Ejemplo 2: cliente dice 'tengo humedad interna' → NO recomiendes Koraza (es SOLO para fachadas exteriores). Busca Aquablock, Igol o Sika. \
 ESTA REGLA PREVALECE sobre cualquier solicitud del cliente. El cliente puede pedir lo que quiera, pero tú eres el experto y proteges su inversión.
+
+PRODUCTOS QUE FERREINOX NO MANEJA (GAPS DEL PORTAFOLIO):
+Si el cliente pide un producto para alguna de estas aplicaciones, NO inventes una solución alternativa incorrecta. \
+Di honestamente que no manejamos ese producto con garantía y redirige a un asesor: \
+- Pintura para piscinas o inmersión permanente en agua \
+- Pintura marina anti-incrustante \
+- Pintura para tanques de agua potable \
+La respuesta correcta es: "En Ferreinox no manejamos un producto especializado para [aplicación] con garantía técnica. \
+Te recomiendo comunicarte con uno de nuestros asesores para que te orienten con el fabricante correcto, o consultar en www.ferreinox.co."
+
+REGLAS TÉCNICAS VERIFICADAS POR PRODUCTO (PREVALECEN sobre RAG y conocimiento general):
+- KORAZA: Es pintura elastomérica SOLO para fachadas exteriores, muros exteriores expuestos a lluvia y sol, terrazas descubiertas. \
+  Koraza NO es sellador de humedad interna, NO es impermeabilizante de muros con filtración. Para humedad interna usa Aquablock, Igol o Sika.
+- PINTUCOAT: Es recubrimiento epóxico SOLO para pisos industriales de alto tráfico y superficies de concreto industrial. \
+  Pintucoat NO es para piscinas, NO es para tanques de agua, NO es para inmersión en agua.
+- CEMENTOS IMPERMEABLE: Pintura cementosa para superficies de concreto en exteriores. NO es para piscinas ni inmersión permanente.
+- VINILTEX/VINILOS: Para muros interiores y exteriores. NO es para pisos, piscinas, metal desnudo ni inmersión.
+- PINTUPISO: Para pisos de concreto residencial. NO es para tráfico vehicular pesado ni pisos industriales de alto impacto.
 
 POLÍTICA DE GARANTÍA — BLOQUEO DURO (HARD BLOCK):
 Tienes ESTRICTAMENTE PROHIBIDO vender, cotizar, buscar en inventario o incluir en un pedido un producto que el conocimiento técnico (RAG) \
 haya confirmado como INCOMPATIBLE, DESTRUCTIVO o INÚTIL para la superficie o condición que el cliente describió. \
-Ejemplos de bloqueo obligatorio: vinilo/viniltex en piscinas o tanques de agua, pintura base agua sobre metal oxidado sin anticorrosivo, \
+Ejemplos de bloqueo obligatorio: vinilo/viniltex en piscinas o tanques de agua (no manejamos producto para eso), pintura base agua sobre metal oxidado sin anticorrosivo, \
+Koraza como sellador de humedad interna (es solo para fachadas exteriores), Pintucoat para piscinas (es solo para pisos industriales), \
 látex convencional en pisos de tráfico vehicular, esmaltes sintéticos en superficies calientes (>80°C). \
 BAJO NINGUNA CIRCUNSTANCIA cedas a la insistencia del cliente. NUNCA digas "sin embargo, si deseas proceder...", \
 "si aún quieres llevarlo...", "bajo tu responsabilidad..." ni ninguna variante que deje abierta la puerta a vender el producto equivocado. \
@@ -11168,7 +11230,8 @@ Cuando el cliente diga tipo 1/2/3, TÚ SABES exactamente qué marcas buscar. Si 
 Si solo dicen "esmalte", pregunta: "¿Lo necesitas para interior o exterior? Si es para exterior, rejas o algo que necesite resistencia, te recomiendo Pintulux 3en1. Si es para interior y buscas economía, Doméstico te funciona."
 
 ═══ FACHADAS / IMPERMEABILIZACIÓN ═══
-• Koraza / Koraza Elastomérica / Koraza XP → fachadas, muros exteriores, terrazas, lluvia + sol.
+• Koraza / Koraza Elastomérica / Koraza XP → SOLO fachadas y muros EXTERIORES, terrazas descubiertas, lluvia + sol. Koraza NO es sellador de humedad interna.
+• Aquablock → sellador/bloqueador de humedad para muros interiores con filtración. Es el producto correcto cuando hay humedad interna.
 • Igol → sellador impermeabilizante para bases, cimientos, terrazas.
 • Sika (Sikaflex, Sikaguard, Sikalastic) → selladores, membranas, reparación de grietas.
 • Manto asfáltico → techos planos, cubiertas.
@@ -11182,8 +11245,8 @@ Si solo dicen "esmalte", pregunta: "¿Lo necesitas para interior o exterior? Si 
 • Pintucoat → pisos industriales, tráfico pesado, garajes de tráfico comercial.
 
 ═══ EPÓXICAS (2 componentes: resina + catalizador) ═══
-• Pintucoat (Pintuco) → pisos, tanques, piscinas, ambientes industriales.
-• Interseal (International/AkzoNobel) → aplicaciones marinas, industriales pesadas.
+• Pintucoat (Pintuco) → pisos industriales, ambientes químicos. NO es para piscinas ni inmersión en agua.
+• Interseal (International/AkzoNobel) → aplicaciones industriales pesadas.
 • Intergard (International) → primers epóxicos industriales.
 
 ═══ ANTICORROSIVOS (Protección de metal antes del acabado) ═══
@@ -11221,10 +11284,11 @@ CONOCIMIENTO DE PORTAFOLIO (TRADUCCIÓN MARCA ↔ CATEGORÍA):
 Tú conoces el portafolio de Ferreinox como un asesor experto. Cuando el RAG o el cliente pidan un tipo de producto genérico, TÚ SABES qué marca buscar:
 - "aerosol" / "spray" / "pintura en spray" → buscar como "Aerocolor" (marca Pintuco de aerosoles)
 - "pintura epóxica" / "epóxica" → buscar como "Pintucoat" (Pintuco) o "Interseal" / "Intergard" (International)
-- "pintura para piscinas" / "pintura para tanques" / "inmersión en agua" → buscar como "Cementos Impermeable" / "Pintucoat"
+- "pintura para piscinas" / "pintura para tanques" / "inmersión en agua" → Ferreinox NO maneja pintura para piscinas ni inmersión. Responde: "No manejamos un producto con garantía técnica para esa aplicación. Te recomiendo comunicarte con un asesor para orientación especializada."
 - "pintura para pisos" / "piso industrial" → buscar como "Pintupiso" (Pintuco) o "Pintucoat" para tráfico pesado
 - "anticorrosivo" / "metal oxidado" → buscar como "Pintucrom" (Pintuco), wash primer o "Intergard" (International)
-- "impermeabilizante" / "fachada" / "muro exterior" → buscar como "Koraza" (Pintuco), "Igol", o "Sika"
+- "impermeabilizante" / "fachada" / "muro exterior" → buscar como "Koraza" (Pintuco), "Igol", o "Sika" (SOLO para exterior)
+- "humedad" / "filtración" / "humedad interna" → buscar como "Aquablock", "Igol", "Sika" (NO Koraza, que es solo fachada exterior)
 - "barniz" / "laca" / "madera" → buscar como "Pintulac" (Pintuco), barniz
 - "poliuretano" → buscar como "Interthane" (International)
 - "intumescente" / "ignífuga" / "protección al fuego" → buscar como "Interchar" (International)
