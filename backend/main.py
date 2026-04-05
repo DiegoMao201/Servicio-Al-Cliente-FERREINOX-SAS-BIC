@@ -13186,13 +13186,18 @@ async def admin_importar_articulos_maestro(
 
             total_imported = conn.execute(text("SELECT COUNT(*) FROM public.articulos_maestro")).scalar()
 
-            # 3. Actualizar vistas con search_blob enriquecido
+            # 3. Actualizar vistas: DROP cascade y recrear con clasificación enriquecida
+            # PostgreSQL no permite cambiar nombres de columnas con CREATE OR REPLACE VIEW,
+            # hay que eliminar las vistas dependientes y recrearlas en orden.
+            conn.execute(text("DROP VIEW IF EXISTS public.vw_agente_producto_disponibilidad CASCADE"))
+            conn.execute(text("DROP VIEW IF EXISTS public.productos CASCADE"))
+            conn.execute(text("DROP VIEW IF EXISTS public.vw_inventario_agente CASCADE"))
+
             sql_migration_path = Path(__file__).resolve().parent / "articulos_maestro_setup.sql"
             if sql_migration_path.exists():
                 sql_content = sql_migration_path.read_text(encoding="utf-8")
-                # Extraer solo las sentencias CREATE OR REPLACE VIEW (saltar CREATE TABLE/INDEX que ya ejecutamos)
                 for stmt_match in re.finditer(
-                    r"(CREATE OR REPLACE VIEW[^;]+;)",
+                    r"(CREATE (?:OR REPLACE )?VIEW[^;]+;)",
                     sql_content,
                     re.DOTALL | re.IGNORECASE,
                 ):

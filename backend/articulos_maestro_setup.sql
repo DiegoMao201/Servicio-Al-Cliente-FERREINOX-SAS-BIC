@@ -49,10 +49,16 @@ CREATE INDEX IF NOT EXISTS idx_articulos_maestro_codigo
     ON public.articulos_maestro (codigo_articulo);
 
 -- ============================================================================
--- 2. VISTA vw_inventario_agente  (ENRIQUECIDA con clasificación)
+-- 2. DROP vistas dependientes y recrear con clasificación
+--    PostgreSQL no permite agregar columnas nuevas a una vista existente con
+--    CREATE OR REPLACE VIEW, por eso hacemos DROP CASCADE + CREATE.
 -- ============================================================================
 
-CREATE OR REPLACE VIEW public.vw_inventario_agente AS
+DROP VIEW IF EXISTS public.vw_agente_producto_disponibilidad CASCADE;
+DROP VIEW IF EXISTS public.productos CASCADE;
+DROP VIEW IF EXISTS public.vw_inventario_agente CASCADE;
+
+CREATE VIEW public.vw_inventario_agente AS
 SELECT
     public.fn_digits_only(r.cod_almacen) AS cod_almacen,
     public.fn_map_almacen_nombre(r.cod_almacen) AS almacen_nombre,
@@ -106,7 +112,7 @@ LEFT JOIN public.articulos_maestro am
 -- 3. VISTA productos  (ENRIQUECIDA — agrega clasificación en search_blob y output)
 -- ============================================================================
 
-CREATE OR REPLACE VIEW public.productos AS
+CREATE VIEW public.productos AS
 SELECT
     referencia_normalizada AS producto_codigo,
     referencia,
@@ -173,7 +179,7 @@ GROUP BY
 -- 4. RE-CREAR vistas dependientes (sin cambio lógico, pero dependen de las anteriores)
 -- ============================================================================
 
-CREATE OR REPLACE VIEW public.vw_agente_producto_disponibilidad AS
+CREATE VIEW public.vw_agente_producto_disponibilidad AS
 SELECT
     referencia_normalizada AS producto_codigo,
     referencia,
