@@ -15,6 +15,7 @@ from datetime import date, timedelta, datetime
 from html import escape
 from pathlib import Path
 from typing import Optional
+import logging
 
 import dropbox
 import pandas as pd
@@ -26,6 +27,9 @@ from openpyxl import Workbook
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 
+
+logger = logging.getLogger("ferreinox_agent")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 
 app = FastAPI(title="CRM Ferreinox Backend", version="2026.3")
 
@@ -12071,29 +12075,40 @@ def _execute_agent_tool(tool_call, context, conversation_context):
     except json.JSONDecodeError:
         fn_args = {}
 
-    if fn_name == "consultar_inventario":
-        result = _handle_tool_consultar_inventario(fn_args, conversation_context)
-    elif fn_name == "verificar_identidad":
-        result = _handle_tool_verificar_identidad(fn_args, context, conversation_context)
-    elif fn_name == "consultar_cartera":
-        result = _handle_tool_consultar_cartera(conversation_context)
-    elif fn_name == "consultar_compras":
-        result = _handle_tool_consultar_compras(fn_args, conversation_context)
-    elif fn_name == "buscar_documento_tecnico":
-        result = _handle_tool_buscar_documento_tecnico(fn_args, context, conversation_context)
-    elif fn_name == "consultar_conocimiento_tecnico":
-        result = _handle_tool_consultar_conocimiento_tecnico(fn_args, context, conversation_context)
-    elif fn_name == "radicar_reclamo":
-        result = _handle_tool_radicar_reclamo(fn_args, context, conversation_context)
-    elif fn_name == "confirmar_pedido_y_generar_pdf":
-        result = _handle_tool_confirmar_pedido(fn_args, context, conversation_context)
-    elif fn_name == "guardar_aprendizaje_producto":
-        result = _handle_tool_guardar_aprendizaje_producto(fn_args, conversation_context)
-    elif fn_name == "guardar_producto_complementario":
-        result = _handle_tool_guardar_producto_complementario(fn_args, conversation_context)
-    else:
-        result = json.dumps({"error": f"Herramienta desconocida: {fn_name}"}, ensure_ascii=False)
+    t0 = time.time()
+    try:
+        if fn_name == "consultar_inventario":
+            result = _handle_tool_consultar_inventario(fn_args, conversation_context)
+        elif fn_name == "verificar_identidad":
+            result = _handle_tool_verificar_identidad(fn_args, context, conversation_context)
+        elif fn_name == "consultar_cartera":
+            result = _handle_tool_consultar_cartera(conversation_context)
+        elif fn_name == "consultar_compras":
+            result = _handle_tool_consultar_compras(fn_args, conversation_context)
+        elif fn_name == "buscar_documento_tecnico":
+            result = _handle_tool_buscar_documento_tecnico(fn_args, context, conversation_context)
+        elif fn_name == "consultar_conocimiento_tecnico":
+            result = _handle_tool_consultar_conocimiento_tecnico(fn_args, context, conversation_context)
+        elif fn_name == "radicar_reclamo":
+            result = _handle_tool_radicar_reclamo(fn_args, context, conversation_context)
+        elif fn_name == "confirmar_pedido_y_generar_pdf":
+            result = _handle_tool_confirmar_pedido(fn_args, context, conversation_context)
+        elif fn_name == "guardar_aprendizaje_producto":
+            result = _handle_tool_guardar_aprendizaje_producto(fn_args, conversation_context)
+        elif fn_name == "guardar_producto_complementario":
+            result = _handle_tool_guardar_producto_complementario(fn_args, conversation_context)
+        else:
+            result = json.dumps({"error": f"Herramienta desconocida: {fn_name}"}, ensure_ascii=False)
+    except Exception as tool_exc:
+        elapsed_ms = int((time.time() - t0) * 1000)
+        logger.error("Tool %s FAILED after %dms: %s", fn_name, elapsed_ms, tool_exc, exc_info=True)
+        result = json.dumps(
+            {"error": True, "mensaje": f"Error temporal al ejecutar {fn_name}: {str(tool_exc)[:200]}. Infórmale al cliente que hubo un problema técnico momentáneo y que puede intentar de nuevo en unos minutos."},
+            ensure_ascii=False,
+        )
 
+    elapsed_ms = int((time.time() - t0) * 1000)
+    logger.info("Tool %s completed in %dms | args=%s", fn_name, elapsed_ms, json.dumps(fn_args, ensure_ascii=False)[:200])
     return fn_name, fn_args, result
 
 
@@ -12130,7 +12145,9 @@ def generate_agent_reply_v2(
 
     messages = [{"role": "system", "content": system_content}]
 
-    for msg in recent_messages[-20:]:
+    # Limit history to last 10 messages to avoid context dilution
+    # When recent topic changes, the LLM needs focus on the latest intent
+    for msg in recent_messages[-10:]:
         role = "assistant" if msg.get("direction") == "outbound" else "user"
         content_text = msg.get("contenido") or ""
         if content_text and msg.get("message_type") in ("text", "button", "interactive", None):
@@ -12138,6 +12155,7 @@ def generate_agent_reply_v2(
 
     messages.append({"role": "user", "content": user_message})
 
+    t_start = time.time()
     response = client.chat.completions.create(
         model=get_openai_model(),
         messages=messages,
@@ -12145,12 +12163,16 @@ def generate_agent_reply_v2(
         tool_choice="auto",
         temperature=0.3,
     )
+    t_first_llm = time.time()
+    logger.info("LLM initial call: %dms", int((t_first_llm - t_start) * 1000))
 
     assistant_message = response.choices[0].message
     tool_calls_made = []
 
     max_iterations = 5
+    iteration = 0
     while assistant_message.tool_calls and max_iterations > 0:
+        iteration += 1
         messages.append(assistant_message)
         for tc in assistant_message.tool_calls:
             fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
@@ -12163,6 +12185,7 @@ def generate_agent_reply_v2(
                 }
             )
 
+        t_loop = time.time()
         response = client.chat.completions.create(
             model=get_openai_model(),
             messages=messages,
@@ -12170,8 +12193,13 @@ def generate_agent_reply_v2(
             tool_choice="auto",
             temperature=0.3,
         )
+        logger.info("LLM iteration %d: %dms", iteration, int((time.time() - t_loop) * 1000))
         assistant_message = response.choices[0].message
         max_iterations -= 1
+
+    total_ms = int((time.time() - t_start) * 1000)
+    tool_names = [tc["name"] for tc in tool_calls_made]
+    logger.info("Agent reply TOTAL: %dms | tools=%s | iterations=%d", total_ms, tool_names, iteration)
 
     response_text = assistant_message.content or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
 
