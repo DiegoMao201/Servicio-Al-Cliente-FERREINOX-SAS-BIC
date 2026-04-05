@@ -584,29 +584,259 @@ PRESENTATION_SIZE_MAP = {
 
 
 PORTFOLIO_ALIASES = {
-    "vinilico": ["vinilico", "viniltex", "vinilo", "vinilica", "viniloco", "vinilico blanco", "viniltex blanco"],
+    # ── VINILOS TIPO 1 (Premium) ──
+    "viniltex": ["viniltex", "viniltex adv", "viniltex advanced", "vinilico", "vinilo", "vtx", "vinilo premium", "vinilo tipo 1"],
+    "vinilico": ["vinilico", "viniltex", "vinilo", "vinilica", "viniloco", "vinilico blanco", "viniltex blanco", "vinilo tipo 1"],
     "viniloco": ["viniloco", "vinilico", "viniltex", "vinilo", "vinilico blanco", "viniltex blanco"],
-    "viniltex": ["viniltex", "vinilico", "vinilo", "vtx"],
-    "pintulux": ["pintulux", "pintulux 3en1", "pintulux 3 en 1", "pintulux 3-en-1", "3en1", "3 en 1", "3-en-1"],
-    "domestico": ["domestico", "doméstico", "vinilico", "viniltex", "economico", "económico"],
+    "vinil plus": ["vinil plus", "vinilplus", "vinil+", "vinilo plus", "vinilo tipo 1"],
+    # ── VINILOS TIPO 2 (Intermedio) ──
+    "intervinil": ["intervinil", "inter vinil", "vinilo tipo 2", "vinilo intermedio"],
+    "vinil latex": ["vinil latex", "vinil látex", "vinillatex", "vinilo latex", "vinilo tipo 2"],
+    "vinilux": ["vinilux", "vinilo tipo 2"],
+    # ── VINILOS TIPO 3 (Económico) ──
+    "pinturama": ["pinturama", "vinilo tipo 3", "vinilo economico", "vinilo económico"],
+    "vinil max": ["vinil max", "vinilmax", "vinil-max", "vinilo tipo 3"],
+    "icolatex": ["icolatex", "ico latex", "vinilo tipo 3"],
+    # ── ESMALTES ──
+    "pintulux": ["pintulux", "pintulux 3en1", "pintulux 3 en 1", "pintulux 3-en-1", "3en1", "3 en 1", "3-en-1", "esmalte pintulux", "esmalte exterior", "esmalte bueno", "esmalte resistente"],
+    "domestico": ["domestico", "doméstico", "vinilico", "economico", "económico", "esmalte domestico", "esmalte interior", "esmalte economico", "esmalte económico"],
+    # ── CÓDIGOS CORTOS DE MOSTRADOR ──
     "pintuco": ["pintuco", "viniltex", "p11", "p-11", "p 11"],
-    "p11": ["p11", "p-11", "p 11", "pintuco 11"],
+    "p11": ["p11", "p-11", "p 11", "pintuco 11", "domestico blanco"],
     "t11": ["t11", "t-11", "t 11", "pintulux 3en1", "pintulux 3 en 1", "3en1 br blanco 11", "br blanco 11"],
     "p53": ["p53", "p-53", "p 53", "verde esmeral", "verde esmer"],
+    # ── LÍNEAS ESPECIALIZADAS PINTUCO ──
+    "pintucoat": ["pintucoat", "epoxica pintuco", "epoxica", "epóxica", "epóxica pintuco", "epoxy", "epoxi pintuco", "recubrimiento epoxica"],
+    "pintupiso": ["pintupiso", "pintura piso", "pintura pisos", "pintura para pisos", "pintura de piso", "pintura cemento piso"],
+    "pintucrom": ["pintucrom", "anticorrosivo pintuco", "anticorrosivo", "anti corrosivo", "cromato pintuco"],
+    "pintacrom": ["pintacrom", "pinta crom", "anticorrosivo aerosol"],
+    "pintulac": ["pintulac", "laca pintuco", "laca", "laca madera"],
+    "aerocolor": ["aerocolor", "aerosol pintuco", "aerosol", "spray pintuco", "spray pintura", "pintura spray", "pintura aerosol", "spray"],
+    "koraza": ["koraza", "impermeabilizante koraza", "koraza elastomerica", "koraza elastomerico", "pintura fachada", "pintura exterior fachada"],
+    "world color": ["world color", "worldcolor", "tinte pintuco", "base tintometrica", "base tintométrica"],
+    "imprimante": ["imprimante", "imprimante pintuco", "primer", "fondo", "sellador fondo", "primer pintuco"],
+    "cementos impermeable": ["cementos impermeable", "pintura cementos", "pintura cemento", "pintura piscina", "pintura piscinas", "piscina cemento", "pintura tanque", "cementosa", "impermeabilizante cementos"],
+    "pintura trafico": ["pintura trafico", "pintura tráfico", "pintura demarcacion", "pintura demarcación", "demarcacion vial", "pintura vial"],
+    "wash primer": ["wash primer", "washprimer", "primer anticorrosivo", "fondo anticorrosivo"],
+    "convertidor oxido": ["convertidor oxido", "convertidor óxido", "convertidor de oxido", "convertidor de óxido", "transformador oxido"],
+    # ── INTERNATIONAL / AKZONOBEL ──
+    "interseal": ["interseal", "epoxica international", "epóxica international", "epoxica akzonobel"],
+    "interthane": ["interthane", "poliuretano international", "poliuretano akzonobel", "poliuretano"],
+    "intergard": ["intergard", "epoxica intergard", "primer intergard"],
+    "interfine": ["interfine", "acabado international", "acabado interthane"],
+    "interchar": ["interchar", "intumescente", "pintura intumescente", "ignifuga", "ignífuga", "ignifugo"],
+    # ── IMPERMEABILIZANTES / SELLADORES ──
+    "igol": ["igol", "igol denso", "igol transparente", "impermeabilizante igol"],
+    "sika": ["sika", "sikaflex", "sikaguard", "sikalastic", "impermeabilizante sika"],
+    "manto asfaltico": ["manto asfaltico", "manto asfáltico", "manto", "impermeabilizante manto"],
+    # ── CERRADURAS / FERRETERÍA ──
     "mega": ["mega", "cerradura mega", "sobreponer"],
     "cerradura": ["cerradura", "cerradur", "chapa", "lock"],
     "derecha": ["derecha", "derecho", "der", "derc"],
     "izquierda": ["izquierda", "izquierdo", "izq"],
-    "brocha": ["brocha", "brochas", "pincel"],
+    "brocha": ["brocha", "brochas", "pincel", "brochas pintuco"],
     "popular": ["popular", "pop"],
+    "rodillo": ["rodillo", "rodillos", "felpa", "mini rodillo"],
+    "lija": ["lija", "lijas", "papel lija", "lija agua", "lija al agua"],
+    # ── ADHESIVOS / PEGANTES ──
     "abracol": ["abracol"],
     "yale": ["yale"],
     "goya": ["goya"],
     "smith": ["smith", "cinta smith", "tirro smith"],
     "afix": ["afix", "silicona afix", "espuma afix", "epoxi afix"],
     "segurex": ["segurex"],
+    "artecola": ["artecola"],
     "pl285": ["pl285", "pl 285", "pegante pl285", "pegante madera"],
-    "koraza": ["koraza"],
+    "montana": ["montana", "montana 94", "aerosol montana"],
+    # ── DISOLVENTES / COMPLEMENTARIOS ──
+    "thinner": ["thinner", "tinner", "diluyente", "disolvente", "solvente"],
+    "varsol": ["varsol", "disolvente varsol"],
+    "aguarras": ["aguarras", "aguarrás", "trementina"],
+    "estuco": ["estuco", "masilla", "estuco plastico", "estuco plástico"],
+    # ── GENÉRICOS QUE DEBEN EXPANDIR ──
+    "vinilo": ["vinilo", "vinilico", "viniltex", "domestico", "intervinil", "vinil latex", "pinturama"],
+    "esmalte": ["esmalte", "pintulux", "domestico", "esmalte sintetico", "esmalte sintético"],
+    "pintura": ["pintura", "viniltex", "pintulux", "koraza", "domestico"],
+}
+
+# ── Taxonomía completa del portafolio Ferreinox ───────────────────────────
+# Árbol jerárquico de familias, calidades y productos reales.
+# Esto lo usa el system prompt para que la IA haga preguntas inteligentes
+# y sepa exactamente qué buscar en PostgREST según la necesidad del cliente.
+PINTUCO_PRODUCT_TAXONOMY = {
+    "vinilos": {
+        "descripcion": "Pinturas vinílicas para muros y cielos rasos (base agua)",
+        "tipo_1_premium": {
+            "descripcion": "Mejor cubrimiento, lavabilidad y rendimiento",
+            "marcas": ["Viniltex", "Viniltex Advanced", "Vinil Plus"],
+            "uso": "Interior y exterior, paredes donde se necesita durabilidad y lavabilidad",
+        },
+        "tipo_2_intermedio": {
+            "descripcion": "Buen cubrimiento a precio medio",
+            "marcas": ["Intervinil", "Vinil Látex", "Vinilux"],
+            "uso": "Interior, paredes de tráfico medio, cuartos, bodegas",
+        },
+        "tipo_3_economico": {
+            "descripcion": "Opción económica para obras y alto volumen",
+            "marcas": ["Pinturama", "Vinil Max", "Icolatex"],
+            "uso": "Interior, cielos rasos, obras masivas, paredes de baja exigencia",
+        },
+    },
+    "esmaltes": {
+        "descripcion": "Pinturas a base de solvente para madera, metal y superficies lavables",
+        "pintulux_3en1": {
+            "descripcion": "Esmalte premium, anticorrosivo, alto brillo o satinado, lavable",
+            "marcas": ["Pintulux 3en1"],
+            "uso": "Exterior e interior, rejas, puertas, muebles, madera, metal. El mejor esmalte del portafolio.",
+        },
+        "domestico": {
+            "descripcion": "Esmalte económico, buen rendimiento para uso general",
+            "marcas": ["Doméstico"],
+            "uso": "Interior, puertas, marcos, madera interior. Más económico que Pintulux.",
+        },
+    },
+    "fachada_impermeabilizante": {
+        "descripcion": "Pinturas elastoméricas e impermeabilizantes para exteriores",
+        "marcas": ["Koraza", "Koraza Elastomérica", "Koraza XP"],
+        "uso": "Fachadas, muros exteriores, terrazas, zonas expuestas a lluvia y sol",
+    },
+    "aerosoles": {
+        "descripcion": "Pinturas en spray para retoques, manualidades y aplicaciones rápidas",
+        "marcas": ["Aerocolor"],
+        "uso": "Retoques, artesanía, metales pequeños, madera, plástico",
+    },
+    "pisos": {
+        "descripcion": "Pinturas especiales para pisos de concreto y cemento",
+        "marcas": ["Pintupiso"],
+        "uso": "Pisos de concreto, andenes, garajes, bodegas",
+    },
+    "epoxicas": {
+        "descripcion": "Recubrimientos de alto desempeño, dos componentes (resina + catalizador)",
+        "marcas": ["Pintucoat", "Interseal", "Intergard"],
+        "uso": "Pisos industriales, tanques, piscinas, ambientes químicos, tráfico pesado",
+    },
+    "anticorrosivos": {
+        "descripcion": "Fondos y primers protectores contra la oxidación del metal",
+        "marcas": ["Pintucrom", "Wash Primer", "Intergard"],
+        "uso": "Metal oxidado, estructuras metálicas, tuberías, rejas antes de esmalte final",
+    },
+    "lacas_barnices": {
+        "descripcion": "Acabados transparentes o semitransparentes para madera",
+        "marcas": ["Pintulac", "Barniz Marino"],
+        "uso": "Muebles, puertas de madera, pisos de madera, decks, artesanías",
+    },
+    "poliuretanos": {
+        "descripcion": "Acabados industriales de alta resistencia química y UV",
+        "marcas": ["Interthane", "Interfine"],
+        "uso": "Acabados finales sobre epóxicas, maquinaria, pisos industriales de alto desempeño",
+    },
+    "intumescentes": {
+        "descripcion": "Pinturas de protección pasiva contra incendios",
+        "marcas": ["Interchar"],
+        "uso": "Estructuras metálicas que deben cumplir norma de resistencia al fuego",
+    },
+    "trafico_demarcacion": {
+        "descripcion": "Pinturas para señalización vial y demarcación de pisos",
+        "marcas": ["Pintura Tráfico"],
+        "uso": "Parqueaderos, canchas, bodegas, vías, líneas de seguridad",
+    },
+}
+
+# ── Mapa de categorías de uso → términos reales de inventario ──────────────
+# Cuando el RAG o el usuario pide un producto por su categoría genérica
+# (ej. "pintura para piscinas"), este mapa expande a los nombres de marca
+# que efectivamente están en el inventario de Ferreinox.
+PORTFOLIO_CATEGORY_MAP = {
+    # ── Piscinas / tanques de agua ──
+    "piscina": ["cementos impermeable", "pintucoat", "epoxica", "pintura piscina", "impermeabilizante"],
+    "piscinas": ["cementos impermeable", "pintucoat", "epoxica", "pintura piscina", "impermeabilizante"],
+    "tanque": ["cementos impermeable", "pintucoat", "epoxica", "tanque", "impermeabilizante"],
+    "tanque agua": ["cementos impermeable", "pintucoat", "epoxica"],
+    "inmersion": ["pintucoat", "epoxica", "cementos impermeable", "interseal"],
+    "inmersion en agua": ["cementos impermeable", "pintucoat", "epoxica"],
+    # ── Pisos ──
+    "pintura piso": ["pintupiso", "pintucoat", "pintura pisos"],
+    "piso industrial": ["pintupiso", "pintucoat", "epoxica pisos"],
+    "piso cemento": ["pintupiso", "pintura pisos"],
+    "piso trafico": ["pintupiso", "pintucoat", "pintura trafico"],
+    "piso concreto": ["pintupiso", "pintura pisos"],
+    "garaje": ["pintupiso", "pintura pisos"],
+    "anden": ["pintupiso", "pintura pisos"],
+    # ── Epóxicas ──
+    "epoxica": ["pintucoat", "interseal", "intergard", "epoxica", "epoxy"],
+    "epoxica industrial": ["pintucoat", "interseal", "intergard"],
+    "pintura epoxica": ["pintucoat", "interseal", "intergard", "epoxica"],
+    "recubrimiento epoxica": ["pintucoat", "interseal", "intergard"],
+    "dos componentes": ["pintucoat", "interseal", "intergard"],
+    # ── Anticorrosivos / metal ──
+    "anticorrosivo": ["pintucrom", "anticorrosivo", "wash primer", "intergard"],
+    "metal": ["pintucrom", "pintulux", "anticorrosivo", "wash primer", "esmalte"],
+    "oxidado": ["pintucrom", "anticorrosivo", "convertidor oxido", "wash primer"],
+    "proteccion metalica": ["pintucrom", "pintulux", "anticorrosivo"],
+    "reja": ["pintulux", "pintucrom", "anticorrosivo", "esmalte"],
+    "estructura metalica": ["pintucrom", "intergard", "anticorrosivo", "pintulux"],
+    "tuberia": ["pintucrom", "anticorrosivo", "pintulux"],
+    # ── Impermeabilizantes / fachadas / techos ──
+    "impermeabilizante": ["koraza", "igol", "sika", "manto", "impermeabilizante"],
+    "fachada": ["koraza", "viniltex", "koraza elastomerica"],
+    "techo": ["koraza", "manto", "igol", "impermeabilizante techo"],
+    "humedad": ["koraza", "igol", "sika", "impermeabilizante", "sellador"],
+    "goteras": ["manto", "igol", "sika", "impermeabilizante"],
+    "terraza": ["koraza", "manto", "igol", "impermeabilizante"],
+    "cubierta": ["manto", "koraza", "igol", "impermeabilizante"],
+    # ── Aerosoles ──
+    "aerosol": ["aerocolor", "montana", "spray", "aerosol"],
+    "spray": ["aerocolor", "montana", "spray", "aerosol"],
+    "pintura spray": ["aerocolor", "montana"],
+    "retoque": ["aerocolor", "aerosol"],
+    # ── Madera ──
+    "barniz": ["barniz", "pintulac", "laca", "barniz marino"],
+    "madera": ["pintulac", "barniz", "laca", "sellador madera", "pintulux"],
+    "laca": ["pintulac", "laca", "laca nitrocelulosa"],
+    "deck": ["barniz", "barniz marino", "pintulac"],
+    "mueble": ["pintulac", "barniz", "pintulux"],
+    # ── Poliuretanos ──
+    "poliuretano": ["interthane", "poliuretano", "uretano"],
+    "acabado industrial": ["interthane", "interfine", "pintucoat"],
+    # ── Intumescentes / fuego ──
+    "intumescente": ["interchar", "intumescente", "ignifuga"],
+    "ignifuga": ["interchar", "intumescente", "ignifuga"],
+    "retardante fuego": ["interchar", "intumescente"],
+    "proteccion fuego": ["interchar", "intumescente"],
+    # ── Demarcación vial / canchas ──
+    "demarcacion": ["pintura trafico", "demarcacion", "demarcacion vial"],
+    "trafico": ["pintura trafico", "pintupiso", "demarcacion"],
+    "cancha": ["pintura trafico", "pintupiso"],
+    "parqueadero": ["pintura trafico", "pintupiso"],
+    "señalizacion": ["pintura trafico", "demarcacion"],
+    # ── Selladores / fondos ──
+    "sellador": ["sellador", "imprimante", "fondo", "primer"],
+    "fondo": ["imprimante", "fondo", "sellador", "primer", "wash primer"],
+    "primer": ["imprimante", "primer", "wash primer", "fondo"],
+    "base": ["imprimante", "fondo", "sellador", "primer"],
+    # ── Vinilos genéricos (cuando dicen solo "vinilo" sin marca) ──
+    "vinilo": ["viniltex", "vinilico", "domestico", "intervinil", "vinil latex", "pinturama"],
+    "vinilo tipo 1": ["viniltex", "viniltex adv", "vinil plus"],
+    "vinilo tipo 2": ["intervinil", "vinil latex", "vinilux"],
+    "vinilo tipo 3": ["pinturama", "vinil max", "icolatex"],
+    "vinilo economico": ["pinturama", "vinil max", "icolatex", "domestico"],
+    "vinilo bueno": ["viniltex", "viniltex adv", "vinil plus"],
+    "vinilo intermedio": ["intervinil", "vinil latex", "vinilux"],
+    "vinilo premium": ["viniltex", "viniltex adv", "vinil plus"],
+    "vinilo barato": ["pinturama", "vinil max", "icolatex", "domestico"],
+    # ── Esmaltes genéricos ──
+    "esmalte": ["pintulux", "domestico", "esmalte"],
+    "esmalte bueno": ["pintulux", "pintulux 3en1"],
+    "esmalte economico": ["domestico"],
+    "esmalte interior": ["domestico", "pintulux"],
+    "esmalte exterior": ["pintulux", "pintulux 3en1"],
+    "esmalte resistente": ["pintulux", "pintulux 3en1"],
+    # ── Pintura genérica ──
+    "pintura interior": ["viniltex", "domestico", "intervinil"],
+    "pintura exterior": ["koraza", "viniltex", "pintulux"],
+    "pintura lavable": ["viniltex", "viniltex adv"],
+    "pintura economica": ["pinturama", "vinil max", "domestico"],
+    "pintura buena": ["viniltex", "pintulux"],
 }
 
 
@@ -641,11 +871,32 @@ STORE_ALIASES = {
 
 
 BRAND_ALIASES = {
-    "viniltex": ["viniltex", "viniltex adv", "vtx"],
-    "domestico": ["domestico", "doméstico", "blanca economica", "blanca económica", "vinilo barato", "p11", "p-11", "p 11"],
-    "pintulux": ["pintulux", "pintulux 3en1", "pintulux 3 en 1", "t11", "t-11", "t 11"],
-    "koraza": ["koraza"],
-    "pintuco": ["pintuco", "viniltex", "domestico", "doméstico", "pintulux", "koraza"],
+    # Marcas madre → sub-marcas que pertenecen a ese fabricante
+    "viniltex": ["viniltex", "viniltex adv", "viniltex advanced", "vtx", "vinil plus"],
+    "domestico": ["domestico", "doméstico", "blanca economica", "blanca económica", "vinilo barato", "p11", "p-11", "p 11", "esmalte domestico"],
+    "pintulux": ["pintulux", "pintulux 3en1", "pintulux 3 en 1", "t11", "t-11", "t 11", "esmalte pintulux", "esmalte exterior"],
+    "koraza": ["koraza", "koraza elastomerica", "koraza elastomerico", "koraza xp"],
+    "pintuco": ["pintuco", "viniltex", "domestico", "doméstico", "pintulux", "koraza", "aerocolor", "pintucoat",
+                "pintupiso", "pintucrom", "pintulac", "pinturama", "intervinil", "vinil latex", "vinil max",
+                "icolatex", "vinilux", "vinil plus", "world color", "cementos impermeable"],
+    "pintucoat": ["pintucoat", "epoxica pintuco", "epoxi pintuco", "recubrimiento epoxica"],
+    "pintupiso": ["pintupiso", "pintura pisos pintuco", "pintura pisos"],
+    "pintucrom": ["pintucrom", "anticorrosivo pintuco", "cromato pintuco"],
+    "aerocolor": ["aerocolor", "aerosol pintuco", "spray pintuco"],
+    "pintulac": ["pintulac", "laca pintuco", "laca"],
+    "intervinil": ["intervinil", "inter vinil"],
+    "vinil latex": ["vinil latex", "vinil látex", "vinillatex"],
+    "vinilux": ["vinilux"],
+    "pinturama": ["pinturama"],
+    "vinil max": ["vinil max", "vinilmax"],
+    "icolatex": ["icolatex", "ico latex"],
+    "vinil plus": ["vinil plus", "vinilplus"],
+    "international": ["international", "interseal", "interthane", "intergard", "interfine", "interchar"],
+    "akzonobel": ["akzonobel", "international", "interseal", "interthane", "intergard"],
+    "interseal": ["interseal", "epoxica international"],
+    "interthane": ["interthane", "poliuretano international"],
+    "intergard": ["intergard", "primer intergard"],
+    "interchar": ["interchar", "intumescente international"],
     "abracol": ["abracol"],
     "yale": ["yale"],
     "goya": ["goya"],
@@ -654,6 +905,7 @@ BRAND_ALIASES = {
     "segurex": ["segurex"],
     "artecola": ["artecola", "pl285", "pl 285"],
     "montana": ["montana", "montana 94"],
+    "sika": ["sika", "sikaflex", "sikaguard", "sikalastic"],
 }
 
 
@@ -833,6 +1085,75 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "canonical_product": "candado yale",
             "brand_filters": ["yale"],
             "core_terms": ["candado", "yale"],
+        },
+        # ── Vinilo por tipo de calidad ──
+        {
+            "pattern": r"\bvinilo\s+tipo\s*1\b|\bvinilo\s+premium\b|\bvinilo\s+bueno\b|\bvinilo\s+lavable\b",
+            "brand_filters": ["viniltex", "pintuco"],
+            "core_terms": ["viniltex"],
+        },
+        {
+            "pattern": r"\bvinilo\s+tipo\s*2\b|\bvinilo\s+intermedio\b",
+            "brand_filters": ["intervinil", "pintuco"],
+            "core_terms": ["intervinil"],
+        },
+        {
+            "pattern": r"\bvinilo\s+tipo\s*3\b|\bvinilo\s+econom\w*\b|\bvinilo\s+barato\b|\bvinilo\s+de\s+obra\b",
+            "brand_filters": ["pinturama", "pintuco"],
+            "core_terms": ["pinturama"],
+        },
+        # ── Esmalte por calidad ──
+        {
+            "pattern": r"\besmalte\s+buen[oa]?\b|\besmalte\s+resistente\b|\besmalte\s+exterior\b",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux"],
+        },
+        {
+            "pattern": r"\besmalte\s+econom\w*\b|\besmalte\s+barat[oa]?\b|\besmalte\s+interior\b",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico"],
+        },
+        # ── Aerosoles ──
+        {
+            "pattern": r"\b(aerosol|spray|pintura\s+spray|pintura\s+en\s+spray)\b",
+            "brand_filters": ["aerocolor", "pintuco"],
+            "core_terms": ["aerocolor"],
+        },
+        # ── Epóxicas ──
+        {
+            "pattern": r"\b(epox\w+|epoxi\w*)\b",
+            "brand_filters": ["pintucoat", "pintuco"],
+            "core_terms": ["pintucoat"],
+        },
+        # ── Anticorrosivos ──
+        {
+            "pattern": r"\b(anticorrosi\w+|anti\s*corrosi\w+)\b",
+            "brand_filters": ["pintucrom", "pintuco"],
+            "core_terms": ["pintucrom"],
+        },
+        # ── Pintura para piso ──
+        {
+            "pattern": r"\bpintura\s+(para\s+)?piso\w*\b|\bpintar\s+(el\s+)?piso\b",
+            "brand_filters": ["pintupiso", "pintuco"],
+            "core_terms": ["pintupiso"],
+        },
+        # ── Pintura de fachada ──
+        {
+            "pattern": r"\bpintura\s+(para\s+|de\s+)?fachada\w*\b|\bpintar\s+(la\s+)?fachada\b",
+            "brand_filters": ["koraza", "pintuco"],
+            "core_terms": ["koraza"],
+        },
+        # ── Impermeabilizante ──
+        {
+            "pattern": r"\bimpermeabiliz\w+\b",
+            "brand_filters": ["koraza", "pintuco"],
+            "core_terms": ["koraza"],
+        },
+        # ── Laca / barniz ──
+        {
+            "pattern": r"\b(laca|barniz)\b",
+            "brand_filters": ["pintulac", "pintuco"],
+            "core_terms": ["pintulac"],
         },
     ]
 
@@ -7723,22 +8044,87 @@ def is_coverage_followup_question(text_value: Optional[str]) -> bool:
 
 def extract_candidate_products_from_rag_context(rag_context: str, source_file: Optional[str] = None) -> list[str]:
     candidates: list[str] = []
+    # Extract explicitly tagged products
     for match in re.finditer(r"\[PRODUCTO:\s*([^\]]+)\]", rag_context or "", flags=re.IGNORECASE):
         candidate = match.group(1).strip()
         if candidate and candidate not in candidates:
             candidates.append(candidate)
+    # Extract brand/product names mentioned in the RAG text that match known portfolio
+    if rag_context:
+        rag_lower = normalize_text_value(rag_context)
+        _KNOWN_PRODUCT_NAMES = [
+            # Pintuco líneas principales
+            "pintucoat", "pintupiso", "pintucrom", "pintulac", "aerocolor", "koraza",
+            "viniltex", "pintulux", "domestico", "pinturama", "intervinil", "vinil latex",
+            "vinilux", "vinil max", "icolatex", "vinil plus", "pintacrom",
+            "cementos impermeable", "world color", "wash primer", "imprimante",
+            "convertidor oxido", "pintura trafico", "barniz marino",
+            # International / AkzoNobel
+            "interseal", "interthane", "intergard", "interfine", "interchar",
+            # Otras marcas
+            "igol", "sikaguard", "sikalastic", "sikaflex", "sika",
+            "koraza elastomerica", "koraza xp",
+        ]
+        for product_name in _KNOWN_PRODUCT_NAMES:
+            if product_name in rag_lower and product_name not in candidates:
+                candidates.append(product_name)
     if source_file:
         normalized_file = re.sub(r"\.pdf$", "", source_file, flags=re.IGNORECASE).strip()
         normalized_file = re.sub(r"\s*\(.*?\)\s*", " ", normalized_file).strip()
         if normalized_file and normalized_file not in candidates:
             candidates.insert(0, normalized_file)
-    return candidates[:5]
+    return candidates[:8]
+
+
+def _expand_terms_with_portfolio_knowledge(terms: list[str]) -> list[str]:
+    """Expand generic product/category terms into brand-specific inventory search terms.
+
+    Uses PORTFOLIO_CATEGORY_MAP and PORTFOLIO_ALIASES to translate generic
+    use-case language (e.g. 'pintura para piscinas') into real brand names
+    that exist in the Ferreinox inventory (e.g. 'pintucoat', 'cementos impermeable').
+    """
+    expanded: list[str] = []
+    seen: set[str] = set()
+    for term in terms:
+        norm = normalize_text_value(term)
+        if not norm:
+            continue
+        if norm not in seen:
+            seen.add(norm)
+            expanded.append(norm)
+        # Check PORTFOLIO_CATEGORY_MAP for category-based expansion
+        for category_key, brand_terms in PORTFOLIO_CATEGORY_MAP.items():
+            if category_key in norm or norm in category_key:
+                for bt in brand_terms:
+                    if bt not in seen:
+                        seen.add(bt)
+                        expanded.append(bt)
+        # Check individual words against category map
+        for word in norm.split():
+            if len(word) < 4:
+                continue
+            if word in PORTFOLIO_CATEGORY_MAP:
+                for bt in PORTFOLIO_CATEGORY_MAP[word]:
+                    if bt not in seen:
+                        seen.add(bt)
+                        expanded.append(bt)
+        # Check PORTFOLIO_ALIASES for alias expansion
+        norm_ref = normalize_reference_value(term)
+        if norm_ref in PORTFOLIO_ALIASES:
+            for alias in PORTFOLIO_ALIASES[norm_ref]:
+                alias_norm = normalize_text_value(alias)
+                if alias_norm and alias_norm not in seen:
+                    seen.add(alias_norm)
+                    expanded.append(alias_norm)
+    return expanded
 
 
 def lookup_inventory_candidates_from_terms(terms: list[str], conversation_context: Optional[dict]) -> list[dict]:
     seen_codes = set()
     resolved: list[dict] = []
     local_context = dict(conversation_context or {})
+
+    # First pass: search with original terms
     for term in terms:
         if not term:
             continue
@@ -7771,6 +8157,46 @@ def lookup_inventory_candidates_from_terms(terms: list[str], conversation_contex
             local_context["last_product_query"] = term
         if len(resolved) >= 4:
             break
+
+    # Second pass: if first pass found nothing, expand terms using portfolio knowledge
+    if not resolved:
+        expanded_terms = _expand_terms_with_portfolio_knowledge(terms)
+        # Remove terms already tried in first pass
+        original_normalized = {normalize_text_value(t) for t in terms if t}
+        new_terms = [t for t in expanded_terms if t not in original_normalized]
+        for term in new_terms:
+            if not term:
+                continue
+            rows = lookup_product_context(term, prepare_product_request_for_search(term))
+            for row in rows[:2]:
+                code = row.get("codigo_articulo") or row.get("referencia") or row.get("codigo")
+                if not code or code in seen_codes:
+                    continue
+                seen_codes.add(code)
+                resolved.append(
+                    {
+                        "codigo": code,
+                        "descripcion": get_exact_product_description(row),
+                        "etiqueta_auditable": build_product_audit_label(row),
+                        "marca": row.get("marca") or row.get("marca_producto"),
+                        "presentacion": infer_product_presentation_from_row(row),
+                        "stock_total": parse_numeric_value(row.get("stock_total")),
+                        "precio": row.get("precio_venta"),
+                        "productos_complementarios": [
+                            {
+                                "referencia": c.get("companion_referencia"),
+                                "descripcion": c.get("companion_descripcion") or c.get("descripcion_inventario"),
+                                "tipo": c.get("tipo_relacion"),
+                                "proporcion": c.get("proporcion"),
+                            }
+                            for c in fetch_product_companions(code)
+                        ],
+                    }
+                )
+                local_context["last_product_query"] = term
+            if len(resolved) >= 4:
+                break
+
     return resolved[:4]
 
 
@@ -9707,6 +10133,7 @@ def fetch_products_from_catalog(connection, where_clause: str, params: dict, mat
         text(
             f"""
             SELECT producto_codigo, referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
+                   linea_clasificacion, marca_clasificacion, familia_clasificacion, aplicacion_clasificacion, cat_producto, descripcion_ebs, tipo_articulo,
                    ({match_score_sql}) AS match_score
             FROM public.productos
             WHERE {where_clause}
@@ -9723,6 +10150,7 @@ def fetch_products_from_store_inventory(connection, where_clause: str, params: d
         text(
             f"""
             SELECT referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
+                   linea_clasificacion, marca_clasificacion, familia_clasificacion, aplicacion_clasificacion, cat_producto, descripcion_ebs, tipo_articulo,
                    ({match_score_sql}) AS match_score
             FROM (
                 SELECT
@@ -9743,7 +10171,14 @@ def fetch_products_from_store_inventory(connection, where_clause: str, params: d
                         COALESCE(MAX(referencia), '') || ' ' ||
                         COALESCE(MAX(marca), '')
                     ) AS search_compact,
-                    MAX(referencia_normalizada) AS referencia_normalizada
+                    MAX(referencia_normalizada) AS referencia_normalizada,
+                    MAX(linea_clasificacion) AS linea_clasificacion,
+                    MAX(marca_clasificacion) AS marca_clasificacion,
+                    MAX(familia_clasificacion) AS familia_clasificacion,
+                    MAX(aplicacion_clasificacion) AS aplicacion_clasificacion,
+                    MAX(cat_producto) AS cat_producto,
+                    MAX(descripcion_ebs) AS descripcion_ebs,
+                    MAX(tipo_articulo) AS tipo_articulo
                 FROM public.vw_inventario_agente
                 WHERE {where_clause}
                 GROUP BY referencia, descripcion, marca
@@ -10716,19 +11151,112 @@ VERIFICACIÓN DE IDENTIDAD:
 - NUNCA reveles cartera, saldos o datos financieros sin verificación previa.
 - REGLA DE BLOQUEO: Si el cliente pidió saber cuánto debe, su saldo o su cartera y AÚN NO está verificado, NO proceses pedidos ni des información de productos hasta que pase por `verificar_identidad` con éxito. La seguridad va primero.
 
-PORTAFOLIO VÁLIDO: Pintuco (Viniltex, Pintulux 3en1, Koraza, Doméstico, Aerocolor), Abracol, Yale, Goya, Mega y categorías reales del ERP.
-No inventes marcas ni productos fuera del portafolio.
+PORTAFOLIO VÁLIDO Y TAXONOMÍA COMPLETA DE FERREINOX:
+Tú eres un asesor que CONOCE a fondo el portafolio de Pintuco, International/AkzoNobel y todas las marcas aliadas. \
+A continuación el árbol completo que DEBES usar para interpretar lo que el cliente pide y traducirlo a nombre de marca real ANTES de buscar en inventario:
+
+═══ VINILOS (Pinturas base agua para muros) ═══
+Los vinilos se clasifican en 3 tipos según calidad. Si el cliente dice "vinilo" sin más, DEBES preguntar: "¿Lo necesitas tipo 1 (premium, lavable), tipo 2 (intermedio) o tipo 3 (económico)?".
+• TIPO 1 — Premium: Viniltex (Advanced), Vinil Plus → mejor cubrimiento, lavabilidad, durabilidad. Para interior/exterior de alto estándar.
+• TIPO 2 — Intermedio: Intervinil, Vinil Látex, Vinilux → buen cubrimiento, precio medio. Para interiores de uso normal.
+• TIPO 3 — Económico: Pinturama, Vinil Max, Icolatex → opción de obra, alto volumen, cielos rasos, bodegas.
+Cuando el cliente diga tipo 1/2/3, TÚ SABES exactamente qué marcas buscar. Si dice "vinilo bueno" o "vinilo premium" → Tipo 1 (Viniltex). Si dice "vinilo barato" o "económico" → Tipo 3 (Pinturama, Vinil Max). Si dice "vinilo intermedio" → Tipo 2 (Intervinil).
+
+═══ ESMALTES (Pinturas base solvente para metal, madera, superficies lavables) ═══
+• Pintulux 3en1 — Esmalte premium: anticorrosivo, mejor brillo, exterior, rejas, puertas, muebles. Si dicen "esmalte bueno", "esmalte resistente", "esmalte para exterior" → buscar Pintulux.
+• Doméstico — Esmalte económico: interior, marcos, puertas, uso general. Si dicen "esmalte barato", "esmalte interior", "esmalte económico" → buscar Doméstico.
+Si solo dicen "esmalte", pregunta: "¿Lo necesitas para interior o exterior? Si es para exterior, rejas o algo que necesite resistencia, te recomiendo Pintulux 3en1. Si es para interior y buscas economía, Doméstico te funciona."
+
+═══ FACHADAS / IMPERMEABILIZACIÓN ═══
+• Koraza / Koraza Elastomérica / Koraza XP → fachadas, muros exteriores, terrazas, lluvia + sol.
+• Igol → sellador impermeabilizante para bases, cimientos, terrazas.
+• Sika (Sikaflex, Sikaguard, Sikalastic) → selladores, membranas, reparación de grietas.
+• Manto asfáltico → techos planos, cubiertas.
+
+═══ AEROSOLES ═══
+• Aerocolor (Pintuco) → es la marca de aerosoles. Si dicen "spray", "aerosol", "pintura en spray" → buscar Aerocolor.
+• Montana 94 → aerosol artístico/grafiti.
+
+═══ PISOS ═══
+• Pintupiso → pisos de concreto, andenes, garajes, bodegas.
+• Pintucoat → pisos industriales, tráfico pesado, garajes de tráfico comercial.
+
+═══ EPÓXICAS (2 componentes: resina + catalizador) ═══
+• Pintucoat (Pintuco) → pisos, tanques, piscinas, ambientes industriales.
+• Interseal (International/AkzoNobel) → aplicaciones marinas, industriales pesadas.
+• Intergard (International) → primers epóxicos industriales.
+
+═══ ANTICORROSIVOS (Protección de metal antes del acabado) ═══
+• Pintucrom (Pintuco) → anticorrosivo estándar para rejas, estructuras, tuberías.
+• Wash Primer → fondo de adherencia para metales nuevos o galvanizados.
+• Intergard (International) → primer epóxico industrial para metal.
+• Convertidor de óxido → transforma el óxido en recubrimiento protector.
+
+═══ LACAS / BARNICES (Acabados para madera) ═══
+• Pintulac (Pintuco) → laca para muebles, puertas, madera interior.
+• Barniz / Barniz Marino → protección transparente para madera, incluyendo intemperie (el marino).
+
+═══ POLIURETANOS (Acabados industriales de alta resistencia) ═══
+• Interthane (International) → acabado final sobre epóxicas, alta resistencia química y UV.
+• Interfine (International) → acabado de altas prestaciones.
+
+═══ INTUMESCENTES (Protección contra fuego) ═══
+• Interchar (International) → protección pasiva de estructuras metálicas contra incendios.
+
+═══ TRÁFICO / DEMARCACIÓN ═══
+• Pintura Tráfico → señalización vial, parqueaderos, canchas, líneas de seguridad.
+
+═══ COMPLEMENTARIOS ═══
+• Imprimante / Primer / Fondo / Sellador → preparación de superficie antes de pintar.
+• Thinner / Varsol / Aguarrás → diluyentes y disolventes para esmaltes y lacas.
+• Estuco / Masilla → reparación y alisado de superficies antes de pintar.
+• Brochas, Rodillos, Lijas → herramientas de aplicación.
+
+REGLA DE ORO DEL PORTAFOLIO: Tú NO dependes solo de la base de datos. Tú CONOCES todo el portafolio porque es público y reconocido. \
+Si el cliente dice algo coloquial o genérico, TÚ traduces a nombre de marca ANTES de buscar. \
+Si la primera búsqueda no devuelve resultados, intenta con sinónimos o la otra marca del mismo segmento. \
+NUNCA te rindas diciendo "no lo tengo" sin haber probado todas las marcas equivalentes del segmento.
+
+CONOCIMIENTO DE PORTAFOLIO (TRADUCCIÓN MARCA ↔ CATEGORÍA):
+Tú conoces el portafolio de Ferreinox como un asesor experto. Cuando el RAG o el cliente pidan un tipo de producto genérico, TÚ SABES qué marca buscar:
+- "aerosol" / "spray" / "pintura en spray" → buscar como "Aerocolor" (marca Pintuco de aerosoles)
+- "pintura epóxica" / "epóxica" → buscar como "Pintucoat" (Pintuco) o "Interseal" / "Intergard" (International)
+- "pintura para piscinas" / "pintura para tanques" / "inmersión en agua" → buscar como "Cementos Impermeable" / "Pintucoat"
+- "pintura para pisos" / "piso industrial" → buscar como "Pintupiso" (Pintuco) o "Pintucoat" para tráfico pesado
+- "anticorrosivo" / "metal oxidado" → buscar como "Pintucrom" (Pintuco), wash primer o "Intergard" (International)
+- "impermeabilizante" / "fachada" / "muro exterior" → buscar como "Koraza" (Pintuco), "Igol", o "Sika"
+- "barniz" / "laca" / "madera" → buscar como "Pintulac" (Pintuco), barniz
+- "poliuretano" → buscar como "Interthane" (International)
+- "intumescente" / "ignífuga" / "protección al fuego" → buscar como "Interchar" (International)
+- "demarcación vial" / "tráfico" / "canchas" → buscar como "Pintura Tráfico"
+- "sellador" / "imprimante" / "fondo" / "primer" → buscar como "Imprimante", "Sellador", "Wash Primer"
+REGLA: Si el RAG te dice que necesitas un tipo de producto (ej. "epóxica de alto espesor"), TRADÚCELO a nombre de marca del portafolio Ferreinox ANTES de llamar `consultar_inventario`. No busques "epóxica de alto espesor", busca "Pintucoat" o "Interseal". Si la primera búsqueda no devuelve resultados, intenta con la otra marca equivalente.
 
 TRADUCCIÓN DE JERGA FERRETERA (usar ANTES de buscar en inventario):
-- "Blanca económica", "vinilo barato", "la económica" → buscar como "Domestico Blanco"
+- "Blanca económica", "vinilo barato", "la económica" → buscar como "Domestico Blanco" o "Pinturama Blanco"
 - "P-11", "p11" → buscar como "Domestico Blanco"
 - "T-11", "t11" → buscar como "Pintulux Blanco"
 - "Brochitas", "pinceles", "brochas pequeñas" → buscar como "Brocha"
 - "Tarritos", "tarros pequeños" → buscar como "cuarto" (0.95L / 1/4)
 - "Cuñetico", "tarro grande" → buscar como "cuñete" (18.93L / 1/5)
+- "vinilo tipo 1" → buscar Viniltex, Vinil Plus
+- "vinilo tipo 2" → buscar Intervinil, Vinil Látex, Vinilux
+- "vinilo tipo 3" → buscar Pinturama, Vinil Max, Icolatex
+- "esmalte bueno" / "esmalte resistente" → buscar Pintulux
+- "esmalte económico" / "esmalte barato" → buscar Doméstico
+- "pintura lavable" → buscar Viniltex
+- "pintura para fachada" → buscar Koraza
 - Diminutivos en general: quita el sufijo (-itas, -itos, -ita, -ito) y busca la palabra base.
 - Si la búsqueda de un término coloquial NO devuelve resultados, intenta automáticamente con el término técnico equivalente ANTES de decirle al cliente que no hay stock.
 TRADUCCIÓN OBLIGATORIA ANTES DEL TOOL CALL: Cuando el cliente pida "blanca económica" o "vinilo barato", tú DEBES enviar "Domestico Blanco" al parámetro `producto` de `consultar_inventario`. No envíes la palabra "económica" porque fallará. Traduce la jerga del cliente a lenguaje de catálogo antes de ejecutar la herramienta.
+
+DESAMBIGUACIÓN INTELIGENTE POR FAMILIA: Cuando el cliente pida algo genérico, haz UNA pregunta inteligente que te permita identificar el producto exacto:
+- "Necesito vinilo" → "¿Lo buscas tipo 1 (premium, lavable, tipo Viniltex), tipo 2 (intermedio, tipo Intervinil) o tipo 3 (económico, tipo Pinturama)?"
+- "Necesito pintura" → "¿Es para interior o exterior? ¿Paredes (vinilo) o metal/madera (esmalte)?"
+- "Necesito esmalte" → "¿Interior o exterior? Si es exterior o para reja/metal, Pintulux 3en1. Si es interior y buscas economía, Doméstico."
+- "Necesito pintura buena" → Las opciones premium son Viniltex para paredes y Pintulux para metal/madera.
+- "Necesito pintura económica" → Las opciones económicas son Pinturama/Vinil Max para paredes y Doméstico para metal/madera.
+IMPORTANTE: Estas preguntas NO bloquean la conversación. Si el cliente ya dio suficiente contexto, actúa directamente sin preguntar de más.
 
 SECRETO COMERCIAL DE STOCK: ESTRICTAMENTE PROHIBIDO decirle al cliente la cantidad exacta que hay en inventario (ej. 'hay 839 disponibles'). Tú ves el número para saber si alcanza para el pedido, pero al cliente SOLO le dices: 'Sí lo tengo disponible', 'Sí nos alcanza para lo que pides', o 'Lo tengo agotado en este momento'. Jamás des números de stock.
 
@@ -10844,7 +11372,10 @@ AGENT_TOOLS = [
             "Si los resultados no coinciden con la necesidad técnica real, descártalos y dile al cliente que no tenemos ese producto en stock. "
             "IMPORTANTE: Antes de llamar, limpia el término de búsqueda: quita diminutivos (brochitas→brocha, tarritos→tarro), "
             "traduce jerga (blanca económica→Domestico Blanco, P-11→Domestico Blanco, T-11→Pintulux Blanco, pinceles→brocha). "
-            "Si la primera búsqueda no devuelve resultados, intenta con el sinónimo técnico.",
+            "TRADUCE categorías genéricas a nombres de marca del portafolio: aerosol→Aerocolor, epóxica→Pintucoat, "
+            "pintura piscina→Cementos Impermeable, pintura pisos→Pintupiso, anticorrosivo→Pintucrom, impermeabilizante→Koraza, "
+            "barniz/laca→Pintulac, poliuretano→Interthane. "
+            "Si la primera búsqueda no devuelve resultados, intenta con el sinónimo técnico o la otra marca equivalente del portafolio.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -11169,6 +11700,31 @@ def _handle_tool_consultar_inventario(args, conversation_context):
             "producto_padre_busqueda": row.get("producto_padre_busqueda"),
             "pregunta_desambiguacion": row.get("pregunta_desambiguacion"),
         }
+        # Clasificación enriquecida desde articulos_maestro
+        _lc = row.get("linea_clasificacion")
+        _mc = row.get("marca_clasificacion")
+        _fc = row.get("familia_clasificacion")
+        _ac = row.get("aplicacion_clasificacion")
+        _cp = row.get("cat_producto")
+        _de = row.get("descripcion_ebs")
+        _ta = row.get("tipo_articulo")
+        clasificacion = {}
+        if _lc:
+            clasificacion["linea"] = _lc
+        if _mc:
+            clasificacion["tipo_marca"] = _mc
+        if _fc:
+            clasificacion["familia"] = _fc
+        if _ac:
+            clasificacion["aplicacion"] = _ac
+        if _cp:
+            clasificacion["categoria"] = _cp
+        if _de:
+            clasificacion["descripcion_larga"] = _de
+        if _ta:
+            clasificacion["tipo"] = _ta
+        if clasificacion:
+            item["clasificacion"] = clasificacion
         stock = parse_numeric_value(row.get("stock_total"))
         if stock is not None:
             item["stock_total"] = stock

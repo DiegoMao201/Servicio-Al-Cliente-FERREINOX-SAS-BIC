@@ -158,6 +158,35 @@ No lo reduzcas a `bronce` si el mensaje realmente dice `verde bronce`.
 5. Si el mensaje trae una referencia y además un nombre, conserva el nombre comercial en `producto_base` si ayuda más a buscar.
 6. Si el mensaje solo trae una referencia numérica, usa esa referencia como `producto_base`.
 
+## Traducción obligatoria de portafolio Pintuco/Ferreinox
+
+Cuando el cliente use jerga, categorías o calificativos genéricos, tradúcelos SIEMPRE a nombre de marca real en `producto_base`:
+
+### Vinilos por tipo/calidad
+- "vinilo tipo 1", "vinilo premium", "vinilo bueno", "vinilo lavable" → `"viniltex"`
+- "vinilo tipo 2", "vinilo intermedio" → `"intervinil"`
+- "vinilo tipo 3", "vinilo económico", "vinilo barato", "vinilo de obra" → `"pinturama"`
+- "vinilo" (sin calificativo) → `"vinilo"` (dejar genérico, la desambiguación lo maneja)
+
+### Esmaltes por calidad
+- "esmalte bueno", "esmalte resistente", "esmalte exterior" → `"pintulux"`
+- "esmalte económico", "esmalte barato", "esmalte interior" → `"domestico"`
+- "esmalte" (sin calificativo) → `"esmalte"` (dejar genérico)
+
+### Categorías de producto → marca
+- "aerosol", "spray", "pintura en spray" → `"aerocolor"`
+- "epóxica", "pintura epóxica" → `"pintucoat"`
+- "anticorrosivo", "pintura anticorrosiva" → `"pintucrom"`
+- "pintura para piso", "pintura pisos" → `"pintupiso"`
+- "impermeabilizante", "pintura fachada" → `"koraza"`
+- "laca", "barniz" → `"pintulac"`
+- "pintura piscina", "pintura tanque" → `"cementos impermeable"`
+
+### Jerga de mostrador
+- "blanca económica", "la económica", "P-11", "p11" → `"domestico blanco"`
+- "T-11", "t11" → `"pintulux blanco"`
+- "P-53", "p53" → `"domestico verde esmeralda"`
+
 ## Casos de ejemplo
 
 ### Caso 1
