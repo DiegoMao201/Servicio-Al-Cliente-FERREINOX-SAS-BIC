@@ -8371,9 +8371,14 @@ def extract_candidate_products_from_rag_context(
 ) -> list[str]:
     candidates: list[str] = []
     # A) Extract explicitly tagged products from RAG chunks
+    # Skip FDS/HDS (safety data sheets) — they match broadly but are not
+    # product recommendations. Only keep FT (ficha técnica) product tags.
     for match in re.finditer(r"\[PRODUCTO:\s*([^\]]+)\]", rag_context or "", flags=re.IGNORECASE):
         candidate = match.group(1).strip()
         if candidate and candidate not in candidates:
+            candidate_upper = candidate.upper()
+            if candidate_upper.startswith("FDS") or candidate_upper.startswith("HDS"):
+                continue
             candidates.append(candidate)
     # B) Extract brand/product names mentioned in the RAG text that match known portfolio
     if rag_context:
