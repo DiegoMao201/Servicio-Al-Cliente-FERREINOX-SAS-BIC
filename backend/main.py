@@ -13107,6 +13107,32 @@ def health_check():
         return {"backend": "ok", "postgrest": "error", "postgrest_url": postgrest_url, "detail": str(exc)}
 
 
+@app.get("/admin/rag-diagnostico")
+def admin_rag_diagnostico(admin_key: str = Header(None, alias="x-admin-key")):
+    """Diagnóstico del RAG: qué fichas técnicas hay indexadas."""
+    expected = os.getenv("ADMIN_API_KEY", "ferreinox_admin_2024")
+    if admin_key != expected:
+        raise HTTPException(status_code=403, detail="Admin key inválida")
+    try:
+        engine = get_db_engine()
+        with engine.connect() as conn:
+            total = conn.execute(text("SELECT COUNT(*) FROM public.agent_technical_doc_chunk")).scalar() or 0
+            docs = conn.execute(text(
+                "SELECT doc_filename, marca, familia_producto, tipo_documento, COUNT(*) as chunks "
+                "FROM public.agent_technical_doc_chunk "
+                "GROUP BY doc_filename, marca, familia_producto, tipo_documento "
+                "ORDER BY doc_filename"
+            )).fetchall()
+        return {
+            "total_chunks": total,
+            "documentos": [
+                {"archivo": r[0], "marca": r[1], "familia": r[2], "tipo": r[3], "chunks": r[4]}
+                for r in docs
+            ],
+        }
+    except Exception as exc:
+        return {"error": str(exc)}
+
 # ---------------------------------------------------------------------------
 # ADMIN: Importar articulos_maestro desde Excel (upload)
 # ---------------------------------------------------------------------------
