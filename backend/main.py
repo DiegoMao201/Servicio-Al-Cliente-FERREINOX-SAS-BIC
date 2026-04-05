@@ -10673,6 +10673,11 @@ REGLAS FUNDAMENTALES:
     - Cuando recibas fragmentos de fichas técnicas o FDS, responde ÚNICA Y EXCLUSIVAMENTE con lo que está en el texto recuperado.
     - Si el cliente pide un dato y NO ESTÁ en el texto recuperado, TIENES PROHIBIDO inventarlo usando conocimiento general.
     - Di: 'Ese dato exacto no lo tengo en la ficha técnica base en este momento. Déjame validarlo con logística o el fabricante.'
+18. CAMBIO DE CONTEXTO INSTANTÁNEO:
+    - Si el cliente cambia de tema radicalmente (estaba hablando de pintura y ahora manda un número largo, o dice 'revisar compras', 'cuánto debo'), ASUME que es una nueva intención. No sigas con el tema anterior.
+    - Un número puede ser MUCHAS cosas: una cédula, un NIT, una referencia de producto, un código de artículo, una cantidad. NUNCA asumas qué es. Mira el contexto de lo que pidió antes o pregunta.
+    - Si no sabes si un número es cédula o referencia, PREGUNTA: '¿Ese número es tu documento de identidad o es una referencia de producto?'
+    - Tú manejas la conversación. Si el cliente escribe algo confuso o enredado, no te paralices. Identifica lo más importante y responde a eso. Si hay varias cosas mezcladas, resuélvelas una por una.
 
 VERIFICACIÓN DE IDENTIDAD:
 - Para cartera, saldos o datos sensibles: pide cédula o NIT y usa verificar_identidad.
@@ -10743,12 +10748,12 @@ DOCUMENTOS: Si te piden ficha técnica u hoja de seguridad, USA LA HERRAMIENTA `
 DOCUMENTOS MÚLTIPLES: Si la herramienta `buscar_documento_tecnico` te devuelve 'multiples_opciones', NO digas que no lo encontraste. Muéstrale al cliente una lista corta y amable con las opciones y pregúntale: 'Tengo estas versiones, ¿cuál de estas fichas necesitas exactamente?'.
 
 ASESORÍA TÉCNICA INTELIGENTE (MODELO HÍBRIDO RAG):
-- PASO 1 — DIAGNÓSTICO PRIMERO: Si el cliente trae un problema amplio (ej. 'tengo humedad', 'quiero proteger un metal', 'necesito pintar madera'), primero diagnostica con máximo 2 preguntas clave por turno hasta identificar la necesidad exacta. No busques en RAG todavía.
-- PASO 2 — CONSULTA OBLIGATORIA: Solo cuando ya tengas la necesidad exacta diagnosticada o un producto/sistema identificado, usa `consultar_conocimiento_tecnico`. No busques términos genéricos; busca exactamente el problema diagnosticado o la referencia del producto correcto.
-- PASO 3 — EXTRACCIÓN DE DATOS REALES: Lee 'respuesta_rag' y extrae los DATOS CONCRETOS: nombres de productos, códigos, proporciones exactas, tiempos exactos, temperaturas, rendimientos y pasos de aplicación. NUNCA digas frases vagas. Si el dato no está literal o claramente sustentado en el texto recuperado, no lo inventes.
-- PASO 4 — RESPALDO PDF: Después del dato técnico, invoca `buscar_documento_tecnico` para enviar el PDF. Di: 'Te envío la ficha técnica oficial como respaldo.'
-- EXCEPCIÓN: Si `consultar_conocimiento_tecnico` devuelve encontrado=false, usa `buscar_documento_tecnico` para enviar el PDF y dile al cliente que revise la ficha.
-- REGLA DE ORO: Si el RAG te devuelve información, tu respuesta DEBE contener al menos un dato específico extraído de 'respuesta_rag' (un nombre, un número, una proporción, un tiempo). Si no encuentras el dato específico en el RAG, di honestamente: 'En la ficha que tengo no aparece ese dato exacto, pero te la envío para que la revises.'
+- PASO 1 — DIAGNÓSTICO PRIMERO: Si el cliente trae un problema amplio (ej. 'tengo humedad', 'quiero proteger un metal', 'necesito pintar un techo', 'cómo protejo una fachada', 'se me grieta la pared'), primero diagnostica con máximo 2 preguntas clave por turno. No busques en RAG todavía. Pregunta lo que un maestro pintor preguntaría: ¿interior o exterior? ¿qué material? ¿qué síntomas? ¿qué acabado quiere?
+- PASO 2 — CONSULTA OBLIGATORIA: Cuando ya tengas la necesidad diagnosticada, usa `consultar_conocimiento_tecnico` con una pregunta DETALLADA que incluya el diagnóstico (ej. 'sistema para impermeabilizar muro interior con humedad por presión negativa en pared estucada' o 'pintura para piso de cemento interior tráfico peatonal'). La herramienta buscará en las fichas técnicas Y te devolverá productos reales del inventario.
+- PASO 3 — EXTRACCIÓN Y CIERRE: Lee 'respuesta_rag' y extrae los DATOS CONCRETOS. Si la herramienta devuelve 'productos_inventario_relacionados', CIERRA LA VENTA: recomiéndale al cliente esos productos reales con el formato '✅'. NUNCA inventes productos que no estén en 'productos_inventario_relacionados'.
+- PASO 4 — RESPALDO PDF: Después, invoca `buscar_documento_tecnico` para enviar la ficha técnica.
+- CAMBIO DE TEMA: Si en medio de la asesoría técnica el cliente cambia de tema (pide cartera, manda cédula, pregunta por otro producto), SIGUE EL NUEVO TEMA. No te quedes pegado en la asesoría anterior. Tú lees TODO el historial y sabes qué está pidiendo ahora.
+- REGLA DE ORO: Si el RAG te devuelve información, tu respuesta DEBE contener al menos un dato específico. Si no encuentra el dato en el RAG, dilo honestamente. NUNCA inventes datos técnicos.
 
 PRODUCTOS COMPLEMENTARIOS (CATALIZADORES, DILUYENTES, BASES):
 - Si `consultar_inventario` devuelve un campo `productos_complementarios` en algún producto, DEBES informar al cliente de forma proactiva. Ejemplo: 'Este producto necesita catalizador EGA247 y diluyente Ajustador 21209.'
@@ -10882,17 +10887,21 @@ AGENT_TOOLS = [
         "function": {
             "name": "consultar_conocimiento_tecnico",
             "description": "Busca información técnica detallada en las fichas técnicas vectorizadas (RAG). "
-            "Úsala ANTES de responder preguntas técnicas como: tiempos de secado, relación de mezcla, "
-            "preparación de superficie, rendimiento, temperatura de aplicación, número de manos, dilución, etc. "
-            "Esta herramienta lee el contenido real de las fichas técnicas y te da la respuesta precisa. "
-            "Después de usarla, SIEMPRE envía el PDF con `buscar_documento_tecnico` como respaldo oficial.",
+            "Úsala OBLIGATORIAMENTE cuando: "
+            "1) El cliente pregunte datos técnicos puntuales (tiempos de secado, relación de mezcla, preparación de superficie, rendimiento, dilución, etc.). "
+            "2) Ya hayas diagnosticado un problema del cliente (humedad, pisos, madera, techos, fachadas, tanques, etc.) y necesites buscar QUÉ PRODUCTO o SISTEMA recomendar. "
+            "Esta herramienta lee el contenido real de ~1000 fichas técnicas del portafolio y te devuelve la respuesta precisa más los productos reales del inventario relacionados. "
+            "NUNCA respondas preguntas técnicas de memoria. SIEMPRE consulta esta herramienta primero. "
+            "Después de usarla, envía el PDF con `buscar_documento_tecnico` como respaldo.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "pregunta": {
                         "type": "string",
-                        "description": "La pregunta técnica específica. Ej: '¿Cuál es el tiempo de secado del Viniltex?', "
-                        "'¿Cómo se prepara la superficie para Koraza?', '¿Cuál es la relación de mezcla del Interseal 670?'",
+                        "description": "La pregunta técnica o la necesidad diagnosticada. "
+                        "Ej puntuales: '¿Cuál es el tiempo de secado del Viniltex?', '¿Cuál es la relación de mezcla del Interseal 670?'. "
+                        "Ej diagnóstico: 'sistema para impermeabilizar muro interior con humedad por presión negativa', "
+                        "'pintura para piso de concreto interior alto tráfico', 'sistema anticorrosivo para metal ferroso en ambiente marino'.",
                     },
                     "producto": {
                         "type": "string",
@@ -11927,7 +11936,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     if producto:
         search_query = f"{producto}: {pregunta}"
 
-    chunks = search_technical_chunks(search_query, top_k=5, marca_filter=marca_filter)
+    chunks = search_technical_chunks(search_query, top_k=6, marca_filter=marca_filter)
     if not chunks:
         return json.dumps(
             {"encontrado": False, "respuesta_rag": None,
@@ -11940,23 +11949,47 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     source_files = list(dict.fromkeys(c.get("doc_filename", "") for c in chunks if c.get("similarity", 0) >= 0.25))
     best_similarity = max(c.get("similarity", 0) for c in chunks)
 
-    return json.dumps(
-        {
-            "encontrado": True,
-            "respuesta_rag": rag_context,
-            "archivos_fuente": source_files,
-            "mejor_similitud": round(best_similarity, 4),
-            "mensaje": (
-                "INSTRUCCIONES OBLIGATORIAS: "
-                "1) Lee 'respuesta_rag' y extrae DATOS CONCRETOS: nombres de catalizadores/componentes, "
-                "proporciones exactas (ej. '4:1'), tiempos (ej. 'secado al tacto: 30 min'), rendimientos, temperaturas. "
-                "2) Tu respuesta al cliente DEBE incluir al menos un dato específico numérico o un nombre de producto extraído de 'respuesta_rag'. "
-                "3) PROHIBIDO decir frases genéricas como 'un agente de curado específico' o 'según las condiciones'. Cita el dato real. "
-                "4) Luego usa `buscar_documento_tecnico` con el nombre del archivo fuente para enviar el PDF como respaldo."
-            ),
-        },
-        ensure_ascii=False,
-    )
+    # Extract candidate products from RAG and resolve against real inventory
+    candidate_product_names = extract_candidate_products_from_rag_context(rag_context, source_files[0] if source_files else None)
+    inventory_candidates = []
+    if candidate_product_names:
+        inventory_candidates = lookup_inventory_candidates_from_terms(candidate_product_names, conversation_context)
+
+    result_payload = {
+        "encontrado": True,
+        "respuesta_rag": rag_context,
+        "archivos_fuente": source_files,
+        "mejor_similitud": round(best_similarity, 4),
+        "mensaje": (
+            "INSTRUCCIONES OBLIGATORIAS: "
+            "1) Lee 'respuesta_rag' y extrae DATOS CONCRETOS: nombres de catalizadores/componentes, "
+            "proporciones exactas (ej. '4:1'), tiempos (ej. 'secado al tacto: 30 min'), rendimientos, temperaturas. "
+            "2) Tu respuesta al cliente DEBE incluir al menos un dato específico numérico o un nombre de producto extraído de 'respuesta_rag'. "
+            "3) PROHIBIDO decir frases genéricas como 'un agente de curado específico' o 'según las condiciones'. Cita el dato real. "
+            "4) Luego usa `buscar_documento_tecnico` con el nombre del archivo fuente para enviar el PDF como respaldo."
+        ),
+    }
+
+    if inventory_candidates:
+        result_payload["productos_inventario_relacionados"] = [
+            {
+                "codigo": p.get("codigo"),
+                "descripcion": p.get("descripcion"),
+                "etiqueta_auditable": p.get("etiqueta_auditable"),
+                "marca": p.get("marca"),
+                "presentacion": p.get("presentacion"),
+                "disponible": bool(p.get("stock_total") and parse_numeric_value(p.get("stock_total")) > 0),
+                "complementarios": p.get("productos_complementarios") or [],
+            }
+            for p in inventory_candidates
+        ]
+        result_payload["instruccion_productos"] = (
+            "ENCONTRÉ PRODUCTOS REALES del portafolio Ferreinox relacionados con esta consulta técnica. "
+            "Después de dar la asesoría técnica, CIERRA LA VENTA: recomiéndale al cliente estos productos concretos. "
+            "Usa el formato: 'Vea, los productos que necesitas son estos:' seguido de la lista con ✅."
+        )
+
+    return json.dumps(result_payload, ensure_ascii=False, default=str)
 
 
 def _handle_tool_guardar_producto_complementario(args, conversation_context):
@@ -12547,16 +12580,6 @@ async def receive_whatsapp_webhook(request: Request):
                 if content and message_type in {"text", "button", "interactive"}:
                     try:
                         ai_result = handle_internal_whatsapp_message(content, context, conversation_context)
-                        detected_intent = detect_business_intent(content)
-                        if ai_result is None and (
-                            detected_intent == "asesoria_tecnica"
-                            or should_continue_technical_advisory_flow(conversation_context, detected_intent, content)
-                        ):
-                            ai_result = build_technical_advisory_flow_reply(
-                                context.get("nombre_visible"),
-                                content,
-                                conversation_context,
-                            )
                         if ai_result is None:
                             ai_result = generate_agent_reply_v2(
                                 context.get("nombre_visible"),
