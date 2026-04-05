@@ -4980,16 +4980,28 @@ def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None
 
 
 def build_rag_context(chunks: list[dict], max_chunks: int = 4) -> str:
-    """Build a textual context from RAG chunks for injection into the agent prompt."""
+    """Build a textual context from RAG chunks for injection into the agent prompt.
+
+    Skips FDS/HDS (safety data sheet) chunks entirely — they contain chemical
+    hazard classifications and transport regulations that add noise and zero
+    value for product recommendation.  Only FT (ficha técnica) content is
+    useful for advising customers.
+    """
     if not chunks:
         return ""
     parts = []
     seen_files = set()
-    for chunk in chunks[:max_chunks]:
+    for chunk in chunks[:max_chunks + 4]:  # read more to compensate for FDS skips
+        if len(parts) >= max_chunks:
+            break
         similarity = chunk.get("similarity", 0)
         if similarity < 0.25:
             continue
         filename = chunk.get("doc_filename", "desconocido")
+        # Skip FDS/HDS safety data sheets — no recommendation value
+        fn_upper = (filename or "").upper()
+        if fn_upper.startswith("FDS") or fn_upper.startswith("HDS"):
+            continue
         text_content = (chunk.get("chunk_text") or "").strip()
         if not text_content:
             continue
