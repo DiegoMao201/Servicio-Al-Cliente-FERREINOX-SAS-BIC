@@ -8330,14 +8330,52 @@ def is_coverage_followup_question(text_value: Optional[str]) -> bool:
     )
 
 
-def extract_candidate_products_from_rag_context(rag_context: str, source_file: Optional[str] = None) -> list[str]:
+def _derive_portfolio_candidates_from_question(question: str) -> list[str]:
+    """Derive product candidates from a question using PORTFOLIO_CATEGORY_MAP.
+
+    This ensures the right products are ALWAYS suggested as candidates even
+    when RAG returns irrelevant chunks (e.g. safety data sheets instead of
+    technical sheets).  The products come from the curated portfolio map.
+    """
+    if not question:
+        return []
+    q_norm = normalize_text_value(question)
     candidates: list[str] = []
-    # Extract explicitly tagged products
+    seen: set[str] = set()
+    # Full-phrase matching against category keys
+    for category_key, brand_terms in PORTFOLIO_CATEGORY_MAP.items():
+        if category_key in q_norm or q_norm in category_key:
+            for bt in brand_terms:
+                if bt != "__SIN_PRODUCTO_FERREINOX__" and bt not in seen:
+                    seen.add(bt)
+                    candidates.append(bt)
+    # Word-level matching
+    _SKIP_WORDS = {"para", "como", "esto", "esta", "esos", "esas", "unos", "unas",
+                   "tiene", "cada", "todo", "toda", "estos", "estas", "necesito",
+                   "quiero", "pintar", "casa", "esta"}
+    for word in q_norm.split():
+        if len(word) < 4 or word in _SKIP_WORDS:
+            continue
+        if word in PORTFOLIO_CATEGORY_MAP:
+            for bt in PORTFOLIO_CATEGORY_MAP[word]:
+                if bt != "__SIN_PRODUCTO_FERREINOX__" and bt not in seen:
+                    seen.add(bt)
+                    candidates.append(bt)
+    return candidates
+
+
+def extract_candidate_products_from_rag_context(
+    rag_context: str,
+    source_file: Optional[str] = None,
+    original_question: str = "",
+) -> list[str]:
+    candidates: list[str] = []
+    # A) Extract explicitly tagged products from RAG chunks
     for match in re.finditer(r"\[PRODUCTO:\s*([^\]]+)\]", rag_context or "", flags=re.IGNORECASE):
         candidate = match.group(1).strip()
         if candidate and candidate not in candidates:
             candidates.append(candidate)
-    # Extract brand/product names mentioned in the RAG text that match known portfolio
+    # B) Extract brand/product names mentioned in the RAG text that match known portfolio
     if rag_context:
         rag_lower = normalize_text_value(rag_context)
         _KNOWN_PRODUCT_NAMES = [
@@ -8349,6 +8387,8 @@ def extract_candidate_products_from_rag_context(rag_context: str, source_file: O
             "pintoxido", "pintura trafico", "barniz marino", "barnex", "wood stain",
             "estuco anti humedad", "impercoat", "tela de refuerzo",
             "pintura cielos", "pintuobra", "aislante", "emulsion asfaltica",
+            "viniltex banos y cocinas", "viniltex advanced", "viniltex ultralavable",
+            "madetec", "construmastic", "pintulac nitro",
             # International / AkzoNobel
             "interseal", "interthane", "intergard", "interfine", "interchar",
             # Impermeabilizantes / selladores
@@ -8358,12 +8398,19 @@ def extract_candidate_products_from_rag_context(rag_context: str, source_file: O
         for product_name in _KNOWN_PRODUCT_NAMES:
             if product_name in rag_lower and product_name not in candidates:
                 candidates.append(product_name)
+    # C) Inject portfolio-derived candidates from the original question
+    # This ensures correct products appear even when RAG returns wrong chunks
+    if original_question:
+        portfolio_candidates = _derive_portfolio_candidates_from_question(original_question)
+        for pc in portfolio_candidates:
+            if pc not in candidates:
+                candidates.append(pc)
     if source_file:
         normalized_file = re.sub(r"\.pdf$", "", source_file, flags=re.IGNORECASE).strip()
         normalized_file = re.sub(r"\s*\(.*?\)\s*", " ", normalized_file).strip()
         if normalized_file and normalized_file not in candidates:
             candidates.insert(0, normalized_file)
-    return candidates[:8]
+    return candidates[:12]
 
 
 def _expand_terms_with_portfolio_knowledge(terms: list[str]) -> list[str]:
@@ -11431,7 +11478,9 @@ MADERA → Sospecha: Barnex/Wood Stain (exterior) o Pintulac (interior)
   - Exterior (pérgola, deck) → Barnex Extra Protección o Wood Stain
   - Interior → Pintulac (transparente) o Pintulux (color sólido)
 
-FLUJO CORRECTO: 1) Escucha el problema → 2) Sospecha un producto basado en el árbol → 3) Haz 1-2 preguntas para confirmar tu sospecha → 4) Llama consultar_conocimiento_tecnico con el producto sospechado → 5) Da la asesoría técnica con datos de la ficha → 6) Ofrece vender los productos.
+FLUJO CORRECTO: 1) Escucha el problema → 2) Sospecha un producto basado en el árbol → 3) Haz 1-2 preguntas para confirmar tu sospecha → 4) Llama consultar_conocimiento_tecnico con el producto sospechado (SIEMPRE pasa el parámetro 'producto' con tu sospecha - NUNCA llames esta herramienta sin un producto específico cuando sea asesoría técnica) → 5) Da la asesoría técnica con datos concretos de la ficha (rendimiento, preparación, tiempos) → 6) Ofrece vender los productos con precio y stock.
+
+REGLA CRÍTICA DEL PARÁMETRO 'producto': Cuando llames `consultar_conocimiento_tecnico` para asesoría técnica, SIEMPRE incluye el parámetro `producto` con el nombre del producto que sospechas (ej: "aquablock", "koraza", "pintuco fill", "corrotec", "pintucoat", "pintura canchas"). Sin este parámetro, la búsqueda técnica devuelve resultados genéricos. CON el parámetro, devuelve la ficha técnica exacta con todos los detalles del producto.
 8. REGLA DE CONVERSACIÓN NATURAL: máximo 2 preguntas clave por turno. No abrumes al cliente ni suenes a formulario.
 9. Preguntas fuera de tema: responde brevemente con naturalidad y redirige al negocio.
 10. FLUJO ACTIVO: Si hay un pedido o reclamo en curso, no lo abandones a menos que el cliente lo pida explícitamente.
@@ -12949,12 +12998,12 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     chunks = search_technical_chunks(search_query, top_k=6, marca_filter=marca_filter)
 
     # ── Portfolio-aware second search pass ──────────────────────────
-    # If the initial RAG search returned weak results (low similarity) AND no
-    # specific product was provided, try again with portfolio-expanded terms.
-    # This catches cases like "pared mojada" where RAG alone doesn't find
-    # Aquablock, but PORTFOLIO_CATEGORY_MAP knows humedad → aquablock.
+    # If the initial RAG search returned weak/wrong results AND no specific
+    # product was provided, try again with portfolio-expanded terms.
+    # Threshold 0.70: most correct product-level queries score >0.70,
+    # so anything below that likely means the RAG didn't find the right product.
     best_sim_initial = max((c.get("similarity", 0) for c in chunks), default=0)
-    if best_sim_initial < 0.55 and not producto:
+    if best_sim_initial < 0.70 and not producto:
         # Extract key terms from the question and expand via portfolio map
         pregunta_norm = normalize_text_value(pregunta)
         portfolio_products: list[str] = []
@@ -13001,7 +13050,10 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     best_similarity = max(c.get("similarity", 0) for c in chunks)
 
     # Extract candidate products from RAG and resolve against real inventory
-    candidate_product_names = extract_candidate_products_from_rag_context(rag_context, source_files[0] if source_files else None)
+    candidate_product_names = extract_candidate_products_from_rag_context(
+        rag_context, source_files[0] if source_files else None,
+        original_question=pregunta,
+    )
     inventory_candidates = []
     if candidate_product_names:
         inventory_candidates = lookup_inventory_candidates_from_terms(candidate_product_names, conversation_context)
@@ -13472,7 +13524,7 @@ def admin_rag_buscar(
 
         # Portfolio-aware expansion (same logic as the real agent handler)
         best_sim = max((c.get("similarity", 0) for c in chunks), default=0)
-        if best_sim < 0.55 and not producto.strip():
+        if best_sim < 0.70 and not producto.strip():
             q_norm = normalize_text_value(query)
             portfolio_prods: list[str] = []
             for cat_key, brand_terms in PORTFOLIO_CATEGORY_MAP.items():
@@ -13509,7 +13561,9 @@ def admin_rag_buscar(
                 "texto": (c.get("chunk_text") or "")[:500],
             })
         rag_ctx = build_rag_context(chunks, max_chunks=4)
-        candidates = extract_candidate_products_from_rag_context(rag_ctx)
+        candidates = extract_candidate_products_from_rag_context(
+            rag_ctx, original_question=query,
+        )
         return {
             "query": query,
             "resultados": results,
