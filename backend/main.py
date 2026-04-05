@@ -20,7 +20,7 @@ import logging
 import dropbox
 import pandas as pd
 import requests
-from fastapi import FastAPI, Header, HTTPException, Query, Request
+from fastapi import FastAPI, Header, HTTPException, Query, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
 from openai import OpenAI
 from openpyxl import Workbook
@@ -13041,6 +13041,178 @@ def health_check():
         return {"backend": "ok", "postgrest": "ok", "postgrest_url": postgrest_url}
     except Exception as exc:
         return {"backend": "ok", "postgrest": "error", "postgrest_url": postgrest_url, "detail": str(exc)}
+
+
+# ---------------------------------------------------------------------------
+# ADMIN: Importar articulos_maestro desde Excel (upload)
+# ---------------------------------------------------------------------------
+@app.post("/admin/importar-articulos-maestro")
+async def admin_importar_articulos_maestro(
+    archivo: UploadFile = File(...),
+    admin_key: str = Header(None, alias="x-admin-key"),
+):
+    """
+    Sube articulos.xlsx y ejecuta:
+      1. Crea tabla articulos_maestro (si no existe)
+      2. Importa/actualiza 20,000+ artículos con clasificación ERP
+      3. Actualiza las vistas de inventario (search_blob enriquecido)
+
+    Uso con curl:
+      curl -X POST https://apicrm.datovatenexuspro.com/admin/importar-articulos-maestro \
+        -H "x-admin-key: TU_ADMIN_KEY" \
+        -F "archivo=@articulos.xlsx"
+    """
+    expected_key = os.getenv("ADMIN_API_KEY", "ferreinox_admin_2024")
+    if admin_key != expected_key:
+        raise HTTPException(status_code=403, detail="Admin key inválida. Envía header x-admin-key.")
+
+    import tempfile
+    import unicodedata as _unicodedata
+
+    import pandas as _pd
+
+    # --- Guardar archivo temporal ---
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx")
+    try:
+        content = await archivo.read()
+        tmp.write(content)
+        tmp.close()
+        excel_path = tmp.name
+
+        # --- Leer Excel ---
+        df = _pd.read_excel(excel_path, sheet_name="Hoja1", header=0, dtype=str)
+
+        # --- Mapeo columnas ---
+        HEADER_TO_DB = {
+            "Descripción": "descripcion", "Cód. Barras": "codigo_barras",
+            "Código Artículo": "codigo_articulo", "Referencia": "referencia",
+            "Descripción Adicional": "descripcion_adicional", "Departamento": "departamento",
+            "Seccion": "seccion", "Família": "familia", "SubFamilia": "subfamilia",
+            "Marca": "marca_erp", "Linea": "linea_erp", "PROVEEDOR": "proveedor",
+            "DESCRIPCION_EBS": "descripcion_ebs", "UDM": "udm",
+            "CAT_PRODUCTO": "cat_producto", "APLICACION": "aplicacion",
+            "LINEA": "linea_clasificacion", "SUBLINEA": "sublinea",
+            "MARCA": "marca_clasificacion", "FAMILIA": "familia_clasificacion",
+            "SUBFAMILIA": "subfamilia_clasificacion", "TIPO": "tipo",
+        }
+        rename_map = {}
+        for header, db_col in HEADER_TO_DB.items():
+            matches = [h for h in df.columns if h.strip() == header.strip()]
+            if matches:
+                rename_map[matches[-1]] = db_col
+
+        df_sel = df[list(rename_map.keys())].copy()
+        df_sel.columns = [rename_map[c] for c in df_sel.columns]
+
+        def _clean(val):
+            if val is None or _pd.isna(val):
+                return None
+            s = str(val).strip()
+            return None if s in ("", "None", "0", " ", "nan") else s
+
+        for col in df_sel.columns:
+            df_sel[col] = df_sel[col].apply(_clean)
+
+        df_sel = df_sel[df_sel["referencia"].notna()].copy()
+        df_sel = df_sel.drop_duplicates(subset="referencia", keep="first")
+
+        def _keep_alnum(tv):
+            if not tv or str(tv).strip() in ("", "None"):
+                return None
+            s = _unicodedata.normalize("NFD", str(tv).strip().upper())
+            s = "".join(c for c in s if _unicodedata.category(c) != "Mn")
+            s = re.sub(r"[^A-Z0-9]", "", s)
+            return s or None
+
+        df_sel["referencia_normalizada"] = df_sel["referencia"].apply(_keep_alnum)
+
+        DB_COLUMNS = [
+            "codigo_articulo", "referencia", "referencia_normalizada", "codigo_barras",
+            "descripcion", "descripcion_adicional", "descripcion_ebs",
+            "departamento", "seccion", "familia", "subfamilia", "marca_erp", "linea_erp",
+            "proveedor", "udm", "cat_producto", "aplicacion",
+            "linea_clasificacion", "sublinea", "marca_clasificacion",
+            "familia_clasificacion", "subfamilia_clasificacion", "tipo",
+        ]
+        for col in DB_COLUMNS:
+            if col not in df_sel.columns:
+                df_sel[col] = None
+
+        # --- Conectar y ejecutar ---
+        engine = get_db_engine()
+        with engine.begin() as conn:
+            # 1. Crear tabla
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.articulos_maestro (
+                    id bigserial PRIMARY KEY, codigo_articulo text, referencia text NOT NULL,
+                    referencia_normalizada text, codigo_barras text, descripcion text,
+                    descripcion_adicional text, descripcion_ebs text, departamento text,
+                    seccion text, familia text, subfamilia text, marca_erp text, linea_erp text,
+                    proveedor text, udm text, cat_producto text, aplicacion text,
+                    linea_clasificacion text, sublinea text, marca_clasificacion text,
+                    familia_clasificacion text, subfamilia_clasificacion text, tipo text,
+                    activo boolean DEFAULT true,
+                    created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now()
+                )
+            """))
+            conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS uq_articulos_maestro_ref ON public.articulos_maestro (referencia)"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS idx_articulos_maestro_ref_norm ON public.articulos_maestro (referencia_normalizada)"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS idx_articulos_maestro_codigo ON public.articulos_maestro (codigo_articulo)"))
+
+            # 2. Truncar e importar
+            conn.execute(text("TRUNCATE public.articulos_maestro RESTART IDENTITY"))
+
+            upsert_sql = """
+                INSERT INTO public.articulos_maestro (
+                    codigo_articulo, referencia, referencia_normalizada, codigo_barras,
+                    descripcion, descripcion_adicional, descripcion_ebs,
+                    departamento, seccion, familia, subfamilia, marca_erp, linea_erp,
+                    proveedor, udm, cat_producto, aplicacion,
+                    linea_clasificacion, sublinea, marca_clasificacion,
+                    familia_clasificacion, subfamilia_clasificacion, tipo
+                ) VALUES (
+                    :codigo_articulo, :referencia, :referencia_normalizada, :codigo_barras,
+                    :descripcion, :descripcion_adicional, :descripcion_ebs,
+                    :departamento, :seccion, :familia, :subfamilia, :marca_erp, :linea_erp,
+                    :proveedor, :udm, :cat_producto, :aplicacion,
+                    :linea_clasificacion, :sublinea, :marca_clasificacion,
+                    :familia_clasificacion, :subfamilia_clasificacion, :tipo
+                )
+            """
+            records = df_sel[DB_COLUMNS].to_dict("records")
+            batch_size = 500
+            for i in range(0, len(records), batch_size):
+                conn.execute(text(upsert_sql), records[i: i + batch_size])
+
+            total_imported = conn.execute(text("SELECT COUNT(*) FROM public.articulos_maestro")).scalar()
+
+            # 3. Actualizar vistas con search_blob enriquecido
+            sql_migration_path = Path(__file__).resolve().parent / "articulos_maestro_setup.sql"
+            if sql_migration_path.exists():
+                sql_content = sql_migration_path.read_text(encoding="utf-8")
+                # Extraer solo las sentencias CREATE OR REPLACE VIEW (saltar CREATE TABLE/INDEX que ya ejecutamos)
+                for stmt_match in re.finditer(
+                    r"(CREATE OR REPLACE VIEW[^;]+;)",
+                    sql_content,
+                    re.DOTALL | re.IGNORECASE,
+                ):
+                    conn.execute(text(stmt_match.group(1)))
+
+        engine.dispose()
+        return {
+            "exito": True,
+            "articulos_importados": total_imported,
+            "columnas_detectadas": list(rename_map.values()),
+            "mensaje": f"Se importaron {total_imported:,} artículos y se actualizaron las vistas de búsqueda.",
+        }
+
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error importando artículos: {exc}") from exc
+    finally:
+        try:
+            os.unlink(tmp.name)
+        except OSError:
+            pass
 
 
 @app.get("/agent/clientes/{cliente_codigo}/contexto")

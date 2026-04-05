@@ -186,7 +186,9 @@ def main():
     full_mode = "--full" in sys.argv
     dry_run = "--dry-run" in sys.argv
 
-    excel_path = EXCEL_PATH
+    # Accept explicit path as positional argument
+    positional_args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    excel_path = positional_args[0] if positional_args else EXCEL_PATH
     if not os.path.exists(excel_path):
         # Intentar ruta alternativa
         alt = os.path.join(os.getcwd(), "articulos.xlsx")

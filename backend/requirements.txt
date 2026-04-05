@@ -12,3 +12,4 @@ xlrd
 reportlab
 pymupdf
 pgvector
+python-multipart
