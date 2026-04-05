@@ -607,18 +607,19 @@ PORTFOLIO_ALIASES = {
     "p53": ["p53", "p-53", "p 53", "verde esmeral", "verde esmer"],
     # ── LÍNEAS ESPECIALIZADAS PINTUCO ──
     "pintucoat": ["pintucoat", "epoxica pintuco", "epoxica", "epóxica", "epóxica pintuco", "epoxy", "epoxi pintuco", "recubrimiento epoxica"],
-    "pintupiso": ["pintupiso", "pintura piso", "pintura pisos", "pintura para pisos", "pintura de piso", "pintura cemento piso"],
-    "pintucrom": ["pintucrom", "anticorrosivo pintuco", "anticorrosivo", "anti corrosivo", "cromato pintuco"],
+    "pintura canchas": ["pintura canchas", "pintura para canchas", "pintura de cancha", "canchas"],
+    "corrotec": ["corrotec", "anticorrosivo pintuco", "anticorrosivo", "anti corrosivo", "corrotec premium"],
+    "pintoxido": ["pintoxido", "desoxidante", "convertidor oxido", "convertidor óxido", "convertidor de oxido"],
     "pintacrom": ["pintacrom", "pinta crom", "anticorrosivo aerosol"],
     "pintulac": ["pintulac", "laca pintuco", "laca", "laca madera"],
     "aerocolor": ["aerocolor", "aerosol pintuco", "aerosol", "spray pintuco", "spray pintura", "pintura spray", "pintura aerosol", "spray"],
     "koraza": ["koraza", "impermeabilizante koraza", "koraza elastomerica", "koraza elastomerico", "pintura fachada", "pintura exterior fachada"],
     "world color": ["world color", "worldcolor", "tinte pintuco", "base tintometrica", "base tintométrica"],
     "imprimante": ["imprimante", "imprimante pintuco", "primer", "fondo", "sellador fondo", "primer pintuco"],
-    "cementos impermeable": ["cementos impermeable", "pintura cementos", "pintura cemento", "cementosa", "impermeabilizante cementos"],
+    "pintuco fill": ["pintuco fill", "impermeabilizante pintuco", "fill 7", "fill 12", "pintuco fill 7", "pintuco fill 12"],
     "pintura trafico": ["pintura trafico", "pintura tráfico", "pintura demarcacion", "pintura demarcación", "demarcacion vial", "pintura vial"],
     "wash primer": ["wash primer", "washprimer", "primer anticorrosivo", "fondo anticorrosivo"],
-    "convertidor oxido": ["convertidor oxido", "convertidor óxido", "convertidor de oxido", "convertidor de óxido", "transformador oxido"],
+
     # ── INTERNATIONAL / AKZONOBEL ──
     "interseal": ["interseal", "epoxica international", "epóxica international", "epoxica akzonobel"],
     "interthane": ["interthane", "poliuretano international", "poliuretano akzonobel", "poliuretano"],
@@ -626,10 +627,10 @@ PORTFOLIO_ALIASES = {
     "interfine": ["interfine", "acabado international", "acabado interthane"],
     "interchar": ["interchar", "intumescente", "pintura intumescente", "ignifuga", "ignífuga", "ignifugo"],
     # ── IMPERMEABILIZANTES / SELLADORES ──
-    "igol": ["igol", "igol denso", "igol transparente", "impermeabilizante igol"],
-    "sika": ["sika", "sikaflex", "sikaguard", "sikalastic", "impermeabilizante sika"],
-    "aquablock": ["aquablock", "aqua block", "sello humedad", "sellador humedad", "impermeabilizante humedad", "bloqueador humedad"],
-    "manto asfaltico": ["manto asfaltico", "manto asfáltico", "manto", "impermeabilizante manto"],
+    "sika": ["sika", "sika 1", "sika-1", "sikamur", "impermeabilizante sika"],
+    "aquablock": ["aquablock", "aqua block", "aquablock ultra", "sello humedad", "sellador humedad", "impermeabilizante humedad", "bloqueador humedad"],
+    "sellamur": ["sellamur", "sella mur", "sellador muro", "sellador mur"],
+    "siliconite": ["siliconite", "silicon", "silicona impermeabilizante"],
     # ── CERRADURAS / FERRETERÍA ──
     "mega": ["mega", "cerradura mega", "sobreponer"],
     "cerradura": ["cerradura", "cerradur", "chapa", "lock"],
@@ -708,8 +709,8 @@ PINTUCO_PRODUCT_TAXONOMY = {
     },
     "pisos": {
         "descripcion": "Pinturas especiales para pisos de concreto y cemento",
-        "marcas": ["Pintupiso"],
-        "uso": "Pisos de concreto, andenes, garajes, bodegas",
+        "marcas": ["Pintura para Canchas", "Pintucoat"],
+        "uso": "Pisos de concreto, andenes, garajes (Canchas). Pisos industriales de alto tráfico (Pintucoat).",
     },
     "epoxicas": {
         "descripcion": "Recubrimientos de alto desempeño, dos componentes (resina + catalizador)",
@@ -718,7 +719,7 @@ PINTUCO_PRODUCT_TAXONOMY = {
     },
     "anticorrosivos": {
         "descripcion": "Fondos y primers protectores contra la oxidación del metal",
-        "marcas": ["Pintucrom", "Wash Primer", "Intergard"],
+        "marcas": ["Corrotec", "Corrotec Premium", "Pintoxido", "Wash Primer", "Intergard"],
         "uso": "Metal oxidado, estructuras metálicas, tuberías, rejas antes de esmalte final",
     },
     "lacas_barnices": {
@@ -756,13 +757,13 @@ PORTFOLIO_CATEGORY_MAP = {
     "inmersion": ["__SIN_PRODUCTO_FERREINOX__"],
     "inmersion en agua": ["__SIN_PRODUCTO_FERREINOX__"],
     # ── Pisos ──
-    "pintura piso": ["pintupiso", "pintucoat", "pintura pisos"],
-    "piso industrial": ["pintupiso", "pintucoat", "epoxica pisos"],
-    "piso cemento": ["pintupiso", "pintura pisos"],
-    "piso trafico": ["pintupiso", "pintucoat", "pintura trafico"],
-    "piso concreto": ["pintupiso", "pintura pisos"],
-    "garaje": ["pintupiso", "pintura pisos"],
-    "anden": ["pintupiso", "pintura pisos"],
+    "pintura piso": ["pintura canchas", "pintucoat", "pintura pisos"],
+    "piso industrial": ["pintucoat", "epoxica pisos"],
+    "piso cemento": ["pintura canchas", "pintura pisos"],
+    "piso trafico": ["pintucoat", "pintura trafico"],
+    "piso concreto": ["pintura canchas", "pintura pisos"],
+    "garaje": ["pintura canchas", "pintura pisos"],
+    "anden": ["pintura canchas", "pintura pisos"],
     # ── Epóxicas ──
     "epoxica": ["pintucoat", "interseal", "intergard", "epoxica", "epoxy"],
     "epoxica industrial": ["pintucoat", "interseal", "intergard"],
@@ -770,21 +771,21 @@ PORTFOLIO_CATEGORY_MAP = {
     "recubrimiento epoxica": ["pintucoat", "interseal", "intergard"],
     "dos componentes": ["pintucoat", "interseal", "intergard"],
     # ── Anticorrosivos / metal ──
-    "anticorrosivo": ["pintucrom", "anticorrosivo", "wash primer", "intergard"],
-    "metal": ["pintucrom", "pintulux", "anticorrosivo", "wash primer", "esmalte"],
-    "oxidado": ["pintucrom", "anticorrosivo", "convertidor oxido", "wash primer"],
-    "proteccion metalica": ["pintucrom", "pintulux", "anticorrosivo"],
-    "reja": ["pintulux", "pintucrom", "anticorrosivo", "esmalte"],
-    "estructura metalica": ["pintucrom", "intergard", "anticorrosivo", "pintulux"],
-    "tuberia": ["pintucrom", "anticorrosivo", "pintulux"],
+    "anticorrosivo": ["corrotec", "anticorrosivo", "wash primer", "intergard"],
+    "metal": ["corrotec", "pintulux", "anticorrosivo", "wash primer", "esmalte"],
+    "oxidado": ["corrotec", "pintoxido", "anticorrosivo", "wash primer"],
+    "proteccion metalica": ["corrotec", "pintulux", "anticorrosivo"],
+    "reja": ["pintulux", "corrotec", "anticorrosivo", "esmalte"],
+    "estructura metalica": ["corrotec", "intergard", "anticorrosivo", "pintulux"],
+    "tuberia": ["corrotec", "anticorrosivo", "pintulux"],
     # ── Impermeabilizantes / fachadas / techos ──
-    "impermeabilizante": ["koraza", "igol", "sika", "manto", "impermeabilizante"],
+    "impermeabilizante": ["koraza", "pintuco fill", "aquablock", "siliconite", "impermeabilizante"],
     "fachada": ["koraza", "viniltex", "koraza elastomerica"],
-    "techo": ["koraza", "manto", "igol", "impermeabilizante techo"],
-    "humedad": ["aquablock", "igol", "sika", "impermeabilizante", "sellador"],
-    "goteras": ["manto", "igol", "sika", "impermeabilizante"],
-    "terraza": ["koraza", "manto", "igol", "impermeabilizante"],
-    "cubierta": ["manto", "koraza", "igol", "impermeabilizante"],
+    "techo": ["koraza", "pintuco fill", "impermeabilizante techo"],
+    "humedad": ["aquablock", "sellamur", "sika", "impermeabilizante", "sellador"],
+    "goteras": ["pintuco fill", "siliconite", "impermeabilizante"],
+    "terraza": ["koraza", "pintuco fill", "impermeabilizante"],
+    "cubierta": ["koraza", "pintuco fill", "impermeabilizante"],
     # ── Aerosoles ──
     "aerosol": ["aerocolor", "montana", "spray", "aerosol"],
     "spray": ["aerocolor", "montana", "spray", "aerosol"],
@@ -806,9 +807,9 @@ PORTFOLIO_CATEGORY_MAP = {
     "proteccion fuego": ["interchar", "intumescente"],
     # ── Demarcación vial / canchas ──
     "demarcacion": ["pintura trafico", "demarcacion", "demarcacion vial"],
-    "trafico": ["pintura trafico", "pintupiso", "demarcacion"],
-    "cancha": ["pintura trafico", "pintupiso"],
-    "parqueadero": ["pintura trafico", "pintupiso"],
+    "trafico": ["pintura trafico", "pintura canchas", "demarcacion"],
+    "cancha": ["pintura canchas", "pintura trafico"],
+    "parqueadero": ["pintura trafico", "pintura canchas"],
     "señalizacion": ["pintura trafico", "demarcacion"],
     # ── Selladores / fondos ──
     "sellador": ["sellador", "imprimante", "fondo", "primer"],
@@ -857,23 +858,27 @@ PORTFOLIO_GAPS = {
 PRODUCT_TECHNICAL_HARD_RULES = {
     "koraza": {
         "es_para": "Pintura elastomérica para FACHADAS exteriores, muros exteriores expuestos a lluvia y sol, terrazas descubiertas.",
-        "no_es_para": "NO es sellador de humedad interna, NO es impermeabilizante de muros con filtración, NO sella grietas con presión de agua. Para humedad interna se necesitan productos como Aquablock, Igol o Sika.",
+        "no_es_para": "NO es sellador de humedad interna, NO es impermeabilizante de muros con filtración, NO sella grietas con presión de agua. Para humedad interna usa Aquablock o Sellamur.",
     },
     "pintucoat": {
         "es_para": "Recubrimiento epóxico para pisos industriales de alto tráfico, superficies de concreto en ambientes industriales y bodegas.",
         "no_es_para": "NO es para piscinas, NO es para tanques de agua, NO es para inmersión en agua, NO es para superficies sumergidas. Ferreinox no maneja pintura para piscinas.",
     },
-    "cementos impermeable": {
-        "es_para": "Pintura cementosa para impermeabilizar superficies de concreto en exteriores (muros, fachadas).",
-        "no_es_para": "NO es para piscinas ni para inmersión permanente en agua.",
+    "aquablock": {
+        "es_para": "Sellador y bloqueador de humedad para muros interiores con filtración. Disponible en presentación para interiores (Aquablock) y como impermeabilizante (Aquablock Ultra).",
+        "no_es_para": "NO es para fachadas (para fachadas usar Koraza). NO es para pisos ni piscinas.",
+    },
+    "pintuco fill": {
+        "es_para": "Impermeabilizante para techos, cubiertas, terrazas. La línea más grande de impermeabilizantes del portafolio (Fill 7, Fill 12).",
+        "no_es_para": "NO es para piscinas ni inmersión en agua.",
     },
     "viniltex": {
         "es_para": "Pintura vinílica premium para muros interiores y exteriores. Lavable, buen cubrimiento.",
         "no_es_para": "NO es para pisos, NO es para piscinas, NO es para metal desnudo, NO es para inmersión en agua.",
     },
-    "pintupiso": {
-        "es_para": "Pintura para pisos de concreto, andenes, garajes de uso residencial.",
-        "no_es_para": "NO es para tráfico vehicular pesado ni para pisos industriales de alto impacto.",
+    "pintura canchas": {
+        "es_para": "Pintura para pisos de concreto: canchas deportivas, andenes, garajes, bodegas.",
+        "no_es_para": "NO es para tráfico vehicular pesado ni pisos industriales de alto impacto (para eso usar Pintucoat).",
     },
 }
 
@@ -915,11 +920,11 @@ BRAND_ALIASES = {
     "pintulux": ["pintulux", "pintulux 3en1", "pintulux 3 en 1", "t11", "t-11", "t 11", "esmalte pintulux", "esmalte exterior"],
     "koraza": ["koraza", "koraza elastomerica", "koraza elastomerico", "koraza xp"],
     "pintuco": ["pintuco", "viniltex", "domestico", "doméstico", "pintulux", "koraza", "aerocolor", "pintucoat",
-                "pintupiso", "pintucrom", "pintulac", "pinturama", "intervinil", "vinil latex", "vinil max",
-                "icolatex", "vinilux", "vinil plus", "world color", "cementos impermeable"],
+                "pintura canchas", "corrotec", "pintulac", "pinturama", "intervinil", "vinil latex", "vinil max",
+                "icolatex", "vinilux", "vinil plus", "world color", "pintuco fill"],
     "pintucoat": ["pintucoat", "epoxica pintuco", "epoxi pintuco", "recubrimiento epoxica"],
-    "pintupiso": ["pintupiso", "pintura pisos pintuco", "pintura pisos"],
-    "pintucrom": ["pintucrom", "anticorrosivo pintuco", "cromato pintuco"],
+    "pintura canchas": ["pintura canchas", "pintura pisos pintuco", "pintura pisos"],
+    "corrotec": ["corrotec", "corrotec premium", "anticorrosivo pintuco"],
     "aerocolor": ["aerocolor", "aerosol pintuco", "spray pintuco"],
     "pintulac": ["pintulac", "laca pintuco", "laca"],
     "intervinil": ["intervinil", "inter vinil"],
@@ -1166,14 +1171,14 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
         # ── Anticorrosivos ──
         {
             "pattern": r"\b(anticorrosi\w+|anti\s*corrosi\w+)\b",
-            "brand_filters": ["pintucrom", "pintuco"],
-            "core_terms": ["pintucrom"],
+            "brand_filters": ["corrotec", "anticorrosivo", "pintuco"],
+            "core_terms": ["corrotec"],
         },
         # ── Pintura para piso ──
         {
             "pattern": r"\bpintura\s+(para\s+)?piso\w*\b|\bpintar\s+(el\s+)?piso\b",
-            "brand_filters": ["pintupiso", "pintuco"],
-            "core_terms": ["pintupiso"],
+            "brand_filters": ["pintura canchas", "pintucoat", "pintuco"],
+            "core_terms": ["pintura canchas"],
         },
         # ── Pintura de fachada ──
         {
@@ -8092,15 +8097,15 @@ def extract_candidate_products_from_rag_context(rag_context: str, source_file: O
         rag_lower = normalize_text_value(rag_context)
         _KNOWN_PRODUCT_NAMES = [
             # Pintuco líneas principales
-            "pintucoat", "pintupiso", "pintucrom", "pintulac", "aerocolor", "koraza",
+            "pintucoat", "pintura canchas", "corrotec", "pintulac", "aerocolor", "koraza",
             "viniltex", "pintulux", "domestico", "pinturama", "intervinil", "vinil latex",
             "vinilux", "vinil max", "icolatex", "vinil plus", "pintacrom",
-            "cementos impermeable", "world color", "wash primer", "imprimante",
-            "convertidor oxido", "pintura trafico", "barniz marino",
+            "pintuco fill", "world color", "wash primer", "imprimante",
+            "pintoxido", "pintura trafico", "barniz marino",
             # International / AkzoNobel
             "interseal", "interthane", "intergard", "interfine", "interchar",
-            # Otras marcas
-            "igol", "sikaguard", "sikalastic", "sikaflex", "sika",
+            # Impermeabilizantes / selladores
+            "aquablock", "aquablock ultra", "sellamur", "siliconite", "sika",
             "koraza elastomerica", "koraza xp",
         ]
         for product_name in _KNOWN_PRODUCT_NAMES:
@@ -8119,7 +8124,7 @@ def _expand_terms_with_portfolio_knowledge(terms: list[str]) -> list[str]:
 
     Uses PORTFOLIO_CATEGORY_MAP and PORTFOLIO_ALIASES to translate generic
     use-case language (e.g. 'pintura para piscinas') into real brand names
-    that exist in the Ferreinox inventory (e.g. 'pintucoat', 'cementos impermeable').
+    that exist in the Ferreinox inventory (e.g. 'pintucoat', 'koraza').
     """
     expanded: list[str] = []
     seen: set[str] = set()
@@ -11172,7 +11177,7 @@ Si el RAG confirma que NO es apto, explica amablemente por qué va a fallar y of
 Si el RAG confirma que SÍ es apto, ahí sí consulta inventario y ofrece. \
 Ejemplo: cliente pide 'vinilo blanco para piscina' → Ferreinox NO maneja pintura para piscinas. Respóndele: \
 "No manejamos un producto con garantía técnica para piscinas. Te recomiendo comunicarte con uno de nuestros asesores para orientación." \
-Ejemplo 2: cliente dice 'tengo humedad interna' → NO recomiendes Koraza (es SOLO para fachadas exteriores). Busca Aquablock, Igol o Sika. \
+Ejemplo 2: cliente dice 'tengo humedad interna' → NO recomiendes Koraza (es SOLO para fachadas exteriores). Busca Aquablock o Sellamur. \
 ESTA REGLA PREVALECE sobre cualquier solicitud del cliente. El cliente puede pedir lo que quiera, pero tú eres el experto y proteges su inversión.
 
 PRODUCTOS QUE FERREINOX NO MANEJA (GAPS DEL PORTAFOLIO):
@@ -11186,12 +11191,12 @@ Te recomiendo comunicarte con uno de nuestros asesores para que te orienten con 
 
 REGLAS TÉCNICAS VERIFICADAS POR PRODUCTO (PREVALECEN sobre RAG y conocimiento general):
 - KORAZA: Es pintura elastomérica SOLO para fachadas exteriores, muros exteriores expuestos a lluvia y sol, terrazas descubiertas. \
-  Koraza NO es sellador de humedad interna, NO es impermeabilizante de muros con filtración. Para humedad interna usa Aquablock, Igol o Sika.
+  Koraza NO es sellador de humedad interna, NO es impermeabilizante de muros con filtración. Para humedad interna usa Aquablock o Sellamur.
 - PINTUCOAT: Es recubrimiento epóxico SOLO para pisos industriales de alto tráfico y superficies de concreto industrial. \
   Pintucoat NO es para piscinas, NO es para tanques de agua, NO es para inmersión en agua.
-- CEMENTOS IMPERMEABLE: Pintura cementosa para superficies de concreto en exteriores. NO es para piscinas ni inmersión permanente.
+- AQUABLOCK: Sellador/bloqueador de humedad para muros interiores con filtración. Disponible como Aquablock (interiores) y Aquablock Ultra (impermeabilizante).
+- PINTUCO FILL: Impermeabilizante para techos, cubiertas, terrazas (Fill 7, Fill 12). NO es para piscinas ni inmersión en agua.
 - VINILTEX/VINILOS: Para muros interiores y exteriores. NO es para pisos, piscinas, metal desnudo ni inmersión.
-- PINTUPISO: Para pisos de concreto residencial. NO es para tráfico vehicular pesado ni pisos industriales de alto impacto.
 
 POLÍTICA DE GARANTÍA — BLOQUEO DURO (HARD BLOCK):
 Tienes ESTRICTAMENTE PROHIBIDO vender, cotizar, buscar en inventario o incluir en un pedido un producto que el conocimiento técnico (RAG) \
@@ -11232,16 +11237,18 @@ Si solo dicen "esmalte", pregunta: "¿Lo necesitas para interior o exterior? Si 
 ═══ FACHADAS / IMPERMEABILIZACIÓN ═══
 • Koraza / Koraza Elastomérica / Koraza XP → SOLO fachadas y muros EXTERIORES, terrazas descubiertas, lluvia + sol. Koraza NO es sellador de humedad interna.
 • Aquablock → sellador/bloqueador de humedad para muros interiores con filtración. Es el producto correcto cuando hay humedad interna.
-• Igol → sellador impermeabilizante para bases, cimientos, terrazas.
-• Sika (Sikaflex, Sikaguard, Sikalastic) → selladores, membranas, reparación de grietas.
-• Manto asfáltico → techos planos, cubiertas.
+• Aquablock Ultra → impermeabilizante para muros interiores y exteriores con problemas de humedad.
+• Sellamur → sellador de muros para impermeabilización.
+• Sika (Sika-1, SikaMur) → impermeabilizantes complementarios disponibles en inventario.
+• Pintuco Fill (Fill 7, Fill 12) → impermeabilizante para techos, cubiertas, terrazas. La línea más grande de impermeabilizantes.
+• Siliconite → sellador siliconado para juntas y filtraciones.
 
 ═══ AEROSOLES ═══
 • Aerocolor (Pintuco) → es la marca de aerosoles. Si dicen "spray", "aerosol", "pintura en spray" → buscar Aerocolor.
 • Montana 94 → aerosol artístico/grafiti.
 
 ═══ PISOS ═══
-• Pintupiso → pisos de concreto, andenes, garajes, bodegas.
+• Pintura para Canchas (Pintuco) → pisos de concreto, andenes, garajes, bodegas, canchas deportivas.
 • Pintucoat → pisos industriales, tráfico pesado, garajes de tráfico comercial.
 
 ═══ EPÓXICAS (2 componentes: resina + catalizador) ═══
@@ -11250,10 +11257,10 @@ Si solo dicen "esmalte", pregunta: "¿Lo necesitas para interior o exterior? Si 
 • Intergard (International) → primers epóxicos industriales.
 
 ═══ ANTICORROSIVOS (Protección de metal antes del acabado) ═══
-• Pintucrom (Pintuco) → anticorrosivo estándar para rejas, estructuras, tuberías.
+• Corrotec / Corrotec Premium (Pintuco) → anticorrosivo para rejas, estructuras, tuberías.
+• Pintoxido (Pintuco) → desoxidante y convertidor de óxido para superficies metálicas.
 • Wash Primer → fondo de adherencia para metales nuevos o galvanizados.
 • Intergard (International) → primer epóxico industrial para metal.
-• Convertidor de óxido → transforma el óxido en recubrimiento protector.
 
 ═══ LACAS / BARNICES (Acabados para madera) ═══
 • Pintulac (Pintuco) → laca para muebles, puertas, madera interior.
@@ -11285,10 +11292,10 @@ Tú conoces el portafolio de Ferreinox como un asesor experto. Cuando el RAG o e
 - "aerosol" / "spray" / "pintura en spray" → buscar como "Aerocolor" (marca Pintuco de aerosoles)
 - "pintura epóxica" / "epóxica" → buscar como "Pintucoat" (Pintuco) o "Interseal" / "Intergard" (International)
 - "pintura para piscinas" / "pintura para tanques" / "inmersión en agua" → Ferreinox NO maneja pintura para piscinas ni inmersión. Responde: "No manejamos un producto con garantía técnica para esa aplicación. Te recomiendo comunicarte con un asesor para orientación especializada."
-- "pintura para pisos" / "piso industrial" → buscar como "Pintupiso" (Pintuco) o "Pintucoat" para tráfico pesado
-- "anticorrosivo" / "metal oxidado" → buscar como "Pintucrom" (Pintuco), wash primer o "Intergard" (International)
-- "impermeabilizante" / "fachada" / "muro exterior" → buscar como "Koraza" (Pintuco), "Igol", o "Sika" (SOLO para exterior)
-- "humedad" / "filtración" / "humedad interna" → buscar como "Aquablock", "Igol", "Sika" (NO Koraza, que es solo fachada exterior)
+- "pintura para pisos" / "piso industrial" → buscar como "Pintura para Canchas" (Pintuco) para residencial o "Pintucoat" para tráfico pesado
+- "anticorrosivo" / "metal oxidado" → buscar como "Corrotec" (Pintuco), "Pintoxido", wash primer o "Intergard" (International)
+- "impermeabilizante" / "fachada" / "muro exterior" → buscar como "Koraza" (Pintuco) para fachadas, "Pintuco Fill" para techos
+- "humedad" / "filtración" / "humedad interna" → buscar como "Aquablock", "Sellamur" (NO Koraza, que es solo fachada exterior)
 - "barniz" / "laca" / "madera" → buscar como "Pintulac" (Pintuco), barniz
 - "poliuretano" → buscar como "Interthane" (International)
 - "intumescente" / "ignífuga" / "protección al fuego" → buscar como "Interchar" (International)
@@ -11437,7 +11444,7 @@ AGENT_TOOLS = [
             "IMPORTANTE: Antes de llamar, limpia el término de búsqueda: quita diminutivos (brochitas→brocha, tarritos→tarro), "
             "traduce jerga (blanca económica→Domestico Blanco, P-11→Domestico Blanco, T-11→Pintulux Blanco, pinceles→brocha). "
             "TRADUCE categorías genéricas a nombres de marca del portafolio: aerosol→Aerocolor, epóxica→Pintucoat, "
-            "pintura piscina→Cementos Impermeable, pintura pisos→Pintupiso, anticorrosivo→Pintucrom, impermeabilizante→Koraza, "
+            "pintura pisos→Pintura para Canchas o Pintucoat, anticorrosivo→Corrotec, impermeabilizante→Koraza, "
             "barniz/laca→Pintulac, poliuretano→Interthane. "
             "Si la primera búsqueda no devuelve resultados, intenta con el sinónimo técnico o la otra marca equivalente del portafolio.",
             "parameters": {
