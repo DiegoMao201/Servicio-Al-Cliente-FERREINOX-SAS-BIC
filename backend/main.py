@@ -13196,8 +13196,9 @@ async def admin_importar_articulos_maestro(
                 sql_content = sql_migration_path.read_text(encoding="utf-8")
                 # Quitar comentarios SQL (-- ...) antes de parsear
                 clean_sql = re.sub(r"--[^\n]*", "", sql_content)
+                # Regex que respeta strings SQL entre comillas simples
                 for stmt_match in re.finditer(
-                    r"(CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+[^;]+;)",
+                    r"(CREATE\s+(?:OR\s+REPLACE\s+)?VIEW\s+(?:[^;']|'[^']*')*;)",
                     clean_sql,
                     re.DOTALL | re.IGNORECASE,
                 ):
