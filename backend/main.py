@@ -1272,8 +1272,33 @@ PRODUCT_TECHNICAL_HARD_RULES = {
         "no_es_para": "NO es sellador de humedad interna, NO es impermeabilizante de muros con filtración, NO sella grietas con presión de agua. Para humedad interna usa Aquablock o Sellamur.",
     },
     "pintucoat": {
-        "es_para": "Recubrimiento epóxico para pisos industriales de alto tráfico, superficies de concreto en ambientes industriales y bodegas.",
-        "no_es_para": "NO es para piscinas, NO es para tanques de agua, NO es para inmersión en agua, NO es para superficies sumergidas. Ferreinox no maneja pintura para piscinas.",
+        "es_para": "Recubrimiento epóxico BICOMPONENTE para pisos industriales de alto tráfico, superficies de concreto en ambientes industriales y bodegas.",
+        "no_es_para": "NO es para piscinas, NO es para tanques de agua, NO es para inmersión en agua, NO es para superficies sumergidas.",
+        "bicomponente": (
+            "SIEMPRE requiere catalizador 13227 COMP B. "
+            "GALÓN: COMP A 3.44L + catalizador 13227 COMP B 0.37L. "
+            "CUÑETE: COMP A 15.14L + catalizador 13227 COMP B 1.89L. Pot-life 6h."
+        ),
+        "exterior": "En exterior expuesto al sol entiza. Requiere acabado Interthane (poliuretano) encima. Pintulux 3en1 NO es sustituto de poliuretano.",
+    },
+    "interthane": {
+        "es_para": "Poliuretano de acabado BICOMPONENTE, alta resistencia UV y química. Marca International/AkzoNobel. Capa final sobre epóxicos industriales.",
+        "no_es_para": "NO es anticorrosivo de primera capa. Se aplica sobre imprimación epóxica curada.",
+        "bicomponente": (
+            "SIEMPRE requiere catalizador PHA046. "
+            "GALÓN: COMP A 3.7L + catalizador PHA046 0.5L. "
+            "CUÑETE: COMP A 20L + catalizador PHA046 3.7L."
+        ),
+    },
+    "interseal": {
+        "es_para": "Epóxico de alto espesor BICOMPONENTE (body coat), capa intermedia en sistemas industriales International/AkzoNobel.",
+        "no_es_para": "NO es acabado final en exterior con exposición UV — requiere Interthane encima.",
+        "bicomponente": "Relación y catalizador extraer de ficha técnica International o Guía de Sistemas MPY.",
+    },
+    "intergard": {
+        "es_para": "Primer epóxico BICOMPONENTE, primera capa sobre acero limpio. Protección anticorrosiva base. Marca International/AkzoNobel.",
+        "no_es_para": "NO es acabado final.",
+        "bicomponente": "Relación y catalizador extraer de ficha técnica International.",
     },
     "aquablock": {
         "es_para": "Sellador y bloqueador de humedad para muros interiores con filtración. Disponible en presentación para interiores (Aquablock) y como impermeabilizante (Aquablock Ultra).",
@@ -1292,6 +1317,83 @@ PRODUCT_TECHNICAL_HARD_RULES = {
         "no_es_para": "NO es para tráfico vehicular pesado ni pisos industriales de alto impacto (para eso usar Pintucoat).",
     },
 }
+
+# ── Catálogo verificado de productos bicomponentes ────────────────────────
+# Fuente de verdad interna: los catalizadores y proporciones aquí registrados
+# PREVALECEN sobre cualquier respuesta del RAG o memoria del LLM.
+# Si el RAG no confirma la relación, el agente DEBE citar este catálogo.
+BICOMPONENT_CATALOG: dict[str, dict] = {
+    # ─ Pintucoat (Pintuco) ─────────────────────────────────────────────────
+    # galón COMP A (3.44L, ref 516 o 517) → catalizador 13227 COMP B 0.37L (1/8)
+    # cuñete COMP A (15.14L) → catalizador 13227 COMP B 1.89L
+    "pintucoat": {
+        "tipo_sistema": "epoxica_dos_componentes",
+        "componente_a_descripcion": "Pintucoat 516 o 517 COMP A (base de color)",
+        "componente_b_codigo": "13227",
+        "componente_b_descripcion": "Pintucoat COMP B catalizador",
+        "proporcion_galon": "COMP A 3.44L + catalizador 13227 COMP B 0.37L (1/8 de galón)",
+        "proporcion_cunete": "COMP A 15.14L + catalizador 13227 COMP B 1.89L",
+        "pot_life_horas": 6,
+        "restriccion_exterior": (
+            "Pintucoat es epóxico y ENTIZA (se decolora) en exteriores expuestos al sol. "
+            "En exterior REQUIERE capa de acabado con poliuretano (Interthane). "
+            "NUNCA ofrecer Pintulux 3en1 como acabado sobre Pintucoat: Pintulux es esmalte alquídico, "
+            "no es poliuretano y no da la resistencia UV requerida."
+        ),
+        "acabado_exterior_obligatorio": "interthane",
+    },
+    # ─ Interthane (International / AkzoNobel) ─────────────────────────────
+    # galón (3.7L, PHA120 o PHA130) → catalizador PHA046 0.5L
+    # cuñete (20L) → catalizador PHA046 3.7L
+    "interthane": {
+        "tipo_sistema": "poliuretano_dos_componentes",
+        "componente_a_descripcion": "Interthane 990 COMP A (color, ej. PHA120 o PHA130)",
+        "componente_b_codigo": "PHA046",
+        "componente_b_descripcion": "Interthane 990 PHA046 catalizador (hardener)",
+        "proporcion_galon": "COMP A 3.7L + catalizador PHA046 0.5L",
+        "proporcion_cunete": "COMP A 20L + catalizador PHA046 3.7L",
+        "nota": "Verificar relación exacta en ficha técnica según número de lote y temperatura.",
+    },
+    # ─ Interseal (International / AkzoNobel) ──────────────────────────────
+    "interseal": {
+        "tipo_sistema": "epoxica_dos_componentes",
+        "componente_a_descripcion": "Interseal COMP A",
+        "componente_b_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
+        "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.",
+    },
+    # ─ Intergard (International / AkzoNobel) ──────────────────────────────
+    "intergard": {
+        "tipo_sistema": "epoxica_dos_componentes",
+        "componente_a_descripcion": "Intergard COMP A (primer epóxico)",
+        "componente_b_descripcion": "Intergard COMP B catalizador — consultar ficha técnica International",
+        "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.",
+    },
+    # ─ Interfine (International / AkzoNobel) ──────────────────────────────
+    "interfine": {
+        "tipo_sistema": "poliuretano_dos_componentes",
+        "componente_a_descripcion": "Interfine 979 COMP A",
+        "componente_b_descripcion": "Interfine COMP B catalizador — consultar ficha técnica International",
+        "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International.",
+    },
+}
+
+# Alias rápidos para buscar si un producto cae en BICOMPONENT_CATALOG
+_BICOMPONENT_KEYWORDS: frozenset[str] = frozenset(BICOMPONENT_CATALOG.keys()) | frozenset([
+    "pintucoat 516", "pintucoat 517", "pintucoat plus",
+    "interthane 990", "interseal 670", "intergard 475",
+    "dos componentes", "bicomponente", "comp a", "comp b",
+    "pha046", "pha120", "pha130",
+    "catalizador 13227",
+])
+
+
+def get_bicomponent_info(product_name_or_query: str) -> dict | None:
+    """Return bicomponent catalog entry if the query matches a known 2-component product."""
+    q = normalize_text_value(product_name_or_query)
+    for key, info in BICOMPONENT_CATALOG.items():
+        if key in q:
+            return {"producto_base": key, **info}
+    return None
 
 
 DIRECTION_ALIASES = {
@@ -11949,10 +12051,13 @@ Te recomiendo comunicarte con uno de nuestros asesores para que te orienten con 
 REGLAS TÉCNICAS VERIFICADAS POR PRODUCTO (PREVALECEN sobre RAG y conocimiento general):
 - KORAZA: Es pintura elastomérica SOLO para fachadas exteriores, muros exteriores expuestos a lluvia y sol, terrazas descubiertas. \
   Koraza NO es sellador de humedad interna, NO es impermeabilizante de muros con filtración. Para humedad interna usa Aquablock o Sellamur.
-- PINTUCOAT: Es recubrimiento epóxico SOLO para pisos industriales de alto tráfico y superficies de concreto industrial. \
-  Pintucoat NO es para piscinas, NO es para tanques de agua, NO es para inmersión en agua.
+- PINTUCOAT: Es recubrimiento epóxico BICOMPONENTE (COMP A + catalizador 13227 COMP B) para pisos industriales y concreto industrial. \
+  Pintucoat NO es para piscinas, NO es para tanques, NO es para inmersión. \
+  OBLIGATORIO incluir catalizador 13227: galón COMP A (3.44L) + catalizador 0.37L; cuñete COMP A (15.14L) + catalizador 1.89L. \
+  En exterior expuesto a sol requiere capa Interthane encima. Pintulux 3en1 NO reemplaza Interthane.
 - AQUABLOCK: Sellador/bloqueador de humedad para muros interiores con filtración. Disponible como Aquablock (interiores) y Aquablock Ultra (impermeabilizante).
 - PINTUCO FILL: Impermeabilizante para techos, cubiertas, terrazas (Fill 7, Fill 12). NO es para piscinas ni inmersión en agua.
+- INTERTHANE: Es el ÚNICO poliuretano de acabado en el portafolio. BICOMPONENTE (COMP A + catalizador PHA046). Galón: COMP A 3.7L + PHA046 0.5L. NUNCA confundir con Pintulux 3en1, que es esmalte alquídico, no poliuretano.
 - VINILTEX/VINILOS: Para muros interiores y exteriores. NO es para pisos, piscinas, metal desnudo ni inmersión.
 
 POLÍTICA DE GARANTÍA — BLOQUEO DURO (HARD BLOCK):
@@ -11968,6 +12073,40 @@ que sabemos que va a fallar en esa aplicación. Mi trabajo es proteger tu invers
 Ofrécele ÚNICAMENTE la solución técnica correcta que el RAG recomiende. \
 Si el cliente insiste, repite el argumento técnico sin ceder y ofrece escalar a un asesor especializado si lo desea. \
 TIENES LA AUTORIDAD OPERATIVA para rechazar una venta si es técnicamente inviable. Esa autoridad te la da la gerencia de Ferreinox.
+
+REGLA BICOMPONENTES — OBLIGATORIA (NIVEL ROJO, MÁXIMA PRIORIDAD):
+Los productos bicomponentes son sistemas de 2 partes que SOLO funcionan si se mezclan JUNTAS. \
+Ofrecerlos sin su catalizador es un error técnico gravísimo que daña la obra del cliente. Por tanto:
+
+1. PROHIBICIÓN ABSOLUTA: Tienes ESTRICTAMENTE PROHIBIDO ofrecer, cotizar o agregar al pedido cualquier producto \
+   bicomponente (epóxico o poliuretano) sin incluir SIMULTÁNEAMENTE su catalizador exacto con código, presentación y proporción correctas.
+
+2. PRODUCTOS BICOMPONENTES EN FERREINOX (los que SIEMPRE llevan catalizador):
+   - PINTUCOAT (Pintuco): catalizador 13227 COMP B. Galón COMP A (3.44L) + catalizador 0.37L (1/8). Cuñete COMP A (15.14L) + catalizador 1.89L.
+   - INTERTHANE (International): catalizador PHA046. Galón COMP A (3.7L) + catalizador PHA046 0.5L. Cuñete COMP A (20L) + catalizador PHA046 3.7L.
+   - INTERSEAL, INTERGARD, INTERFINE (International): catalizador según ficha técnica International — DEBES buscarlo en `consultar_conocimiento_tecnico(marca='international', producto='[nombre]', pregunta='catalizador relación de mezcla')`.
+
+3. FLUJO OBLIGATORIO para productos bicomponentes:
+   Paso A → llamar `consultar_conocimiento_tecnico` para extraer: (i) nombre exacto del COMP B / catalizador, (ii) código o referencia del catalizador, (iii) proporción de mezcla COMP A:COMP B.
+   Paso B → usar esos datos del RAG (o del catálogo interno si el RAG falla) para presentar el sistema completo.
+   Paso C → llamar `consultar_inventario` buscando COMP A Y el catalizador (COMP B) por separado.
+   Paso D → presentar SIEMPRE el par: '[Producto COMP A] + [Catalizador COMP B] en proporción X:Y'.
+   NUNCA ir directamente a `consultar_inventario` con solo el COMP A sin haber identificado el catalizador.
+
+4. SI EL RAG NO DA EL CATALIZADOR: Usa el catálogo interno:
+   - Pintucoat → catalizador 13227 COMP B (0.37L para galón, 1.89L para cuñete).
+   - Interthane → catalizador PHA046 (0.5L para galón, 3.7L para cuñete).
+   - Para otros International (Interseal, Intergard): declara honestamente que el catalizador específico \
+     debe verificarse en la ficha técnica y ofrece buscarla con `buscar_documento_tecnico`.
+
+5. PROHIBICIÓN PINTULUX COMO POLIURETANO: Pintulux 3en1 es un ESMALTE ALQUÍDICO de base solvente. \
+   NUNCA es un poliuretano. NUNCA ofrecer Pintulux 3en1 como acabado poliuretano sobre una epóxica. \
+   El único poliuretano para acabado exterior industrial en el portafolio Ferreinox es Interthane (International/AkzoNobel). \
+   Si el sistema requiere 'acabado poliuretano' → buscar ÚNICAMENTE Interthane.
+
+6. PINTUCOAT EN EXTERIOR: Cuando el cliente quiera aplicar Pintucoat en exterior expuesto al sol, \
+   el sistema completo OBLIGATORIO es: Pintucoat (COMP A + catalizador 13227) → Interthane (COMP A + catalizador PHA046). \
+   NUNCA ofrecer solo el Pintucoat para exterior sin el Interthane encima.
 
 VERIFICACIÓN DE IDENTIDAD:
 - Para cartera, saldos o datos sensibles: pide cédula o NIT y usa verificar_identidad.
@@ -11987,9 +12126,10 @@ Los vinilos se clasifican en 3 tipos según calidad. Si el cliente dice "vinilo"
 Cuando el cliente diga tipo 1/2/3, TÚ SABES exactamente qué marcas buscar. Si dice "vinilo bueno" o "vinilo premium" → Tipo 1 (Viniltex). Si dice "vinilo barato" o "económico" → Tipo 3 (Pinturama, Vinil Max). Si dice "vinilo intermedio" → Tipo 2 (Intervinil).
 
 ═══ ESMALTES (Pinturas base solvente para metal, madera, superficies lavables) ═══
-• Pintulux 3en1 — Esmalte premium: anticorrosivo, mejor brillo, exterior, rejas, puertas, muebles. Si dicen "esmalte bueno", "esmalte resistente", "esmalte para exterior" → buscar Pintulux.
-• Doméstico — Esmalte económico: interior, marcos, puertas, uso general. Si dicen "esmalte barato", "esmalte interior", "esmalte económico" → buscar Doméstico.
-Si solo dicen "esmalte", pregunta: "¿Lo necesitas para interior o exterior? Si es para exterior, rejas o algo que necesite resistencia, te recomiendo Pintulux 3en1. Si es para interior y buscas economía, Doméstico te funciona."
+• Pintulux 3en1 — Esmalte alquídico premium: anticorrosivo, mejor brillo, exterior, rejas, puertas, muebles. Si dicen "esmalte bueno", "esmalte resistente", "esmalte para exterior" → buscar Pintulux.
+• Doméstico — Esmalte alquídico económico: interior, marcos, puertas, uso general. Si dicen "esmalte barato", "esmalte interior", "esmalte económico" → buscar Doméstico.
+⚠️ ADVERTENCIA CRÍTICA: Pintulux 3en1 es un ESMALTE ALQUÍDICO, NO es un poliuretano. NUNCA ofrecer Pintulux 3en1 como 'acabado poliuretano' ni como alternativa a Interthane. Si el cliente o el RAG requieren un 'acabado poliuretano de alta resistencia UV', la única opción en el portafolio es Interthane (International/AkzoNobel).
+Si solo dicen "esmalte", pregunta: "¿Lo necesitas para interior o exterior? Si es para exterior, rejas o algo que necesite resistencia, te recomiendo Pintulux 3en1. Si es para exterior industrial con exposición severa, el acabado correcto es Interthane."
 
 ═══ FACHADAS / IMPERMEABILIZACIÓN ═══
 • Koraza / Koraza Elastomérica / Koraza XP → SOLO fachadas y muros EXTERIORES, terrazas descubiertas, lluvia + sol. Koraza NO es sellador de humedad interna.
@@ -12208,6 +12348,7 @@ ASESORÍA TÉCNICA INTELIGENTE (MODELO HÍBRIDO RAG):
 
 PRODUCTOS COMPLEMENTARIOS (CATALIZADORES, DILUYENTES, BASES):
 - Si `consultar_inventario` devuelve un campo `productos_complementarios` en algún producto, DEBES informar al cliente de forma proactiva. Ejemplo: 'Este producto necesita catalizador EGA247 y diluyente Ajustador 21209.'
+- Para productos bicomponentes (epóxicos y poliuretanos), el complementario tipo 'catalizador' es OBLIGATORIO incluirlo en el pedido. NUNCA lo omitas aunque el cliente no lo haya pedido explícitamente. Anuncia: 'Este producto es bicomponente, requiere su catalizador [código] para funcionar. Lo agrego al pedido automáticamente.'
 - Si un experto o asesor interno (ej. Pablo Mafla) te enseña que un producto requiere un catalizador, diluyente, base, sellador o imprimante, guarda esa relación usando `guardar_producto_complementario`.
 - NUNCA ignores los productos complementarios. Son críticos para que el cliente aplique el producto correctamente.
 - Cuando cierres un pedido que incluya productos con complementarios, recuérdale al cliente si no los ha incluido en el pedido.
@@ -13711,6 +13852,31 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "NUNCA resumir a un solo producto. El cliente industrial necesita el esquema completo. "
             "Si algún dato del esquema no aparece en 'respuesta_rag', dilo explícitamente."
         )
+
+    # ── Bicomponent detection: inject catalyst extraction instruction ────────
+    # If this query involves a bicomponent product, force the agent to extract
+    # the exact catalyst code + proportion from the RAG, and warn against
+    # offering the product without its catalyst.
+    _bicomp_info = get_bicomponent_info(f"{pregunta} {producto}")
+    if _bicomp_info:
+        _bkey = _bicomp_info.get("producto_base", "")
+        _catalog_entry = BICOMPONENT_CATALOG.get(_bkey, {})
+        _comp_b = _catalog_entry.get("componente_b_codigo") or "ver ficha técnica"
+        _prop = _catalog_entry.get("proporcion_galon") or _catalog_entry.get("nota") or "ver ficha técnica"
+        result_payload["instruccion_bicomponente"] = (
+            f"⚠️ PRODUCTO BICOMPONENTE DETECTADO ({_bkey.upper()}). REGLAS OBLIGATORIAS: "
+            f"1) Extrae de 'respuesta_rag' el nombre exacto del COMP B / catalizador, su código y la proporción de mezcla. "
+            f"2) CATÁLOGO INTERNO VERIFICADO → catalizador: '{_comp_b}', proporción galón: '{_prop}'. "
+            f"   Si el RAG confirma datos distintos, usa los del RAG. Si el RAG no los tiene, usa el catálogo interno. "
+            f"   NUNCA INVENTES un código de catalizador distinto a estos datos. "
+            f"3) Llama `consultar_inventario` por separado para: (a) el COMP A, (b) el catalizador COMP B. "
+            f"4) Presenta al cliente SIEMPRE el par: COMP A + COMP B en proporción correcta. "
+            f"5) PROHIBIDO mencionar solo el COMP A sin el catalizador. "
+        )
+        if _catalog_entry.get("restriccion_exterior"):
+            result_payload["instruccion_bicomponente"] += (
+                f"6) RESTRICCIÓN EXTERIOR: {_catalog_entry['restriccion_exterior']}"
+            )
 
     if inventory_candidates:
         result_payload["productos_inventario_relacionados"] = [
