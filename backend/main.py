@@ -14257,6 +14257,34 @@ def admin_rag_diagnostico(admin_key: str = Header(None, alias="x-admin-key")):
     except Exception as exc:
         return {"error": str(exc)}
 
+
+@app.post("/admin/agent-test")
+async def admin_agent_test(request: Request, admin_key: str = Header(None, alias="x-admin-key")):
+    """Endpoint de testing: ejecuta `generate_agent_reply_v2` sin pasar por WhatsApp.
+    Útil para pruebas automáticas y validación de aserciones por turno.
+    Body JSON esperado: { profile_name, conversation_context, recent_messages, user_message, context }
+    """
+    expected = os.getenv("ADMIN_API_KEY", "ferreinox_admin_2024")
+    if admin_key != expected:
+        raise HTTPException(status_code=403, detail="Admin key inválida")
+    try:
+        payload = await request.json()
+    except Exception:
+        payload = {}
+
+    profile_name = payload.get("profile_name")
+    conversation_context = payload.get("conversation_context") or {}
+    recent_messages = payload.get("recent_messages") or []
+    user_message = payload.get("user_message") or ""
+    context = payload.get("context") or {}
+
+    try:
+        # Ejecutar la lógica del agente (sin enviar WhatsApp)
+        result = generate_agent_reply_v2(profile_name, conversation_context, recent_messages, user_message, context)
+        return {"ok": True, "result": result}
+    except Exception as exc:
+        return {"error": str(exc)}
+
 # ---------------------------------------------------------------------------
 # ADMIN: Importar articulos_maestro desde Excel (upload)
 # ---------------------------------------------------------------------------

@@ -624,13 +624,8 @@ def run_agent_tests():
     print("PARTE 2: AGENTE COMPLETO — Flujo multi-turno con LLM + herramientas")
     print("=" * 90)
 
-    # Import the core function
-    try:
-        from main import generate_agent_reply_v2
-    except ImportError as e:
-        print(f"\n💥 No se pudo importar generate_agent_reply_v2: {e}")
-        print("   Asegúrate de tener DATABASE_URL y OPENAI_API_KEY configurados.")
-        return 0, 0, 0
+    # Use admin test endpoint to call agent synchronously
+    agent_test_url = f"{BACKEND_URL.rstrip('/')}/admin/agent-test"
 
     total_turns = sum(len(conv["turns"]) for conv in AGENT_CONVERSATIONS)
     passed = 0
@@ -664,14 +659,31 @@ def run_agent_tests():
 
             try:
                 t0 = time.time()
-                result = generate_agent_reply_v2(
-                    profile_name="Test User",
-                    conversation_context=conversation_context,
-                    recent_messages=recent_messages,
-                    user_message=user_message,
-                    context=context,
+                resp = requests.post(
+                    agent_test_url,
+                    headers={"x-admin-key": ADMIN_KEY, "Content-Type": "application/json"},
+                    json={
+                        "profile_name": "Test User",
+                        "conversation_context": conversation_context,
+                        "recent_messages": recent_messages,
+                        "user_message": user_message,
+                        "context": context,
+                    },
+                    timeout=30,
                 )
+                resp.raise_for_status()
+                data = resp.json()
+                if data.get("error"):
+                    raise RuntimeError(data.get("error"))
+                result = data.get("result") or {}
                 elapsed_ms = int((time.time() - t0) * 1000)
+                # Save per-turn result for auditing
+                try:
+                    os.makedirs("artifacts/agent", exist_ok=True)
+                    with open(f"artifacts/agent/conv_{conv_idx:03d}_turn_{turn_idx:02d}.json", "w", encoding="utf-8") as af:
+                        json.dump({"user": user_message, "result": result}, af, ensure_ascii=False, indent=2)
+                except Exception:
+                    pass
             except Exception as e:
                 print(f"  💥 ERROR: {e}")
                 traceback.print_exc()
