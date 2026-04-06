@@ -980,6 +980,33 @@ PORTFOLIO_CATEGORY_MAP = {
     "retardante fuego": ["interchar"],
     "proteccion fuego": ["interchar"],
 
+    # ── LÍNEA INTERNATIONAL/MPY — MANTENIMIENTO INDUSTRIAL ──────────────────
+    # Estos keywords fuerzan búsqueda en la Guía de Sistemas de Mantenimiento Industrial
+    "international": ["interseal", "interthane", "intergard", "interfine", "interchar"],
+    "mpy": ["interseal", "interthane", "intergard", "interfine", "interchar"],
+    "akzonobel": ["interseal", "interthane", "intergard", "interfine", "interchar"],
+    "mantenimiento industrial": ["interseal", "intergard", "interthane", "interfine"],
+    "sistema mantenimiento": ["interseal", "intergard", "interthane"],
+    "recubrimiento industrial": ["interseal", "interthane", "intergard", "interfine"],
+    "anticorrosivo industrial": ["intergard", "interseal", "interthane"],
+    "estructura acero industrial": ["intergard", "interseal", "interthane"],
+    "acero estructural": ["intergard", "interseal", "interthane"],
+    "planta industrial": ["interseal", "intergard", "interthane"],
+    "bodega quimica": ["interseal", "intergard", "interthane"],
+    "almacenamiento quimico": ["interseal", "intergard"],
+    "ambiente quimico": ["interseal", "intergard", "interthane"],
+    "ambientes agresivos": ["interseal", "intergard", "interthane"],
+    "iso 12944": ["interseal", "intergard", "interthane"],
+    "sspc": ["interseal", "intergard", "interthane"],
+    "epimer": ["interseal", "intergard"],
+    "epoxy marino": ["interseal", "intergard"],
+    "primer industrial": ["intergard", "interseal"],
+    "interchar": ["interchar"],
+    "interfine": ["interfine", "interthane"],
+    "interseal": ["interseal", "intergard"],
+    "intergard": ["intergard", "interseal"],
+    "interthane": ["interthane", "interfine"],
+
     # ── SELLADORES / FONDOS ──
     "sellador": ["sellador", "imprimante", "fondo", "primer"],
     "fondo": ["imprimante", "fondo", "sellador", "wash primer"],
@@ -1179,6 +1206,48 @@ DIAGNOSTIC_QUESTION_TREE = {
                 "razon": "Lija/grata para limpiar → anticorrosivo Corrotec si hay óxido → Pintulux acabado de color"},
             "plastico": {"producto": "aerocolor", "confianza": "media",
                 "razon": "Para plásticos, Aerocolor (aerosol) puede dar buenos resultados. Lijar suave para dar adherencia y aplicar."},
+        },
+    },
+    "industrial_mantenimiento": {
+        "disparadores": [
+            "industrial", "international", "mpy", "interseal", "interthane", "intergard",
+            "interfine", "interchar", "estructura de acero", "acero estructural",
+            "planta industrial", "bodega quimica", "mantenimiento industrial",
+            "sistema de pintura industrial", "recubrimiento industrial",
+            "iso 12944", "sspc", "anticorrosivo industrial", "ambiente agresivo",
+            "ambientes quimicos", "corrosion industrial", "epoxica industrial",
+            "proteccion fuego estructura", "intumescente metal",
+        ],
+        "preguntas": [
+            "¿Qué tipo de estructura o superficie necesitas proteger? (acero estructural, tuberías, tanques, pisos industriales, estructura contra incendio)",
+            "¿En qué entorno está expuesta? (interior industrial, exterior corrosivo, ambiente químico, marino, temperatura extrema)",
+        ],
+        "logica_producto": {
+            "acero estructural / entorno corrosivo": {
+                "producto": "interseal",
+                "confianza": "alta",
+                "razon": "Sistema International: Intergard (primer epóxico) + Interseal (body coat epóxico) + Interthane (acabado poliuretano). Norma ISO 12944 / SSPC.",
+            },
+            "primer / imprimacion industrial": {
+                "producto": "intergard",
+                "confianza": "alta",
+                "razon": "Intergard es el primer epóxico de International/MPY para preparación de superficie de acero. Requiere preparación SSPC SP6 o superior.",
+            },
+            "acabado industrial / resistencia UV / quimica": {
+                "producto": "interthane",
+                "confianza": "alta",
+                "razon": "Interthane es el poliuretano de acabado de International/MPY. Alta resistencia química, UV y mecánica. Aplicar sobre Interseal o Intergard.",
+            },
+            "proteccion fuego / incendio": {
+                "producto": "interchar",
+                "confianza": "alta",
+                "razon": "Interchar es el intumescente de International/MPY para protección pasiva contra incendio en estructuras metálicas. Requiere cálculo de espesor por arquitecto.",
+            },
+            "acabado de alto brillo industrial": {
+                "producto": "interfine",
+                "confianza": "alta",
+                "razon": "Interfine es el acabado de altas prestaciones de International/MPY. Para superficies de alta visibilidad o requerimientos estéticos industriales.",
+            },
         },
     },
 }
@@ -3215,6 +3284,36 @@ def handle_pending_internal_transfer_flow(content: str, context: dict, conversat
                 "internal_transfer_flow": None,
             },
         }
+
+    # ── Loop-escape: user signals they already acted or is dismissing the flow ──
+    done_phrases = [
+        "ya", "ya lo hice", "ya confirme", "ya fue", "ya quedo", "ya di la orden",
+        "ya esta", "ok", "entendido", "gracias", "de acuerdo", "listo ya",
+        "ya confirme", "ya se hizo", "ya se creo",
+    ]
+    is_done_signal = any(phrase in normalized for phrase in done_phrases)
+    if is_done_signal and not wants_transfer and not wants_procurement:
+        return {
+            "response_text": "Perfecto, queda en curso. Avísame si necesitas algo más con traslados o abastecimiento.",
+            "intent": "internal_transfer_flow_acknowledged",
+            "context_updates": {
+                "internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at")),
+                "internal_transfer_flow": None,
+            },
+        }
+
+    # ── Auto-clear after 3 consecutive unrecognized messages (prevent infinite loop) ──
+    turn_count = (flow_payload.get("_unrecognized_turns") or 0) + 1
+    if turn_count >= 3:
+        return {
+            "response_text": "Cerrando la guía operativa de traslados. Si necesitas retomar, menciona 'faltantes', 'traslado' o 'abastecimiento'.",
+            "intent": "internal_transfer_flow_timeout",
+            "context_updates": {
+                "internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at")),
+                "internal_transfer_flow": None,
+            },
+        }
+    flow_payload["_unrecognized_turns"] = turn_count
 
     return {
         "response_text": build_internal_transfer_guidance_text(flow_payload),
@@ -11747,6 +11846,20 @@ PISOS → Sospecha: Pintura Canchas (residencial) o Pintucoat (industrial)
   - Residencial (garaje, andén, cancha) → Pintura para Canchas (acrílica)
   Luego llama consultar_conocimiento_tecnico(producto="pintucoat" o "pintura canchas", pregunta="preparación piso concreto") para recomendar sistema.
 
+INDUSTRIAL / INTERNATIONAL / MPY → Sospecha: sistema integral de International/AkzoNobel
+  DISPARADORES: cuando el cliente mencione "estructura de acero", "planta industrial", "bodega química", "mantenimiento industrial", "International", "MPY", "Intergard", "Interseal", "Interthane", "Interchar", "Interfine", "ISO 12944", "SSPC", "anticorrosivo industrial", "protección contra fuego", "ambiente agresivo/químico".
+  REGLA ESPECIAL: Para consultas industriales International/MPY, el agente DEPENDE CASI EXCLUSIVAMENTE de la Guía de Sistemas de Mantenimiento Industrial (GUIA-Sistemas Mantenimiento Industria_Sep2025). Usa SIEMPRE consultar_conocimiento_tecnico(marca='international', pregunta='...') para estas consultas.
+  Preguntas diagnósticas clave (máximo 2 por turno):
+  - "¿Qué tipo de superficie necesitas proteger? (estructura de acero, tubería, tanque, piso industrial, estructura contra incendio)"
+  - "¿En qué entorno está expuesta? (interior industrial, exterior corrosivo, ambiente químico, marino, alta temperatura)"
+  Lógica de producto:
+  - Acero estructural / entorno corrosivo → Sistema: Intergard (primer) + Interseal (body coat epóxico) + Interthane (acabado poliuretano)
+  - Solo primer/imprimación → Intergard (primer epóxico International)
+  - Acabado resistente UV/químico → Interthane (poliuretano acabado) o Interfine (alto brillo)
+  - Protección contra incendio → Interchar (intumescente) — requiere cálculo de espesor
+  Llamada obligatoria: consultar_conocimiento_tecnico(marca='international', producto='[producto sospechado]', pregunta='sistema completo: preparación + imprimación + acabado + tiempos + normas')
+  NUNCA recomiendes un solo producto; siempre extrae el SISTEMA COMPLETO de la ficha. Si el cliente pide solo "un anticorrosivo industrial", igualmente entrégale el esquema de capas completo.
+
 INTERIORES → Sospecha: Viniltex (premium), Intervinil (intermedio), Pinturama (económico)
   Pregunta clave: "¿Buscas calidad premium (lavable, durable), intermedia o económica?"
   - Premium → Viniltex Advanced
@@ -11900,6 +12013,20 @@ Si solo dicen "esmalte", pregunta: "¿Lo necesitas para interior o exterior? Si 
 • Interseal (International/AkzoNobel) → aplicaciones industriales pesadas.
 • Intergard (International) → primers epóxicos industriales.
 
+═══ LÍNEA INTERNATIONAL/MPY — MANTENIMIENTO INDUSTRIAL INTEGRAL ═══
+La familia International/AkzoNobel es el portafolio de ALTA PRESTACIÓN para mantenimiento industrial. \
+Cuando el cliente mencione estructuras de acero, planta industrial, ISO 12944, SSPC, entornos agresivos, \
+protección contra fuego, o cualquiera de estos productos, usa SIEMPRE consultar_conocimiento_tecnico(marca='international', ...) \
+y extrae el SISTEMA COMPLETO de la Guía de Sistemas de Mantenimiento Industrial. \
+NUNCA recomiendes un solo producto de esta línea sin el esquema de capas completo.
+• Intergard → Primer epóxico Industrial. Primera capa sobre acero limpio (SSPC SP6 o superior). Protección anticorrisiva base.
+• Interseal → Body coat epóxico de alto espesor. Capa intermedia: sello químico y protección de barrera.
+• Interthane → Acabado poliuretano de alta resistencia UV, química y mecánica. Última capa visible.
+• Interfine → Acabado de altas prestaciones y alto brillo para requerimientos estéticos industriales.
+• Interchar → Intumescente para protección pasiva de estructuras metálicas contra incendio. Requiere cálculo de espesor por RF (resistencia al fuego).
+SISTEMA ESTÁNDAR ISO 12944 (acero estructural): Intergard (imprimación) → Interseal (capa intermedia) → Interthane/Interfine (acabado). \
+Aplica también normas SSPC SP6/SP10 para preparación de superficie.
+
 ═══ ANTICORROSIVOS (Protección de metal antes del acabado) ═══
 • Corrotec / Corrotec Premium (Pintuco) → anticorrosivo para rejas, estructuras, tuberías.
 • Pintoxido (Pintuco) → desoxidante y convertidor de óxido para superficies metálicas.
@@ -11967,6 +12094,7 @@ Tú conoces el portafolio de Ferreinox como un asesor experto. Cuando el RAG o e
 - "lija" / "papel lija" / "lija al agua" → buscar como "Lija"
 - "con qué lijo" / "cómo quito pintura" / "cómo preparo la superficie" → NO busques directamente. Primero pregunta qué superficie (metal, madera, pared) y de ahí recomienda: disco flap/grata para metal, removedor para madera, lija para paredes.
 - "tobogán" / "juego infantil" / "baranda" / "portón" / "reja" → identificar el material (normalmente metal) y recomendar sistema anticorrosivo (Corrotec + Pintulux) con preparación previa (disco flap/grata)
+- "International" / "MPY" / "AkzoNobel" / "mantenimiento industrial" / "recubrimiento industrial" / "estructura de acero" / "ISO 12944" / "SSPC" / "protección fuego metal" → SIEMPRE usa consultar_conocimiento_tecnico(marca='international', ...) y extrae el SISTEMA COMPLETO. Traduce: "primer industrial" = Intergard, "body coat industrial" = Interseal, "acabado industrial" = Interthane/Interfine, "intumescente" = Interchar.
 REGLA: Si el RAG te dice que necesitas un tipo de producto (ej. "epóxica de alto espesor"), TRADÚCELO a nombre de marca del portafolio Ferreinox ANTES de llamar `consultar_inventario`. No busques "epóxica de alto espesor", busca "Pintucoat" o "Interseal". Si la primera búsqueda no devuelve resultados, intenta con la otra marca equivalente.
 
 TRADUCCIÓN DE JERGA FERRETERA (usar ANTES de buscar en inventario):
@@ -13473,6 +13601,24 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     if producto:
         search_query = f"{producto}: {pregunta}"
 
+    # ── Auto-detect Industrial/MPY context → prioritize International brand guide ──────
+    # When the query involves industrial maintenance, International/AkzoNobel products,
+    # structures, ISO/SSPC specs, or fire protection — force marca_filter="international"
+    # so the agent pulls from GUIA-Sistemas Mantenimiento Industria almost exclusively.
+    _INDUSTRIAL_MPY_KEYWORDS = [
+        "industrial", "international", "mpy", "akzonobel",
+        "interseal", "interthane", "intergard", "interfine", "interchar",
+        "estructura acero", "estructura metalica industrial", "sspc", "iso 12944",
+        "mantenimiento industrial", "planta industrial", "bodega quimica",
+        "almacenamiento quimico", "proteccion fuego", "intumescente",
+        "poliuretano industrial", "epoxica industrial pesado",
+        "recubrimiento industrial", "sistema mantenimiento", "ambientes agresivos",
+        "ambiente quimico", "corrosion industrial", "anticorrosivo industrial",
+    ]
+    _q_lower = (pregunta + " " + producto).lower()
+    if not marca_filter and any(kw in _q_lower for kw in _INDUSTRIAL_MPY_KEYWORDS):
+        marca_filter = "international"
+
     chunks = search_technical_chunks(search_query, top_k=6, marca_filter=marca_filter)
 
     # ── Portfolio-aware second search pass ──────────────────────────
@@ -13550,6 +13696,21 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "4) Luego usa `buscar_documento_tecnico` con el nombre del archivo fuente para enviar el PDF como respaldo."
         ),
     }
+
+    # ── Industrial/MPY flag: inject complete-system extraction instruction ──
+    if marca_filter == "international":
+        result_payload["instruccion_industrial"] = (
+            "SISTEMA INTEGRAL OBLIGATORIO (consulta industrial International/MPY): "
+            "Extrae de 'respuesta_rag' el SISTEMA COMPLETO tal como lo define la Guía de Mantenimiento Industrial: "
+            "1) Preparación de superficie (norma SSPC/ISO, sa-grado, método). "
+            "2) Imprimación: nombre del producto, número de manos, espesor seco (µm). "
+            "3) Capa intermedia/body coat si aplica: producto, manos, espesor. "
+            "4) Acabado final: producto, manos, espesor. "
+            "5) Tiempos de repintado entre capas y tiempo de curado total. "
+            "6) Condiciones de aplicación (temperatura, humedad relativa, punto de rocío). "
+            "NUNCA resumir a un solo producto. El cliente industrial necesita el esquema completo. "
+            "Si algún dato del esquema no aparece en 'respuesta_rag', dilo explícitamente."
+        )
 
     if inventory_candidates:
         result_payload["productos_inventario_relacionados"] = [
