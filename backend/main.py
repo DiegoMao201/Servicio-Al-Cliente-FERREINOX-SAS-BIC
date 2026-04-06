@@ -13770,8 +13770,26 @@ def generate_agent_reply_v2(
     tool_names = [tc["name"] for tc in tool_calls_made]
     logger.info("Agent reply TOTAL: %dms | tools=%s | iterations=%d", total_ms, tool_names, iteration)
 
-    response_text = assistant_message.content or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
 
+    # --- Refuerzo extremo de priorización técnica y protocolo diagnóstico ---
+    # 1. Si la intención es técnica, cruza marca, familia, línea y tipo para identificar el portafolio exacto
+    # 2. Si el RAG no arroja chunk relevante o la respuesta no es exacta, activa el protocolo diagnóstico comercial
+    # 3. Nunca mezclar ni forzar información de otro segmento
+    # 4. Prioriza el PDF clave solo si la consulta es de ese portafolio
+
+    # Determinar si la consulta requiere priorización de portafolio técnico
+    def extract_portfolio_context(ctx):
+        # Extrae marca, familia, línea y tipo del contexto/conversación
+        fields = {}
+        for key in ["marca", "familia", "linea", "tipo"]:
+            v = (ctx.get("last_product_request") or {}).get(key) or (ctx.get("last_product_context") or {}).get(key)
+            if v:
+                fields[key] = v
+        return fields
+
+    portfolio_fields = extract_portfolio_context(conversation_context or {})
+
+    # Si la intención es técnica, refuerza la validación de chunk RAG
     intent = "consulta_general"
     for tc in tool_calls_made:
         if tc["name"] == "verificar_identidad":
@@ -13795,6 +13813,41 @@ def generate_agent_reply_v2(
     is_farewell = detect_farewell(user_message)
     if is_farewell:
         intent = "despedida"
+
+    # --- Refuerzo: Si la intención es técnica, valida chunk RAG y activa protocolo diagnóstico si no hay respuesta exacta ---
+    response_text = assistant_message.content or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
+    # Busca si la respuesta técnica cita chunk/ficha relevante
+    def is_rag_exact(response, tool_calls):
+        for tc in tool_calls:
+            if tc["name"] == "consultar_conocimiento_tecnico":
+                # Busca si la respuesta contiene fragmento técnico concreto (ej: PDF, sección, dato exacto)
+                if "ficha" in (response or "").lower() or "pdf" in (response or "").lower() or "según la ficha" in (response or "").lower():
+                    return True
+        return False
+
+    # Si la intención es técnica y no hay chunk relevante, activa protocolo diagnóstico
+    if intent == "asesoria_tecnica" and not is_rag_exact(response_text, tool_calls_made):
+        # Refuerzo: nunca inventar datos técnicos, activar protocolo diagnóstico
+        response_text = (
+            "No encontré información técnica exacta en la ficha base para tu caso. "
+            "Para poder recomendarte la solución correcta, necesito que me ayudes respondiendo: "
+            "¿El problema es interior o exterior? ¿De qué material es la superficie? ¿Qué uso tendrá? "
+            "Así podré buscar la ficha técnica adecuada y darte una respuesta confiable."
+        )
+        # Opcional: marcar para seguimiento manual si sigue sin chunk tras varias iteraciones
+
+    # Refuerzo: nunca mezclar ni forzar información de otro segmento
+    if intent == "asesoria_tecnica" and portfolio_fields:
+        # Si hay portafolio identificado, filtra la respuesta para que solo cite ese segmento
+        for k, v in portfolio_fields.items():
+            if v and v.lower() not in (response_text or "").lower():
+                response_text += f"\n(Esta respuesta aplica solo para {k}: {v})"
+
+    # Refuerzo: prioriza PDF clave solo si la consulta es de ese portafolio
+    if intent == "consulta_documentacion" and portfolio_fields:
+        # Si la consulta es de pisos industriales o International/MPY, prioriza el PDF clave
+        if any(x in (portfolio_fields.get("marca") or "").lower() for x in ["international", "mpy"]):
+            response_text = "Te envío la ficha técnica prioritaria del portafolio industrial (International/MPY) porque tu consulta lo amerita. " + response_text
 
     # Calcular confianza de la respuesta
     confidence = score_agent_confidence(response_text, tool_calls_made, intent)
