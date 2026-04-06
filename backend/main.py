@@ -13941,9 +13941,12 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             for p in inventory_candidates
         ]
         result_payload["instruccion_productos"] = (
-            "ENCONTRÉ PRODUCTOS REALES del portafolio Ferreinox relacionados con esta consulta técnica. "
-            "Después de dar la asesoría técnica, CIERRA LA VENTA: recomiéndale al cliente estos productos concretos. "
-            "Usa el formato: 'Vea, los productos que necesitas son estos:' seguido de la lista con ✅."
+            "CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). "
+            "Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como "
+            "disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. "
+            "OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar "
+            "disponibilidad real y referencia ERP antes de recomendar al cliente. "
+            "Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`."
         )
 
     return json.dumps(result_payload, ensure_ascii=False, default=str)
