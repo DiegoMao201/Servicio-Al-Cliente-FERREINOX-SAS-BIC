@@ -363,6 +363,35 @@ TECHNICAL_ADVISORY_KEYWORDS = [
     "epóxico",
     "alquidico",
     "alquídico",
+    "removedor",
+    "removedor de pintura",
+    "decapante",
+    "quitar pintura",
+    "remover pintura",
+    "sacar pintura",
+    "disco flap",
+    "grata",
+    "gratas",
+    "cepillo metalico",
+    "cepillo metálico",
+    "cepillo de alambre",
+    "abrasivo",
+    "abrasivos",
+    "con que lijo",
+    "con qué lijo",
+    "como lijo",
+    "cómo lijo",
+    "como remuevo",
+    "cómo remuevo",
+    "tobogan",
+    "tobogán",
+    "rodadero",
+    "resbaladero",
+    "juego infantil",
+    "parque infantil",
+    "pasamanos",
+    "baranda",
+    "barandas",
 ]
 
 
@@ -957,6 +986,32 @@ PORTFOLIO_CATEGORY_MAP = {
     "primer": ["imprimante", "primer", "wash primer"],
     "base": ["imprimante", "fondo", "sellador"],
 
+    # ── ABRASIVOS / LIJAS / PREPARACIÓN DE SUPERFICIE ──
+    "lija": ["lija", "lija agua", "lija al agua", "papel lija"],
+    "lijas": ["lija", "lija agua", "lija al agua", "papel lija"],
+    "lijar": ["lija", "disco flap", "grata"],
+    "lijado": ["lija", "disco flap", "grata"],
+    "disco flap": ["disco flap", "disco abrasivo"],
+    "disco abrasivo": ["disco flap", "disco abrasivo", "disco corte"],
+    "flap": ["disco flap"],
+    "grata": ["grata", "grata copa", "grata circular"],
+    "gratas": ["grata", "grata copa", "grata circular"],
+    "cepillo metalico": ["grata", "grata copa"],
+    "cepillo de alambre": ["grata", "grata copa"],
+    "abrasivo": ["lija", "disco flap", "grata", "disco abrasivo"],
+    "abrasivos": ["lija", "disco flap", "grata", "disco abrasivo"],
+    "preparacion superficie": ["lija", "removedor", "grata", "disco flap", "estuco", "masilla"],
+    "preparar superficie": ["lija", "removedor", "grata", "disco flap", "estuco", "masilla"],
+
+    # ── REMOVEDORES / DECAPANTES ──
+    "removedor": ["removedor", "removedor pintuco", "decapante"],
+    "removedor de pintura": ["removedor", "removedor pintuco"],
+    "decapante": ["removedor", "removedor pintuco", "decapante"],
+    "quitar pintura": ["removedor", "removedor pintuco", "disco flap", "grata"],
+    "remover pintura": ["removedor", "removedor pintuco", "disco flap", "grata"],
+    "sacar pintura": ["removedor", "removedor pintuco", "disco flap", "grata"],
+    "pelar pintura": ["removedor", "removedor pintuco", "disco flap", "grata"],
+
     # ── JERGA COLOMBIANA / COLOQUIAL (mapear expresiones comunes) ──
     "pelando": ["koraza", "viniltex", "estuco anti humedad"],
     "descascarando": ["koraza", "viniltex", "estuco anti humedad"],
@@ -1082,6 +1137,48 @@ DIAGNOSTIC_QUESTION_TREE = {
                 "razon": "Pintulac: acabado brillante o mate transparente para muebles e interiores"},
             "interior color": {"producto": "pintulux", "confianza": "media",
                 "razon": "Pintulux sobre madera interior cuando se quiere color sólido"},
+        },
+    },
+    "preparacion_superficie": {
+        "disparadores": ["lijar", "lijado", "lija", "quitar pintura", "remover pintura",
+                         "remover", "removedor", "decapar", "decapante", "sacar pintura",
+                         "pelar pintura", "preparar superficie", "preparacion superficie",
+                         "disco flap", "grata", "cepillo metalico", "cepillo alambre",
+                         "abrasivo", "abrasivos", "como lijo", "con que lijo", "como remuevo"],
+        "preguntas": [
+            "¿Qué superficie necesitas preparar: metal, madera, concreto o una pared ya pintada?",
+            "¿Necesitas quitar la pintura vieja completamente o solo lijar para repintar encima?",
+        ],
+        "logica_producto": {
+            "metal oxidado + quitar oxido": {"producto": "disco flap", "confianza": "alta",
+                "razon": "Disco flap o grata para remoción mecánica de óxido, luego Pintóxido si queda óxido residual, luego Corrotec anticorrosivo"},
+            "metal + quitar pintura vieja": {"producto": "removedor", "confianza": "alta",
+                "razon": "Removedor de Pintuco para pintura vieja sobre metal, o disco flap/grata para remoción mecánica rápida"},
+            "madera + quitar barniz/pintura": {"producto": "removedor", "confianza": "alta",
+                "razon": "Removedor de Pintuco para decapar barniz o pintura vieja de madera, luego lija fina para alisar"},
+            "pared pintada + repintar": {"producto": "lija", "confianza": "alta",
+                "razon": "Lija al agua grano 150-220 para dar adherencia a la nueva pintura. Si la pintura está en buen estado, solo lijar suave y pintar"},
+            "pared descascarada + reparar": {"producto": "estuco", "confianza": "alta",
+                "razon": "Raspar todo lo suelto, aplicar estuco para nivelar, lijar con lija 150, sellar con imprimante y luego pintar"},
+            "concreto nuevo + preparar": {"producto": "sellador", "confianza": "alta",
+                "razon": "Imprimante/sellador para sellar porosidad del concreto nuevo antes de pintar. No se necesita lija en concreto nuevo"},
+        },
+    },
+    "recreativo_especial": {
+        "disparadores": ["tobogan", "tobogán", "pasamanos", "juego infantil", "columpio",
+                         "playground", "parque infantil", "resbaladero", "resbalador",
+                         "rodadero", "tubo metalico", "estructura tubular", "barandas"],
+        "preguntas": [
+            "¿La estructura es de metal o plástico?",
+            "¿Está al aire libre o en un espacio interior/cubierto?",
+        ],
+        "logica_producto": {
+            "metal exterior": {"producto": "corrotec", "confianza": "alta",
+                "razon": "Sistema completo: lija/grata para limpiar óxido → Corrotec anticorrosivo → Pintulux acabado de color. Para máxima durabilidad en exteriores."},
+            "metal interior": {"producto": "pintulux", "confianza": "alta",
+                "razon": "Lija/grata para limpiar → anticorrosivo Corrotec si hay óxido → Pintulux acabado de color"},
+            "plastico": {"producto": "aerocolor", "confianza": "media",
+                "razon": "Para plásticos, Aerocolor (aerosol) puede dar buenos resultados. Lijar suave para dar adherencia y aplicar."},
         },
     },
 }
@@ -6246,7 +6343,7 @@ def update_conversation_context(conversation_id: int, context_updates: dict, sum
         )
 
 
-def close_conversation(conversation_id: int, context_updates: dict, summary: Optional[str] = None):
+def close_conversation(conversation_id: int, context_updates: dict, summary: Optional[str] = None, final_status: str = "gestionado"):
     engine = get_db_engine()
     with engine.begin() as connection:
         existing_row = connection.execute(
@@ -6262,7 +6359,7 @@ def close_conversation(conversation_id: int, context_updates: dict, summary: Opt
 
         merged_context = dict(existing_row["contexto"] or {})
         merged_context.update(context_updates or {})
-        merged_context["final_status"] = "gestionado"
+        merged_context["final_status"] = final_status
 
         connection.execute(
             text(
@@ -6282,6 +6379,133 @@ def close_conversation(conversation_id: int, context_updates: dict, summary: Opt
                 "conversation_id": conversation_id,
             },
         )
+
+
+# ── Detección de despedida del cliente ──
+_FAREWELL_PATTERNS = re.compile(
+    r"^\s*(?:(?:muchas\s+)?gracias|chao|cha[uo]|adios|adiós|bye|hasta\s+luego|"
+    r"nos\s+vemos|listo\s+gracias|ok\s+gracias|bueno\s+gracias|"
+    r"no\s+más\s+(?:por\s+ahora|gracias)|eso\s+(?:es\s+todo|era\s+todo)|"
+    r"ya\s+(?:no\s+más|es\s+todo|era\s+todo)|buen(?:o|a)\s+(?:gracias|noche|tarde|día))\s*[.!]*\s*$",
+    re.IGNORECASE,
+)
+
+
+def detect_farewell(user_message: str) -> bool:
+    return bool(_FAREWELL_PATTERNS.match(user_message.strip()))
+
+
+# ── Puntuación de confianza de la respuesta del agente ──
+_LOW_CONFIDENCE_SIGNALS = [
+    "no encontr", "no tengo", "no tenemos", "no puedo", "no manejo",
+    "no dispongo", "no sé", "no se", "no conozco",
+    "no tengo información", "no tengo informacion",
+    "un asesor te contactará", "escalar", "no aplica",
+    "no fue posible", "error al", "fallo al",
+]
+_MEDIUM_CONFIDENCE_SIGNALS = [
+    "te recomiendo comunicarte", "consultar con", "validarlo con",
+    "verificar con", "confirmar con logística", "confirmar con el fabricante",
+    "no manejamos",
+]
+
+
+def score_agent_confidence(response_text: str, tool_calls: list, intent: str) -> dict:
+    resp_lower = (response_text or "").lower()
+    score = 1.0
+    signals = []
+
+    # Penalizar señales de baja confianza (-0.30 cada una)
+    for signal in _LOW_CONFIDENCE_SIGNALS:
+        if signal in resp_lower:
+            score -= 0.30
+            signals.append(f"low:{signal}")
+    # Penalizar señales de confianza media (-0.15 cada una)
+    for signal in _MEDIUM_CONFIDENCE_SIGNALS:
+        if signal in resp_lower:
+            score -= 0.15
+            signals.append(f"med:{signal}")
+
+    # Bonificar uso de herramientas (respuestas basadas en datos reales)
+    tool_names = [tc.get("name", "") for tc in (tool_calls or [])]
+    if "consultar_conocimiento_tecnico" in tool_names:
+        score += 0.15
+        signals.append("rag_used")
+    if "consultar_inventario" in tool_names:
+        score += 0.10
+        signals.append("inventory_used")
+    if "buscar_documento_tecnico" in tool_names:
+        score += 0.10
+        signals.append("doc_used")
+
+    # Penalizar respuestas triviales (< 10 chars) o muy cortas (< 30 chars)
+    if len(response_text or "") < 10:
+        score -= 0.55
+        signals.append("trivial_response")
+    elif len(response_text or "") < 30:
+        score -= 0.30
+        signals.append("very_short_response")
+
+    # Penalizar cuando hay señales LOW y no se usaron herramientas
+    if not tool_names and any(s.startswith("low:") for s in signals):
+        score -= 0.25
+        signals.append("no_tools_with_issues")
+
+    # Penalizar si el intent es consulta general y hay herramientas no usadas
+    if intent == "consulta_general" and not tool_names:
+        if any(kw in resp_lower for kw in ["pintura", "pintar", "humedad", "corrosión", "óxido", "techo", "fachada"]):
+            score -= 0.10
+            signals.append("technical_without_tools")
+
+    score = max(0.0, min(1.0, score))
+    level = "alta" if score >= 0.75 else ("media" if score >= 0.50 else "baja")
+    return {"score": round(score, 2), "level": level, "signals": signals}
+
+
+# ── Alerta inteligente para conversaciones problemáticas ──
+def evaluate_and_create_alert(
+    conversation_id: int,
+    cliente_id: Optional[int],
+    user_message: str,
+    ai_result: dict,
+    confidence: dict,
+):
+    alert_type = None
+    priority = "media"
+    detail = {
+        "mensaje_cliente": user_message[:300],
+        "respuesta_agente": (ai_result.get("response_text") or "")[:300],
+        "confianza": confidence,
+        "intent": ai_result.get("intent"),
+    }
+
+    if confidence["level"] == "baja":
+        alert_type = "respuesta_baja_confianza"
+        priority = "alta"
+        detail["razon"] = "El agente respondió con baja confianza. Revisar si la respuesta es correcta."
+    elif any(s.startswith("low:") for s in confidence.get("signals", [])):
+        # Tiene señales de problema aunque la confianza total no sea baja
+        low_signals = [s for s in confidence["signals"] if s.startswith("low:")]
+        if len(low_signals) >= 2:
+            alert_type = "multiples_señales_problema"
+            detail["razon"] = f"Múltiples señales de respuesta inadecuada: {low_signals}"
+
+    if alert_type:
+        try:
+            upsert_agent_task(
+                conversation_id,
+                cliente_id,
+                alert_type,
+                f"Alerta: {alert_type} — revisar respuesta del agente",
+                detail,
+                priority,
+            )
+            logger.warning(
+                "ALERTA agente [%s] conv=%d confianza=%.2f señales=%s",
+                alert_type, conversation_id, confidence["score"], confidence["signals"],
+            )
+        except Exception as exc:
+            logger.error("No se pudo crear alerta: %s", exc)
 
 
 def upsert_agent_task(conversation_id: int, cliente_id: Optional[int], task_type: str, summary: str, detail: dict, priority: str):
@@ -9426,34 +9650,56 @@ def build_operational_email_payload(intent: str, profile_name: Optional[str], cl
         )
         return {"to_email": to_email, "subject": subject, "html_content": html_content, "text_content": text_content}
 
-    subject = f"Ferreinox CRM | Reclamo cliente {cliente_label} | {detail.get('product_label') or 'sin producto'}"
+    diagnostico_previo = detail.get("diagnostico_previo") or "Sin diagnóstico técnico registrado"
+    evidencia_nota = detail.get("evidence_note") or "Pendiente de recibir"
+    correo_cliente = detail.get("contact_email") or (cliente_contexto or {}).get("email") or "No proporcionado"
+    caso_ref = detail.get("case_reference") or "Pendiente"
+
+    subject = f"Ferreinox CRM | Reclamo radicado {caso_ref} | {detail.get('product_label') or 'sin producto'}"
     html_content = (
         "<div style='font-family:Segoe UI,Arial,sans-serif;color:#111827;background:#f3f4f6;padding:24px'>"
         "<div style='max-width:900px;margin:0 auto;background:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #e5e7eb'>"
         "<div style='background:#111827;color:#ffffff;padding:24px 28px'>"
-        "<h1 style='margin:0;font-size:24px'>Caso radicado desde CRM Ferreinox</h1>"
-        "<p style='margin:8px 0 0 0;color:#d1d5db'>Reclamo de calidad o funcionamiento generado por el agente conversacional.</p>"
+        f"<h1 style='margin:0;font-size:24px'>Caso radicado {escape(caso_ref)}</h1>"
+        "<p style='margin:8px 0 0 0;color:#d1d5db'>Reclamo de calidad o funcionamiento — Resumen ejecutivo generado por el agente.</p>"
         "</div>"
         "<div style='padding:28px'>"
-        f"<p><strong>Cliente:</strong> {escape(cliente_label)}</p>"
-        f"<p><strong>Código cliente:</strong> {escape(str(cliente_codigo))}</p>"
-        f"<p><strong>Producto reportado:</strong> {escape(detail.get('product_label') or 'Pendiente')}</p>"
-        f"<p><strong>Tienda/Ciudad:</strong> {escape(detail.get('store_name') or 'Pendiente')}</p>"
-        f"<p><strong>Resumen:</strong> {escape(detail.get('issue_summary') or 'Pendiente de ampliar')}</p>"
-        "<h2 style='margin-top:28px;font-size:18px'>Historial reciente</h2>"
-        "<table style='width:100%;border-collapse:collapse;font-size:14px'>"
-        f"{transcript_html}"
-        "</table>"
+        "<div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:16px;padding:20px;margin-bottom:20px'>"
+        "<h2 style='margin:0 0 12px 0;font-size:16px;color:#374151'>Datos del cliente</h2>"
+        f"<p style='margin:0 0 6px 0'><strong>Cliente:</strong> {escape(cliente_label)}</p>"
+        f"<p style='margin:0 0 6px 0'><strong>Código cliente:</strong> {escape(str(cliente_codigo))}</p>"
+        f"<p style='margin:0 0 6px 0'><strong>Tienda/Ciudad:</strong> {escape(detail.get('store_name') or 'Pendiente')}</p>"
+        f"<p style='margin:0'><strong>Correo cliente:</strong> {escape(correo_cliente)}</p>"
+        "</div>"
+        "<div style='background:#fef2f2;border:1px solid #fecaca;border-radius:16px;padding:20px;margin-bottom:20px'>"
+        "<h2 style='margin:0 0 12px 0;font-size:16px;color:#991b1b'>Detalle del reclamo</h2>"
+        f"<p style='margin:0 0 6px 0'><strong>Producto reportado:</strong> {escape(detail.get('product_label') or 'Pendiente')}</p>"
+        f"<p style='margin:0 0 6px 0'><strong>Problema descrito:</strong> {escape(detail.get('issue_summary') or 'Pendiente de ampliar')}</p>"
+        f"<p style='margin:0'><strong>Evidencia:</strong> {escape(evidencia_nota)}</p>"
+        "</div>"
+        "<div style='background:#eff6ff;border:1px solid #bfdbfe;border-radius:16px;padding:20px;margin-bottom:20px'>"
+        "<h2 style='margin:0 0 12px 0;font-size:16px;color:#1e40af'>Diagnóstico técnico del agente</h2>"
+        f"<p style='margin:0;white-space:pre-wrap'>{escape(diagnostico_previo)}</p>"
+        "</div>"
+        "<p style='margin:20px 0 0 0;color:#6b7280;font-size:13px'>Este resumen fue generado automáticamente por el agente CRM Ferreinox. "
+        "No incluye la conversación completa por privacidad — solo los datos relevantes para gestionar el caso.</p>"
         "</div></div></div>"
     )
     text_content = (
-        f"Caso radicado desde CRM Ferreinox\n\n"
-        f"Cliente: {cliente_label}\n"
-        f"Código cliente: {cliente_codigo}\n"
-        f"Producto reportado: {detail.get('product_label') or 'Pendiente'}\n"
-        f"Tienda/Ciudad: {detail.get('store_name') or 'Pendiente'}\n"
-        f"Resumen: {detail.get('issue_summary') or 'Pendiente de ampliar'}\n\n"
-        f"Historial reciente:\n{transcript_text}"
+        f"CASO RADICADO: {caso_ref}\n"
+        f"{'=' * 40}\n\n"
+        f"DATOS DEL CLIENTE:\n"
+        f"  Cliente: {cliente_label}\n"
+        f"  Código: {cliente_codigo}\n"
+        f"  Tienda/Ciudad: {detail.get('store_name') or 'Pendiente'}\n"
+        f"  Correo: {correo_cliente}\n\n"
+        f"DETALLE DEL RECLAMO:\n"
+        f"  Producto: {detail.get('product_label') or 'Pendiente'}\n"
+        f"  Problema: {detail.get('issue_summary') or 'Pendiente de ampliar'}\n"
+        f"  Evidencia: {evidencia_nota}\n\n"
+        f"DIAGNÓSTICO TÉCNICO DEL AGENTE:\n"
+        f"  {diagnostico_previo}\n\n"
+        f"Resumen generado por el agente CRM Ferreinox."
     )
     return {"to_email": to_email, "subject": subject, "html_content": html_content, "text_content": text_content}
 
@@ -9471,6 +9717,8 @@ def build_customer_claim_confirmation_email(conversation_id: int, profile_name: 
     evidence_note = detail.get("evidence_note") or "Pendiente de recibir"
     store_name = detail.get("store_name") or "Pendiente"
 
+    diagnostico_previo = detail.get("diagnostico_previo") or "Pendiente de revisión por el equipo técnico"
+
     subject = f"Ferreinox | Solicitud radicada {case_reference}"
     html_content = (
         "<div style='font-family:Segoe UI,Arial,sans-serif;background:#f4f6f8;padding:32px;color:#111827'>"
@@ -9482,16 +9730,17 @@ def build_customer_claim_confirmation_email(conversation_id: int, profile_name: 
         "</div>"
         "<div style='padding:32px'>"
         f"<p style='margin:0 0 18px 0'>Hola, {escape(str(cliente_label))}. Ya registramos tu solicitud y nuestro equipo hará seguimiento con esta información:</p>"
-        "<div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:16px;padding:20px'>"
-        f"<p style='margin:0 0 10px 0'><strong>Cliente:</strong> {escape(str(cliente_label))}</p>"
-        f"<p style='margin:0 0 10px 0'><strong>Código cliente:</strong> {escape(str(cliente_codigo))}</p>"
+        "<div style='background:#f9fafb;border:1px solid #e5e7eb;border-radius:16px;padding:20px;margin-bottom:16px'>"
         f"<p style='margin:0 0 10px 0'><strong>Producto reportado:</strong> {escape(str(product_label))}</p>"
-        f"<p style='margin:0 0 10px 0'><strong>Tienda o ciudad:</strong> {escape(str(store_name))}</p>"
         f"<p style='margin:0 0 10px 0'><strong>Detalle del caso:</strong> {escape(str(issue_summary))}</p>"
         f"<p style='margin:0'><strong>Evidencia recibida:</strong> {escape(str(evidence_note))}</p>"
         "</div>"
-        "<p style='margin:22px 0 0 0'>Si necesitas ampliar el caso, responde a este correo o escríbenos por WhatsApp y lo anexamos al mismo radicado.</p>"
-        "<p style='margin:22px 0 0 0'>Gracias por confiar en Ferreinox.</p>"
+        "<div style='background:#eff6ff;border:1px solid #bfdbfe;border-radius:16px;padding:20px;margin-bottom:16px'>"
+        "<p style='margin:0 0 8px 0'><strong>Diagnóstico técnico preliminar:</strong></p>"
+        f"<p style='margin:0;color:#1e40af'>{escape(diagnostico_previo)}</p>"
+        "</div>"
+        "<p style='margin:16px 0 0 0'>Si necesitas ampliar el caso, responde a este correo o escríbenos por WhatsApp y lo anexamos al mismo radicado.</p>"
+        "<p style='margin:16px 0 0 0'>Gracias por confiar en Ferreinox.</p>"
         "</div>"
         "</div>"
         "</div>"
@@ -9499,12 +9748,10 @@ def build_customer_claim_confirmation_email(conversation_id: int, profile_name: 
     text_content = (
         f"Tu solicitud ya quedó radicada en Ferreinox.\n\n"
         f"Radicado: {case_reference}\n"
-        f"Cliente: {cliente_label}\n"
-        f"Código cliente: {cliente_codigo}\n"
         f"Producto reportado: {product_label}\n"
-        f"Tienda o ciudad: {store_name}\n"
         f"Detalle del caso: {issue_summary}\n"
         f"Evidencia recibida: {evidence_note}\n\n"
+        f"Diagnóstico técnico preliminar:\n{diagnostico_previo}\n\n"
         "Si necesitas ampliar el caso, responde este correo o escríbenos por WhatsApp y lo anexamos al mismo radicado."
     )
     return {"to_email": to_email, "subject": subject, "html_content": html_content, "text_content": text_content}
@@ -11495,6 +11742,20 @@ MADERA → Sospecha: Barnex/Wood Stain (exterior) o Pintulac (interior)
   - Exterior (pérgola, deck) → Barnex Extra Protección o Wood Stain
   - Interior → Pintulac (transparente) o Pintulux (color sólido)
 
+PREPARACIÓN DE SUPERFICIE / ABRASIVOS / REMOCIÓN DE PINTURA → Sospecha: Lija, Disco Flap, Grata, Removedor
+  Pregunta clave: "¿Qué superficie necesitas preparar: metal, madera, concreto o una pared ya pintada?"
+  - Metal oxidado → Disco flap o grata en amoladora para remover óxido mecánicamente. Si no tiene amoladora → Removedor de Pintuco. Después: Pintóxido si queda óxido residual + Corrotec anticorrosivo + Pintulux acabado.
+  - Madera con pintura/barniz viejo → Removedor de Pintuco + espátula + lija fina (grano 220). Después: imprimante + nueva pintura/barniz.
+  - Pared descascarada → Raspar lo suelto + lija al agua 150-220 + estuco si hay huecos. Después: imprimante + pintura.
+  - Metal con pintura vieja → Disco flap en amoladora (rápido) o Removedor Pintuco (sin herramienta eléctrica).
+  Luego llama consultar_inventario para los productos de preparación (lijas, disco flap, grata, removedor) Y los productos de recubrimiento final.
+
+ESTRUCTURAS ESPECIALES (toboganes, juegos infantiles, barandas, portones, rejas) → Sospecha: Corrotec + Pintulux
+  Pregunta clave: "¿Es de metal o plástico? ¿Está al aire libre?"
+  - Metal al aire libre → Sistema completo: disco flap/grata para limpiar + Corrotec anticorrosivo + Pintulux 3en1 acabado
+  - Metal interior → Lija/grata + Corrotec + Pintulux
+  - Con mucho óxido → Disco flap/grata + Pintóxido (convertidor) + Corrotec + Pintulux
+
 FLUJO CORRECTO: 1) Escucha el problema → 2) Sospecha un producto basado en el árbol → 3) Haz 1-2 preguntas para confirmar tu sospecha → 4) Llama consultar_conocimiento_tecnico con el producto sospechado (SIEMPRE pasa el parámetro 'producto' con tu sospecha - NUNCA llames esta herramienta sin un producto específico cuando sea asesoría técnica) → 5) Da la asesoría técnica con datos concretos de la ficha (rendimiento, preparación, tiempos) → 6) Ofrece vender los productos con precio y stock.
 
 REGLA CRÍTICA DEL PARÁMETRO 'producto': Cuando llames `consultar_conocimiento_tecnico` para asesoría técnica, SIEMPRE incluye el parámetro `producto` con el nombre del producto que sospechas (ej: "aquablock", "koraza", "pintuco fill", "corrotec", "pintucoat", "pintura canchas"). Sin este parámetro, la búsqueda técnica devuelve resultados genéricos. CON el parámetro, devuelve la ficha técnica exacta con todos los detalles del producto.
@@ -11641,6 +11902,22 @@ Si solo dicen "esmalte", pregunta: "¿Lo necesitas para interior o exterior? Si 
 • Estuco / Masilla → reparación y alisado de superficies antes de pintar.
 • Brochas, Rodillos, Lijas → herramientas de aplicación.
 
+═══ ABRASIVOS Y PREPARACIÓN DE SUPERFICIE ═══
+• Lijas (de agua, de hierro, de madera) → para lijar superficies antes de pintar. Diferentes granos según necesidad.
+• Disco Flap → disco abrasivo para amoladora/pulidora, ideal para remover óxido, pintura vieja y alisar metal. Más rápido que lija manual.
+• Grata / Grata Copa / Grata Circular → cepillo metálico para amoladora, remueve óxido y pintura vieja por medios mecánicos. Para metal pesado y estructuras.
+• Removedor de Pintuco → decapante químico para quitar pintura vieja de metal, madera y superficies. Se aplica, se deja actuar y se raspa.
+Si el cliente pregunta "¿con qué lijo?" o "¿cómo quito la pintura vieja?", primero pregunta: ¿qué superficie es? (metal, madera, pared). \
+Para METAL: disco flap o grata en amoladora (rápido) o removedor químico (sin amoladora). \
+Para MADERA: removedor de Pintuco + espátula + lija fina. \
+Para PARED: raspar lo suelto + lija al agua 150-220 + estuco si hay huecos.
+
+═══ SUPERFICIES ESPECIALES (toboganes, juegos infantiles, barandas, portones) ═══
+Cuando el cliente quiera pintar una estructura especial como tobogán, juego infantil, baranda, portón o reja, aplica el árbol diagnóstico:
+1. ¿Es de metal o plástico? → Si es metal: sistema anticorrosivo (disco flap/grata para limpiar + Corrotec + Pintulux acabado)
+2. ¿Está al aire libre? → Si sí: productos de mayor resistencia a intemperie (Pintulux 3en1, Corrotec Premium)
+3. ¿Tiene mucho óxido? → Si sí: comenzar con Pintóxido (convertidor) + disco flap/grata + Corrotec + Pintulux
+
 REGLA DE ORO DEL PORTAFOLIO: Tú NO dependes solo de la base de datos. Tú CONOCES todo el portafolio porque es público y reconocido. \
 Si el cliente dice algo coloquial o genérico, TÚ traduces a nombre de marca ANTES de buscar. \
 Si la primera búsqueda no devuelve resultados, intenta con sinónimos o la otra marca del mismo segmento. \
@@ -11660,6 +11937,12 @@ Tú conoces el portafolio de Ferreinox como un asesor experto. Cuando el RAG o e
 - "intumescente" / "ignífuga" / "protección al fuego" → buscar como "Interchar" (International)
 - "demarcación vial" / "tráfico" / "canchas" → buscar como "Pintura Tráfico"
 - "sellador" / "imprimante" / "fondo" / "primer" → buscar como "Imprimante", "Sellador", "Wash Primer"
+- "removedor de pintura" / "decapante" / "quitar pintura" → buscar como "Removedor" (Removedor de Pintuco)
+- "disco flap" / "disco abrasivo" / "disco para lijar" → buscar como "Disco Flap"
+- "grata" / "cepillo metálico" / "cepillo de alambre" / "cepillo copa" → buscar como "Grata"
+- "lija" / "papel lija" / "lija al agua" → buscar como "Lija"
+- "con qué lijo" / "cómo quito pintura" / "cómo preparo la superficie" → NO busques directamente. Primero pregunta qué superficie (metal, madera, pared) y de ahí recomienda: disco flap/grata para metal, removedor para madera, lija para paredes.
+- "tobogán" / "juego infantil" / "baranda" / "portón" / "reja" → identificar el material (normalmente metal) y recomendar sistema anticorrosivo (Corrotec + Pintulux) con preparación previa (disco flap/grata)
 REGLA: Si el RAG te dice que necesitas un tipo de producto (ej. "epóxica de alto espesor"), TRADÚCELO a nombre de marca del portafolio Ferreinox ANTES de llamar `consultar_inventario`. No busques "epóxica de alto espesor", busca "Pintucoat" o "Interseal". Si la primera búsqueda no devuelve resultados, intenta con la otra marca equivalente.
 
 TRADUCCIÓN DE JERGA FERRETERA (usar ANTES de buscar en inventario):
@@ -11746,6 +12029,20 @@ PEDIDOS Y COTIZACIONES:
 - Siempre incluye TODOS los productos que el cliente pidió, nunca dejes ninguno por fuera.
 - Si un producto no se encuentra, informa y sugiere alternativas.
 
+MOSTRAR OPCIONES DE COLOR Y PRESENTACIÓN:
+- Cuando `consultar_inventario` devuelva varios resultados de una misma familia de producto (ej. Pintuco Fill, Koraza, Vinílico), muéstrale al cliente las opciones de COLOR y PRESENTACIÓN disponibles. No asumas un color.
+- Ejemplo: si el cliente pide 'pintuco fill', muéstrale: 'Tenemos Pintuco Fill 7 disponible en Gris y Blanco, en presentaciones de 20K y 11K. ¿Qué color y tamaño necesitas?'
+- Prioriza los colores más vendidos (blanco, gris, rojo, verde) cuando haya muchas opciones.
+- NUNCA elijas un color por el cliente. Siempre pregunta o confirma.
+
+CORRECCIÓN DE PRODUCTOS EN EL PEDIDO (REGLA CRÍTICA):
+- Si el cliente CORRIGE o CAMBIA una especificación de un producto ya listado (color, tamaño, presentación), DEBES llamar `consultar_inventario` DE NUEVO con la especificación actualizada.
+- Cada color, tamaño y presentación tiene un CÓDIGO DE REFERENCIA DIFERENTE. No puedes reusar la referencia anterior.
+- Ejemplo: si el cliente tenía 'Pintuco Fill 7 Gris' [5892274] y dice 'que sea blanco', DEBES buscar 'pintuco fill 7 blanco' en inventario para obtener la referencia correcta del blanco.
+- Ejemplo: si el cliente tenía 'Vinílico Blanco 9.46L' [5891025] y dice 'en cuñete el de 18.93', DEBES buscar 'vinilico blanco 18.93' para obtener la referencia del cuñete.
+- ESTRICTAMENTE PROHIBIDO: cambiar la descripción en tu resumen sin haber buscado la nueva referencia en inventario. Si cambias el color o tamaño en el texto pero pasas la referencia vieja, el PDF y la factura saldrán con el producto equivocado.
+- Después de buscar la versión corregida, actualiza tu resumen mostrando la nueva referencia [CÓDIGO] junto al producto.
+
 DOCUMENTOS: Si te piden ficha técnica u hoja de seguridad, USA LA HERRAMIENTA `buscar_documento_tecnico` inmediatamente. No digas que no puedes hacerlo.
 DOCUMENTOS MÚLTIPLES: Si la herramienta `buscar_documento_tecnico` te devuelve 'multiples_opciones', NO digas que no lo encontraste. Muéstrale al cliente una lista corta y amable con las opciones y pregúntale: 'Tengo estas versiones, ¿cuál de estas fichas necesitas exactamente?'.
 
@@ -11766,13 +12063,66 @@ PRODUCTOS COMPLEMENTARIOS (CATALIZADORES, DILUYENTES, BASES):
 MEMORIA DE LISTAS: Si le mostraste al cliente una lista numerada de opciones (ya sean documentos, productos o cualquier cosa) y el cliente responde con un número (ej. '1', 'el 5', 'la segunda') o una afirmación ('sí', 'esa', 'la primera'), TIENES ESTRICTAMENTE PROHIBIDO pasarle ese número o 'sí' a las herramientas. DEBES buscar en tu memoria de conversación el nombre exacto de la opción que corresponde a ese número, y ejecutar la herramienta usando el NOMBRE COMPLETO EXACTO (ej. 'KORAZA ELASTOMÉRICA.pdf' o 'Domestico Blanco cuñete'). Nunca envíes '1', '2', 'sí' ni 'esa' como parámetro de búsqueda.
 
 CIERRE DE PEDIDO: Una vez el cliente confirme el resumen de productos, pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
+VALIDACIÓN PRE-CIERRE OBLIGATORIA: Antes de llamar `confirmar_pedido_y_generar_pdf`, revisa que CADA referencia en tu resumen corresponda EXACTAMENTE al producto (color, tamaño, presentación) que el cliente pidió. Si el cliente cambió alguna especificación durante la conversación, verifica que hayas hecho una nueva búsqueda de inventario y que la referencia sea la del producto actualizado, NO la del original.
 
-PROTOCOLO ESTRICTO PARA RECLAMOS Y GARANTÍAS:
-Paso 1: Identidad. Si no tienes la cédula/NIT del cliente, usa `verificar_identidad`. Si ya está verificado, continúa.
-Paso 2: Verificación de Compra. Usa `consultar_compras` para confirmar si el cliente realmente compró el producto reclamado recientemente. Si no aparece, díselo con tacto y ofrece alternativas.
-Paso 3: Indagación y Asesoría Técnica (¡VITAL!). NO abras el reclamo inmediatamente. Si un cliente reporta que una pintura 'salió mala', 'parece agua' o 'no cubre', NO le pidas el correo inmediatamente para radicar. Actúa como el experto ferretero que eres: pregúntale de forma conversacional cómo preparó la pared (selló, lijó, aplicó fondo), con qué diluyó el producto y cuántas manos aplicó. Usa sus respuestas para intentar explicarle qué pudo pasar ANTES de radicar. Si definitivamente es garantía o defecto, ahí sí recopila la info.
-- IMPORTANTE: Si el cliente dice que la pintura está aguada, no cubre o se descascara, NO le ofrezcas comprar más pintura. Primero cumple este Paso 3 completo: pregunta preparación de superficie, dilución y manos. Eres el experto, actúa como tal.
-Paso 4: Radicación. Si el problema persiste o es un defecto de fábrica claro, pide una foto (o número de lote) y el correo electrónico del cliente. SOLO ENTONCES ejecuta la herramienta `radicar_reclamo`. Nunca cortes la conversación sin darle un cierre amable al cliente con su número de radicado.
+PROTOCOLO ESTRICTO PARA RECLAMOS Y GARANTÍAS (5 FASES):
+
+FASE 1 — IDENTIFICACIÓN Y VERIFICACIÓN (sin fricción, NO BLOQUEANTE):
+- Si el cliente llega con una queja, reclamo o problema con un producto, NO le pidas datos de inmediato.
+- Primero escúchalo y valida emocionalmente: "Lamento que tengas ese inconveniente, voy a ayudarte."
+- Pregúntale qué producto es y qué pasó. Recoge el problema técnico PRIMERO.
+- IMPORTANTE: NO bloquees el diagnóstico técnico esperando la cédula. Si el cliente ya te está contando el problema, sigue con FASE 2 inmediatamente.
+- La cédula/NIT la puedes pedir en cualquier momento, idealmente después de hacer el diagnóstico y ANTES de radicar (Fase 5).
+- Si el cliente da su cédula voluntariamente, úsala con `verificar_identidad` y `consultar_compras`.
+- CRÍTICO: Si `verificar_identidad` NO encuentra al cliente, NO vuelvas a pedir la cédula ni bloquees el flujo. Continúa con el diagnóstico y la radicación normalmente. La verificación de identidad es un intento, NO un requisito.
+
+FASE 2 — DIAGNÓSTICO TÉCNICO (Contención — la parte MÁS IMPORTANTE):
+- ANTES de radicar nada, actúa como el experto ferretero que eres.
+- Cuando el cliente te cuente el problema y cómo aplicó el producto, usa INMEDIATAMENTE `consultar_conocimiento_tecnico` para buscar la ficha técnica del producto reclamado.
+- NO esperes a tener la cédula para hacer el diagnóstico técnico. La asesoría técnica es independiente de la verificación de identidad.
+- Cruza lo que dice el cliente con las especificaciones reales:
+  * Pregúntale: ¿Cómo preparó la superficie? ¿Lijó, selló, aplicó fondo/imprimación?
+  * ¿Con qué diluyó el producto? ¿Cuántas manos aplicó?
+  * ¿Qué herramientas usó (rodillo, brocha, pistola)?
+  * ¿Es interior o exterior? ¿Hay humedad o exposición directa al sol/lluvia?
+- Haz MÁXIMO 2-3 preguntas por turno. No abrumes al cliente.
+- Ejemplo: El cliente dice que la pintura se despegó del tubo de PVC → Revisa la ficha y nota que se necesita primer para plástico. Ese es tu diagnóstico.
+
+FASE 3 — ASESORÍA Y RESOLUCIÓN DE PRIMER NIVEL:
+- Con las respuestas del cliente y la info técnica del RAG, explica cortésmente la causa probable.
+- Ejemplo: "Según la ficha técnica de este esmalte, para superficies de PVC se requiere aplicar primero un primer de adherencia para plásticos. Sin ese paso, es normal que la pintura no agarre bien."
+- Si la causa fue error de aplicación, ofrece la solución correcta:
+  * Recomienda el producto complementario correcto (primer, sellador, diluyente adecuado).
+  * Da instrucciones claras de cómo re-aplicar correctamente.
+  * Si el producto complementario existe en inventario, búscalo con `consultar_inventario` y ofrécelelo.
+- PROHIBIDO: Si el cliente dice que la pintura salió mala o no cubre, NO le ofrezcas comprar más del mismo producto. Primero haz el diagnóstico completo.
+
+FASE 4 — ESCALAMIENTO CONDICIONADO:
+- Si después de tu diagnóstico técnico, la explicación NO resuelve el problema, O el cliente insiste en que siguió las instrucciones correctamente, O es un defecto claro de fábrica (lote malo, producto vencido, consistencia anormal):
+  * Acepta radicar el reclamo sin discutir más. No desgastes al cliente.
+  * Ejemplo: "Entiendo perfectamente. Con esa información voy a radicarte el reclamo directamente para que el área de calidad lo revise."
+
+FASE 5 — RADICACIÓN Y NOTIFICACIÓN (`radicar_reclamo`):
+- Puedes intentar verificar la identidad con `verificar_identidad` si tienes datos del cliente, pero NO es requisito.
+- Si `verificar_identidad` falla o el cliente no tiene cédula/NIT, PROCEDE con la radicación de todas formas.
+- NUNCA pidas la cédula dos veces. Si ya la pediste y no la tiene, o si verificar_identidad no lo encontró, sigue adelante.
+- Lo ÚNICO obligatorio para radicar es: producto, descripción del problema, diagnóstico técnico y correo electrónico del cliente.
+- Recopila la evidencia mínima:
+  * Pide una foto del producto o la superficie afectada (si no la ha enviado).
+  * Pide el número de lote del producto (si lo tiene).
+  * Pide el correo electrónico del cliente para enviarle la constancia del radicado.
+- SOLO ENTONCES ejecuta `radicar_reclamo` con:
+  * `producto_reclamado`: nombre exacto del producto.
+  * `descripcion_problema`: resumen claro del problema reportado.
+  * `diagnostico_previo`: resumen de toda tu investigación técnica (qué preguntaste, qué respondió el cliente, qué dice la ficha técnica, tu conclusión).
+  * `correo_cliente`: correo del cliente.
+  * `evidencia`: "Foto enviada por WhatsApp" o "Lote XXXX" o "Pendiente".
+- El sistema automáticamente:
+  * Crea un ticket de seguimiento con número CRM-XXX.
+  * Envía un correo al área de calidad/garantías con el RESUMEN del caso (NO la conversación completa).
+  * Envía un correo de confirmación al cliente con el número de radicado y el diagnóstico técnico.
+- Cierra la conversación de reclamo SIEMPRE con un mensaje amable que incluya el número de radicado.
+- IMPORTANTE: El email enviado contiene SOLO el resumen estructurado (producto, problema, diagnóstico, evidencia), NO toda la conversación. Esto protege la privacidad del cliente.
 
 ESTADO ACTUAL DE LA CONVERSACIÓN:
 - Cliente verificado: {verificado}
@@ -11943,7 +12293,8 @@ AGENT_TOOLS = [
             "description": "ESTRICTAMENTE PROHIBIDO llamar a esta herramienta de inmediato. "
             "Úsala ÚNICAMENTE DESPUÉS de haber actuado como asesor técnico: debes haberle hecho al menos 1 o 2 preguntas al cliente "
             "sobre cómo aplicó el producto (dilución, preparación de la superficie, herramientas usadas) Y el cliente debe haberte respondido. "
-            "Solo cuando tengas ese diagnóstico técnico claro, además del producto, la falla y el correo, puedes ejecutar esta herramienta.",
+            "Solo cuando tengas ese diagnóstico técnico claro, además del producto, la falla y el correo, puedes ejecutar esta herramienta. "
+            "NO necesitas que verificar_identidad haya encontrado al cliente. Si la cédula no aparece en el sistema, radica de todas formas.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -12486,18 +12837,21 @@ def _handle_tool_radicar_reclamo(args, context, conversation_context):
     }
 
     # Save claim case in conversation context
-    update_conversation_context(
-        conversation_id,
-        {
-            "claim_case": {
-                "submitted": True,
-                "case_reference": numero_caso,
-                "product_label": producto_reclamado,
-                "issue_summary": descripcion_problema,
-                "contact_email": correo_cliente,
+    try:
+        update_conversation_context(
+            conversation_id,
+            {
+                "claim_case": {
+                    "submitted": True,
+                    "case_reference": numero_caso,
+                    "product_label": producto_reclamado,
+                    "issue_summary": descripcion_problema,
+                    "contact_email": correo_cliente,
+                },
             },
-        },
-    )
+        )
+    except Exception:
+        pass
     conversation_context["claim_case"] = claim_detail
 
     # Create agent task for tracking
@@ -12540,12 +12894,15 @@ def _handle_tool_radicar_reclamo(args, context, conversation_context):
                 intent_detectado="correo_reclamo_interno",
             )
     except Exception as exc:
-        store_outbound_message(
-            conversation_id, None, "system",
-            f"Error enviando correo interno de reclamo: {exc}",
-            {"error": str(exc)},
-            intent_detectado="correo_reclamo_interno_error",
-        )
+        try:
+            store_outbound_message(
+                conversation_id, None, "system",
+                f"Error enviando correo interno de reclamo: {exc}",
+                {"error": str(exc)},
+                intent_detectado="correo_reclamo_interno_error",
+            )
+        except Exception:
+            pass
 
     # 2. Confirmation email to customer
     if correo_cliente:
@@ -12571,12 +12928,15 @@ def _handle_tool_radicar_reclamo(args, context, conversation_context):
                     intent_detectado="correo_reclamo_cliente",
                 )
         except Exception as exc:
-            store_outbound_message(
-                conversation_id, None, "system",
-                f"Error enviando constancia al cliente: {exc}",
-                {"error": str(exc)},
-                intent_detectado="correo_reclamo_cliente_error",
-            )
+            try:
+                store_outbound_message(
+                    conversation_id, None, "system",
+                    f"Error enviando constancia al cliente: {exc}",
+                    {"error": str(exc)},
+                    intent_detectado="correo_reclamo_cliente_error",
+                )
+            except Exception:
+                pass
 
     return json.dumps(
         {
@@ -12665,6 +13025,31 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         )
         if not matched_row:
             rejected_items.append(f"{it.get('descripcion_comercial', 'Producto')} (ref: {reference_value})")
+            continue
+        # --- Cross-validate: detect when the LLM's description doesn't match the real product ---
+        real_desc = (matched_row.get("descripcion") or matched_row.get("nombre_articulo") or "").upper()
+        llm_desc = (it.get("descripcion_comercial") or "").upper()
+        # Check for color mismatch (LLM says BLANCO but ref is GRIS, etc.)
+        _color_keywords = ["BLANCO", "GRIS", "ROJO", "NEGRO", "VERDE", "AZUL", "AMARILLO", "BEIGE", "CREMA", "CAFE", "MARFIL", "OCRE"]
+        _llm_colors = [c for c in _color_keywords if c in llm_desc]
+        _real_colors = [c for c in _color_keywords if c in real_desc]
+        if _llm_colors and _real_colors and set(_llm_colors) != set(_real_colors):
+            rejected_items.append(
+                f"{it.get('descripcion_comercial', 'Producto')} (ref: {reference_value}) — "
+                f"ERROR DE COLOR: la referencia {reference_value} corresponde a '{real_desc.strip()}', "
+                f"pero tú pusiste '{llm_desc.strip()}'. Busca de nuevo con consultar_inventario usando el color correcto."
+            )
+            continue
+        # Check for size/presentation mismatch (LLM says 18.93L but ref is 9.46L, etc.)
+        _size_keywords = ["18.93", "9.46", "3.79", "0.95", "20K", "11K", "4.2K", "4K", "1K", "2.5K", "5K"]
+        _llm_sizes = [s for s in _size_keywords if s in llm_desc]
+        _real_sizes = [s for s in _size_keywords if s in real_desc]
+        if _llm_sizes and _real_sizes and set(_llm_sizes) != set(_real_sizes):
+            rejected_items.append(
+                f"{it.get('descripcion_comercial', 'Producto')} (ref: {reference_value}) — "
+                f"ERROR DE PRESENTACIÓN: la referencia {reference_value} corresponde a '{real_desc.strip()}', "
+                f"pero tú pusiste '{llm_desc.strip()}'. Busca de nuevo con consultar_inventario usando la presentación correcta."
+            )
             continue
         matched_product = dict(matched_row)
         matched_product.setdefault("referencia", reference_value)
@@ -12915,13 +13300,32 @@ def _handle_tool_guardar_aprendizaje_producto(args, conversation_context):
                 ensure_ascii=False,
             )
 
-    normalized_code = normalize_text_value(codigo_cliente)
+    # --- Protección anti-contaminación: frases demasiado genéricas ---
+    _GENERIC_LEARNING_BLOCKLIST = [
+        "pintura", "blanco", "blanca", "galón", "galon", "cuñete", "cunete",
+        "cuarto", "litro", "balde", "tarro", "caneca", "lata",
+        "mate", "brillante", "satinado", "vinilo", "esmalte",
+    ]
+    if normalized_code := normalize_text_value(codigo_cliente):
+        if normalized_code in _GENERIC_LEARNING_BLOCKLIST or len(normalized_code) < 3:
+            return json.dumps(
+                {"guardado": False, "mensaje": f"No se guardó: '{codigo_cliente}' es demasiado genérico para aprender. "
+                 "Solo se aprenden códigos específicos del cliente (ej. P-53, MEGA, DERC20)."},
+                ensure_ascii=False,
+            )
+    else:
+        return json.dumps(
+            {"guardado": False, "mensaje": "No se guardó: la frase del cliente no es válida."},
+            ensure_ascii=False,
+        )
+
     if not should_store_learning_phrase(normalized_code):
         return json.dumps(
             {"guardado": False, "mensaje": "No se guardó: la jerga o frase del cliente es demasiado ambigua para memoria permanente."},
             ensure_ascii=False,
         )
 
+    # --- Validar que el producto realmente existe en inventario antes de aprender ---
     resolved_row = resolve_confirmed_learning_product_row(descripcion_asociada, conversation_context)
     if not resolved_row:
         return json.dumps(
@@ -12944,10 +13348,39 @@ def _handle_tool_guardar_aprendizaje_producto(args, conversation_context):
 
     conversation_id = conversation_context.get("conversation_id")
 
+    # --- Verificar que la referencia canónica realmente existe en el catálogo ---
+    try:
+        engine = get_db_engine()
+        with engine.connect() as connection:
+            exists_check = connection.execute(
+                text("SELECT 1 FROM public.productos WHERE producto_codigo = :ref OR referencia = :ref LIMIT 1"),
+                {"ref": str(canonical_reference)},
+            ).fetchone()
+            if not exists_check:
+                return json.dumps(
+                    {"guardado": False, "mensaje": f"No se guardó: la referencia '{canonical_reference}' no existe en el catálogo de productos."},
+                    ensure_ascii=False,
+                )
+    except Exception:
+        pass  # Si no puede verificar, continúa con precaución
+
     try:
         ensure_product_learning_table()
         engine = get_db_engine()
         with engine.begin() as connection:
+            # --- Limitar cantidad de aprendizajes por conversación (anti-spam) ---
+            learning_count = connection.execute(
+                text(
+                    "SELECT COUNT(*) FROM public.agent_product_learning WHERE source_conversation_id = :conv_id"
+                ),
+                {"conv_id": conversation_id},
+            ).scalar() or 0
+            if learning_count >= 10:
+                return json.dumps(
+                    {"guardado": False, "mensaje": "No se guardó: esta conversación ya tiene 10 aprendizajes guardados (límite de seguridad)."},
+                    ensure_ascii=False,
+                )
+
             connection.execute(
                 text(
                     """
@@ -12985,6 +13418,10 @@ def _handle_tool_guardar_aprendizaje_producto(args, conversation_context):
                     "confidence": 0.95,
                 },
             )
+        logger.info(
+            "Aprendizaje guardado: '%s' → '%s | %s' (conv=%s)",
+            codigo_cliente, canonical_reference, canonical_description, conversation_id,
+        )
         return json.dumps(
             {"guardado": True, "mensaje": f"Aprendizaje guardado: '{codigo_cliente}' → '{canonical_reference} | {canonical_description}'. "
              "La próxima vez que alguien pida este código, el sistema lo reconocerá automáticamente."},
@@ -13338,6 +13775,14 @@ def generate_agent_reply_v2(
         elif tc["name"] == "confirmar_pedido_y_generar_pdf":
             intent = "pedido"
 
+    # Detectar despedida del cliente
+    is_farewell = detect_farewell(user_message)
+    if is_farewell:
+        intent = "despedida"
+
+    # Calcular confianza de la respuesta
+    confidence = score_agent_confidence(response_text, tool_calls_made, intent)
+
     return {
         "response_text": response_text,
         "intent": intent,
@@ -13348,6 +13793,8 @@ def generate_agent_reply_v2(
             "last_product_context": conversation_context.get("last_product_context"),
         } if conversation_context.get("last_product_request") else {},
         "should_create_task": False,
+        "confidence": confidence,
+        "is_farewell": is_farewell,
     }
 
 
@@ -13586,6 +14033,131 @@ def admin_rag_buscar(
             "resultados": results,
             "productos_candidatos": candidates,
         }
+    except Exception as exc:
+        return {"error": str(exc)}
+
+
+
+@app.get("/admin/alertas-agente")
+def admin_alertas_agente(
+    limit: int = 20,
+    estado: str = "pendiente",
+    admin_key: str = Header(None, alias="x-admin-key"),
+):
+    """Consulta alertas generadas por respuestas de baja confianza del agente."""
+    expected = os.getenv("ADMIN_API_KEY", "ferreinox_admin_2024")
+    if admin_key != expected:
+        raise HTTPException(status_code=403, detail="Admin key inválida")
+    try:
+        engine = get_db_engine()
+        with engine.connect() as connection:
+            rows = connection.execute(
+                text(
+                    """
+                    SELECT t.id, t.conversation_id, t.tipo_tarea, t.prioridad, t.estado,
+                           t.resumen, t.detalle, t.created_at,
+                           c.telefono_e164, c.nombre_visible
+                    FROM public.agent_task t
+                    LEFT JOIN public.agent_conversation ac ON ac.id = t.conversation_id
+                    LEFT JOIN public.whatsapp_contacto c ON c.id = ac.contact_id
+                    WHERE t.tipo_tarea IN ('respuesta_baja_confianza', 'multiples_señales_problema', 'revision_manual')
+                      AND (:estado = 'todos' OR t.estado = :estado)
+                    ORDER BY t.created_at DESC
+                    LIMIT :limit
+                    """
+                ),
+                {"estado": estado, "limit": limit},
+            ).mappings().all()
+            alertas = []
+            for r in rows:
+                detalle = r["detalle"]
+                if isinstance(detalle, str):
+                    try:
+                        detalle = json.loads(detalle)
+                    except Exception:
+                        pass
+                alertas.append({
+                    "id": r["id"],
+                    "conversation_id": r["conversation_id"],
+                    "tipo": r["tipo_tarea"],
+                    "prioridad": r["prioridad"],
+                    "estado": r["estado"],
+                    "resumen": r["resumen"],
+                    "detalle": detalle,
+                    "created_at": str(r["created_at"]),
+                    "telefono": r.get("telefono_e164"),
+                    "nombre": r.get("nombre_visible"),
+                })
+            return {"total": len(alertas), "alertas": alertas}
+    except Exception as exc:
+        return {"error": str(exc)}
+
+
+@app.get("/admin/calidad-agente")
+def admin_calidad_agente(
+    horas: int = 24,
+    admin_key: str = Header(None, alias="x-admin-key"),
+):
+    """Resumen de calidad del agente: conversaciones cerradas, alertas, confianza promedio."""
+    expected = os.getenv("ADMIN_API_KEY", "ferreinox_admin_2024")
+    if admin_key != expected:
+        raise HTTPException(status_code=403, detail="Admin key inválida")
+    try:
+        engine = get_db_engine()
+        with engine.connect() as connection:
+            # Conversaciones en las últimas N horas
+            conv_stats = connection.execute(
+                text(
+                    """
+                    SELECT
+                        COUNT(*) AS total,
+                        COUNT(*) FILTER (WHERE estado = 'cerrada') AS cerradas,
+                        COUNT(*) FILTER (WHERE estado = 'abierta') AS abiertas,
+                        COUNT(*) FILTER (WHERE contexto->>'final_status' = 'gestionado') AS gestionadas,
+                        COUNT(*) FILTER (WHERE contexto->>'close_reason' = 'farewell_detected') AS cerradas_despedida
+                    FROM public.agent_conversation
+                    WHERE last_message_at >= now() - make_interval(hours => :horas)
+                    """
+                ),
+                {"horas": horas},
+            ).mappings().one()
+
+            # Alertas en las últimas N horas
+            alert_stats = connection.execute(
+                text(
+                    """
+                    SELECT
+                        COUNT(*) AS total_alertas,
+                        COUNT(*) FILTER (WHERE tipo_tarea = 'respuesta_baja_confianza') AS baja_confianza,
+                        COUNT(*) FILTER (WHERE tipo_tarea = 'multiples_señales_problema') AS multiples_señales,
+                        COUNT(*) FILTER (WHERE tipo_tarea = 'revision_manual') AS revision_manual,
+                        COUNT(*) FILTER (WHERE estado = 'pendiente') AS pendientes
+                    FROM public.agent_task
+                    WHERE created_at >= now() - make_interval(hours => :horas)
+                      AND tipo_tarea IN ('respuesta_baja_confianza', 'multiples_señales_problema', 'revision_manual')
+                    """
+                ),
+                {"horas": horas},
+            ).mappings().one()
+
+            # Aprendizajes recientes
+            learning_stats = connection.execute(
+                text(
+                    """
+                    SELECT COUNT(*) AS total_aprendizajes
+                    FROM public.agent_product_learning
+                    WHERE updated_at >= now() - make_interval(hours => :horas)
+                    """
+                ),
+                {"horas": horas},
+            ).mappings().one()
+
+            return {
+                "periodo_horas": horas,
+                "conversaciones": dict(conv_stats),
+                "alertas": dict(alert_stats),
+                "aprendizajes_recientes": learning_stats["total_aprendizajes"],
+            }
     except Exception as exc:
         return {"error": str(exc)}
 
@@ -14061,11 +14633,54 @@ async def receive_whatsapp_webhook(request: Request):
                     extra_context_updates = ai_result.get("context_updates") or {}
                     if extra_context_updates:
                         context_updates.update(extra_context_updates)
-                    update_conversation_context(
-                        context["conversation_id"],
-                        context_updates,
-                        summary=content[:200] if content else "Mensaje procesado",
-                    )
+
+                    # ── Confianza y alertas ──
+                    confidence = ai_result.get("confidence") or {}
+                    if confidence:
+                        context_updates["last_confidence"] = confidence
+                        logger.info(
+                            "Confianza respuesta conv=%d: score=%.2f level=%s signals=%s",
+                            context["conversation_id"],
+                            confidence.get("score", 0),
+                            confidence.get("level", "?"),
+                            confidence.get("signals", []),
+                        )
+
+                    # ── Evaluar si necesita alerta para el administrador ──
+                    if confidence and confidence.get("level") in ("baja", "media"):
+                        evaluate_and_create_alert(
+                            context["conversation_id"],
+                            context.get("cliente_id"),
+                            content,
+                            ai_result,
+                            confidence,
+                        )
+
+                    # ── Cierre automático por despedida ──
+                    if ai_result.get("is_farewell"):
+                        context_updates["conversation_closed"] = True
+                        context_updates["close_reason"] = "farewell_detected"
+                        try:
+                            close_conversation(
+                                context["conversation_id"],
+                                context_updates,
+                                summary=f"Conversación cerrada por despedida del cliente. Último intent: {ai_result.get('intent')}",
+                                final_status="gestionado",
+                            )
+                            logger.info("Conversación %d cerrada por despedida del cliente", context["conversation_id"])
+                        except Exception as exc:
+                            logger.error("No se pudo cerrar conversación %d: %s", context["conversation_id"], exc)
+                            update_conversation_context(
+                                context["conversation_id"],
+                                context_updates,
+                                summary=content[:200] if content else "Mensaje procesado",
+                            )
+                    else:
+                        update_conversation_context(
+                            context["conversation_id"],
+                            context_updates,
+                            summary=content[:200] if content else "Mensaje procesado",
+                        )
 
                     if ai_result.get("should_create_task"):
                         upsert_agent_task(
