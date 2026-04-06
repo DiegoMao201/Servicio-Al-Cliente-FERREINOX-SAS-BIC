@@ -1253,14 +1253,16 @@ DIAGNOSTIC_QUESTION_TREE = {
 }
 
 # ── Productos/aplicaciones que Ferreinox NO maneja ────────────────────────
-# Cuando el cliente pida algo de esta lista, el agente DEBE decir que no
-# tenemos un producto con garantía técnica para eso y redirigir a un asesor.
+# Solo para casos donde NO existe ningún producto en el portafolio (ni Pintuco ni International).
+# Para aplicaciones condicionales (inmersión, agua potable) el agente DEBE consultar el RAG primero.
 PORTFOLIO_GAPS = {
     "piscina": "Ferreinox actualmente no maneja en su portafolio una pintura especializada para piscinas con garantía técnica. Te recomiendo comunicarte con uno de nuestros asesores para que te orienten con el fabricante, o consultar en www.ferreinox.co.",
     "piscinas": "Ferreinox actualmente no maneja en su portafolio una pintura especializada para piscinas con garantía técnica. Te recomiendo comunicarte con uno de nuestros asesores para que te orienten con el fabricante, o consultar en www.ferreinox.co.",
-    "tanque agua": "Ferreinox actualmente no maneja pintura especializada para tanques de agua potable. Te recomiendo contactar a un asesor para una solución con garantía del fabricante.",
-    "inmersion en agua": "No manejamos recubrimientos certificados para inmersión permanente en agua. Contacta a un asesor para la solución correcta.",
     "pintura marina": "No manejamos pintura marina anti-incrustante. Contacta a un asesor para orientación especializada.",
+    # NOTA: "tanque agua potable" e "inmersion" SE ELIMINARON del hard-block porque la línea
+    # International/AkzoNobel (Interseal 670HS) tiene certificación NSF/ANSI 61 para agua potable
+    # con condiciones específicas. El agente debe consultar el RAG (consultar_conocimiento_tecnico)
+    # antes de responder esas consultas.
 }
 
 # ── Reglas técnicas verificadas por producto ──────────────────────────────
@@ -1360,6 +1362,12 @@ BICOMPONENT_CATALOG: dict[str, dict] = {
         "componente_a_descripcion": "Interseal COMP A",
         "componente_b_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
         "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.",
+        "aplicacion_condicional_agua_potable": (
+            "Interseal 670HS tiene certificación NSF/ANSI 61 para agua potable en tanques > 100 gal (378.5L). "
+            "Condiciones obligatorias: (1) preparación Sa 2.5 / SSPC-SP10, (2) colores específicos certificados "
+            "(verificar lote con distribuidor), (3) respetar tiempo de curado completo antes de servicio. "
+            "Alternativa de mayor desempeño en inmersión permanente: línea Interline (100% sólidos, sin solventes)."
+        ),
     },
     # ─ Intergard (International / AkzoNobel) ──────────────────────────────
     "intergard": {
@@ -12027,26 +12035,36 @@ REGLA CRÍTICA DEL PARÁMETRO 'producto': Cuando llames `consultar_conocimiento_
     - Tú manejas la conversación. Si el cliente escribe algo confuso o enredado, no te paralices. Identifica lo más importante y responde a eso. Si hay varias cosas mezcladas, resuélvelas una por una.
 
 GUARDIÁN TÉCNICO (MÁXIMA PRIORIDAD):
-ERES UN EXPERTO TÉCNICO, NO UN TOMADOR DE PEDIDOS CIEGO. Si un cliente solicita un producto específico para un caso de uso especializado \
-(ej. piscinas, pisos, tráfico pesado, metales, humedad, tanques, techos, fachadas, intemperie, ambientes químicos, temperaturas extremas), \
-TIENES ESTRICTAMENTE PROHIBIDO ofrecer el producto del inventario sin antes validar su idoneidad técnica. \
-Tu obligación es CONTRADECIR al cliente con amabilidad si lo que pide causará un daño o fallo técnico. \
-Antes de ir a `consultar_inventario`, usa `consultar_conocimiento_tecnico` para verificar si el producto solicitado es apto para esa superficie o condición. \
-Si el RAG confirma que NO es apto, explica amablemente por qué va a fallar y ofrece el recubrimiento adecuado basado en la ficha técnica. \
-Si el RAG confirma que SÍ es apto, ahí sí consulta inventario y ofrece. \
-Ejemplo: cliente pide 'vinilo blanco para piscina' → Ferreinox NO maneja pintura para piscinas. Respóndele: \
-"No manejamos un producto con garantía técnica para piscinas. Te recomiendo comunicarte con uno de nuestros asesores para orientación." \
-Ejemplo 2: cliente dice 'tengo humedad interna' → NO recomiendes Koraza (es SOLO para fachadas exteriores). Busca Aquablock o Sellamur. \
-ESTA REGLA PREVALECE sobre cualquier solicitud del cliente. El cliente puede pedir lo que quiera, pero tú eres el experto y proteges su inversión.
+ERES UN EXPERTO TÉCNICO CON ACCESO A FICHAS TÉCNICAS REALES. Tu misión no es bloquear, sino leer la ficha técnica y dar la respuesta correcta basada en datos, incluyendo condiciones, limitaciones y alternativas. \
+Si un cliente pregunta si un producto sirve para una aplicación especializada (inmersión, agua potable, temperatura extrema, ambiente químico, resistencia UV, carga estructural), NUNCA respondas de memoria ni con un 'sí genérico' ni con un 'no de bloqueo'. \
+Tu flujo obligatorio: \
+1) Llama `consultar_conocimiento_tecnico(marca='[marca]', producto='[producto]', pregunta='aptitud para [aplicación]: certificaciones, condiciones, preparación')`. \
+2) Lee el resultado del RAG y construye la respuesta técnica CONDICIONAL: '¿funciona? Sí/No, PERO con estas condiciones: [preparación], [certificación], [limitaciones], [alternativa si aplica]'. \
+3) Si el RAG no tiene suficiente información sobre esa aplicación específica, dilo honestamente: 'No tengo la ficha que confirme o descarte este uso específico. Te recomiendo validarlo con el fabricante antes de aplicar.' \
+Ejemplo 1: cliente pregunta 'el Interseal sirve para tanques de agua potable' → NO respondas de memoria. Llama `consultar_conocimiento_tecnico(marca='international', producto='interseal', pregunta='aplicacion en tanques de agua potable certificacion NSF ANSI 61')`. Lee el RAG. Da la respuesta condicional que tenga la ficha: certificación, colores válidos, preparación superficial requerida, tiempos de curado. \
+Ejemplo 2: cliente pide 'vinilo para piscina' → Ferreinox NO tiene pintura para piscinas. Respóndele: 'No manejamos pintura para piscinas con garantía técnica.' \
+Ejemplo 3: cliente dice 'tengo humedad interna' → NO recomiendes Koraza (es SOLO para fachadas exteriores). Busca Aquablock. \
+ESTA REGLA PREVALECE. La ficha técnica ES la verdad, no tu memoria ni las reglas codificadas.
 
-PRODUCTOS QUE FERREINOX NO MANEJA (GAPS DEL PORTAFOLIO):
-Si el cliente pide un producto para alguna de estas aplicaciones, NO inventes una solución alternativa incorrecta. \
-Di honestamente que no manejamos ese producto con garantía y redirige a un asesor: \
-- Pintura para piscinas o inmersión permanente en agua \
-- Pintura marina anti-incrustante \
-- Pintura para tanques de agua potable \
-La respuesta correcta es: "En Ferreinox no manejamos un producto especializado para [aplicación] con garantía técnica. \
-Te recomiendo comunicarte con uno de nuestros asesores para que te orienten con el fabricante correcto, o consultar en www.ferreinox.co."
+APLICACIONES TÉCNICAS CONDICIONALES (RAG PRIMERO, NUNCA BLOQUEAR SIN CONSULTAR):
+Algunas aplicaciones NO son imposibles, son CONDICIONALES. Antes de decir 'no manejamos', debes consultar el RAG porque la línea International/AkzoNobel tiene certificaciones específicas. \
+APLICACIONES QUE REQUIEREN CONSULTA RAG OBLIGATORIA (no son un 'no' automático): \
+- Inmersión en agua / servicio de inmersión → consultar_conocimiento_tecnico(marca='international', producto='interseal', pregunta='inmersión en agua servicio continuo condiciones') \
+- Agua potable / tanques de agua potable → consultar_conocimiento_tecnico(marca='international', producto='interseal', pregunta='certificacion NSF ANSI 61 agua potable tanques') \
+- Temperaturas extremas / superficies calientes → consultar_conocimiento_tecnico(marca='international', pregunta='temperatura máxima servicio [producto]') \
+- Resistencia química / ambiente agresivo → consultar_conocimiento_tecnico(marca='international', pregunta='resistencia química [producto] ambiente [descripción]') \
+- Exposición marina / ambiente marino → consultar_conocimiento_tecnico(marca='international', pregunta='exposición ambiente marino [producto]') \
+CÓMO DAR LA RESPUESTA CONDICIONAL (modelo que debes seguir): \
+  'Sí, con condiciones específicas: [menciona la certificación si aparece en el RAG]. \
+   Preparación requerida: [norma SAxx o SSPCxx del RAG]. \
+   Limitación: [capacidad mínima, colores válidos, etc.]. \
+   Curado antes del servicio: [tiempo del RAG]. \
+   Si el RAG menciona una alternativa específica (ej. línea Interline para 100% sólidos), menciónala.' \
+GAPS REALES DEL PORTAFOLIO (estos sí son un 'no' definitivo): \
+- Pintura para piscinas o albercas de natación → Ferreinox NO maneja esto. \
+- Pintura marina anti-incrustante (antifouling) → Ferreinox NO maneja esto. \
+La respuesta para gaps reales es: "En Ferreinox no manejamos un producto especializado para [aplicación]. \
+Te recomiendo comunicarte con uno de nuestros asesores o consultar en www.ferreinox.co."
 
 REGLAS TÉCNICAS VERIFICADAS POR PRODUCTO (PREVALECEN sobre RAG y conocimiento general):
 - KORAZA: Es pintura elastomérica SOLO para fachadas exteriores, muros exteriores expuestos a lluvia y sol, terrazas descubiertas. \
@@ -13755,6 +13773,11 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         "poliuretano industrial", "epoxica industrial pesado",
         "recubrimiento industrial", "sistema mantenimiento", "ambientes agresivos",
         "ambiente quimico", "corrosion industrial", "anticorrosivo industrial",
+        # Conditional applications — require RAG lookup from International guide
+        "agua potable", "tanque agua", "tanque de agua", "inmercion", "inmersion",
+        "sumergido", "sumergida", "servicio inmerso", "nsf", "ansi 61", "interline",
+        "lining", "revestimiento interior tanque", "temperatura extrema",
+        "superficies calientes", "resistencia quimica alta", "ambiente marino",
     ]
     _q_lower = (pregunta + " " + producto).lower()
     if not marca_filter and any(kw in _q_lower for kw in _INDUSTRIAL_MPY_KEYWORDS):
@@ -13877,6 +13900,20 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             result_payload["instruccion_bicomponente"] += (
                 f"6) RESTRICCIÓN EXTERIOR: {_catalog_entry['restriccion_exterior']}"
             )
+        # If this is Interseal and query involves water/potable — inject conditional application note
+        _q_agua = normalize_text_value(f"{pregunta} {producto}")
+        _agua_keywords = ["agua potable", "tanque agua", "inmercion", "inmersion", "nsf", "ansi", "sumergido", "lining"]
+        if _bkey == "interseal" and any(kw in _q_agua for kw in _agua_keywords):
+            _agua_note = _catalog_entry.get("aplicacion_condicional_agua_potable", "")
+            if _agua_note:
+                result_payload["instruccion_agua_potable"] = (
+                    "⚠️ CONSULTA DE APLICACIÓN CONDICIONAL (agua potable / inmersión): "
+                    f"CONOCIMIENTO TÉCNICO VERIFICADO: {_agua_note} "
+                    "INSTRUCCIÓN: Lee los fragmentos del RAG y construye la respuesta condicional completa: "
+                    "certificación detectada, preparación requerida, limitaciones de color/capacidad, "
+                    "tiempos de curado, y alternativas si las hay. "
+                    "NUNCA respondas con un 'no manejamos eso' para esta aplicación sin haber leído el RAG."
+                )
 
     if inventory_candidates:
         result_payload["productos_inventario_relacionados"] = [
