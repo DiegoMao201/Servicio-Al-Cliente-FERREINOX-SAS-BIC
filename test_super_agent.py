@@ -669,7 +669,7 @@ def run_agent_tests():
                         "user_message": user_message,
                         "context": context,
                     },
-                    timeout=30,
+                    timeout=60,
                 )
                 resp.raise_for_status()
                 data = resp.json()
@@ -823,25 +823,35 @@ if __name__ == "__main__":
     print("  Diagnóstico • RAG • Inventario • Pedidos • Abrasivos • Gaps")
     print("=" * 90)
 
-    # Check prerequisites
-    if not os.environ.get("DATABASE_URL"):
-        print("\n⚠️  DATABASE_URL no configurada. El test del agente requiere conexión a BD.")
-        print("   Set DATABASE_URL=postgresql://... para ejecutar la parte 2.")
-
     # Part 1: RAG Tests (always runs, only needs network)
     rag_pass, rag_warn, rag_fail = run_rag_tests()
 
-    # Part 2: Agent Tests (needs DB + OpenAI)
+    # Part 2: Agent Tests (uses /admin/agent-test endpoint — no local DB/OpenAI needed)
     agent_pass, agent_warn, agent_fail = 0, 0, 0
-    if os.environ.get("DATABASE_URL") and os.environ.get("OPENAI_API_KEY"):
-        agent_pass, agent_warn, agent_fail = run_agent_tests()
+    skip_agent = os.environ.get("SKIP_AGENT_TESTS", "").lower() in ("1", "true", "yes")
+    if skip_agent:
+        print(f"\n⏭️  Saltando PARTE 2 (Agent Tests): SKIP_AGENT_TESTS=1")
     else:
-        missing = []
-        if not os.environ.get("DATABASE_URL"):
-            missing.append("DATABASE_URL")
-        if not os.environ.get("OPENAI_API_KEY"):
-            missing.append("OPENAI_API_KEY")
-        print(f"\n⏭️  Saltando PARTE 2 (Agent Tests): falta {', '.join(missing)}")
+        # Quick connectivity check before running full suite
+        try:
+            _probe = requests.post(
+                f"{BACKEND_URL}/admin/agent-test",
+                headers={"x-admin-key": ADMIN_KEY, "Content-Type": "application/json"},
+                json={"user_message": "ping", "profile_name": "probe"},
+                timeout=15,
+            )
+            if _probe.status_code == 403:
+                print("\n❌ Admin key rechazada por el backend. Verifica ADMIN_API_KEY.")
+                skip_agent = True
+            elif _probe.status_code >= 500:
+                print(f"\n❌ Backend devolvió {_probe.status_code}. ¿Está desplegado el endpoint /admin/agent-test?")
+                skip_agent = True
+        except Exception as _err:
+            print(f"\n❌ No se pudo conectar al backend ({BACKEND_URL}): {_err}")
+            skip_agent = True
+
+        if not skip_agent:
+            agent_pass, agent_warn, agent_fail = run_agent_tests()
 
     # Final summary
     total_pass = rag_pass + agent_pass

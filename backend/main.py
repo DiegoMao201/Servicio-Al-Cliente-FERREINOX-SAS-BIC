@@ -11759,7 +11759,8 @@ MADERA → Sospecha: Barnex/Wood Stain (exterior) o Pintulac (interior)
   - Interior → Pintulac (transparente) o Pintulux (color sólido)
 
 PREPARACIÓN DE SUPERFICIE / ABRASIVOS / REMOCIÓN DE PINTURA → Sospecha: Lija, Disco Flap, Grata, Removedor
-  Pregunta clave: "¿Qué superficie necesitas preparar: metal, madera, concreto o una pared ya pintada?"
+  REGLA ESPECIAL: Si el cliente ya menciona el tipo de producto abrasivo explícitamente (ej. "lijas al agua", "disco flap", "grata", "cepillo metálico", "removedor de pintura"), llama DIRECTAMENTE `consultar_inventario` con ese producto SIN diagnóstico previo - el cliente ya sabe qué necesita.
+  Pregunta clave (solo si NO mencionó el producto): "¿Qué superficie necesitas preparar: metal, madera, concreto o una pared ya pintada?"
   - Metal oxidado → Disco flap o grata en amoladora para remover óxido mecánicamente. Si no tiene amoladora → Removedor de Pintuco. Después: Pintóxido si queda óxido residual + Corrotec anticorrosivo + Pintulux acabado.
   - Madera con pintura/barniz viejo → Removedor de Pintuco + espátula + lija fina (grano 220). Después: imprimante + nueva pintura/barniz.
   - Pared descascarada → Raspar lo suelto + lija al agua 150-220 + estuco si hay huecos. Después: imprimante + pintura.
@@ -11773,6 +11774,13 @@ ESTRUCTURAS ESPECIALES (toboganes, juegos infantiles, barandas, portones, rejas)
   - Con mucho óxido → Disco flap/grata + Pintóxido (convertidor) + Corrotec + Pintulux
 
 FLUJO CORRECTO: 1) Escucha el problema → 2) Sospecha un producto basado en el árbol → 3) Haz 1-2 preguntas para confirmar tu sospecha → 4) Llama consultar_conocimiento_tecnico con el producto sospechado (SIEMPRE pasa el parámetro 'producto' con tu sospecha - NUNCA llames esta herramienta sin un producto específico cuando sea asesoría técnica) → 5) Da la asesoría técnica con datos concretos de la ficha (rendimiento, preparación, tiempos) → 6) Ofrece vender los productos con precio y stock.
+
+REGLA ANTI-MEMORIA (OBLIGATORIA): En el turno donde el cliente confirme el tipo de superficie, condición o uso específico (después de tu pregunta diagnóstica), DEBES llamar `consultar_conocimiento_tecnico` INMEDIATAMENTE en ese mismo turno antes de dar ningún nombre de producto ni recomendación técnica. EJEMPLOS OBLIGATORIOS:
+  - Cliente dice "es de eternit" → llama consultar_conocimiento_tecnico(producto="pintuco fill", pregunta="impermeabilizar techo fibrocemento eternit") AHORA, no en el siguiente turno.
+  - Cliente dice "quiero acabado transparente para madera exterior" → llama consultar_conocimiento_tecnico(producto="barnex", pregunta="barniz transparente exterior para madera") AHORA.
+  - Cliente dice "el óxido está bastante profundo, está a la intemperie" → llama consultar_conocimiento_tecnico(producto="corrotec", pregunta="sistema anticorrosivo óxido profundo intemperie") AHORA.
+  - Cliente dice "tráfico liviano, solo carros livianos" → llama consultar_conocimiento_tecnico(producto="pintura canchas", pregunta="pintura piso garaje residencial") AHORA.
+PROHIBIDO dar el nombre de un producto como recomendación final sin haber llamado `consultar_conocimiento_tecnico` primero. Los nombres de productos del portafolio Ferreinox deben venir del RAG, no de tu memoria. \n
 
 REGLA CRÍTICA DEL PARÁMETRO 'producto': Cuando llames `consultar_conocimiento_tecnico` para asesoría técnica, SIEMPRE incluye el parámetro `producto` con el nombre del producto que sospechas (ej: "aquablock", "koraza", "pintuco fill", "corrotec", "pintucoat", "pintura canchas"). Sin este parámetro, la búsqueda técnica devuelve resultados genéricos. CON el parámetro, devuelve la ficha técnica exacta con todos los detalles del producto.
 8. REGLA DE CONVERSACIÓN NATURAL: máximo 2 preguntas clave por turno. No abrumes al cliente ni suenes a formulario.
@@ -13777,19 +13785,7 @@ def generate_agent_reply_v2(
     # 3. Nunca mezclar ni forzar información de otro segmento
     # 4. Prioriza el PDF clave solo si la consulta es de ese portafolio
 
-    # Determinar si la consulta requiere priorización de portafolio técnico
-    def extract_portfolio_context(ctx):
-        # Extrae marca, familia, línea y tipo del contexto/conversación
-        fields = {}
-        for key in ["marca", "familia", "linea", "tipo"]:
-            v = (ctx.get("last_product_request") or {}).get(key) or (ctx.get("last_product_context") or {}).get(key)
-            if v:
-                fields[key] = v
-        return fields
-
-    portfolio_fields = extract_portfolio_context(conversation_context or {})
-
-    # Si la intención es técnica, refuerza la validación de chunk RAG
+    # Determinar el intent basado en las herramientas llamadas
     intent = "consulta_general"
     for tc in tool_calls_made:
         if tc["name"] == "verificar_identidad":
@@ -13814,40 +13810,7 @@ def generate_agent_reply_v2(
     if is_farewell:
         intent = "despedida"
 
-    # --- Refuerzo: Si la intención es técnica, valida chunk RAG y activa protocolo diagnóstico si no hay respuesta exacta ---
     response_text = assistant_message.content or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
-    # Busca si la respuesta técnica cita chunk/ficha relevante
-    def is_rag_exact(response, tool_calls):
-        for tc in tool_calls:
-            if tc["name"] == "consultar_conocimiento_tecnico":
-                # Busca si la respuesta contiene fragmento técnico concreto (ej: PDF, sección, dato exacto)
-                if "ficha" in (response or "").lower() or "pdf" in (response or "").lower() or "según la ficha" in (response or "").lower():
-                    return True
-        return False
-
-    # Si la intención es técnica y no hay chunk relevante, activa protocolo diagnóstico
-    if intent == "asesoria_tecnica" and not is_rag_exact(response_text, tool_calls_made):
-        # Refuerzo: nunca inventar datos técnicos, activar protocolo diagnóstico
-        response_text = (
-            "No encontré información técnica exacta en la ficha base para tu caso. "
-            "Para poder recomendarte la solución correcta, necesito que me ayudes respondiendo: "
-            "¿El problema es interior o exterior? ¿De qué material es la superficie? ¿Qué uso tendrá? "
-            "Así podré buscar la ficha técnica adecuada y darte una respuesta confiable."
-        )
-        # Opcional: marcar para seguimiento manual si sigue sin chunk tras varias iteraciones
-
-    # Refuerzo: nunca mezclar ni forzar información de otro segmento
-    if intent == "asesoria_tecnica" and portfolio_fields:
-        # Si hay portafolio identificado, filtra la respuesta para que solo cite ese segmento
-        for k, v in portfolio_fields.items():
-            if v and v.lower() not in (response_text or "").lower():
-                response_text += f"\n(Esta respuesta aplica solo para {k}: {v})"
-
-    # Refuerzo: prioriza PDF clave solo si la consulta es de ese portafolio
-    if intent == "consulta_documentacion" and portfolio_fields:
-        # Si la consulta es de pisos industriales o International/MPY, prioriza el PDF clave
-        if any(x in (portfolio_fields.get("marca") or "").lower() for x in ["international", "mpy"]):
-            response_text = "Te envío la ficha técnica prioritaria del portafolio industrial (International/MPY) porque tu consulta lo amerita. " + response_text
 
     # Calcular confianza de la respuesta
     confidence = score_agent_confidence(response_text, tool_calls_made, intent)
