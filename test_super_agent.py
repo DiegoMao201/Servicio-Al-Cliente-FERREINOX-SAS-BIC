@@ -504,6 +504,13 @@ def run_rag_tests():
 
         candidates = data.get("productos_candidatos", [])
         top_results = data.get("resultados", [])
+        # Save raw RAG response for deeper analysis
+        try:
+            os.makedirs("artifacts/rag", exist_ok=True)
+            with open(f"artifacts/rag/test_{i:03d}.json", "w", encoding="utf-8") as rf:
+                json.dump({"query": query, "response": data}, rf, ensure_ascii=False, indent=2)
+        except Exception:
+            pass
         top_sim = top_results[0]["similitud"] if top_results else 0
         top_family = top_results[0].get("familia", "?") if top_results else "?"
 
@@ -530,6 +537,14 @@ def run_rag_tests():
                 found_forbidden.append(forb)
 
         # Determine status
+        # Extra validation: low similarity means weak evidence
+        low_sim_warning = False
+        try:
+            if top_sim and float(top_sim) < 0.18:
+                low_sim_warning = True
+        except Exception:
+            pass
+
         if found_forbidden:
             status = "FAIL"
             detail = f"PROHIBIDO: {found_forbidden} | Candidatos: {candidates[:5]}"
@@ -557,9 +572,15 @@ def run_rag_tests():
             status = "WARN"
             detail = f"Parcial: ✓{found_exp} ✗{missed_exp} (sim={top_sim:.3f})"
             warned += 1
+            if low_sim_warning:
+                detail += " | Low similarity evidence"
         else:
             status = "PASS"
             detail = f"Top: {top_family} (sim={top_sim:.3f}) | Candidatos: {candidates[:4]}"
+            if low_sim_warning:
+                status = "WARN"
+                detail += " | Low similarity evidence"
+                warned += 1
             passed += 1
 
         icon = {"PASS": "✅", "FAIL": "❌", "WARN": "⚠️", "INFO": "ℹ️"}.get(status, "?")
