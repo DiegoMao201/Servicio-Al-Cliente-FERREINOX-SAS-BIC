@@ -3281,6 +3281,22 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
     if pending_transfer_flow_reply:
         return pending_transfer_flow_reply
 
+    # ── Si hay un reclamo activo en contexto o el mensaje es de reclamo, dejar que el LLM lo maneje ──
+    _claim_case = (conversation_context or {}).get("claim_case") or {}
+    if _claim_case.get("active") and not _claim_case.get("submitted"):
+        return None  # reclamo en curso → pasa al LLM
+
+    _norm_claim = normalize_text_value(content)
+    _CLAIM_SIGNALS = [
+        "reclam", "queja", "garantia", "garantía", "devolucion", "devolución",
+        "producto malo", "producto dañado", "no sirve", "no funciona",
+        "se peló", "se pela", "no cubre", "se agrietó", "se cuarteó",
+        "grumo", "mal olor", "olor raro", "vencido", "caducado",
+        "defecto", "filtra", "filtrando",
+    ]
+    if any(signal in _norm_claim for signal in _CLAIM_SIGNALS):
+        return None  # señal de reclamo → pasa al LLM con flujo de 5 fases
+
     intent = detect_internal_query_intent(content)
     if not intent:
         return None
