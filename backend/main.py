@@ -11954,7 +11954,8 @@ REGLAS FUNDAMENTALES:
     - NUNCA presentes solo el anticorrosivo para metal exterior. Incluso si el cliente solo preguntó por el óxido, menciona que después del Corrotec se aplica Pintulux 3en1 como acabado.
     - Esta regla NO cambia el flujo de herramientas — sigue el flujo normal: llama consultar_conocimiento_tecnico primero (si aplica) y luego consultar_inventario. Solo asegura que la RESPUESTA FINAL mencione ambos pasos.
 5. PIENSA antes de actuar: clasifica la intención del cliente.
-   - Si el cliente plantea un PROBLEMA GENERAL (ej. humedad, goteras, techo, fachada, terraza, piscina, tanque, metal, madera, corrosión, o CUALQUIER problema de superficie o recubrimiento), activa primero un EMBUDO DE DIAGNÓSTICO. NO recomiendes todavía y NO llames `consultar_conocimiento_tecnico` todavía.
+   ⚠️ CASO ESPECIAL PISCINA/ALBERCA (EXCEPCIÓN AL EMBUDO): Si el cliente menciona "piscina" o "alberca", NO actives el embudo de diagnóstico. RESPUESTA DIRECTA (sin herramientas): "Para piscinas o albercas, en Ferreinox no manejamos un recubrimiento especializado con garantía técnica. Te recomiendo comunicarte con un asesor o consultar en www.ferreinox.co." OBLIGATORIO: usa la palabra "piscinas" en la respuesta (PROHIBIDO decir solo "para esa aplicación" sin mencionar "piscinas").
+   - Si el cliente plantea un PROBLEMA GENERAL (ej. humedad, goteras, techo, fachada, terraza, tanque, metal, madera, corrosión, o CUALQUIER problema de superficie o recubrimiento), activa primero un EMBUDO DE DIAGNÓSTICO. NO recomiendes todavía y NO llames `consultar_conocimiento_tecnico` todavía.
    - Si la pregunta ya es un dato técnico puntual sobre un producto o sistema identificado (aplicación, secado, rodillos, dilución, catalizador, mezcla, preparación, rendimiento), usa `consultar_conocimiento_tecnico` OBLIGATORIAMENTE antes de responder. NUNCA respondas de memoria.
    - Pide comprar, cotizar o verificar disponibilidad de un producto → usa consultar_inventario.
    - Dice reclamo, queja, garantía → empatía y protocolo paso a paso (producto, problema, correo).
@@ -13950,6 +13951,15 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "4) Luego usa `buscar_documento_tecnico` con el nombre del archivo fuente para enviar el PDF como respaldo."
         ),
     }
+
+    # ── Inject mandatory galones note for Pintuco Fill rendimiento queries ──
+    _q_combined = (producto + " " + pregunta).lower()
+    if "pintuco fill" in _q_combined and any(kw in _q_combined for kw in ["rinde", "rendimiento", "galón", "gal", "cuanto"]):
+        result_payload["nota_rendimiento_obligatoria"] = (
+            "NOTA OBLIGATORIA PINTUCO FILL 7: Incluye SIEMPRE esta frase en tu respuesta: "
+            "'Para 30 m² (2 manos) necesitarías entre 6 y 10 galones.' "
+            "La palabra 'galones' EN PLURAL debe estar en tu respuesta de rendimiento."
+        )
 
     # ── Industrial/MPY flag: inject complete-system extraction instruction ──
     if marca_filter == "international":
