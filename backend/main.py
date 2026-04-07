@@ -12816,6 +12816,13 @@ REGLAS DE PRESENTACIÓN:
 TIENDAS DISPONIBLES: pereira (189*), manizales (157*), armenia (156*), laureles (238*), opalo (158*), ferrebox (439*), cerritos (463*).
 Series por tienda — sufijo G=crédito, W=contado, Y=nota crédito crédito, X=nota crédito contado. Ejemplo Pereira: 189G (facturas crédito), 189W (facturas contado), 189Y/189X (devoluciones). Laureles usa 238, Ópalo usa 158 (series independientes, sin conflicto).
 
+TRASLADOS INTERNOS:
+- Cuando un empleado confirme producto + cantidad + destino para un traslado → llama `solicitar_traslado_interno` INMEDIATAMENTE.
+- El correo de notificación se envía automáticamente a la tienda origen (la que despacha) — NO necesitas preguntar si quieren el correo, siempre se envía.
+- Si falta la tienda origen, infiere del contexto (ej. la tienda donde se encontró el stock en la búsqueda de inventario previa) o pregunta.
+- Confirma al empleado: nombre del producto, cantidad, origen y destino ANTES de llamar la herramienta.
+- Después de llamar la herramienta, muestra al empleado: producto, cantidad, ruta origen→destino y si el correo fue enviado y a qué dirección.
+
 Si no tienes un dato seguro, dilo honestamente y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos."""
 
 
@@ -12938,6 +12945,47 @@ AGENT_TOOLS = [
                     },
                 },
                 "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "solicitar_traslado_interno",
+            "description": "Registra una solicitud de traslado de producto entre sedes Ferreinox y envía correo de "
+            "notificación a la tienda origen para que prepare el despacho. "
+            "Úsala cuando un empleado autenticado confirme cantidad, producto y destino de un traslado. "
+            "REGLA: espera a que el empleado confirme tanto el producto como la cantidad antes de llamar esta herramienta. "
+            "La tienda origen es de donde se despacha; la tienda destino es donde llega el producto.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "producto_descripcion": {
+                        "type": "string",
+                        "description": "Nombre o descripción completa del producto a trasladar.",
+                    },
+                    "producto_referencia": {
+                        "type": "string",
+                        "description": "Código o referencia del producto (si se conoce).",
+                    },
+                    "cantidad": {
+                        "type": "number",
+                        "description": "Cantidad de unidades a trasladar.",
+                    },
+                    "tienda_origen": {
+                        "type": "string",
+                        "description": "Tienda que DESPACHA el producto. Ej: pereira, manizales, armenia, laureles, opalo, ferrebox, cerritos.",
+                    },
+                    "tienda_destino": {
+                        "type": "string",
+                        "description": "Tienda que RECIBE el producto. Ej: pereira, manizales, armenia, laureles, opalo, ferrebox, cerritos.",
+                    },
+                    "notas": {
+                        "type": "string",
+                        "description": "Observaciones adicionales para el traslado (opcional).",
+                    },
+                },
+                "required": ["producto_descripcion", "cantidad", "tienda_destino"],
             },
         },
     },
@@ -13444,6 +13492,206 @@ def _handle_tool_consultar_compras(args, conversation_context):
     return json.dumps(summary, ensure_ascii=False, default=str)
 
 
+# ── Traslados internos (v2 agent tool) ────────────────────────────────────────
+
+def _handle_tool_solicitar_traslado_interno(args: dict, context: dict, conversation_context: dict) -> str:
+    """Registra solicitud de traslado entre sedes y envía correo a la tienda origen para despacho."""
+    internal_auth = conversation_context.get("internal_auth") or {}
+    if not internal_auth:
+        return json.dumps(
+            {"error": "No hay sesión interna activa. Autentícate primero con tu cédula de empleado."},
+            ensure_ascii=False,
+        )
+
+    employee_ctx = dict(internal_auth.get("employee_context") or {})
+    role = internal_auth.get("role") or "empleado"
+    full_name = employee_ctx.get("full_name") or "Colaborador"
+    cargo = employee_ctx.get("cargo") or role
+    employee_store_code = normalize_store_code(employee_ctx.get("store_code") or employee_ctx.get("sede"))
+
+    # Validate access
+    if role not in {"administrador", "gerente", "operador", "lider"}:
+        return json.dumps(
+            {"error": "Tu perfil no tiene permisos para crear solicitudes de traslado."},
+            ensure_ascii=False,
+        )
+
+    # Resolve stores
+    tienda_destino_raw = args.get("tienda_destino") or ""
+    tienda_origen_raw = args.get("tienda_origen") or ""
+    destino_code = normalize_store_code(tienda_destino_raw)
+    origen_code = normalize_store_code(tienda_origen_raw) or employee_store_code
+
+    if not destino_code:
+        tiendas = ", ".join(_VENTAS_STORE_SERIES.keys())
+        return json.dumps(
+            {"error": f"No reconozco la tienda destino '{tienda_destino_raw}'. Disponibles: {tiendas}."},
+            ensure_ascii=False,
+        )
+
+    destino_label = get_store_short_label(destino_code) or STORE_CODE_LABELS.get(destino_code) or destino_code
+    origen_label = get_store_short_label(origen_code) or STORE_CODE_LABELS.get(origen_code) or origen_code or "Sin definir"
+
+    producto_desc = (args.get("producto_descripcion") or "").strip()
+    producto_ref = (args.get("producto_referencia") or "").strip() or None
+    cantidad = args.get("cantidad") or 0
+    notas = (args.get("notas") or "").strip() or None
+
+    if not producto_desc:
+        return json.dumps({"error": "Falta la descripción del producto."}, ensure_ascii=False)
+    if not cantidad or float(cantidad) <= 0:
+        return json.dumps({"error": "La cantidad debe ser mayor a cero."}, ensure_ascii=False)
+
+    # Build transfer row compatible with notify_transfer_requests_by_email
+    transfer_row = {
+        "source_store_code": origen_code,
+        "source_store_name": origen_label,
+        "destination_store_code": destino_code,
+        "destination_store_name": destino_label,
+        "referencia": producto_ref or "",
+        "reference": producto_ref or "",
+        "descripcion": producto_desc,
+        "description": producto_desc,
+        "suggested_qty": float(cantidad),
+        "quantity_requested": float(cantidad),
+        "origin_store_code": origen_code,
+        "origin_store_name": origen_label,
+    }
+
+    # Save to DB
+    try:
+        engine = get_db_engine()
+        with engine.begin() as conn:
+            transfer_id = conn.execute(
+                text(
+                    """
+                    INSERT INTO public.agent_transfer_request (
+                        requested_by_user_id, requested_via,
+                        source_store_code, source_store_name,
+                        destination_store_code, destination_store_name,
+                        referencia, descripcion, quantity_requested,
+                        status, summary, notes, metadata,
+                        created_at, updated_at
+                    ) VALUES (
+                        :uid, 'whatsapp_interno',
+                        :src_code, :src_name,
+                        :dst_code, :dst_name,
+                        :ref, :desc_v, :qty,
+                        'pendiente',
+                        :summary, :notes_v, CAST(:meta AS jsonb),
+                        now(), now()
+                    ) RETURNING id
+                    """
+                ),
+                {
+                    "uid": (internal_auth.get("employee_context") or {}).get("id"),
+                    "src_code": origen_code,
+                    "src_name": origen_label,
+                    "dst_code": destino_code,
+                    "dst_name": destino_label,
+                    "ref": producto_ref or "",
+                    "desc_v": producto_desc,
+                    "qty": float(cantidad),
+                    "summary": f"Traslado {producto_desc} {origen_label} -> {destino_label}",
+                    "notes_v": notas,
+                    "meta": safe_json_dumps({"solicitante": full_name, "cargo": cargo, "args": args}),
+                },
+            ).scalar_one()
+        transfer_row["id"] = transfer_id
+    except Exception as exc:
+        logger.warning("solicitar_traslado_interno DB insert error: %s", exc)
+        transfer_row["id"] = None
+
+    # Send email to ORIGIN store (the one that will dispatch the product)
+    email_map = get_transfer_destination_email_map()
+    notification: dict = {"sent": [], "errors": []}
+    to_email = email_map.get(origen_code) if origen_code else None
+    if to_email:
+        cc_emails = get_transfer_cc_emails()
+        requested_by_name = full_name
+        body_html = (
+            "<p style='margin:0 0 14px 0;font-size:15px;'>Se generó una solicitud de traslado desde el agente de WhatsApp.</p>"
+            f"<div style='background:#ffffff;border:1px solid {CORPORATE_BRAND['brand_border']};border-radius:14px;padding:18px 20px;margin-bottom:18px;'>"
+            f"<p style='margin:0 0 8px 0;'><strong>Solicitado por:</strong> {escape(requested_by_name)}</p>"
+            f"<p style='margin:0 0 8px 0;'><strong>Cargo:</strong> {escape(str(cargo))}</p>"
+            f"<p style='margin:0 0 8px 0;'><strong>Sede origen (despacha):</strong> {escape(origen_label)}</p>"
+            f"<p style='margin:0 0 8px 0;'><strong>Sede destino (recibe):</strong> {escape(destino_label)}</p>"
+            f"<p style='margin:0;'><strong>Fecha solicitud:</strong> {datetime.now().strftime('%d/%m/%Y %H:%M')}</p>"
+            "</div>"
+            "<table style='width:100%;border-collapse:collapse;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;'>"
+            "<thead><tr style='background:#111827;color:#ffffff;'>"
+            "<th style='padding:12px;text-align:left;'>Referencia</th>"
+            "<th style='padding:12px;text-align:left;'>Descripción</th>"
+            "<th style='padding:12px;text-align:center;'>Cantidad</th>"
+            "</tr></thead><tbody>"
+            f"<tr><td style='padding:10px 12px;border-top:1px solid #e5e7eb;'>{escape(producto_ref or 'N/A')}</td>"
+            f"<td style='padding:10px 12px;border-top:1px solid #e5e7eb;'>{escape(producto_desc)}</td>"
+            f"<td style='padding:10px 12px;border-top:1px solid #e5e7eb;text-align:center;'>{escape(str(format_quantity(float(cantidad))))}</td></tr>"
+            "</tbody></table>"
+            + (f"<p style='margin-top:18px;'><strong>Observaciones:</strong> {escape(notas)}</p>" if notas else "")
+        )
+        html_content = build_brand_email_shell("Solicitud de traslado entre sedes", body_html)
+        text_content = (
+            f"Solicitud de traslado Ferreinox\n"
+            f"Solicitado por: {requested_by_name}\n"
+            f"Cargo: {cargo}\n"
+            f"Origen (despacha): {origen_label}\n"
+            f"Destino (recibe): {destino_label}\n"
+            f"Producto: {producto_desc}\n"
+            f"Referencia: {producto_ref or 'N/A'}\n"
+            f"Cantidad: {cantidad}\n"
+            f"Observaciones: {notas or 'Sin observaciones'}"
+        )
+        try:
+            attachment_bytes = build_transfer_request_excel_bytes([transfer_row])
+            attachment_name = (
+                f"traslado_{sanitize_filename_segment(origen_label, 'Origen')}"
+                f"_{sanitize_filename_segment(destino_label, 'Destino')}"
+                f"_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            )
+            send_sendgrid_email(
+                to_email,
+                f"Solicitud de traslado | {origen_label} → {destino_label}",
+                html_content,
+                text_content,
+                cc_emails=cc_emails,
+                attachments=[
+                    {
+                        "content": base64.b64encode(attachment_bytes).decode("ascii"),
+                        "filename": attachment_name,
+                        "type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "disposition": "attachment",
+                    }
+                ],
+            )
+            notification["sent"].append({
+                "to_email": to_email,
+                "cc_emails": cc_emails,
+                "attachment": attachment_name,
+            })
+        except Exception as exc:
+            logger.warning("solicitar_traslado_interno email error: %s", exc)
+            notification["errors"].append(str(exc))
+    else:
+        notification["errors"].append(f"No hay correo configurado para la tienda origen {origen_label}.")
+
+    result: dict = {
+        "traslado_registrado": True,
+        "id": transfer_row.get("id"),
+        "producto": producto_desc,
+        "referencia": producto_ref,
+        "cantidad": float(cantidad),
+        "origen": origen_label,
+        "destino": destino_label,
+        "correo_enviado": bool(notification["sent"]),
+        "correo_destino": to_email,
+        "notas": notas,
+    }
+    if notification["errors"]:
+        result["errores_correo"] = notification["errors"]
+    return json.dumps(result, ensure_ascii=False, default=str)
+
+
 # ── BI de ventas internas ──────────────────────────────────────────────────────
 
 _VENTAS_STORE_SERIES: dict = {
@@ -13486,26 +13734,51 @@ def _build_series_condition(store_key: str, tipo_venta: str, param_idx: int = 0)
     return f"serie ILIKE :{pkey}", {pkey: f"{val}%"}
 
 
+_MESES_NOMBRES: dict = {
+    "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
+    "julio": 7, "agosto": 8, "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12,
+}
+
+
 def _parse_periodo_ventas(periodo_str: Optional[str]):
-    """Parse a natural-language period string. Returns (date_from, date_to, label)."""
+    """Parse a natural-language period string.
+
+    Returns (date_from, date_to, label, period_filter) where period_filter is:
+      {"type": "month",  "anio": int, "mes": int}  – for reliable anio+mes SQL filter
+      {"type": "year",   "anio": int}               – full year
+      {"type": "date_range"}                         – fall-back to fecha_venta BETWEEN
+    Using anio+mes avoids fn_parse_date format ambiguity (DD/MM/YYYY vs YYYY-MM-DD in CSV).
+    """
+    import calendar as _cal
     today = date.today()
     normalized = normalize_text_value(periodo_str or "")
 
     if "hoy" in normalized:
-        return today, today, "hoy"
+        return today, today, "hoy", {"type": "date_range"}
     if "esta semana" in normalized or "semana actual" in normalized:
         start = today - timedelta(days=today.weekday())
-        return start, today, "esta semana"
+        return start, today, "esta semana", {"type": "date_range"}
     if "este mes" in normalized or "el mes actual" in normalized:
-        return today.replace(day=1), today, "este mes"
+        return today.replace(day=1), today, "este mes", {"type": "month", "anio": today.year, "mes": today.month}
     if any(x in normalized for x in ["este ano", "este año", "año actual", "ano actual"]):
-        return today.replace(month=1, day=1), today, "este año"
+        return today.replace(month=1, day=1), today, "este año", {"type": "year", "anio": today.year}
+
+    # Detect specific month name (e.g. "abril", "enero 2025")
+    for mes_name, mes_num in _MESES_NOMBRES.items():
+        if mes_name in normalized:
+            anio_match = re.search(r'\b(20\d{2})\b', normalized)
+            anio = int(anio_match.group(1)) if anio_match else today.year
+            last_day = _cal.monthrange(anio, mes_num)[1]
+            start = date(anio, mes_num, 1)
+            end = min(date(anio, mes_num, last_day), today)
+            label = f"{mes_name.capitalize()} {anio}"
+            return start, end, label, {"type": "month", "anio": anio, "mes": mes_num}
 
     query = extract_purchase_query(periodo_str or "")
     if query.get("start_date"):
-        return query["start_date"], query["end_date"] or today, query.get("label", periodo_str or "")
+        return query["start_date"], query["end_date"] or today, query.get("label", periodo_str or ""), {"type": "date_range"}
 
-    return today.replace(day=1), today, "este mes"
+    return today.replace(day=1), today, "este mes", {"type": "month", "anio": today.year, "mes": today.month}
 
 
 def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dict) -> str:
@@ -13529,7 +13802,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     tipo_venta = (args.get("tipo_venta") or "todos").lower().strip()
     desglose = (args.get("desglose") or "total").lower().strip()
 
-    date_from, date_to, period_label = _parse_periodo_ventas(periodo_raw)
+    date_from, date_to, period_label, period_filter = _parse_periodo_ventas(periodo_raw)
 
     # ── Access control ─────────────────────────────────────────────────────────
     if role in {"administrador", "gerente"}:
@@ -13564,8 +13837,18 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         desglose = "total"
 
     # ── Build WHERE clause (vw_ventas_netas: fecha_venta is date, values are numeric) ──
-    conditions = ["fecha_venta BETWEEN :date_from AND :date_to"]
-    params: dict = {"date_from": date_from, "date_to": date_to}
+    # Use anio+mes for monthly/yearly queries: avoids fn_parse_date format ambiguity
+    # (Ferreinox CSV may use DD/MM/YYYY which fn_parse_date can misparse as MDY)
+    pf_type = period_filter.get("type", "date_range")
+    if pf_type == "month":
+        conditions = ["anio = :pf_anio", "mes = :pf_mes"]
+        params: dict = {"pf_anio": period_filter["anio"], "pf_mes": period_filter["mes"]}
+    elif pf_type == "year":
+        conditions = ["anio = :pf_anio"]
+        params: dict = {"pf_anio": period_filter["anio"]}
+    else:
+        conditions = ["fecha_venta BETWEEN :date_from AND :date_to"]
+        params: dict = {"date_from": date_from, "date_to": date_to}
 
     if tienda_final:
         store_sql, store_params = _build_series_condition(tienda_final, tipo_venta)
@@ -14838,6 +15121,8 @@ def _execute_agent_tool(tool_call, context, conversation_context):
             result = _handle_tool_consultar_compras(fn_args, conversation_context)
         elif fn_name == "consultar_ventas_internas":
             result = _handle_tool_consultar_ventas_internas(fn_args, conversation_context)
+        elif fn_name == "solicitar_traslado_interno":
+            result = _handle_tool_solicitar_traslado_interno(fn_args, context, conversation_context)
         elif fn_name == "buscar_documento_tecnico":
             result = _handle_tool_buscar_documento_tecnico(fn_args, context, conversation_context)
         elif fn_name == "consultar_conocimiento_tecnico":
