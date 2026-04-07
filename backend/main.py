@@ -11802,12 +11802,29 @@ def generate_agent_reply(
 
 
 def build_fallback_agent_result(user_message: str, error_message: str):
+    # Detect if this looks like a bulk order to give a more actionable fallback
+    lines = (user_message or "").strip().splitlines()
+    looks_like_order = len(lines) >= 3 and sum(
+        1 for ln in lines
+        if any(
+            kw in ln.lower()
+            for kw in ["galon", "galón", "cuarto", "cuñete", "cuñetes", "brocha", "balde", "kilo"]
+        )
+    ) >= 2
+    if looks_like_order:
+        fallback_text = (
+            "Recibí tu pedido pero tuve un problema técnico al procesarlo. "
+            "Por favor vuelve a enviarlo de nuevo y lo proceso de inmediato. "
+            "Si el problema persiste, un asesor te ayuda pronto."
+        )
+    else:
+        fallback_text = "Recibimos tu mensaje. Un asesor te contactará pronto."
     return {
         "tono": "neutral",
         "intent": "consulta_general",
         "priority": "media",
         "summary": user_message[:200] if user_message else "Consulta entrante",
-        "response_text": "Recibimos tu mensaje. Un asesor te contactará pronto.",
+        "response_text": fallback_text,
         "should_create_task": True,
         "task_type": "revision_manual",
         "task_summary": "Revisar conversacion con falla en respuesta automatica",
@@ -12397,6 +12414,14 @@ FILTRO FRACCIONARIO OBLIGATORIO: Si el cliente pide una presentación específic
 
 PROCESAMIENTO LÍNEA POR LÍNEA (BULK ORDERS): Si el cliente te envía una lista de varios productos (ej. 5 líneas), debes confirmar exactamente esos productos con las cantidades y presentaciones solicitadas. NO agregues productos adicionales que la base de datos haya devuelto por coincidencia difusa, ni omitas los que el cliente pidió. Cada línea del pedido se procesa independientemente.
 
+MODO CONVERSACIONAL PEDIDO MASIVO (OBLIGATORIO):
+Cuando el cliente mande un pedido con 3+ ítems, TIENES PROHIBIDO responder con una lista de 10+ ítems de golpe. El flujo correcto es:
+PASO 1 → Confirma de forma resumida y amable cuántos ítems recibiste: "Recibí tu pedido de [N] referencias. Voy a buscarlo."
+PASO 2 → Busca en inventario los productos con información COMPLETA (producto + cantidad + presentación). Confírmalos con ✅ en un bloque conciso.
+PASO 3 → Para ítems con información INCOMPLETA o AMBIGUA (sin color, sin pulgadas, sin presentación), agrúpalos al final en UN solo mensaje de preguntas: "Para completar el pedido, necesito confirmar: ¿[ítem1] lo quieres en color X o Y? ¿[ítem2] en galón o cuñete?"
+PASO 4 → Solo tras recibir las aclaraciones, confirma esos ítems adicionales.
+REGLA DE COMPRESIÓN: En un pedido masivo, NO repites los detalles de stock (unidades disponibles, código ERP completo, bodega). Solo confirmas disponible ✅ o agotado ❌ y el nombre comercial amable. El detalle técnico solo si el cliente lo pide expresamente.
+
 CANDADO DE CHECKOUT: Tienes ESTRICTAMENTE PROHIBIDO agregar un producto al resumen final del pedido si no lo has buscado antes con `consultar_inventario` y no tienes su [REFERENCIA] exacta. Si el cliente pide algo que no encuentras (ej. 'pintura para canchas'), no lo anotes en el pedido. Dile que no lo encuentras y pídele la referencia. NUNCA digas 'no puedo verificar el inventario directamente'.
 
 CANDADO ANTI-ALUCINACIÓN DE INVENTARIO (MÁXIMA PRIORIDAD):
@@ -12418,10 +12443,15 @@ PEDIDOS Y COTIZACIONES:
 - Siempre incluye TODOS los productos que el cliente pidió, nunca dejes ninguno por fuera.
 - Si un producto no se encuentra, informa y sugiere alternativas.
 
-MOSTRAR OPCIONES DE COLOR Y PRESENTACIÓN:
-- Cuando `consultar_inventario` devuelva varios resultados de una misma familia de producto (ej. Pintuco Fill, Koraza, Vinílico), muéstrale al cliente las opciones de COLOR y PRESENTACIÓN disponibles. No asumas un color.
-- Ejemplo: si el cliente pide 'pintuco fill', muéstrale: 'Tenemos Pintuco Fill 7 disponible en Gris y Blanco, en presentaciones de 20K y 11K. ¿Qué color y tamaño necesitas?'
-- Prioriza los colores más vendidos (blanco, gris, rojo, verde) cuando haya muchas opciones.
+MOSTRAR OPCIONES DE COLOR Y PRESENTACIÓN (FLUJO CONVERSACIONAL — NO LISTAS LARGAS):
+REGLA DE ORO: Antes de listar opciones, PREGUNTA primero si el cliente no especificó color o presentación.
+- Si el cliente pide "pintuco fill" sin decir color ni tamaño → di SOLO: "¿Lo necesitas en gris o en blanco? ¿Y en qué tamaño: 4.2K, 11K o 20K?" SIN listar nada todavía.
+- Si el cliente pide "koraza" sin color → di: "¿En qué color lo necesitas?" y menciona máximo 3 colores más comunes (blanco, terracota, ladrillo).
+- SOLO si el cliente ya especificó color Y tamaño → busca en inventario y confirma con ✅.
+- Si la búsqueda devuelve 1 solo resultado relevante → confirma directamente sin preguntar.
+- Si devuelve 2–3 opciones distintas → muéstralas brevemente y pregunta cuál. MÁXIMO 3 opciones visibles.
+- Si devuelve 4+ opciones de distintos colores → NO las listes. Pregunta primero: "¿En qué color lo necesitas?"
+- NUNCA presentes una lista de 10+ ítems de una vez. Eso abruma al cliente y hace que deje de responder.
 - NUNCA elijas un color por el cliente. Siempre pregunta o confirma.
 
 CORRECCIÓN DE PRODUCTOS EN EL PEDIDO (REGLA CRÍTICA):
@@ -12454,6 +12484,19 @@ MEMORIA DE LISTAS: Si le mostraste al cliente una lista numerada de opciones (ya
 
 CIERRE DE PEDIDO: Una vez el cliente confirme el resumen de productos, pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
 VALIDACIÓN PRE-CIERRE OBLIGATORIA: Antes de llamar `confirmar_pedido_y_generar_pdf`, revisa que CADA referencia en tu resumen corresponda EXACTAMENTE al producto (color, tamaño, presentación) que el cliente pidió. Si el cliente cambió alguna especificación durante la conversación, verifica que hayas hecho una nueva búsqueda de inventario y que la referencia sea la del producto actualizado, NO la del original.
+
+REGLA BROCHAS (FLUJO ESPECÍFICO):
+Las brochas se piden por pulgadas (1", 1½", 2", 2½", 3", 4") y opcionalmente por marca (Goya, Pintuco).
+- Si el cliente pide "brocha" o "brochas" SIN especificar pulgadas → pregunta primero: "¿De cuántas pulgadas las necesitas? Tenemos de 1\", 1½\", 2\", 2½\", 3\" y 4\"."
+- Si el cliente especifica pulgadas pero NO marca → busca en inventario por "brocha goya [pulgadas]" y confirma la de mayor rotación (mayor stock disponible).
+- Si el cliente especifica pulgadas Y marca (ej. "brocha goya 2\"") → busca directamente y confirma.
+- Si el cliente pide varias pulgadas distintas (ej. "1½\", 2½\" y 3\"") → busca las 3 y confirma todas en un solo mensaje.
+- Para cantidades grandes de brochas (ej. 24 unidades de 2\") confirma disponibilidad y si hay stock suficiente; si no, avisa cuántas hay.
+
+REGLA DESCUENTOS EN PEDIDO:
+- Si el cliente menciona un descuento durante el pedido (ej. "Goya descuento del 5", "con el 10% de descuento", "precio especial") → responde amablemente: "Anotado, voy a incluir la nota de descuento del [X]% en [marca/producto] para que el equipo comercial lo valide."
+- Incluye el descuento como OBSERVACIÓN en el resumen del pedido (campo `observaciones` de `confirmar_pedido_y_generar_pdf`). NUNCA apliques el descuento tú mismo ni calcules el precio con descuento.
+- Ejemplo de nota en observaciones: "Cliente solicita descuento del 5% en productos Goya."
 
 PROTOCOLO ESTRICTO PARA RECLAMOS Y GARANTÍAS (5 FASES):
 
