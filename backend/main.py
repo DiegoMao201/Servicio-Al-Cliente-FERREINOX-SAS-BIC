@@ -12797,6 +12797,24 @@ ESTADO ACTUAL DE LA CONVERSACIÓN:
 - Nombre cliente: {nombre_cliente}
 - Borrador comercial activo: {borrador_activo}
 - Reclamo activo: {reclamo_activo}
+- Empleado interno activo: {empleado_activo}
+
+INTELIGENCIA DE NEGOCIOS INTERNA (activo solo cuando "Empleado interno activo" ≠ "Ninguno"):
+El JSON de "Empleado interno activo" incluye: nombre, cargo, sede y rol (vendedor/operador/gerente/administrador).
+REGLAS DE ACCESO:
+- rol=vendedor: solo puede ver SUS PROPIAS ventas. Cuando pregunte "cuánto llevo", "mis ventas de hoy", etc. → llama consultar_ventas_internas() inmediatamente SIN pedir más datos. El sistema aplica el filtro de su propia cédula.
+- rol=operador (líderes, facturación, logística, cartera): puede ver la tienda completa de su sede. Cuando pregunte por ventas de su tienda → llama consultar_ventas_internas(desglose="por_vendedor") si quiere desglose, o sin desglose para el total.
+- rol=gerente o administrador: puede ver CUALQUIER tienda o vendedor. Cuando pregunte "cuánto han facturado en Pereira hoy" → consultar_ventas_internas(tienda="pereira", periodo="hoy"). Cuando pregunte "ventas de Ópalo en abril" → consultar_ventas_internas(tienda="opalo", periodo="abril").
+- rol=empleado (otros): no accede a datos individuales de vendedor. Puedes darle totales aggregados de la empresa.
+REGLAS DE PRESENTACIÓN:
+- Separa crédito (series G) de contado (series W) cuando lo pidan explícitamente o cuando el desglose lo justifique.
+- Las notas crédito (series Y/X) son DEVOLUCIONES — réstalas del bruto para calcular el NETO. Muestra ambas cifras.
+- Formatea los valores en pesos colombianos: $1.234.567 (puntos para miles, sin decimales para cifras grandes).
+- Si el período consultado no tiene datos, dilo claramente y sugiere revisar otro período.
+- NUNCA inventes cifras ni las completes de memoria. Solo lo que devuelva consultar_ventas_internas.
+- Si el empleado pregunta "¿cómo voy?" sin especificar período → usa "este mes" por defecto.
+TIENDAS DISPONIBLES: pereira (189*), manizales (157*), armenia (156*), laureles (158*/238*), opalo (158*), ferrebox (439*), cerritos (463*).
+NOTA ÓPALO/LAURELES: ambas comparten la serie 158. Si preguntan por una específica, el sistema lo indica en la respuesta.
 
 Si no tienes un dato seguro, dilo honestamente y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos."""
 
@@ -12880,6 +12898,46 @@ AGENT_TOOLS = [
                         "description": "Periodo a consultar, ej: 'enero 2024', 'últimos 3 meses'. Por defecto últimos 12 meses.",
                     }
                 },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "consultar_ventas_internas",
+            "description": "Consulta el rendimiento de ventas del ERP para empleados internos logueados. "
+            "Úsala cuando un empleado autenticado pregunte por ventas, facturación, cuánto ha vendido, cuánto lleva en el mes, "
+            "rendimiento de la tienda, facturación de un vendedor, comparativa de tiendas, etc. "
+            "El sistema aplica automáticamente el nivel de acceso según el rol: vendedor → solo sus propias ventas; "
+            "líder/operador → solo su sede; gerente/administrador → cualquier tienda o vendedor. "
+            "REGLA: Si el empleado pregunta 'cuánto llevo' o 'mis ventas', llama esta herramienta SIN necesidad de pedir más datos.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "periodo": {
+                        "type": "string",
+                        "description": "Período de tiempo en lenguaje natural: 'hoy', 'esta semana', 'este mes', 'abril', 'enero 2026', 'este año'. Por defecto 'este mes'.",
+                    },
+                    "tienda": {
+                        "type": "string",
+                        "description": "Nombre de la tienda: pereira, manizales, armenia, laureles, opalo, ferrebox, cerritos. Dejar vacío para no filtrar por tienda.",
+                    },
+                    "vendedor_nombre": {
+                        "type": "string",
+                        "description": "Nombre del vendedor específico a consultar (solo disponible para gerente/administrador).",
+                    },
+                    "tipo_venta": {
+                        "type": "string",
+                        "enum": ["todos", "credito", "contado"],
+                        "description": "Filtrar por modalidad: crédito (series G), contado (series W), o todos. Por defecto 'todos'.",
+                    },
+                    "desglose": {
+                        "type": "string",
+                        "enum": ["total", "por_dia", "por_vendedor", "por_producto"],
+                        "description": "Nivel de detalle: total (solo cifras globales), por_dia, por_vendedor (solo admin/gerente/operador), por_producto.",
+                    },
+                },
+                "required": [],
             },
         },
     },
@@ -13384,6 +13442,293 @@ def _handle_tool_consultar_compras(args, conversation_context):
             ensure_ascii=False,
         )
     return json.dumps(summary, ensure_ascii=False, default=str)
+
+
+# ── BI de ventas internas ──────────────────────────────────────────────────────
+
+_VENTAS_STORE_SERIES: dict = {
+    "pereira":   {"all": "189", "credito": "189G", "contado": "189W"},
+    "manizales": {"all": "157", "credito": "157G", "contado": "157W"},
+    "armenia":   {"all": "156"},
+    "laureles":  {"multi": ["158", "238"], "overlap_note": "ℹ️ Serie 158 cubre Laureles y Ópalo. Los datos de 238 son exclusivos de Laureles."},
+    "opalo":     {"all": "158", "overlap_note": "ℹ️ Serie 158 cubre tanto Laureles como Ópalo. Para separar, filtra por nombre del vendedor."},
+    "ferrebox":  {"all": "439"},
+    "cerritos":  {"all": "463"},
+}
+
+
+def _build_series_where(store_key: str, tipo_venta: str):
+    """Returns (sql_fragment, params, overlap_note) for a store+tipo_venta filter.
+    
+    All pattern strings come from the hardcoded _VENTAS_STORE_SERIES table,
+    never from untrusted user input, so inline LIKE literals are safe here.
+    """
+    info = _VENTAS_STORE_SERIES.get(store_key)
+    if not info:
+        return None, {}, None
+
+    overlap_note = info.get("overlap_note")
+
+    if "multi" in info:
+        parts = [f"serie ILIKE '{p}%'" for p in info["multi"]]
+        return f"({' OR '.join(parts)})", {}, overlap_note
+
+    prefix_all = info.get("all", "")
+    if tipo_venta == "credito":
+        prefix = info.get("credito") or f"{prefix_all}G"
+        return f"serie ILIKE '{prefix}%'", {}, overlap_note
+    elif tipo_venta == "contado":
+        prefix = info.get("contado") or f"{prefix_all}W"
+        return f"serie ILIKE '{prefix}%'", {}, overlap_note
+    else:
+        return f"serie ILIKE '{prefix_all}%'", {}, overlap_note
+
+
+def _parse_periodo_ventas(periodo_str: Optional[str]):
+    """Parse a natural-language period string. Returns (date_from, date_to, label)."""
+    today = date.today()
+    normalized = normalize_text_value(periodo_str or "")
+
+    if "hoy" in normalized:
+        return today, today, "hoy"
+    if "esta semana" in normalized or "semana actual" in normalized:
+        start = today - timedelta(days=today.weekday())
+        return start, today, "esta semana"
+    if "este mes" in normalized or "el mes actual" in normalized:
+        return today.replace(day=1), today, "este mes"
+    if any(x in normalized for x in ["este ano", "este año", "año actual", "ano actual"]):
+        return today.replace(month=1, day=1), today, "este año"
+
+    query = extract_purchase_query(periodo_str or "")
+    if query.get("start_date"):
+        return query["start_date"], query["end_date"] or today, query.get("label", periodo_str or "")
+
+    return today.replace(day=1), today, "este mes"
+
+
+def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dict) -> str:
+    """Consultas de BI de ventas del ERP para empleados internos con control de acceso por rol."""
+    internal_auth = conversation_context.get("internal_auth") or {}
+    if not internal_auth:
+        return json.dumps(
+            {"error": "No hay sesión interna activa. Autentícate primero con tu cédula de empleado."},
+            ensure_ascii=False,
+        )
+
+    employee_ctx = dict(internal_auth.get("employee_context") or {})
+    role = internal_auth.get("role") or "empleado"
+    full_name = employee_ctx.get("full_name") or ""
+    sede = normalize_text_value(employee_ctx.get("sede") or "")
+
+    # Parse args
+    periodo_raw = args.get("periodo") or "este mes"
+    tienda_arg = normalize_text_value(args.get("tienda") or "")
+    vendedor_arg = normalize_text_value(args.get("vendedor_nombre") or "")
+    tipo_venta = (args.get("tipo_venta") or "todos").lower().strip()
+    desglose = (args.get("desglose") or "total").lower().strip()
+
+    date_from, date_to, period_label = _parse_periodo_ventas(periodo_raw)
+
+    # ── Access control ─────────────────────────────────────────────────────────
+    if role in {"administrador", "gerente"}:
+        tienda_final = tienda_arg
+        vendedor_filter = vendedor_arg or None
+        vendedor_filter_label = vendedor_arg or None
+    elif role == "operador":
+        if tienda_arg and tienda_arg != sede:
+            return json.dumps(
+                {"acceso_denegado": True,
+                 "mensaje": f"Tu perfil solo tiene acceso a los datos de {sede or 'tu sede'}. No puedes consultar otras tiendas."},
+                ensure_ascii=False,
+            )
+        tienda_final = sede
+        vendedor_filter = None
+        vendedor_filter_label = None
+    elif role == "vendedor":
+        if vendedor_arg and vendedor_arg not in normalize_text_value(full_name):
+            return json.dumps(
+                {"acceso_denegado": True,
+                 "mensaje": "Solo puedes consultar tus propias ventas."},
+                ensure_ascii=False,
+            )
+        tienda_final = tienda_arg
+        name_tokens = [t for t in full_name.split() if len(t) >= 4]
+        vendedor_filter = name_tokens[0] if name_tokens else full_name
+        vendedor_filter_label = full_name
+    else:
+        # empleado or unknown: allow aggregate queries, no desglose individual
+        tienda_final = tienda_arg
+        vendedor_filter = None
+        vendedor_filter_label = None
+        desglose = "total"  # Force aggregate-only
+
+    # ── Build WHERE clause ────────────────────────────────────────────────────
+    conditions = ["fecha_venta BETWEEN :date_from AND :date_to"]
+    params: dict = {"date_from": date_from, "date_to": date_to}
+    overlap_note = None
+
+    if tienda_final:
+        store_sql, store_params, overlap_note = _build_series_where(tienda_final, tipo_venta)
+        if not store_sql:
+            tiendas_disponibles = ", ".join(_VENTAS_STORE_SERIES.keys())
+            return json.dumps(
+                {"error": f"No reconozco la tienda '{tienda_final}'. Disponibles: {tiendas_disponibles}."},
+                ensure_ascii=False,
+            )
+        conditions.append(store_sql)
+        params.update(store_params)
+    elif tipo_venta == "credito":
+        conditions.append("serie ILIKE '%G%'")
+    elif tipo_venta == "contado":
+        conditions.append("serie ILIKE '%W%'")
+
+    if vendedor_filter:
+        conditions.append("nom_vendedor ILIKE :vendedor_nombre")
+        params["vendedor_nombre"] = f"%{vendedor_filter}%"
+
+    where_clause = " AND ".join(conditions)
+
+    # ── Query totals ──────────────────────────────────────────────────────────
+    engine = get_db_engine()
+    try:
+        with engine.connect() as conn:
+            total_row = conn.execute(
+                text(f"""
+                    SELECT
+                        COUNT(DISTINCT tipo_documento) AS num_facturas,
+                        COUNT(DISTINCT cliente_id)     AS num_clientes,
+                        SUM(CASE WHEN serie NOT ILIKE '%Y' AND serie NOT ILIKE '%X'
+                                 THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado_bruto,
+                        SUM(CASE WHEN serie ILIKE '%Y' OR serie ILIKE '%X'
+                                 THEN ABS(COALESCE(valor_venta, 0)) ELSE 0 END) AS devoluciones
+                    FROM public.raw_ventas_detalle
+                    WHERE {where_clause}
+                """),
+                params,
+            ).mappings().one_or_none()
+    except Exception as exc:
+        logger.error("consultar_ventas_internas DB error: %s", exc, exc_info=True)
+        return json.dumps(
+            {"error": f"Error consultando base de datos: {str(exc)[:200]}"},
+            ensure_ascii=False,
+        )
+
+    if not total_row:
+        return json.dumps(
+            {"encontrado": False, "mensaje": f"No se encontraron datos de ventas para {period_label}."},
+            ensure_ascii=False,
+        )
+
+    facturado_bruto = float(total_row.get("facturado_bruto") or 0)
+    devoluciones = float(total_row.get("devoluciones") or 0)
+    neto = facturado_bruto - devoluciones
+    num_facturas = int(total_row.get("num_facturas") or 0)
+    num_clientes = int(total_row.get("num_clientes") or 0)
+
+    result: dict = {
+        "periodo": period_label,
+        "tienda": tienda_final or "todas las tiendas",
+        "vendedor_consultado": vendedor_filter_label or ("todas" if role in {"administrador", "gerente", "operador"} else full_name),
+        "tipo_venta": tipo_venta,
+        "ventas": {
+            "facturado_bruto": round(facturado_bruto, 2),
+            "devoluciones": round(devoluciones, 2),
+            "neto": round(neto, 2),
+            "num_facturas": num_facturas,
+            "num_clientes": num_clientes,
+        },
+    }
+
+    # ── Desglose por vendedor (roles con acceso multi-vendedor) ───────────────
+    if desglose == "por_vendedor" and role in {"administrador", "gerente", "operador"}:
+        try:
+            with engine.connect() as conn:
+                rows = conn.execute(
+                    text(f"""
+                        SELECT nom_vendedor,
+                               SUM(CASE WHEN serie NOT ILIKE '%Y' AND serie NOT ILIKE '%X'
+                                        THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado,
+                               SUM(CASE WHEN serie ILIKE '%Y' OR serie ILIKE '%X'
+                                        THEN ABS(COALESCE(valor_venta, 0)) ELSE 0 END) AS devoluciones,
+                               COUNT(DISTINCT tipo_documento) AS facturas
+                        FROM public.raw_ventas_detalle
+                        WHERE {where_clause}
+                        GROUP BY nom_vendedor
+                        ORDER BY facturado DESC
+                        LIMIT 25
+                    """),
+                    params,
+                ).mappings().all()
+            result["desglose_vendedores"] = [
+                {
+                    "vendedor": r["nom_vendedor"],
+                    "facturado": round(float(r["facturado"] or 0), 2),
+                    "devoluciones": round(float(r["devoluciones"] or 0), 2),
+                    "neto": round(float(r["facturado"] or 0) - float(r["devoluciones"] or 0), 2),
+                    "facturas": int(r["facturas"] or 0),
+                }
+                for r in rows
+            ]
+        except Exception as exc:
+            logger.warning("consultar_ventas_internas desglose_vendedores error: %s", exc)
+
+    # ── Desglose por producto ─────────────────────────────────────────────────
+    elif desglose == "por_producto":
+        try:
+            with engine.connect() as conn:
+                rows = conn.execute(
+                    text(f"""
+                        SELECT nombre_articulo, linea_producto,
+                               SUM(COALESCE(valor_venta, 0))      AS total,
+                               SUM(COALESCE(unidades_vendidas, 0)) AS unidades
+                        FROM public.raw_ventas_detalle
+                        WHERE {where_clause}
+                          AND serie NOT ILIKE '%Y' AND serie NOT ILIKE '%X'
+                        GROUP BY nombre_articulo, linea_producto
+                        ORDER BY total DESC
+                        LIMIT 15
+                    """),
+                    params,
+                ).mappings().all()
+            result["top_productos"] = [
+                {
+                    "producto": r["nombre_articulo"],
+                    "linea": r["linea_producto"],
+                    "total": round(float(r["total"] or 0), 2),
+                    "unidades": float(r["unidades"] or 0),
+                }
+                for r in rows
+            ]
+        except Exception as exc:
+            logger.warning("consultar_ventas_internas top_productos error: %s", exc)
+
+    # ── Desglose por día ──────────────────────────────────────────────────────
+    elif desglose == "por_dia":
+        try:
+            with engine.connect() as conn:
+                rows = conn.execute(
+                    text(f"""
+                        SELECT fecha_venta,
+                               SUM(CASE WHEN serie NOT ILIKE '%Y' AND serie NOT ILIKE '%X'
+                                        THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado
+                        FROM public.raw_ventas_detalle
+                        WHERE {where_clause}
+                        GROUP BY fecha_venta
+                        ORDER BY fecha_venta
+                    """),
+                    params,
+                ).mappings().all()
+            result["desglose_dias"] = [
+                {"fecha": str(r["fecha_venta"]), "facturado": round(float(r["facturado"] or 0), 2)}
+                for r in rows
+            ]
+        except Exception as exc:
+            logger.warning("consultar_ventas_internas por_dia error: %s", exc)
+
+    if overlap_note:
+        result["nota"] = overlap_note
+
+    return json.dumps(result, ensure_ascii=False, default=str)
 
 
 def _send_document_and_respond(doc, context):
@@ -14433,6 +14778,8 @@ def _execute_agent_tool(tool_call, context, conversation_context):
             result = _handle_tool_consultar_cartera(conversation_context)
         elif fn_name == "consultar_compras":
             result = _handle_tool_consultar_compras(fn_args, conversation_context)
+        elif fn_name == "consultar_ventas_internas":
+            result = _handle_tool_consultar_ventas_internas(fn_args, conversation_context)
         elif fn_name == "buscar_documento_tecnico":
             result = _handle_tool_buscar_documento_tecnico(fn_args, context, conversation_context)
         elif fn_name == "consultar_conocimiento_tecnico":
@@ -14483,12 +14830,29 @@ def generate_agent_reply_v2(
     commercial_draft = conversation_context.get("commercial_draft")
     claim_case = conversation_context.get("claim_case")
 
+    internal_auth = conversation_context.get("internal_auth") or {}
+    if internal_auth:
+        emp = dict(internal_auth.get("employee_context") or {})
+        empleado_activo = json.dumps(
+            {
+                "nombre": emp.get("full_name"),
+                "cargo": emp.get("cargo"),
+                "sede": emp.get("sede"),
+                "rol": internal_auth.get("role", "empleado"),
+                "store_code": emp.get("store_code"),
+            },
+            ensure_ascii=False,
+        )
+    else:
+        empleado_activo = "Ninguno"
+
     system_content = AGENT_SYSTEM_PROMPT_V2.format(
         verificado="SÍ" if verified else "NO",
         cliente_codigo=verified_cliente or "No identificado",
         nombre_cliente=nombre_cliente or "No identificado",
         borrador_activo=safe_json_dumps(commercial_draft) if commercial_draft else "Ninguno",
         reclamo_activo=safe_json_dumps(claim_case) if claim_case else "Ninguno",
+        empleado_activo=empleado_activo,
     )
 
     messages = [{"role": "system", "content": system_content}]
@@ -14567,6 +14931,8 @@ def generate_agent_reply_v2(
             intent = "consulta_cartera"
         elif tc["name"] == "consultar_compras":
             intent = "consulta_compras"
+        elif tc["name"] == "consultar_ventas_internas":
+            intent = "consulta_ventas_internas"
         elif tc["name"] == "buscar_documento_tecnico":
             intent = "consulta_documentacion"
         elif tc["name"] == "consultar_conocimiento_tecnico":
