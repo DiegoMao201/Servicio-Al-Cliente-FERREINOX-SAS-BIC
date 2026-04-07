@@ -926,7 +926,7 @@ PORTFOLIO_CATEGORY_MAP = {
     "deck": ["barnex", "wood stain", "barniz marino"],
     "pergola": ["barnex", "wood stain"],
     "mueble": ["pintulac", "barniz", "madetec"],
-    "puerta madera": ["pintulac", "barniz", "barnex"],
+    "puerta madera": ["pintulac", "pintulux", "barniz", "barnex"],
 
     # ── AEROSOLES ──
     "aerosol": ["aerocolor", "montana"],
