@@ -2250,6 +2250,8 @@ def load_employee_directory(force_refresh: bool = False):
     cargo_column = get_column("cargo")
     phone_column = get_column("telefono", "teléfono")
     email_column = get_column("correo electronico", "correo electrónico", "correo")
+    # ERP vendor code: allows precise matching in vw_ventas_netas.codigo_vendedor
+    codigo_vendedor_column = get_column("codigo_vendedor", "código_vendedor", "cod_vendedor", "codigovendedor", "erp_code", "vendor_code")
 
     if not full_name_column or not document_column:
         raise RuntimeError(f"datos_empleados.xlsx no tiene columnas mínimas esperadas. Columnas detectadas: {list(dataframe.columns)}")
@@ -2266,6 +2268,8 @@ def load_employee_directory(force_refresh: bool = False):
         email = str(row.get(email_column) or "").strip().lower() if email_column else None
         role = derive_internal_role_from_employee({"cargo": cargo})
         store_code = resolve_store_code_from_employee_sede(sede)
+        raw_cod_vend = row.get(codigo_vendedor_column) if codigo_vendedor_column else None
+        codigo_vendedor = str(int(float(raw_cod_vend))).strip() if raw_cod_vend and str(raw_cod_vend).strip() not in ("", "nan", "None") else None
         records.append(
             {
                 "full_name": full_name,
@@ -2278,6 +2282,7 @@ def load_employee_directory(force_refresh: bool = False):
                 "role": role,
                 "advanced_access": employee_has_advanced_access({"cargo": cargo}),
                 "is_facturador": employee_can_manage_transfers({"cargo": cargo}),
+                "codigo_vendedor": codigo_vendedor,
             }
         )
 
@@ -2364,6 +2369,7 @@ def build_employee_record_from_internal_user_row(user_row: Optional[dict]):
         "advanced_access": bool(metadata.get("advanced_access", role_value in {"vendedor", "gerente", "operador", "administrador"})),
         "is_facturador": bool(metadata.get("is_facturador", role_value == "administrador")),
         "auth_source": metadata.get("auth_source") or "agent_user",
+        "codigo_vendedor": metadata.get("codigo_vendedor") or None,
     }
 
 
@@ -2611,6 +2617,9 @@ def sync_internal_user_from_employee_record(record: dict):
         "store_code": record.get("store_code"),
         "advanced_access": bool(record.get("advanced_access")),
         "is_facturador": bool(record.get("is_facturador")),
+        # codigo_vendedor: ERP vendor code (e.g. "154011") from datos_empleados.xlsx column "codigo_vendedor"
+        # Enables precise nom_vendedor matching in vw_ventas_netas without relying on ILIKE name patterns
+        "codigo_vendedor": record.get("codigo_vendedor") or None,
     }
 
     engine = get_db_engine()
@@ -2717,6 +2726,8 @@ def build_internal_auth_context(user_payload: dict, token: str, expires_at: Opti
             "store_code": metadata.get("store_code"),
             "advanced_access": metadata.get("advanced_access", False),
             "is_facturador": metadata.get("is_facturador", False),
+            # ERP vendor code if available from employees Excel ("154011" style)
+            "codigo_vendedor": metadata.get("codigo_vendedor") or None,
         },
     }
 
@@ -12808,20 +12819,39 @@ REGLAS DE ACCESO:
 - rol=empleado (otros): no accede a datos individuales de vendedor. Puedes darle totales aggregados de la empresa.
 REGLAS DE PRESENTACIÓN:
 - Separa crédito (series G) de contado (series W) cuando lo pidan explícitamente o cuando el desglose lo justifique.
-- Las notas crédito (series Y/X) son DEVOLUCIONES — réstalas del bruto para calcular el NETO. Muestra ambas cifras.
+- Las notas crédito (series Y/X) son DEVOLUCIONES. La herramienta ya devuelve: `facturas_bruto` (solo facturas), `devoluciones_notas_credito` (devoluciones), `ventas_netas` (facturas - devoluciones). Muestra SIEMPRE `ventas_netas` como el número principal.
+- `ventas_totales_equivalente_app` = cálculo equivalente al que muestra la app Ferreinox Ventas (SUM directo). Si difiere de `ventas_netas`, significa que las notas crédito están almacenadas con valor positivo en el CSV fuente y allá se suman en lugar de restarse. El número CORRECTO para `ventas netas` es siempre `facturas_bruto - devoluciones_notas_credito`.
 - Formatea los valores en pesos colombianos: $1.234.567 (puntos para miles, sin decimales para cifras grandes).
+- Si el campo `datos_db.alerta_datos_desactualizados` = true, avisa al empleado que los datos pueden estar desactualizados y que debe presionar "Sincronizar Dropbox" en el panel del frontend. Muestra cuándo fue la última sincronización.
 - Si el período consultado no tiene datos, dilo claramente y sugiere revisar otro período.
 - NUNCA inventes cifras ni las completes de memoria. Solo lo que devuelva consultar_ventas_internas.
 - Si el empleado pregunta "¿cómo voy?" sin especificar período → usa "este mes" por defecto.
+- DISCREPANCIA CON APP FERREINOX VENTAS: si el empleado compara y dice "la app muestra más", explica que: (1) la DB se actualiza solo cuando se pulsa "Sincronizar Dropbox" y la app lee en tiempo real; (2) `ventas_netas` = facturas - devoluciones es el número correcto de ventas netas; la app puede estar sumando notas crédito como ventas positivas si están almacenadas así en el CSV.
 TIENDAS DISPONIBLES: pereira (189*), manizales (157*), armenia (156*), laureles (238*), opalo (158*), ferrebox (439*), cerritos (463*).
 Series por tienda — sufijo G=crédito, W=contado, Y=nota crédito crédito, X=nota crédito contado. Ejemplo Pereira: 189G (facturas crédito), 189W (facturas contado), 189Y/189X (devoluciones). Laureles usa 238, Ópalo usa 158 (series independientes, sin conflicto).
 
 TRASLADOS INTERNOS:
-- Cuando un empleado confirme producto + cantidad + destino para un traslado → llama `solicitar_traslado_interno` INMEDIATAMENTE.
-- El correo de notificación se envía automáticamente a la tienda origen (la que despacha) — NO necesitas preguntar si quieren el correo, siempre se envía.
-- Si falta la tienda origen, infiere del contexto (ej. la tienda donde se encontró el stock en la búsqueda de inventario previa) o pregunta.
-- Confirma al empleado: nombre del producto, cantidad, origen y destino ANTES de llamar la herramienta.
-- Después de llamar la herramienta, muestra al empleado: producto, cantidad, ruta origen→destino y si el correo fue enviado y a qué dirección.
+FLUJO GUIADO DE TRASLADOS (sigue este orden estricto):
+1. INVENTARIO PRIMERO: Cuando un empleado mencione que necesita un producto en otra tienda → llama `consultar_inventario(tienda="tienda_origen")` para verificar stock disponible en origen.
+2. CONFIRMAR DETALLES: Muestra al empleado: producto encontrado (descripción exacta), stock disponible, precio. Pregunta: ¿cuántas unidades? ¿a qué tienda destino?
+3. REGISTRAR TRASLADO: Solo cuando el empleado confirme producto + cantidad + destino → llama `solicitar_traslado_interno` INMEDIATAMENTE.
+   - El correo va AUTOMÁTICAMENTE a la tienda origen (la que despacha). NO preguntes si quieren correo.
+   - Incluye `producto_referencia` si lo conoces del resultado de `consultar_inventario`.
+4. RESPUESTA FINAL: Después de registrar, muestra SIEMPRE:
+   - ✅ Producto: [descripción exacta + referencia]
+   - ✅ Cantidad: [N unidades]
+   - ✅ Ruta: [TIENDA ORIGEN] → [TIENDA DESTINO]
+   - ✅ Estado: REGISTRADO
+   - ✅ Correo enviado a: [email de la tienda origen]
+   - ✅ CC: compras@ferreinox.co
+   - Si hay error en el correo, indica que el traslado quedó registrado en el sistema aunque el correo no llegó.
+
+TRASLADOS POR INSUFICIENCIA DE STOCK (flujo alternativo):
+- Si el stock en la tienda origen es insuficiente para cubrir el pedido, sugiere cuántas unidades están disponibles y si es posible un traslado parcial.
+- Si NINGUNA tienda tiene el producto, escala a `solicitar_traslado_interno` con notas indicando la necesidad de compra a proveedor.
+
+CONSULTAS DE ESTADO DE TRASLADOS:
+- Si el empleado pregunta "¿qué traslados hay pendientes?" o "traslados activos" → responde consultando el contexto de conversación y si hay historial reciente de traslados en la sesión.
 
 Si no tienes un dato seguro, dilo honestamente y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos."""
 
@@ -13683,9 +13713,17 @@ def _handle_tool_solicitar_traslado_interno(args: dict, context: dict, conversat
         "cantidad": float(cantidad),
         "origen": origen_label,
         "destino": destino_label,
+        "ruta": f"{origen_label} → {destino_label}",
         "correo_enviado": bool(notification["sent"]),
-        "correo_destino": to_email,
+        "correo_destino": to_email or "No configurado",
+        "cc": get_transfer_cc_emails() if notification["sent"] else [],
+        "estado": "REGISTRADO",
         "notas": notas,
+        "instruccion_agente": (
+            "Confirma al empleado: ✅ Producto, ✅ Cantidad, ✅ Ruta origen→destino, ✅ Estado REGISTRADO, "
+            "✅ Correo enviado a (email) con CC a compras@ferreinox.co. "
+            "Si hubo error en el correo, indica que el traslado quedó registrado en el sistema aunque el correo no llegó."
+        ),
     }
     if notification["errors"]:
         result["errores_correo"] = notification["errors"]
@@ -13827,8 +13865,14 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 ensure_ascii=False,
             )
         tienda_final = tienda_arg
-        name_tokens = [t for t in full_name.split() if len(t) >= 4]
-        vendedor_filter = name_tokens[0] if name_tokens else full_name
+        codigo_vendedor_erp = employee_ctx.get("codigo_vendedor") or None
+        if codigo_vendedor_erp:
+            # Prefer ERP vendor code for precise single-vendor match (no false positives)
+            vendedor_filter = {"type": "codigo", "value": str(codigo_vendedor_erp)}
+        else:
+            # Fallback: use up to 2 significant name tokens combined with AND
+            name_tokens = [t for t in normalize_text_value(full_name).split() if len(t) >= 4]
+            vendedor_filter = {"type": "nombre_tokens", "tokens": name_tokens[:2] if len(name_tokens) >= 2 else name_tokens[:1]}
         vendedor_filter_label = full_name
     else:
         tienda_final = tienda_arg
@@ -13865,9 +13909,28 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     elif tipo_venta == "contado":
         conditions.append("RIGHT(serie, 1) = 'W'")
 
+    # Build vendedor filter — supports:
+    #   string (admin/gerente with vendedor_arg),
+    #   dict{"type":"codigo","value":"154011"} (precise ERP code match),
+    #   dict{"type":"nombre_tokens","tokens":["JUAN","GARCIA"]} (ILIKE name match),
+    #   list of tokens (legacy fallback)
     if vendedor_filter:
-        conditions.append("nom_vendedor ILIKE :vendedor_nombre")
-        params["vendedor_nombre"] = f"%{vendedor_filter}%"
+        if isinstance(vendedor_filter, dict):
+            if vendedor_filter.get("type") == "codigo":
+                conditions.append("codigo_vendedor = :vendedor_codigo")
+                params["vendedor_codigo"] = str(vendedor_filter["value"])
+            else:
+                # nombre_tokens — AND combination for precise name matching
+                for i, tok in enumerate(vendedor_filter.get("tokens", [])):
+                    conditions.append(f"nom_vendedor ILIKE :vendedor_tok{i}")
+                    params[f"vendedor_tok{i}"] = f"%{tok}%"
+        elif isinstance(vendedor_filter, list):
+            for i, tok in enumerate(vendedor_filter):
+                conditions.append(f"nom_vendedor ILIKE :vendedor_tok{i}")
+                params[f"vendedor_tok{i}"] = f"%{tok}%"
+        else:
+            conditions.append("nom_vendedor ILIKE :vendedor_nombre")
+            params["vendedor_nombre"] = f"%{vendedor_filter}%"
 
     where_clause = " AND ".join(conditions)
 
@@ -13877,6 +13940,33 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     _VIEW = "public.vw_ventas_netas"
 
     engine = get_db_engine()
+
+    # ── Sync freshness: last successful load of raw_ventas_detalle ────────────
+    ultima_sincronizacion: Optional[str] = None
+    alerta_datos_desactualizados: bool = False
+    try:
+        with engine.connect() as conn:
+            sync_row = conn.execute(
+                text("""
+                    SELECT executed_at
+                    FROM public.sync_run_log
+                    WHERE target_table = 'raw_ventas_detalle' AND status = 'success'
+                    ORDER BY executed_at DESC
+                    LIMIT 1
+                """)
+            ).mappings().one_or_none()
+        if sync_row:
+            ts = sync_row["executed_at"]
+            ultima_sincronizacion = str(ts)[:19]
+            from datetime import datetime as _dt, timezone as _tz
+            if hasattr(ts, "tzinfo") and ts.tzinfo:
+                age_hours = (_dt.now(_tz.utc) - ts).total_seconds() / 3600
+            else:
+                age_hours = (_dt.utcnow() - ts).total_seconds() / 3600 if hasattr(ts, "hour") else 9999
+            alerta_datos_desactualizados = age_hours > 8
+    except Exception:
+        pass  # sync_run_log may not exist in all deployments
+
     try:
         with engine.connect() as conn:
             total_row = conn.execute(
@@ -13885,9 +13975,10 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                         COUNT(*) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS num_lineas,
                         COUNT(DISTINCT cliente_id) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS num_clientes,
                         SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
-                                 THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturado_bruto,
+                                 THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturas_bruto,
                         SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') > 0
-                                 THEN ABS(COALESCE(valor_venta_neto, 0)) ELSE 0 END) AS devoluciones
+                                 THEN ABS(COALESCE(valor_venta_neto, 0)) ELSE 0 END) AS devoluciones,
+                        SUM(COALESCE(valor_venta_neto, 0)) AS ventas_netas_directas
                     FROM {_VIEW}
                     WHERE {where_clause}
                 """),
@@ -13906,9 +13997,12 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             ensure_ascii=False,
         )
 
-    facturado_bruto = float(total_row.get("facturado_bruto") or 0)
+    facturas_bruto = float(total_row.get("facturas_bruto") or 0)
     devoluciones = float(total_row.get("devoluciones") or 0)
-    neto = facturado_bruto - devoluciones
+    neto = facturas_bruto - devoluciones
+    # ventas_netas_directas = SUM(valor_venta_neto) = the most direct equivalent to Ferreinox Ventas app's
+    # ventas_totales = SUM(valor_venta) since both include facturas+notas_credito in a single SUM
+    ventas_netas_directas = float(total_row.get("ventas_netas_directas") or 0)
     num_lineas = int(total_row.get("num_lineas") or 0)
     num_clientes = int(total_row.get("num_clientes") or 0)
 
@@ -13918,35 +14012,68 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         "vendedor_consultado": vendedor_filter_label or ("todos" if role in {"administrador", "gerente", "operador"} else full_name),
         "tipo_venta": tipo_venta,
         "ventas": {
-            "facturado_bruto": round(facturado_bruto, 2),
-            "devoluciones": round(devoluciones, 2),
-            "neto": round(neto, 2),
-            "num_lineas_venta": num_lineas,
+            "facturas_bruto": round(facturas_bruto, 2),
+            "devoluciones_notas_credito": round(devoluciones, 2),
+            "ventas_netas": round(neto, 2),
+            # ventas_totales_app: equivalent to Ferreinox Ventas app's SUM(valor_venta)
+            # If this equals ventas_netas, notas crédito are negative in source CSV (normal ERP convention)
+            # If this is HIGHER than ventas_netas, notas crédito are positive in CSV (app adds instead of subtracts)
+            "ventas_totales_equivalente_app": round(ventas_netas_directas, 2),
+            "num_lineas_factura": num_lineas,
             "num_clientes_distintos": num_clientes,
         },
     }
 
+    if ultima_sincronizacion:
+        result["datos_db"] = {
+            "ultima_sincronizacion": ultima_sincronizacion,
+            "alerta_datos_desactualizados": alerta_datos_desactualizados,
+        }
+        if alerta_datos_desactualizados:
+            result["datos_db"]["aviso"] = (
+                "⚠️ Los datos en la base de datos pueden estar desactualizados (última sincronización "
+                f"hace más de 8 h: {ultima_sincronizacion}). "
+                "Presiona 'Sincronizar Dropbox' en el panel del frontend para actualizar antes de comparar cifras."
+            )
+
     # ── Año anterior — comparativa ────────────────────────────────────────────
     try:
+        prev_anio = period_filter.get("anio", date_from.year) - 1
         prev_from = date_from.replace(year=date_from.year - 1)
         prev_to = date_to.replace(year=date_to.year - 1)
-        prev_params = {**{k: v for k, v in params.items() if k not in ("date_from", "date_to")},
-                       "date_from": prev_from, "date_to": prev_to}
+        # Build prev_params: override period-type params to point at previous year
+        if pf_type == "month":
+            prev_params = {k: v for k, v in params.items() if not k.startswith("pf_")}
+            prev_params["pf_anio"] = prev_anio
+            prev_params["pf_mes"] = period_filter["mes"]
+        elif pf_type == "year":
+            prev_params = {k: v for k, v in params.items() if not k.startswith("pf_")}
+            prev_params["pf_anio"] = prev_anio
+        else:
+            prev_params = {k: v for k, v in params.items() if k not in ("date_from", "date_to")}
+            prev_params["date_from"] = prev_from
+            prev_params["date_to"] = prev_to
         with engine.connect() as conn:
             prev_row = conn.execute(
                 text(f"""
-                    SELECT SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
-                                    THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturado_bruto
+                    SELECT
+                        SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
+                                THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturas_bruto,
+                        SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') > 0
+                                THEN ABS(COALESCE(valor_venta_neto, 0)) ELSE 0 END) AS devoluciones
                     FROM {_VIEW}
                     WHERE {where_clause}
                 """),
                 prev_params,
             ).mappings().one_or_none()
-        prev_bruto = float((prev_row.get("facturado_bruto") or 0) if prev_row else 0)
-        if prev_bruto > 0:
-            variacion_pct = ((facturado_bruto - prev_bruto) / prev_bruto) * 100
+        prev_bruto = float((prev_row.get("facturas_bruto") or 0) if prev_row else 0)
+        prev_dev = float((prev_row.get("devoluciones") or 0) if prev_row else 0)
+        prev_neto = prev_bruto - prev_dev
+        if prev_neto > 0:
+            variacion_pct = ((neto - prev_neto) / prev_neto) * 100
             result["vs_anio_anterior"] = {
-                "facturado_bruto": round(prev_bruto, 2),
+                "anio": prev_anio,
+                "ventas_netas": round(prev_neto, 2),
                 "variacion_pct": round(variacion_pct, 1),
             }
     except Exception as exc:

@@ -20,6 +20,9 @@ EXPECTED_COLUMN_ALIASES = {
     "telefono": ["telefono", "telefono ", "teléfono", "celular", "phone"],
     "correo": ["correo", "correo ", "email", "mail"],
     "rol": ["rol", "cargo_rol", "role"],
+    # ERP vendor code used in raw_ventas_detalle.codigo_vendedor (e.g. "154011")
+    # Enables precise seller matching in BI queries without relying on name ILIKE patterns
+    "codigo_vendedor": ["codigo_vendedor", "código_vendedor", "cod_vendedor", "codigovendedor", "erp_code", "vendor_code"],
 }
 
 
