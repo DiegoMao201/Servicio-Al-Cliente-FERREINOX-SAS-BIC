@@ -11815,7 +11815,20 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             if not terms:
                 return []
 
+            # ── Build query_terms once (used by both curated and full-catalog) ──
+            query_terms = []
+            for term in list(core_terms) + list(terms):
+                if term not in query_terms:
+                    query_terms.append(term)
+                if len(query_terms) == 5:
+                    break
+
+            # ── Stage 3+4 combined: curated catalog + full-catalog term search ──
+            # The curated catalog only has ~1.7k products; public.productos has
+            # ~20k.  Always run both and merge so that products outside the curated
+            # catalog are still discoverable.
             curated_rows = fetch_curated_catalog_product_rows(connection, text_value, product_request, limit=100)
+            ranked_curated_rows: list[dict] = []
             if curated_rows:
                 ranked_curated_rows = hydrate_curated_rows_with_store_inventory(
                     connection,
@@ -11823,20 +11836,29 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     store_filters,
                 )
                 ranked_curated_rows = rank_product_match_rows(ranked_curated_rows, product_request, normalized_query)
-                if ranked_curated_rows:
-                    return ranked_curated_rows[:5]
 
-            query_terms = []
-            for term in list(core_terms) + list(terms):
-                if term not in query_terms:
-                    query_terms.append(term)
-                if len(query_terms) == 5:
-                    break
+            # Always query the full catalog regardless of curated results
             rows = fetch_term_product_rows(connection, query_terms, store_filters)
-
+            ranked_term_rows: list[dict] = []
             if rows:
-                ranked_rows = rank_product_match_rows([dict(row) for row in rows], product_request, normalized_query)
-                return ranked_rows[:5]
+                ranked_term_rows = rank_product_match_rows([dict(row) for row in rows], product_request, normalized_query)
+
+            # Merge curated + full-catalog, curated rows take priority
+            if ranked_curated_rows or ranked_term_rows:
+                seen_codes: set[str] = set()
+                merged: list[dict] = []
+                for row in ranked_curated_rows:
+                    code = str(row.get("producto_codigo") or row.get("referencia") or "")
+                    if code and code not in seen_codes:
+                        seen_codes.add(code)
+                        merged.append(row)
+                for row in ranked_term_rows:
+                    code = str(row.get("producto_codigo") or row.get("referencia") or "")
+                    if code and code not in seen_codes:
+                        seen_codes.add(code)
+                        merged.append(row)
+                if merged:
+                    return merged[:5]
 
             sales_filters = []
             sales_scores = []
@@ -13928,12 +13950,23 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     #   string (admin/gerente with vendedor_arg),
     #   dict{"type":"codigo","value":"154011"} (precise ERP code match),
     #   dict{"type":"nombre_tokens","tokens":["JUAN","GARCIA"]} (ILIKE name match),
+    #   dict{"type":"grupo","value":"MOSTRADOR PEREIRA"} (Ferreinox Ventas app group),
     #   list of tokens (legacy fallback)
+    _MOSTRADOR_GROUPS = {
+        "mostrador pereira": "MOSTRADOR PEREIRA",
+        "mostrador armenia": "MOSTRADOR ARMENIA",
+        "mostrador manizales": "MOSTRADOR MANIZALES",
+        "mostrador laureles": "MOSTRADOR LAURELES",
+        "mostrador opalo": "MOSTRADOR OPALO",
+    }
     if vendedor_filter:
         if isinstance(vendedor_filter, dict):
             if vendedor_filter.get("type") == "codigo":
                 conditions.append("codigo_vendedor = :vendedor_codigo")
                 params["vendedor_codigo"] = str(vendedor_filter["value"])
+            elif vendedor_filter.get("type") == "grupo":
+                conditions.append("grupo_vendedor = :vendedor_grupo")
+                params["vendedor_grupo"] = str(vendedor_filter["value"])
             else:
                 # nombre_tokens — AND combination for precise name matching
                 for i, tok in enumerate(vendedor_filter.get("tokens", [])):
@@ -13943,9 +13976,16 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             for i, tok in enumerate(vendedor_filter):
                 conditions.append(f"nom_vendedor ILIKE :vendedor_tok{i}")
                 params[f"vendedor_tok{i}"] = f"%{tok}%"
-        else:
-            conditions.append("nom_vendedor ILIKE :vendedor_nombre")
-            params["vendedor_nombre"] = f"%{vendedor_filter}%"
+        elif isinstance(vendedor_filter, str):
+            # Check if it matches a MOSTRADOR group name
+            vf_norm = normalize_text_value(vendedor_filter)
+            matched_group = _MOSTRADOR_GROUPS.get(vf_norm)
+            if matched_group:
+                conditions.append("grupo_vendedor = :vendedor_grupo")
+                params["vendedor_grupo"] = matched_group
+            else:
+                conditions.append("nom_vendedor ILIKE :vendedor_nombre")
+                params["vendedor_nombre"] = f"%{vendedor_filter}%"
 
     where_clause = " AND ".join(conditions)
 
@@ -14095,12 +14135,14 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         logger.debug("consultar_ventas_internas comparativa año anterior error: %s", exc)
 
     # ── Desglose por vendedor (roles con acceso multi-vendedor) ───────────────
+    # Uses COALESCE(grupo_vendedor, nom_vendedor) so MOSTRADOR groups appear as
+    # single rows mirroring the Ferreinox Ventas app behaviour.
     if desglose == "por_vendedor" and role in {"administrador", "gerente", "operador"}:
         try:
             with engine.connect() as conn:
                 rows = conn.execute(
                     text(f"""
-                        SELECT nom_vendedor,
+                        SELECT COALESCE(grupo_vendedor, nom_vendedor) AS vendedor_label,
                                SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
                                         THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturado,
                                SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') > 0
@@ -14109,7 +14151,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                                COUNT(DISTINCT cliente_id) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS clientes
                         FROM {_VIEW}
                         WHERE {where_clause}
-                        GROUP BY nom_vendedor
+                        GROUP BY vendedor_label
                         ORDER BY facturado DESC
                         LIMIT 30
                     """),
@@ -14117,7 +14159,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 ).mappings().all()
             result["desglose_vendedores"] = [
                 {
-                    "vendedor": r["nom_vendedor"],
+                    "vendedor": r["vendedor_label"],
                     "facturado": round(float(r["facturado"] or 0), 2),
                     "devoluciones": round(float(r["devoluciones"] or 0), 2),
                     "neto": round(float(r["facturado"] or 0) - float(r["devoluciones"] or 0), 2),

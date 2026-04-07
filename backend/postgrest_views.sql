@@ -139,6 +139,15 @@ SELECT
     public.fn_normalize_text(tipo_documento) AS tipo_documento,
     public.fn_keep_alnum(codigo_vendedor) AS codigo_vendedor,
     public.fn_normalize_text(nom_vendedor) AS nom_vendedor,
+    -- grupo_vendedor: mirrors Ferreinox Ventas app MOSTRADOR grouping
+    CASE
+        WHEN public.fn_normalize_text(nom_vendedor) IN ('ALEJANDRO CARBALLO MARQUEZ', 'GEORGINA A  GALVIS HERRERA', 'GEORGINA A. GALVIS HERRERA') THEN 'MOSTRADOR PEREIRA'
+        WHEN public.fn_normalize_text(nom_vendedor) IN ('CRISTIAN CAMILO RENDON MONTES', 'FANDRY JOHANA ABRIL PENHA', 'JAVIER ORLANDO PATINO HURTADO') THEN 'MOSTRADOR ARMENIA'
+        WHEN public.fn_normalize_text(nom_vendedor) IN ('DAVID FELIPE MARTINEZ RIOS', 'JHON JAIRO CASTANO MONTES') THEN 'MOSTRADOR MANIZALES'
+        WHEN public.fn_normalize_text(nom_vendedor) IN ('MAURICIO RIOS MORALES') THEN 'MOSTRADOR LAURELES'
+        WHEN public.fn_normalize_text(nom_vendedor) IN ('MARIA PAULA DEL JESUS GALVIS HERRERA') THEN 'MOSTRADOR OPALO'
+        ELSE NULL
+    END AS grupo_vendedor,
     public.fn_keep_alnum(cliente_id) AS cliente_id,
     public.fn_normalize_text(nombre_cliente) AS nombre_cliente,
     public.fn_keep_alnum(codigo_articulo) AS codigo_articulo,
@@ -146,6 +155,28 @@ SELECT
     public.fn_normalize_text(categoria_producto) AS categoria_producto,
     public.fn_normalize_text(linea_producto) AS linea_producto,
     public.fn_keep_alnum(marca_producto) AS marca_producto,
+    -- nombre_marca: maps numeric marca_producto code to brand name (same as Ferreinox Ventas app mapeo_marcas)
+    CASE public.fn_parse_integer(marca_producto)
+        WHEN 50 THEN 'P8-ASC-MEGA'
+        WHEN 54 THEN 'MPY-International'
+        WHEN 55 THEN 'DPP-AN COLORANTS LATAM'
+        WHEN 56 THEN 'DPP-Pintuco Profesional'
+        WHEN 57 THEN 'ASC-Mega'
+        WHEN 58 THEN 'DPP-Pintuco'
+        WHEN 59 THEN 'DPP-Madetec'
+        WHEN 60 THEN 'POW-Interpon'
+        WHEN 61 THEN 'various'
+        WHEN 62 THEN 'DPP-ICO'
+        WHEN 63 THEN 'DPP-Terinsa'
+        WHEN 64 THEN 'MPY-Pintuco'
+        WHEN 65 THEN 'non-AN Third Party'
+        WHEN 66 THEN 'ICO-AN Packaging'
+        WHEN 67 THEN 'ASC-Automotive OEM'
+        WHEN 68 THEN 'POW-Resicoat'
+        WHEN 73 THEN 'DPP-Coral'
+        WHEN 91 THEN 'DPP-Sikkens'
+        ELSE 'No Especificada'
+    END AS nombre_marca,
     -- NOTE: In the Ferreinox ERP CSV, NOTA CREDITO rows already have NEGATIVE
     -- valor_venta and unidades_vendidas.  Do NOT multiply by -1 here — that would
     -- double-flip the sign and make SUM(valor_venta_neto) inflated.
@@ -298,7 +329,7 @@ SELECT
     NULLIF(TRIM(COALESCE(am.cat_producto, '')), '') AS cat_producto,
     NULLIF(TRIM(COALESCE(am.descripcion_ebs, '')), '') AS descripcion_ebs,
     NULLIF(TRIM(COALESCE(am.tipo, '')), '') AS tipo_articulo,
-    -- search_blob enriquecido con clasificación
+    -- search_blob enriquecido con clasificación + ERP metadata
     public.fn_normalize_text(
         COALESCE(r.descripcion, '') || ' ' ||
         COALESCE(r.referencia, '') || ' ' ||
@@ -315,7 +346,12 @@ SELECT
         COALESCE(am.descripcion_ebs, '') || ' ' ||
         COALESCE(am.tipo, '') || ' ' ||
         COALESCE(am.seccion, '') || ' ' ||
-        COALESCE(am.descripcion_adicional, '')
+        COALESCE(am.descripcion_adicional, '') || ' ' ||
+        COALESCE(NULLIF(am.familia, 'NaN'), '') || ' ' ||
+        COALESCE(NULLIF(am.subfamilia, 'NaN'), '') || ' ' ||
+        COALESCE(NULLIF(am.marca_erp, 'NaN'), '') || ' ' ||
+        COALESCE(NULLIF(am.linea_erp, 'NaN'), '') || ' ' ||
+        COALESCE(NULLIF(am.proveedor, 'NaN'), '')
     ) AS search_blob
 FROM public.raw_rotacion_inventarios r
 LEFT JOIN public.articulos_maestro am
