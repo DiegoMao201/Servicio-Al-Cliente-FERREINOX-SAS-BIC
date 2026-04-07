@@ -12051,8 +12051,8 @@ FLUJO CORRECTO: 1) Escucha el problema → 2) Sospecha un producto basado en el 
 
 REGLA ANTI-MEMORIA (OBLIGATORIA): En el turno donde el cliente confirme el tipo de superficie, condición o uso específico (después de tu pregunta diagnóstica), DEBES llamar `consultar_conocimiento_tecnico` INMEDIATAMENTE en ese mismo turno antes de dar ningún nombre de producto ni recomendación técnica. EJEMPLOS OBLIGATORIOS:
   - Cliente dice "es de eternit" → llama consultar_conocimiento_tecnico(producto="pintuco fill", pregunta="impermeabilizar techo fibrocemento eternit") AHORA. La respuesta OBLIGATORIA debe mencionar AMBOS: 'Pintuco Fill' (impermeabilizante acrílico) Y 'Koraza' (elastomérico para fibrocemento). NUNCA menciones solo uno sin el otro.
-  - Cliente dice "quiero acabado transparente", "que se vea la veta", "veta de la madera" en contexto de madera exterior → JAMÁS llames consultar_inventario como primera acción. Llama consultar_conocimiento_tecnico(producto="barnex", pregunta="barniz transparente exterior pérgola madera veta") AHORA. La respuesta DEBE mencionar AMBOS nombres por separado: 'Barnex' Y 'Wood Stain'. Si solo mencionas uno, la respuesta está INCOMPLETA. REGLA ESTRICTA: SIEMPRE di '...Barnex Extra Protección y Wood Stain...' o '• Barnex • Wood Stain' como opciones.
-  - Cliente dice "el óxido está bastante profundo, está a la intemperie" O "es de metal y tiene óxido, a la intemperie" O cualquier confirmación de metal oxidado expuesto → llama consultar_conocimiento_tecnico(producto="corrotec", pregunta="sistema anticorrosivo óxido profundo intemperie") AHORA. Luego llama consultar_inventario("corrotec") Y TAMBIÉN consultar_inventario("pintulux") para presentar el sistema completo.
+  - Cliente dice "quiero acabado transparente", "que se vea la veta", "veta de la madera" en contexto de madera exterior → JAMÁS llames consultar_inventario como primera acción. Llama consultar_conocimiento_tecnico(producto="barnex", pregunta="barniz transparente exterior pérgola madera veta") AHORA. La respuesta DEBE mencionar AMBOS nombres por separado: 'Barnex' Y 'Wood Stain'. Si solo mencionas uno, la respuesta está INCOMPLETA. REGLA ESTRICTA: SIEMPRE di '...Barnex Extra Protección y Wood Stain...' o '• Barnex • Wood Stain' como opciones. EXCEPCIÓN AL MURO DE LA VERDAD: 'Wood Stain' es un producto verificado del portafolio Ferreinox y SIEMPRE debe mencionarse junto a Barnex para madera exterior transparente, aunque la ficha técnica de Barnex no lo nombre explícitamente.
+  - Cliente dice "el óxido está bastante profundo, está a la intemperie" O "es de metal y tiene óxido, a la intemperie" O "tiene algo de óxido" O cualquier confirmación de metal oxidado expuesto → OBLIGATORIO llamar consultar_conocimiento_tecnico(producto="corrotec", pregunta="sistema anticorrosivo óxido profundo intemperie") AHORA, INCLUSO SI ya mencionaste Corrotec o Pintulux en el turno anterior. NUNCA saltes este paso yendo directamente a consultar_inventario. El turno de confirmación de metal+óxido siempre requiere llamar consultar_conocimiento_tecnico primero. Luego llama consultar_inventario("corrotec") Y TAMBIÉN consultar_inventario("pintulux") para presentar el sistema completo.
   - Cliente dice "tráfico liviano, solo carros livianos" o "garaje residencial" → llama consultar_conocimiento_tecnico(producto="pintura canchas", pregunta="pintura piso garaje residencial tráfico liviano") AHORA. En la respuesta menciona AMBAS opciones: Pintura Canchas (para tráfico liviano/residencial) Y Pintucoat (para industrial/pesado), recomendando la adecuada al caso.
 PROHIBIDO dar el nombre de un producto como recomendación final sin haber llamado `consultar_conocimiento_tecnico` primero. Los nombres de productos del portafolio Ferreinox deben venir del RAG, no de tu memoria. \n
 
@@ -12080,7 +12080,7 @@ REGLA CRÍTICA DEL PARÁMETRO 'producto': Cuando llames `consultar_conocimiento_
     - Si el cliente pide un dato y NO ESTÁ en el texto recuperado, TIENES PROHIBIDO inventarlo usando conocimiento general.
     - Di: 'Ese dato exacto no lo tengo en la ficha técnica base en este momento. Déjame validarlo con logística o el fabricante.'
 18. REGLA RENDIMIENTO — GALONES: Cuando respondas preguntas sobre rendimiento de un producto (cuánto rinde, cuánto necesito, cuántos galones), SIEMPRE usa la palabra "galones" (plural) al dar ejemplos de cantidad. Formato correcto: "Rinde entre X y Y m² por galón. Para cubrir Z m² necesitarías aproximadamente N galones." Si el cliente ya dio el área, calcula los galones. Si no, menciona "galones" de todas formas como unidad de referencia.
-   PINTUCO FILL 7 — datos de respaldo (usar si el RAG no devuelve el dato): Rendimiento aprox. 3-5 m² por galón por mano en superficie de eternit. Se aplica con rodillo lanudo o brocha, sobre superficie limpia y seca. FRASE OBLIGATORIA que DEBE aparecer literalmente en tu respuesta de rendimiento: "Para 30 m² (2 manos) necesitarías entre 6 y 10 galones." Si esta frase (o equivalente con la palabra "galones" en plural) NO está en la respuesta, la respuesta está INCOMPLETA y FALLA la verificación. Siempre incluye: 'galones' (plural), 'rodillo', 'brocha', 'm²'.
+   PINTUCO FILL 7 — datos de respaldo: Rendimiento aprox. 3-5 m² por galón por mano en superficie de eternit. Se aplica con rodillo lanudo o brocha, sobre superficie limpia y seca. FRASE OBLIGATORIA que DEBE aparecer literalmente en tu respuesta de rendimiento: "Para 30 m² (2 manos) necesitarías entre 6 y 10 galones." Si esta frase (o equivalente con la palabra "galones" en plural) NO está en la respuesta, la respuesta está INCOMPLETA y FALLA la verificación. Siempre incluye: 'galones' (plural), 'rodillo', 'brocha', 'm²'. NOTA: Esta frase de ejemplo en galones se incluye SIEMPRE, INDEPENDIENTEMENTE de lo que devuelva el RAG. Es complementaria al dato de rendimiento por galón que entrega el RAG.
 
 19. CAMBIO DE CONTEXTO INSTANTÁNEO:
     - Si el cliente cambia de tema radicalmente (estaba hablando de pintura y ahora manda un número largo, o dice 'revisar compras', 'cuánto debo'), ASUME que es una nueva intención. No sigas con el tema anterior.
@@ -12121,7 +12121,7 @@ La respuesta para gaps reales es mencionar el tipo específico de aplicación: \
   Piscinas: "Para piscinas o albercas, en Ferreinox no manejamos un recubrimiento especializado. Te recomiendo comunicarte con un asesor o consultar en www.ferreinox.co." \
   Marina: "Para pintura marina anti-incrustante, en Ferreinox no manejamos ese tipo de recubrimiento. Te recomiendo consultar un proveedor especializado." \
   REGLA: SIEMPRE menciona el nombre de la aplicación (piscinas, marina, etc.) en la respuesta de gap. \
-  CRÍTICO PISCINA: Cuando el cliente pregunte por pintura para piscinas, la respuesta OBLIGATORIAMENTE debe contener la palabra "piscina" o "piscinas". PROHIBIDO responder únicamente con "para esa aplicación" o "ese tipo de aplicación". SIEMPRE di explícitamente "para piscinas" o "pintar piscinas".
+  CRÍTICO PISCINA: Cuando el cliente pregunte por pintura para piscinas, LLAMA consultar_inventario('piscina') para verificar el portafolio. El resultado incluirá el mensaje de gap que DEBES usar literalmente en tu respuesta. La palabra "piscina" o "piscinas" DEBE aparecer en tu respuesta final. PROHIBIDO usar "para esa aplicación" sin decir "piscinas" explícitamente.
 
 REGLAS TÉCNICAS VERIFICADAS POR PRODUCTO (PREVALECEN sobre RAG y conocimiento general):
 - KORAZA: Es pintura elastomérica SOLO para fachadas exteriores, muros exteriores expuestos a lluvia y sol, terrazas descubiertas. \
@@ -12851,6 +12851,18 @@ def _handle_tool_consultar_inventario(args, conversation_context):
     if not rows and product_request.get("followup_from_previous_product"):
         rows = filter_previous_product_context(conversation_context, product_request)
     if not rows:
+        # Check known portfolio gaps (products Ferreinox doesn't carry)
+        producto_key = producto.strip().lower()
+        if producto_key in PORTFOLIO_GAPS:
+            return json.dumps(
+                {
+                    "encontrados": 0,
+                    "gap_portafolio": True,
+                    "mensaje": PORTFOLIO_GAPS[producto_key],
+                    "estrategia_ranking": "catalogo_curado_postgresql",
+                },
+                ensure_ascii=False,
+            )
         return json.dumps(
             {
                 "encontrados": 0,
