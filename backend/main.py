@@ -614,7 +614,10 @@ PRESENTATION_SIZE_MAP = {
 
 PORTFOLIO_ALIASES = {
     # ── VINILOS TIPO 1 (Premium) ──
-    "viniltex": ["viniltex", "viniltex adv", "viniltex advanced", "vinilico", "vinilo", "vtx", "vinilo premium", "vinilo tipo 1"],
+    "viniltex": ["viniltex", "viniltex adv", "viniltex advanced", "vinilico", "vinilo", "vtx", "vinilo premium", "vinilo tipo 1",
+                 # Códigos de color Viniltex (cliente dice "1501" para Viniltex Blanco, "1525" para amarillo vivo, etc.)
+                 "1501", "viniltex blanco", "viniltex blanco 1501",
+                 "1525", "viniltex amarillo", "viniltex amarillo vivo 1525"],
     "vinilico": ["vinilico", "viniltex", "vinilo", "vinilica", "viniloco", "vinilico blanco", "viniltex blanco", "vinilo tipo 1"],
     "viniloco": ["viniloco", "vinilico", "viniltex", "vinilo", "vinilico blanco", "viniltex blanco"],
     "vinil plus": ["vinil plus", "vinilplus", "vinil+", "vinilo plus", "vinilo tipo 1"],
@@ -627,7 +630,15 @@ PORTFOLIO_ALIASES = {
     "vinil max": ["vinil max", "vinilmax", "vinil-max", "vinilo tipo 3"],
     "icolatex": ["icolatex", "ico latex", "vinilo tipo 3"],
     # ── ESMALTES ──
-    "pintulux": ["pintulux", "pintulux 3en1", "pintulux 3 en 1", "pintulux 3-en-1", "3en1", "3 en 1", "3-en-1", "esmalte pintulux", "esmalte exterior", "esmalte bueno", "esmalte resistente"],
+    "pintulux": ["pintulux", "pintulux 3en1", "pintulux 3 en 1", "pintulux 3-en-1", "3en1", "3 en 1", "3-en-1", "esmalte pintulux", "esmalte exterior", "esmalte bueno", "esmalte resistente",
+                 # Códigos cortos de mostrador (TEU/T-XX → pintulux con ese número de color)
+                 "t11", "t-11", "t 11", "teu11", "teu-11", "tu11", "tu-11",
+                 "t95", "t-95", "t 95", "teu95", "teu-95", "tu95",
+                 "t84", "t-84", "teu84", "t76", "t-76", "teu76",
+                 "t80", "t-80", "teu80", "t53", "t-53", "teu53",
+                 "t10", "t-10", "teu10", "t89", "t-89", "teu89",
+                 "t18", "t-18", "teu18", "t20", "t-20", "teu20",
+                 "t26", "t-26", "teu26", "t40", "t-40", "teu40"],
     "domestico": ["domestico", "doméstico", "vinilico", "economico", "económico", "esmalte domestico", "esmalte interior", "esmalte economico", "esmalte económico"],
     # ── CÓDIGOS CORTOS DE MOSTRADOR ──
     "pintuco": ["pintuco", "viniltex", "p11", "p-11", "p 11"],
@@ -1637,8 +1648,59 @@ def tokenize_search_phrase(text_value: Optional[str]):
     ]
 
 
+# ── Abreviaciones de mostrador que los clientes usan sin el término completo ──────────────────
+# Pares (regex, reemplazo) aplicados sobre el texto normalizado antes de cualquier búsqueda.
+# Esto permite que "brocha profe" encuentre "BROCHA PROFESIONAL", etc.
+FERRETERIA_WORD_EXPANSIONS: list[tuple[str, str]] = [
+    (r"\bprofe\b", "profesional"),
+    (r"\bpopu\b", "popular"),
+    (r"\bprof\.?(?=\s|$)", "profesional"),   # "prof." o "prof " al final de palabra
+    (r"\bbarni\b", "barniz"),
+    (r"\besmal\b", "esmalte"),
+    (r"\bvini\b", "viniltex"),
+]
+
+
+def expand_ferreteria_text(text_value: Optional[str]) -> str:
+    """Expande abreviaciones de ferretería antes de normalizar para búsqueda."""
+    normalized = normalize_text_value(text_value) or ""
+    for pattern, replacement in FERRETERIA_WORD_EXPANSIONS:
+        normalized = re.sub(pattern, replacement, normalized)
+    return normalized
+
+
+# ── Códigos TEU/T-XX de Pintulux 3en1 → colores canónicos ──────────────────────────────────────
+# La tabla articulos_maestro tiene estas claves en descripcion_adicional (p.ej. T-95 → negro 95).
+# Aquí las mapeamos a términos de búsqueda canonizados para que el agente encuentre el producto correcto
+# aunque el cliente use el código corto.
+PINTULUX_TEU_COLOR_CODES: dict[str, dict] = {
+    # Brillantes
+    r"\b(?:teu?-?|t-?)\s*11\b":  {"color": "blanco",           "code": "11",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*95\b":  {"color": "negro",            "code": "95",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*84\b":  {"color": "gris plata",       "code": "84",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*76\b":  {"color": "caoba",            "code": "76",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*80\b":  {"color": "verde bronce",     "code": "80",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*53\b":  {"color": "verde esmeralda",  "code": "53",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*18\b":  {"color": "amarillo",         "code": "18",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*20\b":  {"color": "naranja",          "code": "20",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*26\b":  {"color": "rojo bermellon",   "code": "26",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*40\b":  {"color": "azul espanol",     "code": "40",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*12\b":  {"color": "crema",            "code": "12",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*5\b":   {"color": "marfil",           "code": "5",   "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*29\b":  {"color": "rojo",             "code": "29",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*35\b":  {"color": "azul claro",       "code": "35",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*38\b":  {"color": "azul mediano",     "code": "38",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*44\b":  {"color": "verde turquesa",   "code": "44",  "acabado": "brillante"},
+    r"\b(?:teu?-?|t-?)\s*47\b":  {"color": "verde maquina",    "code": "47",  "acabado": "brillante"},
+    # Mate
+    r"\b(?:teu?-?|t-?)\s*10\b":  {"color": "blanco mate",      "code": "10",  "acabado": "mate"},
+    r"\b(?:teu?-?|t-?)\s*89\b":  {"color": "negro mate",       "code": "89",  "acabado": "mate"},
+}
+
+
 def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_request: dict):
-    normalized = normalize_text_value(text_value)
+    # Expandir abreviaciones antes de normalizar
+    normalized = expand_ferreteria_text(text_value)
     alias_rules = [
         {
             "pattern": r"\b(blanca economica|blanca economica|la economica|vinilo barato|p11|p-11|p 11)\b",
@@ -1648,11 +1710,97 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "color_filters": ["blanco"],
         },
         {
-            "pattern": r"\b(t11|t-11|t 11)\b",
-            "canonical_product": "pintulux blanco",
+            "pattern": r"\b(?:teu?-?|t-?)\s*11\b",
+            "canonical_product": "pintulux blanco 11",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "blanco"],
+            "core_terms": ["pintulux", "blanco", "11"],
             "color_filters": ["blanco"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*95\b",
+            "canonical_product": "pintulux negro 95",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "negro", "95"],
+            "color_filters": ["negro"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*10\b",
+            "canonical_product": "pintulux blanco mate 10",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "blanco", "mate", "10"],
+            "color_filters": ["blanco mate"],
+            "finish_filters": ["mate"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*89\b",
+            "canonical_product": "pintulux negro mate 89",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "negro", "mate", "89"],
+            "color_filters": ["negro mate"],
+            "finish_filters": ["mate"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*84\b",
+            "canonical_product": "pintulux gris plata 84",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "gris", "84"],
+            "color_filters": ["gris plata"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*76\b",
+            "canonical_product": "pintulux caoba 76",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "caoba", "76"],
+            "color_filters": ["caoba"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*80\b",
+            "canonical_product": "pintulux verde bronce 80",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "verde bronce", "80"],
+            "color_filters": ["verde bronce"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*53\b",
+            "canonical_product": "pintulux verde esmeralda 53",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "verde esmeralda", "53"],
+            "color_filters": ["verde esmeralda"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*18\b",
+            "canonical_product": "pintulux amarillo 18",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "amarillo", "18"],
+            "color_filters": ["amarillo"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*20\b",
+            "canonical_product": "pintulux naranja 20",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "naranja", "20"],
+            "color_filters": ["naranja"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*26\b",
+            "canonical_product": "pintulux rojo bermellon 26",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "rojo", "26"],
+            "color_filters": ["rojo bermellon"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*40\b",
+            "canonical_product": "pintulux azul espanol 40",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "azul", "40"],
+            "color_filters": ["azul espanol"],
+        },
+        {
+            "pattern": r"\b(?:teu?-?|t-?)\s*12\b",
+            "canonical_product": "pintulux crema 12",
+            "brand_filters": ["pintulux", "pintuco"],
+            "core_terms": ["pintulux", "crema", "12"],
+            "color_filters": ["crema"],
         },
         {
             "pattern": r"\b(p53|p-53|p 53)\b",
@@ -1759,6 +1907,8 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
         prepared_request["brand_filters"] = merge_unique_terms(prepared_request.get("brand_filters"), rule.get("brand_filters"))
         prepared_request["core_terms"] = merge_unique_terms(prepared_request.get("core_terms"), rule.get("core_terms"))
         prepared_request["color_filters"] = merge_unique_terms(prepared_request.get("color_filters"), rule.get("color_filters"))
+        if rule.get("finish_filters"):
+            prepared_request["finish_filters"] = merge_unique_terms(prepared_request.get("finish_filters"), rule.get("finish_filters"))
 
     if "verde bronce" in normalized:
         prepared_request["color_filters"] = merge_unique_terms(prepared_request.get("color_filters"), ["verde bronce"])
@@ -11581,6 +11731,22 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     ranked_code_rows = rank_product_match_rows([dict(row) for row in code_rows], product_request, normalized_query)
                     ranked_code_rows = filter_rows_by_requested_presentation(ranked_code_rows, product_request)
                     return ranked_code_rows[:5]
+                # Fuzzy near-code fallback: if no results, try digit-deletion and digit-transposition variants
+                # (e.g. user types "17174" when correct code is "117474" or vice-versa)
+                fuzzy_codes: list[str] = []
+                for code in product_codes[:2]:
+                    if re.fullmatch(r"\d{5,10}", code):
+                        for pos in range(len(code)):
+                            fuzzy_codes.append(code[:pos] + code[pos + 1:])
+                        for pos in range(len(code) - 1):
+                            fuzzy_codes.append(code[:pos] + code[pos + 1] + code[pos] + code[pos + 2:])
+                fuzzy_codes = list(dict.fromkeys(c for c in fuzzy_codes if len(c) >= 4))[:20]
+                if fuzzy_codes:
+                    fuzzy_rows = fetch_code_product_rows(connection, fuzzy_codes[:3], store_filters)
+                    if fuzzy_rows:
+                        ranked_fuzzy = rank_product_match_rows([dict(row) for row in fuzzy_rows], product_request, normalized_query)
+                        ranked_fuzzy = filter_rows_by_requested_presentation(ranked_fuzzy, product_request)
+                        return ranked_fuzzy[:5]
 
             if not terms:
                 return []

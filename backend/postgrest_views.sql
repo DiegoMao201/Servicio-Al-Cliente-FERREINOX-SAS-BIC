@@ -481,60 +481,66 @@ FROM public.vw_inventario_agente;
 
 CREATE OR REPLACE VIEW public.vw_agent_catalog_product_search AS
 SELECT
-    producto_codigo,
-    referencia,
-    descripcion_base,
-    descripcion_inventario,
-    marca,
-    linea_producto,
-    categoria_producto,
-    super_categoria,
-    departamentos,
-    stock_total,
-    stock_por_tienda,
-    costo_promedio_und,
-    inventario_unidades_metric,
-    ventas_unidades_total,
-    ventas_valor_total,
-    ultima_venta,
-    prioridad_origen,
-    tiene_stock,
-    tiene_historial_ventas,
-    color_detectado,
-    color_raiz,
-    acabado_detectado,
-    presentacion_canonica,
-    core_descriptor,
-    producto_padre_busqueda_sugerido,
-    familia_consulta_sugerida,
-    variant_label,
-    workbook_version,
+    p.producto_codigo,
+    p.referencia,
+    p.descripcion_base,
+    p.descripcion_inventario,
+    p.marca,
+    p.linea_producto,
+    p.categoria_producto,
+    p.super_categoria,
+    p.departamentos,
+    p.stock_total,
+    p.stock_por_tienda,
+    p.costo_promedio_und,
+    p.inventario_unidades_metric,
+    p.ventas_unidades_total,
+    p.ventas_valor_total,
+    p.ultima_venta,
+    p.prioridad_origen,
+    p.tiene_stock,
+    p.tiene_historial_ventas,
+    p.color_detectado,
+    p.color_raiz,
+    p.acabado_detectado,
+    p.presentacion_canonica,
+    p.core_descriptor,
+    p.producto_padre_busqueda_sugerido,
+    p.familia_consulta_sugerida,
+    p.variant_label,
+    p.workbook_version,
     public.fn_normalize_text(
-        COALESCE(descripcion_base, '') || ' ' ||
-        COALESCE(descripcion_inventario, '') || ' ' ||
-        COALESCE(marca, '') || ' ' ||
-        COALESCE(linea_producto, '') || ' ' ||
-        COALESCE(categoria_producto, '') || ' ' ||
-        COALESCE(super_categoria, '') || ' ' ||
-        COALESCE(color_detectado, '') || ' ' ||
-        COALESCE(color_raiz, '') || ' ' ||
-        COALESCE(acabado_detectado, '') || ' ' ||
-        COALESCE(presentacion_canonica, '') || ' ' ||
-        COALESCE(core_descriptor, '') || ' ' ||
-        COALESCE(producto_padre_busqueda_sugerido, '') || ' ' ||
-        COALESCE(familia_consulta_sugerida, '') || ' ' ||
-        COALESCE(variant_label, '') || ' ' ||
-        COALESCE(referencia, '') || ' ' ||
-        COALESCE(producto_codigo, '')
+        COALESCE(p.descripcion_base, '') || ' ' ||
+        COALESCE(p.descripcion_inventario, '') || ' ' ||
+        COALESCE(p.marca, '') || ' ' ||
+        COALESCE(p.linea_producto, '') || ' ' ||
+        COALESCE(p.categoria_producto, '') || ' ' ||
+        COALESCE(p.super_categoria, '') || ' ' ||
+        COALESCE(p.color_detectado, '') || ' ' ||
+        COALESCE(p.color_raiz, '') || ' ' ||
+        COALESCE(p.acabado_detectado, '') || ' ' ||
+        COALESCE(p.presentacion_canonica, '') || ' ' ||
+        COALESCE(p.core_descriptor, '') || ' ' ||
+        COALESCE(p.producto_padre_busqueda_sugerido, '') || ' ' ||
+        COALESCE(p.familia_consulta_sugerida, '') || ' ' ||
+        COALESCE(p.variant_label, '') || ' ' ||
+        COALESCE(p.referencia, '') || ' ' ||
+        COALESCE(p.producto_codigo, '') || ' ' ||
+        -- descripcion_adicional y descripcion_ebs de articulos_maestro (aliases, codigos alternos, T-XX, etc.)
+        COALESCE(NULLIF(NULLIF(TRIM(am.descripcion_adicional), ''), '0'), '') || ' ' ||
+        COALESCE(am.descripcion_ebs, '')
     ) AS search_blob,
     public.fn_keep_alnum(
-        COALESCE(descripcion_base, '') || ' ' ||
-        COALESCE(descripcion_inventario, '') || ' ' ||
-        COALESCE(marca, '') || ' ' ||
-        COALESCE(referencia, '') || ' ' ||
-        COALESCE(producto_codigo, '')
+        COALESCE(p.descripcion_base, '') || ' ' ||
+        COALESCE(p.descripcion_inventario, '') || ' ' ||
+        COALESCE(p.marca, '') || ' ' ||
+        COALESCE(p.referencia, '') || ' ' ||
+        COALESCE(p.producto_codigo, '') || ' ' ||
+        COALESCE(NULLIF(NULLIF(TRIM(am.descripcion_adicional), ''), '0'), '') || ' ' ||
+        COALESCE(am.descripcion_ebs, '')
     ) AS search_compact
-FROM public.agent_catalog_product;
+FROM public.agent_catalog_product p
+LEFT JOIN public.articulos_maestro am ON am.referencia = p.referencia;
 
 CREATE OR REPLACE VIEW public.vw_agent_catalog_alias_active AS
 SELECT
