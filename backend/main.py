@@ -12813,8 +12813,8 @@ REGLAS DE PRESENTACIÓN:
 - Si el período consultado no tiene datos, dilo claramente y sugiere revisar otro período.
 - NUNCA inventes cifras ni las completes de memoria. Solo lo que devuelva consultar_ventas_internas.
 - Si el empleado pregunta "¿cómo voy?" sin especificar período → usa "este mes" por defecto.
-TIENDAS DISPONIBLES: pereira (189*), manizales (157*), armenia (156*), laureles (158*/238*), opalo (158*), ferrebox (439*), cerritos (463*).
-NOTA ÓPALO/LAURELES: ambas comparten la serie 158. Si preguntan por una específica, el sistema lo indica en la respuesta.
+TIENDAS DISPONIBLES: pereira (189*), manizales (157*), armenia (156*), laureles (238*), opalo (158*), ferrebox (439*), cerritos (463*).
+Series por tienda — sufijo G=crédito, W=contado, Y=nota crédito crédito, X=nota crédito contado. Ejemplo Pereira: 189G (facturas crédito), 189W (facturas contado), 189Y/189X (devoluciones). Laureles usa 238, Ópalo usa 158 (series independientes, sin conflicto).
 
 Si no tienes un dato seguro, dilo honestamente y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos."""
 
@@ -12933,8 +12933,8 @@ AGENT_TOOLS = [
                     },
                     "desglose": {
                         "type": "string",
-                        "enum": ["total", "por_dia", "por_vendedor", "por_producto"],
-                        "description": "Nivel de detalle: total (solo cifras globales), por_dia, por_vendedor (solo admin/gerente/operador), por_producto.",
+                        "enum": ["total", "por_dia", "por_vendedor", "por_producto", "por_cliente"],
+                        "description": "Nivel de detalle: total (solo cifras globales), por_dia, por_vendedor (solo admin/gerente/operador), por_producto, por_cliente.",
                     },
                 },
                 "required": [],
@@ -13447,41 +13447,43 @@ def _handle_tool_consultar_compras(args, conversation_context):
 # ── BI de ventas internas ──────────────────────────────────────────────────────
 
 _VENTAS_STORE_SERIES: dict = {
-    "pereira":   {"all": "189", "credito": "189G", "contado": "189W"},
-    "manizales": {"all": "157", "credito": "157G", "contado": "157W"},
-    "armenia":   {"all": "156"},
-    "laureles":  {"multi": ["158", "238"], "overlap_note": "ℹ️ Serie 158 cubre Laureles y Ópalo. Los datos de 238 son exclusivos de Laureles."},
-    "opalo":     {"all": "158", "overlap_note": "ℹ️ Serie 158 cubre tanto Laureles como Ópalo. Para separar, filtra por nombre del vendedor."},
-    "ferrebox":  {"all": "439"},
-    "cerritos":  {"all": "463"},
+    "pereira":   {"prefix": "189", "credito": "189G", "contado": "189W"},
+    "manizales": {"prefix": "157", "credito": "157G", "contado": "157W"},
+    "armenia":   {"prefix": "156"},
+    "laureles":  {"prefix": "238"},
+    "opalo":     {"prefix": "158"},
+    "ferrebox":  {"prefix": "439"},
+    "cerritos":  {"prefix": "463"},
+}
+
+# Vendedores de mostrador por sede (del sistema de BI Ferreinox Ventas)
+_VENDEDORES_MOSTRADOR: dict = {
+    "pereira":   ["ALEJANDRO CARBALLO MARQUEZ", "GEORGINA A GALVIS HERRERA"],
+    "armenia":   ["CRISTIAN CAMILO RENDON MONTES", "FANDRY JOHANA ABRIL PENHA", "JAVIER ORLANDO PATINO HURTADO"],
+    "manizales": ["DAVID FELIPE MARTINEZ RIOS", "JHON JAIRO CASTAÑO MONTES"],
+    "laureles":  ["MAURICIO RIOS MORALES"],
+    "opalo":     ["MARIA PAULA DEL JESUS GALVIS HERRERA"],
 }
 
 
-def _build_series_where(store_key: str, tipo_venta: str):
-    """Returns (sql_fragment, params, overlap_note) for a store+tipo_venta filter.
-    
-    All pattern strings come from the hardcoded _VENTAS_STORE_SERIES table,
-    never from untrusted user input, so inline LIKE literals are safe here.
+def _build_series_condition(store_key: str, tipo_venta: str, param_idx: int = 0):
+    """Returns (sql_fragment, params_dict) for serie filter.
+
+    Uses :bind_param notation (value contains %) so the % stays in the
+    parameter dict, not in the SQL string — avoids psycopg2 format errors.
     """
     info = _VENTAS_STORE_SERIES.get(store_key)
     if not info:
-        return None, {}, None
-
-    overlap_note = info.get("overlap_note")
-
-    if "multi" in info:
-        parts = [f"serie ILIKE '{p}%'" for p in info["multi"]]
-        return f"({' OR '.join(parts)})", {}, overlap_note
-
-    prefix_all = info.get("all", "")
+        return None, {}
+    pkey = f"serie_p{param_idx}"
+    prefix = info["prefix"]
     if tipo_venta == "credito":
-        prefix = info.get("credito") or f"{prefix_all}G"
-        return f"serie ILIKE '{prefix}%'", {}, overlap_note
+        val = info.get("credito") or f"{prefix}G"
     elif tipo_venta == "contado":
-        prefix = info.get("contado") or f"{prefix_all}W"
-        return f"serie ILIKE '{prefix}%'", {}, overlap_note
+        val = info.get("contado") or f"{prefix}W"
     else:
-        return f"serie ILIKE '{prefix_all}%'", {}, overlap_note
+        val = prefix
+    return f"serie ILIKE :{pkey}", {pkey: f"{val}%"}
 
 
 def _parse_periodo_ventas(periodo_str: Optional[str]):
@@ -13541,7 +13543,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                  "mensaje": f"Tu perfil solo tiene acceso a los datos de {sede or 'tu sede'}. No puedes consultar otras tiendas."},
                 ensure_ascii=False,
             )
-        tienda_final = sede
+        tienda_final = tienda_arg or sede
         vendedor_filter = None
         vendedor_filter_label = None
     elif role == "vendedor":
@@ -13556,19 +13558,17 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         vendedor_filter = name_tokens[0] if name_tokens else full_name
         vendedor_filter_label = full_name
     else:
-        # empleado or unknown: allow aggregate queries, no desglose individual
         tienda_final = tienda_arg
         vendedor_filter = None
         vendedor_filter_label = None
-        desglose = "total"  # Force aggregate-only
+        desglose = "total"
 
     # ── Build WHERE clause ────────────────────────────────────────────────────
     conditions = ["fecha_venta BETWEEN :date_from AND :date_to"]
     params: dict = {"date_from": date_from, "date_to": date_to}
-    overlap_note = None
 
     if tienda_final:
-        store_sql, store_params, overlap_note = _build_series_where(tienda_final, tipo_venta)
+        store_sql, store_params = _build_series_condition(tienda_final, tipo_venta)
         if not store_sql:
             tiendas_disponibles = ", ".join(_VENTAS_STORE_SERIES.keys())
             return json.dumps(
@@ -13578,9 +13578,10 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         conditions.append(store_sql)
         params.update(store_params)
     elif tipo_venta == "credito":
-        conditions.append("serie ILIKE '%G%'")
+        # RIGHT(serie,1)='G' avoids % in SQL — safe for psycopg2
+        conditions.append("RIGHT(serie, 1) = 'G'")
     elif tipo_venta == "contado":
-        conditions.append("serie ILIKE '%W%'")
+        conditions.append("RIGHT(serie, 1) = 'W'")
 
     if vendedor_filter:
         conditions.append("nom_vendedor ILIKE :vendedor_nombre")
@@ -13589,17 +13590,19 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     where_clause = " AND ".join(conditions)
 
     # ── Query totals ──────────────────────────────────────────────────────────
+    # RIGHT(serie,1) NOT IN ('Y','X') = real sales (G or W suffix)
+    # RIGHT(serie,1) IN ('Y','X') = returns / notas crédito
     engine = get_db_engine()
     try:
         with engine.connect() as conn:
             total_row = conn.execute(
                 text(f"""
                     SELECT
-                        COUNT(DISTINCT tipo_documento) AS num_facturas,
-                        COUNT(DISTINCT cliente_id)     AS num_clientes,
-                        SUM(CASE WHEN serie NOT ILIKE '%Y' AND serie NOT ILIKE '%X'
+                        COUNT(DISTINCT CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X') THEN tipo_documento END) AS num_facturas,
+                        COUNT(DISTINCT CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X') THEN cliente_id END) AS num_clientes,
+                        SUM(CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X')
                                  THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado_bruto,
-                        SUM(CASE WHEN serie ILIKE '%Y' OR serie ILIKE '%X'
+                        SUM(CASE WHEN RIGHT(serie, 1) IN ('Y','X')
                                  THEN ABS(COALESCE(valor_venta, 0)) ELSE 0 END) AS devoluciones
                     FROM public.raw_ventas_detalle
                     WHERE {where_clause}
@@ -13628,16 +13631,42 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     result: dict = {
         "periodo": period_label,
         "tienda": tienda_final or "todas las tiendas",
-        "vendedor_consultado": vendedor_filter_label or ("todas" if role in {"administrador", "gerente", "operador"} else full_name),
+        "vendedor_consultado": vendedor_filter_label or ("todos" if role in {"administrador", "gerente", "operador"} else full_name),
         "tipo_venta": tipo_venta,
         "ventas": {
             "facturado_bruto": round(facturado_bruto, 2),
             "devoluciones": round(devoluciones, 2),
             "neto": round(neto, 2),
             "num_facturas": num_facturas,
-            "num_clientes": num_clientes,
+            "num_clientes_distintos": num_clientes,
         },
     }
+
+    # ── Año anterior — comparativa ────────────────────────────────────────────
+    try:
+        prev_from = date_from.replace(year=date_from.year - 1)
+        prev_to = date_to.replace(year=date_to.year - 1)
+        prev_params = {**{k: v for k, v in params.items() if k not in ("date_from", "date_to")},
+                       "date_from": prev_from, "date_to": prev_to}
+        with engine.connect() as conn:
+            prev_row = conn.execute(
+                text(f"""
+                    SELECT SUM(CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X')
+                                    THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado_bruto
+                    FROM public.raw_ventas_detalle
+                    WHERE {where_clause.replace(':date_from', ':date_from').replace(':date_to', ':date_to')}
+                """),
+                prev_params,
+            ).mappings().one_or_none()
+        prev_bruto = float((prev_row.get("facturado_bruto") or 0) if prev_row else 0)
+        if prev_bruto > 0:
+            variacion_pct = ((facturado_bruto - prev_bruto) / prev_bruto) * 100
+            result["vs_anio_anterior"] = {
+                "facturado_bruto": round(prev_bruto, 2),
+                "variacion_pct": round(variacion_pct, 1),
+            }
+    except Exception as exc:
+        logger.debug("consultar_ventas_internas comparativa año anterior error: %s", exc)
 
     # ── Desglose por vendedor (roles con acceso multi-vendedor) ───────────────
     if desglose == "por_vendedor" and role in {"administrador", "gerente", "operador"}:
@@ -13646,16 +13675,17 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 rows = conn.execute(
                     text(f"""
                         SELECT nom_vendedor,
-                               SUM(CASE WHEN serie NOT ILIKE '%Y' AND serie NOT ILIKE '%X'
+                               SUM(CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X')
                                         THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado,
-                               SUM(CASE WHEN serie ILIKE '%Y' OR serie ILIKE '%X'
+                               SUM(CASE WHEN RIGHT(serie, 1) IN ('Y','X')
                                         THEN ABS(COALESCE(valor_venta, 0)) ELSE 0 END) AS devoluciones,
-                               COUNT(DISTINCT tipo_documento) AS facturas
+                               COUNT(DISTINCT CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X') THEN tipo_documento END) AS facturas,
+                               COUNT(DISTINCT CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X') THEN cliente_id END) AS clientes
                         FROM public.raw_ventas_detalle
                         WHERE {where_clause}
                         GROUP BY nom_vendedor
                         ORDER BY facturado DESC
-                        LIMIT 25
+                        LIMIT 30
                     """),
                     params,
                 ).mappings().all()
@@ -13666,6 +13696,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                     "devoluciones": round(float(r["devoluciones"] or 0), 2),
                     "neto": round(float(r["facturado"] or 0) - float(r["devoluciones"] or 0), 2),
                     "facturas": int(r["facturas"] or 0),
+                    "clientes": int(r["clientes"] or 0),
                 }
                 for r in rows
             ]
@@ -13678,13 +13709,13 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             with engine.connect() as conn:
                 rows = conn.execute(
                     text(f"""
-                        SELECT nombre_articulo, linea_producto,
-                               SUM(COALESCE(valor_venta, 0))      AS total,
+                        SELECT nombre_articulo, linea_producto, marca_producto,
+                               SUM(COALESCE(valor_venta, 0))       AS total,
                                SUM(COALESCE(unidades_vendidas, 0)) AS unidades
                         FROM public.raw_ventas_detalle
                         WHERE {where_clause}
-                          AND serie NOT ILIKE '%Y' AND serie NOT ILIKE '%X'
-                        GROUP BY nombre_articulo, linea_producto
+                          AND RIGHT(serie, 1) NOT IN ('Y','X')
+                        GROUP BY nombre_articulo, linea_producto, marca_producto
                         ORDER BY total DESC
                         LIMIT 15
                     """),
@@ -13702,6 +13733,30 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         except Exception as exc:
             logger.warning("consultar_ventas_internas top_productos error: %s", exc)
 
+    # ── Desglose por cliente ──────────────────────────────────────────────────
+    elif desglose == "por_cliente" and role in {"administrador", "gerente", "operador", "vendedor"}:
+        try:
+            with engine.connect() as conn:
+                rows = conn.execute(
+                    text(f"""
+                        SELECT nombre_cliente, cliente_id,
+                               SUM(COALESCE(valor_venta, 0)) AS total
+                        FROM public.raw_ventas_detalle
+                        WHERE {where_clause}
+                          AND RIGHT(serie, 1) NOT IN ('Y','X')
+                        GROUP BY nombre_cliente, cliente_id
+                        ORDER BY total DESC
+                        LIMIT 20
+                    """),
+                    params,
+                ).mappings().all()
+            result["top_clientes"] = [
+                {"cliente": r["nombre_cliente"], "total": round(float(r["total"] or 0), 2)}
+                for r in rows
+            ]
+        except Exception as exc:
+            logger.warning("consultar_ventas_internas top_clientes error: %s", exc)
+
     # ── Desglose por día ──────────────────────────────────────────────────────
     elif desglose == "por_dia":
         try:
@@ -13709,8 +13764,10 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 rows = conn.execute(
                     text(f"""
                         SELECT fecha_venta,
-                               SUM(CASE WHEN serie NOT ILIKE '%Y' AND serie NOT ILIKE '%X'
-                                        THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado
+                               SUM(CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X')
+                                        THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado,
+                               COUNT(DISTINCT CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X')
+                                                   THEN tipo_documento END) AS facturas
                         FROM public.raw_ventas_detalle
                         WHERE {where_clause}
                         GROUP BY fecha_venta
@@ -13719,14 +13776,15 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                     params,
                 ).mappings().all()
             result["desglose_dias"] = [
-                {"fecha": str(r["fecha_venta"]), "facturado": round(float(r["facturado"] or 0), 2)}
+                {
+                    "fecha": str(r["fecha_venta"]),
+                    "facturado": round(float(r["facturado"] or 0), 2),
+                    "facturas": int(r["facturas"] or 0),
+                }
                 for r in rows
             ]
         except Exception as exc:
             logger.warning("consultar_ventas_internas por_dia error: %s", exc)
-
-    if overlap_note:
-        result["nota"] = overlap_note
 
     return json.dumps(result, ensure_ascii=False, default=str)
 
