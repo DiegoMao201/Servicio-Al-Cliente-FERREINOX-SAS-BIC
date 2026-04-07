@@ -1468,7 +1468,7 @@ BRAND_ALIASES = {
     # Marcas madre → sub-marcas que pertenecen a ese fabricante
     "viniltex": ["viniltex", "viniltex adv", "viniltex advanced", "vtx", "vinil plus"],
     "domestico": ["domestico", "doméstico", "blanca economica", "blanca económica", "vinilo barato", "p11", "p-11", "p 11", "esmalte domestico"],
-    "pintulux": ["pintulux", "pintulux 3en1", "pintulux 3 en 1", "t11", "t-11", "t 11", "esmalte pintulux", "esmalte exterior"],
+    "pintulux": ["pintulux", "pintulux 3en1", "pintulux 3 en 1", "t11", "t-11", "t 11", "tu11", "tu-11", "tu 11", "teu11", "teu-11", "teu 11", "esmalte pintulux", "esmalte exterior"],
     "koraza": ["koraza", "koraza elastomerica", "koraza elastomerico", "koraza xp"],
     "pintuco": ["pintuco", "viniltex", "domestico", "doméstico", "pintulux", "koraza", "aerocolor", "pintucoat",
                 "pintura canchas", "corrotec", "pintulac", "pinturama", "intervinil", "vinil latex", "vinil max",
@@ -12341,8 +12341,11 @@ REGLA: Si el RAG te dice que necesitas un tipo de producto (ej. "epóxica de alt
 
 TRADUCCIÓN DE JERGA FERRETERA (usar ANTES de buscar en inventario):
 - "Blanca económica", "vinilo barato", "la económica" → buscar como "Domestico Blanco" o "Pinturama Blanco"
-- "P-11", "p11" → buscar como "Domestico Blanco"
-- "T-11", "t11" → buscar como "Pintulux Blanco"
+- "P-11", "p11", "1501" → buscar como "Domestico Blanco" o "Viniltex 1501 Blanco"
+- "T-11", "t11", "TU11", "TEU11", "tu 11", "teu 11" → buscar como "Pintulux Blanco Brillante 3en1" (código de color 11). Si el cliente no especifica mate o brillante, pregunta: '¿Lo necesitas mate o brillante?'
+- "TEU95", "teu 95", "T-95" → buscar como "Pintulux 3en1 Negro 95" (esmalte negro de alta resistencia)
+- "SD1", "sd 1", "barniz sd1" → buscar como "barniz sd1" o "sellador sd1". Si no hay resultado, preguntarle al cliente qué producto es SD1.
+- "1501" en contexto de Viniltex → Viniltex Blanco 1501. Buscar "Viniltex 1501".
 - "Brochitas", "pinceles", "brochas pequeñas" → buscar como "Brocha"
 - "Tarritos", "tarros pequeños" → buscar como "cuarto" (0.95L / 1/4)
 - "Cuñetico", "tarro grande" → buscar como "cuñete" (18.93L / 1/5)
@@ -12356,6 +12359,14 @@ TRADUCCIÓN DE JERGA FERRETERA (usar ANTES de buscar en inventario):
 - Diminutivos en general: quita el sufijo (-itas, -itos, -ita, -ito) y busca la palabra base.
 - Si la búsqueda de un término coloquial NO devuelve resultados, intenta automáticamente con el término técnico equivalente ANTES de decirle al cliente que no hay stock.
 TRADUCCIÓN OBLIGATORIA ANTES DEL TOOL CALL: Cuando el cliente pida "blanca económica" o "vinilo barato", tú DEBES enviar "Domestico Blanco" al parámetro `producto` de `consultar_inventario`. No envíes la palabra "económica" porque fallará. Traduce la jerga del cliente a lenguaje de catálogo antes de ejecutar la herramienta.
+
+CÓDIGOS DE COLOR PINTULUX (los clientes usan el número de color como nombre del producto):
+- "TU11", "TEU11", "T11", "tu11", "pintulux 11", "pintulux blanco brillante" → Pintulux 3en1 Brillante Blanco 11
+- "TEU95", "T95", "pintulux 95", "pintulux negro" → Pintulux 3en1 Negro 95  
+- "TEU89", "pintulux 89" → Pintulux 3en1 Negro 89
+- Otros colores (ej. TEU-XX): el número es el código de color. Busca "Pintulux [color]" en inventario.
+Si el cliente usa solo el número SIN la palabra 'Pintulux' (ej. solo 'tu11') en un contexto donde ya se habla de esmaltes, asume que es Pintulux y búscalo como tal.
+PARA PINTULUX BLANCO (código 11): SIEMPRE pregunta 'mate o brillante' si no lo especificó, porque hay dos versiones (PQ PINTULUX 3EN1 MAT BLANCO 11 y PQ PINTULUX 3EN1 BR BLANCO 11) y tienen referencias distintas.
 
 DESAMBIGUACIÓN INTELIGENTE POR FAMILIA: Cuando el cliente pida algo genérico, haz UNA pregunta inteligente que te permita identificar el producto exacto:
 - "Necesito vinilo" → "¿Lo buscas tipo 1 (premium, lavable, tipo Viniltex), tipo 2 (intermedio, tipo Intervinil) o tipo 3 (económico, tipo Pinturama)?"
@@ -12403,14 +12414,17 @@ NUNCA ofrezcas un producto de categoría inferior solo para "no dejar ir" al cli
 EL ESCAPE COMERCIAL (PÁGINA WEB): Cuando la herramienta de inventario no encuentre el producto solicitado o solo devuelva resultados irrelevantes, NO inventes nombres ni ofrezcas cosas al azar para rellenar. Aplica esta respuesta adaptada a tu tono: 'No logro ubicar un producto con esa descripción exacta por acá. ¿De pronto tienes la referencia o un nombre más preciso? Si no tienes el dato a la mano, te invito a consultar nuestro catálogo en www.ferreinox.co. Allí seguro encuentras el producto exacto que buscas y me confirmas para armar el pedido.'.
 
 CÓDIGOS FRACCIONARIOS: En esta ferretería, los clientes piden usando la estructura 'Cantidad/Presentación'.
-- El sufijo '/1' significa GALÓN. (Ej. '4/1 p-11' = 4 galones de P-11).
-- El sufijo '/4' significa CUARTO. (Ej. '6/4 pintulux naranja' = 6 cuartos de Pintulux Naranja).
-- El sufijo '/5' significa CUÑETE o CANECA. (Ej. '3/5 de 27155' = 3 cuñetes de la referencia 27155).
+- El sufijo '/1' o 'galón/galones' significa GALÓN (~3.79L). (Ej. '4/1 p-11' = 4 galones de P-11, '8 galones 1501' = 8 galones de Viniltex 1501).
+- El sufijo '/4' o 'cuarto/cuartos' significa CUARTO (~0.95L). (Ej. '6/4 pintulux' = 6 cuartos de Pintulux, '9 cuartos sd1' = 9 cuartos).
+- El sufijo '/5' o 'cuñete/cuñetes/caneca' significa CUÑETE (~18.93L). (Ej. '3/5 de 27155' = 3 cuñetes).
+- El sufijo '/2' o 'balde/baldes' significa BALDE (medio cuñete ~9.46L). (Ej. '9/2 viniltex' = 9 baldes de Viniltex 9.46L).
 Cuando veas esta nomenclatura, DEBES entender la cantidad y presentación solicitadas antes de usar la herramienta de inventario. Busca el producto por su nombre y luego filtra mentalmente la presentación correcta.
 
 DESCARTAR BASURA DEL JSON (FILTRO DE PRESENTACIONES): Si el cliente pidió un 'cuarto' (ej. 6/4), y la herramienta de inventario te devuelve un JSON que incluye el cuarto, el galón y el tambor de 50 galones, TIENES ESTRICTAMENTE PROHIBIDO mencionar el galón y el tambor en tu respuesta. Filtra mentalmente el JSON y confírmale al cliente ÚNICAMENTE la presentación que solicitó. Si la presentación específica que pidió no aparece en el JSON, dile amablemente que esa presentación puntual no la tenemos disponible, y ofrécele las que sí hay en presentaciones lógicas (cuñete, galón o cuarto).
 
-FILTRO FRACCIONARIO OBLIGATORIO: Si el cliente pide una presentación específica usando fracciones (ej. '/4' = cuarto, '/1' = galón, '/5' = cuñete) y la herramienta te devuelve múltiples tamaños del mismo producto, TIENES ESTRICTAMENTE PROHIBIDO mostrarle al cliente los tamaños que no pidió. Filtra mentalmente el JSON. Si pidió cuartos, confírmale SOLO los cuartos. Muestra otros tamaños SOLO si el solicitado está agotado.
+FILTRO FRACCIONARIO OBLIGATORIO: Si el cliente pide una presentación específica usando fracciones O palabras explícitas (ej. '8 galones', '/4' = cuarto, '/1' = galón, '/5' = cuñete, '/2' = balde) y la herramienta te devuelve múltiples tamaños del mismo producto, TIENES ESTRICTAMENTE PROHIBIDO mostrarle al cliente los tamaños que no pidió. Filtra mentalmente el JSON. Si pidió galones, confirma SOLO el galón (~3.79L). Si pidió cuartos, confirma SOLO los cuartos (~0.95L). Muestra otros tamaños SOLO si el solicitado está agotado.
+EJEMPLO CORRECTO: cliente dice '8 galones 1501' → busca 'Viniltex 1501' → hay galón y cuñete → confirma SOLO el galón con ✅. NO preguntes cuál tamaño, ya lo dijo.
+EJEMPLO INCORRECTO: mostrar galón Y cuñete cuando el cliente ya dijo 'galones'.
 
 PROCESAMIENTO LÍNEA POR LÍNEA (BULK ORDERS): Si el cliente te envía una lista de varios productos (ej. 5 líneas), debes confirmar exactamente esos productos con las cantidades y presentaciones solicitadas. NO agregues productos adicionales que la base de datos haya devuelto por coincidencia difusa, ni omitas los que el cliente pidió. Cada línea del pedido se procesa independientemente.
 
@@ -12486,12 +12500,17 @@ CIERRE DE PEDIDO: Una vez el cliente confirme el resumen de productos, pregúnta
 VALIDACIÓN PRE-CIERRE OBLIGATORIA: Antes de llamar `confirmar_pedido_y_generar_pdf`, revisa que CADA referencia en tu resumen corresponda EXACTAMENTE al producto (color, tamaño, presentación) que el cliente pidió. Si el cliente cambió alguna especificación durante la conversación, verifica que hayas hecho una nueva búsqueda de inventario y que la referencia sea la del producto actualizado, NO la del original.
 
 REGLA BROCHAS (FLUJO ESPECÍFICO):
-Las brochas se piden por pulgadas (1", 1½", 2", 2½", 3", 4") y opcionalmente por marca (Goya, Pintuco).
+Las brochas se piden por pulgadas (1", 1½", 2", 2½", 3", 4") y opcionalmente por línea (profesional, popular) y marca (Goya, Pintuco).
+- DISTINCIÓN OBLIGATORIA entre líneas:
+  * "brocha profesional" o "brocha pro" → buscar como "brocha goya profesional [pulgadas]". NUNCA traigas la Popular cuando pidieron Profesional.
+  * "brocha popular" → buscar como "brocha goya popular [pulgadas]".
+  * "brocha goya" sin línea → buscar como "brocha goya [pulgadas]" y confirma la disponible. Si hay profesional y popular, pregunta cuál quiere.
 - Si el cliente pide "brocha" o "brochas" SIN especificar pulgadas → pregunta primero: "¿De cuántas pulgadas las necesitas? Tenemos de 1\", 1½\", 2\", 2½\", 3\" y 4\"."
-- Si el cliente especifica pulgadas pero NO marca → busca en inventario por "brocha goya [pulgadas]" y confirma la de mayor rotación (mayor stock disponible).
-- Si el cliente especifica pulgadas Y marca (ej. "brocha goya 2\"") → busca directamente y confirma.
-- Si el cliente pide varias pulgadas distintas (ej. "1½\", 2½\" y 3\"") → busca las 3 y confirma todas en un solo mensaje.
-- Para cantidades grandes de brochas (ej. 24 unidades de 2\") confirma disponibilidad y si hay stock suficiente; si no, avisa cuántas hay.
+- Si el cliente especifica pulgadas pero NO marca → busca por "brocha goya [pulgadas]" y confirma la de mayor rotación.
+- Si el cliente especifica pulgadas, línea Y marca COMPLETOS (ej. "12 brochas profesional goya de 1½\"") → busca directamente por "brocha goya profesional 1.5" y confirma sin preguntar.
+- Si el cliente pide varias pulgadas distintas (ej. "1½\", 2½\" y 3\"") → busca CADA pulgada por separado y confirma todas en un solo mensaje.
+- Para pedidos de brochas con cantidad + pulgadas ya especificados, NO preguntes cuál medida. Ya lo dijeron.
+- Nota: '1½"' y '11/2"' son la misma medida (un pulgada y media). '2½"' y '21/2"' son iguales (dos y media).
 
 REGLA DESCUENTOS EN PEDIDO:
 - Si el cliente menciona un descuento durante el pedido (ej. "Goya descuento del 5", "con el 10% de descuento", "precio especial") → responde amablemente: "Anotado, voy a incluir la nota de descuento del [X]% en [marca/producto] para que el equipo comercial lo valide."
@@ -12584,7 +12603,8 @@ AGENT_TOOLS = [
             "DEBES evaluar críticamente si cada producto devuelto es técnicamente apto para el proyecto del cliente antes de ofrecerlo. "
             "Si los resultados no coinciden con la necesidad técnica real, descártalos y dile al cliente que no tenemos ese producto en stock. "
             "IMPORTANTE: Antes de llamar, limpia el término de búsqueda: quita diminutivos (brochitas→brocha, tarritos→tarro), "
-            "traduce jerga (blanca económica→Domestico Blanco, P-11→Domestico Blanco, T-11→Pintulux Blanco, pinceles→brocha). "
+            "traduce jerga (blanca económica→Domestico Blanco, P-11→Domestico Blanco, T-11/TU11/TEU11→Pintulux Blanco Brillante, TEU95→Pintulux Negro 95, SD1→barniz SD1, 1501→Viniltex Blanco 1501, pinceles→brocha, brocha profesional→brocha goya profesional). "
+            "Para brochas, incluye 'profesional' o 'popular' en tu búsqueda según lo que pidió el cliente. NUNCA mezcles la línea. "
             "TRADUCE categorías genéricas a nombres de marca del portafolio: aerosol→Aerocolor, epóxica→Pintucoat, "
             "pintura pisos→Pintura para Canchas o Pintucoat, anticorrosivo→Corrotec, impermeabilizante→Koraza, "
             "barniz/laca→Pintulac, poliuretano→Interthane. "
