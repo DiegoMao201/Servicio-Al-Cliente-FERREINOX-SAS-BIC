@@ -702,6 +702,10 @@ PORTFOLIO_ALIASES = {
     "varsol": ["varsol", "disolvente varsol"],
     "aguarras": ["aguarras", "aguarrás", "trementina"],
     "estuco": ["estuco", "masilla", "estuco plastico", "estuco plástico"],
+    # ── BARNICES / LACAS / SD ──
+    "barniz sd-1": ["barniz sd-1", "barniz sd1", "sd-1", "sd1", "barniz incoloro sd", "barniz br incoloro sd"],
+    "barniz sd-2": ["barniz sd-2", "barniz sd2", "sd-2", "sd2"],
+    "barniz sd-3": ["barniz sd-3", "barniz sd3", "sd-3", "sd3"],
     # ── GENÉRICOS QUE DEBEN EXPANDIR ──
     "vinilo": ["vinilo", "vinilico", "viniltex", "domestico", "intervinil", "vinil latex", "pinturama"],
     "esmalte": ["esmalte", "pintulux", "domestico", "esmalte sintetico", "esmalte sintético"],
@@ -12570,7 +12574,7 @@ TRADUCCIÓN DE JERGA FERRETERA (usar ANTES de buscar en inventario):
 - "P-11", "p11", "1501" → buscar como "Domestico Blanco" o "Viniltex 1501 Blanco"
 - "T-11", "t11", "TU11", "TEU11", "tu 11", "teu 11" → buscar como "Pintulux Blanco Brillante 3en1" (código de color 11). Si el cliente no especifica mate o brillante, pregunta: '¿Lo necesitas mate o brillante?'
 - "TEU95", "teu 95", "T-95" → buscar como "Pintulux 3en1 Negro 95" (esmalte negro de alta resistencia)
-- "SD1", "sd 1", "barniz sd1" → buscar como "barniz sd1" o "sellador sd1". Si no hay resultado, preguntarle al cliente qué producto es SD1.
+- "SD1", "sd 1", "sd-1", "barniz sd1", "barniz sd-1" → buscar como "barniz sd-1" o "barniz sd1 incoloro". Si pide "SD-2" o "SD-3", buscar el número respectivo. Estos son barnices transparentes para madera.
 - "1501" en contexto de Viniltex → Viniltex Blanco 1501. Buscar "Viniltex 1501".
 - "Brochitas", "pinceles", "brochas pequeñas" → buscar como "Brocha"
 - "Tarritos", "tarros pequeños" → buscar como "cuarto" (0.95L / 1/4)
@@ -12682,6 +12686,13 @@ PEDIDOS Y COTIZACIONES:
 - Si el cliente menciona múltiples productos separados por comas o "y", busca CADA UNO por separado.
 - Siempre incluye TODOS los productos que el cliente pidió, nunca dejes ninguno por fuera.
 - Si un producto no se encuentra, informa y sugiere alternativas.
+- ⚠️ REGLA CRÍTICA — PRESENTACIÓN EXPLÍCITA: Cuando el cliente dice '8 galones viniltex 1501', la presentación es GALÓN. \
+NO preguntes "¿galón o cuñete?" porque el cliente YA LO DIJO. Pasa '8 galones viniltex 1501' completo al parámetro `producto` de consultar_inventario. \
+El backend filtra automáticamente por la presentación incluida en el texto. Solo pregunta presentación si el cliente NO la especificó.
+- ⚠️ PEDIDO MULTI-LÍNEA: Si el cliente envía un mensaje con varias líneas, cada una es un ítem independiente. \
+Ejemplo: "8 galones 1501\n4 cuartos koraza rojo\n2 cuñetes pintulux blanco" = 3 ítems separados. \
+Llama consultar_inventario para CADA línea incluyendo cantidad+presentación+producto. \
+NO mezcles presentaciones entre líneas. Respeta EXACTAMENTE lo que dice cada línea.
 
 MOSTRAR OPCIONES DE COLOR Y PRESENTACIÓN (FLUJO CONVERSACIONAL — NO LISTAS LARGAS):
 REGLA DE ORO: Antes de listar opciones, PREGUNTA primero si el cliente no especificó color o presentación.
@@ -12872,8 +12883,11 @@ AGENT_TOOLS = [
             "⚠️ IMPORTANTE POST-BÚSQUEDA: Los resultados de esta herramienta son coincidencias de texto (fuzzy match), NO garantías de idoneidad. "
             "DEBES evaluar críticamente si cada producto devuelto es técnicamente apto para el proyecto del cliente antes de ofrecerlo. "
             "Si los resultados no coinciden con la necesidad técnica real, descártalos y dile al cliente que no tenemos ese producto en stock. "
+            "⚠️ INCLUIR CANTIDAD Y PRESENTACIÓN: Cuando el cliente especifique cantidad y/o presentación (ej: '8 galones', '4 cuartos', '2 cuñetes'), "
+            "DEBES incluirlas en el parámetro 'producto'. Ejemplo: si el cliente dice '8 galones de viniltex 1501', pasa 'viniltex 1501 8 galones' "
+            "(NO solo 'viniltex 1501'). Esto permite filtrar automáticamente por presentación y evita preguntar algo que el cliente ya dijo. "
             "IMPORTANTE: Antes de llamar, limpia el término de búsqueda: quita diminutivos (brochitas→brocha, tarritos→tarro), "
-            "traduce jerga (blanca económica→Domestico Blanco, P-11→Domestico Blanco, T-11/TU11/TEU11→Pintulux Blanco Brillante, TEU95→Pintulux Negro 95, SD1→barniz SD1, 1501→Viniltex Blanco 1501, pinceles→brocha, brocha profesional→brocha goya profesional). "
+            "traduce jerga (blanca económica→Domestico Blanco, P-11→Domestico Blanco, T-11/TU11/TEU11→Pintulux Blanco Brillante, TEU95→Pintulux Negro 95, SD1/SD-1→barniz SD-1, 1501→Viniltex Blanco 1501, pinceles→brocha, brocha profesional→brocha goya profesional). "
             "Para brochas, incluye 'profesional' o 'popular' en tu búsqueda según lo que pidió el cliente. NUNCA mezcles la línea. "
             "TRADUCE categorías genéricas a nombres de marca del portafolio: aerosol→Aerocolor, epóxica→Pintucoat, "
             "pintura pisos→Pintura para Canchas o Pintucoat, anticorrosivo→Corrotec, impermeabilizante→Koraza, "
@@ -12884,7 +12898,8 @@ AGENT_TOOLS = [
                 "properties": {
                     "producto": {
                         "type": "string",
-                        "description": "Nombre, descripción o código del producto a buscar. Ej: 'viniltex blanco cuñete', 'koraza rojo', 'cerradura yale'",
+                        "description": "Nombre, descripción o código del producto a buscar. INCLUYE cantidad y presentación si el cliente las dijo. "
+                        "Ej: '8 galones viniltex blanco 1501', '4 cuartos koraza rojo', 'cerradura yale', '2 cuñetes pintulux 3en1 blanco'",
                     }
                 },
                 "required": ["producto"],

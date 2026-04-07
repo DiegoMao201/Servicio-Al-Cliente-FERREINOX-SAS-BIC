@@ -146,14 +146,12 @@ SELECT
     public.fn_normalize_text(categoria_producto) AS categoria_producto,
     public.fn_normalize_text(linea_producto) AS linea_producto,
     public.fn_keep_alnum(marca_producto) AS marca_producto,
-    CASE
-        WHEN public.fn_normalize_text(tipo_documento) LIKE '%NOTA%CREDITO%' THEN public.fn_parse_numeric(valor_venta) * -1
-        ELSE public.fn_parse_numeric(valor_venta)
-    END AS valor_venta_neto,
-    CASE
-        WHEN public.fn_normalize_text(tipo_documento) LIKE '%NOTA%CREDITO%' THEN public.fn_parse_numeric(unidades_vendidas) * -1
-        ELSE public.fn_parse_numeric(unidades_vendidas)
-    END AS unidades_vendidas_netas,
+    -- NOTE: In the Ferreinox ERP CSV, NOTA CREDITO rows already have NEGATIVE
+    -- valor_venta and unidades_vendidas.  Do NOT multiply by -1 here — that would
+    -- double-flip the sign and make SUM(valor_venta_neto) inflated.
+    -- With raw negative values preserved, SUM(valor_venta_neto) = facturas − devoluciones = correct net.
+    public.fn_parse_numeric(valor_venta) AS valor_venta_neto,
+    public.fn_parse_numeric(unidades_vendidas) AS unidades_vendidas_netas,
     public.fn_parse_numeric(costo_unitario) AS costo_unitario,
     public.fn_normalize_text(super_categoria) AS super_categoria
 FROM public.raw_ventas_detalle
