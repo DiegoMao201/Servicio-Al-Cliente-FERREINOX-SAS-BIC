@@ -13563,7 +13563,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         vendedor_filter_label = None
         desglose = "total"
 
-    # ── Build WHERE clause ────────────────────────────────────────────────────
+    # ── Build WHERE clause (vw_ventas_netas: fecha_venta is date, values are numeric) ──
     conditions = ["fecha_venta BETWEEN :date_from AND :date_to"]
     params: dict = {"date_from": date_from, "date_to": date_to}
 
@@ -13578,7 +13578,6 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         conditions.append(store_sql)
         params.update(store_params)
     elif tipo_venta == "credito":
-        # RIGHT(serie,1)='G' avoids % in SQL — safe for psycopg2
         conditions.append("RIGHT(serie, 1) = 'G'")
     elif tipo_venta == "contado":
         conditions.append("RIGHT(serie, 1) = 'W'")
@@ -13589,22 +13588,24 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
 
     where_clause = " AND ".join(conditions)
 
-    # ── Query totals ──────────────────────────────────────────────────────────
-    # RIGHT(serie,1) NOT IN ('Y','X') = real sales (G or W suffix)
-    # RIGHT(serie,1) IN ('Y','X') = returns / notas crédito
+    # Use vw_ventas_netas: proper date/numeric types, already filters FACTURA+NOTA_CREDITO,
+    # valor_venta_neto is negative for notas crédito.
+    # STRPOS avoids inline LIKE '%..%' patterns which would crash psycopg2.
+    _VIEW = "public.vw_ventas_netas"
+
     engine = get_db_engine()
     try:
         with engine.connect() as conn:
             total_row = conn.execute(
                 text(f"""
                     SELECT
-                        COUNT(DISTINCT CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X') THEN tipo_documento END) AS num_facturas,
-                        COUNT(DISTINCT CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X') THEN cliente_id END) AS num_clientes,
-                        SUM(CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X')
-                                 THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado_bruto,
-                        SUM(CASE WHEN RIGHT(serie, 1) IN ('Y','X')
-                                 THEN ABS(COALESCE(valor_venta, 0)) ELSE 0 END) AS devoluciones
-                    FROM public.raw_ventas_detalle
+                        COUNT(*) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS num_lineas,
+                        COUNT(DISTINCT cliente_id) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS num_clientes,
+                        SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
+                                 THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturado_bruto,
+                        SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') > 0
+                                 THEN ABS(COALESCE(valor_venta_neto, 0)) ELSE 0 END) AS devoluciones
+                    FROM {_VIEW}
                     WHERE {where_clause}
                 """),
                 params,
@@ -13625,7 +13626,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     facturado_bruto = float(total_row.get("facturado_bruto") or 0)
     devoluciones = float(total_row.get("devoluciones") or 0)
     neto = facturado_bruto - devoluciones
-    num_facturas = int(total_row.get("num_facturas") or 0)
+    num_lineas = int(total_row.get("num_lineas") or 0)
     num_clientes = int(total_row.get("num_clientes") or 0)
 
     result: dict = {
@@ -13637,7 +13638,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             "facturado_bruto": round(facturado_bruto, 2),
             "devoluciones": round(devoluciones, 2),
             "neto": round(neto, 2),
-            "num_facturas": num_facturas,
+            "num_lineas_venta": num_lineas,
             "num_clientes_distintos": num_clientes,
         },
     }
@@ -13651,10 +13652,10 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         with engine.connect() as conn:
             prev_row = conn.execute(
                 text(f"""
-                    SELECT SUM(CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X')
-                                    THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado_bruto
-                    FROM public.raw_ventas_detalle
-                    WHERE {where_clause.replace(':date_from', ':date_from').replace(':date_to', ':date_to')}
+                    SELECT SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
+                                    THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturado_bruto
+                    FROM {_VIEW}
+                    WHERE {where_clause}
                 """),
                 prev_params,
             ).mappings().one_or_none()
@@ -13675,13 +13676,13 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 rows = conn.execute(
                     text(f"""
                         SELECT nom_vendedor,
-                               SUM(CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X')
-                                        THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado,
-                               SUM(CASE WHEN RIGHT(serie, 1) IN ('Y','X')
-                                        THEN ABS(COALESCE(valor_venta, 0)) ELSE 0 END) AS devoluciones,
-                               COUNT(DISTINCT CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X') THEN tipo_documento END) AS facturas,
-                               COUNT(DISTINCT CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X') THEN cliente_id END) AS clientes
-                        FROM public.raw_ventas_detalle
+                               SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
+                                        THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturado,
+                               SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') > 0
+                                        THEN ABS(COALESCE(valor_venta_neto, 0)) ELSE 0 END) AS devoluciones,
+                               COUNT(*) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS lineas,
+                               COUNT(DISTINCT cliente_id) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS clientes
+                        FROM {_VIEW}
                         WHERE {where_clause}
                         GROUP BY nom_vendedor
                         ORDER BY facturado DESC
@@ -13695,7 +13696,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                     "facturado": round(float(r["facturado"] or 0), 2),
                     "devoluciones": round(float(r["devoluciones"] or 0), 2),
                     "neto": round(float(r["facturado"] or 0) - float(r["devoluciones"] or 0), 2),
-                    "facturas": int(r["facturas"] or 0),
+                    "lineas": int(r["lineas"] or 0),
                     "clientes": int(r["clientes"] or 0),
                 }
                 for r in rows
@@ -13710,11 +13711,11 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 rows = conn.execute(
                     text(f"""
                         SELECT nombre_articulo, linea_producto, marca_producto,
-                               SUM(COALESCE(valor_venta, 0))       AS total,
-                               SUM(COALESCE(unidades_vendidas, 0)) AS unidades
-                        FROM public.raw_ventas_detalle
+                               SUM(COALESCE(valor_venta_neto, 0))       AS total,
+                               SUM(COALESCE(unidades_vendidas_netas, 0)) AS unidades
+                        FROM {_VIEW}
                         WHERE {where_clause}
-                          AND RIGHT(serie, 1) NOT IN ('Y','X')
+                          AND STRPOS(tipo_documento, 'NOTA') = 0
                         GROUP BY nombre_articulo, linea_producto, marca_producto
                         ORDER BY total DESC
                         LIMIT 15
@@ -13740,10 +13741,10 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 rows = conn.execute(
                     text(f"""
                         SELECT nombre_cliente, cliente_id,
-                               SUM(COALESCE(valor_venta, 0)) AS total
-                        FROM public.raw_ventas_detalle
+                               SUM(COALESCE(valor_venta_neto, 0)) AS total
+                        FROM {_VIEW}
                         WHERE {where_clause}
-                          AND RIGHT(serie, 1) NOT IN ('Y','X')
+                          AND STRPOS(tipo_documento, 'NOTA') = 0
                         GROUP BY nombre_cliente, cliente_id
                         ORDER BY total DESC
                         LIMIT 20
@@ -13764,11 +13765,10 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 rows = conn.execute(
                     text(f"""
                         SELECT fecha_venta,
-                               SUM(CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X')
-                                        THEN COALESCE(valor_venta, 0) ELSE 0 END) AS facturado,
-                               COUNT(DISTINCT CASE WHEN RIGHT(serie, 1) NOT IN ('Y','X')
-                                                   THEN tipo_documento END) AS facturas
-                        FROM public.raw_ventas_detalle
+                               SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
+                                        THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturado,
+                               COUNT(*) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS lineas
+                        FROM {_VIEW}
                         WHERE {where_clause}
                         GROUP BY fecha_venta
                         ORDER BY fecha_venta
@@ -13779,7 +13779,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 {
                     "fecha": str(r["fecha_venta"]),
                     "facturado": round(float(r["facturado"] or 0), 2),
-                    "facturas": int(r["facturas"] or 0),
+                    "lineas": int(r["lineas"] or 0),
                 }
                 for r in rows
             ]
