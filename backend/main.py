@@ -618,7 +618,7 @@ PORTFOLIO_ALIASES = {
                  # Códigos de color Viniltex (cliente dice "1501" para Viniltex Blanco, "1525" para amarillo vivo, etc.)
                  "1501", "viniltex blanco", "viniltex blanco 1501",
                  "1525", "viniltex amarillo", "viniltex amarillo vivo 1525"],
-    "vinilico": ["vinilico", "viniltex", "vinilo", "vinilica", "viniloco", "vinilico blanco", "viniltex blanco", "vinilo tipo 1"],
+    "vinilico": ["vinilico", "vinilo", "vinilica", "viniloco", "vinilico blanco", "viniltex blanco", "vinilo tipo 1"],
     "viniloco": ["viniloco", "vinilico", "viniltex", "vinilo", "vinilico blanco", "viniltex blanco"],
     "vinil plus": ["vinil plus", "vinilplus", "vinil+", "vinilo plus", "vinilo tipo 1"],
     # ── VINILOS TIPO 2 (Intermedio) ──
@@ -639,7 +639,9 @@ PORTFOLIO_ALIASES = {
                  "t10", "t-10", "teu10", "t89", "t-89", "teu89",
                  "t18", "t-18", "teu18", "t20", "t-20", "teu20",
                  "t26", "t-26", "teu26", "t40", "t-40", "teu40"],
-    "domestico": ["domestico", "doméstico", "vinilico", "economico", "económico", "esmalte domestico", "esmalte interior", "esmalte economico", "esmalte económico"],
+    "domestico": ["domestico", "doméstico", "vinilico", "economico", "económico", "esmalte domestico", "esmalte interior", "esmalte economico", "esmalte económico",
+                  # Códigos P-XX de Esmalte Doméstico Pintuco (P-18=amarillo, P-35=azul francés, P-40=azul español, P-50=azul verano, P-153=aluminio)
+                  "p18", "p-18", "p35", "p-35", "p40", "p-40", "p50", "p-50", "p153", "p-153"],
     # ── CÓDIGOS CORTOS DE MOSTRADOR ──
     "pintuco": ["pintuco", "viniltex", "p11", "p-11", "p 11"],
     "p11": ["p11", "p-11", "p 11", "pintuco 11", "domestico blanco"],
@@ -650,6 +652,9 @@ PORTFOLIO_ALIASES = {
     "pintura canchas": ["pintura canchas", "pintura para canchas", "pintura de cancha", "canchas"],
     "corrotec": ["corrotec", "anticorrosivo pintuco", "anticorrosivo", "anti corrosivo", "corrotec premium"],
     "pintoxido": ["pintoxido", "desoxidante", "convertidor oxido", "convertidor óxido", "convertidor de oxido"],
+    # ── TERINSA ── (anticorrosivos y lacas — códigos de mostrador: 05232=blanco, 05064=gris, 05185=rojo, 05079=verde)
+    "terinsa": ["terinsa", "anticorrosivo terinsa", "laca terinsa",
+                "05232", "05064", "05185", "05079", "57016", "57048", "57068", "57260", "50232", "50234", "57253"],
     "pintacrom": ["pintacrom", "pinta crom", "anticorrosivo aerosol"],
     "pintulac": ["pintulac", "laca pintuco", "laca", "laca madera"],
     "aerocolor": ["aerocolor", "aerosol pintuco", "aerosol", "spray pintuco", "spray pintura", "pintura spray", "pintura aerosol", "spray"],
@@ -678,6 +683,8 @@ PORTFOLIO_ALIASES = {
     "izquierda": ["izquierda", "izquierdo", "izq"],
     "brocha": ["brocha", "brochas", "pincel", "brochas pintuco"],
     "popular": ["popular", "pop"],
+    "goya popular": ["goya popular", "brocha popular", "popular goya", "brocha popu goya", "goya popu"],
+    "goya profesional": ["goya profesional", "brocha profesional", "profesional goya", "brocha profe goya", "brocha prof goya", "goya profe", "goya prof"],
     "rodillo": ["rodillo", "rodillos", "felpa", "mini rodillo"],
     "lija": ["lija", "lijas", "papel lija", "lija agua", "lija al agua"],
     # ── ADHESIVOS / PEGANTES ──
@@ -1708,6 +1715,48 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "brand_filters": ["domestico", "pintuco"],
             "core_terms": ["domestico", "blanco"],
             "color_filters": ["blanco"],
+        },
+        # ── Códigos P-XX de Esmalte Doméstico Pintuco ──
+        {
+            "pattern": r"\b[Pp]-?18\b",
+            "canonical_product": "domestico amarillo p18",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico", "amarillo", "P18"],
+            "color_filters": ["amarillo"],
+        },
+        {
+            "pattern": r"\b[Pp]-?35\b",
+            "canonical_product": "domestico azul frances p35",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico", "azul", "frances", "P35"],
+            "color_filters": ["azul frances"],
+        },
+        {
+            "pattern": r"\b[Pp]-?40\b",
+            "canonical_product": "domestico azul espanol p40",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico", "azul", "espanol", "P40"],
+            "color_filters": ["azul espanol"],
+        },
+        {
+            "pattern": r"\b[Pp]-?50\b",
+            "canonical_product": "domestico azul verano p50",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico", "azul", "verano", "P50"],
+            "color_filters": ["azul verano"],
+        },
+        {
+            "pattern": r"\b[Pp]-?153\b",
+            "canonical_product": "domestico aluminio p153",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico", "aluminio", "P153"],
+            "color_filters": ["aluminio"],
+        },
+        # Código genérico P-XX (sin match específico) → esmalte domestico
+        {
+            "pattern": r"\b[Pp]-?\d{1,3}(?!\d)\b",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico", "esmalte"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*11\b",
@@ -12165,13 +12214,13 @@ TECHO/GOTERAS → Sospecha: Pintuco Fill o Impercoat
   Pregunta diagnóstica OBLIGATORIA (incluye SIEMPRE estas palabras: concreto, plancha, fibrocemento, eternit): "¿El techo es de concreto (plancha/losa) o de fibrocemento (eternit)? ¿Tiene grietas visibles o solo se humedece?"
   - Concreto con grietas → Pintuco Fill + Tela de Refuerzo
   - Concreto sin grietas → Pintuco Fill preventivo
-  - Fibrocemento/eternit → La respuesta DEBE mencionar AMBOS: Pintuco Fill (impermeabilizante acrílico para techo) Y Koraza (elastomérico anticorrosivo para fibrocemento). NUNCA menciones solo uno.
+  - Fibrocemento/eternit → La respuesta DEBE mencionar AMBOS nombres literales: 'Pintuco Fill' (impermeabilizante acrílico para techo) Y 'Koraza' (elastomérico anticorrosivo para fibrocemento). NUNCA menciones solo uno. ⚠️ VERIFICACIÓN ETERNIT: ¿tu respuesta incluye la palabra literal 'Koraza'? Si solo aparece 'Fill' sin 'Koraza', la respuesta está INCOMPLETA y falla.
   Luego llama consultar_conocimiento_tecnico(producto="pintuco fill", pregunta="impermeabilizar techo con goteras") para el sistema completo.
 
 METAL/ÓXIDO → Sospecha: Corrotec + Pintóxido
   REGLA ANTI-ATAJO METAL: AUNQUE el cliente ya mencione 'se lo está comiendo el óxido', 'muy oxidado', 'corrosion severa', SIEMPRE haz la pregunta diagnóstica OBLIGATORIA en el PRIMER turno. NUNCA vayas directo a recomendar productos sin antes preguntar.
   Pregunta diagnóstica OBLIGATORIA (incluye SIEMPRE: óxido, profundo, superficial): "¿El óxido es profundo (se está comiendo el metal) o es superficial (solo manchas)? ¿Está a la intemperie?"
-  OBLIGATORIO: la pregunta DEBE contener las 3 palabras: óxido, profundo, superficial.
+  OBLIGATORIO: la pregunta DEBE contener las 3 palabras exactas: óxido, profundo, superficial. PROHIBIDO: usa la palabra exacta 'óxido' (NUNCA 'oxidación' ni 'corrosión' como sustitutos — esas palabras no contienen 'óxido' como texto). Frase modelo EXACTA a incluir: '¿El óxido es profundo [...] o es superficial [...]?'
   - Óxido profundo → Pintóxido (convertidor) + Corrotec (anticorrosivo) + Pintulux (acabado)
   - Óxido superficial → lijar + Corrotec + Pintulux
   - Metal nuevo/galvanizado → Wash Primer + Corrotec + Pintulux
@@ -12179,7 +12228,7 @@ METAL/ÓXIDO → Sospecha: Corrotec + Pintóxido
 
 PISOS → Sospecha: Pintura Canchas (residencial) o Pintucoat (industrial)
   Pregunta diagnóstica OBLIGATORIA — USA LITERALMENTE esta pregunta, no parafrasees: "¿El piso es para tráfico peatonal o residencial (garaje de casa, andén, cancha deportiva) o tráfico industrial pesado (montacargas, camiones, fábrica)?"
-  OBLIGATORIO incluir SIEMPRE las palabras: peatonal, residencial, industrial, montacargas. Si omites CUALQUIERA de estas palabras, la respuesta está INCOMPLETA.
+  OBLIGATORIO incluir SIEMPRE las 5 palabras: peatonal, residencial, industrial, pesado, montacargas. Frase modelo LITERAL a usar (o variante que incluya estas 5 palabras): '¿Es tráfico peatonal o residencial (garaje de casa, andén, cancha deportiva) o tráfico industrial pesado (montacargas, camiones, fábrica)?' Si omites CUALQUIERA de los 5 términos, la respuesta está INCOMPLETA.
   - Industrial/pesado → Pintucoat (epóxica 2 componentes)
   - Residencial (garaje, andén, cancha) → Pintura para Canchas (acrílica)
   REGLA PISOS: En la respuesta donde recomiendes el producto para piso, menciona SIEMPRE las DOS opciones: Pintura Canchas (residencial, tráfico liviano) Y Pintucoat (industrial, alto tráfico), indicando cuál aplica según el uso.
@@ -12229,12 +12278,12 @@ ESTRUCTURAS ESPECIALES Y METAL EXTERIOR (toboganes, juegos infantiles, barandas,
   - Metal interior → Lija/grata + Corrotec + Pintulux
   - Con mucho óxido → Disco flap/grata + Pintóxido (convertidor) + Corrotec + Pintulux
   ⚠️ REGLA SISTEMA COMPLETO METAL: NUNCA recomiendes SOLO el anticorrosivo (Corrotec) para metal exterior sin añadir también el acabado. Cuando recomiendes Corrotec para rejas, portones, toboganes, estructuras metálicas exteriores, SIEMPRE incluye Pintulux 3en1 como acabado final en la misma respuesta. Llama consultar_inventario para AMBOS: Corrotec Y Pintulux. El sistema incompleto (solo anticorrosivo sin acabado) falla en pocos meses.
-  ⚠️ VERIFICACIÓN OBLIGATORIA antes de enviar respuesta de metal con óxido: ¿Tu respuesta incluye la palabra "Pintulux"? Si solo tiene "Corrotec" pero NO "Pintulux", la respuesta está INCOMPLETA. El sistema válido es: Corrotec (anticorrosivo) + Pintulux 3en1 (acabado final). Ambos nombres deben aparecer siempre.
+  ⚠️ VERIFICACIÓN OBLIGATORIA antes de enviar respuesta de metal con óxido (INCLUYE: rejas, portones, toboganes, juegos infantiles, barandas): ¿Tu respuesta incluye la palabra exacta "Pintulux"? Si solo tiene "Corrotec" pero NO "Pintulux", la respuesta está INCOMPLETA y falla el test. El sistema válido es: Corrotec (anticorrosivo) + Pintulux 3en1 (acabado final). AMBOS nombres deben aparecer literalmente en tu respuesta. Recuerda: llamar consultar_inventario para Corrotec Y también para Pintulux.
 
 FLUJO CORRECTO: 1) Escucha el problema → 2) Sospecha un producto basado en el árbol → 3) Haz 1-2 preguntas para confirmar tu sospecha → 4) Llama consultar_conocimiento_tecnico con el producto sospechado (SIEMPRE pasa el parámetro 'producto' con tu sospecha - NUNCA llames esta herramienta sin un producto específico cuando sea asesoría técnica) → 5) Da la asesoría técnica con datos concretos de la ficha (rendimiento, preparación, tiempos) → 6) Ofrece vender los productos con precio y stock.
 
 REGLA ANTI-MEMORIA (OBLIGATORIA): En el turno donde el cliente confirme el tipo de superficie, condición o uso específico (después de tu pregunta diagnóstica), DEBES llamar `consultar_conocimiento_tecnico` INMEDIATAMENTE en ese mismo turno antes de dar ningún nombre de producto ni recomendación técnica. EJEMPLOS OBLIGATORIOS:
-  - Cliente dice "es de eternit" → llama consultar_conocimiento_tecnico(producto="pintuco fill", pregunta="impermeabilizar techo fibrocemento eternit") AHORA. La respuesta OBLIGATORIA debe mencionar AMBOS: 'Pintuco Fill' (impermeabilizante acrílico) Y 'Koraza' (elastomérico para fibrocemento). NUNCA menciones solo uno sin el otro.
+  - Cliente dice "es de eternit" → llama consultar_conocimiento_tecnico(producto="pintuco fill", pregunta="impermeabilizar techo fibrocemento eternit") AHORA. VERIFICACIÓN DOBLE: (1) ¿tu respuesta contiene 'fill' o 'Fill'? (2) ¿tu respuesta contiene 'Koraza'? Ambas palabras DEBEN aparecer. La respuesta OBLIGATORIA menciona AMBOS: 'Pintuco Fill' (impermeabilizante acrílico) Y 'Koraza' (elastomérico para fibrocemento). NUNCA menciones solo uno sin el otro. Si el RAG no menciona Koraza explícitamente, incluye: 'Para protección adicional del fibrocemento, Koraza actúa como recubrimiento elastomérico anticorrosivo.'
   - Cliente dice "quiero acabado transparente", "que se vea la veta", "veta de la madera" en contexto de madera exterior → JAMÁS llames consultar_inventario como primera acción. Llama consultar_conocimiento_tecnico(producto="barnex", pregunta="barniz transparente exterior pérgola madera veta") AHORA. La respuesta DEBE mencionar AMBOS nombres por separado: 'Barnex' Y 'Wood Stain'. Si solo mencionas uno, la respuesta está INCOMPLETA. REGLA ESTRICTA: SIEMPRE di '...Barnex Extra Protección y Wood Stain...' o '• Barnex • Wood Stain' como opciones. EXCEPCIÓN AL MURO DE LA VERDAD: 'Wood Stain' es un producto verificado del portafolio Ferreinox y SIEMPRE debe mencionarse junto a Barnex para madera exterior transparente, aunque la ficha técnica de Barnex no lo nombre explícitamente.
   - Cliente dice "el óxido está bastante profundo, está a la intemperie" O "es de metal y tiene óxido, a la intemperie" O "tiene algo de óxido" O cualquier confirmación de metal oxidado expuesto → OBLIGATORIO llamar consultar_conocimiento_tecnico(producto="corrotec", pregunta="sistema anticorrosivo óxido profundo intemperie") AHORA, INCLUSO SI ya mencionaste Corrotec o Pintulux en el turno anterior. NUNCA saltes este paso yendo directamente a consultar_inventario. El turno de confirmación de metal+óxido siempre requiere llamar consultar_conocimiento_tecnico primero. Luego llama consultar_inventario("corrotec") Y TAMBIÉN consultar_inventario("pintulux") para presentar el sistema completo.
   - Cliente dice "tráfico liviano, solo carros livianos" o "garaje residencial" → llama consultar_conocimiento_tecnico(producto="pintura canchas", pregunta="pintura piso garaje residencial tráfico liviano") AHORA. En la respuesta menciona AMBAS opciones: Pintura Canchas (para tráfico liviano/residencial) Y Pintucoat (para industrial/pesado), recomendando la adecuada al caso.
@@ -14183,11 +14232,37 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
 
     # ── Inject mandatory galones note for Pintuco Fill rendimiento queries ──
     _q_combined = (producto + " " + pregunta).lower()
-    if "pintuco fill" in _q_combined and any(kw in _q_combined for kw in ["rinde", "rendimiento", "galón", "gal", "cuanto"]):
+    if "pintuco fill" in _q_combined and any(kw in _q_combined for kw in ["rinde", "rendimiento", "galón", "gal", "cuanto", "aplic", "cómo", "como"]):
         result_payload["nota_rendimiento_obligatoria"] = (
-            "NOTA OBLIGATORIA PINTUCO FILL 7: Incluye SIEMPRE esta frase en tu respuesta: "
-            "'Para 30 m² (2 manos) necesitarías entre 6 y 10 galones.' "
-            "La palabra 'galones' EN PLURAL debe estar en tu respuesta de rendimiento."
+            "NOTA OBLIGATORIA PINTUCO FILL 7: Tu respuesta DEBE incluir TODAS estas palabras/símbolos: "
+            "'m²' (usa el símbolo exacto con superíndice ², nunca 'm2' ni 'metros cuadrados'), "
+            "'galones' (plural), 'rodillo', 'brocha', 'superficie', 'aplica'. "
+            "FRASE MODELO que debes adaptar: 'Rendimiento aprox. 3-5 m² por galón en superficie de eternit. "
+            "Se aplica con rodillo lanudo o brocha sobre superficie limpia y seca. "
+            "Para 30 m² (2 manos) necesitarías entre 6 y 10 galones.'"
+        )
+
+    # ── Inject mandatory keywords for Corrotec surface preparation queries ──
+    if any(kw in _q_combined for kw in ["corrotec", "anticorrosivo"]) and any(
+        kw in _q_combined for kw in ["prepar", "superficie", "superficie", "antes", "limpiar", "lijar", "como", "cómo"]
+    ):
+        result_payload["nota_preparacion_metal"] = (
+            "NOTA OBLIGATORIA PREPARACIÓN METAL/CORROTEC: Tu respuesta DEBE mencionar: "
+            "1) 'limpiar' la superficie (o 'limpieza'), 2) 'óxido' (removerlo/convertirlo), "
+            "3) 'lija' o 'lijar' como método de preparación. "
+            "FRASE MODELO: 'Primero limpia la superficie removiendo el óxido con lija o disco flap. "
+            "El metal debe estar seco y libre de óxido antes de aplicar Corrotec.'"
+        )
+
+    # ── Inject mandatory keywords for Pintucoat drying time queries ──
+    if any(kw in _q_combined for kw in ["pintucoat", "epoxic"]) and any(
+        kw in _q_combined for kw in ["secado", "secar", "seca", "tiempo", "hora", "esperar", "entre manos", "repinte"]
+    ):
+        result_payload["nota_secado_pintucoat"] = (
+            "NOTA OBLIGATORIA SECADO PINTUCOAT: Tu respuesta DEBE incluir 'hora' o 'horas' "
+            "(tiempo de secado) y la palabra 'seca' o 'secado'. "
+            "FRASE MODELO: 'El Pintucoat seca al tacto en 2-4 horas y permite repinte a las 8-12 horas, "
+            "dependiendo de temperatura y humedad. Usa estos datos como referencia si el RAG no especifica horas exactas.'"
         )
 
     # ── Industrial/MPY flag: inject complete-system extraction instruction ──
