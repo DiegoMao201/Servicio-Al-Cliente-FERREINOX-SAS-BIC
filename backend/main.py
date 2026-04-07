@@ -11989,7 +11989,7 @@ INTERIORES → Sospecha: Viniltex (premium), Intervinil (intermedio), Pinturama 
 
 MADERA → Sospecha: Barnex/Wood Stain (exterior) o Pintulac (interior)
   Pregunta clave: "¿La madera está al aire libre o es un mueble de interior?"
-  - Exterior (pérgola, deck) → Barnex Extra Protección o Wood Stain
+  - Exterior (pérgola, deck) → SIEMPRE mencionar AMBOS: Barnex Extra Protección Y Wood Stain como opciones. Si quieren veta visible/transparente → Barnex Extra Protección (incoloro) o Wood Stain. REGLA: Para pérgolas/madera exterior transparente, la respuesta DEBE incluir el nombre "Wood Stain" además de Barnex.
   - Interior → Pintulac (transparente) o Pintulux (color sólido)
 
 PREPARACIÓN DE SUPERFICIE / ABRASIVOS / REMOCIÓN DE PINTURA → Sospecha: Lija, Disco Flap, Grata, Removedor
@@ -12212,6 +12212,9 @@ Aplica también normas SSPC SP6/SP10 para preparación de superficie.
 
 ═══ LACAS / BARNICES (Acabados para madera) ═══
 • Pintulac (Pintuco) → laca para muebles, puertas, madera interior.
+• Barnex Extra Protección (Mohawk) → barniz exterior de alto rendimiento para pérgolas, deck, madera expuesta. Versiones incoloro (deja ver la veta), caoba, caramelo.
+• Wood Stain (Mohawk) → tinte/barniz para madera que deja ver la veta con color. Para madera interior y exterior.
+• REGLA: Para pérgola/deck/madera exterior con veta visible → recomendar AMBOS: Barnex Extra Protección Y Wood Stain como opciones.
 • Barniz / Barniz Marino → protección transparente para madera, incluyendo intemperie (el marino).
 
 ═══ POLIURETANOS (Acabados industriales de alta resistencia) ═══
