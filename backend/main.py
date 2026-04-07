@@ -919,7 +919,7 @@ PORTFOLIO_CATEGORY_MAP = {
 
     # ── MADERA ──
     "barniz": ["barniz", "barnex", "pintulac", "barniz marino"],
-    "madera": ["barnex", "pintulac", "barniz", "wood stain", "madetec"],
+    "madera": ["barnex", "pintulac", "barniz", "wood stain", "madetec", "pintulux"],
     "madera exterior": ["barnex", "wood stain", "barniz marino"],
     "madera interior": ["pintulac", "barniz", "madetec"],
     "laca": ["pintulac", "laca"],
@@ -927,6 +927,30 @@ PORTFOLIO_CATEGORY_MAP = {
     "pergola": ["barnex", "wood stain"],
     "mueble": ["pintulac", "barniz", "madetec"],
     "puerta madera": ["pintulac", "pintulux", "barniz", "barnex"],
+
+    # ── PRODUCTO NOMBRES DIRECTOS (lookup cuando mencionan el producto por nombre) ──
+    "viniltex": ["viniltex", "viniltex adv", "acriltex viniltex"],
+    "koraza": ["koraza", "koraza sol y lluvia", "koraza elastomerica"],
+    "corrotec": ["corrotec", "anticorrosivo", "pintoxido"],
+    "pintucoat": ["pintucoat", "epoxica industrial", "anticorrosiva epoxica"],
+    "aquablock": ["aquablock", "aquablock ultra", "sellamur"],
+    "pintuco fill": ["pintuco fill", "impercoat", "fill 7", "fill 12"],
+    "pintulux": ["pintulux", "pintulux 3en1", "domestico"],
+    "barnex": ["barnex", "wood stain", "barniz marino"],
+    "pintoxido": ["pintoxido", "corrotec", "anticorrosivo"],
+    "imprimante": ["imprimante", "fondo", "sellador", "primer"],
+    "wash primer": ["wash primer", "imprimante", "corrotec"],
+    "impercoat": ["impercoat", "pintuco fill", "tela de refuerzo"],
+    "intervinil": ["intervinil", "viniltex", "vinil latex"],
+    "pintulac": ["pintulac", "barniz", "barnex"],
+    "catalizador": ["catalizador", "pintucoat", "interseal"],
+    "diluir": ["viniltex", "pintulo", "domestico"],
+    "diluyente": ["thinner", "agua destilada", "disolvente"],
+    "rendimiento": ["pintuco fill", "koraza", "viniltex"],
+    "proporcion": ["pintucoat", "interseal", "catalizador"],
+    "mezcla": ["pintucoat", "interseal", "catalizador"],
+    "preparacion": ["corrotec", "imprimante", "wash primer", "lija"],
+    "secado": ["pintucoat", "corrotec", "viniltex"],
 
     # ── AEROSOLES ──
     "aerosol": ["aerocolor", "montana"],
