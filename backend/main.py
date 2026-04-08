@@ -662,7 +662,9 @@ PORTFOLIO_ALIASES = {
     "world color": ["world color", "worldcolor", "tinte pintuco", "base tintometrica", "base tintométrica"],
     "imprimante": ["imprimante", "imprimante pintuco", "primer", "fondo", "sellador fondo", "primer pintuco"],
     "pintuco fill": ["pintuco fill", "impermeabilizante pintuco", "fill 7", "fill 12", "pintuco fill 7", "pintuco fill 12"],
-    "pintura trafico": ["pintura trafico", "pintura tráfico", "pintura demarcacion", "pintura demarcación", "demarcacion vial", "pintura vial"],
+    "pintura trafico": ["pintura trafico", "pintura tráfico", "pintutraf", "pintutrafico", "pintura demarcacion", "pintura demarcación", "demarcacion vial", "pintura vial", "trafico", "señalizacion vial"],
+    "pintutraf": ["pintutraf", "pintutrafico", "pintura trafico", "pintura tráfico", "pintura demarcacion", "trafico", "señalizacion vial"],
+    "microesfera": ["microesfera", "microesferas", "micro esfera", "esferas reflectivas", "esferas vidrio", "esferas trafico"],
     "wash primer": ["wash primer", "washprimer", "primer anticorrosivo", "fondo anticorrosivo"],
 
     # ── INTERNATIONAL / AKZONOBEL ──
@@ -906,10 +908,10 @@ PORTFOLIO_CATEGORY_MAP = {
     "cancha": ["pintura canchas"],
     "canchas": ["pintura canchas"],
     "microfutbol": ["pintura canchas"],
-    "demarcacion": ["pintura trafico", "demarcacion vial"],
-    "trafico": ["pintura trafico", "pintura canchas"],
-    "senalizacion": ["pintura trafico"],
-    "lineas": ["pintura trafico", "pintura canchas"],
+    "demarcacion": ["pintutraf", "pintura trafico", "demarcacion vial"],
+    "trafico": ["pintutraf", "pintura trafico", "pintura canchas"],
+    "senalizacion": ["pintutraf", "pintura trafico"],
+    "lineas": ["pintutraf", "pintura trafico", "pintura canchas"],
 
     # ── EPÓXICAS ──
     "epoxica": ["pintucoat", "interseal", "intergard", "epoxica"],
@@ -1949,6 +1951,19 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "pattern": r"\b(laca|barniz)\b",
             "brand_filters": ["pintulac", "pintuco"],
             "core_terms": ["pintulac"],
+        },
+        # ── Pintura de tráfico / demarcación vial ──
+        {
+            "pattern": r"\b(pintutraf\w*|pintutrafico|pintura\s+(?:de\s+)?traf\w*|trafico\s+vial|demarcaci[oó]n\s+vial|señalizaci[oó]n\s+vial)\b",
+            "canonical_product": "pintutraf",
+            "brand_filters": ["pintuco"],
+            "core_terms": ["pintutraf"],
+        },
+        # ── Microesferas (complemento de pintura tráfico) ──
+        {
+            "pattern": r"\b(microesfera\w*|micro\s+esfera\w*|esferas?\s+(?:reflectiva|vidrio|trafico))\b",
+            "canonical_product": "microesferas",
+            "core_terms": ["microesfera", "microesferas"],
         },
     ]
 
@@ -4148,7 +4163,7 @@ def filter_previous_product_context(conversation_context: Optional[dict], produc
             visible_rows.append(row_copy)
         filtered_rows = visible_rows
 
-    return filtered_rows[:5]
+    return filtered_rows[:10]
 
 
 def extract_store_mentions_in_order(text_value: Optional[str]):
@@ -11843,12 +11858,12 @@ def fetch_code_product_rows(connection, product_codes: list[str], store_filters:
             f"({' OR '.join(store_code_filters)}) AND ({' OR '.join(store_filters_sql)})",
             params,
             " + ".join(store_score_terms) if store_score_terms else "0",
-            limit=5,
+            limit=15,
         )
 
     where_clause = f"({' OR '.join(code_filters)})"
     match_score_sql = " + ".join(score_terms) if score_terms else "0"
-    return fetch_products_from_catalog(connection, where_clause, params, match_score_sql, limit=5)
+    return fetch_products_from_catalog(connection, where_clause, params, match_score_sql, limit=15)
 
 
 def fetch_term_product_rows(connection, query_terms: list[str], store_filters: list[str]):
@@ -11868,6 +11883,25 @@ def fetch_term_product_rows(connection, query_terms: list[str], store_filters: l
         score_terms.append(
             f"CASE WHEN search_blob ILIKE :pattern_{index} OR search_compact LIKE :compact_{index} THEN 1 ELSE 0 END"
         )
+
+    # ── Abbreviation prefix matching ──────────────────────────────────────
+    # ERP often truncates multi-word product names (e.g. "PINTUTRAF" for
+    # "PINTURA TRAFICO").  For each pair of adjacent terms, concatenate them
+    # and generate progressively shorter prefixes (min 6 chars) so that
+    # e.g. "pintutrafico" → also tries "pintutrafic", "pintutraf", etc.
+    abbrev_index = len(query_terms[:5]) * 10  # offset to avoid param name collisions
+    for i in range(len(query_terms[:5]) - 1):
+        concat_compact = normalize_reference_value(query_terms[i]) + normalize_reference_value(query_terms[i + 1])
+        if len(concat_compact) < 8:
+            continue
+        # Try progressively shorter prefixes down to 6 chars
+        for trim in range(0, min(len(concat_compact) - 6, 5)):
+            prefix = concat_compact[: len(concat_compact) - trim]
+            param_key = f"abbrev_{abbrev_index}"
+            abbrev_index += 1
+            params[param_key] = f"%{prefix}%"
+            search_filters.append(f"search_compact LIKE :{param_key}")
+            score_terms.append(f"CASE WHEN search_compact LIKE :{param_key} THEN 1 ELSE 0 END")
 
     if store_filters:
         store_search_filters = []
@@ -12290,7 +12324,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                 if code_rows:
                     ranked_code_rows = rank_product_match_rows([dict(row) for row in code_rows], product_request, normalized_query)
                     ranked_code_rows = filter_rows_by_requested_presentation(ranked_code_rows, product_request)
-                    return ranked_code_rows[:5]
+                    return ranked_code_rows[:10]
                 # Fuzzy near-code fallback: if no results, try digit-deletion and digit-transposition variants
                 # (e.g. user types "17174" when correct code is "117474" or vice-versa)
                 fuzzy_codes: list[str] = []
@@ -12306,7 +12340,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     if fuzzy_rows:
                         ranked_fuzzy = rank_product_match_rows([dict(row) for row in fuzzy_rows], product_request, normalized_query)
                         ranked_fuzzy = filter_rows_by_requested_presentation(ranked_fuzzy, product_request)
-                        return ranked_fuzzy[:5]
+                        return ranked_fuzzy[:10]
 
             if not terms:
                 return []
@@ -12354,7 +12388,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                         seen_codes.add(code)
                         merged.append(row)
                 if merged:
-                    return merged[:5]
+                    return merged[:10]
 
             sales_filters = []
             sales_scores = []
@@ -12391,7 +12425,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     WHERE {' OR '.join(sales_filters)}
                     GROUP BY 1, 2, 3, 4
                     ORDER BY match_score DESC, valor_vendido DESC NULLS LAST
-                    LIMIT 5
+                    LIMIT 10
                     """
                 ),
                 sales_params,
@@ -12996,6 +13030,9 @@ REGLAS TÉCNICAS VERIFICADAS POR PRODUCTO (PREVALECEN sobre RAG y conocimiento g
 - PINTUCO FILL: Impermeabilizante para techos, cubiertas, terrazas (Fill 7, Fill 12). NO es para piscinas ni inmersión en agua.
 - INTERTHANE: Es el ÚNICO poliuretano de acabado en el portafolio. BICOMPONENTE (COMP A + catalizador PHA046). Galón: COMP A 3.7L + PHA046 0.5L. NUNCA confundir con Pintulux 3en1, que es esmalte alquídico, no poliuretano.
 - VINILTEX/VINILOS: Para muros interiores y exteriores. NO es para pisos, piscinas, metal desnudo ni inmersión.
+- PINTURA TRÁFICO (PINTUTRAF): Pintura de demarcación vial para parqueaderos, canchas, bodegas, vías, líneas de seguridad. \
+  Busca en inventario como "pintutraf" (abreviación del ERP). Complementar con microesferas reflectivas si el cliente las necesita. \
+  KORAZA NO sirve para tráfico. VINILTEX NO sirve para tráfico. PINTULUX NO sirve para tráfico. Solo PINTUTRAF es para demarcación vial.
 
 POLÍTICA DE GARANTÍA — BLOQUEO DURO (HARD BLOCK):
 Tienes ESTRICTAMENTE PROHIBIDO vender, cotizar, buscar en inventario o incluir en un pedido un producto que el conocimiento técnico (RAG) \
@@ -13632,11 +13669,15 @@ AGENT_TOOLS = [
             "DEBES incluirlas en el parámetro 'producto'. Ejemplo: si el cliente dice '8 galones de viniltex 1501', pasa 'viniltex 1501 8 galones' "
             "(NO solo 'viniltex 1501'). Esto permite filtrar automáticamente por presentación y evita preguntar algo que el cliente ya dijo. "
             "IMPORTANTE: Antes de llamar, limpia el término de búsqueda: quita diminutivos (brochitas→brocha, tarritos→tarro), "
-            "traduce jerga (blanca económica→Domestico Blanco, P-11→Domestico Blanco, T-11/TU11/TEU11→Pintulux Blanco Brillante, TEU95→Pintulux Negro 95, SD1/SD-1→barniz SD-1, 1501→Viniltex Blanco 1501, pinceles→brocha, brocha profesional→brocha goya profesional). "
+            "traduce jerga (blanca económica→Domestico Blanco, P-11→Domestico Blanco, T-11/TU11/TEU11→Pintulux Blanco Brillante, TEU95→Pintulux Negro 95, SD1/SD-1→barniz SD-1, 1501→Viniltex Blanco 1501, pinceles→brocha, brocha profesional→brocha goya profesional, "
+            "pintura tráfico/pintutráfico→pintutraf, microesferas→microesferas). "
             "Para brochas, incluye 'profesional' o 'popular' en tu búsqueda según lo que pidió el cliente. NUNCA mezcles la línea. "
             "TRADUCE categorías genéricas a nombres de marca del portafolio: aerosol→Aerocolor, epóxica→Pintucoat, "
             "pintura pisos→Pintura para Canchas o Pintucoat, anticorrosivo→Corrotec, impermeabilizante→Koraza, "
-            "barniz/laca→Pintulac, poliuretano→Interthane. "
+            "barniz/laca→Pintulac, poliuretano→Interthane, pintura tráfico/demarcación vial→pintutraf. "
+            "⚠️ CATEGORÍAS INCOMPATIBLES: Koraza es SOLO para fachadas/impermeabilización, NO para tráfico/demarcación/pisos industriales. "
+            "Viniltex es SOLO para muros interiores/exteriores, NO para tráfico ni pisos. "
+            "Pintura de tráfico/demarcación vial = busca 'pintutraf'. Pintura de pisos = busca 'pintura canchas' o 'pintucoat'. "
             "Si la primera búsqueda no devuelve resultados, intenta con el sinónimo técnico o la otra marca equivalente del portafolio.",
             "parameters": {
                 "type": "object",
@@ -13755,7 +13796,13 @@ AGENT_TOOLS = [
             "notificación a la tienda origen para que prepare el despacho. "
             "Úsala cuando un empleado autenticado confirme cantidad, producto y destino de un traslado. "
             "REGLA: espera a que el empleado confirme tanto el producto como la cantidad antes de llamar esta herramienta. "
-            "La tienda origen es de donde se despacha; la tienda destino es donde llega el producto.",
+            "La tienda origen es de donde se despacha; la tienda destino es donde llega el producto. "
+            "⚠️ CONTEXTO DE CONVERSACIÓN: Si el empleado solicita trasladar un producto SIN especificar cuál, "
+            "pero acaban de consultar o discutir un producto (ej. Viniltex 1501), DEBES usar el ÚLTIMO producto "
+            "consultado como producto_descripcion y su código como producto_referencia. "
+            "NUNCA ignores el contexto previo de la conversación. NUNCA busques pedidos pendientes cuando el contexto es claro. "
+            "Ejemplo: si discutieron Viniltex 1501 y el empleado dice 'necesito trasladar 10 cuñetes de pereira a manizales', "
+            "usa 'PQ VINILTEX ADV MAT BLANCO 1501 18.93L' (o la presentación discutida) como producto_descripcion.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -14170,7 +14217,7 @@ def _handle_tool_consultar_inventario(args, conversation_context):
             ensure_ascii=False,
         )
     results = []
-    for row in rows[:5]:
+    for row in rows[:10]:
         item = {
             "codigo": row.get("codigo_articulo") or row.get("referencia") or row.get("codigo"),
             "descripcion": get_exact_product_description(row),
@@ -14256,7 +14303,7 @@ def _handle_tool_consultar_inventario(args, conversation_context):
     if rows:
         conversation_context["last_product_request"] = product_request
         conversation_context["last_product_query"] = producto
-        conversation_context["last_product_context"] = results[:5]
+        conversation_context["last_product_context"] = results[:10]
     clarification_required = should_ask_product_clarification(product_request, rows)
     clarification_question = build_best_product_clarification_question(product_request, rows) if clarification_required else None
     return json.dumps(
@@ -14475,6 +14522,24 @@ def _handle_tool_solicitar_traslado_interno(args: dict, context: dict, conversat
     producto_ref = (args.get("producto_referencia") or "").strip() or None
     cantidad = args.get("cantidad") or 0
     notas = (args.get("notas") or "").strip() or None
+
+    # ── Auto-fill from conversation context when product is vague/missing ──
+    if (not producto_desc or len(producto_desc) < 5) and conversation_context.get("last_product_context"):
+        last_products = conversation_context["last_product_context"]
+        if last_products and len(last_products) >= 1:
+            best = last_products[0]
+            if not producto_desc:
+                producto_desc = best.get("descripcion") or best.get("descripcion_exacta") or ""
+            if not producto_ref:
+                producto_ref = best.get("codigo") or None
+    # Also try to fill reference from context if we have description but no reference
+    if producto_desc and not producto_ref and conversation_context.get("last_product_context"):
+        desc_lower = producto_desc.lower()
+        for ctx_product in conversation_context.get("last_product_context") or []:
+            ctx_desc = (ctx_product.get("descripcion") or ctx_product.get("descripcion_exacta") or "").lower()
+            if ctx_desc and (desc_lower in ctx_desc or ctx_desc in desc_lower):
+                producto_ref = ctx_product.get("codigo") or producto_ref
+                break
 
     if not producto_desc:
         return json.dumps({"error": "Falta la descripción del producto."}, ensure_ascii=False)
