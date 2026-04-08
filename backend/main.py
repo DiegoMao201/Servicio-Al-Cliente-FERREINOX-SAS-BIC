@@ -1675,6 +1675,45 @@ FERRETERIA_WORD_EXPANSIONS: list[tuple[str, str]] = [
     (r"\bvini\b", "viniltex"),
 ]
 
+# ── Bidirectional search-term variants ──────────────────────────────────────
+# When a term appears in a search query, these variants are ALSO searched via ILIKE.
+# This handles the DB having "PROF." when user says "profesional" and vice-versa,
+# as well as common ERP truncations.
+_SEARCH_TERM_VARIANTS: dict[str, list[str]] = {
+    "profesional": ["prof", "profes", "profesio"],
+    "prof":        ["profesional", "profes"],
+    "popular":     ["popu", "popul"],
+    "popu":        ["popular", "popul"],
+    "barniz":      ["barni", "barn"],
+    "esmalte":     ["esmal"],
+    "brillante":   ["brill", "br"],
+    "mate":        ["mat"],
+    "satinado":    ["sat", "satin"],
+    "incoloro":    ["incol"],
+    "galones":     ["gal", "galon"],
+    "galon":       ["gal", "galones"],
+    "cuartos":     ["cuarto", "cto"],
+    "cuarto":      ["cuartos", "cto"],
+    "pulgadas":    ["pulg", "pulgada"],
+    "pulgada":     ["pulg", "pulgadas"],
+    "acrilico":    ["acril"],
+    "anticorrosivo": ["anticorr", "anticorrosi"],
+    "impermeabilizante": ["imperm", "impermeab"],
+}
+
+
+def expand_search_terms_with_variants(query_terms: list[str]) -> list[str]:
+    """Given query terms, expand them with DB abbreviation variants for broader matching."""
+    expanded = list(query_terms)
+    for term in query_terms:
+        low = term.lower()
+        variants = _SEARCH_TERM_VARIANTS.get(low, [])
+        for v in variants:
+            upper_v = v.upper()
+            if upper_v not in expanded:
+                expanded.append(upper_v)
+    return expanded
+
 
 def expand_ferreteria_text(text_value: Optional[str]) -> str:
     """Expande abreviaciones de ferretería antes de normalizar para búsqueda."""
@@ -2156,8 +2195,16 @@ def prepare_product_request_for_search(text_value: Optional[str], product_reques
     return prepared_request
 
 
+_db_engine_singleton = None
+_db_engine_url = None
+
 def get_db_engine():
-    return create_engine(get_database_url())
+    global _db_engine_singleton, _db_engine_url
+    url = get_database_url()
+    if _db_engine_singleton is None or _db_engine_url != url:
+        _db_engine_singleton = create_engine(url, pool_size=5, max_overflow=10, pool_recycle=300, pool_pre_ping=True)
+        _db_engine_url = url
+    return _db_engine_singleton
 
 
 def safe_json_dumps(value):
@@ -5273,12 +5320,25 @@ def smart_score_product(
     return round(score, 4)
 
 
+# ── Global rotation cache with TTL ────────────────────────────────────────────
+_rotation_cache_data: dict = {}
+_rotation_cache_ts: float = 0.0
+_ROTATION_CACHE_TTL = 300  # 5 minutes
+
+
 def fetch_rotation_cache(connection) -> dict:
-    """Load the rotation scores into a Python dict for fast lookup."""
+    """Load the rotation scores with 5-minute in-memory cache."""
+    global _rotation_cache_data, _rotation_cache_ts
+    now = time.time()
+    if _rotation_cache_data and (now - _rotation_cache_ts) < _ROTATION_CACHE_TTL:
+        return _rotation_cache_data
     try:
         rows = connection.execute(
             text("SELECT producto_codigo, rotation_score FROM mv_product_rotation")
         ).mappings().all()
+        _rotation_cache_data = {str(row["producto_codigo"]): float(row["rotation_score"]) for row in rows}
+        _rotation_cache_ts = now
+        return _rotation_cache_data
         return {str(row["producto_codigo"]): float(row["rotation_score"]) for row in rows}
     except Exception:
         return {}
@@ -5303,7 +5363,9 @@ def fetch_smart_product_rows(
     ilike_filters: list[str] = []
     score_parts: list[str] = []
 
-    # Standard ILIKE term matching (existing approach, kept for exact matches)
+    # Standard ILIKE term matching + bidirectional abbreviation variants combined
+    # Each term + its variants produce a SINGLE 1-point score (not additive)
+    var_idx = 200
     for idx, term in enumerate(query_terms[:6]):
         params[f"pat_{idx}"] = f"%{term}%"
         compact = normalize_reference_value(term)
@@ -5311,8 +5373,24 @@ def fetch_smart_product_rows(
         ilike_filters.append(f"search_blob ILIKE :pat_{idx}")
         if compact:
             ilike_filters.append(f"search_compact LIKE :cpt_{idx}")
+
+        # Collect variant ILIKE conditions for the WHERE clause
+        variant_conditions = []
+        variants = _SEARCH_TERM_VARIANTS.get(term.lower(), [])
+        for variant in variants[:3]:
+            vk = f"var_{var_idx}"
+            var_idx += 1
+            params[vk] = f"%{variant.upper()}%"
+            ilike_filters.append(f"search_blob ILIKE :{vk}")
+            variant_conditions.append(f"search_blob ILIKE :{vk}")
+
+        # Combined score: 1 point if original OR compact OR any variant matches
+        all_conditions = [f"search_blob ILIKE :pat_{idx}"]
+        if compact:
+            all_conditions.append(f"search_compact LIKE :cpt_{idx}")
+        all_conditions.extend(variant_conditions)
         score_parts.append(
-            f"CASE WHEN search_blob ILIKE :pat_{idx} OR search_compact LIKE :cpt_{idx} THEN 1 ELSE 0 END"
+            f"CASE WHEN {' OR '.join(all_conditions)} THEN 1 ELSE 0 END"
         )
 
     # Phonetic expansion: generate phonetic variants and search them too
@@ -5340,9 +5418,8 @@ def fetch_smart_product_rows(
             ilike_filters.append(f"search_compact LIKE :{pk}")
             score_parts.append(f"CASE WHEN search_compact LIKE :{pk} THEN 1 ELSE 0 END")
 
-    # Trigram similarity for the full query (DB-side fuzzy)
-    params["trgm_query"] = normalize_text_value(query_text) or ""
-    trgm_score = "similarity(search_blob, :trgm_query)"
+    # Trigram query kept for potential Python-side use, but NOT computed in SQL (expensive)
+    trgm_score = "0"  # Disabled in SQL for speed; smart_score handles fuzzy ranking in Python
 
     # Numeric pattern → prioritize by referencia/producto_codigo exact match
     numeric_pattern_bonus = []
@@ -5360,7 +5437,7 @@ def fetch_smart_product_rows(
     where_clause = f"({' OR '.join(ilike_filters)})"
 
     if store_filters:
-        return _fetch_smart_from_store(connection, where_clause, params, match_score_sql, trgm_score, store_filters, limit)
+        return _fetch_smart_from_store(connection, where_clause, params, match_score_sql, store_filters, limit)
 
     rows = connection.execute(
         text(
@@ -5368,12 +5445,11 @@ def fetch_smart_product_rows(
             SELECT p.producto_codigo, p.referencia, p.descripcion, p.marca, p.departamentos, p.stock_total, p.costo_promedio_und, p.stock_por_tienda,
                    p.linea_clasificacion, p.marca_clasificacion, p.familia_clasificacion, p.aplicacion_clasificacion, p.cat_producto, p.descripcion_ebs, p.tipo_articulo,
                    ({match_score_sql}) AS match_score,
-                   {trgm_score} AS trgm_similarity,
                    COALESCE(rot.rotation_score, 0) AS rotation_score
-            FROM public.productos p
+            FROM mv_productos p
             LEFT JOIN mv_product_rotation rot ON rot.producto_codigo = p.producto_codigo
             WHERE {where_clause}
-            ORDER BY ({match_score_sql}) DESC, {trgm_score} DESC, stock_total DESC NULLS LAST
+            ORDER BY ({match_score_sql}) DESC, COALESCE(rot.rotation_score, 0) DESC, stock_total DESC NULLS LAST
             LIMIT {int(limit)}
             """
         ),
@@ -5382,15 +5458,15 @@ def fetch_smart_product_rows(
     return [dict(r) for r in rows]
 
 
-def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, trgm_score, store_filters, limit):
+def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, store_filters, limit):
     """Store-filtered variant of smart search."""
     store_sql = []
     for si, sc in enumerate(store_filters):
         params[f"store_{si}"] = sc
         store_sql.append(f"cod_almacen = :store_{si}")
 
-    # Build inner WHERE: use only the pat_ ILIKE filters (not phonetic/abbreviation which might not have search_blob)
-    pat_keys = sorted([k for k in params if k.startswith("pat_")])
+    # Build inner WHERE: use pat_ and var_ ILIKE filters for broader matching
+    pat_keys = sorted([k for k in params if k.startswith("pat_") or k.startswith("var_")])
     inner_filters = [f"search_blob ILIKE :{k}" for k in pat_keys]
     if not inner_filters:
         inner_filters = ["TRUE"]
@@ -5402,7 +5478,6 @@ def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, t
             SELECT referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
                    linea_clasificacion, marca_clasificacion, familia_clasificacion, aplicacion_clasificacion, cat_producto, descripcion_ebs, tipo_articulo,
                    ({match_score_sql}) AS match_score,
-                   {trgm_score} AS trgm_similarity,
                    COALESCE(rot.rotation_score, 0) AS rotation_score
             FROM (
                 SELECT
@@ -5431,7 +5506,7 @@ def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, t
                 GROUP BY referencia, descripcion, marca
             ) inventory
             LEFT JOIN mv_product_rotation rot ON rot.producto_codigo = inventory.referencia
-            ORDER BY ({match_score_sql}) DESC, {trgm_score} DESC, stock_total DESC NULLS LAST
+            ORDER BY ({match_score_sql}) DESC, COALESCE(rot.rotation_score, 0) DESC, stock_total DESC NULLS LAST
             LIMIT {int(limit)}
             """
         ),
@@ -5764,7 +5839,12 @@ def is_learned_reference_relevant(product_request: Optional[dict], learned_row: 
     return True
 
 
+_product_learning_table_ensured = False
+
 def ensure_product_learning_table():
+    global _product_learning_table_ensured
+    if _product_learning_table_ensured:
+        return
     engine = get_db_engine()
     with engine.begin() as connection:
         connection.execute(
@@ -5797,9 +5877,15 @@ def ensure_product_learning_table():
                 """
             )
         )
+    _product_learning_table_ensured = True
 
+
+_product_companion_table_ensured = False
 
 def ensure_product_companion_table():
+    global _product_companion_table_ensured
+    if _product_companion_table_ensured:
+        return
     engine = get_db_engine()
     with engine.begin() as connection:
         connection.execute(
@@ -5840,6 +5926,7 @@ def ensure_product_companion_table():
                 """
             )
         )
+    _product_companion_table_ensured = True
 
 
 # ---------------------------------------------------------------------------
@@ -6312,7 +6399,7 @@ def fetch_product_companions(referencia: str) -> list[dict]:
                            c.proporcion, c.notas, c.confidence,
                            p.stock_total, p.descripcion AS descripcion_inventario
                     FROM public.agent_product_companion c
-                    LEFT JOIN public.productos p ON p.referencia = c.companion_referencia
+                    LEFT JOIN mv_productos p ON p.referencia = c.companion_referencia
                     WHERE c.producto_referencia = :ref AND c.activo = true
                     ORDER BY c.tipo_relacion, c.confidence DESC
                     """
@@ -12098,7 +12185,7 @@ def fetch_products_from_catalog(connection, where_clause: str, params: dict, mat
             SELECT producto_codigo, referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
                    linea_clasificacion, marca_clasificacion, familia_clasificacion, aplicacion_clasificacion, cat_producto, descripcion_ebs, tipo_articulo,
                    ({match_score_sql}) AS match_score
-            FROM public.productos
+            FROM mv_productos
             WHERE {where_clause}
             ORDER BY match_score DESC, stock_total DESC NULLS LAST, descripcion ASC NULLS LAST
             LIMIT {int(limit)}
@@ -12251,6 +12338,7 @@ def fetch_term_product_rows(connection, query_terms: list[str], store_filters: l
     params = {}
     search_filters = []
     score_terms = []
+    var_idx = 500
     for index, term in enumerate(query_terms[:5]):
         params[f"pattern_{index}"] = f"%{term}%"
         compact_term = normalize_reference_value(term)
@@ -12258,8 +12346,24 @@ def fetch_term_product_rows(connection, query_terms: list[str], store_filters: l
         search_filters.append(f"search_blob ILIKE :pattern_{index}")
         if compact_term:
             search_filters.append(f"search_compact LIKE :compact_{index}")
+
+        # Collect variant ILIKE conditions for WHERE clause
+        variant_conditions = []
+        variants = _SEARCH_TERM_VARIANTS.get(term.lower(), [])
+        for variant in variants[:3]:
+            vk = f"tvar_{var_idx}"
+            var_idx += 1
+            params[vk] = f"%{variant.upper()}%"
+            search_filters.append(f"search_blob ILIKE :{vk}")
+            variant_conditions.append(f"search_blob ILIKE :{vk}")
+
+        # Combined score: 1 point if original OR compact OR any variant matches
+        all_conditions = [f"search_blob ILIKE :pattern_{index}"]
+        if compact_term:
+            all_conditions.append(f"search_compact LIKE :compact_{index}")
+        all_conditions.extend(variant_conditions)
         score_terms.append(
-            f"CASE WHEN search_blob ILIKE :pattern_{index} OR search_compact LIKE :compact_{index} THEN 1 ELSE 0 END"
+            f"CASE WHEN {' OR '.join(all_conditions)} THEN 1 ELSE 0 END"
         )
 
     # ── Abbreviation prefix matching ──────────────────────────────────────
@@ -12622,6 +12726,7 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
         key=lambda item: (
             item.get("kit_promo_penalty") or 0,  # Negative for kits → sorts them to the bottom
             item.get("exact_code_score") or 0,
+            item.get("specific_score") or 0,       # Product-specific term matches (moved up for accuracy)
             item.get("match_score") or 0,
             item.get("smart_score") or 0,         # Unified 0-1 smart score
             item.get("rotation_score") or 0,       # Historical sales rotation
@@ -12631,7 +12736,6 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
             item.get("finish_score") or 0,
             item.get("color_score") or 0,
             item.get("brand_score") or 0,
-            item.get("specific_score") or 0,
             item.get("base_exact_score") or 0,
             item.get("family_score") or 0,
             item.get("fuzzy_score") or 0,
@@ -12644,10 +12748,10 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
     if top_exact_code_score > 0:
         ranked_rows = [item for item in ranked_rows if (item.get("exact_code_score") or 0) == top_exact_code_score]
 
-    top_specific_score = ranked_rows[0].get("specific_score") or 0 if ranked_rows else 0
-    if top_specific_score >= 2:
-        ranked_rows = [item for item in ranked_rows if (item.get("specific_score") or 0) == top_specific_score]
-    elif top_specific_score > 0 and len(specific_terms) == 1:
+    max_specific_score = max((item.get("specific_score") or 0 for item in ranked_rows), default=0) if ranked_rows else 0
+    if max_specific_score >= 2:
+        ranked_rows = [item for item in ranked_rows if (item.get("specific_score") or 0) == max_specific_score]
+    elif max_specific_score > 0 and len(specific_terms) == 1:
         ranked_rows = [item for item in ranked_rows if (item.get("specific_score") or 0) > 0]
 
     top_match_score = ranked_rows[0].get("match_score") or 0 if ranked_rows else 0
@@ -12787,24 +12891,27 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             if smart_rows:
                 ranked_term_rows = rank_product_match_rows(smart_rows, product_request, normalized_query, rotation_cache, text_value)
 
-            # Also run legacy term search as fallback (in case smart search misses due to trigram threshold)
-            legacy_rows = fetch_term_product_rows(connection, query_terms, store_filters)
-            if legacy_rows:
-                legacy_ranked = rank_product_match_rows([dict(row) for row in legacy_rows], product_request, normalized_query, rotation_cache, text_value)
-                ranked_term_rows = _merge_product_rows(ranked_term_rows, legacy_ranked)
+            # Also run legacy term search as fallback ONLY if smart search has weak results
+            # (skip it when smart search already found strong matches to save a DB roundtrip)
+            good_smart_count = sum(1 for r in ranked_term_rows if (r.get("match_score") or 0) >= 3)
+            if good_smart_count < 3:
+                legacy_rows = fetch_term_product_rows(connection, query_terms, store_filters)
+                if legacy_rows:
+                    legacy_ranked = rank_product_match_rows([dict(row) for row in legacy_rows], product_request, normalized_query, rotation_cache, text_value)
+                    ranked_term_rows = _merge_product_rows(ranked_term_rows, legacy_ranked)
 
             # Merge curated + full-catalog, curated rows take priority, then re-sort by smart_score
             if ranked_curated_rows or ranked_term_rows:
                 merged = _merge_product_rows(ranked_curated_rows, ranked_term_rows)
                 if merged:
-                    # Final re-sort by smart_score descending so best matches float to top
+                    # Final re-sort: specific_score before smart_score so relevant matches win
                     merged.sort(
                         key=lambda item: (
                             item.get("kit_promo_penalty") or 0,
                             item.get("exact_code_score") or 0,
+                            item.get("specific_score") or 0,
                             item.get("smart_score") or 0,
                             item.get("rotation_score") or 0,
-                            item.get("specific_score") or 0,
                             item.get("match_score") or 0,
                             parse_numeric_value(item.get("stock_total")) or 0,
                         ),
@@ -13937,6 +14044,12 @@ IMPORTANTE: Los precios son ANTES DE IVA. El IVA es del 19%. Siempre muestra: Su
 Si no encuentras el precio de un producto, indica 'Precio pendiente de confirmación' en esa línea. \
 ⚠️ VIOLACIÓN GRAVE: Preguntar datos de despacho (nombre, dirección) ANTES de mostrar la cotización con precios. El cliente necesita VER los números antes de decidir si compra.
 
+REGLA DE VELOCIDAD — PEDIDOS Y COTIZACIONES MULTI-PRODUCTO (OBLIGATORIA — NIVEL ROJO):
+Cuando el cliente envíe una LISTA de 2 o más productos (pedido, cotización, lista de compras), DEBES usar la herramienta `consultar_inventario_lote` \
+pasando TODOS los productos de una sola vez en el array `productos`. NUNCA llames `consultar_inventario` múltiples veces por separado \
+para un mismo listado. El cliente NO puede esperar 5+ minutos. UNA sola llamada a `consultar_inventario_lote`, UN solo resultado, \
+UNA sola respuesta con TODO el listado. Si el cliente envía una lista, ESTA es tu herramienta.
+
 CIERRE DE PEDIDO: Una vez el cliente confirme que SÍ quiere hacer el pedido (después de ver la cotización), pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
 VALIDACIÓN PRE-CIERRE OBLIGATORIA: Antes de llamar `confirmar_pedido_y_generar_pdf`, revisa que CADA referencia en tu resumen corresponda EXACTAMENTE al producto (color, tamaño, presentación) que el cliente pidió. Si el cliente cambió alguna especificación durante la conversación, verifica que hayas hecho una nueva búsqueda de inventario y que la referencia sea la del producto actualizado, NO la del original.
 
@@ -14600,16 +14713,51 @@ AGENT_TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "consultar_inventario_lote",
+            "description": (
+                "Busca disponibilidad y precios de MÚLTIPLES productos en UNA SOLA llamada. "
+                "⚠️ OBLIGATORIO: Cuando el cliente envíe una lista de 2 o más productos (pedido, cotización, lista de compras), "
+                "USA ESTA HERRAMIENTA en vez de llamar `consultar_inventario` varias veces. Esto es MUCHO más rápido. "
+                "Cada elemento del array debe ser un producto individual con cantidad y presentación. "
+                "Aplica las mismas reglas de traducción que consultar_inventario: "
+                "T-11→Pintulux Blanco Brillante 3en1, SD1→barniz SD-1, 1501→Viniltex Blanco 1501, "
+                "brocha profesional→brocha goya profesional, etc."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "productos": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "Lista de productos a buscar. Cada string es un producto con cantidad y presentación. "
+                            "Ej: ['8 galones viniltex blanco 1501', '9 cuartos barniz SD-1 brillante', "
+                            "'2 galones pintulux 3en1 blanco 11', '12 brochas goya profesional 1 1/2']"
+                        ),
+                    },
+                },
+                "required": ["productos"],
+            },
+        },
+    },
 ]
 
 
 def _handle_tool_consultar_inventario(args, conversation_context):
     producto = args.get("producto", "")
+    # Skip NLU (OpenAI) call — the main LLM already parsed the product query via tool call
+    base_request = extract_product_request(producto)
+    base_request["nlu_processed"] = True
+    base_request = apply_deterministic_product_alias_rules(producto, base_request)
     product_request = build_followup_inventory_request(
         producto,
-        prepare_product_request_for_search(producto),
+        base_request,
         conversation_context,
     )
+    product_request["nlu_processed"] = True
     rows = lookup_product_context(producto, product_request)
     requested_store_codes = product_request.get("store_filters") or []
     requested_store_code = requested_store_codes[0] if len(requested_store_codes) == 1 else None
@@ -14741,6 +14889,116 @@ def _handle_tool_consultar_inventario(args, conversation_context):
                 "Se recuperó el producto del mensaje anterior para resolver este seguimiento."
                 if product_request.get("followup_from_previous_product") else None
             ),
+        },
+        ensure_ascii=False,
+        default=str,
+    )
+
+
+def _handle_tool_consultar_inventario_lote(args, conversation_context):
+    """Batch inventory lookup — processes multiple products in one call for speed."""
+    productos = args.get("productos") or []
+    if not productos:
+        return json.dumps({"encontrados": 0, "mensaje": "No se enviaron productos."}, ensure_ascii=False)
+
+    all_results = []
+    # Pre-warm rotation cache once for the entire batch
+    try:
+        engine = get_db_engine()
+        with engine.connect() as connection:
+            fetch_rotation_cache(connection)  # Warms global cache
+    except Exception:
+        pass
+
+    for producto_text in productos[:15]:  # Cap at 15 items max
+        producto_text = str(producto_text).strip()
+        if not producto_text:
+            continue
+        try:
+            # Skip NLU (OpenAI) call for batch items — the main LLM already parsed them
+            base_request = extract_product_request(producto_text)
+            base_request["nlu_processed"] = True
+            base_request = apply_deterministic_product_alias_rules(producto_text, base_request)
+            product_request = build_followup_inventory_request(
+                producto_text,
+                base_request,
+                conversation_context,
+            )
+            product_request["nlu_processed"] = True  # Ensure it stays set
+            rows = lookup_product_context(producto_text, product_request)
+            if not rows:
+                producto_key = producto_text.strip().lower()
+                if producto_key in PORTFOLIO_GAPS:
+                    all_results.append({
+                        "busqueda": producto_text,
+                        "encontrados": 0,
+                        "gap_portafolio": True,
+                        "mensaje": PORTFOLIO_GAPS[producto_key],
+                    })
+                    continue
+                all_results.append({
+                    "busqueda": producto_text,
+                    "encontrados": 0,
+                    "productos": [],
+                    "mensaje": "No se encontraron productos con esa descripción.",
+                })
+                continue
+
+            items = []
+            for row in rows[:5]:  # Top 5 per product (less than single to save tokens)
+                item = {
+                    "codigo": row.get("codigo_articulo") or row.get("referencia") or row.get("codigo"),
+                    "descripcion": get_exact_product_description(row),
+                    "descripcion_exacta": get_exact_product_description(row),
+                    "etiqueta_auditable": build_product_audit_label(row),
+                    "marca": row.get("marca") or row.get("marca_producto"),
+                    "presentacion": infer_product_presentation_from_row(row),
+                }
+                stock = parse_numeric_value(row.get("stock_total"))
+                item["disponible"] = (stock or 0) > 0
+                # Price lookup
+                ref_code = item.get("codigo") or ""
+                price_info = fetch_product_price(str(ref_code))
+                if price_info and price_info.get("precio_mejor"):
+                    pvp = float(price_info["precio_mejor"])
+                    item["precio_unitario"] = pvp
+                    item["precio_con_iva"] = round(pvp * 1.19)
+                    item["iva_pct"] = 19
+                elif not item.get("precio"):
+                    item["precio_unitario"] = None
+                    item["precio_nota"] = "Precio pendiente de confirmación"
+                items.append(item)
+
+            clarification_required = should_ask_product_clarification(product_request, rows)
+            clarification_question = build_best_product_clarification_question(product_request, rows) if clarification_required else None
+            all_results.append({
+                "busqueda": producto_text,
+                "encontrados": len(items),
+                "productos": items,
+                "requiere_aclaracion": clarification_required,
+                "pregunta_desambiguacion": clarification_question,
+                "nlu_extraccion": product_request.get("nlu_extraction") or {},
+            })
+
+            # Store last product context
+            if rows:
+                conversation_context["last_product_request"] = product_request
+                conversation_context["last_product_query"] = producto_text
+                conversation_context["last_product_context"] = items[:10]
+
+        except Exception as exc:
+            logger.warning("Batch lookup error for '%s': %s", producto_text, exc)
+            all_results.append({
+                "busqueda": producto_text,
+                "encontrados": 0,
+                "error": str(exc),
+            })
+
+    return json.dumps(
+        {
+            "total_buscados": len(all_results),
+            "resultados": all_results,
+            "estrategia_ranking": "catalogo_curado_postgresql",
         },
         ensure_ascii=False,
         default=str,
@@ -16445,7 +16703,7 @@ def _handle_tool_guardar_aprendizaje_producto(args, conversation_context):
         engine = get_db_engine()
         with engine.connect() as connection:
             exists_check = connection.execute(
-                text("SELECT 1 FROM public.productos WHERE producto_codigo = :ref OR referencia = :ref LIMIT 1"),
+                text("SELECT 1 FROM mv_productos WHERE producto_codigo = :ref OR referencia = :ref LIMIT 1"),
                 {"ref": str(canonical_reference)},
             ).fetchone()
             if not exists_check:
@@ -17020,6 +17278,8 @@ def _execute_agent_tool(tool_call, context, conversation_context):
     try:
         if fn_name == "consultar_inventario":
             result = _handle_tool_consultar_inventario(fn_args, conversation_context)
+        elif fn_name == "consultar_inventario_lote":
+            result = _handle_tool_consultar_inventario_lote(fn_args, conversation_context)
         elif fn_name == "verificar_identidad":
             result = _handle_tool_verificar_identidad(fn_args, context, conversation_context)
         elif fn_name == "consultar_cartera":
@@ -17180,6 +17440,8 @@ def generate_agent_reply_v2(
         if tc["name"] == "verificar_identidad":
             intent = "verificacion_identidad"
         elif tc["name"] == "consultar_inventario":
+            intent = "consulta_productos"
+        elif tc["name"] == "consultar_inventario_lote":
             intent = "consulta_productos"
         elif tc["name"] == "consultar_cartera":
             intent = "consulta_cartera"
@@ -17799,6 +18061,13 @@ async def admin_importar_articulos_maestro(
                     re.DOTALL | re.IGNORECASE,
                 ):
                     conn.execute(text(stmt_match.group(1)))
+
+            # Refresh materialized views used by product search
+            try:
+                conn.execute(text("REFRESH MATERIALIZED VIEW mv_productos"))
+                conn.execute(text("REFRESH MATERIALIZED VIEW mv_product_rotation"))
+            except Exception:
+                pass  # May not exist yet on first setup
 
         engine.dispose()
         return {
