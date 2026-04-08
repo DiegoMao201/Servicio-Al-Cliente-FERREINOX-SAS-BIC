@@ -39,6 +39,15 @@ BEGIN
         RETURN NULL;
     END IF;
 
+    -- Handle scientific notation (e.g. 1.53138e+006, 3.19E+006, -1.05454e+006)
+    IF cleaned ~* '[eE]' THEN
+        BEGIN
+            RETURN cleaned::double precision::numeric;
+        EXCEPTION
+            WHEN others THEN NULL;  -- fall through to standard parsing
+        END;
+    END IF;
+
     cleaned := REGEXP_REPLACE(cleaned, '[^0-9,.-]', '', 'g');
     IF cleaned = '' OR cleaned IN ('-', '.', ',') THEN
         RETURN NULL;
