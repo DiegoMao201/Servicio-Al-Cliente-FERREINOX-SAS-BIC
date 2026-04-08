@@ -5461,6 +5461,75 @@ def ensure_product_companion_table():
         )
 
 
+def ensure_expert_knowledge_table():
+    """Create agent_expert_knowledge table for commercial reinforcement notes."""
+    engine = get_db_engine()
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS public.agent_expert_knowledge (
+                    id bigserial PRIMARY KEY,
+                    cedula_experto text NOT NULL,
+                    nombre_experto text NOT NULL DEFAULT 'PABLO CESAR MAFLA BANOL',
+                    contexto_tags text NOT NULL,
+                    producto_recomendado text,
+                    producto_desestimado text,
+                    nota_comercial text NOT NULL,
+                    tipo text NOT NULL DEFAULT 'preferencia',
+                    activo boolean NOT NULL DEFAULT true,
+                    conversation_id bigint REFERENCES public.agent_conversation(id) ON DELETE SET NULL,
+                    created_at timestamptz NOT NULL DEFAULT now(),
+                    updated_at timestamptz NOT NULL DEFAULT now()
+                )
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                CREATE INDEX IF NOT EXISTS idx_agent_expert_knowledge_tags
+                ON public.agent_expert_knowledge USING gin(to_tsvector('spanish', contexto_tags || ' ' || nota_comercial))
+                """
+            )
+        )
+
+
+def fetch_expert_knowledge(query: str, limit: int = 5) -> list[dict]:
+    """Fetch commercial expert knowledge matching the query context."""
+    if not query:
+        return []
+    try:
+        engine = get_db_engine()
+        normalized = normalize_text_value(query)
+        terms = [t for t in normalized.split() if len(t) >= 4][:6]
+        if not terms:
+            return []
+        with engine.connect() as connection:
+            conditions = " OR ".join(
+                f"(contexto_tags ILIKE :t{i} OR nota_comercial ILIKE :t{i} OR COALESCE(producto_recomendado,'') ILIKE :t{i})"
+                for i in range(len(terms))
+            )
+            params = {f"t{i}": f"%{t}%" for i, t in enumerate(terms)}
+            rows = connection.execute(
+                text(
+                    f"""
+                    SELECT id, contexto_tags, producto_recomendado, producto_desestimado,
+                           nota_comercial, tipo, nombre_experto, created_at
+                    FROM public.agent_expert_knowledge
+                    WHERE activo = true AND ({conditions})
+                    ORDER BY created_at DESC
+                    LIMIT :lim
+                    """
+                ),
+                {**params, "lim": limit},
+            ).mappings().all()
+            return [dict(r) for r in rows]
+    except Exception as exc:
+        logger.debug("fetch_expert_knowledge error: %s", exc)
+        return []
+
+
 def fetch_product_companions(referencia: str) -> list[dict]:
     """Fetch all active companion/complementary products for a given reference."""
     if not referencia:
@@ -12753,6 +12822,18 @@ PRODUCTOS COMPLEMENTARIOS (CATALIZADORES, DILUYENTES, BASES):
 - NUNCA ignores los productos complementarios. Son críticos para que el cliente aplique el producto correctamente.
 - Cuando cierres un pedido que incluya productos con complementarios, recuérdale al cliente si no los ha incluido en el pedido.
 
+REFUERZO DE CONOCIMIENTO TÉCNICO-COMERCIAL (PABLO MAFLA — ASESOR EXPERTO):
+- El asesor técnico autorizado es PABLO CÉSAR MAFLA BAÑOL (cédula 1053774777). Cuando él habla contigo (ya autenticado como usuario interno), tiene la capacidad de ENSEÑARTE qué producto es correcto para cada situación.
+- Cuando Pablo te corrija, te diga 'para este caso es mejor X', 'ese producto no sirve para Y', 'en realidad para Z se usa W', o cualquier frase que implique una preferencia o corrección comercial: DEBES llamar `registrar_conocimiento_experto` inmediatamente para guardar ese aprendizaje.
+- EJEMPLOS que deben disparar `registrar_conocimiento_experto`:
+  * 'para tanque de agua potable no usar Pintucoat, usar Epoxipoliamida' → guardar
+  * 'el viniltex advanced es mejor que el basic para exteriores en clima húmedo' → guardar
+  * 'el Corrotec Premium supera al Corrotec estándar en acero expuesto' → guardar
+  * 'para pisos de bodega industrial el secado de 4h del epóxico piso es clave vs 24h del Pintucoat' → guardar
+- Extrae automáticamente: contexto_tags (palabras clave del caso), producto_recomendado, producto_desestimado si hay, nota_comercial completa, tipo (preferencia/contraindicacion/equivalencia/uso_especifico).
+- Cuando guardes el conocimiento, confirma a Pablo: '✅ Anotado. Para [contexto] recomendaré [producto] en lugar de [otro] porque [razón].'
+- Este conocimiento NO modifica las fichas técnicas. Se muestra como 'Experiencia Ferreinox' junto a la respuesta técnica del RAG.
+
 MEMORIA DE LISTAS: Si le mostraste al cliente una lista numerada de opciones (ya sean documentos, productos o cualquier cosa) y el cliente responde con un número (ej. '1', 'el 5', 'la segunda') o una afirmación ('sí', 'esa', 'la primera'), TIENES ESTRICTAMENTE PROHIBIDO pasarle ese número o 'sí' a las herramientas. DEBES buscar en tu memoria de conversación el nombre exacto de la opción que corresponde a ese número, y ejecutar la herramienta usando el NOMBRE COMPLETO EXACTO (ej. 'KORAZA ELASTOMÉRICA.pdf' o 'Domestico Blanco cuñete'). Nunca envíes '1', '2', 'sí' ni 'esa' como parámetro de búsqueda.
 
 CIERRE DE PEDIDO: Una vez el cliente confirme el resumen de productos, pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
@@ -13284,6 +13365,75 @@ AGENT_TOOLS = [
                     },
                 },
                 "required": ["producto_referencia", "companion_referencia", "tipo_relacion"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "registrar_conocimiento_experto",
+            "description": (
+                "Guarda conocimiento comercial real que el experto técnico de Ferreinox aporta para reforzar "
+                "las recomendaciones del agente. SOLO puede usarse cuando el usuario autenticado es el asesor "
+                "experto autorizado (Pablo César Mafla Bañol, cédula 1053774777). "
+                "Úsala cuando el experto corrija una recomendación del agente, indique que un producto es "
+                "mejor que otro para un uso específico, o aporte contexto técnico-comercial que no está en "
+                "las fichas técnicas. Ejemplo: 'para tanque de agua potable NO usar Pintucoat, usar "
+                "Epoxipoliamida porque tiene componente amida certificado para contacto con agua'. "
+                "Este conocimiento se inyecta automáticamente en futuras consultas similares."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "contexto_tags": {
+                        "type": "string",
+                        "description": (
+                            "Palabras clave separadas por comas que describen el contexto de uso. "
+                            "Ej: 'tanque agua potable, epoxico, inmersion, contacto agua, nsf'. "
+                            "Deben capturar cómo un cliente futuro podría describir el mismo problema."
+                        ),
+                    },
+                    "producto_recomendado": {
+                        "type": "string",
+                        "description": (
+                            "Nombre o referencia del producto que SE DEBE recomendar para este contexto. "
+                            "Ej: 'Epoxipoliamida', 'Corrotec Premium', 'Viniltex Advanced'. "
+                            "Puede estar vacío si la nota es solo informativa."
+                        ),
+                    },
+                    "producto_desestimado": {
+                        "type": "string",
+                        "description": (
+                            "Nombre del producto que NO se debe recomendar en este contexto o que el "
+                            "experto señaló como inferior. Ej: 'Pintucoat' (para tanques agua potable). "
+                            "Puede estar vacío si la nota no compara productos."
+                        ),
+                    },
+                    "nota_comercial": {
+                        "type": "string",
+                        "description": (
+                            "La nota completa del experto en lenguaje natural. Debe explicar POR QUÉ "
+                            "se prefiere un producto, las condiciones o limitaciones, y cualquier dato "
+                            "técnico-comercial relevante que no esté en las fichas. "
+                            "Ej: 'Para tanques de agua potable, el Pintucoat no tiene componente amida "
+                            "certificado para contacto con agua potable. La Epoxipoliamida si lo tiene. "
+                            "En cualquier aplicación donde el recubrimiento toque agua que se va a "
+                            "consumir, siempre recomendar Epoxipoliamida.'"
+                        ),
+                    },
+                    "tipo": {
+                        "type": "string",
+                        "enum": ["preferencia", "equivalencia", "contraindicacion", "uso_especifico"],
+                        "description": (
+                            "Tipo de conocimiento: "
+                            "'preferencia' = A es mejor que B para X uso; "
+                            "'equivalencia' = A y B sirven igual para X; "
+                            "'contraindicacion' = A NO debe usarse para X; "
+                            "'uso_especifico' = A es ideal para X (sin comparación)."
+                        ),
+                    },
+                },
+                "required": ["contexto_tags", "nota_comercial", "tipo"],
             },
         },
     },
@@ -15211,6 +15361,33 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`."
         )
 
+    # ── Inject expert commercial knowledge (does not modify RAG, is additive) ──
+    expert_notes = fetch_expert_knowledge(f"{producto} {pregunta}", limit=4)
+    if expert_notes:
+        result_payload["conocimiento_comercial_ferreinox"] = [
+            {
+                "id": n["id"],
+                "tipo": n["tipo"],
+                "contexto": n["contexto_tags"],
+                "recomendar": n["producto_recomendado"],
+                "evitar": n["producto_desestimado"],
+                "nota": n["nota_comercial"],
+            }
+            for n in expert_notes
+        ]
+        result_payload["instruccion_conocimiento_comercial"] = (
+            "⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — "
+            "El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. "
+            "REGLAS OBLIGATORIAS: "
+            "1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. "
+            "2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. "
+            "3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. "
+            "4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' "
+            "SEPARADO de la información de la ficha técnica. "
+            "5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). "
+            "El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente."
+        )
+
     return json.dumps(result_payload, ensure_ascii=False, default=str)
 
 
@@ -15286,6 +15463,89 @@ def _handle_tool_guardar_producto_complementario(args, conversation_context):
         )
 
 
+# ── Expert knowledge: save commercial reinforcement notes ─────────────────────
+_EXPERT_CEDULA = "1053774777"
+_EXPERT_NOMBRE = "PABLO CESAR MAFLA BANOL"
+
+
+def _handle_tool_registrar_conocimiento_experto(args, conversation_context):
+    """Save a commercial knowledge note from the authorized expert (Pablo Mafla)."""
+    # Guard: only the authorized expert can save knowledge
+    internal_user = conversation_context.get("internal_user") or {}
+    cedula = str(internal_user.get("cedula") or "").strip()
+    if cedula != _EXPERT_CEDULA:
+        return json.dumps(
+            {
+                "guardado": False,
+                "mensaje": (
+                    "Solo el asesor técnico autorizado (cédula 1053774777) puede registrar "
+                    "conocimiento experto. Si eres Pablo Mafla, verifica que hayas iniciado "
+                    "sesión con tu cédula."
+                ),
+            },
+            ensure_ascii=False,
+        )
+
+    contexto_tags = (args.get("contexto_tags") or "").strip()
+    nota_comercial = (args.get("nota_comercial") or "").strip()
+    tipo = (args.get("tipo") or "preferencia").strip()
+    producto_recomendado = (args.get("producto_recomendado") or "").strip() or None
+    producto_desestimado = (args.get("producto_desestimado") or "").strip() or None
+
+    if not contexto_tags or not nota_comercial:
+        return json.dumps(
+            {"guardado": False, "mensaje": "Se requieren contexto_tags y nota_comercial."},
+            ensure_ascii=False,
+        )
+
+    conversation_id = conversation_context.get("conversation_id") or None
+    try:
+        ensure_expert_knowledge_table()
+        engine = get_db_engine()
+        with engine.begin() as conn:
+            row = conn.execute(
+                text(
+                    """
+                    INSERT INTO public.agent_expert_knowledge
+                        (cedula_experto, nombre_experto, contexto_tags, producto_recomendado,
+                         producto_desestimado, nota_comercial, tipo, conversation_id)
+                    VALUES
+                        (:cedula, :nombre, :tags, :rec, :des, :nota, :tipo, :conv_id)
+                    RETURNING id
+                    """
+                ),
+                {
+                    "cedula": _EXPERT_CEDULA,
+                    "nombre": _EXPERT_NOMBRE,
+                    "tags": contexto_tags,
+                    "rec": producto_recomendado,
+                    "des": producto_desestimado,
+                    "nota": nota_comercial,
+                    "tipo": tipo,
+                    "conv_id": conversation_id,
+                },
+            ).fetchone()
+        kid = row[0] if row else "?"
+        rec_txt = f" → recomendar: {producto_recomendado}" if producto_recomendado else ""
+        des_txt = f" | evitar: {producto_desestimado}" if producto_desestimado else ""
+        return json.dumps(
+            {
+                "guardado": True,
+                "id": kid,
+                "mensaje": (
+                    f"✅ Conocimiento registrado (ID {kid}). Contexto: [{contexto_tags}]{rec_txt}{des_txt}. "
+                    f"El agente usará este conocimiento en consultas futuras similares."
+                ),
+            },
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        return json.dumps(
+            {"guardado": False, "mensaje": f"Error al guardar conocimiento: {exc}"},
+            ensure_ascii=False,
+        )
+
+
 def _execute_agent_tool(tool_call, context, conversation_context):
     fn_name = tool_call.function.name
     try:
@@ -15319,6 +15579,8 @@ def _execute_agent_tool(tool_call, context, conversation_context):
             result = _handle_tool_guardar_aprendizaje_producto(fn_args, conversation_context)
         elif fn_name == "guardar_producto_complementario":
             result = _handle_tool_guardar_producto_complementario(fn_args, conversation_context)
+        elif fn_name == "registrar_conocimiento_experto":
+            result = _handle_tool_registrar_conocimiento_experto(fn_args, conversation_context)
         else:
             result = json.dumps({"error": f"Herramienta desconocida: {fn_name}"}, ensure_ascii=False)
     except Exception as tool_exc:
