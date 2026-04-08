@@ -14652,10 +14652,11 @@ _VENTAS_STORE_SERIES: dict = {
 }
 
 # Vendedores de mostrador por sede (del sistema de BI Ferreinox Ventas)
+# Names must match fn_normalize_text() output exactly
 _VENDEDORES_MOSTRADOR: dict = {
-    "pereira":   ["ALEJANDRO CARBALLO MARQUEZ", "GEORGINA A GALVIS HERRERA"],
+    "pereira":   ["ALEJANDRO CARBALLO MARQUEZ", "GEORGINA A. GALVIS HERRERA"],
     "armenia":   ["CRISTIAN CAMILO RENDON MONTES", "FANDRY JOHANA ABRIL PENHA", "JAVIER ORLANDO PATINO HURTADO"],
-    "manizales": ["DAVID FELIPE MARTINEZ RIOS", "JHON JAIRO CASTAÑO MONTES"],
+    "manizales": ["DAVID FELIPE MARTINEZ RIOS", "JHON JAIRO CASTANO MONTES"],
     "laureles":  ["MAURICIO RIOS MORALES"],
     "opalo":     ["MARIA PAULA DEL JESUS GALVIS HERRERA"],
 }
@@ -14924,8 +14925,8 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
 
     where_clause = " AND ".join(conditions)
 
-    # ── Helper: raw table name (dedup exact-duplicate rows from CSV source) ───
-    _RAW = "(SELECT DISTINCT * FROM public.raw_ventas_detalle) AS dedup_ventas"
+    # ── Helper: raw table name ─────────────────────────────────────────────────
+    _RAW = "public.raw_ventas_detalle"
 
     # ── Nombre de marca mapping (inline CASE) ─────────────────────────────────
     _MARCA_CASE = """
