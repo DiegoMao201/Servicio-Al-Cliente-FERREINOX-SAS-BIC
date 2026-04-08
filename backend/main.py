@@ -5851,6 +5851,54 @@ def fetch_expert_knowledge(query: str, limit: int = 5) -> list[dict]:
         return []
 
 
+def fetch_product_price(referencia: str) -> Optional[dict]:
+    """Look up price for a product by its referencia code from agent_precios."""
+    if not referencia:
+        return None
+    try:
+        engine = get_db_engine()
+        with engine.connect() as conn:
+            row = conn.execute(
+                text("""
+                    SELECT referencia, descripcion, marca, pvp_sap, pvp_franquicia
+                    FROM public.agent_precios
+                    WHERE referencia = :ref AND pvp_sap > 0
+                    LIMIT 1
+                """),
+                {"ref": str(referencia).strip()},
+            ).mappings().first()
+            if row:
+                return dict(row)
+    except Exception as exc:
+        logger.debug("fetch_product_price error: %s", exc)
+    return None
+
+
+def fetch_client_by_nif(nif: str) -> Optional[dict]:
+    """Look up client info from agent_clientes by NIF (cedula/NIT)."""
+    if not nif:
+        return None
+    clean_nif = str(nif).strip().replace(".", "").replace("-", "")
+    try:
+        engine = get_db_engine()
+        with engine.connect() as conn:
+            row = conn.execute(
+                text("""
+                    SELECT codigo, nombre, nif, direccion, telefono, ciudad, categoria,
+                           email, persona_contacto, segmento, negocio, razon_social
+                    FROM public.agent_clientes
+                    WHERE REPLACE(REPLACE(nif, '.', ''), '-', '') = :nif
+                    LIMIT 1
+                """),
+                {"nif": clean_nif},
+            ).mappings().first()
+            if row:
+                return dict(row)
+    except Exception as exc:
+        logger.debug("fetch_client_by_nif error: %s", exc)
+    return None
+
+
 def fetch_product_companions(referencia: str) -> list[dict]:
     """Fetch all active companion/complementary products for a given reference."""
     if not referencia:
@@ -10858,12 +10906,14 @@ def generate_commercial_pdf(
     table_header = [
         Paragraph("<b>#</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
         Paragraph("<b>Producto</b>", ParagraphStyle("TH", parent=normal_style, textColor=white)),
-        Paragraph("<b>Referencia</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
-        Paragraph("<b>Cantidad</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
-        Paragraph("<b>Disponibilidad</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
+        Paragraph("<b>Ref.</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
+        Paragraph("<b>Cant.</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
+        Paragraph("<b>Precio Unit.</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
+        Paragraph("<b>Subtotal</b>", ParagraphStyle("TH", parent=normal_style, textColor=white, alignment=TA_CENTER)),
     ]
     table_data = [table_header]
 
+    grand_subtotal = 0
     for idx, item in enumerate(matched_items, start=1):
         matched_product = item.get("matched_product") or {}
         raw_desc = matched_product.get("descripcion") or matched_product.get("nombre_articulo") or item.get("original_text") or "Producto"
@@ -10880,8 +10930,18 @@ def generate_commercial_pdf(
             qty_label = format_quantity(qty_val)
         else:
             qty_label = "Por confirmar"
-        stock_val = parse_numeric_value(matched_product.get("stock_total") if matched_product.get("stock_total") is not None else matched_product.get("stock")) or 0
-        availability = "✅ Disponible" if stock_val > 0 else "⚠️ Agotado"
+
+        # --- Price lookup ---
+        price_info = fetch_product_price(str(ref_code))
+        unit_price = 0
+        if price_info and price_info.get("pvp_sap"):
+            unit_price = float(price_info["pvp_sap"])
+        qty_numeric = float(qty_val) if qty_val else 0
+        line_subtotal = unit_price * qty_numeric
+        grand_subtotal += line_subtotal
+
+        price_label = f"${unit_price:,.0f}".replace(",", ".") if unit_price > 0 else "Pendiente"
+        subtotal_label = f"${line_subtotal:,.0f}".replace(",", ".") if line_subtotal > 0 else "—"
 
         row_bg = white if idx % 2 == 1 else brand_light_bg
         table_data.append([
@@ -10889,13 +10949,37 @@ def generate_commercial_pdf(
             Paragraph(commercial_name, normal_style),
             Paragraph(str(ref_code), ParagraphStyle("Cell", parent=normal_style, alignment=TA_CENTER)),
             Paragraph(qty_label, ParagraphStyle("Cell", parent=normal_style, alignment=TA_CENTER)),
-            Paragraph(availability, ParagraphStyle("Cell", parent=normal_style, alignment=TA_CENTER)),
+            Paragraph(price_label, ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT)),
+            Paragraph(subtotal_label, ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT)),
+        ])
+
+    # --- Totals row ---
+    iva_amount = round(grand_subtotal * 0.19)
+    grand_total = round(grand_subtotal + iva_amount)
+    if grand_subtotal > 0:
+        fmt_sub = f"${grand_subtotal:,.0f}".replace(",", ".")
+        fmt_iva = f"${iva_amount:,.0f}".replace(",", ".")
+        fmt_total = f"${grand_total:,.0f}".replace(",", ".")
+        table_data.append([
+            Paragraph("", normal_style), Paragraph("", normal_style), Paragraph("", normal_style), Paragraph("", normal_style),
+            Paragraph("<b>Subtotal</b>", ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT)),
+            Paragraph(f"<b>{fmt_sub}</b>", ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT)),
+        ])
+        table_data.append([
+            Paragraph("", normal_style), Paragraph("", normal_style), Paragraph("", normal_style), Paragraph("", normal_style),
+            Paragraph("<b>IVA (19%)</b>", ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT)),
+            Paragraph(f"<b>{fmt_iva}</b>", ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT)),
+        ])
+        table_data.append([
+            Paragraph("", normal_style), Paragraph("", normal_style), Paragraph("", normal_style), Paragraph("", normal_style),
+            Paragraph("<b>TOTAL</b>", ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT, textColor=brand_dark)),
+            Paragraph(f"<b>{fmt_total}</b>", ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT, textColor=brand_dark)),
         ])
 
     if not matched_items:
-        table_data.append([Paragraph("—", normal_style)] * 5)
+        table_data.append([Paragraph("—", normal_style)] * 6)
 
-    col_widths = [doc.width * 0.05, doc.width * 0.41, doc.width * 0.16, doc.width * 0.16, doc.width * 0.22] if compact_mode else [doc.width * 0.06, doc.width * 0.38, doc.width * 0.18, doc.width * 0.18, doc.width * 0.20]
+    col_widths = [doc.width * 0.04, doc.width * 0.32, doc.width * 0.13, doc.width * 0.11, doc.width * 0.18, doc.width * 0.22] if compact_mode else [doc.width * 0.05, doc.width * 0.30, doc.width * 0.14, doc.width * 0.13, doc.width * 0.18, doc.width * 0.20]
     items_table = Table(table_data, colWidths=col_widths, repeatRows=1)
     table_style_cmds = [
         ("BACKGROUND", (0, 0), (-1, 0), brand_dark),
@@ -10917,11 +11001,12 @@ def generate_commercial_pdf(
 
     total_items = len(matched_items)
     pending_items = len([i for i in items if i.get("status") != "matched"])
+    total_label = f"${grand_total:,.0f}".replace(",", ".") if grand_total > 0 else "Pendiente"
     metrics_table = Table(
         [[
-            Paragraph(f"<b>Confirmados</b><br/>{total_items}", ParagraphStyle("Metric", parent=normal_style, alignment=TA_CENTER)),
-            Paragraph(f"<b>Pendientes</b><br/>{pending_items}", ParagraphStyle("Metric", parent=normal_style, alignment=TA_CENTER)),
+            Paragraph(f"<b>Productos</b><br/>{total_items}", ParagraphStyle("Metric", parent=normal_style, alignment=TA_CENTER)),
             Paragraph(f"<b>Sede</b><br/>{escape(str(store_name))}", ParagraphStyle("Metric", parent=normal_style, alignment=TA_CENTER)),
+            Paragraph(f"<b>Total IVA inc.</b><br/>{total_label}", ParagraphStyle("Metric", parent=normal_style, alignment=TA_CENTER)),
         ]],
         colWidths=[doc.width / 3.0, doc.width / 3.0, doc.width / 3.0],
     )
@@ -10935,9 +11020,11 @@ def generate_commercial_pdf(
     ]))
     elements.append(metrics_table)
     elements.append(Spacer(1, (2 if compact_mode else 5) * mm))
-    summary_text = f"<b>Total productos confirmados:</b> {total_items}"
+    summary_text = f"<b>Total productos:</b> {total_items}"
     if pending_items > 0:
         summary_text += f" — <i>{pending_items} pendiente(s) por precisar</i>"
+    if grand_total > 0:
+        summary_text += f" | <b>Total con IVA:</b> {total_label}"
     elements.append(Paragraph(summary_text, normal_style))
     if observations:
         elements.append(Spacer(1, (2 if compact_mode else 3) * mm))
@@ -10946,8 +11033,9 @@ def generate_commercial_pdf(
 
     elements.append(HRFlowable(width="100%", thickness=0.5, color=brand_border, spaceBefore=4, spaceAfter=4))
     elements.append(Paragraph(
-        "Este documento resume una solicitud comercial generada desde el CRM Ferreinox. "
-        "No constituye factura ni cotización valorada y está sujeto a validación de inventario, alistamiento y confirmación operativa por Ferreinox SAS BIC.",
+        f"Este documento resume una solicitud comercial generada desde el CRM Ferreinox. "
+        f"Los precios incluidos son antes de IVA (19%). Precios sujetos a disponibilidad y cambio sin previo aviso. "
+        f"No constituye factura y está sujeto a validación operativa por Ferreinox SAS BIC.",
         small_style,
     ))
     elements.append(Spacer(1, 3 * mm))
@@ -13308,7 +13396,32 @@ IMPORTANTE: El contenido completo del documento queda almacenado en el contexto 
 
 MEMORIA DE LISTAS: Si le mostraste al cliente una lista numerada de opciones (ya sean documentos, productos o cualquier cosa) y el cliente responde con un número (ej. '1', 'el 5', 'la segunda') o una afirmación ('sí', 'esa', 'la primera'), TIENES ESTRICTAMENTE PROHIBIDO pasarle ese número o 'sí' a las herramientas. DEBES buscar en tu memoria de conversación el nombre exacto de la opción que corresponde a ese número, y ejecutar la herramienta usando el NOMBRE COMPLETO EXACTO (ej. 'KORAZA ELASTOMÉRICA.pdf' o 'Domestico Blanco cuñete'). Nunca envíes '1', '2', 'sí' ni 'esa' como parámetro de búsqueda.
 
-CIERRE DE PEDIDO: Una vez el cliente confirme el resumen de productos, pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
+REGLA DE DISPONIBILIDAD (ESTRICTA):
+Cuando reportes disponibilidad de un producto, di ÚNICAMENTE '✅ Disponible' o '❌ No disponible'. \
+NUNCA muestres cantidades exactas de stock (NO digas '10 cuñetes disponibles', '56 cuartos en stock', etc.). \
+El cliente NO debe saber cuántas unidades hay en bodega. Solo necesita saber SI hay o NO hay.
+
+REGLA DE PRECISIÓN EN RECOMENDACIONES (ESTRICTA):
+Cuando el cliente pregunte cuánto producto necesita para un proyecto, calcula la cantidad EXACTA basándote en: \
+1) Los rendimientos de las fichas técnicas del RAG (m²/galón, m²/cuñete según el número de manos recomendado). \
+2) El área que el cliente describa. \
+3) El número de manos que recomienda la ficha técnica. \
+NUNCA redondees hacia arriba más de lo estrictamente necesario. Si el cálculo da 3.2 galones, recomienda 4 galones (la presentación siguiente), NO 5 ni 6. \
+El objetivo es que el cliente compre EXACTAMENTE lo que necesita, sin exceso innecesario. \
+Muestra siempre el cálculo: 'Área: X m² ÷ Rendimiento: Y m²/gal × Z manos = W galones'. \
+Si no conoces el rendimiento exacto, usa `consultar_conocimiento_tecnico` ANTES de dar la recomendación.
+
+FLUJO COMERCIAL — COTIZACIÓN PRIMERO, PEDIDO DESPUÉS (REGLA OBLIGATORIA):
+NUNCA asumas que el cliente quiere hacer un pedido directamente. El flujo correcto es: \
+1) Cuando el cliente seleccione productos y confirme cantidades, PRIMERO genera una COTIZACIÓN con precios. \
+2) Presenta el resumen con: producto, cantidad, precio unitario (+ IVA), subtotal por línea, y TOTAL. \
+3) Pregúntale: '¿Deseas que armemos el pedido para despacho, o por ahora solo necesitabas la cotización?' \
+4) Si el cliente dice que SÍ quiere pedir → pregunta a nombre de quién va el despacho y canal de envío, luego usa `confirmar_pedido_y_generar_pdf`. \
+5) Si el cliente dice que solo cotizaba → envía la cotización por el canal que prefiera (WhatsApp o correo) y cierra amablemente. \
+IMPORTANTE: Los precios son ANTES DE IVA. El IVA es del 19%. Siempre muestra: Subtotal + IVA (19%) = Total. \
+Si no encuentras el precio de un producto, indica 'Precio pendiente de confirmación' en esa línea.
+
+CIERRE DE PEDIDO: Una vez el cliente confirme que SÍ quiere hacer el pedido (después de ver la cotización), pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
 VALIDACIÓN PRE-CIERRE OBLIGATORIA: Antes de llamar `confirmar_pedido_y_generar_pdf`, revisa que CADA referencia en tu resumen corresponda EXACTAMENTE al producto (color, tamaño, presentación) que el cliente pidió. Si el cliente cambió alguna especificación durante la conversación, verifica que hayas hecho una nueva búsqueda de inventario y que la referencia sea la del producto actualizado, NO la del original.
 
 REGLA BROCHAS (FLUJO ESPECÍFICO):
@@ -14029,23 +14142,33 @@ def _handle_tool_consultar_inventario(args, conversation_context):
         if clasificacion:
             item["clasificacion"] = clasificacion
         stock = parse_numeric_value(row.get("stock_total"))
-        if stock is not None:
-            item["stock_total"] = stock
+        # Solo indicar disponible/no disponible, NUNCA cantidades exactas
+        item["disponible"] = (stock or 0) > 0
         requested_store_stock = row.get("stock_en_tienda_solicitada")
         if requested_store_stock is None and requested_store_code:
             requested_store_stock = extract_store_stock_from_summary(row.get("stock_por_tienda"), requested_store_code)
         if requested_store_stock is not None:
-            item["stock_tienda_solicitada"] = requested_store_stock
             item["disponible_tienda_solicitada"] = requested_store_stock > 0
         if requested_store_code:
             item["visibilidad_tienda_exacta"] = bool(row.get("visibilidad_tienda_exacta") or requested_store_stock is not None)
             item["tienda_solicitada"] = STORE_CODE_LABELS.get(requested_store_code) or requested_store_code
         stock_189 = parse_numeric_value(row.get("stock_189"))
         if stock_189 is not None:
-            item["stock_pereira"] = stock_189
+            item["disponible_pereira"] = stock_189 > 0
         precio = row.get("precio_venta")
         if precio is not None:
             item["precio"] = precio
+        # --- Price lookup from agent_precios ---
+        ref_code = item.get("codigo") or ""
+        price_info = fetch_product_price(str(ref_code))
+        if price_info and price_info.get("pvp_sap"):
+            pvp = price_info["pvp_sap"]
+            item["precio_unitario"] = pvp
+            item["precio_con_iva"] = round(float(pvp) * 1.19)
+            item["iva_pct"] = 19
+        elif not precio:
+            item["precio_unitario"] = None
+            item["precio_nota"] = "Precio pendiente de confirmación"
         # --- Companion/complementary products ---
         ref_for_companion = item.get("codigo") or ""
         companions = fetch_product_companions(ref_for_companion)
@@ -14140,17 +14263,27 @@ def _handle_tool_verificar_identidad(args, context, conversation_context):
                 "verified_cliente_codigo": cliente_codigo,
             }
         )
-        return json.dumps(
-            {
+        result = {
                 "verificado": True,
                 "nombre_cliente": verified_context.get("nombre_cliente"),
                 "cliente_codigo": cliente_codigo,
                 "ciudad": verified_context.get("ciudad"),
                 "nit": verified_context.get("nit"),
-            },
-            ensure_ascii=False,
-            default=str,
-        )
+            }
+        # Enrich with agent_clientes data
+        enrich_nif = verified_context.get("nit") or (criterio if is_numeric else None)
+        if enrich_nif:
+            client_extra = fetch_client_by_nif(enrich_nif)
+            if client_extra:
+                if client_extra.get("categoria"):
+                    result["categoria_cliente"] = client_extra["categoria"]
+                if client_extra.get("ciudad"):
+                    result["ciudad"] = result.get("ciudad") or client_extra["ciudad"]
+                if client_extra.get("email"):
+                    result["email"] = client_extra["email"]
+                if client_extra.get("segmento"):
+                    result["segmento"] = client_extra["segmento"]
+        return json.dumps(result, ensure_ascii=False, default=str)
     else:
         tipo = "documento" if is_numeric else "nombre"
         return json.dumps(

@@ -470,4 +470,63 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_agent_catalog_family_key
 CREATE UNIQUE INDEX IF NOT EXISTS uq_agent_catalog_rule_key
     ON public.agent_catalog_rule (regla_clave, COALESCE(tipo_regla, ''), COALESCE(aplicacion, ''));
 
+-- ===== PRECIOS Y CLIENTES =====
+CREATE TABLE IF NOT EXISTS public.agent_precios (
+    id SERIAL PRIMARY KEY,
+    codigo INTEGER,
+    descripcion_adicional TEXT,
+    descripcion TEXT,
+    referencia TEXT,
+    codigo_barras TEXT,
+    familia TEXT,
+    subfamilia TEXT,
+    marca TEXT,
+    linea TEXT,
+    cat_producto TEXT,
+    aplicacion TEXT,
+    departamento TEXT,
+    seccion TEXT,
+    sublinea TEXT,
+    peso_articulo NUMERIC,
+    pvp_sap NUMERIC DEFAULT 0,
+    pvp_franquicia NUMERIC DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_agent_precios_referencia ON public.agent_precios(referencia);
+CREATE INDEX IF NOT EXISTS idx_agent_precios_codigo ON public.agent_precios(codigo);
+
+CREATE TABLE IF NOT EXISTS public.agent_clientes (
+    id SERIAL PRIMARY KEY,
+    codigo INTEGER,
+    nombre TEXT,
+    nif TEXT,
+    direccion TEXT,
+    telefono TEXT,
+    poblacion TEXT,
+    codigo_postal TEXT,
+    provincia TEXT,
+    riesgo_concedido NUMERIC,
+    telefono_2 TEXT,
+    tipo_documento TEXT,
+    email TEXT,
+    persona_contacto TEXT,
+    ciudad TEXT,
+    categoria TEXT,
+    segmento TEXT,
+    negocio TEXT,
+    tipocliente2 TEXT,
+    tipo_de_documento TEXT,
+    nombre_1 TEXT,
+    otros_nombres TEXT,
+    apellido_1 TEXT,
+    apellido_2 TEXT,
+    razon_social TEXT,
+    dv TEXT,
+    clasificacion TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_agent_clientes_nif ON public.agent_clientes(nif);
+CREATE INDEX IF NOT EXISTS idx_agent_clientes_codigo ON public.agent_clientes(codigo);
+CREATE INDEX IF NOT EXISTS idx_agent_clientes_telefono ON public.agent_clientes(telefono);
+
 COMMIT;
