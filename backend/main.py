@@ -1670,6 +1670,8 @@ FERRETERIA_WORD_EXPANSIONS: list[tuple[str, str]] = [
     (r"\bprof\.?(?=\s|$)", "profesional"),   # "prof." o "prof " al final de palabra
     (r"\bbarni\b", "barniz"),
     (r"\besmal\b", "esmalte"),
+    # ── Fracciones de pulgada pegadas (ERP: "11/2" = 1½", "21/2" = 2½") ──
+    (r"\b([1-4])1/2\b", r"\1 1/2"),   # "11/2" → "1 1/2", "21/2" → "2 1/2", etc.
     (r"\bvini\b", "viniltex"),
 ]
 
@@ -1768,21 +1770,21 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*11\b",
             "canonical_product": "pintulux blanco 11",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "blanco", "11"],
+            "core_terms": ["pintulux", "blanco 11", "3en1 br blanco 11"],
             "color_filters": ["blanco"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*95\b",
             "canonical_product": "pintulux negro 95",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "negro", "95"],
+            "core_terms": ["pintulux", "negro 95", "3en1 br negro 95"],
             "color_filters": ["negro"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*10\b",
             "canonical_product": "pintulux blanco mate 10",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "blanco", "mate", "10"],
+            "core_terms": ["pintulux", "mat blanco 10", "3en1 mat blanco 10"],
             "color_filters": ["blanco mate"],
             "finish_filters": ["mate"],
         },
@@ -1790,7 +1792,7 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*89\b",
             "canonical_product": "pintulux negro mate 89",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "negro", "mate", "89"],
+            "core_terms": ["pintulux", "mat negro 89", "3en1 mat negro"],
             "color_filters": ["negro mate"],
             "finish_filters": ["mate"],
         },
@@ -1798,63 +1800,63 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*84\b",
             "canonical_product": "pintulux gris plata 84",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "gris", "84"],
+            "core_terms": ["pintulux", "gris plata 84", "br gris"],
             "color_filters": ["gris plata"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*76\b",
             "canonical_product": "pintulux caoba 76",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "caoba", "76"],
+            "core_terms": ["pintulux", "caoba 76", "br caoba 76"],
             "color_filters": ["caoba"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*80\b",
             "canonical_product": "pintulux verde bronce 80",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "verde bronce", "80"],
+            "core_terms": ["pintulux", "verde bronce 80", "br verde bronce"],
             "color_filters": ["verde bronce"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*53\b",
             "canonical_product": "pintulux verde esmeralda 53",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "verde esmeralda", "53"],
+            "core_terms": ["pintulux", "verde esmeralda 53", "br verde esmer"],
             "color_filters": ["verde esmeralda"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*18\b",
             "canonical_product": "pintulux amarillo 18",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "amarillo", "18"],
+            "core_terms": ["pintulux", "amarillo 18", "br amarillo 18"],
             "color_filters": ["amarillo"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*20\b",
             "canonical_product": "pintulux naranja 20",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "naranja", "20"],
+            "core_terms": ["pintulux", "naranja 20", "br naranja 20"],
             "color_filters": ["naranja"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*26\b",
             "canonical_product": "pintulux rojo bermellon 26",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "rojo", "26"],
+            "core_terms": ["pintulux", "rojo bermellon 26", "br rojo"],
             "color_filters": ["rojo bermellon"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*40\b",
             "canonical_product": "pintulux azul espanol 40",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "azul", "40"],
+            "core_terms": ["pintulux", "azul espanol 40", "br azul"],
             "color_filters": ["azul espanol"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*12\b",
             "canonical_product": "pintulux crema 12",
             "brand_filters": ["pintulux", "pintuco"],
-            "core_terms": ["pintulux", "crema", "12"],
+            "core_terms": ["pintulux", "crema 12", "br crema 12"],
             "color_filters": ["crema"],
         },
         {
@@ -1869,6 +1871,25 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "canonical_product": "pegante pl285 madera",
             "brand_filters": ["artecola"],
             "core_terms": ["pl285", "madera"],
+        },
+        # ── Barniz SD (SD-1, SD-2, SD-3) ──
+        {
+            "pattern": r"\bsd[\s-]*1\b",
+            "canonical_product": "barniz sd-1",
+            "brand_filters": ["pintuco"],
+            "core_terms": ["barniz", "incoloro", "sd-1"],
+        },
+        {
+            "pattern": r"\bsd[\s-]*2\b",
+            "canonical_product": "barniz sd-2",
+            "brand_filters": ["pintuco"],
+            "core_terms": ["barniz", "sd-2"],
+        },
+        {
+            "pattern": r"\bsd[\s-]*3\b",
+            "canonical_product": "barniz sd-3",
+            "brand_filters": ["pintuco"],
+            "core_terms": ["barniz", "sd-3"],
         },
         {
             "pattern": r"\b(pintulux)\b.*\bverde\s+bronce\b|\bverde\s+bronce\b.*\b(pintulux)\b",
@@ -6323,9 +6344,19 @@ def extract_size_filters(text_value: Optional[str]):
     if not text_value:
         return []
 
+    # Normalize fractional sizes: "11/2" → "1 1/2", "21/2" → "2 1/2"
+    normalized_text = re.sub(r'\b([1-4])1/2', r'\1 1/2', text_value)
+
     normalized_sizes = []
     seen_sizes = set()
-    for raw_match in re.findall(r"\b(\d+(?:\s+\d/\d)?)(?=\s*(?:\"|pulgadas?|pulg))", text_value, flags=re.IGNORECASE):
+    # Match sizes followed by " or pulgada
+    for raw_match in re.findall(r"\b(\d+(?:\s+\d/\d)?)(?=\s*(?:\"|''|pulgadas?|pulg))", normalized_text, flags=re.IGNORECASE):
+        size_value = re.sub(r"\s+", " ", raw_match.strip())
+        if size_value and size_value not in seen_sizes:
+            seen_sizes.add(size_value)
+            normalized_sizes.append(size_value)
+    # Also match bare fractions like "1/2", "1 1/2", "2 1/2" even without trailing quote
+    for raw_match in re.findall(r"\b(\d+\s+\d/\d)\b", normalized_text):
         size_value = re.sub(r"\s+", " ", raw_match.strip())
         if size_value and size_value not in seen_sizes:
             seen_sizes.add(size_value)
@@ -6335,11 +6366,13 @@ def extract_size_filters(text_value: Optional[str]):
 
 def infer_product_size_from_row(product_row: dict):
     raw_description = str(product_row.get("descripcion") or product_row.get("nombre_articulo") or "")
-    size_match = re.search(r"\b(\d+(?:/\d+)?(?:\s+\d/\d+)?)(?=\")", raw_description)
+    # Normalize ERP fractional sizes: "11/2" → "1 1/2", "21/2" → "2 1/2"
+    norm_desc = re.sub(r'\b([1-4])1/2\b', r'\1 1/2', raw_description)
+    size_match = re.search(r"\b(\d+(?:/\d+)?(?:\s+\d/\d+)?)(?=\")", norm_desc)
     if size_match:
         return re.sub(r"\s+", " ", size_match.group(1).strip())
 
-    normalized_description = normalize_text_value(raw_description)
+    normalized_description = normalize_text_value(norm_desc)
     for size_value in ["2 1/2", "1 1/2", "3 1/2", "4 1/2", "1/2"]:
         if size_value in normalized_description:
             return size_value
@@ -12192,6 +12225,14 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
         candidate_color = infer_product_color_from_row(candidate)
         candidate_finish = infer_product_finish_from_row(candidate)
 
+        # ── Kit/Promo deprioritization ──
+        # ERP has KIT, PAGUE, NO INV bundles that match product terms but are NOT
+        # the actual stock product.  Penalize them so real products rank higher.
+        _kit_promo_penalty = 0
+        _desc_upper = (candidate.get("descripcion") or candidate.get("nombre_articulo") or "").upper()
+        if any(kw in _desc_upper for kw in ("KIT ", "PAGUE ", "PAGU ", "NO INV", "GRATIS", "GTIS", "LLEVE")):
+            _kit_promo_penalty = -10
+
         specific_matches = 0
         for term in specific_terms:
             normalized_term = normalize_text_value(term)
@@ -12222,10 +12263,12 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
         candidate["direction_score"] = 1 if (request.get("direction_filters") or []) and candidate_direction in (request.get("direction_filters") or []) else 0
         candidate["color_score"] = 1 if (request.get("color_filters") or []) and candidate_color in (request.get("color_filters") or []) else 0
         candidate["finish_score"] = 1 if (request.get("finish_filters") or []) and candidate_finish in (request.get("finish_filters") or []) else 0
+        candidate["kit_promo_penalty"] = _kit_promo_penalty
         ranked_rows.append(candidate)
 
     ranked_rows.sort(
         key=lambda item: (
+            item.get("kit_promo_penalty") or 0,  # Negative for kits → sorts them to the bottom
             item.get("exact_code_score") or 0,
             item.get("match_score") or 0,
             item.get("direction_score") or 0,

@@ -407,7 +407,12 @@ SELECT
     public.fn_keep_alnum(
         COALESCE(descripcion, '') || ' ' ||
         COALESCE(referencia, '') || ' ' ||
-        COALESCE(marca, '')
+        COALESCE(marca, '') || ' ' ||
+        COALESCE(MAX(familia_clasificacion), '') || ' ' ||
+        COALESCE(MAX(descripcion_ebs), '') || ' ' ||
+        COALESCE(MAX(cat_producto), '') || ' ' ||
+        REPLACE(COALESCE(descripcion, ''), '-', '') || ' ' ||
+        REPLACE(COALESCE(descripcion, ''), ' ', '')
     ) AS search_compact,
     MAX(linea_clasificacion) AS linea_clasificacion,
     MAX(sublinea_clasificacion) AS sublinea_clasificacion,
