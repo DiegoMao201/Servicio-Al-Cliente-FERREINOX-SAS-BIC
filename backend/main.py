@@ -14924,8 +14924,8 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
 
     where_clause = " AND ".join(conditions)
 
-    # ── Helper: raw table name ─────────────────────────────────────────────────
-    _RAW = "public.raw_ventas_detalle"
+    # ── Helper: raw table name (dedup exact-duplicate rows from CSV source) ───
+    _RAW = "(SELECT DISTINCT * FROM public.raw_ventas_detalle) AS dedup_ventas"
 
     # ── Nombre de marca mapping (inline CASE) ─────────────────────────────────
     _MARCA_CASE = """

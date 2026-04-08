@@ -185,7 +185,7 @@ SELECT
     public.fn_parse_numeric(unidades_vendidas) AS unidades_vendidas_netas,
     public.fn_parse_numeric(costo_unitario) AS costo_unitario,
     public.fn_normalize_text(super_categoria) AS super_categoria
-FROM public.raw_ventas_detalle
+FROM (SELECT DISTINCT * FROM public.raw_ventas_detalle) AS dedup
 WHERE public.fn_normalize_text(tipo_documento) LIKE '%FACTURA%'
    OR public.fn_normalize_text(tipo_documento) LIKE '%NOTA%CREDITO%';
 
