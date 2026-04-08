@@ -5852,7 +5852,8 @@ def fetch_expert_knowledge(query: str, limit: int = 5) -> list[dict]:
 
 
 def fetch_product_price(referencia: str) -> Optional[dict]:
-    """Look up price for a product by its referencia code from agent_precios."""
+    """Look up price for a product by its referencia code from agent_precios.
+    Uses pvp_sap for Pintuco/MPY brands, pvp_franquicia for complementary brands (Goya, Yale, Abracol, etc.)."""
     if not referencia:
         return None
     try:
@@ -5860,9 +5861,11 @@ def fetch_product_price(referencia: str) -> Optional[dict]:
         with engine.connect() as conn:
             row = conn.execute(
                 text("""
-                    SELECT referencia, descripcion, marca, pvp_sap, pvp_franquicia
+                    SELECT referencia, descripcion, marca, cat_producto, aplicacion,
+                           pvp_sap, pvp_franquicia,
+                           COALESCE(NULLIF(pvp_sap, 0), NULLIF(pvp_franquicia, 0)) AS precio_mejor
                     FROM public.agent_precios
-                    WHERE referencia = :ref AND pvp_sap > 0
+                    WHERE referencia = :ref AND (pvp_sap > 0 OR pvp_franquicia > 0)
                     LIMIT 1
                 """),
                 {"ref": str(referencia).strip()},
@@ -5874,28 +5877,43 @@ def fetch_product_price(referencia: str) -> Optional[dict]:
     return None
 
 
-def fetch_client_by_nif(nif: str) -> Optional[dict]:
-    """Look up client info from agent_clientes by NIF (cedula/NIT)."""
-    if not nif:
+def fetch_client_by_nif_or_codigo(criterio: str) -> Optional[dict]:
+    """Look up client info from agent_clientes by NIF (cedula/NIT) or by codigo."""
+    if not criterio:
         return None
-    clean_nif = str(nif).strip().replace(".", "").replace("-", "")
+    clean = str(criterio).strip().replace(".", "").replace("-", "")
     try:
         engine = get_db_engine()
         with engine.connect() as conn:
+            # Try by NIF first
             row = conn.execute(
                 text("""
                     SELECT codigo, nombre, nif, direccion, telefono, ciudad, categoria,
-                           email, persona_contacto, segmento, negocio, razon_social
+                           email, persona_contacto, segmento, negocio, razon_social, riesgo_concedido
                     FROM public.agent_clientes
                     WHERE REPLACE(REPLACE(nif, '.', ''), '-', '') = :nif
                     LIMIT 1
                 """),
-                {"nif": clean_nif},
+                {"nif": clean},
             ).mappings().first()
             if row:
                 return dict(row)
+            # Fallback: try by codigo
+            if clean.isdigit():
+                row = conn.execute(
+                    text("""
+                        SELECT codigo, nombre, nif, direccion, telefono, ciudad, categoria,
+                               email, persona_contacto, segmento, negocio, razon_social, riesgo_concedido
+                        FROM public.agent_clientes
+                        WHERE codigo = :cod
+                        LIMIT 1
+                    """),
+                    {"cod": int(clean)},
+                ).mappings().first()
+                if row:
+                    return dict(row)
     except Exception as exc:
-        logger.debug("fetch_client_by_nif error: %s", exc)
+        logger.debug("fetch_client_by_nif_or_codigo error: %s", exc)
     return None
 
 
@@ -12677,9 +12695,23 @@ def send_whatsapp_document_bytes(to_phone: str, document_bytes: bytes, filename:
 
 # ── Agent v2: Function Calling Architecture ─────────────────────────
 
-AGENT_SYSTEM_PROMPT_V2 = """Eres el Ingeniero de Aplicaciones Senior de Ferreinox SAS BIC, con más de 13 años de experiencia en recubrimientos y soluciones constructivas. \
+AGENT_SYSTEM_PROMPT_V2 = """Eres Ferreinox AI, el asistente experto de Ferreinox SAS BIC, con más de 13 años de experiencia en recubrimientos, soluciones constructivas y ferretería especializada. \
 Tu objetivo NO es solo vender productos: es garantizar el ÉXITO del proyecto de mantenimiento o construcción del cliente. \
-Atiendes clientes por WhatsApp con tono profesional, cercano, extremadamente técnico pero pedagógico. Eres un solucionador de problemas y cierras ventas técnicas con criterio de ingeniero.
+Atiendes clientes por WhatsApp con tono CÁLIDO, cercano, servicial y humano — como un amigo experto que genuinamente quiere ayudar. \
+Eres un solucionador de problemas y cierras ventas técnicas con criterio de ingeniero.
+
+IDENTIDAD Y SALUDO:
+- Tu nombre es Ferreinox AI. Cuando el cliente te pregunte quién eres, responde: "Soy Ferreinox AI, tu experto en proyectos de pintura, recubrimientos y ferretería."
+- PRIMER MENSAJE de cada conversación: "¡Bienvenido a Ferreinox! Soy Ferreinox AI, tu experto en proyectos. ¿Qué tienes en mente hoy?" (adapta variantes naturales, NO repitas exactamente lo mismo).
+- Después del primer mensaje, NO vuelvas a saludar ni presentarte.
+
+TONO DE CONVERSACIÓN (REGLA DE ORO — HUMANIDAD):
+- Habla como un asesor amigable, no como un robot. Usa expresiones naturales: "claro que sí", "dale", "perfecto", "listo", "mira te cuento", "buenísimo".
+- NO uses listas numeradas largas ni bullets fríos cuando puedas explicar de forma conversacional. Las listas están bien para resúmenes de pedidos y cotizaciones.
+- Muestra empatía real: si el cliente tiene goteras, di "qué fastidio, pero tranquilo que eso tiene solución" antes de diagnosticar.
+- PROHIBIDO sonar como manual técnico. Eres experto pero ACCESIBLE. Explicar las cosas para que cualquier persona las entienda.
+- Si el cliente comete un error técnico, corrígelo con gentileza: "Ojo con eso, lo que pasa es que..." en vez de "Eso es incorrecto."
+- Los emojis están bien con moderación (✅, 💡, ⚠️) pero no abuses. NO uses emojis en cada oración.
 
 PRINCIPIO FUNDAMENTAL — VENDEMOS SISTEMAS, NO PRODUCTOS SUELTOS:
 \
@@ -13411,15 +13443,40 @@ El objetivo es que el cliente compre EXACTAMENTE lo que necesita, sin exceso inn
 Muestra siempre el cálculo: 'Área: X m² ÷ Rendimiento: Y m²/gal × Z manos = W galones'. \
 Si no conoces el rendimiento exacto, usa `consultar_conocimiento_tecnico` ANTES de dar la recomendación.
 
-FLUJO COMERCIAL — COTIZACIÓN PRIMERO, PEDIDO DESPUÉS (REGLA OBLIGATORIA):
-NUNCA asumas que el cliente quiere hacer un pedido directamente. El flujo correcto es: \
+REGLA SATINADO — MAPEO OBLIGATORIO (NIVEL ROJO):
+Cuando el cliente pida "pintura satinada", "acabado satinado", "satinado" para paredes, interiores o muros: \
+- "Satinado" = Viniltex Acriltex. La línea Acriltex ES la línea satinada de Pintuco para interiores/exteriores. \
+- NUNCA ofrezcas Viniltex Mate cuando el cliente pide satinado. Viniltex Mate es MATE, Acriltex es SATINADO. Son acabados diferentes. \
+- Si el cliente dice "satinado" sin más: busca "acriltex" en inventario. Pregunta color y presentación. \
+- El nombre comercial correcto es: Viniltex Acriltex BYC Satinado. \
+- Esta regla aplica SIEMPRE. No hay excepción.
+
+REGLA FILTRO DE CATEGORÍA — ANTI-HALLUCINATION (NIVEL ROJO):
+Los productos de la base de precios tienen un campo `aplicacion` que indica: CONSTRUCCION, DECORATIVO, AUTOS, RAD, ACC PARA PINTAR. \
+NUNCA recomiendes productos de categoría AUTOS (automotriz/industrial automotor) cuando el cliente necesita pintar una sala, habitación, fachada, muro, techo o cualquier superficie residencial/constructiva. \
+Productos AUTOS incluyen: primers automotrices, masillas automotrices, pinturas de retoque vehicular, etc. \
+Si el RAG o inventario te devuelve un producto con aplicacion=AUTOS y el cliente tiene una necesidad DECORATIVO/CONSTRUCCION, DESCARTA ese resultado silenciosamente. \
+La misma regla aplica al revés: si alguien necesita algo automotriz, no le ofrezcas vinilos decorativos. \
+Cuando hagas recomendaciones técnicas, valida mentalmente: "¿Este producto es para la misma aplicación que el cliente necesita?"
+
+REGLA ALTERNATIVAS PROACTIVAS (VENDEDOR INTELIGENTE):
+Si el producto exacto que el cliente busca NO está disponible (stock agotado o no existe esa referencia), NO te rindas. \
+1) Busca automáticamente la alternativa más cercana dentro de la misma familia: si no hay lija 150, busca lija 180; si no hay Viniltex blanco galón, busca Viniltex blanco cuñete. \
+2) Cuando ofrezcas la alternativa, EXPLICA brevemente por qué funciona: "No tengo lija 150 en este momento, pero la lija 180 es un grano más fino que te da un acabado muy similar, incluso un poco más suave." \
+3) Deja que el cliente decida: "¿Te sirve la 180 o prefieres que te avise cuando llegue la 150?" \
+4) Si no hay ninguna alternativa lógica en la misma familia, dilo honestamente y ofrece EL ESCAPE COMERCIAL (www.ferreinox.co). \
+OBJETIVO: El cliente NUNCA se va con las manos vacías si hay una solución razonable disponible.
+
+FLUJO COMERCIAL — COTIZACIÓN PRIMERO, PEDIDO DESPUÉS (REGLA OBLIGATORIA — NIVEL ROJO):
+NUNCA asumas que el cliente quiere hacer un pedido directamente. NUNCA preguntes "¿a nombre de quién va el despacho?" antes de presentar la cotización con precios. El flujo correcto es ESTRICTO: \
 1) Cuando el cliente seleccione productos y confirme cantidades, PRIMERO genera una COTIZACIÓN con precios. \
-2) Presenta el resumen con: producto, cantidad, precio unitario (+ IVA), subtotal por línea, y TOTAL. \
+2) Presenta el resumen con: producto, cantidad, precio unitario (+ IVA 19%), subtotal por línea, y TOTAL. \
 3) Pregúntale: '¿Deseas que armemos el pedido para despacho, o por ahora solo necesitabas la cotización?' \
-4) Si el cliente dice que SÍ quiere pedir → pregunta a nombre de quién va el despacho y canal de envío, luego usa `confirmar_pedido_y_generar_pdf`. \
-5) Si el cliente dice que solo cotizaba → envía la cotización por el canal que prefiera (WhatsApp o correo) y cierra amablemente. \
+4) SOLO SI el cliente dice que SÍ quiere pedir (después de ver precios) → AHORA sí pregunta a nombre de quién va el despacho y canal de envío, luego usa `confirmar_pedido_y_generar_pdf`. \
+5) Si el cliente dice que solo cotizaba → envía la cotización y cierra amablemente. \
 IMPORTANTE: Los precios son ANTES DE IVA. El IVA es del 19%. Siempre muestra: Subtotal + IVA (19%) = Total. \
-Si no encuentras el precio de un producto, indica 'Precio pendiente de confirmación' en esa línea.
+Si no encuentras el precio de un producto, indica 'Precio pendiente de confirmación' en esa línea. \
+⚠️ VIOLACIÓN GRAVE: Preguntar datos de despacho (nombre, dirección) ANTES de mostrar la cotización con precios. El cliente necesita VER los números antes de decidir si compra.
 
 CIERRE DE PEDIDO: Una vez el cliente confirme que SÍ quiere hacer el pedido (después de ver la cotización), pregúntale a nombre de quién va el despacho y si quiere el soporte por WhatsApp o al correo. Cuando tengas esos datos, ejecuta la herramienta `confirmar_pedido_y_generar_pdf`.
 VALIDACIÓN PRE-CIERRE OBLIGATORIA: Antes de llamar `confirmar_pedido_y_generar_pdf`, revisa que CADA referencia en tu resumen corresponda EXACTAMENTE al producto (color, tamaño, presentación) que el cliente pidió. Si el cliente cambió alguna especificación durante la conversación, verifica que hayas hecho una nueva búsqueda de inventario y que la referencia sea la del producto actualizado, NO la del original.
@@ -14161,11 +14218,13 @@ def _handle_tool_consultar_inventario(args, conversation_context):
         # --- Price lookup from agent_precios ---
         ref_code = item.get("codigo") or ""
         price_info = fetch_product_price(str(ref_code))
-        if price_info and price_info.get("pvp_sap"):
-            pvp = price_info["pvp_sap"]
+        if price_info and price_info.get("precio_mejor"):
+            pvp = float(price_info["precio_mejor"])
             item["precio_unitario"] = pvp
-            item["precio_con_iva"] = round(float(pvp) * 1.19)
+            item["precio_con_iva"] = round(pvp * 1.19)
             item["iva_pct"] = 19
+            if price_info.get("pvp_franquicia") and not price_info.get("pvp_sap"):
+                item["lista_precio"] = "franquicia"
         elif not precio:
             item["precio_unitario"] = None
             item["precio_nota"] = "Precio pendiente de confirmación"
@@ -14270,19 +14329,25 @@ def _handle_tool_verificar_identidad(args, context, conversation_context):
                 "ciudad": verified_context.get("ciudad"),
                 "nit": verified_context.get("nit"),
             }
-        # Enrich with agent_clientes data
-        enrich_nif = verified_context.get("nit") or (criterio if is_numeric else None)
-        if enrich_nif:
-            client_extra = fetch_client_by_nif(enrich_nif)
-            if client_extra:
-                if client_extra.get("categoria"):
-                    result["categoria_cliente"] = client_extra["categoria"]
-                if client_extra.get("ciudad"):
-                    result["ciudad"] = result.get("ciudad") or client_extra["ciudad"]
-                if client_extra.get("email"):
-                    result["email"] = client_extra["email"]
-                if client_extra.get("segmento"):
-                    result["segmento"] = client_extra["segmento"]
+        # Enrich with agent_clientes data (by NIF, cliente_codigo, or criterio)
+        enrich_keys = [verified_context.get("nit"), cliente_codigo, criterio if is_numeric else None]
+        client_extra = None
+        for ek in enrich_keys:
+            if ek and not client_extra:
+                client_extra = fetch_client_by_nif_or_codigo(str(ek))
+        if client_extra:
+            if client_extra.get("categoria"):
+                result["categoria_cliente"] = client_extra["categoria"]
+            if client_extra.get("ciudad"):
+                result["ciudad"] = result.get("ciudad") or client_extra["ciudad"]
+            if client_extra.get("email"):
+                result["email"] = client_extra["email"]
+            if client_extra.get("segmento"):
+                result["segmento"] = client_extra["segmento"]
+            if client_extra.get("direccion"):
+                result["direccion"] = client_extra["direccion"]
+            if client_extra.get("razon_social"):
+                result["razon_social"] = client_extra["razon_social"]
         return json.dumps(result, ensure_ascii=False, default=str)
     else:
         tipo = "documento" if is_numeric else "nombre"
