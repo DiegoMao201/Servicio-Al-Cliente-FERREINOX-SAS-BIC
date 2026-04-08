@@ -1,0 +1,67 @@
+{
+  "query": "pintura económica para cielo raso bodega",
+  "response": {
+    "query": "pintura económica para cielo raso bodega",
+    "resultados": [
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6803,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: En repinte]\n\nsobre color diferente\n30 a 40 m2 /gal\na 2 manos."
+      },
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6716,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: En repinte 40 a 50 m2 /gal]\n\nsobre color igual o similar a 2 manos."
+      },
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6702,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: En repinte 30 a 40 m2 /gal]\n\nsobre color diferente a 2 manos."
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6381,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+      },
+      {
+        "archivo": "PINTURA CIELOS.pdf",
+        "familia": "PINTURA CIELOS",
+        "similitud": 0.633,
+        "texto": "[PRODUCTO: PINTURA CIELOS] [MARCA: Pintuco]\n[SECCIÓN: Brocha o rodillo]\n\n1 galón\n25%\n1.0"
+      },
+      {
+        "archivo": "PINTURA SUPER CUBRIENTE.pdf",
+        "familia": "PINTURA SUPER CUBRIENTE",
+        "similitud": 0.6281,
+        "texto": "[PRODUCTO: PINTURA SUPER CUBRIENTE] [MARCA: Pintuco]\n[SECCIÓN: Brocha o Rodillo]\n\n1 galón\n 25%"
+      },
+      {
+        "archivo": "PINTURAMA.pdf",
+        "familia": "PINTURAMA",
+        "similitud": 0.625,
+        "texto": "[PRODUCTO: PINTURAMA] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para pintar superficies interiores no expuestas al polvo y a]\n\nfricciones, tales como techos y cielorrasos. Disponible en una amplia gama\nde colores."
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.5986,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15 m2/gal a 2 manos."
+      }
+    ],
+    "productos_candidatos": [
+      "Viniltex-advanced",
+      "PINTURA PARA CANCHAS",
+      "viniltex",
+      "pintucoat",
+      "pintura canchas",
+      "pinturama",
+      "pintura cielos",
+      "vinil max",
+      "domestico"
+    ]
+  }
+}

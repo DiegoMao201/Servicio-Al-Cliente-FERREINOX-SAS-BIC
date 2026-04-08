@@ -1,0 +1,65 @@
+{
+  "query": "techo de concreto goteando, tiene grietas",
+  "response": {
+    "query": "techo de concreto goteando, tiene grietas",
+    "resultados": [
+      {
+        "archivo": "PINTUCO FILL 12.pdf",
+        "familia": "PINTUCO FILL 12",
+        "similitud": 0.6554,
+        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nRecubrimiento acrílico impermeable y flexible, para\nevitar\nel\npaso\nde\nhumedad\ny\nfiltraciones\nen\ncubiertas y terrazas. Mejorado con fibras que le\npermiten puentear fisuras existentes hasta de 1 mm\ny distribuir los esfuerzos de tensión evitando que se\nproduzca rompimiento de la película. Diseñado para\ndar\nuna\nóptima\ndurabilidad\nde\nsu\npelícula\nimpermeabilizante de hasta 12 años siempre y\ncuando\nse\nsigan\nlas\nrecomendaciones\nde\nprep"
+      },
+      {
+        "archivo": "PINTUCO FILL 12.pdf",
+        "familia": "PINTUCO FILL 12",
+        "similitud": 0.6512,
+        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: Para]\n\nimpermeabilización\nflexible\nde\nplacas,\ncubiertas y canaletas. En terrazas y estructuras en\nconcreto, mortero, tejas de barro, fibrocemento,\nzinc"
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.6414,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: APLICACIÓN]\n\n• Recomendamos aplicar 1 mano de imprimante Sellomax ref.10270 o 10272\nespecialmente cuando se aplica sobre ladrillo vitrificado, para disminuir\nhumedades, mejorar adherencia y desempeño.\n• Si hay grietas de más de 1mm de ancho o empates entre losas, es necesario\nreforzar el sistema colocando una malla o tela de fibra de vidrio traslapando 10 cm\na cada lado de la grieta.(La fibra debe quedar embebida en el impermeabilizante\nROOF MA"
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.6395,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: IMPERMEABILIZANTE ACRILICO ROOF]\n\nMASTIC: 1/2"
+      },
+      {
+        "archivo": "PINTUCO FILL 7.pdf",
+        "familia": "PINTUCO FILL 7",
+        "similitud": 0.6391,
+        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nImpermeabilización flexible de placas, cubiertas,\ncanaletas. En terrazas y estructuras en mortero,\nconcreto, ladrillo, tejas de arcilla cocida, zinc o\naluminio."
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.6345,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE]\n\nSUPERFICIE | • La superficie que se va a impermeabilizar, debe ser sólida, completamente\nlimpia, seca y libre de partículas sueltas.\n• Las pinturas deterioradas, se eliminan con rasqueta y agua a presión.\n• Es Recomendable lavar con Hidrolavadora (presión de 1000 a 3000\nlibras/pulgada²)\n• Los resanes de grietas, huecos se deben hacer con el “ Mortero de Reparación”,\nRef. 27525/27526, o con la “Base Adhesiva para Impermeabilizar"
+      },
+      {
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.557,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: Cuarteamiento superficial]\n\n0\n\n-\nCuarteamiento a alto espesor (mudcracking)"
+      },
+      {
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.5461,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas, patios y terrazas revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar y tejas. Para el Sistema de Junta Perdida en fachadas\nfibrocemento."
+      }
+    ],
+    "productos_candidatos": [
+      "PINTUCO FILL 12",
+      "IMPERCOAT 7A",
+      "pintuco fill",
+      "imprimante",
+      "impercoat",
+      "koraza",
+      "tela de refuerzo"
+    ]
+  }
+}

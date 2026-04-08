@@ -1,0 +1,130 @@
+{
+  "user": "¿Qué colores de Koraza tienen disponibles en cuñete?",
+  "result": {
+    "response_text": "Actualmente, tenemos disponible el siguiente color de Koraza en cuñete:\n\n✅ [5891122] - PQ KORAZA MAT BLANCO 2650 18.93L: Disponible\n\nSi necesitas más información o deseas realizar un pedido, ¡avísame!",
+    "intent": "consulta_productos",
+    "tool_calls": [
+      {
+        "name": "consultar_inventario",
+        "args": {
+          "producto": "koraza"
+        },
+        "result": "{\"encontrados\": 5, \"productos\": [{\"codigo\": \"5891696\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 0.95L\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 0.95L\", \"etiqueta_auditable\": \"[5891696] - PQ KORAZA MAT BLANCO 2650 0.95L\", \"marca\": \"58\", \"presentacion\": \"cuarto\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"stock_total\": 123.0}, {\"codigo\": \"5890707\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 3.79L\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 3.79L\", \"etiqueta_auditable\": \"[5890707] - PQ KORAZA MAT BLANCO 2650 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"stock_total\": 105.0}, {\"codigo\": \"5891023\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 9.46L\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 9.46L\", \"etiqueta_auditable\": \"[5891023] - PQ KORAZA MAT BLANCO 2650 9.46L\", \"marca\": \"58\", \"presentacion\": null, \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"stock_total\": 47.0}, {\"codigo\": \"5891122\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 18.93L\", \"etiqueta_auditable\": \"[5891122] - PQ KORAZA MAT BLANCO 2650 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"stock_total\": 83.0}, {\"codigo\": \"5893857\", \"descripcion\": \"PQ KORAZA PINT IMPER BLANCO 4032 3.79L\", \"descripcion_exacta\": \"PQ KORAZA PINT IMPER BLANCO 4032 3.79L\", \"etiqueta_auditable\": \"[5893857] - PQ KORAZA PINT IMPER BLANCO 4032 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"stock_total\": 17.0}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {\"cantidad_inferida\": null, \"presentacion_canonica_inferida\": null, \"producto_base\": \"koraza\", \"color\": null, \"acabado\": null}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": true, \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"mensaje\": null}"
+      }
+    ],
+    "context_updates": {
+      "last_product_request": {
+        "core_terms": [
+          "koraza"
+        ],
+        "search_terms": [
+          "koraza",
+          "impermeabilizante koraza",
+          "koraza elastomerica",
+          "koraza elastomerico",
+          "pintura fachada",
+          "pintura exterior fachada",
+          "pintura canchas",
+          "pintura para canchas",
+          "pintura de cancha",
+          "canchas"
+        ],
+        "requested_quantity": null,
+        "requested_unit": null,
+        "quantity_expression": null,
+        "product_codes": [],
+        "brand_filters": [
+          "koraza",
+          "pintuco"
+        ],
+        "direction_filters": [],
+        "size_filters": [],
+        "store_filters": [],
+        "original_query": "koraza",
+        "color_filters": [],
+        "finish_filters": [],
+        "nlu_processed": true,
+        "nlu_extraction": {
+          "cantidad_inferida": null,
+          "presentacion_canonica_inferida": null,
+          "producto_base": "koraza",
+          "color": null,
+          "acabado": null
+        },
+        "canonical_product": "koraza"
+      },
+      "last_product_query": "koraza",
+      "last_product_context": [
+        {
+          "codigo": "5891696",
+          "descripcion": "PQ KORAZA MAT BLANCO 2650 0.95L",
+          "descripcion_exacta": "PQ KORAZA MAT BLANCO 2650 0.95L",
+          "etiqueta_auditable": "[5891696] - PQ KORAZA MAT BLANCO 2650 0.95L",
+          "marca": "58",
+          "presentacion": "cuarto",
+          "familia_consulta": "koraza_blanco",
+          "producto_padre_busqueda": "koraza blanco",
+          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
+          "stock_total": 123.0
+        },
+        {
+          "codigo": "5890707",
+          "descripcion": "PQ KORAZA MAT BLANCO 2650 3.79L",
+          "descripcion_exacta": "PQ KORAZA MAT BLANCO 2650 3.79L",
+          "etiqueta_auditable": "[5890707] - PQ KORAZA MAT BLANCO 2650 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "koraza_blanco",
+          "producto_padre_busqueda": "koraza blanco",
+          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
+          "stock_total": 105.0
+        },
+        {
+          "codigo": "5891023",
+          "descripcion": "PQ KORAZA MAT BLANCO 2650 9.46L",
+          "descripcion_exacta": "PQ KORAZA MAT BLANCO 2650 9.46L",
+          "etiqueta_auditable": "[5891023] - PQ KORAZA MAT BLANCO 2650 9.46L",
+          "marca": "58",
+          "presentacion": null,
+          "familia_consulta": "koraza_blanco",
+          "producto_padre_busqueda": "koraza blanco",
+          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
+          "stock_total": 47.0
+        },
+        {
+          "codigo": "5891122",
+          "descripcion": "PQ KORAZA MAT BLANCO 2650 18.93L",
+          "descripcion_exacta": "PQ KORAZA MAT BLANCO 2650 18.93L",
+          "etiqueta_auditable": "[5891122] - PQ KORAZA MAT BLANCO 2650 18.93L",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": "koraza_blanco",
+          "producto_padre_busqueda": "koraza blanco",
+          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
+          "stock_total": 83.0
+        },
+        {
+          "codigo": "5893857",
+          "descripcion": "PQ KORAZA PINT IMPER BLANCO 4032 3.79L",
+          "descripcion_exacta": "PQ KORAZA PINT IMPER BLANCO 4032 3.79L",
+          "etiqueta_auditable": "[5893857] - PQ KORAZA PINT IMPER BLANCO 4032 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "koraza_blanco",
+          "producto_padre_busqueda": "koraza blanco",
+          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
+          "stock_total": 17.0
+        }
+      ]
+    },
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": [
+        "inventory_used"
+      ]
+    },
+    "is_farewell": false
+  }
+}

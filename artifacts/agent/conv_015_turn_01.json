@@ -1,0 +1,27 @@
+{
+  "user": "Me puedes enviar la ficha técnica de Koraza",
+  "result": {
+    "response_text": "Encontré varias fichas técnicas de Koraza. ¿Cuál de estas necesitas exactamente?\n\n1. KORAZA 5.pdf\n2. KORAZA 5 GARANTIA.pdf\n3. KORAZA DOBLE VIDA.pdf\n4. KORAZA IMPERMEABLE.pdf\n5. KORAZA ELASTOMÉRICA.pdf\n6. KORAZA PROTECCION 3 EN 1.pdf",
+    "intent": "consulta_documentacion",
+    "tool_calls": [
+      {
+        "name": "buscar_documento_tecnico",
+        "args": {
+          "termino_busqueda": "koraza",
+          "es_hoja_de_seguridad": false
+        },
+        "result": "{\"status\": \"multiples_opciones\", \"opciones\": [\"KORAZA 5.pdf\", \"KORAZA 5 GARANTIA.pdf\", \"KORAZA DOBLE VIDA.pdf\", \"KORAZA IMPERMEABLE.pdf\", \"KORAZA ELASTOMÉRICA.pdf\", \"KORAZA PROTECCION 3 EN 1.pdf\"], \"mensaje\": \"Se encontraron 6 documentos para 'koraza'. Pregúntale al cliente cuál necesita.\"}"
+      }
+    ],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": [
+        "doc_used"
+      ]
+    },
+    "is_farewell": false
+  }
+}

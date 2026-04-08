@@ -1,0 +1,61 @@
+{
+  "query": "andén de concreto exterior",
+  "response": {
+    "query": "andén de concreto exterior",
+    "resultados": [
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.7037,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6587,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15 m2/gal a 2 manos."
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6449,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Acabado antideslizante.\n Alta resistencia al desgaste.\n Lista para usar, fácil de aplicar.\n Excelente durabilidad de los colores en exterior.\n Producto base agua, amigable con el usuario y el medio ambiente.\n Disponible en más de 200 colores por Sistema de Colores Pintuco®."
+      },
+      {
+        "archivo": "Doors And Frame (1).pdf",
+        "familia": "Doors And Frame",
+        "similitud": 0.5288,
+        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Interior and]\n\nexterior"
+      },
+      {
+        "archivo": "Doors And Frame (1).pdf",
+        "familia": "Doors And Frame",
+        "similitud": 0.5287,
+        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Wall]\n\n6˝ concrete block\n43"
+      },
+      {
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.5213,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Wall]\n\n6˝ concrete block\n43"
+      },
+      {
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.4911,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Interior and]\n\nexterior"
+      },
+      {
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.4787,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Full glass entrance door]\n\nconstruction"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTURA PARA CANCHAS",
+      "Doors And Frame",
+      "pintura canchas"
+    ]
+  }
+}

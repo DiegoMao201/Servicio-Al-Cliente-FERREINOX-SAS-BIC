@@ -1,0 +1,43 @@
+{
+  "query": "baño con hongos negros en las paredes",
+  "response": {
+    "query": "baño con hongos negros en las paredes",
+    "resultados": [
+      {
+        "archivo": "FDS - PINTULACA NEGRO 7518.pdf",
+        "familia": "FDS - PINTULACA NEGRO 7518",
+        "similitud": 0.5883,
+        "texto": "[PRODUCTO: FDS - PINTULACA NEGRO 7518] [MARCA: Pintuco]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      },
+      {
+        "archivo": "FDS - PINTULACA NEGRO 7518.pdf",
+        "familia": "FDS - PINTULACA NEGRO 7518",
+        "similitud": 0.5197,
+        "texto": "[PRODUCTO: FDS - PINTULACA NEGRO 7518]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      },
+      {
+        "archivo": "FDS- PINTULACA NEGRO MATIZ 7589.pdf",
+        "familia": "FDS- PINTULACA NEGRO MATIZ 7589",
+        "similitud": 0.5013,
+        "texto": "[PRODUCTO: FDS- PINTULACA NEGRO MATIZ 7589]\n[SECCIÓN: Crónico NOEC 50 ul/L Agua marina]\n\nAlgas - Hormosira banksii -"
+      },
+      {
+        "archivo": "FDS - PINTULUX ANTICORROSIVO ECO BASE AGUA GRIS.pdf",
+        "familia": "FDS - PINTULUX ANTICORROSIVO ECO BASE AGUA GRIS",
+        "similitud": 0.4859,
+        "texto": "[PRODUCTO: FDS - PINTULUX ANTICORROSIVO ECO BASE AGUA GRIS] [MARCA: Pintuco]\n[SECCIÓN: Evitar álcalis o bases fuertes]\n\n10.6"
+      },
+      {
+        "archivo": "FDS - ACUALUX BLANCO.pdf",
+        "familia": "FDS - ACUALUX BLANCO",
+        "similitud": 0.4841,
+        "texto": "[PRODUCTO: FDS - ACUALUX BLANCO] [MARCA: Pintuco]\n[SECCIÓN: Evitar álcalis o bases fuertes]\n\n10.6"
+      }
+    ],
+    "productos_candidatos": [
+      "viniltex",
+      "viniltex banos y cocinas",
+      "aquablock"
+    ]
+  }
+}

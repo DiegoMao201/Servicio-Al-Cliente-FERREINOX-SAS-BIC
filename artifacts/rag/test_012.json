@@ -1,0 +1,66 @@
+{
+  "query": "impermeabilizar terraza de plancha",
+  "response": {
+    "query": "impermeabilizar terraza de plancha",
+    "resultados": [
+      {
+        "archivo": "PINTUCO FILL 12.pdf",
+        "familia": "PINTUCO FILL 12",
+        "similitud": 0.7433,
+        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: Para]\n\nimpermeabilización\nflexible\nde\nplacas,\ncubiertas y canaletas. En terrazas y estructuras en\nconcreto, mortero, tejas de barro, fibrocemento,\nzinc"
+      },
+      {
+        "archivo": "PINTUCO FILL 7.pdf",
+        "familia": "PINTUCO FILL 7",
+        "similitud": 0.7372,
+        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nImpermeabilización flexible de placas, cubiertas,\ncanaletas. En terrazas y estructuras en mortero,\nconcreto, ladrillo, tejas de arcilla cocida, zinc o\naluminio."
+      },
+      {
+        "archivo": "PINTUCO FILL 12.pdf",
+        "familia": "PINTUCO FILL 12",
+        "similitud": 0.7289,
+        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: Impermeabilizante para cubiertas y terrazas]\n\nRugosas: 3 - 4 m2/ gal"
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.7093,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE]\n\nSUPERFICIE | • La superficie que se va a impermeabilizar, debe ser sólida, completamente\nlimpia, seca y libre de partículas sueltas.\n• Las pinturas deterioradas, se eliminan con rasqueta y agua a presión.\n• Es Recomendable lavar con Hidrolavadora (presión de 1000 a 3000\nlibras/pulgada²)\n• Los resanes de grietas, huecos se deben hacer con el “ Mortero de Reparación”,\nRef. 27525/27526, o con la “Base Adhesiva para Impermeabilizar"
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.6964,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: APLICACIÓN]\n\n• Recomendamos aplicar 1 mano de imprimante Sellomax ref.10270 o 10272\nespecialmente cuando se aplica sobre ladrillo vitrificado, para disminuir\nhumedades, mejorar adherencia y desempeño.\n• Si hay grietas de más de 1mm de ancho o empates entre losas, es necesario\nreforzar el sistema colocando una malla o tela de fibra de vidrio traslapando 10 cm\na cada lado de la grieta.(La fibra debe quedar embebida en el impermeabilizante\nROOF MA"
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.6837,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nSe utiliza para la Impermeabilización de muros, terrazas sobre ladrillo, ladrillo\nvitrificado o concreto.\nNota. No se debe utilizar en inmersión permanente."
+      },
+      {
+        "archivo": "KORAZA PROTECCION 3 EN 1.pdf",
+        "familia": "KORAZA PROTECCION 3 EN 1",
+        "similitud": 0.6057,
+        "texto": "[PRODUCTO: KORAZA PROTECCION 3 EN 1] [MARCA: Pintuco]\n[SECCIÓN: Protección 3 en 1 como refuerzo en medias]\n\ncañas, sifones y juntas de dilatación. En terrazas\nnuevas o viejas con un área superior a 100m2,\ndebe aplicarse tela de refuerzo en toda el área.\nNo se recomienda Koraza® Protección 3 en 1\npara cubiertas o superficies con tráfico peatonal\npermanente. Se recomienda aplicar el sustrato\ncon una temperatura ambiente entre 5°C y 35°C\nKoraza® Protección 3 en 1 tiene una durabilidad\nde hasta 5 añ"
+      },
+      {
+        "archivo": "KORAZA PROTECCION 3 EN 1.pdf",
+        "familia": "KORAZA PROTECCION 3 EN 1",
+        "similitud": 0.6039,
+        "texto": "[PRODUCTO: KORAZA PROTECCION 3 EN 1] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para sellar, impermeabilizar y decorar techos, terrazas con tráfico liviano, paredes\nexteriores de concreto, cemento, ladrillo, piedra y superficies estucadas con estuco plástico\nresistenteal agua. Además recomendada para aplicar en zonas cálidas para reducir la temperatura\nal interior de su hogar y generando ahorro de energía al reducir el uso de aires acondicionados y\nventiladores. Disponible en color blanco."
+      }
+    ],
+    "productos_candidatos": [
+      "PINTUCO FILL 12",
+      "PINTUCO FILL 7",
+      "IMPERCOAT 7A",
+      "pintuco fill",
+      "imprimante",
+      "impercoat",
+      "koraza",
+      "aquablock"
+    ]
+  }
+}

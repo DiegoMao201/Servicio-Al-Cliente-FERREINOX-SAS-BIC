@@ -1,0 +1,66 @@
+{
+  "query": "juego infantil de metal al aire libre",
+  "response": {
+    "query": "juego infantil de metal al aire libre",
+    "resultados": [
+      {
+        "archivo": "FDS - PINTULUX MP ALUMINIO.pdf",
+        "familia": "FDS - PINTULUX MP ALUMINIO",
+        "similitud": 0.4779,
+        "texto": "[PRODUCTO: FDS - PINTULUX MP ALUMINIO] [MARCA: Pintuco]\n[SECCIÓN: Puede reaccionar]\n\nviolentamente\n10.6"
+      },
+      {
+        "archivo": "FDS - PINTULUX MP ALUMINIO.pdf",
+        "familia": "FDS - PINTULUX MP ALUMINIO",
+        "similitud": 0.465,
+        "texto": "[PRODUCTO: FDS - PINTULUX MP ALUMINIO] [MARCA: Pintulux]\n[SECCIÓN: Puede reaccionar]\n\nviolentamente\n10.6"
+      },
+      {
+        "archivo": "FDS- PINTULUX MP BASE DEEP VERANO ETERNO.pdf",
+        "familia": "FDS- PINTULUX MP BASE DEEP VERANO ETERNO",
+        "similitud": 0.4564,
+        "texto": "[PRODUCTO: FDS- PINTULUX MP BASE DEEP VERANO ETERNO] [MARCA: Pintuco]\n[SECCIÓN: Log POW]\n\n3,3"
+      },
+      {
+        "archivo": "FDC ANTICORROSIVO VERDE OLIVA 513.pdf",
+        "familia": "FDC ANTICORROSIVO VERDE OLIVA 513",
+        "similitud": 0.448,
+        "texto": "[PRODUCTO: FDC ANTICORROSIVO VERDE OLIVA 513] [MARCA: Pintuco]\n[SECCIÓN: Choque y fricción Contacto con el aire Calentamiento Luz Solar Humedad]\n\nNo aplicable No aplicable Riesgo de inflamación Evitar incidencia directa No aplicable\n10.5 Materiales incompatibles:"
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.4456,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nAplique al metal el producto con una brocha de cerda natural o sumerja el objeto metálico en Pintóxido\nhasta humedecerlo bien, dejando actuar el producto durante 4 horas para que la transformación del óxido\nsea completa (a 25°C), y luego retire el objeto para exponerlo al aire. Se debe procurar que el producto\npenetre muy bien en las zonas oxidadas para que ataque el óxido incrustado profundamente, lo cual se"
+      },
+      {
+        "archivo": "C- THERM HB 990 OUTDOOR.pdf",
+        "familia": "C- THERM HB 990 OUTDOOR",
+        "similitud": 0.4436,
+        "texto": "[PRODUCTO: C- THERM HB 990 OUTDOOR] [MARCA: Pintuco]\n[SECCIÓN: Rodillo]\n\n250"
+      },
+      {
+        "archivo": "FDS - PRIMER ANTICORROSIVO VERDE OLIVA 513.pdf",
+        "familia": "FDS - PRIMER ANTICORROSIVO VERDE OLIVA 513",
+        "similitud": 0.4333,
+        "texto": "[PRODUCTO: FDS - PRIMER ANTICORROSIVO VERDE OLIVA 513] [MARCA: Pintuco]\n[SECCIÓN: Choque y fricción Contacto con el aire Calentamiento Luz Solar Humedad]\n\nNo aplicable No aplicable Riesgo de inflamación Evitar incidencia directa No aplicable\n10.5 Materiales incompatibles:"
+      },
+      {
+        "archivo": "FDC ANTICORROSIVO VERDE OLIVA 513.pdf",
+        "familia": "FDC ANTICORROSIVO VERDE OLIVA 513",
+        "similitud": 0.4324,
+        "texto": "[PRODUCTO: FDC ANTICORROSIVO VERDE OLIVA 513]\n[SECCIÓN: Choque y fricción Contacto con el aire Calentamiento Luz Solar Humedad]\n\nNo aplicable No aplicable Riesgo de inflamación Evitar incidencia directa No aplicable\n10.5 Materiales incompatibles:"
+      }
+    ],
+    "productos_candidatos": [
+      "FDC ANTICORROSIVO VERDE OLIVA 513",
+      "CORROTEC",
+      "C- THERM HB 990 OUTDOOR",
+      "corrotec",
+      "pintoxido",
+      "pintulux",
+      "anticorrosivo",
+      "wash primer"
+    ]
+  }
+}

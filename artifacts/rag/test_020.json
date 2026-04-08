@@ -1,0 +1,63 @@
+{
+  "query": "garaje residencial piso de concreto",
+  "response": {
+    "query": "garaje residencial piso de concreto",
+    "resultados": [
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6623,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15 m2/gal a 2 manos."
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6384,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6211,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: INDICACIONES IMPORTANTES/PRECAUCIONES]\n\n Chequear condiciones de la loza de concreto que no vayan a afectar la adherencia del producto,\ntales como curadores, capas de lechada o endurecedores.\n Si la superficie es en concreto nuevo o nunca ha sido pintado, es obligatorio aplicar como\nimprimante pintura epóxica Base Solvente de Pintuco.\n La garantía del producto depende de la frecuencia, tipo de uso de la cancha y el número de\nmanos qu"
+      },
+      {
+        "archivo": "PINTUCOAT.pdf",
+        "familia": "PINTUCOAT",
+        "similitud": 0.6084,
+        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: Versión 7 / Junio 2021]\n\nabrasivo mínimo a grado comercial con remoción completa de la escama de laminación (SSPC-SP6,\nestándar Sueco SA-2), y para mayor durabilidad deben ser preparados cerca de metal blanco (SSPC-SP10).\nAntes de aplicar el Pintucoat®, proteja el metal con una Pintura Anticorrosiva Pintuco® apropiada. En\nmaderas selle bien con una mano de Pintucoat® diluido al 20% por volumen con Ajustador Pintuco® Ref.\n21209. En concreto y fibro"
+      },
+      {
+        "archivo": "PINTURA EPOXICA PARA CONCRETO.pdf",
+        "familia": "PINTURA EPOXICA PARA CONCRETO",
+        "similitud": 0.6082,
+        "texto": "[PRODUCTO: PINTURA EPOXICA PARA CONCRETO] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar verifique que la superficie esté seca, libre de polvo, mugre, grasa y/o pintura deteriorada. Para\nrepintes sobre pinturas epóxicas en buenas condiciones, se debe lijar en seco para eliminarles el brillo y promover\nperfil de anclaje. Tener especial cuidado al aplicar sobre pinturas no epóxicas ya que pueden removerse o\nablandarse. Las pinturas deterioradas se deben eliminar por med"
+      },
+      {
+        "archivo": "PINTUCOAT.pdf",
+        "familia": "PINTUCOAT",
+        "similitud": 0.6014,
+        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: Zonas de tráfico medio:]\n\no Se recomienda hacer una imprimación con Pintucoat® Ref. 516 o 517 y dar acabado\ncon Esmalte Poliuretano Ref. 11304 o 11324 con catalizador Ref. 11351 en relación de\nmezcla 1:1\no Se puede utilizar barniz poliuretano para pisos, como acabado final.\n* Para mayor información consultar con servicio técnico.\n\nNOTA: Únicamente en ambientes interiores este producto puede ser utilizado sin pintura de acabado; en\nambientes exteri"
+      },
+      {
+        "archivo": "CANCHAS Y PISOS.pdf",
+        "familia": "CANCHAS Y PISOS",
+        "similitud": 0.4775,
+        "texto": "[PRODUCTO: CANCHAS Y PISOS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15m2/gal. a 2 manos"
+      },
+      {
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.4745,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: Espesor seco recomendado]\n\n175\n225"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTURA PARA CANCHAS",
+      "PINTUCOAT",
+      "pintucoat",
+      "imprimante",
+      "pintura canchas"
+    ]
+  }
+}

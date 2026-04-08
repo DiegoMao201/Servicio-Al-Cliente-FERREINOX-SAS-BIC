@@ -1,0 +1,65 @@
+{
+  "query": "el hierro se lo está comiendo el óxido",
+  "response": {
+    "query": "el hierro se lo está comiendo el óxido",
+    "resultados": [
+      {
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.612,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
+      },
+      {
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.5859,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
+      },
+      {
+        "archivo": "FDS - PINTOXIDO 514.pdf",
+        "familia": "FDS - PINTOXIDO 514",
+        "similitud": 0.5741,
+        "texto": "[PRODUCTO: FDS - PINTOXIDO 514]\n[SECCIÓN: Los productos de descomposición pueden incluir los siguientes materiales:]\n\nóxidos de fósforo\nóxido/óxidos metálico/metálicos"
+      },
+      {
+        "archivo": "FDS - CORROTEC PREMIUM 507.pdf",
+        "familia": "FDS - CORROTEC PREMIUM 507",
+        "similitud": 0.5537,
+        "texto": "[PRODUCTO: FDS - CORROTEC PREMIUM 507]\n[SECCIÓN: Reactivo o incompatible con los siguientes materiales:]\n\nmateriales oxidantes\n:\n:"
+      },
+      {
+        "archivo": "FDS - CORROTEC PREMIUM 507.pdf",
+        "familia": "FDS - CORROTEC PREMIUM 507",
+        "similitud": 0.5493,
+        "texto": "[PRODUCTO: FDS - CORROTEC PREMIUM 507]\n[SECCIÓN: Rata]\n\n6400 mg/kg\n-\nbis(2-etilhexanoato) de\ncobalto"
+      },
+      {
+        "archivo": "FDS - CORROTEC PREMIUM 507.pdf",
+        "familia": "FDS - CORROTEC PREMIUM 507",
+        "similitud": 0.5463,
+        "texto": "[PRODUCTO: FDS - CORROTEC PREMIUM 507]\n[SECCIÓN: Rata]\n\n1.22 g/kg\n-\ntetraóxido de bario y diboro"
+      },
+      {
+        "archivo": "FDS- ACRILICA MANTENIMIENTO ROJO 13881.pdf",
+        "familia": "FDS- ACRILICA MANTENIMIENTO ROJO 13881",
+        "similitud": 0.5242,
+        "texto": "[PRODUCTO: FDS- ACRILICA MANTENIMIENTO ROJO 13881]\n[SECCIÓN: Reactivo o incompatible con los siguientes materiales:]\n\nmateriales oxidantes\n:\n:"
+      },
+      {
+        "archivo": "LACA MULTIUSOS AEROCOLOR GENERICA.pdf",
+        "familia": "LACA MULTIUSOS AEROCOLOR GENERICA",
+        "similitud": 0.5193,
+        "texto": "[PRODUCTO: LACA MULTIUSOS AEROCOLOR GENERICA] [MARCA: Pintuco]\n[SECCIÓN: Materiales a Evitar:]\n\nAgentes Oxidantes fuertes, bases o ácidos, ataca muchos metales en\npresencia de agua"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTOXIDO",
+      "LACA MULTIUSOS AEROCOLOR GENERICA",
+      "aerocolor",
+      "pintoxido",
+      "corrotec",
+      "anticorrosivo",
+      "pintulux"
+    ]
+  }
+}

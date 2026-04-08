@@ -1,0 +1,19 @@
+﻿python : Traceback (most recent call last):
+En línea: 1 Carácter: 54
++ ... ricio\Desktop\CRM_Ferreinox" ; python explore_catalog.py 2>&1 | Out-F ...
++                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Traceback (most recent call last) 
+   ::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  File "C:\Users\Diego Mauricio\Desktop\CRM_Ferreinox\explore_catalog.py", 
+line 3, in <module>
+    conn = psycopg2.connect(host='192.81.216.49', port=3000, 
+dbname='postgres', user='postgres', password='Ferreinox2024*')
+  File "C:\Users\Diego Mauricio\AppData\Local\Packages\PythonSoftwareFoundation
+.Python.3.13_qbz5n2kfra8p0\LocalCache\local-packages\Python313\site-packages\ps
+ycopg2\__init__.py", line 135, in connect
+    conn = _connect(dsn, connection_factory=connection_factory, **kwasync)
+psycopg2.OperationalError: connection to server at "192.81.216.49", port 3000 
+failed: FATAL:  password authentication failed for user "postgres"
+

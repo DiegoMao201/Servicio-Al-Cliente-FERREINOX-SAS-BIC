@@ -1,0 +1,64 @@
+{
+  "query": "cuántas manos de koraza debo aplicar en fachada",
+  "response": {
+    "query": "cuántas manos de koraza debo aplicar en fachada",
+    "resultados": [
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.6827,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: En obra nueva sobre]\n\nrevoque\n8 - 10 m²/gal a 2 manos\n*El rendimiento puede variar dependiendo del método y\nherramientas de aplicación, así como el\nestado de\nrugosidad de la superficie y del color a cubrir."
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.6614,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: En repinte sobre]\n\ncolor igual o similar\n20 - 25 m²/gal a 2 manos"
+      },
+      {
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.659,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: En obra nueva sobre]\n\nrevoque\n8 - 10 m²/gal a 2 manos\n*El rendimiento puede variar dependiendo del método y\nherramientas de aplicación, así como el\nestado de\nrugosidad de la superficie y del color a cubrir."
+      },
+      {
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.6382,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas, patios y terrazas revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar y tejas. Para el Sistema de Junta Perdida en fachadas\nfibrocemento."
+      },
+      {
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.6172,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: Preparación del Producto y Aplicación]\n\nMezcle Koraza® PRO Elastomérica con una espátula limpia hasta obtener su completa uniformidad. Diluya con agua\nsegún el equipo de aplicación a usar de acuerdo con la siguiente tabla:"
+      },
+      {
+        "archivo": "FDS - KORAZA LADRILLO 2674.pdf",
+        "familia": "FDS - KORAZA LADRILLO 2674",
+        "similitud": 0.5996,
+        "texto": "[PRODUCTO: FDS - KORAZA LADRILLO 2674] [MARCA: Koraza]\n[SECCIÓN: Proteccion]\n\nobligatoria de la\nmanos"
+      },
+      {
+        "archivo": "FDS - KORAZA LADRILLO 2674.pdf",
+        "familia": "FDS - KORAZA LADRILLO 2674",
+        "similitud": 0.5753,
+        "texto": "[PRODUCTO: FDS - KORAZA LADRILLO 2674] [MARCA: Koraza]\n[SECCIÓN: No aplicable]\n\n10.5"
+      },
+      {
+        "archivo": "FDS - KORAZA BASE ACCENT 27477.pdf",
+        "familia": "FDS - KORAZA BASE ACCENT 27477",
+        "similitud": 0.5706,
+        "texto": "[PRODUCTO: FDS - KORAZA BASE ACCENT 27477] [MARCA: Koraza]\n[SECCIÓN: Protección]\n\nobligatoria de la\nmanos"
+      }
+    ],
+    "productos_candidatos": [
+      "KORAZA IMPERMEABLE",
+      "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+      "KORAZA PRO 750 ELASTOMERICA",
+      "koraza",
+      "koraza sol y lluvia",
+      "koraza elastomerica"
+    ]
+  }
+}

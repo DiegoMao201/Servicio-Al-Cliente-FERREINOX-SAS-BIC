@@ -1,0 +1,16 @@
+{
+  "user": "Tengo una pérgola de madera que está a la intemperie y quiero protegerla",
+  "result": {
+    "response_text": "¿La madera de la pérgola es exterior o interior? ¿Quieres un acabado transparente (que se vea la veta natural) o prefieres un color sólido?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": []
+    },
+    "is_farewell": false
+  }
+}

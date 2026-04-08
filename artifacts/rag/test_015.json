@@ -1,0 +1,65 @@
+{
+  "query": "reja de hierro toda oxidada, se está comiendo",
+  "response": {
+    "query": "reja de hierro toda oxidada, se está comiendo",
+    "resultados": [
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.6041,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
+      },
+      {
+        "archivo": "FDS - PINTOXIDO 514.pdf",
+        "familia": "FDS - PINTOXIDO 514",
+        "similitud": 0.5892,
+        "texto": "[PRODUCTO: FDS - PINTOXIDO 514]\n[SECCIÓN: Ingestión]\n\n:\n:\n:"
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.5804,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.571,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Versión 5 / Abril 2022]\n\nCORROTEC DESOXIDANTE PINTÓXIDO®"
+      },
+      {
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.5694,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
+      },
+      {
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.5694,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
+      },
+      {
+        "archivo": "FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050.pdf",
+        "familia": "FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050",
+        "similitud": 0.4821,
+        "texto": "[PRODUCTO: FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050] [MARCA: Pintuco]\n[SECCIÓN: DL50 oral]\n\n3350 mg/kg"
+      },
+      {
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.4675,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nAplique al metal el producto con una brocha de cerda natural o sumerja el objeto metálico en Pintóxido\nhasta humedecerlo bien, dejando actuar el producto durante 4 horas para que la transformación del óxido\nsea completa (a 25°C), y luego retire el objeto para exponerlo al aire. Se debe procurar que el producto\npenetre muy bien en las zonas oxidadas para que ataque el óxido incrustado profundamente, lo cual s"
+      }
+    ],
+    "productos_candidatos": [
+      "CORROTEC",
+      "PINTOXIDO",
+      "corrotec",
+      "pintoxido",
+      "anticorrosivo",
+      "pintulux",
+      "wash primer"
+    ]
+  }
+}

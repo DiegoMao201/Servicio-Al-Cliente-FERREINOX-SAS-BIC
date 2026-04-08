@@ -1,0 +1,70 @@
+{
+  "query": "estructura de acero nueva sin pintar a la intemperie",
+  "response": {
+    "query": "estructura de acero nueva sin pintar a la intemperie",
+    "resultados": [
+      {
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.6084,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: Disponible en acabados brillante incoloro y semibrillante incoloro o]\n\ncoloreado."
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.6066,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: Versión 1 / 2015]\n\nBARNEX®"
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.6064,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: Disponible en acabados brillante incoloro y semibrillante incoloro o]\n\ncoloreado."
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.5874,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: D1644]\n\nKORAZA® PROTECCIÓN\nSOL & LLUVIA PINTURA"
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.5778,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: KORAZA]\n\n® PROTECCIÓN\nSOL & LLUVIA PINTURA"
+      },
+      {
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.5756,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
+      },
+      {
+        "archivo": "EPOXI ESTRUCTURAS.pdf",
+        "familia": "EPOXI ESTRUCTURAS",
+        "similitud": 0.5489,
+        "texto": "[PRODUCTO: EPOXI ESTRUCTURAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nIdeal para proteger y decorar e superficies de metal, concreto, asbesto-cemento y madera en ambientes\ninteriores y exteriores expuestos a conminación industrial de agresividad media o que requieran un lavado\nfrecuente, alta dureza y resistencia mecánica. El producto puede ser utilizado como auto imprimante\ncuando la preparación de superficie es mínimo grado comercial de acuerdo al estándar SSPC-SP6 y cuando\nla estructura va a estar "
+      },
+      {
+        "archivo": "EPOXI ESTRUCTURAS.pdf",
+        "familia": "EPOXI ESTRUCTURAS",
+        "similitud": 0.5476,
+        "texto": "[PRODUCTO: EPOXI ESTRUCTURAS] [MARCA: Pintuco]\n[SECCIÓN: PINTURA EPOXI ESTRUCTURAS Ideal para proteger y decorar estruc]\n\nIdeal para proteger y decorar estructuras metálicas, exterior de tanques y t\ntanques y tuberías, y equipos en zonas de alta contaminación"
+      }
+    ],
+    "productos_candidatos": [
+      "BARNEX EXTRA PROTECCIÓN",
+      "BARNEX EXTRA PROTECCION",
+      "KORAZA IMPERMEABLE",
+      "koraza",
+      "barnex",
+      "koraza sol y lluvia",
+      "corrotec",
+      "anticorrosivo",
+      "intergard",
+      "wash primer",
+      "imprimante",
+      "fondo"
+    ]
+  }
+}

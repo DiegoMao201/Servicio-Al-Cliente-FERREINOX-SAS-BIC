@@ -1,0 +1,63 @@
+{
+  "query": "disco para pulir y quitar óxido en amoladora",
+  "response": {
+    "query": "disco para pulir y quitar óxido en amoladora",
+    "resultados": [
+      {
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.7129,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.6874,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
+      },
+      {
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.6413,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.6071,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
+      },
+      {
+        "archivo": "ANTICORROSIVO INDUSTRIAL 210003.pdf",
+        "familia": "ANTICORROSIVO INDUSTRIAL 210003",
+        "similitud": 0.605,
+        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nToda superficie metálica debe estar seca y libre de polvo, mugre, grasa y pintura deteriorada. El óxido se\nelimina con rasqueta, cepillo de alambre, papel de lija o esmeriladores. El óxido residual difícil de suprimir\n\nPROPIEDAD | RANGO | UNIDADES\nAcabado | Mate\nViscosidad, ASTM D562/NTC 559 | 80 | 90 | KU\nPeso neto por galón | 5.06 | kg\nSólidos por volumen ASTM D2697/NTC1786 | 40 | 42 | %\nEspes"
+      },
+      {
+        "archivo": "ANTICORROSIVO INDUSTRIAL 210003.pdf",
+        "familia": "ANTICORROSIVO INDUSTRIAL 210003",
+        "similitud": 0.6013,
+        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: MERCURY 5C]\n\nBROCHA: Se usa brocha de cerda natural.\nRODILLO: Se utiliza rodillo resistente a disolventes."
+      },
+      {
+        "archivo": "PASTA PULIDORA 120025.pdf",
+        "familia": "PASTA PULIDORA 120025",
+        "similitud": 0.5845,
+        "texto": "[PRODUCTO: PASTA PULIDORA 120025]\n[SECCIÓN: Producto formulado especialmente para que pueda desmanchar y brillar]\n\ncon un efecto abrasivo muy mínimo que no afecte el recubrimiento de\nla superficie, muy fácil de aplicar y retirar.\nRecomendado para desmanchar, pulir y brillar superficies con pintura\noriginal y/o repintada, diferentes tipos de sustratos metálicos y plásticos\ny para eliminar defectos de aplicación mejorando el brillo del acabado,\nsu poder abrasivo es medio/bajo.\nPara otros usos se r"
+      },
+      {
+        "archivo": "PASTA PULIDORA CREMA 4040.pdf",
+        "familia": "PASTA PULIDORA CREMA 4040",
+        "similitud": 0.5807,
+        "texto": "[PRODUCTO: PASTA PULIDORA CREMA 4040] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendado para desmanchar, pulir y brillar\nsuperficies con pintura original y/o repintada,\ndiferentes tipos de sustratos metálicos y plásticos y\npara eliminar defectos de aplicación como grumos\npequeños, mugres y rayas poco profundas mejorando\nel brillo del acabado."
+      }
+    ],
+    "productos_candidatos": [
+      "PINTOXIDO",
+      "CORROTEC",
+      "corrotec",
+      "pintoxido",
+      "anticorrosivo"
+    ]
+  }
+}

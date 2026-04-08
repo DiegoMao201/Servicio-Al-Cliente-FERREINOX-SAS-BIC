@@ -1,0 +1,18 @@
+{
+  "user": "¿Con qué le quito el óxido a una estructura metálica? Tengo amoladora",
+  "result": {
+    "response_text": "Para quitar el óxido de una estructura metálica con amoladora, te recomiendo usar un disco flap o una grata. Estos son ideales para remover óxido y pintura vieja de manera efectiva. \n\nDespués de limpiar, necesitarás aplicar un anticorrosivo como Corrotec, y luego un acabado como Pintulux 3en1 para proteger la superficie. ¿Te gustaría que busque estos productos en inventario?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  }
+}

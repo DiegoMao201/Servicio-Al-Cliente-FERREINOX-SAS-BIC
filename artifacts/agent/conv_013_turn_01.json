@@ -1,0 +1,16 @@
+{
+  "user": "Necesito vinilo, ¿qué tienen?",
+  "result": {
+    "response_text": "¿Lo necesitas tipo 1 (premium, lavable), tipo 2 (intermedio) o tipo 3 (económico)?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": []
+    },
+    "is_farewell": false
+  }
+}

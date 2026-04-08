@@ -1,0 +1,18 @@
+{
+  "user": "Necesito pintar un tobogán metálico de un parque infantil que está al aire libre",
+  "result": {
+    "response_text": "Para pintar un tobogán metálico al aire libre, te recomiendo un sistema anticorrosivo. Primero, debes limpiar el metal con un disco flap o grata. Luego, aplica Corrotec como anticorrosivo y, finalmente, Pintulux 3en1 como acabado.\n\n¿Te gustaría que busque estos productos en inventario?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  }
+}

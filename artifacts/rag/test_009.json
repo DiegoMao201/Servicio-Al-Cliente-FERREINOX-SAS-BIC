@@ -1,0 +1,57 @@
+{
+  "query": "muro exterior que le da el sol todo el día",
+  "response": {
+    "query": "muro exterior que le da el sol todo el día",
+    "resultados": [
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.6452,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: Protección]\n\nSol\n&"
+      },
+      {
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.6175,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.593,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: GENERAL]\n\nKORAZA® PROTECCIÓN SOL Y"
+      },
+      {
+        "archivo": "Doors And Frame (1).pdf",
+        "familia": "Doors And Frame",
+        "similitud": 0.4702,
+        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Interior and]\n\nexterior"
+      },
+      {
+        "archivo": "Doors And Frame (1).pdf",
+        "familia": "Doors And Frame",
+        "similitud": 0.427,
+        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Full glass entrance door]\n\nconstruction"
+      },
+      {
+        "archivo": "Doors And Frame (1).pdf",
+        "familia": "Doors And Frame",
+        "similitud": 0.4269,
+        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Mullion]\n\nRSM"
+      },
+      {
+        "archivo": "Doors And Frame (1).pdf",
+        "familia": "Doors And Frame",
+        "similitud": 0.4239,
+        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Description]\n\n6'8\" Removable Mullion"
+      }
+    ],
+    "productos_candidatos": [
+      "KORAZA IMPERMEABLE",
+      "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+      "Doors And Frame",
+      "koraza",
+      "koraza sol y lluvia"
+    ]
+  }
+}

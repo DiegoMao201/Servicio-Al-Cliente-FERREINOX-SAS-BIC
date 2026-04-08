@@ -1,0 +1,64 @@
+{
+  "query": "qué le echo al piso del parqueadero para que quede bonito",
+  "response": {
+    "query": "qué le echo al piso del parqueadero para que quede bonito",
+    "resultados": [
+      {
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.6746,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: Meses]\n\nVersión 1.2 / Noviembre 2019 INSTRUCCIONES DE USOPreparación de la Superficie\nLa superficie debe estar libre de humedad, polvo, mugre, grasa y cera. La limpieza se hace con agua a\npresión dejando secar muy bien la superficie, con escobas manuales o mecánicas, cepillos o aire a presión.\nRemover pintura anterior en caso de que tenga mala adherencia.\nPara pintar tope llantas o este tipo de elementos es necesario confirmar que n"
+      },
+      {
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.6606,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nRevuelva con espátula limpia la pintura para homogenizar antes de su uso. El producto tiene viscosidad de\naplicación, es decir que no se recomienda dilución excepto en situaciones de alta temperatura donde se\ndebe diluir máximo en un 4% con el Solvente Ref. 21204.\nAplique la Pintura para Parqueaders solamente sobre pavimentos rígidos o flexibles que lleven mínimo 28\ndías de construidos, en cas"
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6559,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+      },
+      {
+        "archivo": "PINTUCOAT.pdf",
+        "familia": "PINTUCOAT",
+        "similitud": 0.6438,
+        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: Zonas de tráfico medio:]\n\no Se recomienda hacer una imprimación con Pintucoat® Ref. 516 o 517 y dar acabado\ncon Esmalte Poliuretano Ref. 11304 o 11324 con catalizador Ref. 11351 en relación de\nmezcla 1:1\no Se puede utilizar barniz poliuretano para pisos, como acabado final.\n* Para mayor información consultar con servicio técnico.\n\nNOTA: Únicamente en ambientes interiores este producto puede ser utilizado sin pintura de acabado; en\nambientes exteri"
+      },
+      {
+        "archivo": "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA(TERINSA).pdf",
+        "familia": "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
+        "similitud": 0.6354,
+        "texto": "[PRODUCTO: PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\nLa superficie que se va a señalizar debe estar completamente limpia, seca y libre de partículas sueltas. Se deben resanar las grietas y agujeros que\npuedan dañar prematuramente las señales. Algunos métodos prácticos para lograr una buena limpieza son: Agua a presión (dejando secar\nposteriormente la superficie), escobas comunes o mecánicas, cepillos, aire a presión o la combina"
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6328,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Acabado antideslizante.\n Alta resistencia al desgaste.\n Lista para usar, fácil de aplicar.\n Excelente durabilidad de los colores en exterior.\n Producto base agua, amigable con el usuario y el medio ambiente.\n Disponible en más de 200 colores por Sistema de Colores Pintuco®."
+      },
+      {
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.5608,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.2 / Noviembre 2019 PINTURA PARA\nPintura acrílica modificada para demarcación horizontal,\ncon excelente visibilidad diurna y nocturna, resistente a la\nabrasión severa y a gran variedad de contaminantes,\ndurables y rápido secamiento para apertura al tráfico y\nentre manos."
+      },
+      {
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.5599,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: CUMPLIMIENTO DE NORMAS]\n\n Pintura diseñada según la norma NTC 1360.\n La correcta aplicación, con adición de microesferas cumple las especificaciones de la NTC 4744VENTAJAS Y BE\n Fácil aplicación\n Rápido secado: 15 min\n Buena resistencia a la abrasión provocada por las llantas\n Interior y exterior ESPECIFICACIONES TÉCNICASPROPIEDADRANGOUNIDADES"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTURA PARA PARQUEADERO",
+      "PINTURA PARA CANCHAS",
+      "PINTUCOAT",
+      "pintucoat",
+      "pintura canchas",
+      "pintura trafico"
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "query": "se filtra agua por el muro del sótano, sale salitre",
+  "response": {
+    "query": "se filtra agua por el muro del sótano, sale salitre",
+    "resultados": [
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6865,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: Se usa como tratamiento correctivo y preventivo de]\n\nhumedades por nivel freático o presión negativa en\nmuros de contención, sótanos, bodegas, cuartos útiles o\nviviendas. Funciona como una pintura impermeable de\nalta blancura, para sellar y proteger contra la humedad\nparedes y muros interiores o exteriores que pueden estar\nexpuestos a contacto directo con la tierra en al menos\nuna de sus caras, o donde se presente aparición de\nhumedades en muros causados por"
+      },
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6679,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: DESCRIPCIÓN]\n\nAQUABLOCK® ULTRA es un impermeabilizante acrílico\nbase agua de alto desempeño para uso interior y exterior,\nposee resinas acrílicas, fungicidas y micro partículas que\npenetran el sustrato, lo sellan e inhiben el paso de la\nhumedad\npor\ncapilaridad\no\npresión\nnegativa,\nAQUABLOCK® ULTRA genera triple protección gracias a\nsu\ntecnología\nSellamur®\nque\nle\npermite\nsellar,\nimpermeabilizar y pintar en un solo paso y que le\nproporciona\nuna\npotente resisten"
+      },
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6668,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: Aqua block ultra]\n\nSella, impermeabiliza y pinta"
+      },
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6288,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n✓Evita filtraciones y ampollas.\n✓Antihongos y antialgas.\n✓Uso interior y exterior.\n✓Bloquea humedades severas."
+      },
+      {
+        "archivo": "FDS - SELLOMAX ANTI ALCALINO.pdf",
+        "familia": "FDS - SELLOMAX ANTI ALCALINO",
+        "similitud": 0.5182,
+        "texto": "[PRODUCTO: FDS - SELLOMAX ANTI ALCALINO] [MARCA: Pintuco]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      },
+      {
+        "archivo": "FDS - SELLOMAX ANTI ALCALINO.pdf",
+        "familia": "FDS - SELLOMAX ANTI ALCALINO",
+        "similitud": 0.5143,
+        "texto": "[PRODUCTO: FDS - SELLOMAX ANTI ALCALINO]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      },
+      {
+        "archivo": "FDS - PERMEX BASE AGUA NEGRO.pdf",
+        "familia": "FDS - PERMEX BASE AGUA NEGRO",
+        "similitud": 0.5055,
+        "texto": "[PRODUCTO: FDS - PERMEX BASE AGUA NEGRO] [MARCA: Pintuco]\n[SECCIÓN: Suelo seco]\n\nSí"
+      },
+      {
+        "archivo": "SILICONITE 7 3103.pdf",
+        "familia": "SILICONITE 7 3103",
+        "similitud": 0.4964,
+        "texto": "[PRODUCTO: SILICONITE 7 3103] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n✓El agua simplemente rueda.\n✓Reduce la absorción del 80% al 85%.\n✓Permeable al vapor de agua.\n✓Reduce el ensuciamiento de las fachadas.\n✓Impide la absorción de agua evitando la\nformación de hongos y eflorescencias.\n✓No forma película, permitiendo la\ntranspiración normal de la superficie.\n✓Mantiene las fachadas limpias por más\ntiempo, evitando sobrecostos por\nmantenimientos periódicos.\n✓Producto listo para usar.\n✓De "
+      }
+    ],
+    "productos_candidatos": [
+      "AQUABLOCK ULTRA",
+      "aquablock",
+      "aquablock ultra",
+      "sellamur",
+      "estuco anti humedad"
+    ]
+  }
+}

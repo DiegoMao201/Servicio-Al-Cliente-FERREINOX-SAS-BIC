@@ -1,0 +1,68 @@
+{
+  "query": "cepillo metálico para limpiar estructura oxidada",
+  "response": {
+    "query": "cepillo metálico para limpiar estructura oxidada",
+    "resultados": [
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.7209,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
+      },
+      {
+        "archivo": "PINTULUX 3 EN 1 BRILLANTE.pdf",
+        "familia": "PINTULUX 3 EN 1 BRILLANTE",
+        "similitud": 0.6708,
+        "texto": "[PRODUCTO: PINTULUX 3 EN 1 BRILLANTE] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nEsmalte alquídico que evita lijar en superficies con oxidación leve, contiene\nanticorrosivo y da un hermoso acabado brillante. Diseñado para aplicar directo al\nmetal con una excelente adherencia, durable y resistente a la corrosión.\nPrepara, protege y decora en un solo paso. Producto formulado sin plomo ni cromo."
+      },
+      {
+        "archivo": "PINTULUX 3 EN 1 MATE.pdf",
+        "familia": "PINTULUX 3 EN 1 MATE",
+        "similitud": 0.6708,
+        "texto": "[PRODUCTO: PINTULUX 3 EN 1 MATE] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nEsmalte alquídico que evita lijar en superficies con oxidación leve, contiene anticorrosivo\ny da un hermoso acabado mate. Diseñado para aplicar directo al metal con una excelente\nadherencia, durable y resistente a la corrosión. Prepara, protege y decora en un solo\npaso. Producto formulado sin plomo ni cromo."
+      },
+      {
+        "archivo": "PINTULUX 3 EN 1 BRILLANTE.pdf",
+        "familia": "PINTULUX 3 EN 1 BRILLANTE",
+        "similitud": 0.6629,
+        "texto": "[PRODUCTO: PINTULUX 3 EN 1 BRILLANTE] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para proteger y decorar superficies y/o artículos de metal y madera]\n\nen ambientes interiores y exteriores como estructuras metálicas, puertas, portones,\nventanas, rejas, marcos, etc. Puede ser aplicado sobre superficies metálicas oxidadas,\nya que por su diseño Pintulux 3 en 1 funciona como inhibidor de óxido que brinda una\nexcelente protección y da un acabado brillante, simplificando el proceso de aplicación."
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.6571,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
+      },
+      {
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.6524,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Removedor]\n\nPintuco®\nRef.1020\ny\nherramientas mecánicas tales como rasquetas, lijas\no cepillos. En metales no ferrosos como aluminio,\nzinc,\nhojalata,\ngalvanizados\ny\nmetales\npulidos\naplique una mano (capa) delgada de Wash Primer\nPintuco® Ref.509A/509B para promover adherencia\ndel anticorrosivo.\n2. Preparación del producto y aplicación: Mezcle\nel Corrotec® Premium con una espátula limpia\nhasta obtener su completa uniformidad. Diluya el\nproduct"
+      },
+      {
+        "archivo": "ANTICORROSIVA FENOLICA MATE AMARILLA.pdf",
+        "familia": "ANTICORROSIVA FENOLICA MATE AMARILLA",
+        "similitud": 0.6375,
+        "texto": "[PRODUCTO: ANTICORROSIVA FENOLICA MATE AMARILLA] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.0 / 2017 Ideal para proteger estructuras metálicas en general, exterio"
+      },
+      {
+        "archivo": "ANTICORROSIVO AMARILLO  505.pdf",
+        "familia": "ANTICORROSIVO AMARILLO  505",
+        "similitud": 0.6332,
+        "texto": "[PRODUCTO: ANTICORROSIVO AMARILLO  505] [MARCA: Pintuco]\n[SECCIÓN: ANTICORROSIVA FENÓLICA MATE AMARILLA 505 Ideal para pro]\n\nIdeal para proteger estructuras metálicas en general, exterior de tanques y\ntanques y tuberías expuestas a ambientes de corrosividad"
+      }
+    ],
+    "productos_candidatos": [
+      "CORROTEC",
+      "PINTULUX 3 EN 1 BRILLANTE",
+      "PINTULUX 3 EN 1 MATE",
+      "corrotec",
+      "pintulux",
+      "anticorrosivo",
+      "wash primer",
+      "pintoxido",
+      "grata",
+      "grata copa"
+    ]
+  }
+}

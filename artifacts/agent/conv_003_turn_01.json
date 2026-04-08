@@ -1,0 +1,16 @@
+{
+  "user": "Necesito pintar el piso de un garaje de la casa",
+  "result": {
+    "response_text": "¿El piso es de concreto o de otro material? ¿Buscas un acabado específico, como un color o una textura?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": []
+    },
+    "is_farewell": false
+  }
+}

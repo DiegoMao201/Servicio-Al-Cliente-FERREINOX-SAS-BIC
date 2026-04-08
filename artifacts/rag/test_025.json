@@ -1,0 +1,65 @@
+{
+  "query": "cuarto del bebé pintura lavable",
+  "response": {
+    "query": "cuarto del bebé pintura lavable",
+    "resultados": [
+      {
+        "archivo": "INTERVINIL.pdf",
+        "familia": "INTERVINIL",
+        "similitud": 0.6004,
+        "texto": "[PRODUCTO: INTERVINIL] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nIntervinil® es una pintura para interiores, lavable, de\nalto rendimiento\ny cubrimiento\nen\nmenos\nmanos.\nCuenta con excelente adherencia. Ideal como acabado\nfinal\no\npara\ndar\nprimeras\nmanos\nen\nambientes\ninteriores."
+      },
+      {
+        "archivo": "INTERVINI ANTI BACTERIAL.pdf",
+        "familia": "INTERVINI ANTI BACTERIAL",
+        "similitud": 0.5943,
+        "texto": "[PRODUCTO: INTERVINI ANTI BACTERIAL] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintura en emulsión base agua (látex), fabricada a base de\ncopolímeros acrílicos de acabado mate y terso. Alto\nrendimiento y cubrimiento, ideal para ambientes interiores\ny exteriores. Máxima lavabilidad, fácil de aplicar.\nIntervinil® Anti bacterial contiene un ingrediente activo\nque elimina y evita la proliferación de bacterias, hongos y\ngérmenes en más de un 99% y su efecto anti bacterial no\nse pierde al limpiar las p"
+      },
+      {
+        "archivo": "INTERVINI ANTI BACTERIAL.pdf",
+        "familia": "INTERVINI ANTI BACTERIAL",
+        "similitud": 0.5871,
+        "texto": "[PRODUCTO: INTERVINI ANTI BACTERIAL] [MARCA: Pintuco]\n[SECCIÓN: Preparación del Producto y Aplicación]\n\nMezclar bien la pintura Intervinil® Anti bacterial con una espátula limpia para obtener su\ncompleta uniformidad. Los equipos de aplicación se lavan con agua."
+      },
+      {
+        "archivo": "VINILTEX BAÑOS Y COCINAS.pdf",
+        "familia": "VINILTEX BAÑOS Y COCINAS",
+        "similitud": 0.5755,
+        "texto": "[PRODUCTO: VINILTEX BAÑOS Y COCINAS] [MARCA: Pintuco]\n[SECCIÓN: En repinte 25 a 30 m2 /gal]\n\nsobre color diferente a 2 manos."
+      },
+      {
+        "archivo": "VINILTEX BIO CUIDADO.pdf",
+        "familia": "VINILTEX BIO CUIDADO",
+        "similitud": 0.5714,
+        "texto": "[PRODUCTO: VINILTEX BIO CUIDADO] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintura premium tipo 1 de interior y exterior amigable con el medio ambiente, que elimina el 99.9%\nde virus y bacterias, es una pintura con la tecnología comprobada y certificada que proporciona\nuna protección eficaz y duradera sobre los virus* (SARS CoV-2 y H1N1, después de 15 minutos de\ncontacto con la superficie) y bacterias* (Como Escherichia coli y Staphylococcus aureus) en las\nsuperficies como paredes y muros, hacien"
+      },
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.5697,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nEs una pintura premium base agua que ofrece máxima lavabilidad y durabilidad. Es la marca #1\nrecomendada por pintores en Colombia. Protege y a la vez decora con color, siendo amigable con\nel medio ambiente por su bajo contenido VOC. Tiene un antibacterial activo que elimina el 99,9%\nde las bacterias. Cuenta con nuestro desarollo tecnológico del color, ColorTech®."
+      },
+      {
+        "archivo": "ESTUCOR MOLDURAS.pdf",
+        "familia": "ESTUCOR MOLDURAS",
+        "similitud": 0.4885,
+        "texto": "[PRODUCTO: ESTUCOR MOLDURAS] [MARCA: Pintuco]\n[SECCIÓN: Pintura]\n\nSuperlavable,"
+      },
+      {
+        "archivo": "PINTURAMA.pdf",
+        "familia": "PINTURAMA",
+        "similitud": 0.4881,
+        "texto": "[PRODUCTO: PINTURAMA] [MARCA: Pintuco]\n[SECCIÓN: Secamiento al tacto]\n\n1 - 2"
+      }
+    ],
+    "productos_candidatos": [
+      "INTERVINIL",
+      "INTERVINI ANTI BACTERIAL",
+      "VINILTEX BAÑOS Y COCINAS",
+      "viniltex",
+      "intervinil",
+      "viniltex banos y cocinas",
+      "viniltex adv"
+    ]
+  }
+}

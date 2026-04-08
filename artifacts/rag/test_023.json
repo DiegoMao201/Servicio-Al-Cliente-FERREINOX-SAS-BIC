@@ -1,0 +1,65 @@
+{
+  "query": "pintar sala de la casa, calidad premium lavable",
+  "response": {
+    "query": "pintar sala de la casa, calidad premium lavable",
+    "resultados": [
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6872,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nEs una pintura premium base agua que ofrece máxima lavabilidad y durabilidad. Es la marca #1\nrecomendada por pintores en Colombia. Protege y a la vez decora con color, siendo amigable con\nel medio ambiente por su bajo contenido VOC. Tiene un antibacterial activo que elimina el 99,9%\nde las bacterias. Cuenta con nuestro desarollo tecnológico del color, ColorTech®."
+      },
+      {
+        "archivo": "VINILTEX ADVANCE.pdf",
+        "familia": "VINILTEX ADVANCE",
+        "similitud": 0.6767,
+        "texto": "[PRODUCTO: VINILTEX ADVANCE] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nViniltex® Advanced mate es una pintura premium para\ninteriores, que genera una capa de alto cubrimiento y\ndurabilidad, permitiendo una máxima lavabilidad y\nresistencia al frote sin desgastar la superficie por\ndesprendimiento."
+      },
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6536,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Máxima duración y lavabilidad.\n Excelente resistencia a la abrasión.\n Única con tecnología superior del\ncolor ColorTech®.\n Bajo VOC\n Libre de APEO."
+      },
+      {
+        "archivo": "INTERVINIL.pdf",
+        "familia": "INTERVINIL",
+        "similitud": 0.646,
+        "texto": "[PRODUCTO: INTERVINIL] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nIntervinil® es una pintura para interiores, lavable, de\nalto rendimiento\ny cubrimiento\nen\nmenos\nmanos.\nCuenta con excelente adherencia. Ideal como acabado\nfinal\no\npara\ndar\nprimeras\nmanos\nen\nambientes\ninteriores."
+      },
+      {
+        "archivo": "INTERVINI ANTI BACTERIAL.pdf",
+        "familia": "INTERVINI ANTI BACTERIAL",
+        "similitud": 0.6269,
+        "texto": "[PRODUCTO: INTERVINI ANTI BACTERIAL] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintura en emulsión base agua (látex), fabricada a base de\ncopolímeros acrílicos de acabado mate y terso. Alto\nrendimiento y cubrimiento, ideal para ambientes interiores\ny exteriores. Máxima lavabilidad, fácil de aplicar.\nIntervinil® Anti bacterial contiene un ingrediente activo\nque elimina y evita la proliferación de bacterias, hongos y\ngérmenes en más de un 99% y su efecto anti bacterial no\nse pierde al limpiar las p"
+      },
+      {
+        "archivo": "INTERVINIL.pdf",
+        "familia": "INTERVINIL",
+        "similitud": 0.6191,
+        "texto": "[PRODUCTO: INTERVINIL] [MARCA: Pintuco]\n[SECCIÓN: Lavabilidad]\n\n> =50\n%"
+      },
+      {
+        "archivo": "SUPER CUBRIENTE.pdf",
+        "familia": "SUPER CUBRIENTE",
+        "similitud": 0.59,
+        "texto": "[PRODUCTO: SUPER CUBRIENTE] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Alto rendimiento.\n Alto cubrimiento.\n Alta viscosidad.\n Pintura Lavable.\n Bajo Salpique.\n Más de mil colores."
+      },
+      {
+        "archivo": "PINTURA SUPER CUBRIENTE.pdf",
+        "familia": "PINTURA SUPER CUBRIENTE",
+        "similitud": 0.588,
+        "texto": "[PRODUCTO: PINTURA SUPER CUBRIENTE] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Más rendimiento y cubrimiento\n Alta viscosidad\n Vinilo lavable"
+      }
+    ],
+    "productos_candidatos": [
+      "Viniltex-advanced",
+      "VINILTEX ADVANCE",
+      "INTERVINIL",
+      "viniltex",
+      "intervinil",
+      "viniltex advanced",
+      "viniltex adv"
+    ]
+  }
+}

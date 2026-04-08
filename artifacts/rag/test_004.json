@@ -1,0 +1,64 @@
+{
+  "query": "humedad ascendente en primer piso, capilaridad",
+  "response": {
+    "query": "humedad ascendente en primer piso, capilaridad",
+    "resultados": [
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6118,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: Se usa como tratamiento correctivo y preventivo de]\n\nhumedades por nivel freático o presión negativa en\nmuros de contención, sótanos, bodegas, cuartos útiles o\nviviendas. Funciona como una pintura impermeable de\nalta blancura, para sellar y proteger contra la humedad\nparedes y muros interiores o exteriores que pueden estar\nexpuestos a contacto directo con la tierra en al menos\nuna de sus caras, o donde se presente aparición de\nhumedades en muros causados por"
+      },
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.5968,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n✓Evita filtraciones y ampollas.\n✓Antihongos y antialgas.\n✓Uso interior y exterior.\n✓Bloquea humedades severas."
+      },
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.5725,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: La aplicación de la pintura debe quedar sobre toda el área]\n\nafectada y hasta 50 cm por encima de la marca de humedad\nexistente."
+      },
+      {
+        "archivo": "TOP QUALITY PLUS.pdf",
+        "familia": "TOP QUALITY PLUS",
+        "similitud": 0.5504,
+        "texto": "[PRODUCTO: TOP QUALITY PLUS] [MARCA: Pintuco]\n[SECCIÓN: Humedad]\n\nambiente"
+      },
+      {
+        "archivo": "FDS - CATALIZADOR PARA PRIMER RAP. SEC. AMBAR.pdf",
+        "familia": "FDS - CATALIZADOR PARA PRIMER RAP. SEC. AMBAR",
+        "similitud": 0.5348,
+        "texto": "[PRODUCTO: FDS - CATALIZADOR PARA PRIMER RAP. SEC. AMBAR]\n[SECCIÓN: Suelo húmedo]\n\nSí\n12.5"
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.5302,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: PRODUCTOS COMPLEMENTARIOS]\n\n• Sellamur 3 en 1: Impermeabilizante de humedad freatica o ascendente"
+      },
+      {
+        "archivo": "FDS-CATALIZADOR PRIMER EPOX 50RS PARTE B.pdf",
+        "familia": "FDS-CATALIZADOR PRIMER EPOX 50RS PARTE B",
+        "similitud": 0.5269,
+        "texto": "[PRODUCTO: FDS-CATALIZADOR PRIMER EPOX 50RS PARTE B]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      }
+    ],
+    "productos_candidatos": [
+      "AQUABLOCK ULTRA",
+      "TOP QUALITY PLUS",
+      "aquablock",
+      "aquablock ultra",
+      "sellamur",
+      "estuco anti humedad",
+      "sika",
+      "pintura canchas",
+      "pintucoat",
+      "imprimante",
+      "primer",
+      "wash primer"
+    ]
+  }
+}

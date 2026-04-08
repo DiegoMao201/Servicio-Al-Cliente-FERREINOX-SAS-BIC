@@ -1,0 +1,19 @@
+{
+  "user": "Necesito pintar una piscina, ¿qué producto me sirve?",
+  "result": {
+    "response_text": "Para piscinas o albercas, en Ferreinox no manejamos un recubrimiento especializado con garantía técnica. Te recomiendo comunicarte con un asesor o consultar en www.ferreinox.co.",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.7,
+      "level": "media",
+      "signals": [
+        "med:te recomiendo comunicarte",
+        "med:no manejamos"
+      ]
+    },
+    "is_farewell": false
+  }
+}

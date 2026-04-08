@@ -1,0 +1,58 @@
+{
+  "query": "la pared suda y tiene manchas blancas de salitre",
+  "response": {
+    "query": "la pared suda y tiene manchas blancas de salitre",
+    "resultados": [
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6957,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: Aqua block ultra]\n\nSella, impermeabiliza y pinta"
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.6747,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Se puede usar en obra nueva en muros interiores o exteriores que]\n\nse prevea van a tener problemas de humedad ascendente o\ncomo reparación de muros donde se presenten eﬂorescencia (\nmanchas blancas), ampollamiento y descascaramiento de\npintura, también es ideal en las zonas de ventana, balcones, patio\ny en general muros que posean problemas de humedad."
+      },
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6599,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: Se usa como tratamiento correctivo y preventivo de]\n\nhumedades por nivel freático o presión negativa en\nmuros de contención, sótanos, bodegas, cuartos útiles o\nviviendas. Funciona como una pintura impermeable de\nalta blancura, para sellar y proteger contra la humedad\nparedes y muros interiores o exteriores que pueden estar\nexpuestos a contacto directo con la tierra en al menos\nuna de sus caras, o donde se presente aparición de\nhumedades en muros causados por"
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.6472,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Antihumedad Estuco Acrílico es una masilla]\n\nacrílica de altísima resistencia al agua, diseñada\npara aplicar en fachadas y zonas húmedas, en la\nbase de los muros interiores o exteriores, donde\nse presenten problemas de humedad freática o\nascendente, para evitar o reparar los daños\ncausados por este tipo de humedades,\nimpidiendo\nel\npaso\nde\nhumedad\ny\ndisminuyendo de forma efectiva la posibilidad\nde aparición de ampollas en la pintura"
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.6249,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Para usos en fachadas en ambientes muy fríos o cálidos con alta]\n\nhumedad relativa, zonas húmedas en baños y lavados de ropa."
+      },
+      {
+        "archivo": "FDS - PINTULACA BLANCO 7519.pdf",
+        "familia": "FDS - PINTULACA BLANCO 7519",
+        "similitud": 0.5275,
+        "texto": "[PRODUCTO: FDS - PINTULACA BLANCO 7519] [MARCA: Pintuco]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      },
+      {
+        "archivo": "FDS - PINTULACA BLANCO 7519 _ 10014720-10012716 _COL (Versión 3).pdf",
+        "familia": "FDS - PINTULACA BLANCO 7519   10014720-10012716  COL",
+        "similitud": 0.5214,
+        "texto": "[PRODUCTO: FDS - PINTULACA BLANCO 7519 _ 10014720-10012716 _COL] [MARCA: Pintuco]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      }
+    ],
+    "productos_candidatos": [
+      "AQUABLOCK ULTRA",
+      "ESTUCO ANTI HUMEDAD",
+      "estuco anti humedad",
+      "aquablock",
+      "aquablock ultra",
+      "sellamur"
+    ]
+  }
+}

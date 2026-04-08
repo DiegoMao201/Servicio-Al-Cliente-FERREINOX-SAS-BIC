@@ -1,0 +1,67 @@
+{
+  "query": "se ampollan las paredes por humedad interior",
+  "response": {
+    "query": "se ampollan las paredes por humedad interior",
+    "resultados": [
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.768,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: Se usa como tratamiento correctivo y preventivo de]\n\nhumedades por nivel freático o presión negativa en\nmuros de contención, sótanos, bodegas, cuartos útiles o\nviviendas. Funciona como una pintura impermeable de\nalta blancura, para sellar y proteger contra la humedad\nparedes y muros interiores o exteriores que pueden estar\nexpuestos a contacto directo con la tierra en al menos\nuna de sus caras, o donde se presente aparición de\nhumedades en muros causados por"
+      },
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.748,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n✓Evita filtraciones y ampollas.\n✓Antihongos y antialgas.\n✓Uso interior y exterior.\n✓Bloquea humedades severas."
+      },
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.7363,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: DESCRIPCIÓN]\n\nAQUABLOCK® ULTRA es un impermeabilizante acrílico\nbase agua de alto desempeño para uso interior y exterior,\nposee resinas acrílicas, fungicidas y micro partículas que\npenetran el sustrato, lo sellan e inhiben el paso de la\nhumedad\npor\ncapilaridad\no\npresión\nnegativa,\nAQUABLOCK® ULTRA genera triple protección gracias a\nsu\ntecnología\nSellamur®\nque\nle\npermite\nsellar,\nimpermeabilizar y pintar en un solo paso y que le\nproporciona\nuna\npotente resisten"
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.6422,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: PRODUCTOS COMPLEMENTARIOS]\n\n• Sellamur 3 en 1: Impermeabilizante de humedad freatica o ascendente"
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.635,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Se puede usar en obra nueva en muros interiores o exteriores que]\n\nse prevea van a tener problemas de humedad ascendente o\ncomo reparación de muros donde se presenten eﬂorescencia (\nmanchas blancas), ampollamiento y descascaramiento de\npintura, también es ideal en las zonas de ventana, balcones, patio\ny en general muros que posean problemas de humedad."
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.5845,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Antihumedad Estuco Acrílico es una masilla]\n\nacrílica de altísima resistencia al agua, diseñada\npara aplicar en fachadas y zonas húmedas, en la\nbase de los muros interiores o exteriores, donde\nse presenten problemas de humedad freática o\nascendente, para evitar o reparar los daños\ncausados por este tipo de humedades,\nimpidiendo\nel\npaso\nde\nhumedad\ny\ndisminuyendo de forma efectiva la posibilidad\nde aparición de ampollas en la pintura"
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.5824,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Para usos en fachadas en ambientes muy fríos o cálidos con alta]\n\nhumedad relativa, zonas húmedas en baños y lavados de ropa."
+      },
+      {
+        "archivo": "TOP QUALITY PLUS.pdf",
+        "familia": "TOP QUALITY PLUS",
+        "similitud": 0.5678,
+        "texto": "[PRODUCTO: TOP QUALITY PLUS] [MARCA: Pintuco]\n[SECCIÓN: Humedad]\n\nambiente"
+      }
+    ],
+    "productos_candidatos": [
+      "AQUABLOCK ULTRA",
+      "ESTUCO ANTI HUMEDAD",
+      "estuco anti humedad",
+      "aquablock",
+      "aquablock ultra",
+      "sellamur",
+      "sika",
+      "viniltex",
+      "intervinil"
+    ]
+  }
+}

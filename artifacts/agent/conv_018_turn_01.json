@@ -1,0 +1,128 @@
+{
+  "user": "Necesito lijas al agua para preparar una pared",
+  "result": {
+    "response_text": "Tengo varias opciones de lijas al agua Abracol. ¿Qué número de grano buscas? Aquí tienes algunas opciones:\n\n- Lija 60\n- Lija 80\n- Lija 180\n- Lija 320\n- Lija 2000\n\nDime cuál prefieres.",
+    "intent": "consulta_productos",
+    "tool_calls": [
+      {
+        "name": "consultar_inventario",
+        "args": {
+          "producto": "lijas al agua"
+        },
+        "result": "{\"encontrados\": 5, \"productos\": [{\"codigo\": \"F6514502\", \"descripcion\": \"LIJA 80 AGUA ABRACOL\", \"descripcion_exacta\": \"LIJA 80 AGUA ABRACOL\", \"etiqueta_auditable\": \"[F6514502] - LIJA 80 AGUA ABRACOL\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"lija_agua_abracol\", \"producto_padre_busqueda\": \"lija de agua abracol\", \"pregunta_desambiguacion\": \"Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?\", \"stock_total\": 2421.0}, {\"codigo\": \"F6514501\", \"descripcion\": \"LIJA 60 AGUA ABRACOL\", \"descripcion_exacta\": \"LIJA 60 AGUA ABRACOL\", \"etiqueta_auditable\": \"[F6514501] - LIJA 60 AGUA ABRACOL\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"lija_agua_abracol\", \"producto_padre_busqueda\": \"lija de agua abracol\", \"pregunta_desambiguacion\": \"Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?\", \"stock_total\": 1534.0}, {\"codigo\": \"F190023\", \"descripcion\": \"LIJA 2000 AGUA ABRACOL\", \"descripcion_exacta\": \"LIJA 2000 AGUA ABRACOL\", \"etiqueta_auditable\": \"[F190023] - LIJA 2000 AGUA ABRACOL\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"lija_agua_abracol\", \"producto_padre_busqueda\": \"lija de agua abracol\", \"pregunta_desambiguacion\": \"Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?\", \"stock_total\": 320.0}, {\"codigo\": \"F6514506\", \"descripcion\": \"LIJA 180 AGUA ABRACOL\", \"descripcion_exacta\": \"LIJA 180 AGUA ABRACOL\", \"etiqueta_auditable\": \"[F6514506] - LIJA 180 AGUA ABRACOL\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"lija_agua_abracol\", \"producto_padre_busqueda\": \"lija de agua abracol\", \"pregunta_desambiguacion\": \"Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?\", \"stock_total\": 5503.0}, {\"codigo\": \"F6514508\", \"descripcion\": \"LIJA 320 AGUA ABRACOL\", \"descripcion_exacta\": \"LIJA 320 AGUA ABRACOL\", \"etiqueta_auditable\": \"[F6514508] - LIJA 320 AGUA ABRACOL\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"lija_agua_abracol\", \"producto_padre_busqueda\": \"lija de agua abracol\", \"pregunta_desambiguacion\": \"Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?\", \"stock_total\": 4014.0}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {\"cantidad_inferida\": null, \"presentacion_canonica_inferida\": null, \"producto_base\": \"lijas al agua\", \"color\": null, \"acabado\": null}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": false, \"pregunta_desambiguacion\": null, \"mensaje\": null}"
+      }
+    ],
+    "context_updates": {
+      "last_product_request": {
+        "core_terms": [
+          "lijas",
+          "al",
+          "agua",
+          "lijas al agua"
+        ],
+        "search_terms": [
+          "lijas",
+          "lija",
+          "papel lija",
+          "lija agua",
+          "lija al agua",
+          "al",
+          "agua",
+          "lijas al agua"
+        ],
+        "requested_quantity": null,
+        "requested_unit": null,
+        "quantity_expression": null,
+        "product_codes": [],
+        "brand_filters": [],
+        "direction_filters": [],
+        "size_filters": [],
+        "store_filters": [],
+        "original_query": "lijas al agua",
+        "color_filters": [],
+        "finish_filters": [],
+        "nlu_processed": true,
+        "nlu_extraction": {
+          "cantidad_inferida": null,
+          "presentacion_canonica_inferida": null,
+          "producto_base": "lijas al agua",
+          "color": null,
+          "acabado": null
+        },
+        "canonical_product": "lijas al agua"
+      },
+      "last_product_query": "lijas al agua",
+      "last_product_context": [
+        {
+          "codigo": "F6514502",
+          "descripcion": "LIJA 80 AGUA ABRACOL",
+          "descripcion_exacta": "LIJA 80 AGUA ABRACOL",
+          "etiqueta_auditable": "[F6514502] - LIJA 80 AGUA ABRACOL",
+          "marca": null,
+          "presentacion": null,
+          "familia_consulta": "lija_agua_abracol",
+          "producto_padre_busqueda": "lija de agua abracol",
+          "pregunta_desambiguacion": "Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?",
+          "stock_total": 2421.0
+        },
+        {
+          "codigo": "F6514501",
+          "descripcion": "LIJA 60 AGUA ABRACOL",
+          "descripcion_exacta": "LIJA 60 AGUA ABRACOL",
+          "etiqueta_auditable": "[F6514501] - LIJA 60 AGUA ABRACOL",
+          "marca": null,
+          "presentacion": null,
+          "familia_consulta": "lija_agua_abracol",
+          "producto_padre_busqueda": "lija de agua abracol",
+          "pregunta_desambiguacion": "Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?",
+          "stock_total": 1534.0
+        },
+        {
+          "codigo": "F190023",
+          "descripcion": "LIJA 2000 AGUA ABRACOL",
+          "descripcion_exacta": "LIJA 2000 AGUA ABRACOL",
+          "etiqueta_auditable": "[F190023] - LIJA 2000 AGUA ABRACOL",
+          "marca": null,
+          "presentacion": null,
+          "familia_consulta": "lija_agua_abracol",
+          "producto_padre_busqueda": "lija de agua abracol",
+          "pregunta_desambiguacion": "Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?",
+          "stock_total": 320.0
+        },
+        {
+          "codigo": "F6514506",
+          "descripcion": "LIJA 180 AGUA ABRACOL",
+          "descripcion_exacta": "LIJA 180 AGUA ABRACOL",
+          "etiqueta_auditable": "[F6514506] - LIJA 180 AGUA ABRACOL",
+          "marca": null,
+          "presentacion": null,
+          "familia_consulta": "lija_agua_abracol",
+          "producto_padre_busqueda": "lija de agua abracol",
+          "pregunta_desambiguacion": "Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?",
+          "stock_total": 5503.0
+        },
+        {
+          "codigo": "F6514508",
+          "descripcion": "LIJA 320 AGUA ABRACOL",
+          "descripcion_exacta": "LIJA 320 AGUA ABRACOL",
+          "etiqueta_auditable": "[F6514508] - LIJA 320 AGUA ABRACOL",
+          "marca": null,
+          "presentacion": null,
+          "familia_consulta": "lija_agua_abracol",
+          "producto_padre_busqueda": "lija de agua abracol",
+          "pregunta_desambiguacion": "Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?",
+          "stock_total": 4014.0
+        }
+      ]
+    },
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": [
+        "inventory_used"
+      ]
+    },
+    "is_farewell": false
+  }
+}

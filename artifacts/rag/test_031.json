@@ -1,0 +1,63 @@
+{
+  "query": "necesito quitar barniz viejo de una puerta de madera",
+  "response": {
+    "query": "necesito quitar barniz viejo de una puerta de madera",
+    "resultados": [
+      {
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.64,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar el barniz, verifique el estado de la madera.\nEn maderas nuevas para obtener tersura y promover adherencia, lije muy bien la superficie en el\nsentido de la veta de la madera con papel abrasivo N°180 y elimine el polvillo suelto. Para alargar la\ndurabilidad de la madera, aplique una mano de Base Inmunizante Pintuco® Ref. 6601 como\npreparador de superficie.\nEn repintes, si la pintura está "
+      },
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6399,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar el barniz, verifique el estado de la madera.\nEn maderas nuevas para obtener tersura y promover adherencia, lije muy bien la superficie en el\nsentido de las vetas de la madera con papel abrasivo N°180 y elimine el polvillo suelto. Para alargar la\ndurabilidad de la madera, aplique una mano de Base Inmunizante Pintuco® Ref. 6601 como\npreparador de superficie.\nEn repintes, si la pintura está dete"
+      },
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6389,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
+      },
+      {
+        "archivo": "BARNIZ SD1.pdf",
+        "familia": "BARNIZ SD1",
+        "similitud": 0.6346,
+        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar el barniz, verifique el estado de la madera.\nEn maderas nuevas, para obtener tersura y promover adherencia, lije muy bien la superficie en el\nsentido de las vetas de la madera con papel abrasivo N° 180 y elimine el polvillo suelto.\nEn repintes, si la pintura está deteriorada, aplique Removedor Pintuco® Ref. 1020, deje actuar por 10\nminutos y retire con una espátula las capas de pintura removidas. Lu"
+      },
+      {
+        "archivo": "REMOVEDOR PINTUCO 1020 (Copia en conflicto de usuario-PC 2019-09-07).pdf",
+        "familia": "REMOVEDOR PINTUCO 1020",
+        "similitud": 0.6194,
+        "texto": "[PRODUCTO: REMOVEDOR PINTUCO 1020] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\nLa pintura, barniz o laca que se va a eliminar debe estar limpia, seca y fría.\n1/3"
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.5653,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar el barniz, verifique el estado de la madera.\nEn maderas nuevas para obtener tersura y promover adherencia, lije muy bien la superficie en el\nsentido de la veta de la madera con papel abrasivo N°180 y elimine el polvillo suelto. Para alargar la\ndurabilidad de la madera, aplique una mano de Base Inmunizante Pintuco® Ref. 6601 como\npreparador de superficie.\nEn repintes, si la pintura está "
+      },
+      {
+        "archivo": "MADETEC 5 EN 1.pdf",
+        "familia": "MADETEC 5 EN 1",
+        "similitud": 0.5564,
+        "texto": "[PRODUCTO: MADETEC 5 EN 1] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar el barniz, verifique el estado de la madera.\nEn maderas nuevas, para obtener tersura y promover adherencia, lije muy bien la superficie en el\nsentido de las vetas de la madera con papel abrasivo N° 180 y elimine el polvillo suelto, luego pula con\nN° 360.\nEn repintes, si la pintura está deteriorada, aplique Removedor Pintuco® Ref. 1020, deje actuar por 10\nminutos y retire con una espátula las cap"
+      }
+    ],
+    "productos_candidatos": [
+      "BARNEX EXTRA PROTECCIÓN",
+      "BARNIZ BARNEX 557",
+      "BARNIZ SD1",
+      "imprimante",
+      "barnex",
+      "barniz",
+      "pintulac",
+      "barniz marino",
+      "wood stain",
+      "madetec",
+      "pintulux"
+    ]
+  }
+}

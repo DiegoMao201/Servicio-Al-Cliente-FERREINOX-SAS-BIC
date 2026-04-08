@@ -1,0 +1,66 @@
+{
+  "query": "rendimiento por galón de pintuco fill 7",
+  "response": {
+    "query": "rendimiento por galón de pintuco fill 7",
+    "resultados": [
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.7887,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: Espesor recomendado]\n\n2 - 3 manos(15 a 20 mils)\nRendimiento práctico aproximado(Acabado)\n\n\n4 - 5 m² / galón"
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.7496,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: PRESENTACION]\n\ncuñete de 5 gal, galón"
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.741,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: REFERENCIAS Y]\n\nCOLORES | 27504 Blanco\n27507 Verde Amazonas | 27505 Gris | 27506 Rojo teja\nPRESENTACION | cuñete de 5 gal, galón\nDESCRIPCIÓN | Producto diseñado con resinas acrílicas de alta elongación, garantizando resistencia\na la intemperie, excelente adherencia, flexibilidad y resistencia al agua.\nUSOS | Se utiliza para la Impermeabilización de muros, terrazas sobre ladrillo, ladrillo\nvitrificado o concreto.\nNota. No se debe utilizar en inm"
+      },
+      {
+        "archivo": "PINTUCO FILL 7.pdf",
+        "familia": "PINTUCO FILL 7",
+        "similitud": 0.6907,
+        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: Fill]\n\n7"
+      },
+      {
+        "archivo": "PINTUCO FILL 7.pdf",
+        "familia": "PINTUCO FILL 7",
+        "similitud": 0.687,
+        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: Lisas]\n\n5 - 6 m2/ gal"
+      },
+      {
+        "archivo": "PINTUCO FILL 7.pdf",
+        "familia": "PINTUCO FILL 7",
+        "similitud": 0.6698,
+        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: Líquido viscoso]\n\n%"
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.6282,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: Peso neto por galón]\n\n5.03 kilos"
+      },
+      {
+        "archivo": "PINTULACA.pdf",
+        "familia": "PINTULACA",
+        "similitud": 0.6276,
+        "texto": "[PRODUCTO: PINTULACA] [MARCA: Pintuco]\n[SECCIÓN: RENDIMIENTO]\n\n35-47 m2/gal rendimiento teórico para un espesor de 3 mills"
+      }
+    ],
+    "productos_candidatos": [
+      "IMPERCOAT 7A",
+      "PINTUCO FILL 7",
+      "pintuco fill",
+      "impercoat",
+      "fill 7",
+      "fill 12",
+      "koraza",
+      "viniltex"
+    ]
+  }
+}

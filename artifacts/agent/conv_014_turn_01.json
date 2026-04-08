@@ -1,0 +1,16 @@
+{
+  "user": "Necesito esmalte, ¿qué tienen?",
+  "result": {
+    "response_text": "¿Lo necesitas para interior o exterior? Para interior tenemos el Doméstico (esmalte económico) y para exterior o metal, te recomiendo el Pintulux 3en1.",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": []
+    },
+    "is_farewell": false
+  }
+}

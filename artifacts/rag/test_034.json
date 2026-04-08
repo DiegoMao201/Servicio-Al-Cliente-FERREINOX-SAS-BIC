@@ -1,0 +1,67 @@
+{
+  "query": "necesito pintar un tobogán metálico de un parque",
+  "response": {
+    "query": "necesito pintar un tobogán metálico de un parque",
+    "resultados": [
+      {
+        "archivo": "ANTICORROSIVO ROJO 10050 - 545.pdf",
+        "familia": "ANTICORROSIVO ROJO 10050 - 545",
+        "similitud": 0.5962,
+        "texto": "[PRODUCTO: ANTICORROSIVO ROJO 10050 - 545] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintura anticorrosiva de dos componentes, una anticorrosiva\nepóxica con óxido de hierro y un endurecedor poliamínico, que al\nmezclarse en proporciones apropiadas (ver especificaciones)\nproduce al aplicarla, una capa sólida, dura, resistente a aguas\ndulces potables o saladas, ácidos débiles, sales álcalis, disolventes\nalifáticos y temperaturas de 120° en seco y 70°C en inmersión. USOS\nComo base anticorrosiva, con "
+      },
+      {
+        "archivo": "ANTICORROSIVO AROFLEX ATOXICO ROJO 10082.pdf",
+        "familia": "ANTICORROSIVO AROFLEX ATOXICO ROJO 10082",
+        "similitud": 0.5958,
+        "texto": "[PRODUCTO: ANTICORROSIVO AROFLEX ATOXICO ROJO 10082] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\n• El metal debe estar completamente libre de humedad, grasas y otros contaminantes.\n• El óxido, pinturas deterioradas y partículas sueltas se deben eliminar.\n• Para máxima eficiencia de la anticorrosiva se debe tratar el metal con chorro abrasivo Grado Metal\nBlanco SA3 (SSPC-SP5) con un perfil de rugosidad de 25 a 37 micrones. El perfil de rugosidad se\npuede medir con cintas especiales.\n• "
+      },
+      {
+        "archivo": "PINTURA ACRILICA PARA MANTENIMIENTO.pdf",
+        "familia": "PINTURA ACRILICA PARA MANTENIMIENTO",
+        "similitud": 0.5948,
+        "texto": "[PRODUCTO: PINTURA ACRILICA PARA MANTENIMIENTO] [MARCA: Pintuco]\n[SECCIÓN: Ideal para proteger y decorar superficies de concreto como pisos]\n\nindustriales e institucionales, y en metales para estanterías,\npasamanos, transformadores, torres de transmisión y otras\nsuperficies metálicas ferrosas y no ferrosas en ambientes industriales\nde mediana agresividad que no estén expuestas a contacto con\nsolventes orgánicos. Es aplicada como acabado en superestructuras\nde embarcaciones fluviales y marinas."
+      },
+      {
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.5724,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: Meses]\n\nVersión 1.2 / Noviembre 2019 INSTRUCCIONES DE USOPreparación de la Superficie\nLa superficie debe estar libre de humedad, polvo, mugre, grasa y cera. La limpieza se hace con agua a\npresión dejando secar muy bien la superficie, con escobas manuales o mecánicas, cepillos o aire a presión.\nRemover pintura anterior en caso de que tenga mala adherencia.\nPara pintar tope llantas o este tipo de elementos es necesario confirmar que n"
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.5687,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nAplique al metal el producto con una brocha de cerda natural o sumerja el objeto metálico en Pintóxido\nhasta humedecerlo bien, dejando actuar el producto durante 4 horas para que la transformación del óxido\nsea completa (a 25°C), y luego retire el objeto para exponerlo al aire. Se debe procurar que el producto\npenetre muy bien en las zonas oxidadas para que ataque el óxido incrustado profundamente, lo cual se"
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.5643,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+      },
+      {
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.5571,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: Amarillo]\n\n10398132"
+      },
+      {
+        "archivo": "PINTURAMA.pdf",
+        "familia": "PINTURAMA",
+        "similitud": 0.5422,
+        "texto": "[PRODUCTO: PINTURAMA] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para pintar superficies interiores no expuestas al polvo y a]\n\nfricciones, tales como techos y cielorrasos. Disponible en una amplia gama\nde colores."
+      }
+    ],
+    "productos_candidatos": [
+      "ANTICORROSIVO ROJO 10050 - 545",
+      "ANTICORROSIVO AROFLEX ATOXICO ROJO 10082",
+      "PINTURA ACRILICA PARA MANTENIMIENTO",
+      "PINTURA PARA PARQUEADERO",
+      "pintucoat",
+      "corrotec",
+      "pintulux",
+      "anticorrosivo",
+      "wash primer"
+    ]
+  }
+}

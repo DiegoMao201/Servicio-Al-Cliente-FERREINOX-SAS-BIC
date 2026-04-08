@@ -1,0 +1,69 @@
+{
+  "query": "baranda de hierro que está oxidada a la intemperie",
+  "response": {
+    "query": "baranda de hierro que está oxidada a la intemperie",
+    "resultados": [
+      {
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.582,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.558,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nBARNEX®"
+      },
+      {
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.554,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Para evitar el deterioro prematuro de la superficie]\n\npintada, evite lavarla con agua y jabón antes de\ntranscurridos 30 días después de la aplicación."
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.5501,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: Versión 1 / 2015]\n\nBARNEX®"
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.5492,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\nno estén expuestos a la abrasión. No apto para uso en pisos."
+      },
+      {
+        "archivo": "ALTA TEMPERATURA GRIS 902.pdf",
+        "familia": "ALTA TEMPERATURA GRIS 902",
+        "similitud": 0.522,
+        "texto": "[PRODUCTO: ALTA TEMPERATURA GRIS 902] [MARCA: Pintuco]\n[SECCIÓN: Ideal para proteger y decorar exteriormente superficies]\n\nmetálicas sometidos a temperaturas entre 150°C y 400°C"
+      },
+      {
+        "archivo": "C- THERM HB 990 OUTDOOR.pdf",
+        "familia": "C- THERM HB 990 OUTDOOR",
+        "similitud": 0.5045,
+        "texto": "[PRODUCTO: C- THERM HB 990 OUTDOOR] [MARCA: Pintuco]\n[SECCIÓN: PRINCIPALES]\n\nProtección contra el fuego de estructuras de acero."
+      },
+      {
+        "archivo": "PRODUCTOS MANTENIMIENTO.pdf",
+        "familia": "PRODUCTOS MANTENIMIENTO",
+        "similitud": 0.5004,
+        "texto": "[PRODUCTO: PRODUCTOS MANTENIMIENTO] [MARCA: Pintuco]\n[SECCIÓN: Alta Resistencia a la intemperie]\n\n•\nPara proteger y decorar cabinas, puertas, ventanas, estructuras, en\ninteriores y exteriores."
+      }
+    ],
+    "productos_candidatos": [
+      "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+      "BARNEX EXTRA PROTECCION",
+      "BARNEX EXTRA PROTECCIÓN",
+      "koraza",
+      "barnex",
+      "koraza sol y lluvia",
+      "corrotec",
+      "pintoxido",
+      "anticorrosivo",
+      "pintulux",
+      "wash primer"
+    ]
+  }
+}

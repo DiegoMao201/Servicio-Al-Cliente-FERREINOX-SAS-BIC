@@ -1,0 +1,53 @@
+{
+  "query": "pintar un tanque de agua potable por dentro",
+  "response": {
+    "query": "pintar un tanque de agua potable por dentro",
+    "resultados": [
+      {
+        "archivo": "PINTUCOAT BASE AGUA.pdf",
+        "familia": "PINTUCOAT BASE AGUA",
+        "similitud": 0.5962,
+        "texto": "[PRODUCTO: PINTUCOAT BASE AGUA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nIdeal para proteger y decorar el exterior de tanques,\ntuberías y estructuras metálicas; así como superficies de\nconcreto que requieren un alto grado de asepsia en plantas\nde procesamiento de alimentos y laboratorios de medicamentos. Tenga en cuenta que no debe ser usado\nen el interior de tanques de almacenamiento (inmersión). Contiene agentes bactericidas que lo hace ideal\npara zonas de alta desinfección."
+      },
+      {
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.5648,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Agua]\n\nNOTA: Para el rendimiento práctico se deben tener en cuenta las pérdidas de pintura durante mezcla y\naplicación."
+      },
+      {
+        "archivo": "PINTUNOV 1280.pdf",
+        "familia": "PINTUNOV 1280",
+        "similitud": 0.5647,
+        "texto": "[PRODUCTO: PINTUNOV 1280] [MARCA: Pintuco]\n[SECCIÓN: PRODUCTO]\n\nRecubrimiento Epoxi modificado 100% sólidos por volumen, autoimprimante de\ndos componentes, con alto entrecruzamiento, excelente resistencia química y\nmecánica, diseñados especialmente para el exterior de tuberías enterradas. Es\nideal para la protección a la corrosión de ductos o tuberías enterradas en\nambientes severos y para el interior de tanques."
+      },
+      {
+        "archivo": "PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO.pdf",
+        "familia": "PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO",
+        "similitud": 0.5608,
+        "texto": "[PRODUCTO: PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO] [MARCA: Pintuco]\n[SECCIÓN: Productos de Mantenimiento y Marinas de Alto Desempeño]\n\npara uso en proyectos industriales\n\nM A N T E N I M I E N T O Y M A R I N A S SISTEMA PINTUCOAT® BASE AGUA\nIdeal para proteger exterior de tanques,\nestructuras, tuberías, superficies metálicas\n(Acero), como puentes, estructuras y\ntanques al exterior."
+      },
+      {
+        "archivo": "PINTURA CEMENTOS IMPERMEABLE 27519.pdf",
+        "familia": "PINTURA CEMENTOS IMPERMEABLE 27519",
+        "similitud": 0.5602,
+        "texto": "[PRODUCTO: PINTURA CEMENTOS IMPERMEABLE 27519] [MARCA: Pintuco]\n[SECCIÓN: Agua potable]\n\nProporción de mezcla: llana"
+      },
+      {
+        "archivo": "PRODUCTOS MANTENIMIENTO.pdf",
+        "familia": "PRODUCTOS MANTENIMIENTO",
+        "similitud": 0.5583,
+        "texto": "[PRODUCTO: PRODUCTOS MANTENIMIENTO] [MARCA: Pintuco]\n[SECCIÓN: Productos con certificación de la ANSI/NSF para almacenar agua]\n\npotable\n•"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTUCOAT BASE AGUA",
+      "PINTOXIDO",
+      "PINTUNOV 1280",
+      "PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO",
+      "pintucoat",
+      "imprimante",
+      "pintoxido"
+    ]
+  }
+}

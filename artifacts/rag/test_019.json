@@ -1,0 +1,51 @@
+{
+  "query": "piso de bodega industrial con tráfico de montacargas",
+  "response": {
+    "query": "piso de bodega industrial con tráfico de montacargas",
+    "resultados": [
+      {
+        "archivo": "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA(TERINSA).pdf",
+        "familia": "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
+        "similitud": 0.6529,
+        "texto": "[PRODUCTO: PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nSe usan para la demarcación y señalización de carreteras, calles, autopistas, parqueaderos, cachas deportivas, pisos de almacenes, bodegas e\nindustrias en general, aplicadas sobre superficies de pavimento, concreto, ladrillo y acero."
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6472,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+      },
+      {
+        "archivo": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
+        "familia": "FDS- PINTURA CANCHAS BASE ACCENT",
+        "similitud": 0.6256,
+        "texto": "[PRODUCTO: FDS- PINTURA CANCHAS BASE ACCENT] [MARCA: Pintuco]\n[SECCIÓN: Legislación relacionada con la gestión de residuos:]\n\n10221353 FABRICADO CONSTRUCCION PINTURA PARA CANCHAS"
+      },
+      {
+        "archivo": "FDS-PINTULUX TEU CAOBA.pdf",
+        "familia": "FDS-PINTULUX TEU CAOBA",
+        "similitud": 0.5742,
+        "texto": "[PRODUCTO: FDS-PINTULUX TEU CAOBA] [MARCA: Pintuco]\n[SECCIÓN: Transporte a granel con]\n\narreglo al anexo II de MARPOL\n73/78 y al Código IBC:"
+      },
+      {
+        "archivo": "FDS - PINTUTRAFICO ACRIL NEGRO 13756.pdf",
+        "familia": "FDS - PINTUTRAFICO ACRIL NEGRO 13756",
+        "similitud": 0.5695,
+        "texto": "[PRODUCTO: FDS - PINTUTRAFICO ACRIL NEGRO 13756] [MARCA: Pintuco]\n[SECCIÓN: Transporte a granel con]\n\narreglo al anexo II de MARPOL\n73/78 y al Código IBC:"
+      },
+      {
+        "archivo": "FDS- PINTUCOAT ALUMINIO 13261.pdf",
+        "familia": "FDS- PINTUCOAT ALUMINIO 13261",
+        "similitud": 0.4627,
+        "texto": "[PRODUCTO: FDS- PINTUCOAT ALUMINIO 13261] [MARCA: Pintuco]\n[SECCIÓN: Transporte a granel con]\n\narreglo al anexo II de MARPOL\n73/78 y al Código IBC:"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
+      "PINTURA PARA CANCHAS",
+      "pintura canchas",
+      "pintucoat",
+      "pintura trafico"
+    ]
+  }
+}

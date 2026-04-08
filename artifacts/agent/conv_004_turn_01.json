@@ -1,0 +1,18 @@
+{
+  "user": "Tengo unas rejas muy oxidadas, se las está comiendo el óxido",
+  "result": {
+    "response_text": "¿El óxido es profundo (se está comiendo el metal) o es superficial (solo manchas)? ¿Está a la intemperie?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  }
+}

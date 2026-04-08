@@ -1,0 +1,67 @@
+{
+  "query": "la pared se está mojando por dentro desde la base",
+  "response": {
+    "query": "la pared se está mojando por dentro desde la base",
+    "resultados": [
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.688,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: DESCRIPCIÓN]\n\nAQUABLOCK® ULTRA es un impermeabilizante acrílico\nbase agua de alto desempeño para uso interior y exterior,\nposee resinas acrílicas, fungicidas y micro partículas que\npenetran el sustrato, lo sellan e inhiben el paso de la\nhumedad\npor\ncapilaridad\no\npresión\nnegativa,\nAQUABLOCK® ULTRA genera triple protección gracias a\nsu\ntecnología\nSellamur®\nque\nle\npermite\nsellar,\nimpermeabilizar y pintar en un solo paso y que le\nproporciona\nuna\npotente resisten"
+      },
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6803,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: Aqua block ultra]\n\nSella, impermeabiliza y pinta"
+      },
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6507,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: Se usa como tratamiento correctivo y preventivo de]\n\nhumedades por nivel freático o presión negativa en\nmuros de contención, sótanos, bodegas, cuartos útiles o\nviviendas. Funciona como una pintura impermeable de\nalta blancura, para sellar y proteger contra la humedad\nparedes y muros interiores o exteriores que pueden estar\nexpuestos a contacto directo con la tierra en al menos\nuna de sus caras, o donde se presente aparición de\nhumedades en muros causados por"
+      },
+      {
+        "archivo": "FDS- AQUABLOCK ULTRA 27070.pdf",
+        "familia": "FDS- AQUABLOCK ULTRA 27070",
+        "similitud": 0.6422,
+        "texto": "[PRODUCTO: FDS- AQUABLOCK ULTRA 27070]\n[SECCIÓN: Uso del producto]\n\n: Recubrimiento base agua para uso interior y exterior."
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.5658,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: PRODUCTOS COMPLEMENTARIOS]\n\n• Sellamur 3 en 1: Impermeabilizante de humedad freatica o ascendente"
+      },
+      {
+        "archivo": "FDS- PINTULACA TRANSPARENTE BRILLANTE 7400.pdf",
+        "familia": "FDS- PINTULACA TRANSPARENTE BRILLANTE 7400",
+        "similitud": 0.5309,
+        "texto": "[PRODUCTO: FDS- PINTULACA TRANSPARENTE BRILLANTE 7400]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.518,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Se puede usar en obra nueva en muros interiores o exteriores que]\n\nse prevea van a tener problemas de humedad ascendente o\ncomo reparación de muros donde se presenten eﬂorescencia (\nmanchas blancas), ampollamiento y descascaramiento de\npintura, también es ideal en las zonas de ventana, balcones, patio\ny en general muros que posean problemas de humedad."
+      },
+      {
+        "archivo": "C-THERM W910 INTUMESCENTE BASE AGUA.pdf",
+        "familia": "C-THERM W910 INTUMESCENTE BASE AGUA",
+        "similitud": 0.5136,
+        "texto": "[PRODUCTO: C-THERM W910 INTUMESCENTE BASE AGUA] [MARCA: Pintuco]\n[SECCIÓN: Humedad relativa]\n\n≤ 80 %"
+      }
+    ],
+    "productos_candidatos": [
+      "AQUABLOCK ULTRA",
+      "ESTUCO ANTI HUMEDAD",
+      "estuco anti humedad",
+      "aquablock",
+      "aquablock ultra",
+      "sellamur",
+      "imprimante",
+      "fondo",
+      "sellador"
+    ]
+  }
+}

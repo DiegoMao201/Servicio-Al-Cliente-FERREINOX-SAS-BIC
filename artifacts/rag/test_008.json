@@ -1,0 +1,64 @@
+{
+  "query": "pintar frente de la casa que aguante intemperie",
+  "response": {
+    "query": "pintar frente de la casa que aguante intemperie",
+    "resultados": [
+      {
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.638,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nBARNEX®"
+      },
+      {
+        "archivo": "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE.pdf",
+        "familia": "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE",
+        "similitud": 0.6359,
+        "texto": "[PRODUCTO: FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Importante tener presente que únicamente se pueden]\n\naplicar los colores del abanico que se encuentren\nmarcados con el símbolo del sol ☼, para asegurar\nla retención/duración del color con el paso del\ntiempo."
+      },
+      {
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.6336,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Recomendada]\n\npara\nambientes\nexteriores,\npara\ndecorar\ny proteger fachadas y patios revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar,\ntejas y láminas de fibrocemento. Disponible en una\namplia gama de colores gracias a la Tecnología\nSuperior de Color Pintuco® Colortech®."
+      },
+      {
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.6311,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Importante tener presente que únicamente se pueden]\n\naplicar los colores del abanico que se encuentren\nmarcados con el símbolo del sol ☼, para asegurar\nla retención/duración del color con el paso del\ntiempo."
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.6304,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: BARNIZ]\n\nPINTUCO®"
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.63,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: BARNIZ]\n\nPINTUCO®"
+      },
+      {
+        "archivo": "KORAZA 5.pdf",
+        "familia": "KORAZA 5",
+        "similitud": 0.6126,
+        "texto": "[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas y patios; revocados y\nestucados, en bloque a la vista, ladrillo sin esmaltar, tejas y láminas de fibro-cemento.\n\n*Para la elección adecuada del color te recomendamos utilizar los colores marcados en el abanico\ncon el simbolo del “sol” ☼ los cuales garantizan la retención del color por 5 años siguiendo las\nrecomendaciones de aplicación."
+      },
+      {
+        "archivo": "FDS - ESTUCO ACRILICO PARA EXTERIOR BLANCO 27060.pdf",
+        "familia": "FDS - ESTUCO ACRILICO PARA EXTERIOR BLANCO 27060",
+        "similitud": 0.4677,
+        "texto": "[PRODUCTO: FDS - ESTUCO ACRILICO PARA EXTERIOR BLANCO 27060] [MARCA: Pintuco]\n[SECCIÓN: No relevante]\n\nSECCIÓN 5: MEDIDAS DE LUCHA CONTRA INCENDIOS\n5.1"
+      }
+    ],
+    "productos_candidatos": [
+      "BARNEX EXTRA PROTECCION",
+      "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE",
+      "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+      "koraza",
+      "barnex",
+      "koraza sol y lluvia"
+    ]
+  }
+}

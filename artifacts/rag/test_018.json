@@ -1,0 +1,66 @@
+{
+  "query": "tubo galvanizado nuevo cómo pintarlo",
+  "response": {
+    "query": "tubo galvanizado nuevo cómo pintarlo",
+    "resultados": [
+      {
+        "archivo": "WASH PRIMER BASE AGUA.pdf",
+        "familia": "WASH PRIMER BASE AGUA",
+        "similitud": 0.6131,
+        "texto": "[PRODUCTO: WASH PRIMER BASE AGUA] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nSe revuelve el Wash Primer base agua, con una espátula limpia hasta que la mezcla sea total y uniforme.\nSe aplica sin diluir, a pistola o brocha una sola mano delgada, que cubra uniformemente toda la superficie\nmetálica. Se deja secar el tiempo recomendado y se aplica luego un recubrimiento de acabado estético ya\nsea de tipo alquídico, acrílico, epóxico, poliuretano o poliaspártica. Si se requier"
+      },
+      {
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.6023,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: INSTRUCCIONES DE USO]\n\n1. Preparación de la superficie a pintar: Antes de\naplicar verifique que la superficie esté seca, libre de\ngrasa,\npolvo,\nóxido\ny\npintura\ndeteriorada.\nEn\nsuperficies oxidadas, elimine el óxido con rasqueta,\ncepillo\nde\nalambre,\npapel\nde\nlija\no\nmáquina\npulidora. Para eliminar el óxido residual aplique\nuna mano (capa) de Pintóxido de Pintuco® Ref.514."
+      },
+      {
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.5982,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Pintura anticorrosiva base solvente y de acabado]\n\nmate."
+      },
+      {
+        "archivo": "DOMESTICO.pdf",
+        "familia": "DOMESTICO",
+        "similitud": 0.5939,
+        "texto": "[PRODUCTO: DOMESTICO] [MARCA: Pintuco]\n[SECCIÓN: Superficies]\n\nnuevas: aplicar previamente Corrotec® Premium.\nSuperficies con pintura en buen estado: lije la\nsuperficie con papel abrasivo, limpie y aplique"
+      },
+      {
+        "archivo": "ANTICORROSIVO INDUSTRIAL 210003.pdf",
+        "familia": "ANTICORROSIVO INDUSTRIAL 210003",
+        "similitud": 0.5931,
+        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: Versión 2 / Septiembre 2020]\n\nse trata con Pintóxido Ref. 514; las pinturas deterioradas se quitan con Removedor Pintuco Ref. 1020. Los\nsustratos metálicos no ferrosos como el aluminio, hojalata, zinc y metales lisos o pulidos se les aplica\nWash-Primer Pintuco base agua Ref. 10281795 (1/4 de galón), 10281794 (galón) para obtener óptima\nadherencia de la anticorrosiva."
+      },
+      {
+        "archivo": "ANTICORROSIVO AMARILLO  505.pdf",
+        "familia": "ANTICORROSIVO AMARILLO  505",
+        "similitud": 0.5915,
+        "texto": "[PRODUCTO: ANTICORROSIVO AMARILLO  505] [MARCA: Pintuco]\n[SECCIÓN: ANTICORROSIVA FENÓLICA MATE AMARILLA 505 Ideal para pro]\n\nIdeal para proteger estructuras metálicas en general, exterior de tanques y\ntanques y tuberías expuestas a ambientes de corrosividad"
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.5896,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Agua]\n\nNOTA: Para el rendimiento práctico se deben tener en cuenta las pérdidas de pintura durante mezcla y\naplicación."
+      },
+      {
+        "archivo": "WASH PRIMER.pdf",
+        "familia": "WASH PRIMER",
+        "similitud": 0.5889,
+        "texto": "[PRODUCTO: WASH PRIMER] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nPor separado cada componente debe agitarse con una espátula limpia hasta obtener su completa\nuniformidad. Mezcle 1 parte por volumen del Componente A con 1 parte por volumen del componente B,\ny revuelva la mezcla con una espátula limpia hasta que sea uniforme. De la exactitud y uniformidad de la\nmezcla dependen las propiedades del producto aplicado. Se debe preparar únicamente la cantidad de\nmezcla que se "
+      }
+    ],
+    "productos_candidatos": [
+      "WASH PRIMER BASE AGUA",
+      "CORROTEC PREMIUM",
+      "DOMESTICO",
+      "corrotec",
+      "domestico",
+      "wash primer",
+      "pintoxido",
+      "anticorrosivo"
+    ]
+  }
+}

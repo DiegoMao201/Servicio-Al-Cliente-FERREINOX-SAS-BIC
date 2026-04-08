@@ -1,0 +1,64 @@
+{
+  "query": "le está saliendo como un polvo blanco a la pared",
+  "response": {
+    "query": "le está saliendo como un polvo blanco a la pared",
+    "resultados": [
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.659,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Se puede usar en obra nueva en muros interiores o exteriores que]\n\nse prevea van a tener problemas de humedad ascendente o\ncomo reparación de muros donde se presenten eﬂorescencia (\nmanchas blancas), ampollamiento y descascaramiento de\npintura, también es ideal en las zonas de ventana, balcones, patio\ny en general muros que posean problemas de humedad."
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.6469,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Antihumedad Estuco Acrílico es una masilla]\n\nacrílica de altísima resistencia al agua, diseñada\npara aplicar en fachadas y zonas húmedas, en la\nbase de los muros interiores o exteriores, donde\nse presenten problemas de humedad freática o\nascendente, para evitar o reparar los daños\ncausados por este tipo de humedades,\nimpidiendo\nel\npaso\nde\nhumedad\ny\ndisminuyendo de forma efectiva la posibilidad\nde aparición de ampollas en la pintura"
+      },
+      {
+        "archivo": "FDS-  AQUABLOCK ULTRA 27070 BLANCO.pdf",
+        "familia": "FDS-  AQUABLOCK ULTRA 27070 BLANCO",
+        "similitud": 0.6423,
+        "texto": "[PRODUCTO: FDS-  AQUABLOCK ULTRA 27070 BLANCO]\n[SECCIÓN: Derrame pequeño]\n\n:"
+      },
+      {
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6352,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: 2. Aplique con brocha o rodillo y sin diluir una mano de]\n\nAQUABLOCK® ULTRA hasta obtener una película uniforme\nsobre toda la superficie, sin presencia de microburbujas o\nespacios sin producto. Nivele y resane la superficie con Estuco"
+      },
+      {
+        "archivo": "FDS-  AQUABLOCK ULTRA 27070 BLANCO.pdf",
+        "familia": "FDS-  AQUABLOCK ULTRA 27070 BLANCO",
+        "similitud": 0.6319,
+        "texto": "[PRODUCTO: FDS-  AQUABLOCK ULTRA 27070 BLANCO]\n[SECCIÓN: Uso del producto]\n\n: Recubrimiento base agua para uso interior y exterior."
+      },
+      {
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.6026,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Para usos en fachadas en ambientes muy fríos o cálidos con alta]\n\nhumedad relativa, zonas húmedas en baños y lavados de ropa."
+      },
+      {
+        "archivo": "FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883.pdf",
+        "familia": "FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883",
+        "similitud": 0.479,
+        "texto": "[PRODUCTO: FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883]\n[SECCIÓN: Por inhalación]\n\n:\n:"
+      },
+      {
+        "archivo": "FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883.pdf",
+        "familia": "FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883",
+        "similitud": 0.4648,
+        "texto": "[PRODUCTO: FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883]\n[SECCIÓN: Derrame pequeño]\n\n:"
+      }
+    ],
+    "productos_candidatos": [
+      "ESTUCO ANTI HUMEDAD",
+      "AQUABLOCK ULTRA",
+      "estuco anti humedad",
+      "aquablock",
+      "aquablock ultra",
+      "sellamur"
+    ]
+  }
+}
