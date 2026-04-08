@@ -5461,6 +5461,327 @@ def ensure_product_companion_table():
         )
 
 
+# ---------------------------------------------------------------------------
+# WhatsApp Media Download & Document Processing for Expert Training
+# ---------------------------------------------------------------------------
+
+def download_whatsapp_media(media_id: str) -> tuple[bytes, str]:
+    """Download media bytes from WhatsApp Cloud API. Returns (bytes, mime_type)."""
+    # Step 1: Get media URL
+    url_resp = requests.get(
+        f"https://graph.facebook.com/v22.0/{media_id}",
+        headers={"Authorization": f"Bearer {get_whatsapp_access_token()}"},
+        timeout=15,
+    )
+    if url_resp.status_code >= 400:
+        raise RuntimeError(f"WhatsApp media metadata error {url_resp.status_code}: {url_resp.text[:300]}")
+    media_info = url_resp.json()
+    media_url = media_info.get("url")
+    mime_type = media_info.get("mime_type", "application/octet-stream")
+    if not media_url:
+        raise RuntimeError(f"No URL in media response: {media_info}")
+
+    # Step 2: Download actual bytes
+    dl_resp = requests.get(
+        media_url,
+        headers={"Authorization": f"Bearer {get_whatsapp_access_token()}"},
+        timeout=60,
+    )
+    if dl_resp.status_code >= 400:
+        raise RuntimeError(f"WhatsApp media download error {dl_resp.status_code}")
+    return dl_resp.content, mime_type
+
+
+def extract_text_from_pdf_bytes(pdf_bytes: bytes) -> str:
+    """Extract text from PDF using PyMuPDF (mirrors ingest_technical_sheets.py)."""
+    import fitz
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+    pages = []
+    for page in doc:
+        page_parts = []
+        try:
+            tables = page.find_tables()
+            if tables and tables.tables:
+                for table in tables:
+                    table_data = table.extract()
+                    if table_data:
+                        formatted_rows = []
+                        for row in table_data:
+                            clean_cells = [str(cell).strip() if cell else "" for cell in row]
+                            if len(clean_cells) == 2 and clean_cells[0] and clean_cells[1]:
+                                formatted_rows.append(f"{clean_cells[0]}: {clean_cells[1]}")
+                            elif any(c for c in clean_cells):
+                                formatted_rows.append(" | ".join(c for c in clean_cells if c))
+                        if formatted_rows:
+                            page_parts.append("\n".join(formatted_rows))
+        except Exception:
+            pass
+        text_content = page.get_text("text")
+        if text_content and text_content.strip():
+            if page_parts:
+                blocks = page.get_text("blocks")
+                non_table_text = []
+                for block in blocks:
+                    if block[6] == 0:
+                        block_text = block[4].strip()
+                        if block_text:
+                            non_table_text.append(block_text)
+                if non_table_text:
+                    page_parts.insert(0, "\n".join(non_table_text))
+                pages.append("\n\n".join(page_parts))
+            else:
+                pages.append(text_content.strip())
+    doc.close()
+    return "\n\n".join(pages)
+
+
+def extract_text_from_excel_bytes(excel_bytes: bytes) -> str:
+    """Extract text from Excel file (all sheets) using openpyxl."""
+    from openpyxl import load_workbook
+    wb = load_workbook(io.BytesIO(excel_bytes), read_only=True, data_only=True)
+    parts = []
+    for sheet_name in wb.sheetnames:
+        ws = wb[sheet_name]
+        rows_text = []
+        for row in ws.iter_rows(values_only=True):
+            cells = [str(c).strip() if c is not None else "" for c in row]
+            if any(cells):
+                rows_text.append(" | ".join(c for c in cells if c))
+        if rows_text:
+            parts.append(f"[HOJA: {sheet_name}]\n" + "\n".join(rows_text))
+    wb.close()
+    return "\n\n".join(parts)
+
+
+def extract_text_from_image_bytes(image_bytes: bytes, mime_type: str) -> str:
+    """Use OpenAI GPT-4o vision to extract text/content from an image."""
+    try:
+        b64 = base64.b64encode(image_bytes).decode("utf-8")
+        client = get_openai_client()
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                "Extrae TODO el texto visible en esta imagen. "
+                                "Si es una ficha técnica, tabla de datos, cálculo o documento técnico, "
+                                "transcríbelo completo preservando la estructura (tablas, listas, secciones). "
+                                "Si es una foto de un producto o superficie, describe exactamente lo que ves. "
+                                "Responde SOLO con el contenido extraído, sin comentarios adicionales."
+                            ),
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:{mime_type};base64,{b64}"},
+                        },
+                    ],
+                }
+            ],
+            max_tokens=4000,
+            temperature=0,
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as exc:
+        logger.warning("Image text extraction failed: %s", exc)
+        return f"[Error extrayendo texto de imagen: {exc}]"
+
+
+def extract_text_from_media(media_bytes: bytes, mime_type: str, filename: str = "") -> tuple[str, str]:
+    """Extract text from media based on MIME type. Returns (text, doc_type)."""
+    mime_lower = (mime_type or "").lower()
+    fname_lower = (filename or "").lower()
+
+    if "pdf" in mime_lower or fname_lower.endswith(".pdf"):
+        return extract_text_from_pdf_bytes(media_bytes), "pdf"
+    elif any(x in mime_lower for x in ["spreadsheet", "excel", "xlsx", "xls"]) or \
+         fname_lower.endswith((".xlsx", ".xls")):
+        return extract_text_from_excel_bytes(media_bytes), "excel"
+    elif any(x in mime_lower for x in ["image/", "png", "jpeg", "jpg", "webp", "gif"]):
+        return extract_text_from_image_bytes(media_bytes, mime_type), "image"
+    elif "text" in mime_lower or fname_lower.endswith((".txt", ".csv", ".md")):
+        try:
+            return media_bytes.decode("utf-8"), "text"
+        except UnicodeDecodeError:
+            return media_bytes.decode("latin-1"), "text"
+    else:
+        # Try as text first, fall back to binary description
+        try:
+            text = media_bytes.decode("utf-8")
+            if text.strip():
+                return text, "text"
+        except UnicodeDecodeError:
+            pass
+        return f"[Archivo binario no soportado: {mime_type}, {len(media_bytes)} bytes]", "unsupported"
+
+
+def _chunk_expert_document(text: str, filename: str, max_chars: int = 2000, overlap: int = 300) -> list[str]:
+    """Chunk an expert-uploaded document for RAG storage."""
+    if not text or not text.strip():
+        return []
+    # Section-aware splitting (same logic as ingest_technical_sheets.py)
+    section_header_re = [
+        r"^[A-ZÁÉÍÓÚÑ\s/]{5,60}$",
+        r"^(?:\d+[\.\)]\s*)?[A-ZÁÉÍÓÚÑ][\w\s/]+:?\s*$",
+    ]
+
+    def is_header(line):
+        s = line.strip()
+        if not s or len(s) < 4 or len(s) > 80:
+            return False
+        return any(re.match(p, s) for p in section_header_re)
+
+    lines = text.split("\n")
+    sections = []
+    cur_hdr, cur_body = "GENERAL", []
+    for line in lines:
+        if is_header(line) and line.strip():
+            if cur_body:
+                body = "\n".join(cur_body).strip()
+                if body:
+                    sections.append((cur_hdr, body))
+            cur_hdr = line.strip()
+            cur_body = []
+        else:
+            cur_body.append(line)
+    if cur_body:
+        body = "\n".join(cur_body).strip()
+        if body:
+            sections.append((cur_hdr, body))
+    if not sections:
+        sections = [("GENERAL", text)]
+
+    product_name = re.sub(r"\.\w+$", "", filename).strip()
+    context_header = f"[DOCUMENTO EXPERTO: {product_name}] [FUENTE: Subido por asesor Ferreinox]"
+
+    chunks = []
+    for section_header, section_body in sections:
+        prefix = f"{context_header}\n[SECCIÓN: {section_header}]\n\n"
+        available = max_chars - len(prefix)
+        if len(section_body) <= available:
+            chunks.append(f"{prefix}{section_body}")
+        else:
+            start = 0
+            while start < len(section_body):
+                end = start + available
+                if end < len(section_body):
+                    brk = section_body.rfind("\n\n", start + available // 2, end)
+                    if brk == -1:
+                        brk = section_body.rfind(". ", start + available // 2, end)
+                    if brk > start:
+                        end = brk + 1
+                sub = section_body[start:end].strip()
+                if sub:
+                    chunks.append(f"{prefix}{sub}")
+                start = end - overlap if end < len(section_body) else len(section_body)
+    return chunks
+
+
+def ingest_expert_document_to_rag(
+    extracted_text: str,
+    filename: str,
+    expert_cedula: str,
+    conversation_id: int | None = None,
+    marca: str | None = None,
+) -> dict:
+    """Chunk, embed and store an expert-uploaded document into the RAG system."""
+    chunks = _chunk_expert_document(extracted_text, filename)
+    if not chunks:
+        return {"ingested": False, "reason": "No se pudo extraer texto útil del documento."}
+
+    # Generate embeddings
+    try:
+        client = get_openai_client()
+        all_embeddings = []
+        for i in range(0, len(chunks), 50):
+            batch = chunks[i:i + 50]
+            resp = client.embeddings.create(
+                model="text-embedding-3-small",
+                input=batch,
+                dimensions=1536,
+            )
+            batch_emb = [item.embedding for item in sorted(resp.data, key=lambda x: x.index)]
+            all_embeddings.extend(batch_emb)
+    except Exception as exc:
+        return {"ingested": False, "reason": f"Error generando embeddings: {exc}"}
+
+    # Store in agent_technical_doc_chunk
+    doc_path_lower = f"expert_upload/{expert_cedula}/{filename.lower()}"
+    doc_filename = filename
+
+    # Infer brand from content/filename
+    if not marca:
+        combined = (filename + " " + extracted_text[:500]).lower()
+        brand_patterns = [
+            "pintuco", "viniltex", "koraza", "pintulux", "domestico", "doméstico",
+            "abracol", "yale", "goya", "mega", "international",
+            "interseal", "intergard", "interchar", "interzone", "interthane",
+        ]
+        for bp in brand_patterns:
+            if bp in combined:
+                marca = bp.capitalize()
+                break
+
+    familia = re.sub(r"\.\w+$", "", filename).strip()
+
+    try:
+        engine = get_db_engine()
+        raw_conn = engine.raw_connection()
+        try:
+            cur = raw_conn.cursor()
+            # Delete previous chunks for this exact document (re-upload overwrites)
+            cur.execute(
+                "DELETE FROM public.agent_technical_doc_chunk WHERE doc_path_lower = %s",
+                (doc_path_lower,),
+            )
+            for idx, (chunk_text, embedding) in enumerate(zip(chunks, all_embeddings)):
+                embedding_str = "[" + ",".join(str(v) for v in embedding) + "]"
+                metadata_json = json.dumps({
+                    "uploaded_by_expert": expert_cedula,
+                    "conversation_id": conversation_id,
+                    "upload_date": datetime.utcnow().isoformat(),
+                    "source": "whatsapp_expert_upload",
+                }, ensure_ascii=False)
+                cur.execute(
+                    """
+                    INSERT INTO public.agent_technical_doc_chunk
+                        (doc_filename, doc_path_lower, chunk_index, chunk_text,
+                         marca, familia_producto, tipo_documento, metadata,
+                         embedding, token_count)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s::vector, %s)
+                    ON CONFLICT (doc_path_lower, chunk_index) DO UPDATE SET
+                        chunk_text = EXCLUDED.chunk_text,
+                        marca = EXCLUDED.marca,
+                        familia_producto = EXCLUDED.familia_producto,
+                        metadata = EXCLUDED.metadata,
+                        embedding = EXCLUDED.embedding,
+                        token_count = EXCLUDED.token_count,
+                        ingested_at = now()
+                    """,
+                    (
+                        doc_filename, doc_path_lower, idx, chunk_text,
+                        marca, familia, "ficha_tecnica_experto",
+                        metadata_json, embedding_str, len(chunk_text) // 4,
+                    ),
+                )
+            raw_conn.commit()
+        finally:
+            raw_conn.close()
+    except Exception as exc:
+        return {"ingested": False, "reason": f"Error almacenando en base de datos: {exc}"}
+
+    return {
+        "ingested": True,
+        "chunks_count": len(chunks),
+        "doc_path": doc_path_lower,
+        "filename": filename,
+        "marca_detectada": marca,
+    }
+
+
 def ensure_expert_knowledge_table():
     """Create agent_expert_knowledge table for commercial reinforcement notes."""
     engine = get_db_engine()
@@ -12941,7 +13262,23 @@ RESUMEN PARA PABLO — PALABRAS CLAVE:
 | Palabra clave | Qué hace |
 | ENSEÑAR / ENSEÑANZA / ANOTA ESTO / GUARDA ESTO / APRENDER ESTO | Guarda conocimiento experto en la base de datos |
 | PROBAR / PRUEBA / SIMULAR CLIENTE / COMO CLIENTE | Prueba cómo responde el agente como si fuera un cliente |
+| Enviar un DOCUMENTO (PDF, Excel, imagen, TXT) | Activa MODO DOCUMENTO — ver abajo |
 | (sin palabra clave) | Conversación normal de usuario interno |
+
+📄 MODO DOCUMENTO (cuando Pablo envía un archivo por WhatsApp):
+Cuando Pablo envíe un archivo (PDF, Excel, imagen, TXT) por WhatsApp, el sistema extrae automáticamente el contenido del documento. \
+Tú recibirás el texto extraído dentro del mensaje como [DOCUMENTO RECIBIDO: ...]. Tu flujo OBLIGATORIO es: \
+1) Lee el contenido extraído del documento. \
+2) Muéstrale a Pablo un RESUMEN ESTRUCTURADO de lo que encontraste: \
+   - Tipo de documento detectado (ficha técnica, cálculo, tabla de rendimientos, guía de aplicación, etc.) \
+   - Marca/producto si lo identificaste \
+   - Secciones principales encontradas \
+   - Un resumen de 3-5 puntos clave del contenido \
+3) Pregúntale: '📄 Pablo, este es el resumen de lo que extraje del documento. ¿Quieres que lo guarde en el RAG para que esté disponible en consultas futuras? Si sí, ¿tiene alguna marca asociada o nota adicional?' \
+4) Si Pablo confirma → llama `procesar_documento_experto(confirmar_ingesta=true, marca='...', notas_adicionales='...')` \
+5) Si Pablo dice que no, o quiere modificar algo → pregúntale qué quiere ajustar. Si dice que solo quería mostrar el documento pero no guardarlo, respóndele normalmente. \
+6) Si Pablo envía una IMAGEN de un producto, superficie, instalación o etiqueta → extrae la información visible y pregúntale si quiere guardar esa información como conocimiento experto (usa `registrar_conocimiento_experto` en ese caso, porque las imágenes descriptivas van mejor como conocimiento que como RAG). \
+IMPORTANTE: El contenido completo del documento queda almacenado en el contexto de la conversación como `pending_expert_document`. Cuando Pablo confirme, el tool `procesar_documento_experto` lo vectoriza y lo almacena en el RAG automáticamente.
 
 MEMORIA DE LISTAS: Si le mostraste al cliente una lista numerada de opciones (ya sean documentos, productos o cualquier cosa) y el cliente responde con un número (ej. '1', 'el 5', 'la segunda') o una afirmación ('sí', 'esa', 'la primera'), TIENES ESTRICTAMENTE PROHIBIDO pasarle ese número o 'sí' a las herramientas. DEBES buscar en tu memoria de conversación el nombre exacto de la opción que corresponde a ese número, y ejecutar la herramienta usando el NOMBRE COMPLETO EXACTO (ej. 'KORAZA ELASTOMÉRICA.pdf' o 'Domestico Blanco cuñete'). Nunca envíes '1', '2', 'sí' ni 'esa' como parámetro de búsqueda.
 
@@ -13543,6 +13880,49 @@ AGENT_TOOLS = [
                     },
                 },
                 "required": ["contexto_tags", "nota_comercial", "tipo"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "procesar_documento_experto",
+            "description": (
+                "Ingesta un documento (PDF, Excel, imagen, texto) subido por el asesor experto Pablo Mafla "
+                "(cédula 1053774777) al sistema RAG de fichas técnicas. SOLO puede usarse cuando el usuario "
+                "autenticado es Pablo y ha enviado un documento por WhatsApp. "
+                "Úsala DESPUÉS de que Pablo confirme qué contenido quiere guardar del documento. "
+                "El agente primero muestra un resumen del documento al experto, le pregunta si confirma "
+                "la ingesta y, si confirma, llama esta herramienta. "
+                "El contenido se vectoriza y queda disponible en futuras consultas del RAG."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "confirmar_ingesta": {
+                        "type": "boolean",
+                        "description": (
+                            "True si Pablo confirmó que quiere guardar el documento en el RAG. "
+                            "False si quiere cancelar."
+                        ),
+                    },
+                    "marca": {
+                        "type": "string",
+                        "description": (
+                            "Marca del producto relacionado si Pablo la indicó. "
+                            "Ej: 'Pintuco', 'International', 'Koraza'. Opcional."
+                        ),
+                    },
+                    "notas_adicionales": {
+                        "type": "string",
+                        "description": (
+                            "Notas adicionales de Pablo sobre el documento. Ej: 'este es el cálculo "
+                            "correcto para tanques de 500 galones', 'esta ficha reemplaza la anterior'. "
+                            "Opcional."
+                        ),
+                    },
+                },
+                "required": ["confirmar_ingesta"],
             },
         },
     },
@@ -15662,6 +16042,70 @@ def _handle_tool_registrar_conocimiento_experto(args, conversation_context):
         )
 
 
+def _handle_tool_procesar_documento_experto(args, conversation_context):
+    """Ingest an expert-uploaded document into the RAG system after confirmation."""
+    # Auth guard
+    internal_user = conversation_context.get("internal_user") or {}
+    cedula = str(internal_user.get("cedula") or "").strip()
+    if cedula != _EXPERT_CEDULA:
+        return json.dumps(
+            {"ingested": False, "mensaje": "Solo el asesor técnico autorizado puede subir documentos al RAG."},
+            ensure_ascii=False,
+        )
+
+    confirmar = args.get("confirmar_ingesta", False)
+    if not confirmar:
+        return json.dumps(
+            {"ingested": False, "mensaje": "Ingesta cancelada por el experto."},
+            ensure_ascii=False,
+        )
+
+    # Get pending document from conversation context
+    pending_doc = conversation_context.get("pending_expert_document")
+    if not pending_doc:
+        return json.dumps(
+            {"ingested": False, "mensaje": "No hay documento pendiente de ingesta. Envía primero el archivo por WhatsApp."},
+            ensure_ascii=False,
+        )
+
+    extracted_text = pending_doc.get("extracted_text", "")
+    filename = pending_doc.get("filename", "documento_experto.pdf")
+    marca = args.get("marca") or pending_doc.get("marca_detected")
+    notas = (args.get("notas_adicionales") or "").strip()
+
+    if notas:
+        extracted_text = f"[NOTAS DEL EXPERTO: {notas}]\n\n{extracted_text}"
+
+    conversation_id = conversation_context.get("conversation_id")
+    result = ingest_expert_document_to_rag(
+        extracted_text=extracted_text,
+        filename=filename,
+        expert_cedula=cedula,
+        conversation_id=conversation_id,
+        marca=marca,
+    )
+
+    if result.get("ingested"):
+        return json.dumps(
+            {
+                "ingested": True,
+                "mensaje": (
+                    f"✅ Documento '{filename}' ingresado al RAG exitosamente.\n"
+                    f"📊 {result['chunks_count']} fragmentos vectorizados y almacenados.\n"
+                    f"📁 Ruta: {result['doc_path']}\n"
+                    f"🏷️ Marca detectada: {result.get('marca_detectada') or 'No identificada'}\n"
+                    f"Este contenido ya está disponible para consultas técnicas futuras."
+                ),
+            },
+            ensure_ascii=False,
+        )
+    else:
+        return json.dumps(
+            {"ingested": False, "mensaje": f"No se pudo ingestar el documento: {result.get('reason', 'error desconocido')}"},
+            ensure_ascii=False,
+        )
+
+
 def _execute_agent_tool(tool_call, context, conversation_context):
     fn_name = tool_call.function.name
     try:
@@ -15697,6 +16141,8 @@ def _execute_agent_tool(tool_call, context, conversation_context):
             result = _handle_tool_guardar_producto_complementario(fn_args, conversation_context)
         elif fn_name == "registrar_conocimiento_experto":
             result = _handle_tool_registrar_conocimiento_experto(fn_args, conversation_context)
+        elif fn_name == "procesar_documento_experto":
+            result = _handle_tool_procesar_documento_experto(fn_args, conversation_context)
         else:
             result = json.dumps({"error": f"Herramienta desconocida: {fn_name}"}, ensure_ascii=False)
     except Exception as tool_exc:
@@ -16580,12 +17026,42 @@ async def receive_whatsapp_webhook(request: Request):
                     continue
 
                 content = None
+                media_extracted_text = None
+                media_filename = None
+                media_doc_type = None
                 if message_type == "text":
                     content = message.get("text", {}).get("body")
                 elif message_type == "button":
                     content = message.get("button", {}).get("text")
                 elif message_type == "interactive":
                     content = __import__("json").dumps(message.get("interactive", {}), ensure_ascii=False)
+                elif message_type in ("document", "image"):
+                    # Handle document/image uploads
+                    media_obj = message.get(message_type, {})
+                    media_id = media_obj.get("id")
+                    media_filename = media_obj.get("filename") or f"archivo.{message_type}"
+                    caption = media_obj.get("caption", "")
+                    if media_id:
+                        try:
+                            media_bytes, mime_type = download_whatsapp_media(media_id)
+                            media_extracted_text, media_doc_type = extract_text_from_media(
+                                media_bytes, mime_type, media_filename
+                            )
+                            # Build content description for the AI
+                            text_preview = media_extracted_text[:1500] if media_extracted_text else "(sin texto)"
+                            content = (
+                                f"[DOCUMENTO RECIBIDO: {media_filename} | tipo: {media_doc_type}]\n"
+                                f"{f'Mensaje adjunto: {caption}' if caption else ''}\n"
+                                f"--- CONTENIDO EXTRAÍDO ---\n{text_preview}\n"
+                                f"--- FIN CONTENIDO ---\n"
+                                f"{'[Documento truncado, hay más contenido...]' if len(media_extracted_text or '') > 1500 else ''}"
+                            )
+                        except Exception as exc:
+                            logger.error("Media download/extraction failed for %s: %s", media_id, exc)
+                            content = (
+                                f"[El cliente envió un archivo ({media_filename}) pero no pude procesarlo. "
+                                f"Error: {str(exc)[:200]}. Infórmale que hubo un problema procesando su archivo.]"
+                            )
 
                 stored_content = content
                 if content:
@@ -16668,7 +17144,25 @@ async def receive_whatsapp_webhook(request: Request):
                 # Generate response using LLM with function calling
                 ai_result = None
                 outbound_payload = None
-                if content and message_type in {"text", "button", "interactive"}:
+
+                # ── If expert (Pablo) uploaded a document, store in context for RAG ingestion ──
+                if media_extracted_text and message_type in ("document", "image"):
+                    internal_auth = conversation_context.get("internal_auth") or {}
+                    expert_cedula = str((internal_auth.get("user") or {}).get("cedula") or "").strip()
+                    if expert_cedula == _EXPERT_CEDULA:
+                        # Store full extracted text in conversation context for the tool
+                        conversation_context["pending_expert_document"] = {
+                            "extracted_text": media_extracted_text,
+                            "filename": media_filename or "documento_experto",
+                            "doc_type": media_doc_type,
+                            "marca_detected": None,
+                        }
+                        update_conversation_context(
+                            context["conversation_id"],
+                            {"pending_expert_document": conversation_context["pending_expert_document"]},
+                        )
+
+                if content and message_type in {"text", "button", "interactive", "document", "image"}:
                     try:
                         ai_result = handle_internal_whatsapp_message(content, context, conversation_context)
                         if ai_result is None:
