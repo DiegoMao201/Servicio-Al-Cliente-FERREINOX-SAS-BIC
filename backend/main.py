@@ -13702,12 +13702,16 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "consultar_ventas_internas",
-            "description": "Consulta el rendimiento de ventas del ERP para empleados internos logueados. "
+            "description": "Consulta el BI consolidado de ventas del ERP para empleados internos logueados. "
             "Úsala cuando un empleado autenticado pregunte por ventas, facturación, cuánto ha vendido, cuánto lleva en el mes, "
             "rendimiento de la tienda, facturación de un vendedor, comparativa de tiendas, etc. "
+            "IMPORTANTE: Esta herramienta consulta TODAS las ventas reales (mostradores + comerciales + todos los canales). "
+            "Si el empleado dice 'ventas de la empresa' o 'ventas totales' → usa canal='empresa'. "
+            "Si dice 'ventas de mostradores' → usa canal='mostradores'. "
+            "Si dice 'ventas de comerciales' o 'ventas de vendedores' → usa canal='comerciales'. "
+            "Si dice 'cuánto llevo' o 'mis ventas' → no necesitas canal, se filtra automáticamente por su código. "
             "El sistema aplica automáticamente el nivel de acceso según el rol: vendedor → solo sus propias ventas; "
-            "líder/operador → solo su sede; gerente/administrador → cualquier tienda o vendedor. "
-            "REGLA: Si el empleado pregunta 'cuánto llevo' o 'mis ventas', llama esta herramienta SIN necesidad de pedir más datos.",
+            "líder/operador → solo su sede; gerente/administrador → cualquier tienda o vendedor.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -13717,11 +13721,16 @@ AGENT_TOOLS = [
                     },
                     "tienda": {
                         "type": "string",
-                        "description": "Nombre de la tienda: pereira, manizales, armenia, laureles, opalo, ferrebox, cerritos. Dejar vacío para no filtrar por tienda.",
+                        "description": "Nombre de la tienda: pereira, manizales, armenia, laureles, opalo, ferrebox, cerritos. Dejar vacío para todas.",
                     },
                     "vendedor_nombre": {
                         "type": "string",
                         "description": "Nombre del vendedor específico a consultar (solo disponible para gerente/administrador).",
+                    },
+                    "canal": {
+                        "type": "string",
+                        "enum": ["empresa", "mostradores", "comerciales"],
+                        "description": "Canal de venta: 'empresa' = total consolidado (TODOS los canales, DEFAULT), 'mostradores' = solo vendedores de mostrador, 'comerciales' = solo vendedores comerciales/externos. Por defecto 'empresa'.",
                     },
                     "tipo_venta": {
                         "type": "string",
@@ -13730,8 +13739,8 @@ AGENT_TOOLS = [
                     },
                     "desglose": {
                         "type": "string",
-                        "enum": ["total", "por_dia", "por_vendedor", "por_producto", "por_cliente"],
-                        "description": "Nivel de detalle: total (solo cifras globales), por_dia, por_vendedor (solo admin/gerente/operador), por_producto, por_cliente.",
+                        "enum": ["total", "por_dia", "por_vendedor", "por_producto", "por_cliente", "por_tienda", "por_canal"],
+                        "description": "Nivel de detalle: total, por_dia, por_vendedor, por_producto, por_cliente, por_tienda (ventas por sede), por_canal (mostradores vs comerciales). Por defecto 'total'.",
                     },
                 },
                 "required": [],
@@ -14672,6 +14681,31 @@ def _build_series_condition(store_key: str, tipo_venta: str, param_idx: int = 0)
     return f"serie ILIKE :{pkey}", {pkey: f"{val}%"}
 
 
+def _build_series_condition_raw(store_key: str, tipo_venta: str, param_idx: int = 0):
+    """Like _build_series_condition but for raw_ventas_detalle (text columns, no fn_ wrappers on serie)."""
+    info = _VENTAS_STORE_SERIES.get(store_key)
+    if not info:
+        return None, {}
+    pkey = f"serie_p{param_idx}"
+    prefix = info["prefix"]
+    if tipo_venta == "credito":
+        val = info.get("credito") or f"{prefix}G"
+    elif tipo_venta == "contado":
+        val = info.get("contado") or f"{prefix}W"
+    else:
+        val = prefix
+    return f"serie ILIKE :{pkey}", {pkey: f"{val}%"}
+
+
+def _build_canal_case_sql() -> str:
+    """Build a SQL CASE expression that classifies a vendedor as 'Mostrador' or 'Comercial'."""
+    when_clauses = []
+    for names in _VENDEDORES_MOSTRADOR.values():
+        for name in names:
+            when_clauses.append(f"WHEN fn_normalize_text(nom_vendedor) = '{name}' THEN 'Mostrador'")
+    return "CASE " + " ".join(when_clauses) + " ELSE 'Comercial' END"
+
+
 _MESES_NOMBRES: dict = {
     "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
     "julio": 7, "agosto": 8, "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12,
@@ -14720,7 +14754,11 @@ def _parse_periodo_ventas(periodo_str: Optional[str]):
 
 
 def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dict) -> str:
-    """Consultas de BI de ventas del ERP para empleados internos con control de acceso por rol."""
+    """Consultas de BI de ventas consolidadas desde raw_ventas_detalle para empleados internos con control de acceso por rol.
+
+    Queries raw_ventas_detalle directly (not vw_ventas_netas) to include ALL channels:
+    mostradores, comerciales, credito, contado. Uses fn_parse_* for safe type casting.
+    """
     internal_auth = conversation_context.get("internal_auth") or {}
     if not internal_auth:
         return json.dumps(
@@ -14737,6 +14775,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     periodo_raw = args.get("periodo") or "este mes"
     tienda_arg = normalize_text_value(args.get("tienda") or "")
     vendedor_arg = normalize_text_value(args.get("vendedor_nombre") or "")
+    canal_arg = (args.get("canal") or "empresa").lower().strip()
     tipo_venta = (args.get("tipo_venta") or "todos").lower().strip()
     desglose = (args.get("desglose") or "total").lower().strip()
 
@@ -14767,10 +14806,8 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         tienda_final = tienda_arg
         codigo_vendedor_erp = employee_ctx.get("codigo_vendedor") or None
         if codigo_vendedor_erp:
-            # Prefer ERP vendor code for precise single-vendor match (no false positives)
             vendedor_filter = {"type": "codigo", "value": str(codigo_vendedor_erp)}
         else:
-            # Fallback: use up to 2 significant name tokens combined with AND
             name_tokens = [t for t in normalize_text_value(full_name).split() if len(t) >= 4]
             vendedor_filter = {"type": "nombre_tokens", "tokens": name_tokens[:2] if len(name_tokens) >= 2 else name_tokens[:1]}
         vendedor_filter_label = full_name
@@ -14780,22 +14817,31 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         vendedor_filter_label = None
         desglose = "total"
 
-    # ── Build WHERE clause (vw_ventas_netas: fecha_venta is date, values are numeric) ──
-    # Use anio+mes for monthly/yearly queries: avoids fn_parse_date format ambiguity
-    # (Ferreinox CSV may use DD/MM/YYYY which fn_parse_date can misparse as MDY)
+    # ── Build WHERE clause — now queries raw_ventas_detalle directly ──────────
+    # Always filter to FACTURA + NOTA_CREDITO (exclude ALBARAN_PENDIENTE)
+    conditions = [
+        "(fn_normalize_text(tipo_documento) LIKE '%FACTURA%' OR fn_normalize_text(tipo_documento) LIKE '%NOTA%CREDITO%')"
+    ]
+    params: dict = {}
+
+    # Period filter
     pf_type = period_filter.get("type", "date_range")
     if pf_type == "month":
-        conditions = ["anio = :pf_anio", "mes = :pf_mes"]
-        params: dict = {"pf_anio": period_filter["anio"], "pf_mes": period_filter["mes"]}
+        conditions.append("fn_parse_integer(anio) = :pf_anio")
+        conditions.append("fn_parse_integer(mes) = :pf_mes")
+        params["pf_anio"] = period_filter["anio"]
+        params["pf_mes"] = period_filter["mes"]
     elif pf_type == "year":
-        conditions = ["anio = :pf_anio"]
-        params: dict = {"pf_anio": period_filter["anio"]}
+        conditions.append("fn_parse_integer(anio) = :pf_anio")
+        params["pf_anio"] = period_filter["anio"]
     else:
-        conditions = ["fecha_venta BETWEEN :date_from AND :date_to"]
-        params: dict = {"date_from": date_from, "date_to": date_to}
+        conditions.append("fn_parse_date(fecha_venta) BETWEEN :date_from AND :date_to")
+        params["date_from"] = date_from
+        params["date_to"] = date_to
 
+    # Tienda (store) filter by serie prefix
     if tienda_final:
-        store_sql, store_params = _build_series_condition(tienda_final, tipo_venta)
+        store_sql, store_params = _build_series_condition_raw(tienda_final, tipo_venta)
         if not store_sql:
             tiendas_disponibles = ", ".join(_VENTAS_STORE_SERIES.keys())
             return json.dumps(
@@ -14809,12 +14855,26 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     elif tipo_venta == "contado":
         conditions.append("RIGHT(serie, 1) = 'W'")
 
-    # Build vendedor filter — supports:
-    #   string (admin/gerente with vendedor_arg),
-    #   dict{"type":"codigo","value":"154011"} (precise ERP code match),
-    #   dict{"type":"nombre_tokens","tokens":["JUAN","GARCIA"]} (ILIKE name match),
-    #   dict{"type":"grupo","value":"MOSTRADOR PEREIRA"} (Ferreinox Ventas app group),
-    #   list of tokens (legacy fallback)
+    # Canal filter (mostradores vs comerciales)
+    _ALL_MOSTRADOR_NAMES = []
+    for names in _VENDEDORES_MOSTRADOR.values():
+        _ALL_MOSTRADOR_NAMES.extend(names)
+
+    if canal_arg == "mostradores":
+        if _ALL_MOSTRADOR_NAMES:
+            mostrador_placeholders = ", ".join(f":most_{i}" for i in range(len(_ALL_MOSTRADOR_NAMES)))
+            conditions.append(f"fn_normalize_text(nom_vendedor) IN ({mostrador_placeholders})")
+            for i, name in enumerate(_ALL_MOSTRADOR_NAMES):
+                params[f"most_{i}"] = name
+    elif canal_arg == "comerciales":
+        if _ALL_MOSTRADOR_NAMES:
+            mostrador_placeholders = ", ".join(f":most_{i}" for i in range(len(_ALL_MOSTRADOR_NAMES)))
+            conditions.append(f"fn_normalize_text(nom_vendedor) NOT IN ({mostrador_placeholders})")
+            for i, name in enumerate(_ALL_MOSTRADOR_NAMES):
+                params[f"most_{i}"] = name
+    # canal_arg == "empresa" → no filter, all channels
+
+    # Vendedor filter
     _MOSTRADOR_GROUPS = {
         "mostrador pereira": "MOSTRADOR PEREIRA",
         "mostrador armenia": "MOSTRADOR ARMENIA",
@@ -14825,41 +14885,93 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     if vendedor_filter:
         if isinstance(vendedor_filter, dict):
             if vendedor_filter.get("type") == "codigo":
-                conditions.append("codigo_vendedor = :vendedor_codigo")
+                conditions.append("fn_keep_alnum(codigo_vendedor) = :vendedor_codigo")
                 params["vendedor_codigo"] = str(vendedor_filter["value"])
             elif vendedor_filter.get("type") == "grupo":
-                conditions.append("grupo_vendedor = :vendedor_grupo")
-                params["vendedor_grupo"] = str(vendedor_filter["value"])
+                # For grupo filter, match the list of vendedores in that mostrador group
+                vf_norm = normalize_text_value(str(vendedor_filter.get("value", "")))
+                for tienda_key, mostrador_group_name in _MOSTRADOR_GROUPS.items():
+                    if vf_norm == mostrador_group_name or vf_norm == tienda_key:
+                        mostrador_names = _VENDEDORES_MOSTRADOR.get(tienda_key.replace("mostrador ", ""), [])
+                        if mostrador_names:
+                            g_placeholders = ", ".join(f":grp_{i}" for i in range(len(mostrador_names)))
+                            conditions.append(f"fn_normalize_text(nom_vendedor) IN ({g_placeholders})")
+                            for i, n in enumerate(mostrador_names):
+                                params[f"grp_{i}"] = n
+                        break
             else:
-                # nombre_tokens — AND combination for precise name matching
                 for i, tok in enumerate(vendedor_filter.get("tokens", [])):
-                    conditions.append(f"nom_vendedor ILIKE :vendedor_tok{i}")
+                    conditions.append(f"fn_normalize_text(nom_vendedor) ILIKE :vendedor_tok{i}")
                     params[f"vendedor_tok{i}"] = f"%{tok}%"
         elif isinstance(vendedor_filter, list):
             for i, tok in enumerate(vendedor_filter):
-                conditions.append(f"nom_vendedor ILIKE :vendedor_tok{i}")
+                conditions.append(f"fn_normalize_text(nom_vendedor) ILIKE :vendedor_tok{i}")
                 params[f"vendedor_tok{i}"] = f"%{tok}%"
         elif isinstance(vendedor_filter, str):
-            # Check if it matches a MOSTRADOR group name
             vf_norm = normalize_text_value(vendedor_filter)
             matched_group = _MOSTRADOR_GROUPS.get(vf_norm)
             if matched_group:
-                conditions.append("grupo_vendedor = :vendedor_grupo")
-                params["vendedor_grupo"] = matched_group
+                sede_key = vf_norm.replace("mostrador ", "")
+                mostrador_names = _VENDEDORES_MOSTRADOR.get(sede_key, [])
+                if mostrador_names:
+                    g_placeholders = ", ".join(f":grp_{i}" for i in range(len(mostrador_names)))
+                    conditions.append(f"fn_normalize_text(nom_vendedor) IN ({g_placeholders})")
+                    for i, n in enumerate(mostrador_names):
+                        params[f"grp_{i}"] = n
             else:
-                conditions.append("nom_vendedor ILIKE :vendedor_nombre")
+                conditions.append("fn_normalize_text(nom_vendedor) ILIKE :vendedor_nombre")
                 params["vendedor_nombre"] = f"%{vendedor_filter}%"
 
     where_clause = " AND ".join(conditions)
 
-    # Use vw_ventas_netas: proper date/numeric types, already filters FACTURA+NOTA_CREDITO,
-    # valor_venta_neto is negative for notas crédito.
-    # STRPOS avoids inline LIKE '%..%' patterns which would crash psycopg2.
-    _VIEW = "public.vw_ventas_netas"
+    # ── Helper: raw table name ─────────────────────────────────────────────────
+    _RAW = "public.raw_ventas_detalle"
+
+    # ── Nombre de marca mapping (inline CASE) ─────────────────────────────────
+    _MARCA_CASE = """
+        CASE fn_parse_integer(marca_producto)
+            WHEN 50 THEN 'P8-ASC-MEGA'
+            WHEN 54 THEN 'MPY-International'
+            WHEN 55 THEN 'DPP-AN COLORANTS LATAM'
+            WHEN 56 THEN 'DPP-Pintuco Profesional'
+            WHEN 57 THEN 'ASC-Mega'
+            WHEN 58 THEN 'DPP-Pintuco'
+            WHEN 59 THEN 'DPP-Madetec'
+            WHEN 60 THEN 'POW-Interpon'
+            WHEN 61 THEN 'various'
+            WHEN 62 THEN 'DPP-ICO'
+            WHEN 63 THEN 'DPP-Terinsa'
+            WHEN 64 THEN 'MPY-Pintuco'
+            WHEN 65 THEN 'non-AN Third Party'
+            WHEN 66 THEN 'ICO-AN Packaging'
+            WHEN 67 THEN 'ASC-Automotive OEM'
+            WHEN 68 THEN 'POW-Resicoat'
+            WHEN 73 THEN 'DPP-Coral'
+            WHEN 91 THEN 'DPP-Sikkens'
+            ELSE 'No Especificada'
+        END
+    """
+
+    # ── Tienda label from serie prefix ─────────────────────────────────────────
+    _TIENDA_CASE = """
+        CASE LEFT(serie, 3)
+            WHEN '189' THEN 'Pereira'
+            WHEN '157' THEN 'Manizales'
+            WHEN '156' THEN 'Armenia'
+            WHEN '238' THEN 'Laureles'
+            WHEN '158' THEN 'Opalo'
+            WHEN '439' THEN 'Ferrebox'
+            WHEN '463' THEN 'Cerritos'
+            ELSE 'Otra (' || LEFT(serie, 3) || ')'
+        END
+    """
+
+    # ── Canal classification (mostrador vs comercial) ──────────────────────────
+    _CANAL_CASE = _build_canal_case_sql()
 
     engine = get_db_engine()
 
-    # ── Sync freshness: last successful load of raw_ventas_detalle ────────────
+    # ── Sync freshness ────────────────────────────────────────────────────────
     ultima_sincronizacion: Optional[str] = None
     alerta_datos_desactualizados: bool = False
     try:
@@ -14883,21 +14995,22 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 age_hours = (_dt.utcnow() - ts).total_seconds() / 3600 if hasattr(ts, "hour") else 9999
             alerta_datos_desactualizados = age_hours > 8
     except Exception:
-        pass  # sync_run_log may not exist in all deployments
+        pass
 
     try:
         with engine.connect() as conn:
             total_row = conn.execute(
                 text(f"""
                     SELECT
-                        COUNT(*) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS num_lineas,
-                        COUNT(DISTINCT cliente_id) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS num_clientes,
-                        SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
-                                 THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturas_bruto,
-                        SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') > 0
-                                 THEN ABS(COALESCE(valor_venta_neto, 0)) ELSE 0 END) AS devoluciones,
-                        SUM(COALESCE(valor_venta_neto, 0)) AS ventas_netas_directas
-                    FROM {_VIEW}
+                        COUNT(*) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS num_lineas,
+                        COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS num_clientes,
+                        SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                                 THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturas_bruto,
+                        SUM(CASE WHEN fn_normalize_text(tipo_documento) LIKE '%%NOTA%%'
+                                 THEN ABS(COALESCE(fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
+                        SUM(COALESCE(fn_parse_numeric(valor_venta), 0)) AS ventas_netas_directas,
+                        COUNT(DISTINCT fn_normalize_text(nom_vendedor)) AS num_vendedores
+                    FROM {_RAW}
                     WHERE {where_clause}
                 """),
                 params,
@@ -14918,27 +15031,27 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     facturas_bruto = float(total_row.get("facturas_bruto") or 0)
     devoluciones = float(total_row.get("devoluciones") or 0)
     neto = facturas_bruto - devoluciones
-    # ventas_netas_directas = SUM(valor_venta_neto) = the most direct equivalent to Ferreinox Ventas app's
-    # ventas_totales = SUM(valor_venta) since both include facturas+notas_credito in a single SUM
     ventas_netas_directas = float(total_row.get("ventas_netas_directas") or 0)
     num_lineas = int(total_row.get("num_lineas") or 0)
     num_clientes = int(total_row.get("num_clientes") or 0)
+    num_vendedores = int(total_row.get("num_vendedores") or 0)
+
+    canal_label = {"empresa": "consolidado (todos los canales)", "mostradores": "solo mostradores", "comerciales": "solo comerciales"}.get(canal_arg, canal_arg)
 
     result: dict = {
         "periodo": period_label,
         "tienda": tienda_final or "todas las tiendas",
+        "canal": canal_label,
         "vendedor_consultado": vendedor_filter_label or ("todos" if role in {"administrador", "gerente", "operador"} else full_name),
         "tipo_venta": tipo_venta,
         "ventas": {
             "facturas_bruto": round(facturas_bruto, 2),
             "devoluciones_notas_credito": round(devoluciones, 2),
             "ventas_netas": round(neto, 2),
-            # ventas_totales_app: equivalent to Ferreinox Ventas app's SUM(valor_venta)
-            # If this equals ventas_netas, notas crédito are negative in source CSV (normal ERP convention)
-            # If this is HIGHER than ventas_netas, notas crédito are positive in CSV (app adds instead of subtracts)
             "ventas_totales_equivalente_app": round(ventas_netas_directas, 2),
             "num_lineas_factura": num_lineas,
             "num_clientes_distintos": num_clientes,
+            "num_vendedores": num_vendedores,
         },
     }
 
@@ -14959,7 +15072,6 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         prev_anio = period_filter.get("anio", date_from.year) - 1
         prev_from = date_from.replace(year=date_from.year - 1)
         prev_to = date_to.replace(year=date_to.year - 1)
-        # Build prev_params: override period-type params to point at previous year
         if pf_type == "month":
             prev_params = {k: v for k, v in params.items() if not k.startswith("pf_")}
             prev_params["pf_anio"] = prev_anio
@@ -14975,11 +15087,11 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             prev_row = conn.execute(
                 text(f"""
                     SELECT
-                        SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
-                                THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturas_bruto,
-                        SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') > 0
-                                THEN ABS(COALESCE(valor_venta_neto, 0)) ELSE 0 END) AS devoluciones
-                    FROM {_VIEW}
+                        SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                                THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturas_bruto,
+                        SUM(CASE WHEN fn_normalize_text(tipo_documento) LIKE '%%NOTA%%'
+                                THEN ABS(COALESCE(fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones
+                    FROM {_RAW}
                     WHERE {where_clause}
                 """),
                 prev_params,
@@ -14997,24 +15109,24 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     except Exception as exc:
         logger.debug("consultar_ventas_internas comparativa año anterior error: %s", exc)
 
-    # ── Desglose por vendedor (roles con acceso multi-vendedor) ───────────────
-    # Uses COALESCE(grupo_vendedor, nom_vendedor) so MOSTRADOR groups appear as
-    # single rows mirroring the Ferreinox Ventas app behaviour.
+    # ── Desglose por vendedor ─────────────────────────────────────────────────
     if desglose == "por_vendedor" and role in {"administrador", "gerente", "operador"}:
         try:
             with engine.connect() as conn:
                 rows = conn.execute(
                     text(f"""
-                        SELECT COALESCE(grupo_vendedor, nom_vendedor) AS vendedor_label,
-                               SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
-                                        THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturado,
-                               SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') > 0
-                                        THEN ABS(COALESCE(valor_venta_neto, 0)) ELSE 0 END) AS devoluciones,
-                               COUNT(*) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS lineas,
-                               COUNT(DISTINCT cliente_id) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS clientes
-                        FROM {_VIEW}
+                        SELECT fn_normalize_text(nom_vendedor) AS vendedor_label,
+                               fn_keep_alnum(codigo_vendedor) AS codigo,
+                               {_CANAL_CASE} AS canal_vendedor,
+                               SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                                        THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
+                               SUM(CASE WHEN fn_normalize_text(tipo_documento) LIKE '%%NOTA%%'
+                                        THEN ABS(COALESCE(fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
+                               COUNT(*) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS lineas,
+                               COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS clientes
+                        FROM {_RAW}
                         WHERE {where_clause}
-                        GROUP BY vendedor_label
+                        GROUP BY vendedor_label, codigo, canal_vendedor
                         ORDER BY facturado DESC
                         LIMIT 30
                     """),
@@ -15023,6 +15135,8 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             result["desglose_vendedores"] = [
                 {
                     "vendedor": r["vendedor_label"],
+                    "codigo": r["codigo"],
+                    "canal": r["canal_vendedor"],
                     "facturado": round(float(r["facturado"] or 0), 2),
                     "devoluciones": round(float(r["devoluciones"] or 0), 2),
                     "neto": round(float(r["facturado"] or 0) - float(r["devoluciones"] or 0), 2),
@@ -15034,19 +15148,94 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         except Exception as exc:
             logger.warning("consultar_ventas_internas desglose_vendedores error: %s", exc)
 
+    # ── Desglose por tienda ───────────────────────────────────────────────────
+    elif desglose == "por_tienda" and role in {"administrador", "gerente"}:
+        try:
+            with engine.connect() as conn:
+                rows = conn.execute(
+                    text(f"""
+                        SELECT {_TIENDA_CASE} AS tienda_label,
+                               LEFT(serie, 3) AS serie_prefix,
+                               SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                                        THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
+                               SUM(CASE WHEN fn_normalize_text(tipo_documento) LIKE '%%NOTA%%'
+                                        THEN ABS(COALESCE(fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
+                               COUNT(*) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS lineas,
+                               COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS clientes,
+                               COUNT(DISTINCT fn_normalize_text(nom_vendedor)) AS vendedores
+                        FROM {_RAW}
+                        WHERE {where_clause}
+                        GROUP BY tienda_label, serie_prefix
+                        ORDER BY facturado DESC
+                    """),
+                    params,
+                ).mappings().all()
+            result["desglose_tiendas"] = [
+                {
+                    "tienda": r["tienda_label"],
+                    "facturado": round(float(r["facturado"] or 0), 2),
+                    "devoluciones": round(float(r["devoluciones"] or 0), 2),
+                    "neto": round(float(r["facturado"] or 0) - float(r["devoluciones"] or 0), 2),
+                    "lineas": int(r["lineas"] or 0),
+                    "clientes": int(r["clientes"] or 0),
+                    "vendedores": int(r["vendedores"] or 0),
+                }
+                for r in rows
+            ]
+        except Exception as exc:
+            logger.warning("consultar_ventas_internas desglose_tiendas error: %s", exc)
+
+    # ── Desglose por canal (mostradores vs comerciales) ───────────────────────
+    elif desglose == "por_canal" and role in {"administrador", "gerente", "operador"}:
+        try:
+            with engine.connect() as conn:
+                rows = conn.execute(
+                    text(f"""
+                        SELECT {_CANAL_CASE} AS canal_label,
+                               SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                                        THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
+                               SUM(CASE WHEN fn_normalize_text(tipo_documento) LIKE '%%NOTA%%'
+                                        THEN ABS(COALESCE(fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
+                               COUNT(*) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS lineas,
+                               COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS clientes,
+                               COUNT(DISTINCT fn_normalize_text(nom_vendedor)) AS vendedores
+                        FROM {_RAW}
+                        WHERE {where_clause}
+                        GROUP BY canal_label
+                        ORDER BY facturado DESC
+                    """),
+                    params,
+                ).mappings().all()
+            result["desglose_canales"] = [
+                {
+                    "canal": r["canal_label"],
+                    "facturado": round(float(r["facturado"] or 0), 2),
+                    "devoluciones": round(float(r["devoluciones"] or 0), 2),
+                    "neto": round(float(r["facturado"] or 0) - float(r["devoluciones"] or 0), 2),
+                    "lineas": int(r["lineas"] or 0),
+                    "clientes": int(r["clientes"] or 0),
+                    "vendedores": int(r["vendedores"] or 0),
+                }
+                for r in rows
+            ]
+        except Exception as exc:
+            logger.warning("consultar_ventas_internas desglose_canales error: %s", exc)
+
     # ── Desglose por producto ─────────────────────────────────────────────────
     elif desglose == "por_producto":
         try:
             with engine.connect() as conn:
                 rows = conn.execute(
                     text(f"""
-                        SELECT nombre_articulo, linea_producto, marca_producto,
-                               SUM(COALESCE(valor_venta_neto, 0))       AS total,
-                               SUM(COALESCE(unidades_vendidas_netas, 0)) AS unidades
-                        FROM {_VIEW}
+                        SELECT fn_normalize_text(nombre_articulo) AS nombre_articulo,
+                               fn_normalize_text(linea_producto) AS linea_producto,
+                               {_MARCA_CASE} AS nombre_marca,
+                               SUM(COALESCE(fn_parse_numeric(valor_venta), 0)) AS total,
+                               SUM(COALESCE(fn_parse_numeric(unidades_vendidas), 0)) AS unidades
+                        FROM {_RAW}
                         WHERE {where_clause}
-                          AND STRPOS(tipo_documento, 'NOTA') = 0
-                        GROUP BY nombre_articulo, linea_producto, marca_producto
+                          AND fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                        GROUP BY 1, 2, 3
                         ORDER BY total DESC
                         LIMIT 15
                     """),
@@ -15056,6 +15245,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 {
                     "producto": r["nombre_articulo"],
                     "linea": r["linea_producto"],
+                    "marca": r["nombre_marca"],
                     "total": round(float(r["total"] or 0), 2),
                     "unidades": float(r["unidades"] or 0),
                 }
@@ -15070,12 +15260,13 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             with engine.connect() as conn:
                 rows = conn.execute(
                     text(f"""
-                        SELECT nombre_cliente, cliente_id,
-                               SUM(COALESCE(valor_venta_neto, 0)) AS total
-                        FROM {_VIEW}
+                        SELECT fn_normalize_text(nombre_cliente) AS nombre_cliente,
+                               fn_keep_alnum(cliente_id) AS cliente_id,
+                               SUM(COALESCE(fn_parse_numeric(valor_venta), 0)) AS total
+                        FROM {_RAW}
                         WHERE {where_clause}
-                          AND STRPOS(tipo_documento, 'NOTA') = 0
-                        GROUP BY nombre_cliente, cliente_id
+                          AND fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                        GROUP BY 1, 2
                         ORDER BY total DESC
                         LIMIT 20
                     """),
@@ -15094,20 +15285,20 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             with engine.connect() as conn:
                 rows = conn.execute(
                     text(f"""
-                        SELECT fecha_venta,
-                               SUM(CASE WHEN STRPOS(tipo_documento, 'NOTA') = 0
-                                        THEN COALESCE(valor_venta_neto, 0) ELSE 0 END) AS facturado,
-                               COUNT(*) FILTER (WHERE STRPOS(tipo_documento, 'NOTA') = 0) AS lineas
-                        FROM {_VIEW}
+                        SELECT fn_parse_date(fecha_venta) AS fecha,
+                               SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                                        THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
+                               COUNT(*) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS lineas
+                        FROM {_RAW}
                         WHERE {where_clause}
-                        GROUP BY fecha_venta
-                        ORDER BY fecha_venta
+                        GROUP BY fecha
+                        ORDER BY fecha
                     """),
                     params,
                 ).mappings().all()
             result["desglose_dias"] = [
                 {
-                    "fecha": str(r["fecha_venta"]),
+                    "fecha": str(r["fecha"]),
                     "facturado": round(float(r["facturado"] or 0), 2),
                     "lineas": int(r["lineas"] or 0),
                 }
