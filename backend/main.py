@@ -1176,18 +1176,35 @@ DIAGNOSTIC_QUESTION_TREE = {
     },
     "piso": {
         "disparadores": ["piso", "garaje", "bodega", "parqueadero", "cancha", "anden",
-                         "fabrica", "industrial", "montacargas", "trafico"],
+                         "fabrica", "industrial", "montacargas", "trafico", "estibador",
+                         "piso concreto", "piso cemento", "piso exterior", "piso interior"],
         "preguntas": [
-            "¿Es un piso residencial (garaje, andén) o industrial (bodega, fábrica)?",
-            "¿Habrá tráfico vehicular pesado o solo peatonal?",
+            "¿El piso es concreto nuevo (obra gris recién fundido) o es un piso viejo/ya pintado? Si es viejo y ya está pintado, ¿qué tipo de pintura tiene?",
+            "Si el piso es nuevo, ¿ya cumplió los 28 días de curado del concreto/mortero? (Esto es crítico: la humedad que evapora de la mezcla de cemento puede dañar la pintura si no ha curado completamente).",
+            "¿Cuál va a ser el uso del piso? ¿Tráfico de montacargas/estibadores (pesado), solo peatonal, o mixto?",
+            "¿Es un piso interior o exterior? (Si es exterior y le da el sol, el sistema de pintura cambia completamente).",
         ],
         "logica_producto": {
-            "industrial/pesado": {"producto": "pintucoat", "confianza": "alta",
-                "razon": "Pintucoat es epóxica de 2 componentes para tráfico pesado, montacargas, bodegas industriales"},
+            "industrial/pesado + interior": {"producto": "pintucoat", "confianza": "alta",
+                "razon": "Pintucoat es epóxica bicomponente para tráfico pesado interior (montacargas, estibadores, bodegas industriales). "
+                         "Requiere: piso curado 28 días mínimo, superficie limpia y seca, imprimante epóxico si el concreto es muy poroso. "
+                         "Sistema: Imprimante → Pintucoat Comp A + Catalizador 13227 (2-3 manos). Pot life: 6 horas."},
+            "industrial/pesado + exterior": {"producto": "pintucoat", "confianza": "alta",
+                "razon": "Pintucoat + acabado Interthane OBLIGATORIO en exterior. El epóxico ENTIZA (se decolora/chalking) con la exposición UV. "
+                         "Sistema exterior: Imprimante → Pintucoat Comp A + Cat 13227 → Interthane 990 + Cat PHA046 como sello UV. "
+                         "NUNCA ofrecer Pintucoat solo en exterior — siempre con Interthane."},
             "residencial/liviano": {"producto": "pintura canchas", "confianza": "alta",
-                "razon": "Pintura para Canchas: acrílica para garajes, andenes, canchas deportivas, patios"},
+                "razon": "Pintura para Canchas: acrílica monocomponente para garajes, andenes, canchas deportivas, patios. "
+                         "Más fácil de aplicar y más económica, pero NO resiste tráfico de montacargas."},
             "cancha deportiva": {"producto": "pintura canchas", "confianza": "alta",
-                "razon": "Pintura para Canchas: acabado antideslizante, resistente al desgaste y UV"},
+                "razon": "Pintura para Canchas: acabado antideslizante, resistente al desgaste y UV. Ideal para canchas y andenes."},
+            "piso viejo ya pintado": {"producto": "pintucoat", "confianza": "media",
+                "razon": "Si ya tiene pintura: (1) Identificar tipo de pintura actual (epóxica, acrílica, alquídica). "
+                         "(2) Si es compatible, lijar para dar adherencia. Si no es compatible, remover completamente. "
+                         "(3) Aplicar sistema nuevo según tipo de tráfico."},
+            "concreto sin curar": {"producto": "ninguno", "confianza": "alta",
+                "razon": "NUNCA pintar concreto sin curar. La humedad residual del cemento destruye cualquier recubrimiento. "
+                         "Esperar mínimo 28 días de curado. Verificar con prueba de humedad (pegar cinta plástica 24h, si condensa hay humedad)."},
         },
     },
     "interior_general": {
@@ -3832,6 +3849,40 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
     ]
     if any(signal in _norm_claim for signal in _CLAIM_SIGNALS):
         return None  # señal de reclamo → pasa al LLM con flujo de 5 fases
+
+    # ── ENSEÑANZA / CORRECCIÓN de Pablo u otros expertos → dejar que el LLM lo maneje ──
+    # Debe evaluarse ANTES de detect_internal_query_intent para evitar que palabras
+    # como "compra", "traslado" dentro de una corrección técnica secuestren el flujo.
+    _TEACHING_SIGNALS = [
+        "ensenar", "ensenanza", "anota esto", "guarda esto", "aprender esto",
+        "enseñar", "enseñanza",
+        # Señales de corrección implícita (Pablo corrigiendo sin palabra clave)
+        "la recomendacion esta mal", "la recomendación está mal",
+        "no es asi", "no es así", "eso esta mal", "eso está mal",
+        "te equivocaste", "mucho cuidado con", "ojo que", "no confundas",
+        "el proceso no esta bien", "el proceso no está bien",
+        "primero se debe", "el orden correcto es", "lo que hay que hacer es",
+        "en realidad se usa", "ese producto no sirve para",
+        "para este caso es mejor", "la respuesta esta mal", "la respuesta está mal",
+        "debes responder", "debes preguntar", "primero el estado",
+    ]
+    _norm_for_teach = normalize_text_value(content)
+    if any(signal in _norm_for_teach for signal in _TEACHING_SIGNALS):
+        return None  # enseñanza/corrección experta → pasa al LLM para registrar_conocimiento_experto
+
+    # ── Detección de asesoría técnica en curso (diagnóstico/recomendación de producto) ──
+    # Si el mensaje contiene señales de consulta técnica de producto/superficie,
+    # dejar que el LLM maneje el flujo diagnóstico completo en vez de rutear a intents internos.
+    _TECHNICAL_ADVISORY_SIGNALS = [
+        "pintar un piso", "pintar piso", "pintar una pared", "pintar pared",
+        "pintar un techo", "pintar techo", "pintar fachada", "pintar madera",
+        "pintar metal", "pintar hierro", "humedad", "impermeabilizar",
+        "que me recomiendas", "qué me recomiendas", "alternativas para pintar",
+        "sistema para", "necesito pintar", "quiero pintar",
+        "que producto uso", "qué producto uso", "como protejo", "cómo protejo",
+    ]
+    if any(signal in _norm_for_teach for signal in _TECHNICAL_ADVISORY_SIGNALS):
+        return None  # consulta técnica → pasa al LLM con diagnóstico + RAG
 
     intent = detect_internal_query_intent(content)
     if not intent:
@@ -13897,7 +13948,16 @@ DOCUMENTOS: Si te piden ficha técnica u hoja de seguridad, USA LA HERRAMIENTA `
 DOCUMENTOS MÚLTIPLES: Si la herramienta `buscar_documento_tecnico` te devuelve 'multiples_opciones', NO digas que no lo encontraste. Muéstrale al cliente una lista corta y amable con las opciones y pregúntale: 'Tengo estas versiones, ¿cuál de estas fichas necesitas exactamente?'.
 
 ASESORÍA TÉCNICA INTELIGENTE (MODELO HÍBRIDO RAG + CONOCIMIENTO EXPERTO):
-- PASO 1 — DIAGNÓSTICO PRIMERO: Si el cliente trae un problema amplio (ej. 'tengo humedad', 'quiero proteger un metal', 'necesito pintar un techo', 'cómo protejo una fachada', 'se me grieta la pared', o CUALQUIER otro problema de superficie o recubrimiento), primero diagnostica con máximo 2 preguntas clave por turno. No busques en RAG todavía. Pregunta lo que un ingeniero de aplicaciones preguntaría: ¿interior o exterior? ¿qué material/superficie? ¿qué síntomas? ¿qué acabado quiere? ¿qué tráfico o exposición? ¿qué herramientas tiene disponibles?
+- PASO 1 — DIAGNÓSTICO PRIMERO (OBLIGATORIO — NIVEL ROJO): Si el cliente trae un problema amplio (ej. 'tengo humedad', 'quiero proteger un metal', 'necesito pintar un techo/piso/fachada', 'se me grieta la pared', o CUALQUIER otro problema de superficie o recubrimiento), primero diagnostica con máximo 2-3 preguntas clave por turno. No busques en RAG todavía. NUNCA saltes directamente a recomendar un producto sin haber completado el diagnóstico mínimo.
+  PREGUNTAS QUE UN INGENIERO DE APLICACIONES HARÍA (según el caso):
+  • ¿Interior o exterior? (CAMBIA COMPLETAMENTE el sistema — ej. epóxico en exterior necesita acabado UV)
+  • ¿Qué material/superficie? (concreto, metal, madera, ladrillo, fibrocemento)
+  • Estado de la superficie: ¿nueva (obra gris) o vieja/ya pintada? Si ya está pintada, ¿con qué?
+  • Si es concreto nuevo: ¿Ya cumplió los 28 DÍAS DE CURADO? (la humedad residual del cemento destruye la pintura)
+  • ¿Qué tipo de tráfico o exposición? (peatonal, vehicular, montacargas, UV/sol, humedad, químicos)
+  • ¿Qué acabado quiere? ¿Qué herramientas tiene disponibles?
+  REGLA CRÍTICA DE PISOS: Para consultas de pisos, SIEMPRE pregunta: (1) nuevo o viejo/ya pintado, (2) si es nuevo ¿28 días de curado?, (3) tipo de tráfico exacto, (4) interior o exterior. Estas 4 preguntas SON OBLIGATORIAS porque cambian totalmente el sistema recomendado. Un piso industrial exterior lleva un sistema diferente (epóxico + poliuretano) que uno interior (epóxico solo). Un piso sin curar NO DEBE PINTARSE.
+  REGLA DE CONDUCTA: Aunque el cliente ya mencionó algunos datos (ej. 'bodega interior con montacargas'), VERIFICA lo que falta. Si dijo que es interior y tiene montacargas, aún falta saber: ¿piso nuevo o viejo? ¿cuántos días tiene el concreto? ¿hay grasas o aceites en el piso? Solo con diagnóstico COMPLETO recomiendas.
 - PASO 2 — CONSULTA OBLIGATORIA (RAG + CONOCIMIENTO EXPERTO): Cuando ya tengas la necesidad diagnosticada, usa `consultar_conocimiento_tecnico` con una pregunta DETALLADA. La herramienta buscará en AMBAS fuentes: fichas técnicas (RAG) Y base de conocimiento experto Ferreinox. Si la respuesta incluye `conocimiento_comercial_ferreinox`, ese conocimiento PREVALECE sobre recomendaciones genéricas del RAG.
 - PASO 3 — RESPUESTA CON CHAIN OF THOUGHT (obligatorio para asesoría técnica):
   A) PREPARACIÓN DE SUPERFICIE: Explica qué hacer ANTES de aplicar. SIEMPRE incluye la herramienta de preparación correcta: lija roja (grano 80-120 para metal/madera seco), lija de agua (150-220 para paredes), disco flap (óxido pesado/soldaduras), grata copa (estructuras grandes), removedor (pintura vieja sin herramienta eléctrica). Las lijas y abrasivos SON PARTE DEL SISTEMA — recomiéndalos.
