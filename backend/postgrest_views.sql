@@ -672,4 +672,49 @@ SELECT
 FROM public.agent_transfer_request tr
 WHERE tr.status IN ('pendiente', 'aprobado', 'en_transito');
 
+-- ══════════════════════════════════════════════════════════════════════════════
+-- Smart Matcher: pg_trgm extension + product rotation materialized view
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+DROP MATERIALIZED VIEW IF EXISTS mv_product_rotation CASCADE;
+CREATE MATERIALIZED VIEW mv_product_rotation AS
+WITH sales_6m AS (
+    SELECT
+        am.referencia_normalizada AS producto_codigo,
+        SUM(GREATEST(COALESCE(fn_parse_numeric(rv.unidades_vendidas), 0), 0)) AS units_sold,
+        SUM(GREATEST(COALESCE(fn_parse_numeric(rv.valor_venta), 0), 0)) AS revenue,
+        COUNT(DISTINCT rv.serie) AS store_breadth,
+        COUNT(*) AS transaction_count
+    FROM raw_ventas_detalle rv
+    JOIN articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+    WHERE (fn_parse_integer(rv.anio) >= EXTRACT(YEAR FROM CURRENT_DATE) - 1)
+      AND UPPER(COALESCE(rv.tipo_documento,'')) LIKE '%FACTURA%'
+    GROUP BY am.referencia_normalizada
+),
+max_vals AS (
+    SELECT
+        GREATEST(MAX(units_sold), 1) AS max_units,
+        GREATEST(MAX(revenue), 1) AS max_revenue,
+        GREATEST(MAX(transaction_count), 1) AS max_txn
+    FROM sales_6m
+)
+SELECT
+    s.producto_codigo,
+    s.units_sold,
+    s.revenue,
+    s.store_breadth,
+    s.transaction_count,
+    ROUND(
+        LEAST(1.0,
+            0.4 * (s.units_sold / m.max_units) +
+            0.3 * (s.revenue / m.max_revenue) +
+            0.3 * (s.transaction_count::numeric / m.max_txn)
+        )::numeric, 4
+    ) AS rotation_score
+FROM sales_6m s, max_vals m
+WHERE s.producto_codigo IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_rotation_prod ON mv_product_rotation (producto_codigo);
+
 COMMIT;

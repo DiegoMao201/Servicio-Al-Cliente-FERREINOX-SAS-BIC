@@ -5095,6 +5095,351 @@ def sequence_similarity(left_value: Optional[str], right_value: Optional[str]):
     return SequenceMatcher(None, left_normalized, right_normalized).ratio()
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# SMART MATCHER ENGINE — Pattern-based product search (replaces manual aliases)
+# ══════════════════════════════════════════════════════════════════════════════
+
+# ── Spanish Phonetic Key ──────────────────────────────────────────────────────
+# Adapted Soundex for Spanish: normalizes common misspellings/phonetic variants
+# so "rodiyo"≈"rodillo", "liha"≈"lija", "brosha"≈"brocha", "barnís"≈"barniz"
+_SPANISH_PHONETIC_MAP: list[tuple[str, str]] = [
+    # Vowels collapse (keep first, absorb rest)
+    # Handled specially below
+    # Consonant equivalences in Latin American Spanish
+    (r"ll", "y"),       # ll → y (yeísmo)
+    (r"rr", "r"),       # rr → r
+    (r"cc", "c"),       # cc → c
+    (r"ss", "s"),       # ss → s
+    (r"nn", "n"),       # nn → n
+    (r"qu", "k"),       # qu → k
+    (r"ch", "X"),       # ch → X (placeholder)
+    (r"sh", "X"),       # sh → X (brosha→broXa)
+    (r"ck", "k"),       # ck → k
+    (r"ph", "f"),       # ph → f
+    (r"v", "b"),        # v → b (labial merge)
+    (r"z", "s"),        # z → s (seseo)
+    (r"ce", "se"),      # ce → se
+    (r"ci", "si"),      # ci → si
+    (r"ge", "je"),      # ge → je
+    (r"gi", "ji"),      # gi → ji
+    (r"gü", "w"),       # gü → w
+    (r"gu(?=[ei])", "g"),  # gue/gui → ge/gi
+    (r"h", ""),         # h is silent (liha→lia→lja)
+    (r"j", "j"),        # j stays j
+    (r"x", "ks"),       # x → ks
+    (r"w", "u"),        # w → u
+    (r"ñ", "ny"),       # ñ → ny
+    (r"y$", "i"),       # final y → i
+]
+
+def spanish_phonetic_key(text_value: Optional[str]) -> str:
+    """Generate a Spanish phonetic key for fuzzy matching.
+    Maps common misspellings/phonetic variants to the same key."""
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return ""
+    # Apply phonetic transformations
+    result = normalized
+    for pattern, replacement in _SPANISH_PHONETIC_MAP:
+        result = re.sub(pattern, replacement, result)
+    # Collapse consecutive duplicate consonants
+    result = re.sub(r"([bcdfgjklmnpqrstvxyz])\1+", r"\1", result)
+    # Collapse consecutive vowels to single vowel
+    result = re.sub(r"([aeiou])\1+", r"\1", result)
+    return result
+
+
+def spanish_phonetic_similarity(query: str, candidate: str) -> float:
+    """Compare two strings using Spanish phonetic keys + character overlap."""
+    key_q = spanish_phonetic_key(query)
+    key_c = spanish_phonetic_key(candidate)
+    if not key_q or not key_c:
+        return 0.0
+    return SequenceMatcher(None, key_q, key_c).ratio()
+
+
+# ── Smart Brand Anchor ────────────────────────────────────────────────────────
+# Leader brands that should anchor search when detected in query
+_LEADER_BRANDS_PRIORITY: list[tuple[str, list[str]]] = [
+    ("pintuco", ["pintuco", "viniltex", "koraza", "pintulux", "domestico", "aerocolor",
+                 "pintucoat", "corrotec", "pintulac", "intervinil", "pintuco fill",
+                 "aquablock", "sellamur", "siliconite", "pintura canchas", "barnex",
+                 "wood stain", "estucomast", "epoxipoliamida", "vinilux", "vinil max",
+                 "vinil plus", "icolatex"]),
+    ("abracol", ["abracol", "disco abracol", "lija abracol"]),
+    ("goya", ["goya", "brocha goya", "rodillo goya"]),
+    ("yale", ["yale", "cerradura yale", "candado yale"]),
+    ("smith", ["smith", "cinta smith"]),
+    ("international", ["international", "interseal", "interthane", "intergard", "interchar", "interfine"]),
+    ("sika", ["sika", "sikaflex", "sikaguard", "sikalastic"]),
+    ("norton", ["norton", "disco norton"]),
+    ("afix", ["afix"]),
+    ("artecola", ["artecola"]),
+    ("montana", ["montana", "spray montana"]),
+]
+
+def detect_brand_anchor(query_text: str) -> Optional[str]:
+    """Detect if a leader brand is mentioned in the query and return its canonical name."""
+    normalized = normalize_text_value(query_text)
+    if not normalized:
+        return None
+    for brand_name, triggers in _LEADER_BRANDS_PRIORITY:
+        for trigger in triggers:
+            if trigger in normalized:
+                return brand_name
+    return None
+
+
+# ── Smart Scoring System (0.0 – 1.0) ─────────────────────────────────────────
+_KIT_PROMO_KEYWORDS = frozenset(["KIT ", "PAGUE ", "PAGU ", "NO INV", "GRATIS", "GTIS", "LLEVE", "OBSEQUIO", "REGALO"])
+_GENERIC_BRAND_CODES = frozenset(["0", "", "NaN"])
+
+def smart_score_product(
+    candidate: dict,
+    query_text: str,
+    product_request: dict,
+    rotation_cache: Optional[dict] = None,
+) -> float:
+    """Unified scoring: rotation(0.4) + text_match(0.3) + stock(0.2) + penalties.
+    Returns a float in the range [-1.5, 1.0]."""
+    score = 0.0
+    desc = candidate.get("descripcion") or candidate.get("nombre_articulo") or ""
+    desc_upper = desc.upper()
+    candidate_code = str(candidate.get("producto_codigo") or candidate.get("referencia") or candidate.get("codigo_articulo") or "")
+    candidate_brand = str(candidate.get("marca") or candidate.get("marca_producto") or "")
+
+    # ── +0.4: Rotation score (historical sales velocity) ──
+    if rotation_cache and candidate_code in rotation_cache:
+        score += 0.4 * rotation_cache[candidate_code]
+
+    # ── +0.3: Text similarity (phonetic + trigram-style character overlap) ──
+    normalized_query = normalize_text_value(query_text)
+    # Build a rich candidate text from ALL available fields
+    candidate_fields = [
+        desc,
+        candidate.get("descripcion_ebs") or "",
+        candidate.get("familia_clasificacion") or "",
+        candidate.get("cat_producto") or "",
+        candidate.get("marca_clasificacion") or "",
+        candidate.get("aplicacion_clasificacion") or "",
+    ]
+    rich_candidate_text = " ".join(f for f in candidate_fields if f and f != "NaN")
+    normalized_candidate = normalize_text_value(rich_candidate_text)
+
+    if normalized_query and normalized_candidate:
+        # Character-level similarity (SequenceMatcher)
+        char_sim = SequenceMatcher(None, normalized_query, normalized_candidate).ratio()
+        # Phonetic similarity
+        phonetic_sim = spanish_phonetic_similarity(normalized_query, rich_candidate_text)
+        # Term overlap: what fraction of query terms appear in candidate?
+        query_tokens = set(normalized_query.split())
+        candidate_tokens = set(normalized_candidate.split())
+        if query_tokens:
+            term_overlap = len(query_tokens & candidate_tokens) / len(query_tokens)
+        else:
+            term_overlap = 0.0
+        # Weighted blend: term overlap is most important, then phonetic, then raw char sim
+        text_score = 0.5 * term_overlap + 0.3 * phonetic_sim + 0.2 * char_sim
+        score += 0.3 * text_score
+
+    # ── +0.2: Stock availability ──
+    stock = parse_numeric_value(candidate.get("stock_total")) or 0
+    if stock > 0:
+        score += 0.2
+
+    # ── -0.5: Kit/Promo penalty (unless user explicitly asks for a kit) ──
+    is_kit_requested = any(kw in (normalized_query or "") for kw in ["kit", "combo", "promo", "pague"])
+    if not is_kit_requested and any(kw in desc_upper for kw in _KIT_PROMO_KEYWORDS):
+        score -= 0.5
+
+    # ── -1.0: Generic/no-brand penalty when a branded version exists ──
+    if candidate_brand in _GENERIC_BRAND_CODES:
+        brand_anchor = detect_brand_anchor(query_text)
+        if brand_anchor:
+            score -= 1.0
+
+    # ── Brand anchor bonus: +0.1 if matches detected brand ──
+    brand_anchor = detect_brand_anchor(query_text)
+    if brand_anchor:
+        brand_fields = normalize_text_value(
+            f"{candidate.get('marca_clasificacion') or ''} {desc} {candidate.get('familia_clasificacion') or ''}"
+        )
+        if brand_anchor in brand_fields or any(
+            alias in brand_fields
+            for alias in (BRAND_ALIASES.get(brand_anchor) or [])
+        ):
+            score += 0.1
+
+    return round(score, 4)
+
+
+def fetch_rotation_cache(connection) -> dict:
+    """Load the rotation scores into a Python dict for fast lookup."""
+    try:
+        rows = connection.execute(
+            text("SELECT producto_codigo, rotation_score FROM mv_product_rotation")
+        ).mappings().all()
+        return {str(row["producto_codigo"]): float(row["rotation_score"]) for row in rows}
+    except Exception:
+        return {}
+
+
+# ── Fuzzy Multi-Column Search (Trigram + Phonetic) ────────────────────────────
+def fetch_smart_product_rows(
+    connection,
+    query_text: str,
+    query_terms: list[str],
+    product_request: dict,
+    store_filters: list[str],
+    limit: int = 30,
+) -> list[dict]:
+    """Multi-column fuzzy search using pg_trgm similarity + ILIKE.
+    Searches across: descripcion, descripcion_ebs, referencia, familia_clasificacion,
+    cat_producto, marca_clasificacion, aplicacion_clasificacion, search_blob."""
+    if not query_terms:
+        return []
+
+    params: dict = {}
+    ilike_filters: list[str] = []
+    score_parts: list[str] = []
+
+    # Standard ILIKE term matching (existing approach, kept for exact matches)
+    for idx, term in enumerate(query_terms[:6]):
+        params[f"pat_{idx}"] = f"%{term}%"
+        compact = normalize_reference_value(term)
+        params[f"cpt_{idx}"] = f"%{compact}%"
+        ilike_filters.append(f"search_blob ILIKE :pat_{idx}")
+        if compact:
+            ilike_filters.append(f"search_compact LIKE :cpt_{idx}")
+        score_parts.append(
+            f"CASE WHEN search_blob ILIKE :pat_{idx} OR search_compact LIKE :cpt_{idx} THEN 1 ELSE 0 END"
+        )
+
+    # Phonetic expansion: generate phonetic variants and search them too
+    phonetic_query = spanish_phonetic_key(query_text)
+    if phonetic_query and len(phonetic_query) >= 4:
+        # Split into phonetic tokens and search each
+        phonetic_tokens = [t for t in phonetic_query.split() if len(t) >= 3]
+        for pidx, ptok in enumerate(phonetic_tokens[:4]):
+            pk = f"phon_{pidx}"
+            params[pk] = f"%{ptok}%"
+            ilike_filters.append(f"search_blob ILIKE :{pk}")
+            score_parts.append(f"CASE WHEN search_blob ILIKE :{pk} THEN 1 ELSE 0 END")
+
+    # Abbreviation prefix matching (existing approach)
+    abbrev_idx = 100
+    for i in range(len(query_terms[:6]) - 1):
+        concat_compact = normalize_reference_value(query_terms[i]) + normalize_reference_value(query_terms[i + 1])
+        if len(concat_compact) < 8:
+            continue
+        for trim in range(0, min(len(concat_compact) - 6, 5)):
+            prefix = concat_compact[:len(concat_compact) - trim]
+            pk = f"abr_{abbrev_idx}"
+            abbrev_idx += 1
+            params[pk] = f"%{prefix}%"
+            ilike_filters.append(f"search_compact LIKE :{pk}")
+            score_parts.append(f"CASE WHEN search_compact LIKE :{pk} THEN 1 ELSE 0 END")
+
+    # Trigram similarity for the full query (DB-side fuzzy)
+    params["trgm_query"] = normalize_text_value(query_text) or ""
+    trgm_score = "similarity(search_blob, :trgm_query)"
+
+    # Numeric pattern → prioritize by referencia/producto_codigo exact match
+    numeric_pattern_bonus = []
+    for term in query_terms[:3]:
+        if re.fullmatch(r"\d{4,}", term):
+            npk = f"numex_{len(numeric_pattern_bonus)}"
+            params[npk] = term
+            numeric_pattern_bonus.append(
+                f"CASE WHEN referencia = :{npk} THEN 50 ELSE 0 END"
+            )
+
+    all_score_parts = score_parts + numeric_pattern_bonus
+    match_score_sql = " + ".join(all_score_parts) if all_score_parts else "0"
+
+    where_clause = f"({' OR '.join(ilike_filters)})"
+
+    if store_filters:
+        return _fetch_smart_from_store(connection, where_clause, params, match_score_sql, trgm_score, store_filters, limit)
+
+    rows = connection.execute(
+        text(
+            f"""
+            SELECT p.producto_codigo, p.referencia, p.descripcion, p.marca, p.departamentos, p.stock_total, p.costo_promedio_und, p.stock_por_tienda,
+                   p.linea_clasificacion, p.marca_clasificacion, p.familia_clasificacion, p.aplicacion_clasificacion, p.cat_producto, p.descripcion_ebs, p.tipo_articulo,
+                   ({match_score_sql}) AS match_score,
+                   {trgm_score} AS trgm_similarity,
+                   COALESCE(rot.rotation_score, 0) AS rotation_score
+            FROM public.productos p
+            LEFT JOIN mv_product_rotation rot ON rot.producto_codigo = p.producto_codigo
+            WHERE {where_clause}
+            ORDER BY ({match_score_sql}) DESC, {trgm_score} DESC, stock_total DESC NULLS LAST
+            LIMIT {int(limit)}
+            """
+        ),
+        params,
+    ).mappings().all()
+    return [dict(r) for r in rows]
+
+
+def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, trgm_score, store_filters, limit):
+    """Store-filtered variant of smart search."""
+    store_sql = []
+    for si, sc in enumerate(store_filters):
+        params[f"store_{si}"] = sc
+        store_sql.append(f"cod_almacen = :store_{si}")
+
+    # Build inner WHERE: use only the pat_ ILIKE filters (not phonetic/abbreviation which might not have search_blob)
+    pat_keys = sorted([k for k in params if k.startswith("pat_")])
+    inner_filters = [f"search_blob ILIKE :{k}" for k in pat_keys]
+    if not inner_filters:
+        inner_filters = ["TRUE"]
+    inner_where = f"({' OR '.join(inner_filters)}) AND ({' OR '.join(store_sql)})"
+
+    rows = connection.execute(
+        text(
+            f"""
+            SELECT referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
+                   linea_clasificacion, marca_clasificacion, familia_clasificacion, aplicacion_clasificacion, cat_producto, descripcion_ebs, tipo_articulo,
+                   ({match_score_sql}) AS match_score,
+                   {trgm_score} AS trgm_similarity,
+                   COALESCE(rot.rotation_score, 0) AS rotation_score
+            FROM (
+                SELECT
+                    referencia,
+                    descripcion,
+                    marca,
+                    STRING_AGG(DISTINCT departamento, ', ' ORDER BY departamento) AS departamentos,
+                    COALESCE(SUM(stock_disponible), 0) AS stock_total,
+                    AVG(costo_promedio_und) AS costo_promedio_und,
+                    STRING_AGG(
+                        almacen_nombre || ': ' || COALESCE(stock_disponible::text, '0'),
+                        '; ' ORDER BY almacen_nombre
+                    ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
+                    MAX(search_blob) AS search_blob,
+                    public.fn_keep_alnum(MAX(descripcion) || ' ' || MAX(referencia) || ' ' || MAX(marca)) AS search_compact,
+                    MAX(referencia_normalizada) AS referencia_normalizada,
+                    MAX(linea_clasificacion) AS linea_clasificacion,
+                    MAX(marca_clasificacion) AS marca_clasificacion,
+                    MAX(familia_clasificacion) AS familia_clasificacion,
+                    MAX(aplicacion_clasificacion) AS aplicacion_clasificacion,
+                    MAX(cat_producto) AS cat_producto,
+                    MAX(descripcion_ebs) AS descripcion_ebs,
+                    MAX(tipo_articulo) AS tipo_articulo
+                FROM public.vw_inventario_agente
+                WHERE {inner_where}
+                GROUP BY referencia, descripcion, marca
+            ) inventory
+            LEFT JOIN mv_product_rotation rot ON rot.producto_codigo = inventory.referencia
+            ORDER BY ({match_score_sql}) DESC, {trgm_score} DESC, stock_total DESC NULLS LAST
+            LIMIT {int(limit)}
+            """
+        ),
+        params,
+    ).mappings().all()
+    return [dict(r) for r in rows]
+
+
 def translate_product_to_commercial(description: Optional[str], presentation: Optional[str] = None, brand: Optional[str] = None):
     """Convert raw DB descriptions like 'PQ VINILTEX ADV MAT BLANCO 1501 18.93L' to commercial language."""
     if not description:
@@ -12181,7 +12526,7 @@ def hydrate_curated_rows_with_store_inventory(connection, curated_rows: list[dic
     return hydrated_rows or curated_rows
 
 
-def rank_product_match_rows(product_rows: list[dict], product_request: Optional[dict], normalized_query: Optional[str]):
+def rank_product_match_rows(product_rows: list[dict], product_request: Optional[dict], normalized_query: Optional[str], rotation_cache: Optional[dict] = None, query_text: Optional[str] = None):
     if not product_rows:
         return []
 
@@ -12264,6 +12609,13 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
         candidate["color_score"] = 1 if (request.get("color_filters") or []) and candidate_color in (request.get("color_filters") or []) else 0
         candidate["finish_score"] = 1 if (request.get("finish_filters") or []) and candidate_finish in (request.get("finish_filters") or []) else 0
         candidate["kit_promo_penalty"] = _kit_promo_penalty
+        # ── Smart Score (unified 0-1 scoring) ──
+        _smart_query = query_text or normalized_query or ""
+        candidate["smart_score"] = smart_score_product(candidate, _smart_query, request, rotation_cache)
+        # Use rotation_score from DB if present, else from cache
+        candidate["rotation_score"] = float(candidate.get("rotation_score") or (rotation_cache or {}).get(
+            str(candidate.get("producto_codigo") or candidate.get("referencia") or ""), 0
+        ))
         ranked_rows.append(candidate)
 
     ranked_rows.sort(
@@ -12271,6 +12623,8 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
             item.get("kit_promo_penalty") or 0,  # Negative for kits → sorts them to the bottom
             item.get("exact_code_score") or 0,
             item.get("match_score") or 0,
+            item.get("smart_score") or 0,         # Unified 0-1 smart score
+            item.get("rotation_score") or 0,       # Historical sales rotation
             item.get("direction_score") or 0,
             item.get("size_score") or 0,
             item.get("presentation_score") or 0,
@@ -12341,6 +12695,23 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
     return ranked_rows
 
 
+def _merge_product_rows(primary: list[dict], secondary: list[dict]) -> list[dict]:
+    """Merge two ranked product lists, deduplicating by product code. Primary rows take priority."""
+    seen: set[str] = set()
+    merged: list[dict] = []
+    for row in primary:
+        code = str(row.get("producto_codigo") or row.get("referencia") or "")
+        if code and code not in seen:
+            seen.add(code)
+            merged.append(row)
+    for row in secondary:
+        code = str(row.get("producto_codigo") or row.get("referencia") or "")
+        if code and code not in seen:
+            seen.add(code)
+            merged.append(row)
+    return merged
+
+
 def lookup_product_context(text_value: Optional[str], product_request: Optional[dict] = None):
     product_request = prepare_product_request_for_search(text_value, product_request)
     core_terms = product_request.get("core_terms") or []
@@ -12357,6 +12728,9 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
     try:
         engine = get_db_engine()
         with engine.connect() as connection:
+            # ── Load rotation cache once for the full search session ──
+            rotation_cache = fetch_rotation_cache(connection)
+
             if learned_references:
                 learned_rows = fetch_reference_product_rows(connection, learned_references, store_filters, 90)
                 if learned_rows:
@@ -12365,7 +12739,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             if product_codes:
                 code_rows = fetch_code_product_rows(connection, product_codes, store_filters)
                 if code_rows:
-                    ranked_code_rows = rank_product_match_rows([dict(row) for row in code_rows], product_request, normalized_query)
+                    ranked_code_rows = rank_product_match_rows([dict(row) for row in code_rows], product_request, normalized_query, rotation_cache, text_value)
                     ranked_code_rows = filter_rows_by_requested_presentation(ranked_code_rows, product_request)
                     return ranked_code_rows[:10]
                 # Fuzzy near-code fallback: if no results, try digit-deletion and digit-transposition variants
@@ -12381,7 +12755,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                 if fuzzy_codes:
                     fuzzy_rows = fetch_code_product_rows(connection, fuzzy_codes[:3], store_filters)
                     if fuzzy_rows:
-                        ranked_fuzzy = rank_product_match_rows([dict(row) for row in fuzzy_rows], product_request, normalized_query)
+                        ranked_fuzzy = rank_product_match_rows([dict(row) for row in fuzzy_rows], product_request, normalized_query, rotation_cache, text_value)
                         ranked_fuzzy = filter_rows_by_requested_presentation(ranked_fuzzy, product_request)
                         return ranked_fuzzy[:10]
 
@@ -12393,13 +12767,10 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             for term in list(core_terms) + list(terms):
                 if term not in query_terms:
                     query_terms.append(term)
-                if len(query_terms) == 5:
+                if len(query_terms) == 6:
                     break
 
-            # ── Stage 3+4 combined: curated catalog + full-catalog term search ──
-            # The curated catalog only has ~1.7k products; public.productos has
-            # ~20k.  Always run both and merge so that products outside the curated
-            # catalog are still discoverable.
+            # ── Stage 3+4 combined: curated catalog + smart full-catalog search ──
             curated_rows = fetch_curated_catalog_product_rows(connection, text_value, product_request, limit=100)
             ranked_curated_rows: list[dict] = []
             if curated_rows:
@@ -12408,29 +12779,37 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     [dict(row) for row in curated_rows],
                     store_filters,
                 )
-                ranked_curated_rows = rank_product_match_rows(ranked_curated_rows, product_request, normalized_query)
+                ranked_curated_rows = rank_product_match_rows(ranked_curated_rows, product_request, normalized_query, rotation_cache, text_value)
 
-            # Always query the full catalog regardless of curated results
-            rows = fetch_term_product_rows(connection, query_terms, store_filters)
+            # Smart full-catalog search with trigram + phonetic + rotation
+            smart_rows = fetch_smart_product_rows(connection, text_value or "", query_terms, product_request, store_filters, limit=30)
             ranked_term_rows: list[dict] = []
-            if rows:
-                ranked_term_rows = rank_product_match_rows([dict(row) for row in rows], product_request, normalized_query)
+            if smart_rows:
+                ranked_term_rows = rank_product_match_rows(smart_rows, product_request, normalized_query, rotation_cache, text_value)
 
-            # Merge curated + full-catalog, curated rows take priority
+            # Also run legacy term search as fallback (in case smart search misses due to trigram threshold)
+            legacy_rows = fetch_term_product_rows(connection, query_terms, store_filters)
+            if legacy_rows:
+                legacy_ranked = rank_product_match_rows([dict(row) for row in legacy_rows], product_request, normalized_query, rotation_cache, text_value)
+                ranked_term_rows = _merge_product_rows(ranked_term_rows, legacy_ranked)
+
+            # Merge curated + full-catalog, curated rows take priority, then re-sort by smart_score
             if ranked_curated_rows or ranked_term_rows:
-                seen_codes: set[str] = set()
-                merged: list[dict] = []
-                for row in ranked_curated_rows:
-                    code = str(row.get("producto_codigo") or row.get("referencia") or "")
-                    if code and code not in seen_codes:
-                        seen_codes.add(code)
-                        merged.append(row)
-                for row in ranked_term_rows:
-                    code = str(row.get("producto_codigo") or row.get("referencia") or "")
-                    if code and code not in seen_codes:
-                        seen_codes.add(code)
-                        merged.append(row)
+                merged = _merge_product_rows(ranked_curated_rows, ranked_term_rows)
                 if merged:
+                    # Final re-sort by smart_score descending so best matches float to top
+                    merged.sort(
+                        key=lambda item: (
+                            item.get("kit_promo_penalty") or 0,
+                            item.get("exact_code_score") or 0,
+                            item.get("smart_score") or 0,
+                            item.get("rotation_score") or 0,
+                            item.get("specific_score") or 0,
+                            item.get("match_score") or 0,
+                            parse_numeric_value(item.get("stock_total")) or 0,
+                        ),
+                        reverse=True,
+                    )
                     return merged[:10]
 
             sales_filters = []
