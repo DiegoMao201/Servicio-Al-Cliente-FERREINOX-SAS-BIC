@@ -13812,7 +13812,12 @@ RESPUESTA AL CLIENTE — ESTRUCTURA OBLIGATORIA para asesorías técnicas:
   4) COTIZACIÓN LIMPIA: Lista agrupada por producto:
      • 2 Cuñetes Interseal EGA130 + 2 Catalizador EGA247: $X
      • 2 Cuñetes Intergard 740 ECA011 + 2 Catalizador: $Y
-     Subtotal: $Z | IVA 19%: $W | **Total: $T**
+     Subtotal (sin IVA): $Z | IVA 19%: $W | **Total con IVA: $T**
+     ⚠️ REGLA IVA ABSOLUTA: Los datos de inventario te dan `precio_base_sin_iva` (SIN IVA) y `precio_con_iva_19` (YA CON 19%).
+     → Usa `precio_base_sin_iva` × cantidad para calcular subtotal.
+     → Suma 19% UNA SOLA VEZ para obtener total.
+     → NUNCA digas "el precio ya incluye IVA" si usas precio_base_sin_iva.
+     → NUNCA sumes IVA adicional al precio_con_iva_19.
      Si NO tengo precio → "Este es un sistema especializado de alto desempeño. Te estructuro el sistema exacto y, para entregarte el valor total liquidado con descuentos, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le notifique de inmediato a tiendapintucopereira@ferreinox.co para que te envíe la liquidación?"
   5) VENTA CRUZADA INTELIGENTE: No una lista genérica. Productos específicos para APLICAR este sistema. Ej: "Para aplicar este epóxico necesitas Rodillo de Felpa industrial, Thinner Epóxico [ref] como ajustador, y Lija de agua grano 220 para la preparación."
   6) PREGUNTA DE CIERRE: Solo cuando el sistema esté completo y el cliente satisfecho → "¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?"
@@ -13825,6 +13830,29 @@ REGLAS DE DIAGNÓSTICO OBLIGATORIO:
   - Si es proyecto de FACHADA: ¿m²? ¿Pintura soplada/moho? ¿Humedad visible?
   - CUALQUIER OTRO PROYECTO: ¿Qué superficie? ¿Qué condición? ¿Interior/exterior? ¿m²? ¿Color?
   Si el cliente YA dio la info → NO repitas preguntas. Avanza al RAG.
+
+══════════════════════════════════════════════════════════════════════════════
+🛑 REGLA DE COMPATIBILIDAD QUÍMICA (NIVEL CRÍTICO — CERO TOLERANCIA):
+══════════════════════════════════════════════════════════════════════════════
+FAMILIAS QUÍMICAS:
+  • ALQUÍDICA: Corrotec, Pintóxido, Pintulux, Esmalte Doméstico (curado por oxidación, base solvente)
+  • EPÓXICA: Interseal, Intergard, Pintucoat (curado por reacción 2 componentes)
+  • POLIURETANO: Interthane, Interfine (curado por reacción con catalizador isocianato)
+  • ACRÍLICA: Viniltex, Koraza, Avicolor, Pinturama, Intervinil (curado por evaporación, base agua)
+
+COMBINACIONES PROHIBIDAS (causan falla del sistema):
+  ❌ ALQUÍDICO + POLIURETANO: Corrotec/Pintulux NUNCA con Interthane/Interfine. Los solventes alquídicos destruyen el poliuretano.
+  ❌ ALQUÍDICO sobre EPÓXICO: Pintulux/Corrotec NUNCA como acabado de Interseal/Intergard. El esmalte alquídico no tiene dureza química suficiente.
+
+SISTEMAS CORRECTOS (memorizar):
+  ✅ Metal industrial: Interseal (epóxico imprimante) + Interthane (PU acabado) — sistema International
+  ✅ Metal arquitectónico/económico: Corrotec (anticorrosivo) + Pintulux 3en1 (esmalte alquídico) — sistema Pintuco
+  ✅ Pisos industriales: Interseal (imprimante) + Pintucoat/Intergard 740/Intergard 2002 (epóxico acabado)
+  ✅ Muros interiores: Viniltex/Pinturama (acrílico)
+  ✅ Fachadas: Koraza (acrílico exterior)
+
+Si detectas que un cliente mezcla familias incompatibles, CORRÍGELO INMEDIATAMENTE con el sistema correcto.
+══════════════════════════════════════════════════════════════════════════════
 \
 REGLA DE HIERRO: Sin llamar `consultar_conocimiento_tecnico`, NO puedes recomendar productos técnicos.
 ══════════════════════════════════════════════════════════════════════════════
@@ -14847,13 +14875,13 @@ def _handle_tool_consultar_inventario(args, conversation_context):
         price_info = fetch_product_price(str(ref_code))
         if price_info and price_info.get("precio_mejor"):
             pvp = float(price_info["precio_mejor"])
-            item["precio_unitario"] = pvp
-            item["precio_con_iva"] = round(pvp * 1.19)
-            item["iva_pct"] = 19
+            item["precio_base_sin_iva"] = pvp
+            item["precio_con_iva_19"] = round(pvp * 1.19)
+            item["nota_precio"] = "precio_base_sin_iva NO incluye IVA. precio_con_iva_19 YA incluye 19%. NUNCA sumes IVA adicional al precio_con_iva_19."
             if price_info.get("pvp_franquicia") and not price_info.get("pvp_sap"):
                 item["lista_precio"] = "franquicia"
         elif not precio:
-            item["precio_unitario"] = None
+            item["precio_base_sin_iva"] = None
             item["precio_nota"] = "Precio pendiente de confirmación"
         # --- Companion/complementary products ---
         ref_for_companion = item.get("codigo") or ""
@@ -14870,6 +14898,40 @@ def _handle_tool_consultar_inventario(args, conversation_context):
                 }
                 for c in companions
             ]
+
+        # --- BICOMPONENTE AUTO-INJECTION: si el producto es bicomponente y no
+        # se encontró catalizador en companion DB, inyectar desde BICOMPONENT_CATALOG ---
+        desc_lower = (item.get("descripcion") or "").lower()
+        nombre_lower = (item.get("nombre") or "").lower()
+        producto_text_lower = f"{desc_lower} {nombre_lower}"
+        has_catalyst_companion = any(
+            "catalizador" in (c.get("tipo") or "").lower() or
+            "comp b" in (c.get("tipo") or "").lower() or
+            "hardener" in (c.get("tipo") or "").lower()
+            for c in (companions or [])
+        )
+        if not has_catalyst_companion:
+            for bicomp_key, bicomp_info in BICOMPONENT_CATALOG.items():
+                if bicomp_key in producto_text_lower:
+                    cat_code = bicomp_info.get("componente_b_codigo", "")
+                    cat_desc = bicomp_info.get("componente_b_descripcion", "")
+                    proporcion = bicomp_info.get("proporcion_galon", bicomp_info.get("proporcion", ""))
+                    item["⚠️_BICOMPONENTE_OBLIGATORIO"] = {
+                        "advertencia": f"ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.",
+                        "catalizador_codigo": cat_code,
+                        "catalizador_descripcion": cat_desc,
+                        "proporcion": proporcion,
+                        "nota": bicomp_info.get("nota", ""),
+                    }
+                    # Auto-lookup catalyst price
+                    if cat_code:
+                        cat_price_info = fetch_product_price(cat_code)
+                        if cat_price_info and cat_price_info.get("precio_mejor"):
+                            cat_pvp = float(cat_price_info["precio_mejor"])
+                            item["⚠️_BICOMPONENTE_OBLIGATORIO"]["catalizador_precio_base_sin_iva"] = cat_pvp
+                            item["⚠️_BICOMPONENTE_OBLIGATORIO"]["catalizador_precio_con_iva_19"] = round(cat_pvp * 1.19)
+                    break
+
         results.append(item)
     if rows:
         conversation_context["last_product_request"] = product_request
@@ -14984,11 +15046,11 @@ def _handle_tool_consultar_inventario_lote(args, conversation_context):
                 price_info = fetch_product_price(str(ref_code))
                 if price_info and price_info.get("precio_mejor"):
                     pvp = float(price_info["precio_mejor"])
-                    item["precio_unitario"] = pvp
-                    item["precio_con_iva"] = round(pvp * 1.19)
-                    item["iva_pct"] = 19
+                    item["precio_base_sin_iva"] = pvp
+                    item["precio_con_iva_19"] = round(pvp * 1.19)
+                    item["nota_precio"] = "precio_base_sin_iva NO incluye IVA. precio_con_iva_19 YA incluye 19%. NUNCA sumes IVA adicional al precio_con_iva_19."
                 elif not item.get("precio"):
-                    item["precio_unitario"] = None
+                    item["precio_base_sin_iva"] = None
                     item["precio_nota"] = "Precio pendiente de confirmación"
                 items.append(item)
 
@@ -17873,6 +17935,243 @@ def generate_agent_reply_v2(
             )
             assistant_message = ensenar_response.choices[0].message
             logger.info("GUARDIA ENSEÑAR retry completed: %dms", int((time.time() - t_ensenar) * 1000))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA QUÍMICA: detecta combinaciones de productos INCOMPATIBLES
+    # por química de curado. Alquídicos + Poliuretanos/Epóxicos = PROHIBIDO.
+    # Este es un BLOQUEO DURO — el LLM NO puede saltarlo.
+    # ══════════════════════════════════════════════════════════════════════
+    _CHEM_FAMILIES = {
+        "alkyd": ["corrotec", "pintóxido", "pintoxido", "pintulux", "esmalte doméstico",
+                   "esmalte domestico", "pintulux 3en1", "anticorrosivo pintuco"],
+        "polyurethane": ["interthane", "interfine"],
+        "epoxy": ["interseal", "intergard", "pintucoat", "primer 50rs", "primer 50 rs"],
+    }
+    _CHEM_INCOMPATIBLE_PAIRS = [
+        # (family_a, family_b, explanation)
+        ("alkyd", "polyurethane",
+         "Los alquídicos (Corrotec, Pintulux, Pintóxido) son INCOMPATIBLES con poliuretanos (Interthane, Interfine). "
+         "Los solventes alquídicos impiden la reticulación del poliuretano y causan desprendimiento. "
+         "Sistema CORRECTO para metal industrial: Imprimante Epóxico (Interseal/Intergard) + Acabado Poliuretano (Interthane). "
+         "Sistema CORRECTO para metal arquitectónico/económico: Anticorrosivo (Corrotec) + Esmalte alquídico (Pintulux 3en1)."),
+        ("alkyd", "epoxy",
+         "Los alquídicos (Corrotec, Pintulux) son INCOMPATIBLES como acabado sobre epóxicos (Interseal, Intergard). "
+         "El esmalte alquídico NO tiene la dureza química para proteger un sistema epóxico. "
+         "Sistema CORRECTO industrial: Epóxico (Interseal/Intergard) + Poliuretano (Interthane). "
+         "Sistema CORRECTO económico: Anticorrosivo (Corrotec) + Esmalte alquídico (Pintulux 3en1)."),
+    ]
+
+    response_text_chem = (assistant_message.content or "").lower()
+    if not is_ensenar_msg and not is_simple_greeting(user_message or ""):
+        # Detect which chemistry families appear in the response
+        families_in_response = {}
+        for fam, signals in _CHEM_FAMILIES.items():
+            found = [s for s in signals if s in response_text_chem]
+            if found:
+                families_in_response[fam] = found
+
+        # Check for incompatible pairs
+        for fam_a, fam_b, explanation in _CHEM_INCOMPATIBLE_PAIRS:
+            if fam_a in families_in_response and fam_b in families_in_response:
+                products_a = families_in_response[fam_a]
+                products_b = families_in_response[fam_b]
+                logger.warning(
+                    "⛔ GUARDIA QUÍMICA ACTIVADA: Incompatibilidad %s (%s) + %s (%s)",
+                    fam_a, products_a, fam_b, products_b,
+                )
+                messages.append(assistant_message)
+                messages.append({
+                    "role": "system",
+                    "content": (
+                        f"⛔⛔⛔ BLOQUEO QUÍMICO CRÍTICO — Tu respuesta será DESCARTADA y REESCRITA.\n\n"
+                        f"DETECTADO: Estás recomendando {', '.join(products_a)} (familia {fam_a}) "
+                        f"junto con {', '.join(products_b)} (familia {fam_b}) en el MISMO sistema.\n\n"
+                        f"ESTO ES INCOMPATIBLE Y PELIGROSO:\n{explanation}\n\n"
+                        f"ACCIÓN OBLIGATORIA:\n"
+                        f"1. Elimina COMPLETAMENTE los productos de una de las dos familias incompatibles.\n"
+                        f"2. Usa UNO de los sistemas correctos descritos arriba.\n"
+                        f"3. Llama `consultar_inventario_lote` con los productos del sistema CORRECTO.\n"
+                        f"4. Reescribe la cotización COMPLETA con el sistema compatible."
+                    ),
+                })
+                t_chem = time.time()
+                chem_response = client.chat.completions.create(
+                    model=get_openai_model(),
+                    messages=messages,
+                    tools=AGENT_TOOLS,
+                    tool_choice="auto",
+                    temperature=0.3,
+                )
+                assistant_message = chem_response.choices[0].message
+                chem_retries = 3
+                while assistant_message.tool_calls and chem_retries > 0:
+                    messages.append(assistant_message)
+                    for tc in assistant_message.tool_calls:
+                        fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+                        tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
+                        messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+                    chem_response = client.chat.completions.create(
+                        model=get_openai_model(),
+                        messages=messages,
+                        tools=AGENT_TOOLS,
+                        tool_choice="auto",
+                        temperature=0.3,
+                    )
+                    assistant_message = chem_response.choices[0].message
+                    chem_retries -= 1
+                logger.info("GUARDIA QUÍMICA retry completed: %dms", int((time.time() - t_chem) * 1000))
+                break  # Only fix the first incompatibility found
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA BICOMPONENTE: si la respuesta menciona un producto bicomponente
+    # pero NO menciona su catalizador, BLOQUEAR y forzar corrección.
+    # ══════════════════════════════════════════════════════════════════════
+    _BICOMP_CHECKS = [
+        # (product_signals, catalyst_signals, product_name, catalyst_name)
+        (["interthane"], ["pha046", "catalizador interthane", "comp b interthane", "hardener interthane"],
+         "Interthane 990", "PHA046 catalizador"),
+        (["pintucoat"], ["13227", "catalizador pintucoat", "comp b pintucoat"],
+         "Pintucoat", "13227 catalizador"),
+        (["interseal"], ["catalizador interseal", "comp b interseal"],
+         "Interseal", "Comp B catalizador (ver ficha técnica)"),
+        (["intergard 740", "intergard 2002"], ["catalizador intergard", "comp b intergard"],
+         "Intergard", "Comp B catalizador (ver ficha técnica)"),
+    ]
+
+    response_text_bicomp = (assistant_message.content or "").lower()
+    if not is_ensenar_msg and not is_simple_greeting(user_message or ""):
+        for prod_signals, cat_signals, prod_name, cat_name in _BICOMP_CHECKS:
+            has_product = any(s in response_text_bicomp for s in prod_signals)
+            has_catalyst = any(s in response_text_bicomp for s in cat_signals)
+            if has_product and not has_catalyst:
+                logger.warning(
+                    "⛔ GUARDIA BICOMPONENTE ACTIVADA: %s detectado sin catalizador %s",
+                    prod_name, cat_name,
+                )
+                messages.append(assistant_message)
+                messages.append({
+                    "role": "system",
+                    "content": (
+                        f"⛔ BLOQUEO BICOMPONENTE — Tu respuesta será DESCARTADA.\n\n"
+                        f"DETECTADO: Mencionas {prod_name} pero NO incluyes su catalizador obligatorio ({cat_name}).\n"
+                        f"{prod_name} es un producto BICOMPONENTE (2 componentes). "
+                        f"Sin catalizador, el producto NO endurece y es INSERVIBLE.\n\n"
+                        f"ACCIÓN OBLIGATORIA:\n"
+                        f"1. Agrega {cat_name} a la cotización con cantidad proporcional.\n"
+                        f"2. Cada línea de {prod_name} debe decir '(Kit A+B)' e incluir el catalizador.\n"
+                        f"3. El precio del kit = precio {prod_name} + precio catalizador.\n"
+                        f"4. Llama `consultar_inventario` con '{cat_name}' si no tienes su precio.\n"
+                        f"Reescribe la cotización COMPLETA incluyendo el catalizador."
+                    ),
+                })
+                t_bicomp = time.time()
+                bicomp_response = client.chat.completions.create(
+                    model=get_openai_model(),
+                    messages=messages,
+                    tools=AGENT_TOOLS,
+                    tool_choice="auto",
+                    temperature=0.3,
+                )
+                assistant_message = bicomp_response.choices[0].message
+                bicomp_retries = 3
+                while assistant_message.tool_calls and bicomp_retries > 0:
+                    messages.append(assistant_message)
+                    for tc in assistant_message.tool_calls:
+                        fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+                        tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
+                        messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+                    bicomp_response = client.chat.completions.create(
+                        model=get_openai_model(),
+                        messages=messages,
+                        tools=AGENT_TOOLS,
+                        tool_choice="auto",
+                        temperature=0.3,
+                    )
+                    assistant_message = bicomp_response.choices[0].message
+                    bicomp_retries -= 1
+                logger.info("GUARDIA BICOMPONENTE retry completed: %dms", int((time.time() - t_bicomp) * 1000))
+                # Re-check the response for remaining missing catalysts
+                response_text_bicomp = (assistant_message.content or "").lower()
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA ANTI-RENDICIÓN COMERCIAL: detecta si el agente se rinde
+    # y desvía al asesor cuando TIENE datos suficientes para responder.
+    # ══════════════════════════════════════════════════════════════════════
+    response_text_surrender = (assistant_message.content or "").lower()
+    _SURRENDER_SIGNALS = [
+        "te contactaré con", "te comunico con", "te paso con",
+        "un asesor te", "nuestro asesor", "asesor técnico comercial",
+        "te transfiero", "te derivo", "escalaré tu consulta",
+        "no tengo esa información", "no cuento con", "no dispongo de",
+        "no puedo ayudarte con eso", "fuera de mi alcance",
+    ]
+    # Only trigger if the agent has inventory/price data available
+    has_inventory_data = any(tc["name"] in ("consultar_inventario", "consultar_inventario_lote") for tc in tool_calls_made)
+    has_surrender = any(s in response_text_surrender for s in _SURRENDER_SIGNALS)
+
+    if has_surrender and has_inventory_data and not is_ensenar_msg:
+        # Check if inventory actually returned products with prices
+        inventory_had_results = False
+        for tc in tool_calls_made:
+            if tc["name"] in ("consultar_inventario", "consultar_inventario_lote"):
+                try:
+                    r = json.loads(tc["result"]) if isinstance(tc["result"], str) else tc["result"]
+                    if isinstance(r, dict) and r.get("productos"):
+                        inventory_had_results = any(
+                            p.get("precio_base_sin_iva") for p in r["productos"]
+                        )
+                    elif isinstance(r, dict) and r.get("resultados"):
+                        for res in r["resultados"]:
+                            if any(p.get("precio_base_sin_iva") for p in (res.get("productos") or [])):
+                                inventory_had_results = True
+                except Exception:
+                    pass
+
+        if inventory_had_results:
+            logger.warning(
+                "⛔ GUARDIA ANTI-RENDICIÓN: Agente intenta desviar al asesor pero TIENE datos de inventario+precio."
+            )
+            messages.append(assistant_message)
+            messages.append({
+                "role": "system",
+                "content": (
+                    "⛔ RENDICIÓN COMERCIAL BLOQUEADA — Tu respuesta será DESCARTADA.\n\n"
+                    "DETECTADO: Estás desviando al cliente a un 'asesor' o diciendo que no tienes información, "
+                    "pero YA consultaste inventario y TIENES precios disponibles.\n\n"
+                    "REGLA DE HIERRO: Si tienes producto + precio + stock → COTIZA TÚ MISMO.\n"
+                    "Solo escalas al Asesor Técnico Comercial cuando:\n"
+                    "- NO hay precio en el sistema para NINGÚN producto del sistema\n"
+                    "- El cliente pide descuento especial o crédito\n"
+                    "- Es un proyecto >$5M que requiere negociación\n\n"
+                    "Reescribe tu respuesta con la cotización completa usando los datos que YA tienes."
+                ),
+            })
+            t_surr = time.time()
+            surr_response = client.chat.completions.create(
+                model=get_openai_model(),
+                messages=messages,
+                tools=AGENT_TOOLS,
+                tool_choice="auto",
+                temperature=0.3,
+            )
+            assistant_message = surr_response.choices[0].message
+            surr_retries = 2
+            while assistant_message.tool_calls and surr_retries > 0:
+                messages.append(assistant_message)
+                for tc in assistant_message.tool_calls:
+                    fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+                    tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
+                    messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+                surr_response = client.chat.completions.create(
+                    model=get_openai_model(),
+                    messages=messages,
+                    tools=AGENT_TOOLS,
+                    tool_choice="auto",
+                    temperature=0.3,
+                )
+                assistant_message = surr_response.choices[0].message
+                surr_retries -= 1
+            logger.info("GUARDIA ANTI-RENDICIÓN retry completed: %dms", int((time.time() - t_surr) * 1000))
 
     # --- Refuerzo extremo de priorización técnica y protocolo diagnóstico ---
     # 1. Si la intención es técnica, cruza marca, familia, línea y tipo para identificar el portafolio exacto
