@@ -762,13 +762,13 @@ PINTUCO_PRODUCT_TAXONOMY = {
     },
     "pisos": {
         "descripcion": "Pinturas especiales para pisos de concreto y cemento",
-        "marcas": ["Pintura para Canchas", "Pintucoat"],
-        "uso": "Pisos de concreto, andenes, garajes (Canchas). Pisos industriales de alto tráfico (Pintucoat).",
+        "marcas": ["Pintura para Canchas", "Pintucoat", "Intergard 740", "Intergard 2002"],
+        "uso": "Pisos de concreto, andenes, garajes (Canchas). Pisos industriales de tráfico MEDIO acabado mate (Pintucoat). Pisos industriales acabado brillante resistencia media (Intergard 740). Pisos industriales alta resistencia con cuarzo (Intergard 2002 + Cuarzo ref 5891610).",
     },
     "epoxicas": {
         "descripcion": "Recubrimientos de alto desempeño, dos componentes (resina + catalizador)",
-        "marcas": ["Pintucoat", "Interseal", "Intergard"],
-        "uso": "Pisos industriales, ambientes químicos, tráfico pesado. NO sirven para piscinas ni inmersión en agua.",
+        "marcas": ["Pintucoat", "Interseal", "Intergard", "Intergard 740", "Intergard 2002"],
+        "uso": "Pisos industriales tráfico medio acabado mate (Pintucoat), tráfico medio brillante (Intergard 740), tráfico pesado con cuarzo (Intergard 2002 + ref 5891610), ambientes químicos. NO sirven para piscinas ni inmersión en agua.",
     },
     "anticorrosivos": {
         "descripcion": "Fondos y primers protectores contra la oxidación del metal",
@@ -890,18 +890,18 @@ PORTFOLIO_CATEGORY_MAP = {
     "pintura piso": ["pintura canchas", "pintucoat"],
     "piso": ["pintura canchas", "pintucoat"],
     "pisos": ["pintura canchas", "pintucoat"],
-    "piso industrial": ["pintucoat"],
+    "piso industrial": ["pintucoat", "intergard 740", "intergard 2002"],
     "piso cemento": ["pintura canchas"],
     "piso concreto": ["pintura canchas"],
-    "piso trafico": ["pintucoat"],
-    "piso fabrica": ["pintucoat"],
-    "piso bodega": ["pintucoat", "pintura canchas"],
-    "bodega": ["pintucoat", "pintura canchas"],
+    "piso trafico": ["pintucoat", "intergard 740", "intergard 2002"],
+    "piso fabrica": ["intergard 2002", "pintucoat"],
+    "piso bodega": ["pintucoat", "intergard 740", "pintura canchas"],
+    "bodega": ["pintucoat", "intergard 740", "pintura canchas"],
     "garaje": ["pintura canchas", "pintucoat"],
     "anden": ["pintura canchas"],
     "parqueadero": ["pintura canchas", "pintucoat", "pintura trafico"],
-    "montacargas": ["pintucoat"],
-    "trafico pesado": ["pintucoat"],
+    "montacargas": ["intergard 2002"],
+    "trafico pesado": ["intergard 2002"],
     "piso garaje": ["pintura canchas", "pintucoat"],
 
     # ── CANCHAS / DEMARCACIÓN ──
@@ -1185,14 +1185,26 @@ DIAGNOSTIC_QUESTION_TREE = {
             "¿Es un piso interior o exterior? (Si es exterior y le da el sol, el sistema de pintura cambia completamente).",
         ],
         "logica_producto": {
-            "industrial/pesado + interior": {"producto": "pintucoat", "confianza": "alta",
-                "razon": "Pintucoat es epóxica bicomponente para tráfico pesado interior (montacargas, estibadores, bodegas industriales). "
-                         "Requiere: piso curado 28 días mínimo, superficie limpia y seca, imprimante epóxico si el concreto es muy poroso. "
-                         "Sistema: Imprimante → Pintucoat Comp A + Catalizador 13227 (2-3 manos). Pot life: 6 horas."},
-            "industrial/pesado + exterior": {"producto": "pintucoat", "confianza": "alta",
+            "industrial/pesado + interior": {"producto": "intergard 2002", "confianza": "alta",
+                "razon": "Para tráfico PESADO (montacargas, estibadores) se requiere Intergard 2002 (alto volumen de sólidos) + cuarzo ref 5891610 esparcido por broadcasting. "
+                         "Sistema: Interseal gris RAL 7038 (imprimante para concreto) → Intergard 2002 + cuarzo ref 5891610 (2-3 manos). "
+                         "NOTA: Pintucoat NO resiste montacargas — es de resistencia MEDIA."},
+            "industrial/pesado + exterior": {"producto": "intergard 2002", "confianza": "alta",
+                "razon": "Intergard 2002 + cuarzo ref 5891610 + acabado Interthane OBLIGATORIO en exterior. "
+                         "Sistema exterior: Interseal gris RAL 7038 (imprimante) → Intergard 2002 + cuarzo → Interthane 990 + Cat PHA046 como sello UV. "
+                         "NUNCA usar Pintucoat para tráfico pesado."},
+            "industrial/medio + interior": {"producto": "pintucoat", "confianza": "alta",
+                "razon": "Pintucoat es epóxica bicomponente de resistencia MEDIA, acabado MATE, para tráfico peatonal y carretillas manuales en interior. "
+                         "Sistema: Interseal gris RAL 7038 (imprimante) → Pintucoat Comp A + Catalizador 13227 (2-3 manos). Pot life: 6 horas. "
+                         "Alternativa brillante: Intergard 740."},
+            "industrial/medio + exterior": {"producto": "pintucoat", "confianza": "alta",
                 "razon": "Pintucoat + acabado Interthane OBLIGATORIO en exterior. El epóxico ENTIZA (se decolora/chalking) con la exposición UV. "
-                         "Sistema exterior: Imprimante → Pintucoat Comp A + Cat 13227 → Interthane 990 + Cat PHA046 como sello UV. "
-                         "NUNCA ofrecer Pintucoat solo en exterior — siempre con Interthane."},
+                         "Sistema exterior: Interseal gris RAL 7038 (imprimante) → Pintucoat Comp A + Cat 13227 → Interthane 990 + Cat PHA046 como sello UV. "
+                         "Alternativa brillante: Intergard 740 + Interthane."},
+            "industrial/brillante": {"producto": "intergard 740", "confianza": "alta",
+                "razon": "Intergard 740 es epóxico bicomponente de resistencia MEDIA con acabado BRILLANTE. "
+                         "Ideal cuando el cliente quiere piso industrial con más brillo que el Pintucoat (que es mate). "
+                         "Sistema: Interseal gris RAL 7038 (imprimante) → Intergard 740 (2-3 manos)."},
             "residencial/liviano": {"producto": "pintura canchas", "confianza": "alta",
                 "razon": "Pintura para Canchas: acrílica monocomponente para garajes, andenes, canchas deportivas, patios. "
                          "Más fácil de aplicar y más económica, pero NO resiste tráfico de montacargas."},
@@ -1345,8 +1357,8 @@ PRODUCT_TECHNICAL_HARD_RULES = {
         "no_es_para": "NO es sellador de humedad interna, NO es impermeabilizante de muros con filtración, NO sella grietas con presión de agua. Para humedad interna usa Aquablock o Sellamur.",
     },
     "pintucoat": {
-        "es_para": "Recubrimiento epóxico BICOMPONENTE para pisos industriales de alto tráfico, superficies de concreto en ambientes industriales y bodegas.",
-        "no_es_para": "NO es para piscinas, NO es para tanques de agua, NO es para inmersión en agua, NO es para superficies sumergidas.",
+        "es_para": "Recubrimiento epóxico BICOMPONENTE para pisos industriales de tráfico MEDIO (peatonal, carretillas manuales). Acabado MATE. NO resiste tráfico pesado de montacargas — para tráfico pesado usar Intergard 2002 + cuarzo.",
+        "no_es_para": "NO es para piscinas, NO es para tanques de agua, NO es para inmersión en agua, NO es para superficies sumergidas. NO es para tráfico pesado de montacargas.",
         "bicomponente": (
             "SIEMPRE requiere catalizador 13227 COMP B. "
             "GALÓN: COMP A 3.44L + catalizador 13227 COMP B 0.37L. "
@@ -1369,9 +1381,31 @@ PRODUCT_TECHNICAL_HARD_RULES = {
         "bicomponente": "Relación y catalizador extraer de ficha técnica International o Guía de Sistemas MPY.",
     },
     "intergard": {
-        "es_para": "Primer epóxico BICOMPONENTE, primera capa sobre acero limpio. Protección anticorrosiva base. Marca International/AkzoNobel.",
-        "no_es_para": "NO es acabado final.",
+        "es_para": "Primer epóxico BICOMPONENTE, primera capa sobre acero limpio. Protección anticorrosiva base. Marca International/AkzoNobel. La línea Intergard 740 e Intergard 2002 también se usan como acabados de pisos industriales.",
+        "no_es_para": "NO es acabado final (excepto Intergard 740 en pisos y Intergard 2002 en pisos con cuarzo).",
         "bicomponente": "Relación y catalizador extraer de ficha técnica International.",
+    },
+    # ── BLOQUEO ABSOLUTO: PRIMER 50RS / EPOXY PRIMER 50RS / UEA400 ──
+    "primer 50rs": {
+        "es_para": "Imprimante epóxico para ESTRUCTURAS METÁLICAS únicamente. Protección anticorrosiva sobre acero.",
+        "no_es_para": (
+            "NUNCA para pisos de concreto. NUNCA para pisos industriales. NUNCA para superficies de cemento. "
+            "Si el cliente necesita imprimante para piso de concreto, el correcto es INTERSEAL GRIS RAL 7038. "
+            "Primer 50RS es EXCLUSIVO para metal."
+        ),
+    },
+    "epoxy primer 50rs": {
+        "es_para": "Imprimante epóxico para ESTRUCTURAS METÁLICAS únicamente.",
+        "no_es_para": "NUNCA para pisos de concreto. Para pisos usar INTERSEAL GRIS RAL 7038 como imprimante.",
+    },
+    # ── IMPRIMANTE CORRECTO PARA PISOS DE CONCRETO ──
+    "interseal gris": {
+        "es_para": (
+            "Imprimante epóxico para PISOS DE CONCRETO. Interseal gris RAL 7038 es el imprimante correcto "
+            "que va como primera capa antes de Pintucoat, Intergard 740 o Intergard 2002 en pisos industriales. "
+            "Sella la porosidad del concreto y mejora la adherencia del acabado epóxico."
+        ),
+        "no_es_para": "NO es acabado final. Va como capa de imprimación debajo del sistema de piso.",
     },
     "aquablock": {
         "es_para": "Sellador y bloqueador de humedad para muros interiores con filtración. Disponible en presentación para interiores (Aquablock) y como impermeabilizante (Aquablock Ultra).",
@@ -1387,7 +1421,7 @@ PRODUCT_TECHNICAL_HARD_RULES = {
     },
     "pintura canchas": {
         "es_para": "Pintura para pisos de concreto: canchas deportivas, andenes, garajes, bodegas.",
-        "no_es_para": "NO es para tráfico vehicular pesado ni pisos industriales de alto impacto (para eso usar Pintucoat).",
+        "no_es_para": "NO es para tráfico vehicular pesado ni pisos industriales (para tráfico medio usar Pintucoat, para pesado Intergard 2002 + cuarzo).",
     },
 }
 
@@ -1414,6 +1448,14 @@ BICOMPONENT_CATALOG: dict[str, dict] = {
             "no es poliuretano y no da la resistencia UV requerida."
         ),
         "acabado_exterior_obligatorio": "interthane",
+        "resistencia": "media",
+        "acabado": "mate",
+        "uso_piso": True,
+        "nota_resistencia": (
+            "Pintucoat es de resistencia MEDIA. NO resiste tráfico pesado de montacargas/estibadores. "
+            "Para tráfico pesado recomendar Intergard 2002 + cuarzo (ref 5891610). "
+            "Alternativa brillante de resistencia media: Intergard 740."
+        ),
     },
     # ─ Interthane (International / AkzoNobel) ─────────────────────────────
     # galón (3.7L, PHA120 o PHA130) → catalizador PHA046 0.5L
@@ -1440,12 +1482,38 @@ BICOMPONENT_CATALOG: dict[str, dict] = {
             "Alternativa de mayor desempeño en inmersión permanente: línea Interline (100% sólidos, sin solventes)."
         ),
     },
-    # ─ Intergard (International / AkzoNobel) ──────────────────────────────
+    # ─ Intergard (International / AkzoNobel) ── GENÉRICO ────────────────────
     "intergard": {
         "tipo_sistema": "epoxica_dos_componentes",
         "componente_a_descripcion": "Intergard COMP A (primer epóxico)",
         "componente_b_descripcion": "Intergard COMP B catalizador — consultar ficha técnica International",
         "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.",
+    },
+    # ─ Intergard 740 (International / AkzoNobel) ── PISOS TRÁFICO MEDIO ACABADO BRILLANTE ──
+    "intergard 740": {
+        "tipo_sistema": "epoxica_dos_componentes",
+        "componente_a_descripcion": "Intergard 740 COMP A (acabado brillante)",
+        "componente_b_descripcion": "Intergard 740 COMP B catalizador — consultar ficha técnica International",
+        "nota": "Epóxico para pisos de tráfico MEDIO con acabado BRILLANTE. Alternativa al Pintucoat cuando el cliente quiere más brillo.",
+        "resistencia": "media",
+        "acabado": "brillante",
+        "uso_piso": True,
+    },
+    # ─ Intergard 2002 (International / AkzoNobel) ── PISOS ALTA RESISTENCIA + CUARZO ──
+    "intergard 2002": {
+        "tipo_sistema": "epoxica_dos_componentes",
+        "componente_a_descripcion": "Intergard 2002 COMP A (alto volumen de sólidos)",
+        "componente_b_descripcion": "Intergard 2002 COMP B catalizador — consultar ficha técnica International",
+        "nota": (
+            "Epóxico de alto volumen de sólidos para pisos de tráfico PESADO (montacargas, estibadores). "
+            "Para máxima resistencia, se aplica con CUARZO esparcido por broadcasting (ref 5891610). "
+            "El cuarzo aumenta la resistencia mecánica y antideslizante. "
+            "Sistema: Interseal gris RAL 7038 (imprimante) → Intergard 2002 + cuarzo ref 5891610 → sello opcional."
+        ),
+        "resistencia": "alta (con cuarzo)",
+        "acabado": "mate/satinado",
+        "uso_piso": True,
+        "cuarzo_ref": "5891610",
     },
     # ─ Interfine (International / AkzoNobel) ──────────────────────────────
     "interfine": {
@@ -6333,6 +6401,81 @@ def ensure_expert_knowledge_table():
                 """
             )
         )
+    # Run Phase 19 seeds after table is ensured
+    seed_expert_knowledge_phase19()
+
+
+def seed_expert_knowledge_phase19():
+    """Seed critical expert knowledge from Diego García (Phase 19 corrections)."""
+    try:
+        engine = get_db_engine()
+        seeds = [
+            {
+                "cedula": "1088266407", "nombre": "DIEGO MAURICIO GARCIA RENGIFO",
+                "tags": "piso, pintucoat, resistencia, tráfico medio, acabado mate",
+                "rec": "Pintucoat", "des": None,
+                "nota": "Pintucoat es de resistencia MEDIA, acabado MATE. NO resiste tráfico pesado de montacargas. Para tráfico pesado usar Intergard 2002 + cuarzo.",
+                "tipo": "correccion",
+            },
+            {
+                "cedula": "1088266407", "nombre": "DIEGO MAURICIO GARCIA RENGIFO",
+                "tags": "piso, intergard 740, resistencia media, acabado brillante",
+                "rec": "Intergard 740", "des": None,
+                "nota": "Intergard 740: epóxico para pisos de resistencia MEDIA con acabado BRILLANTE. Alternativa al Pintucoat cuando el cliente quiere más brillo.",
+                "tipo": "preferencia",
+            },
+            {
+                "cedula": "1088266407", "nombre": "DIEGO MAURICIO GARCIA RENGIFO",
+                "tags": "piso, intergard 2002, cuarzo, tráfico pesado, montacargas, alta resistencia",
+                "rec": "Intergard 2002", "des": "Pintucoat",
+                "nota": "Intergard 2002 es de alto volumen de sólidos. Con cuarzo (ref 5891610) esparcido por broadcasting se obtiene alta resistencia para montacargas y estibadores. Sistema: Interseal gris RAL 7038 → Intergard 2002 + cuarzo.",
+                "tipo": "preferencia",
+            },
+            {
+                "cedula": "1088266407", "nombre": "DIEGO MAURICIO GARCIA RENGIFO",
+                "tags": "piso, primer 50rs, epoxy primer 50rs, imprimante, concreto, metal",
+                "rec": "Interseal gris RAL 7038", "des": "Primer 50RS",
+                "nota": "PRIMER 50RS es EXCLUSIVAMENTE para estructuras metálicas. NUNCA para pisos de concreto. Para pisos de concreto el imprimante correcto es Interseal gris RAL 7038.",
+                "tipo": "contraindicacion",
+            },
+            {
+                "cedula": "1088266407", "nombre": "DIEGO MAURICIO GARCIA RENGIFO",
+                "tags": "piso, imprimante, concreto, interseal gris, ral 7038",
+                "rec": "Interseal gris RAL 7038", "des": None,
+                "nota": "Para pisos de concreto, el imprimante correcto es Interseal gris RAL 7038. Sella la porosidad del concreto y mejora adherencia del sistema epóxico.",
+                "tipo": "uso_especifico",
+            },
+            {
+                "cedula": "1088266407", "nombre": "DIEGO MAURICIO GARCIA RENGIFO",
+                "tags": "piso, cuarzo, ref 5891610, broadcasting, antideslizante",
+                "rec": "Cuarzo ref 5891610", "des": None,
+                "nota": "El cuarzo ref 5891610 se aplica por broadcasting (esparcido) sobre el Intergard 2002 fresco. Aumenta la resistencia mecánica y proporciona acabado antideslizante.",
+                "tipo": "uso_especifico",
+            },
+        ]
+        with engine.begin() as conn:
+            for s in seeds:
+                # Only insert if not already seeded (check by nota_comercial)
+                existing = conn.execute(
+                    text("SELECT id FROM public.agent_expert_knowledge WHERE nota_comercial = :nota AND cedula_experto = :cedula LIMIT 1"),
+                    {"nota": s["nota"], "cedula": s["cedula"]},
+                ).fetchone()
+                if existing:
+                    continue
+                conn.execute(
+                    text(
+                        """
+                        INSERT INTO public.agent_expert_knowledge
+                            (cedula_experto, nombre_experto, contexto_tags, producto_recomendado,
+                             producto_desestimado, nota_comercial, tipo)
+                        VALUES (:cedula, :nombre, :tags, :rec, :des, :nota, :tipo)
+                        """
+                    ),
+                    s,
+                )
+        logger.info("Phase 19 expert knowledge seeds applied successfully.")
+    except Exception as exc:
+        logger.warning("Could not seed Phase 19 expert knowledge: %s", exc)
 
 
 def fetch_expert_knowledge(query: str, limit: int = 5) -> list[dict]:
@@ -11612,6 +11755,179 @@ def store_commercial_pdf(conversation_id: int, request_type: str, profile_name: 
     return pdf_id, filename
 
 
+    return pdf_id, filename
+
+
+# ── Memoria Técnica / Technical Advisory PDF ──────────────────────────────
+def generate_technical_advisory_pdf(
+    conversation_id: int,
+    cliente_nombre: str,
+    diagnostico_resumen: list[dict],
+    sistema_recomendado: list[dict],
+    productos_tabla: list[dict],
+    notas_experto: str = "",
+):
+    """Generate a Technical Advisory PDF ('Memoria Técnica') with diagnostic + recommendation."""
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.units import mm
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable, Image
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer, pagesize=letter,
+        topMargin=14 * mm, bottomMargin=14 * mm,
+        leftMargin=16 * mm, rightMargin=16 * mm,
+    )
+    styles = getSampleStyleSheet()
+    brand_dark = colors.HexColor(CORPORATE_BRAND["brand_dark"])
+    brand_accent = colors.HexColor(CORPORATE_BRAND["brand_accent"])
+    brand_light_bg = colors.HexColor(CORPORATE_BRAND["brand_light"])
+    white = colors.white
+
+    title_style = ParagraphStyle("TATtitle", parent=styles["Title"], fontSize=17, textColor=white, alignment=TA_LEFT, spaceAfter=3)
+    subtitle_style = ParagraphStyle("TATsub", parent=styles["Normal"], fontSize=8.5, textColor=colors.HexColor("#D1D5DB"), alignment=TA_LEFT, leading=10)
+    heading_style = ParagraphStyle("TATheading", parent=styles["Heading2"], fontSize=11, textColor=brand_dark, spaceBefore=10, spaceAfter=4)
+    normal_style = ParagraphStyle("TATbody", parent=styles["Normal"], fontSize=9, textColor=brand_dark, leading=11)
+    small_style = ParagraphStyle("TATsmall", parent=styles["Normal"], fontSize=7.5, textColor=colors.HexColor("#6B7280"), leading=9)
+    right_style = ParagraphStyle("TATright", parent=styles["Normal"], fontSize=9, textColor=brand_dark, alignment=TA_RIGHT, leading=11)
+
+    now = datetime.now()
+    date_str = now.strftime("%d/%m/%Y")
+    time_str = now.strftime("%I:%M %p")
+    case_ref = f"MEM-{conversation_id}"
+
+    elements = []
+
+    # ── Header ──
+    logo_cell = ""
+    if CORPORATE_LOGO_PATH.exists():
+        logo = Image(str(CORPORATE_LOGO_PATH))
+        logo.drawHeight = 18 * mm
+        logo.drawWidth = 42 * mm
+        logo_cell = logo
+
+    header_data = [
+        [logo_cell, Paragraph("Recomendación Técnica Especializada", title_style)],
+        ["", Paragraph(f"Ref: {case_ref} | Fecha: {date_str} {time_str}", subtitle_style)],
+    ]
+    header_table = Table(header_data, colWidths=[50 * mm, 130 * mm])
+    header_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), brand_dark),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(header_table)
+    elements.append(Spacer(1, 6 * mm))
+
+    # ── Client info ──
+    elements.append(Paragraph("Datos del Cliente", heading_style))
+    elements.append(Paragraph(f"<b>Cliente:</b> {cliente_nombre}", normal_style))
+    elements.append(Spacer(1, 3 * mm))
+
+    # ── Diagnostic summary ──
+    elements.append(Paragraph("1. Diagnóstico Realizado", heading_style))
+    for item in diagnostico_resumen:
+        q = item.get("pregunta", "")
+        a = item.get("respuesta", "")
+        elements.append(Paragraph(f"<b>P:</b> {q}", normal_style))
+        elements.append(Paragraph(f"<b>R:</b> {a}", normal_style))
+        elements.append(Spacer(1, 1.5 * mm))
+    elements.append(Spacer(1, 3 * mm))
+
+    # ── Recommended system ──
+    elements.append(Paragraph("2. Sistema Recomendado (Paso a Paso)", heading_style))
+    for i, paso in enumerate(sistema_recomendado, 1):
+        desc = paso.get("descripcion", "")
+        prod = paso.get("producto", "")
+        elements.append(Paragraph(f"<b>Paso {i}:</b> {desc}", normal_style))
+        if prod:
+            elements.append(Paragraph(f"&nbsp;&nbsp;&nbsp;Producto: <b>{prod}</b>", normal_style))
+        elements.append(Spacer(1, 1.5 * mm))
+    elements.append(Spacer(1, 3 * mm))
+
+    # ── Product table ──
+    if productos_tabla:
+        elements.append(Paragraph("3. Tabla de Productos y Referencias", heading_style))
+        table_data = [["Producto", "Referencia", "Presentación", "Precio Unit.", "Cantidad", "Subtotal"]]
+        for p in productos_tabla:
+            table_data.append([
+                Paragraph(str(p.get("nombre", "")), normal_style),
+                str(p.get("referencia", "")),
+                str(p.get("presentacion", "")),
+                str(p.get("precio", "")),
+                str(p.get("cantidad", "")),
+                str(p.get("subtotal", "")),
+            ])
+        prod_table = Table(table_data, colWidths=[55 * mm, 28 * mm, 28 * mm, 22 * mm, 18 * mm, 25 * mm])
+        prod_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), brand_dark),
+            ("TEXTCOLOR", (0, 0), (-1, 0), white),
+            ("FONTSIZE", (0, 0), (-1, 0), 8),
+            ("FONTSIZE", (0, 1), (-1, -1), 8),
+            ("ALIGN", (3, 0), (-1, -1), "RIGHT"),
+            ("GRID", (0, 0), (-1, -1), 0.4, colors.HexColor("#D1D5DB")),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [white, brand_light_bg]),
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ("LEFTPADDING", (0, 0), (-1, -1), 4),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+            ("TOPPADDING", (0, 0), (-1, -1), 3),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+        ]))
+        elements.append(prod_table)
+        elements.append(Spacer(1, 4 * mm))
+
+    # ── Expert notes ──
+    if notas_experto:
+        elements.append(Paragraph("4. Notas del Asesor Experto", heading_style))
+        elements.append(Paragraph(notas_experto, normal_style))
+        elements.append(Spacer(1, 3 * mm))
+
+    # ── Disclaimer footer ──
+    elements.append(HRFlowable(width="100%", color=colors.HexColor("#D1D5DB"), thickness=0.5))
+    elements.append(Spacer(1, 2 * mm))
+    disclaimer = (
+        "⚠️ IMPORTANTE: Esta recomendación técnica se basa en la información proporcionada por el cliente "
+        "y el conocimiento técnico de Ferreinox. Los rendimientos, tiempos de curado y resultados finales "
+        "pueden variar según las condiciones reales de la superficie, el clima y la aplicación. "
+        "Ferreinox recomienda realizar pruebas de adherencia en un área pequeña antes de la aplicación total. "
+        "Consulte siempre la ficha técnica del fabricante para datos exactos. "
+        "Esta memoria técnica NO constituye una garantía sobre el resultado final."
+    )
+    elements.append(Paragraph(disclaimer, small_style))
+    elements.append(Spacer(1, 2 * mm))
+    elements.append(Paragraph(
+        f"{CORPORATE_BRAND['company_name']} | {CORPORATE_BRAND['service_email']} | {CORPORATE_BRAND['phone_landline']} | {CORPORATE_BRAND['website']} | {date_str}",
+        ParagraphStyle("TATfooter", parent=small_style, alignment=TA_CENTER),
+    ))
+
+    doc.build(elements)
+    buffer.seek(0)
+    return buffer
+
+
+def store_technical_advisory_pdf(conversation_id: int, cliente_nombre: str, diagnostico_resumen: list[dict],
+                                  sistema_recomendado: list[dict], productos_tabla: list[dict], notas_experto: str = ""):
+    """Store a Technical Advisory PDF and return its ID and filename."""
+    pdf_buffer = generate_technical_advisory_pdf(
+        conversation_id, cliente_nombre, diagnostico_resumen, sistema_recomendado, productos_tabla, notas_experto
+    )
+    pdf_id = uuid.uuid4().hex[:12]
+    filename = f"Ferreinox_MemoriaTecnica_MEM-{conversation_id}_{pdf_id}.pdf"
+    PDF_STORAGE[pdf_id] = {
+        "buffer": pdf_buffer.getvalue(),
+        "filename": filename,
+        "created_at": datetime.now().isoformat(),
+        "conversation_id": conversation_id,
+    }
+    return pdf_id, filename
+
+
 def infer_confirmed_order_store_filters(commercial_draft: dict, context: dict, conversation_context: dict, internal_user: Optional[dict] = None):
     existing_filters = [normalize_store_code(value) for value in (commercial_draft.get("store_filters") or [])]
     existing_filters = [value for value in existing_filters if value]
@@ -13309,14 +13625,14 @@ def send_whatsapp_document_bytes(to_phone: str, document_bytes: bytes, filename:
 
 # ── Agent v2: Function Calling Architecture ─────────────────────────
 
-AGENT_SYSTEM_PROMPT_V2 = """Eres Ferreinox AI, el asistente experto de Ferreinox SAS BIC, con más de 13 años de experiencia en recubrimientos, soluciones constructivas y ferretería especializada. \
+AGENT_SYSTEM_PROMPT_V2 = """Eres FERRO (Ferreinox Operative Response Agent), el asistente experto de Ferreinox SAS BIC, con más de 13 años de experiencia en recubrimientos, soluciones constructivas y ferretería especializada. \
 Tu objetivo NO es solo vender productos: es garantizar el ÉXITO del proyecto de mantenimiento o construcción del cliente. \
 Atiendes clientes por WhatsApp con tono CÁLIDO, cercano, servicial y humano — como un amigo experto que genuinamente quiere ayudar. \
 Eres un solucionador de problemas y cierras ventas técnicas con criterio de ingeniero.
 
 IDENTIDAD Y SALUDO:
-- Tu nombre es Ferreinox AI. Cuando el cliente te pregunte quién eres, responde: "Soy Ferreinox AI, tu experto en proyectos de pintura, recubrimientos y ferretería."
-- PRIMER MENSAJE de cada conversación: "¡Bienvenido a Ferreinox! Soy Ferreinox AI, tu experto en proyectos. ¿Qué tienes en mente hoy?" (adapta variantes naturales, NO repitas exactamente lo mismo).
+- Tu nombre es FERRO. Cuando el cliente te pregunte quién eres, responde: "Soy FERRO, tu Asistente Técnico de IA de Ferreinox. Experto en proyectos de pintura, recubrimientos y ferretería."
+- PRIMER MENSAJE de cada conversación: "¡Bienvenido a Ferreinox! Soy FERRO, tu Asistente Técnico de IA. ¿Qué tienes en mente hoy?" (adapta variantes naturales, NO repitas exactamente lo mismo).
 - Después del primer mensaje, NO vuelvas a saludar ni presentarte.
 
 TONO DE CONVERSACIÓN (REGLA DE ORO — HUMANIDAD):
@@ -13339,7 +13655,9 @@ El 99% de los casos requieren sistemas completos. NUNCA recomiendes un solo prod
 \
 - Techo goteras → Malla/tela de refuerzo si hay grietas + Pintuco Fill (impermeabilizante) + Koraza (protección adicional fibrocemento)
 \
-- Piso industrial → Imprimante epóxico + Pintucoat (base) + Pintucoat acabado
+- Piso industrial tráfico medio → Interseal gris RAL 7038 (imprimante) + Pintucoat (acabado mate) o Intergard 740 (acabado brillante)
+\
+- Piso industrial tráfico pesado → Interseal gris RAL 7038 (imprimante) + Intergard 2002 + cuarzo ref 5891610
 \
 - Fachada deteriorada → Raspar + sellador/imprimante + Koraza/Viniltex exterior
 \
@@ -13349,7 +13667,7 @@ ESTOS SON SOLO EJEMPLOS, NO REGLAS ESTRICTAS. El principio universal es: para CU
 Tú eres un ingeniero de aplicaciones — no recitas fórmulas memorizadas, sino que RAZONAS el sistema correcto usando: \
 (a) el diagnóstico de la superficie y condición del cliente, \
 (b) las fichas técnicas del RAG, \
-(c) el conocimiento experto de Pablo Mafla en agent_expert_knowledge, \
+(c) el conocimiento experto de los asesores autorizados (Pablo Mafla y Diego García) en agent_expert_knowledge, \
 (d) tu criterio técnico sobre preparación de superficie, capas, compatibilidad y acabado. \
 Si no tienes un sistema precargado para un caso, CONSTRÚYELO razonando desde los principios: \
 1) ¿Qué superficie es? → eso define la preparación (lija roja en seco para metal/madera, lija de agua para paredes, disco flap para óxido pesado, grata para estructuras). \
@@ -13555,6 +13873,14 @@ REGLA CRÍTICA DEL PARÁMETRO 'producto': Cuando llames `consultar_conocimiento_
     - Cuando recibas fragmentos de fichas técnicas o FDS, responde ÚNICA Y EXCLUSIVAMENTE con lo que está en el texto recuperado.
     - Si el cliente pide un dato y NO ESTÁ en el texto recuperado, TIENES PROHIBIDO inventarlo usando conocimiento general.
     - Di: 'Ese dato exacto no lo tengo en la ficha técnica base en este momento. Déjame validarlo con logística o el fabricante.'
+    - SOLO recomienda productos cuya información provenga de: (a) fichas técnicas en el RAG, (b) conocimiento experto registrado por Pablo o Diego, (c) las reglas técnicas verificadas en PRODUCT_TECHNICAL_HARD_RULES y BICOMPONENT_CATALOG. NUNCA inventes productos, usos o características que no estén en estas fuentes.
+17B. FILTRO DE CATEGORÍAS (ANTI-CONTAMINACIÓN CRUZADA):
+    - "sala", "cuarto", "habitación", "pared", "muro interior" → SOLO familia Vinilos (Viniltex, Intervinil, Pinturama). NUNCA epóxicos ni industriales.
+    - "piso industrial", "bodega", "fábrica", "tráfico" → SOLO familia Epóxicos/Bicomponentes (Pintucoat, Intergard 740, Intergard 2002). NUNCA vinilos.
+    - "fachada", "muro exterior" → SOLO Koraza o Viniltex exterior. NUNCA epóxicos.
+    - "metal", "estructura metálica", "acero" → SOLO línea anticorrosiva (Corrotec, Intergard primer, Interthane). Para imprimante de metal: Primer 50RS, Wash Primer. NUNCA Pintucoat.
+    - "piso de concreto" → Para imprimante: SOLO Interseal gris RAL 7038. NUNCA Primer 50RS (que es para metal).
+    - NUNCA cruces automotriz ↔ decorativo ↔ industrial. Si un producto del inventario aparece en búsqueda pero NO es de la categoría correcta para el uso del cliente, DESCÁRTALO y busca el correcto.
 18. REGLA RENDIMIENTO — GALONES: Cuando respondas preguntas sobre rendimiento de un producto (cuánto rinde, cuánto necesito, cuántos galones), SIEMPRE usa la palabra "galones" (plural) al dar ejemplos de cantidad. Formato correcto: "Rinde entre X y Y m² por galón. Para cubrir Z m² necesitarías aproximadamente N galones." Si el cliente ya dio el área, calcula los galones. Si no, menciona "galones" de todas formas como unidad de referencia.
    PINTUCO FILL 7 — datos de respaldo: Rendimiento aprox. 3-5 m² por galón por mano en superficie de eternit. Se aplica con rodillo lanudo o brocha, sobre superficie limpia y seca. FRASE OBLIGATORIA que DEBE aparecer literalmente en tu respuesta de rendimiento: "Para 30 m² (2 manos) necesitarías entre 6 y 10 galones." Si esta frase (o equivalente con la palabra "galones" en plural) NO está en la respuesta, la respuesta está INCOMPLETA y FALLA la verificación. Siempre incluye: 'galones' (plural), 'rodillo', 'brocha', 'm²'. NOTA: Esta frase de ejemplo en galones se incluye SIEMPRE, INDEPENDIENTEMENTE de lo que devuelva el RAG. Es complementaria al dato de rendimiento por galón que entrega el RAG.
 
@@ -13956,7 +14282,21 @@ ASESORÍA TÉCNICA INTELIGENTE (MODELO HÍBRIDO RAG + CONOCIMIENTO EXPERTO):
   • Si es concreto nuevo: ¿Ya cumplió los 28 DÍAS DE CURADO? (la humedad residual del cemento destruye la pintura)
   • ¿Qué tipo de tráfico o exposición? (peatonal, vehicular, montacargas, UV/sol, humedad, químicos)
   • ¿Qué acabado quiere? ¿Qué herramientas tiene disponibles?
-  REGLA CRÍTICA DE PISOS: Para consultas de pisos, SIEMPRE pregunta: (1) nuevo o viejo/ya pintado, (2) si es nuevo ¿28 días de curado?, (3) tipo de tráfico exacto, (4) interior o exterior. Estas 4 preguntas SON OBLIGATORIAS porque cambian totalmente el sistema recomendado. Un piso industrial exterior lleva un sistema diferente (epóxico + poliuretano) que uno interior (epóxico solo). Un piso sin curar NO DEBE PINTARSE.
+  REGLA CRÍTICA DE PISOS (BLOQUEO ABSOLUTO — NO NEGOCIABLE): Para consultas de pisos, las siguientes 4 preguntas SON OBLIGATORIAS y DEBEN completarse TODAS antes de recomendar CUALQUIER producto o precio:
+  (1) ¿El piso es nuevo (obra gris recién fundido) o viejo/ya pintado? Si viejo, ¿qué pintura tiene?
+  (2) Si es nuevo, ¿ya cumplió los 28 días de curado del concreto?
+  (3) ¿Cuál es el tipo de tráfico exacto? (peatonal, carretillas manuales = MEDIO; montacargas/estibadores = PESADO)
+  (4) ¿Es interior o exterior?
+  ⛔ PROHIBIDO ABSOLUTO: Si el cliente dice "sí" o quiere saltarse el diagnóstico, NO se lo permitas. Dile: "Necesito esta información para darte la solución correcta. Si te recomiendo el producto equivocado, puedes perder la inversión." Continúa preguntando hasta completar las 4 preguntas.
+  ⛔ PROHIBIDO: Mencionar NINGÚN nombre de producto de pisos (Pintucoat, Intergard 740, Intergard 2002, Pintura Canchas) hasta que las 4 preguntas estén respondidas.
+  ⛔ PROHIBIDO: Mostrar precios, referencias o códigos de productos de pisos sin diagnóstico completo.
+  TABLA DE DECISIÓN DE PISOS (solo usar DESPUÉS del diagnóstico completo):
+  | Tráfico | Acabado | Producto |
+  | Medio (peatonal) | Mate | Pintucoat |
+  | Medio (peatonal) | Brillante | Intergard 740 |
+  | Pesado (montacargas) | Cualquiera | Intergard 2002 + cuarzo ref 5891610 |
+  | Residencial (garaje/cancha) | — | Pintura para Canchas |
+  IMPRIMANTE CORRECTO para pisos de concreto: Interseal gris RAL 7038 (NUNCA Primer 50RS, que es para metal).
   REGLA DE CONDUCTA: Aunque el cliente ya mencionó algunos datos (ej. 'bodega interior con montacargas'), VERIFICA lo que falta. Si dijo que es interior y tiene montacargas, aún falta saber: ¿piso nuevo o viejo? ¿cuántos días tiene el concreto? ¿hay grasas o aceites en el piso? Solo con diagnóstico COMPLETO recomiendas.
 - PASO 2 — CONSULTA OBLIGATORIA (RAG + CONOCIMIENTO EXPERTO): Cuando ya tengas la necesidad diagnosticada, usa `consultar_conocimiento_tecnico` con una pregunta DETALLADA. La herramienta buscará en AMBAS fuentes: fichas técnicas (RAG) Y base de conocimiento experto Ferreinox. Si la respuesta incluye `conocimiento_comercial_ferreinox`, ese conocimiento PREVALECE sobre recomendaciones genéricas del RAG.
 - PASO 3 — RESPUESTA CON CHAIN OF THOUGHT (obligatorio para asesoría técnica):
@@ -13968,6 +14308,7 @@ ASESORÍA TÉCNICA INTELIGENTE (MODELO HÍBRIDO RAG + CONOCIMIENTO EXPERTO):
   NUNCA muestres códigos [5XXXXXXX] sin que el cliente lo pida. Presenta solo nombres comerciales hasta que el cliente confirme que quiere proceder con la compra.
 - PASO 4 — RESPALDO PDF: Después, invoca `buscar_documento_tecnico` para enviar la ficha técnica.
 - PASO 5 — INVENTARIO (solo cuando el cliente diga que sí): Llama `consultar_inventario` para CADA producto del sistema (incluyendo lijas/abrasivos de preparación). Confirma con ✅.
+- PASO 6 — MEMORIA TÉCNICA (opcional pero recomendada para proyectos industriales/técnicos): Si el diagnóstico fue completo y el sistema tiene 3+ pasos, ofrece al cliente: '¿Te genero un documento PDF con la Memoria Técnica completa? Incluye el diagnóstico, los pasos del sistema y la tabla de productos con referencias.' Si el cliente acepta, llama `generar_memoria_tecnica` con todos los datos del diagnóstico y la recomendación. Para pisos industriales, sistemas anticorrosivos y proyectos grandes, SIEMPRE ofrece la Memoria Técnica.
 - CAMBIO DE TEMA: Si en medio de la asesoría técnica el cliente cambia de tema (pide cartera, manda cédula, pregunta por otro producto), SIGUE EL NUEVO TEMA. No te quedes pegado en la asesoría anterior. Tú lees TODO el historial y sabes qué está pidiendo ahora.
 - REGLA DE ORO: Si el RAG te devuelve información, tu respuesta DEBE contener al menos un dato específico. Si no encuentra el dato en el RAG, dilo honestamente. NUNCA inventes datos técnicos.
 - UNIVERSALIDAD: No importa si el caso del cliente coincide con un árbol de diagnóstico conocido o no. TÚ eres el ingeniero de aplicaciones — RAZONES el sistema correcto para CUALQUIER caso usando RAG + conocimiento experto + tu criterio técnico. Si un cliente pregunta por algo que nunca se ha planteado antes, CONSTRÚYELE el sistema desde los principios: superficie → preparación → capas → acabado.
@@ -13982,34 +14323,38 @@ ASESORÍA TÉCNICA INTELIGENTE (MODELO HÍBRIDO RAG + CONOCIMIENTO EXPERTO):
 PRODUCTOS COMPLEMENTARIOS (CATALIZADORES, DILUYENTES, BASES):
 - Si `consultar_inventario` devuelve un campo `productos_complementarios` en algún producto, DEBES informar al cliente de forma proactiva. Ejemplo: 'Este producto necesita catalizador EGA247 y diluyente Ajustador 21209.'
 - Para productos bicomponentes (epóxicos y poliuretanos), el complementario tipo 'catalizador' es OBLIGATORIO incluirlo en el pedido. NUNCA lo omitas aunque el cliente no lo haya pedido explícitamente. Anuncia: 'Este producto es bicomponente, requiere su catalizador [código] para funcionar. Lo agrego al pedido automáticamente.'
-- Si un experto o asesor interno (ej. Pablo Mafla) te enseña que un producto requiere un catalizador, diluyente, base, sellador o imprimante, guarda esa relación usando `guardar_producto_complementario`.
+- Si un experto o asesor interno (Pablo Mafla o Diego García) te enseña que un producto requiere un catalizador, diluyente, base, sellador o imprimante, guarda esa relación usando `guardar_producto_complementario`.
 - NUNCA ignores los productos complementarios. Son críticos para que el cliente aplique el producto correctamente.
 - Cuando cierres un pedido que incluya productos con complementarios, recuérdale al cliente si no los ha incluido en el pedido.
 
-REFUERZO DE CONOCIMIENTO TÉCNICO-COMERCIAL (PABLO MAFLA — ASESOR EXPERTO):
-- El asesor técnico autorizado es PABLO CÉSAR MAFLA BAÑOL (cédula 1053774777). Cuando él habla contigo (ya autenticado como usuario interno), tiene DOS MODOS de interacción:
+REFUERZO DE CONOCIMIENTO TÉCNICO-COMERCIAL (ASESORES EXPERTOS AUTORIZADOS):
+- Los asesores técnicos autorizados son:
+  * PABLO CÉSAR MAFLA BAÑOL (cédula 1053774777)
+  * DIEGO MAURICIO GARCÍA RENGIFO (cédula 1088266407)
+  Cada experto tiene su propio flujo de conocimiento AISLADO. El conocimiento de Pablo NO contamina el de Diego y viceversa.
+  Cuando cualquiera de ellos habla contigo (ya autenticado como usuario interno), tiene DOS MODOS de interacción:
 
   🔧 MODO ENSEÑANZA (palabra clave: "ENSEÑAR" o "ENSEÑANZA" o "APRENDER ESTO" o "ANOTA ESTO" o "GUARDA ESTO"):
-  Cuando Pablo escriba alguna de estas palabras clave al INICIO de su mensaje, activas MODO ENSEÑANZA:
+  Cuando el experto escriba alguna de estas palabras clave al INICIO de su mensaje, activas MODO ENSEÑANZA:
   - Todo lo que diga en ese mensaje es CONOCIMIENTO EXPERTO para guardar en la base.
-  - DEBES llamar `registrar_conocimiento_experto` inmediatamente con la información que Pablo te dé.
+  - DEBES llamar `registrar_conocimiento_experto` inmediatamente con la información que te dé.
   - Confirma con: '✅ Conocimiento guardado:\n📋 Contexto: [contexto_tags]\n✅ Recomendar: [producto]\n❌ Evitar: [producto_desestimado si hay]\n💡 Nota: [nota_comercial]\nEsto se aplicará automáticamente en futuras consultas de clientes sobre este tema.'
-  - Si Pablo escribe varias correcciones en un mismo mensaje, guarda CADA UNA como registro separado.
-  - Ejemplo: Pablo escribe "ENSEÑAR: para tanques de agua potable no usar Pintucoat, el correcto es Epoxipoliamida porque tiene componente amida certificado"
+  - Si el experto escribe varias correcciones en un mismo mensaje, guarda CADA UNA como registro separado.
+  - Ejemplo: El experto escribe "ENSEÑAR: para tanques de agua potable no usar Pintucoat, el correcto es Epoxipoliamida porque tiene componente amida certificado"
     → Guardar con contexto_tags="tanque agua potable, inmersión", producto_recomendado="Epoxipoliamida", producto_desestimado="Pintucoat", nota_comercial="Componente amida certificado para contacto con agua potable", tipo="contraindicacion"
 
   🧪 MODO PRUEBA (palabra clave: "PROBAR" o "PRUEBA" o "SIMULAR CLIENTE" o "COMO CLIENTE"):
-  Cuando Pablo escriba alguna de estas palabras clave, activas MODO PRUEBA:
-  - Pablo va a actuar COMO SI FUERA UN CLIENTE para probar cómo respondes.
+  Cuando el experto escriba alguna de estas palabras clave, activas MODO PRUEBA:
+  - El experto va a actuar COMO SI FUERA UN CLIENTE para probar cómo respondes.
   - Trátalo exactamente como tratarías a un cliente normal — diagnóstico, Chain of Thought, sistema completo.
-  - NO le muestres que sabes que es Pablo ni que es una prueba. Responde naturalmente.
+  - NO le muestres que sabes que es un experto ni que es una prueba. Responde naturalmente.
   - Al FINAL de tu respuesta (después de toda la asesoría), agrega una línea separada:
-    '---\n🧪 [MODO PRUEBA] Pablo, esta fue mi respuesta al cliente. ¿Quieres corregir algo? Si sí, escribe ENSEÑAR seguido de la corrección.'
-  - Esto permite que Pablo pruebe → vea la respuesta → corrija si es necesario.
+    '---\n🧪 [MODO PRUEBA] Esta fue mi respuesta al cliente. ¿Quieres corregir algo? Si sí, escribe ENSEÑAR seguido de la corrección.'
+  - Esto permite que el experto pruebe → vea la respuesta → corrija si es necesario.
 
   💬 MODO NORMAL (sin palabra clave):
-  Cuando Pablo habla sin palabra clave, es conversación normal de usuario interno.
-  PERO ERES INTELIGENTE — detecta AUTOMÁTICAMENTE cuando Pablo te está corrigiendo o enseñando, incluso sin palabras clave. 
+  Cuando el experto habla sin palabra clave, es conversación normal de usuario interno.
+  PERO ERES INTELIGENTE — detecta AUTOMÁTICAMENTE cuando te está corrigiendo o enseñando, incluso sin palabras clave. 
   SEÑALES DE CORRECCIÓN (actúa SIN esperar 'ENSEÑAR'):
   - 'El proceso no está bien...' / 'No es así...' / 'Eso está mal...' / 'Te equivocaste...'
   - 'Primero se debe...' / 'El orden correcto es...' / 'Lo que hay que hacer es...'
@@ -14017,8 +14362,8 @@ REFUERZO DE CONOCIMIENTO TÉCNICO-COMERCIAL (PABLO MAFLA — ASESOR EXPERTO):
   - 'Mucho cuidado con...' / 'Ojo que...' / 'No confundas...'
   - Cualquier mensaje donde Pablo describe un proceso técnico paso a paso diferente al que tú diste.
   Cuando DETECTES una corrección:
-  1) RECONOCE el error: 'Tienes razón, Pablo. El proceso correcto es [resumen de lo que Pablo dijo].'
-  2) GUARDA AUTOMÁTICAMENTE: Llama `registrar_conocimiento_experto` inmediatamente con la corrección. NO le pidas que escriba 'ENSEÑAR' — eso es fricción innecesaria. Si Pablo se tomó el tiempo de corregirte, GUÁRDALO.
+  1) RECONOCE el error: 'Tienes razón. El proceso correcto es [resumen de lo que el experto dijo].'
+  2) GUARDA AUTOMÁTICAMENTE: Llama `registrar_conocimiento_experto` inmediatamente con la corrección. NO le pidas que escriba 'ENSEÑAR' — eso es fricción innecesaria. Si el experto se tomó el tiempo de corregirte, GUÁRDALO.
   3) CONFIRMA qué guardaste: '✅ Conocimiento guardado: [resumen]. Esto se aplicará en futuras consultas.'
   4) Si NO estás 100% seguro de que es una corrección (mensaje ambiguo), entonces sí pregunta: '¿Quieres que guarde esto como conocimiento experto para futuras consultas?'
 
@@ -14030,27 +14375,27 @@ REFUERZO DE CONOCIMIENTO TÉCNICO-COMERCIAL (PABLO MAFLA — ASESOR EXPERTO):
 - Extrae automáticamente: contexto_tags (palabras clave del caso), producto_recomendado, producto_desestimado si hay, nota_comercial completa, tipo (preferencia/contraindicacion/equivalencia/uso_especifico).
 - Este conocimiento NO modifica las fichas técnicas. Se muestra como 'Experiencia Ferreinox' junto a la respuesta técnica del RAG.
 
-RESUMEN PARA PABLO — PALABRAS CLAVE:
+RESUMEN PARA EXPERTOS (Pablo y Diego) — PALABRAS CLAVE:
 | Palabra clave | Qué hace |
 | ENSEÑAR / ENSEÑANZA / ANOTA ESTO / GUARDA ESTO / APRENDER ESTO | Guarda conocimiento experto en la base de datos |
 | PROBAR / PRUEBA / SIMULAR CLIENTE / COMO CLIENTE | Prueba cómo responde el agente como si fuera un cliente |
 | Enviar un DOCUMENTO (PDF, Excel, imagen, TXT) | Activa MODO DOCUMENTO — ver abajo |
 | (sin palabra clave) | Conversación normal de usuario interno |
 
-📄 MODO DOCUMENTO (cuando Pablo envía un archivo por WhatsApp):
-Cuando Pablo envíe un archivo (PDF, Excel, imagen, TXT) por WhatsApp, el sistema extrae automáticamente el contenido del documento. \
+📄 MODO DOCUMENTO (cuando un experto envía un archivo por WhatsApp):
+Cuando un experto envíe un archivo (PDF, Excel, imagen, TXT) por WhatsApp, el sistema extrae automáticamente el contenido del documento. \
 Tú recibirás el texto extraído dentro del mensaje como [DOCUMENTO RECIBIDO: ...]. Tu flujo OBLIGATORIO es: \
 1) Lee el contenido extraído del documento. \
-2) Muéstrale a Pablo un RESUMEN ESTRUCTURADO de lo que encontraste: \
+2) Muéstrale al experto un RESUMEN ESTRUCTURADO de lo que encontraste: \
    - Tipo de documento detectado (ficha técnica, cálculo, tabla de rendimientos, guía de aplicación, etc.) \
    - Marca/producto si lo identificaste \
    - Secciones principales encontradas \
    - Un resumen de 3-5 puntos clave del contenido \
-3) Pregúntale: '📄 Pablo, este es el resumen de lo que extraje del documento. ¿Quieres que lo guarde en el RAG para que esté disponible en consultas futuras? Si sí, ¿tiene alguna marca asociada o nota adicional?' \
-4) Si Pablo confirma → llama `procesar_documento_experto(confirmar_ingesta=true, marca='...', notas_adicionales='...')` \
-5) Si Pablo dice que no, o quiere modificar algo → pregúntale qué quiere ajustar. Si dice que solo quería mostrar el documento pero no guardarlo, respóndele normalmente. \
-6) Si Pablo envía una IMAGEN de un producto, superficie, instalación o etiqueta → extrae la información visible y pregúntale si quiere guardar esa información como conocimiento experto (usa `registrar_conocimiento_experto` en ese caso, porque las imágenes descriptivas van mejor como conocimiento que como RAG). \
-IMPORTANTE: El contenido completo del documento queda almacenado en el contexto de la conversación como `pending_expert_document`. Cuando Pablo confirme, el tool `procesar_documento_experto` lo vectoriza y lo almacena en el RAG automáticamente.
+3) Pregúntale: '📄 Este es el resumen de lo que extraje del documento. ¿Quieres que lo guarde en el RAG para que esté disponible en consultas futuras? Si sí, ¿tiene alguna marca asociada o nota adicional?' \
+4) Si el experto confirma → llama `procesar_documento_experto(confirmar_ingesta=true, marca='...', notas_adicionales='...')` \
+5) Si dice que no, o quiere modificar algo → pregúntale qué quiere ajustar. Si dice que solo quería mostrar el documento pero no guardarlo, respóndele normalmente. \
+6) Si el experto envía una IMAGEN de un producto, superficie, instalación o etiqueta → extrae la información visible y pregúntale si quiere guardar esa información como conocimiento experto (usa `registrar_conocimiento_experto` en ese caso, porque las imágenes descriptivas van mejor como conocimiento que como RAG). \
+IMPORTANTE: El contenido completo del documento queda almacenado en el contexto de la conversación como `pending_expert_document`. Cuando el experto confirme, el tool `procesar_documento_experto` lo vectoriza y lo almacena en el RAG automáticamente.
 
 MEMORIA DE LISTAS: Si le mostraste al cliente una lista numerada de opciones (ya sean documentos, productos o cualquier cosa) y el cliente responde con un número (ej. '1', 'el 5', 'la segunda') o una afirmación ('sí', 'esa', 'la primera'), TIENES ESTRICTAMENTE PROHIBIDO pasarle ese número o 'sí' a las herramientas. DEBES buscar en tu memoria de conversación el nombre exacto de la opción que corresponde a ese número, y ejecutar la herramienta usando el NOMBRE COMPLETO EXACTO (ej. 'KORAZA ELASTOMÉRICA.pdf' o 'Domestico Blanco cuñete'). Nunca envíes '1', '2', 'sí' ni 'esa' como parámetro de búsqueda.
 
@@ -14667,8 +15012,8 @@ AGENT_TOOLS = [
             "name": "registrar_conocimiento_experto",
             "description": (
                 "Guarda conocimiento comercial real que el experto técnico de Ferreinox aporta para reforzar "
-                "las recomendaciones del agente. SOLO puede usarse cuando el usuario autenticado es el asesor "
-                "experto autorizado (Pablo César Mafla Bañol, cédula 1053774777). "
+                "las recomendaciones del agente. SOLO puede usarse cuando el usuario autenticado es un asesor "
+                "experto autorizado (Pablo César Mafla Bañol cédula 1053774777 o Diego Mauricio García Rengifo cédula 1088266407). "
                 "Úsala cuando el experto corrija una recomendación del agente, indique que un producto es "
                 "mejor que otro para un uso específico, o aporte contexto técnico-comercial que no está en "
                 "las fichas técnicas. Ejemplo: 'para tanque de agua potable NO usar Pintucoat, usar "
@@ -14735,9 +15080,9 @@ AGENT_TOOLS = [
         "function": {
             "name": "procesar_documento_experto",
             "description": (
-                "Ingesta un documento (PDF, Excel, imagen, texto) subido por el asesor experto Pablo Mafla "
-                "(cédula 1053774777) al sistema RAG de fichas técnicas. SOLO puede usarse cuando el usuario "
-                "autenticado es Pablo y ha enviado un documento por WhatsApp. "
+                "Ingesta un documento (PDF, Excel, imagen, texto) subido por un asesor experto autorizado "
+                "(Pablo Mafla cédula 1053774777 o Diego García cédula 1088266407) al sistema RAG de fichas técnicas. SOLO puede usarse cuando el usuario "
+                "autenticado es un experto autorizado y ha enviado un documento por WhatsApp. "
                 "Úsala DESPUÉS de que Pablo confirme qué contenido quiere guardar del documento. "
                 "El agente primero muestra un resumen del documento al experto, le pregunta si confirma "
                 "la ingesta y, si confirma, llama esta herramienta. "
@@ -14800,6 +15145,71 @@ AGENT_TOOLS = [
                     },
                 },
                 "required": ["productos"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "generar_memoria_tecnica",
+            "description": (
+                "Genera un PDF de Memoria Técnica (Recomendación Técnica Especializada) para el cliente. "
+                "Úsala DESPUÉS de completar el diagnóstico completo y haber recomendado un sistema de productos. "
+                "El PDF incluye: resumen del diagnóstico, sistema recomendado paso a paso, tabla de productos "
+                "con referencias y precios, y notas del asesor experto. "
+                "El cliente puede solicitar este documento diciendo 'quiero la memoria técnica', "
+                "'dame el documento con la recomendación', 'envíame el PDF técnico', etc."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "cliente_nombre": {
+                        "type": "string",
+                        "description": "Nombre del cliente.",
+                    },
+                    "diagnostico": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "pregunta": {"type": "string"},
+                                "respuesta": {"type": "string"},
+                            },
+                        },
+                        "description": "Lista de preguntas y respuestas del diagnóstico realizado.",
+                    },
+                    "sistema_recomendado": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "descripcion": {"type": "string"},
+                                "producto": {"type": "string"},
+                            },
+                        },
+                        "description": "Pasos del sistema recomendado con descripción y producto.",
+                    },
+                    "productos": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "nombre": {"type": "string"},
+                                "referencia": {"type": "string"},
+                                "presentacion": {"type": "string"},
+                                "precio": {"type": "string"},
+                                "cantidad": {"type": "string"},
+                                "subtotal": {"type": "string"},
+                            },
+                        },
+                        "description": "Tabla de productos con nombre, referencia, presentación, precio, cantidad y subtotal.",
+                    },
+                    "notas_experto": {
+                        "type": "string",
+                        "description": "Notas adicionales del asesor experto para el cliente.",
+                    },
+                },
+                "required": ["cliente_nombre", "diagnostico", "sistema_recomendado"],
             },
         },
     },
@@ -17181,23 +17591,25 @@ def _handle_tool_guardar_producto_complementario(args, conversation_context):
 
 
 # ── Expert knowledge: save commercial reinforcement notes ─────────────────────
-_EXPERT_CEDULA = "1053774777"
-_EXPERT_NOMBRE = "PABLO CESAR MAFLA BANOL"
+# Multi-expert system: each authorized expert has isolated knowledge streams
+_AUTHORIZED_EXPERTS: dict[str, str] = {
+    "1053774777": "PABLO CESAR MAFLA BANOL",
+    "1088266407": "DIEGO MAURICIO GARCIA RENGIFO",
+}
 
 
 def _handle_tool_registrar_conocimiento_experto(args, conversation_context):
-    """Save a commercial knowledge note from the authorized expert (Pablo Mafla)."""
-    # Guard: only the authorized expert can save knowledge
+    """Save a commercial knowledge note from an authorized expert (Pablo Mafla or Diego García)."""
+    # Guard: only authorized experts can save knowledge
     internal_user = conversation_context.get("internal_user") or {}
     cedula = str(internal_user.get("cedula") or "").strip()
-    if cedula != _EXPERT_CEDULA:
+    if cedula not in _AUTHORIZED_EXPERTS:
         return json.dumps(
             {
                 "guardado": False,
                 "mensaje": (
-                    "Solo el asesor técnico autorizado (cédula 1053774777) puede registrar "
-                    "conocimiento experto. Si eres Pablo Mafla, verifica que hayas iniciado "
-                    "sesión con tu cédula."
+                    "Solo los asesores técnicos autorizados (Pablo Mafla o Diego García) pueden registrar "
+                    "conocimiento experto. Verifica que hayas iniciado sesión con tu cédula."
                 ),
             },
             ensure_ascii=False,
@@ -17232,8 +17644,8 @@ def _handle_tool_registrar_conocimiento_experto(args, conversation_context):
                     """
                 ),
                 {
-                    "cedula": _EXPERT_CEDULA,
-                    "nombre": _EXPERT_NOMBRE,
+                    "cedula": cedula,
+                    "nombre": _AUTHORIZED_EXPERTS.get(cedula, "EXPERTO FERREINOX"),
                     "tags": contexto_tags,
                     "rec": producto_recomendado,
                     "des": producto_desestimado,
@@ -17268,9 +17680,9 @@ def _handle_tool_procesar_documento_experto(args, conversation_context):
     # Auth guard
     internal_user = conversation_context.get("internal_user") or {}
     cedula = str(internal_user.get("cedula") or "").strip()
-    if cedula != _EXPERT_CEDULA:
+    if cedula not in _AUTHORIZED_EXPERTS:
         return json.dumps(
-            {"ingested": False, "mensaje": "Solo el asesor técnico autorizado puede subir documentos al RAG."},
+            {"ingested": False, "mensaje": "Solo los asesores técnicos autorizados pueden subir documentos al RAG."},
             ensure_ascii=False,
         )
 
@@ -17327,6 +17739,47 @@ def _handle_tool_procesar_documento_experto(args, conversation_context):
         )
 
 
+def _handle_tool_generar_memoria_tecnica(args, conversation_context):
+    """Generate a Technical Advisory PDF and return a download link."""
+    conversation_id = conversation_context.get("conversation_id") or 0
+    cliente_nombre = (args.get("cliente_nombre") or "Cliente Ferreinox").strip()
+    diagnostico = args.get("diagnostico") or []
+    sistema = args.get("sistema_recomendado") or []
+    productos = args.get("productos") or []
+    notas = (args.get("notas_experto") or "").strip()
+
+    try:
+        pdf_id, filename = store_technical_advisory_pdf(
+            conversation_id=conversation_id,
+            cliente_nombre=cliente_nombre,
+            diagnostico_resumen=diagnostico,
+            sistema_recomendado=sistema,
+            productos_tabla=productos,
+            notas_experto=notas,
+        )
+        download_url = f"/api/pdf/{pdf_id}"
+        return json.dumps(
+            {
+                "generado": True,
+                "pdf_id": pdf_id,
+                "filename": filename,
+                "download_url": download_url,
+                "mensaje": (
+                    f"✅ Memoria Técnica generada exitosamente.\n"
+                    f"📄 Documento: {filename}\n"
+                    f"🔗 Descarga: {download_url}\n"
+                    f"Puedes compartir este enlace con el cliente."
+                ),
+            },
+            ensure_ascii=False,
+        )
+    except Exception as exc:
+        return json.dumps(
+            {"generado": False, "mensaje": f"Error al generar la Memoria Técnica: {exc}"},
+            ensure_ascii=False,
+        )
+
+
 def _execute_agent_tool(tool_call, context, conversation_context):
     fn_name = tool_call.function.name
     try:
@@ -17366,6 +17819,8 @@ def _execute_agent_tool(tool_call, context, conversation_context):
             result = _handle_tool_registrar_conocimiento_experto(fn_args, conversation_context)
         elif fn_name == "procesar_documento_experto":
             result = _handle_tool_procesar_documento_experto(fn_args, conversation_context)
+        elif fn_name == "generar_memoria_tecnica":
+            result = _handle_tool_generar_memoria_tecnica(fn_args, conversation_context)
         else:
             result = json.dumps({"error": f"Herramienta desconocida: {fn_name}"}, ensure_ascii=False)
     except Exception as tool_exc:
@@ -18377,11 +18832,11 @@ async def receive_whatsapp_webhook(request: Request):
                 ai_result = None
                 outbound_payload = None
 
-                # ── If expert (Pablo) uploaded a document, store in context for RAG ingestion ──
+                # ── If expert (Pablo/Diego) uploaded a document, store in context for RAG ingestion ──
                 if media_extracted_text and message_type in ("document", "image"):
                     internal_auth = conversation_context.get("internal_auth") or {}
                     expert_cedula = str((internal_auth.get("user") or {}).get("cedula") or "").strip()
-                    if expert_cedula == _EXPERT_CEDULA:
+                    if expert_cedula in _AUTHORIZED_EXPERTS:
                         # Store full extracted text in conversation context for the tool
                         conversation_context["pending_expert_document"] = {
                             "extracted_text": media_extracted_text,
