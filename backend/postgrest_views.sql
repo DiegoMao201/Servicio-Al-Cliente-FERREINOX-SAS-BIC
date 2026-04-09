@@ -751,11 +751,11 @@ DROP MATERIALIZED VIEW IF EXISTS mv_productos CASCADE;
 CREATE MATERIALIZED VIEW mv_productos AS
 SELECT
     referencia_normalizada AS producto_codigo,
-    referencia,
-    descripcion,
-    descripcion_normalizada,
-    marca,
-    marca_normalizada,
+    MAX(referencia) AS referencia,
+    MAX(descripcion) AS descripcion,
+    MAX(descripcion_normalizada) AS descripcion_normalizada,
+    MAX(marca) AS marca,
+    MAX(marca_normalizada) AS marca_normalizada,
     STRING_AGG(DISTINCT departamento, ', ' ORDER BY departamento) AS departamentos,
     COALESCE(SUM(stock_disponible), 0) AS stock_total,
     AVG(costo_promedio_und) AS costo_promedio_und,
@@ -768,14 +768,14 @@ SELECT
         ORDER BY almacen_nombre
     ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
     public.fn_normalize_text(
-        COALESCE(descripcion, '') || ' ' ||
-        COALESCE(referencia, '') || ' ' ||
-        COALESCE(marca, '') || ' ' ||
+        COALESCE(MAX(descripcion), '') || ' ' ||
+        COALESCE(MAX(referencia), '') || ' ' ||
+        COALESCE(MAX(marca), '') || ' ' ||
         COALESCE(STRING_AGG(DISTINCT departamento, ' ' ORDER BY departamento), '') || ' ' ||
-        REPLACE(COALESCE(descripcion, ''), '-', ' ') || ' ' ||
-        REPLACE(COALESCE(referencia, ''), '-', ' ') || ' ' ||
-        REPLACE(COALESCE(descripcion, ''), '/', ' ') || ' ' ||
-        REPLACE(COALESCE(referencia, ''), '/', ' ') || ' ' ||
+        REPLACE(COALESCE(MAX(descripcion), ''), '-', ' ') || ' ' ||
+        REPLACE(COALESCE(MAX(referencia), ''), '-', ' ') || ' ' ||
+        REPLACE(COALESCE(MAX(descripcion), ''), '/', ' ') || ' ' ||
+        REPLACE(COALESCE(MAX(referencia), ''), '/', ' ') || ' ' ||
         COALESCE(MAX(linea_clasificacion), '') || ' ' ||
         COALESCE(MAX(sublinea_clasificacion), '') || ' ' ||
         COALESCE(MAX(marca_clasificacion), '') || ' ' ||
@@ -787,14 +787,14 @@ SELECT
         COALESCE(MAX(tipo_articulo), '')
     ) AS search_blob,
     public.fn_keep_alnum(
-        COALESCE(descripcion, '') || ' ' ||
-        COALESCE(referencia, '') || ' ' ||
-        COALESCE(marca, '') || ' ' ||
+        COALESCE(MAX(descripcion), '') || ' ' ||
+        COALESCE(MAX(referencia), '') || ' ' ||
+        COALESCE(MAX(marca), '') || ' ' ||
         COALESCE(MAX(familia_clasificacion), '') || ' ' ||
         COALESCE(MAX(descripcion_ebs), '') || ' ' ||
         COALESCE(MAX(cat_producto), '') || ' ' ||
-        REPLACE(COALESCE(descripcion, ''), '-', '') || ' ' ||
-        REPLACE(COALESCE(descripcion, ''), ' ', '')
+        REPLACE(COALESCE(MAX(descripcion), ''), '-', '') || ' ' ||
+        REPLACE(COALESCE(MAX(descripcion), ''), ' ', '')
     ) AS search_compact,
     MAX(linea_clasificacion) AS linea_clasificacion,
     MAX(sublinea_clasificacion) AS sublinea_clasificacion,
@@ -806,12 +806,7 @@ SELECT
     MAX(tipo_articulo) AS tipo_articulo
 FROM public.vw_inventario_agente
 GROUP BY
-    referencia_normalizada,
-    referencia,
-    descripcion,
-    descripcion_normalizada,
-    marca,
-    marca_normalizada;
+    referencia_normalizada;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_productos_codigo ON mv_productos (producto_codigo);
 CREATE INDEX IF NOT EXISTS idx_mv_productos_search_blob_trgm ON mv_productos USING GIN (search_blob gin_trgm_ops);
