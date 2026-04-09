@@ -13744,6 +13744,8 @@ Este protocolo aplica a TODA asesoría técnica sin excepción.
 
 JERARQUÍA DE CONOCIMIENTO (Regla de Oro):
 \
+La ÚNICA VERDAD TÉCNICA es la FUSIÓN del RAG + Conocimiento Experto. Las notas de Pablo y Diego PREVALECEN sobre el RAG base. No hay conflicto entre Pablo y Diego — sus conocimientos se SUMAN y complementan.
+\
 Para cada consulta técnica, consultas DOS fuentes:
 \
 - RAG (Fichas Técnicas): Información base del fabricante — specs, rendimientos, tiempos, proporciones.
@@ -13768,6 +13770,7 @@ DEBES generar internamente un bloque de razonamiento estructurado. Este bloque N
 4. PRODUCTO SOSPECHADO: ¿Qué producto o sistema creo correcto basado en mi diagnóstico?
 5. HERRAMIENTA A USAR: ¿consultar_conocimiento_tecnico primero? ¿consultar_inventario? ¿ambas?
 6. VALIDACIÓN CRUZADA: ¿El producto sospechado es de la categoría correcta para esta superficie? (anti-contaminación cruzada)
+7. ÁREA (m²): Si el cliente pide pisos, fachadas, techos o cualquier superficie medible → ¿Ya tengo los m² exactos? Si NO → PROHIBIDO llamar consultar_inventario. Pregunta: '¿Cuántos metros cuadrados necesitas cubrir?'
 </analisis_tecnico_comercial>
 
 Si algún campo está incompleto (ej. no sabes la superficie), NO llames herramientas — haz preguntas de diagnóstico al cliente. \
@@ -14475,6 +14478,7 @@ TRIGGER RULES PARA HERRAMIENTAS (reglas de cuándo usar cada herramienta):
 - Los resultados son fuzzy match → evalúa críticamente si cada producto devuelto es apto para la superficie del cliente.
 - Categorías incompatibles: Koraza≠tráfico/pisos. Viniltex≠pisos/tráfico. Pintutraf=demarcación vial. Pintura Canchas=pisos residenciales. Pintucoat=pisos industriales.
 - NO usar para intenciones genéricas ("quiero hacer un pedido") → pregunta qué productos necesita.
+- REGLA ANTI-VÓMITO DE VARIANTES: Si el inventario devuelve múltiples colores/presentaciones del mismo producto (ej. Pintucoat 516, 517, PLS, etc.), PROHIBIDO listarlos todos. Muestra máximo 2-3 opciones representativas y pregunta: '¿Lo necesitas en color X, Y o alguno específico?' El cliente NO necesita ver 15 referencias — necesita que lo guíes.
 
 ▶ consultar_conocimiento_tecnico:
 - OBLIGATORIO antes de recomendar cualquier producto como asesoría técnica. NUNCA responder de memoria.
@@ -14510,6 +14514,7 @@ ESTADO ACTUAL DE LA CONVERSACIÓN:
 - Borrador comercial activo: {borrador_activo}
 - Reclamo activo: {reclamo_activo}
 - Empleado interno activo: {empleado_activo}
+- Experto autorizado: {es_experto_autorizado}
 
 INTELIGENCIA DE NEGOCIOS INTERNA (activo solo cuando "Empleado interno activo" ≠ "Ninguno"):
 El JSON de "Empleado interno activo" incluye: nombre, cargo, sede y rol (vendedor/operador/gerente/administrador).
@@ -17782,9 +17787,11 @@ def generate_agent_reply_v2(
     internal_auth = conversation_context.get("internal_auth") or {}
     if internal_auth:
         emp = dict(internal_auth.get("employee_context") or {})
+        cedula_empleado = str(emp.get("cedula") or "").strip()
         empleado_activo = json.dumps(
             {
                 "nombre": emp.get("full_name"),
+                "cedula": cedula_empleado,
                 "cargo": emp.get("cargo"),
                 "sede": emp.get("sede"),
                 "rol": internal_auth.get("role", "empleado"),
@@ -17792,8 +17799,17 @@ def generate_agent_reply_v2(
             },
             ensure_ascii=False,
         )
+        if cedula_empleado in _AUTHORIZED_EXPERTS:
+            nombre_exp = emp.get("full_name") or cedula_empleado
+            es_experto_autorizado = (
+                f"⚠️ SÍ — ESTÁS HABLANDO CON EL EXPERTO AUTORIZADO {nombre_exp} (cédula {cedula_empleado}). "
+                f"TIENES PERMISO ABSOLUTO para ejecutar registrar_conocimiento_experto cuando diga ENSEÑAR."
+            )
+        else:
+            es_experto_autorizado = "No"
     else:
         empleado_activo = "Ninguno"
+        es_experto_autorizado = "No"
 
     system_content = AGENT_SYSTEM_PROMPT_V2.format(
         verificado="SÍ" if verified else "NO",
@@ -17802,6 +17818,7 @@ def generate_agent_reply_v2(
         borrador_activo=safe_json_dumps(commercial_draft) if commercial_draft else "Ninguno",
         reclamo_activo=safe_json_dumps(claim_case) if claim_case else "Ninguno",
         empleado_activo=empleado_activo,
+        es_experto_autorizado=es_experto_autorizado,
     )
 
     messages = [{"role": "system", "content": system_content}]
