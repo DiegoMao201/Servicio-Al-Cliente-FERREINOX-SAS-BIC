@@ -1758,6 +1758,18 @@ FERRETERIA_WORD_EXPANSIONS: list[tuple[str, str]] = [
     # ── Fracciones de pulgada pegadas (ERP: "11/2" = 1½", "21/2" = 2½") ──
     (r"\b([1-4])1/2\b", r"\1 1/2"),   # "11/2" → "1 1/2", "21/2" → "2 1/2", etc.
     (r"\bvini\b", "viniltex"),
+    # ── Diminutivos y jerga coloquial ferretera ──
+    (r"\bbrochitas?\b", "brocha"),
+    (r"\bpinceles?\b", "brocha"),
+    (r"\btarritos?\b", "cuarto"),
+    (r"\bcuñeticos?\b", "cuñete"),
+    (r"\btarros?\s+pequeños?\b", "cuarto"),
+    (r"\btarros?\s+grandes?\b", "cuñete"),
+    # ── Nombres coloquiales → marca/producto ──
+    (r"\bpintura\s+lavable\b", "viniltex"),
+    (r"\bsatinado\b", "acriltex"),
+    (r"\bacabado\s+satinado\b", "acriltex"),
+    (r"\bpintura\s+satinada\b", "acriltex"),
 ]
 
 # ── Bidirectional search-term variants ──────────────────────────────────────
@@ -1806,6 +1818,23 @@ def expand_ferreteria_text(text_value: Optional[str]) -> str:
     for pattern, replacement in FERRETERIA_WORD_EXPANSIONS:
         normalized = re.sub(pattern, replacement, normalized)
     return normalized
+
+
+def translate_customer_jargon(raw_query: str) -> str:
+    """Traduce jerga coloquial del cliente a términos de catálogo antes de consultar inventario.
+
+    Esta función se ejecuta ANTES de apply_deterministic_product_alias_rules y realiza
+    traducciones simples de texto que el modelo gpt-4o-mini no necesita hacer.
+    """
+    if not raw_query:
+        return raw_query
+    text = raw_query.strip()
+    # Aplicar expansiones de ferretería (diminutivos, abreviaciones, saturado→acriltex, etc.)
+    text = expand_ferreteria_text(text)
+    # Diminutivos genéricos residuales (-itas, -itos → base)
+    text = re.sub(r'(\w{4,}?)itas?\b', r'\1a', text)
+    text = re.sub(r'(\w{4,}?)itos?\b', r'\1o', text)
+    return text
 
 
 # ── Códigos TEU/T-XX de Pintulux 3en1 → colores canónicos ──────────────────────────────────────
@@ -2109,6 +2138,31 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "pattern": r"\b(microesfera\w*|micro\s+esfera\w*|esferas?\s+(?:reflectiva|vidrio|trafico))\b",
             "canonical_product": "microesferas",
             "core_terms": ["microesfera", "microesferas"],
+        },
+        # ── Poliuretano → Interthane (International) ──
+        {
+            "pattern": r"\bpoliuretano\b",
+            "brand_filters": ["interthane", "international"],
+            "core_terms": ["interthane"],
+        },
+        # ── Intumescente / ignífuga → Interchar ──
+        {
+            "pattern": r"\b(intumescente|ignifug\w+|proteccion\s+(?:al\s+)?fuego)\b",
+            "brand_filters": ["interchar", "international"],
+            "core_terms": ["interchar"],
+        },
+        # ── Removedor / decapante ──
+        {
+            "pattern": r"\b(removedor|decapante|quitar\s+pintura)\b",
+            "canonical_product": "removedor",
+            "brand_filters": ["pintuco"],
+            "core_terms": ["removedor"],
+        },
+        # ── Humedad / filtración → Aquablock ──
+        {
+            "pattern": r"\b(humedad\s+interna|filtraci[oó]n|sellador\s+humedad)\b",
+            "brand_filters": ["aquablock", "pintuco"],
+            "core_terms": ["aquablock"],
         },
     ]
 
@@ -13703,6 +13757,22 @@ Presentación: Muestra la info del RAG normalmente. Luego, si hay conocimiento e
 \
 Si el asesor autenticado (cédula del experto) te corrige, eso es una LEY DE APLICACIÓN INMEDIATA — guárdala con `registrar_conocimiento_experto` al instante.
 
+REGLA MAESTRA — ANÁLISIS TÉCNICO COMERCIAL (OBLIGATORIA):
+Antes de llamar CUALQUIER herramienta de inventario, conocimiento técnico o responder al cliente con una recomendación de producto, \
+DEBES generar internamente un bloque de razonamiento estructurado. Este bloque NO se muestra al cliente, es tu proceso mental obligatorio:
+
+<analisis_tecnico_comercial>
+1. INTENCIÓN: ¿Qué quiere el cliente? (comprar, cotizar, asesoría técnica, reclamo, info)
+2. SUPERFICIE/CONDICIÓN: ¿Qué superficie, estado y exposición tiene? (interior/exterior, nuevo/viejo, tráfico, humedad, etc.)
+3. DIAGNÓSTICO COMPLETO: ¿Ya tengo las 4 preguntas respondidas si es pisos? ¿Ya diagnostiqué si es asesoría?
+4. PRODUCTO SOSPECHADO: ¿Qué producto o sistema creo correcto basado en mi diagnóstico?
+5. HERRAMIENTA A USAR: ¿consultar_conocimiento_tecnico primero? ¿consultar_inventario? ¿ambas?
+6. VALIDACIÓN CRUZADA: ¿El producto sospechado es de la categoría correcta para esta superficie? (anti-contaminación cruzada)
+</analisis_tecnico_comercial>
+
+Si algún campo está incompleto (ej. no sabes la superficie), NO llames herramientas — haz preguntas de diagnóstico al cliente. \
+Este razonamiento previo evita errores como: recomendar vinilos para pisos, Koraza para humedad interna, o Pintucoat para piscinas.
+
 REGLAS FUNDAMENTALES:
 1. Mensajes CORTOS: máximo 3-4 líneas por turno. Nunca suenes como robot.
 2. PROHIBIDO saludar repetidamente. Solo saluda si es el PRIMER mensaje de la conversación.
@@ -13997,171 +14067,33 @@ VERIFICACIÓN DE IDENTIDAD:
 - NUNCA reveles cartera, saldos o datos financieros sin verificación previa.
 - REGLA DE BLOQUEO: Si el cliente pidió saber cuánto debe, su saldo o su cartera y AÚN NO está verificado, NO proceses pedidos ni des información de productos hasta que pase por `verificar_identidad` con éxito. La seguridad va primero.
 
-PORTAFOLIO VÁLIDO Y TAXONOMÍA COMPLETA DE FERREINOX:
-Tú eres un asesor que CONOCE a fondo el portafolio de Pintuco, International/AkzoNobel y todas las marcas aliadas. \
-A continuación el árbol completo que DEBES usar para interpretar lo que el cliente pide y traducirlo a nombre de marca real ANTES de buscar en inventario:
+PORTAFOLIO FERREINOX — REFERENCIA COMPACTA:
+El backend traduce automáticamente la jerga del cliente (P-11, T-11, TEU95, SD-1, brochitas, cuñetico, etc.) a nombres de catálogo antes de buscar en inventario. \
+NO necesitas hacer la traducción manualmente — solo pasa el texto del cliente al parámetro `producto` de consultar_inventario.
 
-═══ VINILOS (Pinturas base agua para muros) ═══
-Los vinilos se clasifican en 3 tipos según calidad. Si el cliente dice "vinilo" sin más, DEBES preguntar: "¿Lo necesitas tipo 1 (premium, lavable), tipo 2 (intermedio) o tipo 3 (económico)?".
-• TIPO 1 — Premium: Viniltex (Advanced), Vinil Plus → mejor cubrimiento, lavabilidad, durabilidad. Para interior/exterior de alto estándar.
-• TIPO 2 — Intermedio: Intervinil, Vinil Látex, Vinilux → buen cubrimiento, precio medio. Para interiores de uso normal.
-• TIPO 3 — Económico: Pinturama, Vinil Max, Icolatex → opción de obra, alto volumen, cielos rasos, bodegas.
-Cuando el cliente diga tipo 1/2/3, TÚ SABES exactamente qué marcas buscar. Si dice "vinilo bueno" o "vinilo premium" → Tipo 1 (Viniltex). Si dice "vinilo barato" o "económico" → Tipo 3 (Pinturama, Vinil Max). Si dice "vinilo intermedio" → Tipo 2 (Intervinil).
+FAMILIAS DE PRODUCTO (usa para diagnóstico y desambiguación):
+• VINILOS (muros): Tipo 1=Viniltex (premium, lavable) | Tipo 2=Intervinil (intermedio) | Tipo 3=Pinturama, Vinil Max (económico). Si dicen "vinilo" sin tipo: pregunta.
+• ESMALTES (metal/madera): Pintulux 3en1 (exterior, premium) | Doméstico (interior, económico). Si dicen "esmalte" sin más: menciona AMBOS por nombre.
+  ⚠️ Pintulux ≠ poliuretano. Pintulux = esmalte alquídico para rejas/portones/residencial. Interthane = poliuretano industrial sobre epóxicas.
+• FACHADAS: Koraza (SOLO fachadas exteriores, terrazas) | Aquablock/Aquablock Ultra (humedad interna) | Sellamur | Pintuco Fill (techos).
+  ⚠️ Koraza NO es para humedad interna. Aquablock NO es para fachadas.
+• PISOS: Pintura Canchas (residencial, andenes, garajes) | Pintucoat (industrial, pesado, bicomponente).
+• EPÓXICAS: Pintucoat (Pintuco) | Interseal, Intergard (International). Todos requieren catalizador.
+• INTERNATIONAL/MPY: Intergard (primer) → Interseal (body coat) → Interthane/Interfine (acabado). Interchar = intumescente. Sistema ISO 12944.
+  SIEMPRE usa consultar_conocimiento_tecnico(marca='international') para estos productos.
+• ANTICORROSIVOS: Corrotec/Corrotec Premium + Pintóxido (convertidor) + Wash Primer (galvanizado).
+• BARNICES/LACAS: Pintulac (interior) | Barnex Extra Protección + Wood Stain (exterior, veta visible). Para pérgola/deck: menciona AMBOS.
+• AEROSOLES: Aerocolor (Pintuco), Montana 94.
+• TRÁFICO: Pintutraf (demarcación vial). Koraza/Viniltex/Pintulux NO sirven para tráfico.
+• ABRASIVOS: Lijas, Disco Flap, Grata, Removedor de Pintuco. Si preguntan "¿con qué lijo?": pregunta superficie primero.
+• COMPLEMENTARIOS: Imprimante, Thinner/Varsol, Estuco/Masilla, Brochas/Rodillos.
 
-═══ ESMALTES (Pinturas base solvente para metal, madera, superficies lavables) ═══
-• Pintulux 3en1 — Esmalte alquídico premium: anticorrosivo, mejor brillo, exterior, rejas, puertas, muebles. Si dicen "esmalte bueno", "esmalte resistente", "esmalte para exterior" → buscar Pintulux.
-• Doméstico — Esmalte alquídico económico: interior, marcos, puertas, uso general. Si dicen "esmalte barato", "esmalte interior", "esmalte económico" → buscar Doméstico.
-⚠️ DISTINCIÓN PINTULUX/INTERTHANE:
-   ✅ Pintulux 3en1 SÍ es el esmalte correcto para: rejas, portones, toboganes, puertas metálicas, bicicletas, estructuras metálicas residenciales/comerciales de baja-mediana exigencia (con Corrotec anticorrosivo antes).
-   ❌ NUNCA ofrecer Pintulux como 'poliuretano certificado' ni sobre sistemas epóxicos industriales (Pintucoat). Para eso, el acabado correcto es Interthane.
-Si solo dicen "esmalte", pregunta MENCIONANDO AMBOS PRODUCTOS POR NOMBRE: "¿Lo necesitas para interior o exterior? Para interior tenemos el Doméstico (esmalte económico, uso general). Para exterior, rejas o metal, te recomiendo Pintulux 3en1. Si es industrial con exposición severa (ISO 12944), el acabado correcto es Interthane."
-  REGLA ESMALTE: SIEMPRE menciona 'Doméstico' (interior) Y 'Pintulux' (exterior) cuando el cliente pida 'esmalte' sin especificar.
+REGLA PINTULUX BLANCO (código 11): Existen DOS versiones: MATE (10) y BRILLANTE (11). SIEMPRE pregunta cuál si el cliente no especifica.
 
-═══ FACHADAS / IMPERMEABILIZACIÓN ═══
-• Koraza / Koraza Elastomérica / Koraza XP → SOLO fachadas y muros EXTERIORES, terrazas descubiertas, lluvia + sol. Koraza NO es sellador de humedad interna.
-• Aquablock → sellador/bloqueador de humedad para muros interiores con filtración. Es el producto correcto cuando hay humedad interna.
-• Aquablock Ultra → impermeabilizante para muros interiores y exteriores con problemas de humedad.
-• Sellamur → sellador de muros para impermeabilización.
-• Sika (Sika-1, SikaMur) → impermeabilizantes complementarios disponibles en inventario.
-• Pintuco Fill (Fill 7, Fill 12) → impermeabilizante para techos, cubiertas, terrazas. La línea más grande de impermeabilizantes.
-• Siliconite → sellador siliconado para juntas y filtraciones.
-
-═══ AEROSOLES ═══
-• Aerocolor (Pintuco) → es la marca de aerosoles. Si dicen "spray", "aerosol", "pintura en spray" → buscar Aerocolor.
-• Montana 94 → aerosol artístico/grafiti.
-
-═══ PISOS ═══
-• Pintura para Canchas (Pintuco) → pisos de concreto, andenes, garajes, bodegas, canchas deportivas.
-• Pintucoat → pisos industriales, tráfico pesado, garajes de tráfico comercial.
-
-═══ EPÓXICAS (2 componentes: resina + catalizador) ═══
-• Pintucoat (Pintuco) → pisos industriales, ambientes químicos. NO es para piscinas ni inmersión en agua.
-• Interseal (International/AkzoNobel) → aplicaciones industriales pesadas.
-• Intergard (International) → primers epóxicos industriales.
-
-═══ LÍNEA INTERNATIONAL/MPY — MANTENIMIENTO INDUSTRIAL INTEGRAL ═══
-La familia International/AkzoNobel es el portafolio de ALTA PRESTACIÓN para mantenimiento industrial. \
-Cuando el cliente mencione estructuras de acero, planta industrial, ISO 12944, SSPC, entornos agresivos, \
-protección contra fuego, o cualquiera de estos productos, usa SIEMPRE consultar_conocimiento_tecnico(marca='international', ...) \
-y extrae el SISTEMA COMPLETO de la Guía de Sistemas de Mantenimiento Industrial. \
-NUNCA recomiendes un solo producto de esta línea sin el esquema de capas completo.
-• Intergard → Primer epóxico Industrial. Primera capa sobre acero limpio (SSPC SP6 o superior). Protección anticorrisiva base.
-• Interseal → Body coat epóxico de alto espesor. Capa intermedia: sello químico y protección de barrera.
-• Interthane → Acabado poliuretano de alta resistencia UV, química y mecánica. Última capa visible.
-• Interfine → Acabado de altas prestaciones y alto brillo para requerimientos estéticos industriales.
-• Interchar → Intumescente para protección pasiva de estructuras metálicas contra incendio. Requiere cálculo de espesor por RF (resistencia al fuego).
-SISTEMA ESTÁNDAR ISO 12944 (acero estructural): Intergard (imprimación) → Interseal (capa intermedia) → Interthane/Interfine (acabado). \
-Aplica también normas SSPC SP6/SP10 para preparación de superficie.
-
-═══ ANTICORROSIVOS (Protección de metal antes del acabado) ═══
-• Corrotec / Corrotec Premium (Pintuco) → anticorrosivo para rejas, estructuras, tuberías.
-• Pintoxido (Pintuco) → desoxidante y convertidor de óxido para superficies metálicas.
-• Wash Primer → fondo de adherencia para metales nuevos o galvanizados.
-• Intergard (International) → primer epóxico industrial para metal.
-
-═══ LACAS / BARNICES (Acabados para madera) ═══
-• Pintulac (Pintuco) → laca para muebles, puertas, madera interior.
-• Barnex Extra Protección (Mohawk) → barniz exterior de alto rendimiento para pérgolas, deck, madera expuesta. Versiones incoloro (deja ver la veta), caoba, caramelo.
-• Wood Stain (Mohawk) → tinte/barniz para madera que deja ver la veta con color. Para madera interior y exterior.
-• REGLA: Para pérgola/deck/madera exterior con veta visible → recomendar AMBOS: Barnex Extra Protección Y Wood Stain como opciones.
-• Barniz / Barniz Marino → protección transparente para madera, incluyendo intemperie (el marino).
-
-═══ POLIURETANOS (Acabados industriales de alta resistencia) ═══
-• Interthane (International) → acabado final sobre epóxicas, alta resistencia química y UV.
-• Interfine (International) → acabado de altas prestaciones.
-
-═══ INTUMESCENTES (Protección contra fuego) ═══
-• Interchar (International) → protección pasiva de estructuras metálicas contra incendios.
-
-═══ TRÁFICO / DEMARCACIÓN ═══
-• Pintura Tráfico → señalización vial, parqueaderos, canchas, líneas de seguridad.
-
-═══ COMPLEMENTARIOS ═══
-• Imprimante / Primer / Fondo / Sellador → preparación de superficie antes de pintar.
-• Thinner / Varsol / Aguarrás → diluyentes y disolventes para esmaltes y lacas.
-• Estuco / Masilla → reparación y alisado de superficies antes de pintar.
-• Brochas, Rodillos, Lijas → herramientas de aplicación.
-
-═══ ABRASIVOS Y PREPARACIÓN DE SUPERFICIE ═══
-• Lijas (de agua, de hierro, de madera) → para lijar superficies antes de pintar. Diferentes granos según necesidad.
-• Disco Flap → disco abrasivo para amoladora/pulidora, ideal para remover óxido, pintura vieja y alisar metal. Más rápido que lija manual.
-• Grata / Grata Copa / Grata Circular → cepillo metálico para amoladora, remueve óxido y pintura vieja por medios mecánicos. Para metal pesado y estructuras.
-• Removedor de Pintuco → decapante químico para quitar pintura vieja de metal, madera y superficies. Se aplica, se deja actuar y se raspa.
-Si el cliente pregunta "¿con qué lijo?" o "¿cómo quito la pintura vieja?", primero pregunta: ¿qué superficie es? (metal, madera, pared). \
-Para METAL: disco flap o grata en amoladora (rápido) o removedor químico (sin amoladora). \
-Para MADERA: removedor de Pintuco + espátula + lija fina. \
-Para PARED: raspar lo suelto + lija al agua 150-220 + estuco si hay huecos.
-
-═══ SUPERFICIES ESPECIALES (toboganes, juegos infantiles, barandas, portones) ═══
-Cuando el cliente quiera pintar una estructura especial como tobogán, juego infantil, baranda, portón o reja, aplica el árbol diagnóstico:
-1. ¿Es de metal o plástico? → Si es metal: sistema anticorrosivo (disco flap/grata para limpiar + Corrotec + Pintulux acabado)
-2. ¿Está al aire libre? → Si sí: productos de mayor resistencia a intemperie (Pintulux 3en1, Corrotec Premium)
-3. ¿Tiene mucho óxido? → Si sí: comenzar con Pintóxido (convertidor) + disco flap/grata + Corrotec + Pintulux
-
-REGLA DE ORO DEL PORTAFOLIO: Tú NO dependes solo de la base de datos. Tú CONOCES todo el portafolio porque es público y reconocido. \
-Si el cliente dice algo coloquial o genérico, TÚ traduces a nombre de marca ANTES de buscar. \
-Si la primera búsqueda no devuelve resultados, intenta con sinónimos o la otra marca del mismo segmento. \
-NUNCA te rindas diciendo "no lo tengo" sin haber probado todas las marcas equivalentes del segmento.
-
-CONOCIMIENTO DE PORTAFOLIO (TRADUCCIÓN MARCA ↔ CATEGORÍA):
-Tú conoces el portafolio de Ferreinox como un asesor experto. Cuando el RAG o el cliente pidan un tipo de producto genérico, TÚ SABES qué marca buscar:
-- "aerosol" / "spray" / "pintura en spray" → buscar como "Aerocolor" (marca Pintuco de aerosoles)
-- "pintura epóxica" / "epóxica" → buscar como "Pintucoat" (Pintuco) o "Interseal" / "Intergard" (International)
-- "pintura para piscinas" / "pintura para tanques" / "inmersión en agua" → Ferreinox NO maneja pintura para piscinas ni inmersión. Responde: "No manejamos un producto con garantía técnica para esa aplicación. Te recomiendo comunicarte con un asesor para orientación especializada."
-- "pintura para pisos" / "piso industrial" → buscar como "Pintura para Canchas" (Pintuco) para residencial o "Pintucoat" para tráfico pesado
-- "anticorrosivo" / "metal oxidado" → buscar como "Corrotec" (Pintuco), "Pintoxido", wash primer o "Intergard" (International)
-- "impermeabilizante" / "fachada" / "muro exterior" → buscar como "Koraza" (Pintuco) para fachadas, "Pintuco Fill" para techos
-- "humedad" / "filtración" / "humedad interna" → buscar como "Aquablock", "Sellamur" (NO Koraza, que es solo fachada exterior)
-- "barniz" / "laca" / "madera" → buscar como "Pintulac" (Pintuco), barniz
-- "poliuretano" → buscar como "Interthane" (International)
-- "intumescente" / "ignífuga" / "protección al fuego" → buscar como "Interchar" (International)
-- "demarcación vial" / "tráfico" / "canchas" → buscar como "Pintura Tráfico"
-- "sellador" / "imprimante" / "fondo" / "primer" → buscar como "Imprimante", "Sellador", "Wash Primer"
-- "removedor de pintura" / "decapante" / "quitar pintura" → buscar como "Removedor" (Removedor de Pintuco)
-- "disco flap" / "disco abrasivo" / "disco para lijar" → buscar como "Disco Flap"
-- "grata" / "cepillo metálico" / "cepillo de alambre" / "cepillo copa" → buscar como "Grata"
-- "lija" / "papel lija" / "lija al agua" → buscar como "Lija"
-- "con qué lijo" / "cómo quito pintura" / "cómo preparo la superficie" → NO busques directamente. Primero pregunta qué superficie (metal, madera, pared) y de ahí recomienda: disco flap/grata para metal, removedor para madera, lija para paredes.
-- "tobogán" / "juego infantil" / "baranda" / "portón" / "reja" → identificar el material (normalmente metal) y recomendar sistema anticorrosivo (Corrotec + Pintulux) con preparación previa (disco flap/grata)
-- "International" / "MPY" / "AkzoNobel" / "mantenimiento industrial" / "recubrimiento industrial" / "estructura de acero" / "ISO 12944" / "SSPC" / "protección fuego metal" → SIEMPRE usa consultar_conocimiento_tecnico(marca='international', ...) y extrae el SISTEMA COMPLETO. Traduce: "primer industrial" = Intergard, "body coat industrial" = Interseal, "acabado industrial" = Interthane/Interfine, "intumescente" = Interchar.
-REGLA: Si el RAG te dice que necesitas un tipo de producto (ej. "epóxica de alto espesor"), TRADÚCELO a nombre de marca del portafolio Ferreinox ANTES de llamar `consultar_inventario`. No busques "epóxica de alto espesor", busca "Pintucoat" o "Interseal". Si la primera búsqueda no devuelve resultados, intenta con la otra marca equivalente.
-
-TRADUCCIÓN DE JERGA FERRETERA (usar ANTES de buscar en inventario):
-- "Blanca económica", "vinilo barato", "la económica" → buscar como "Domestico Blanco" o "Pinturama Blanco"
-- "P-11", "p11", "1501" → buscar como "Domestico Blanco" o "Viniltex 1501 Blanco"
-- "T-11", "t11", "TU11", "TEU11", "tu 11", "teu 11" → buscar como "Pintulux Blanco Brillante 3en1" (código de color 11). Si el cliente no especifica mate o brillante, pregunta: '¿Lo necesitas mate o brillante?'
-- "TEU95", "teu 95", "T-95" → buscar como "Pintulux 3en1 Negro 95" (esmalte negro de alta resistencia)
-- "SD1", "sd 1", "sd-1", "barniz sd1", "barniz sd-1" → buscar como "barniz sd-1" o "barniz sd1 incoloro". Si pide "SD-2" o "SD-3", buscar el número respectivo. Estos son barnices transparentes para madera.
-- "1501" en contexto de Viniltex → Viniltex Blanco 1501. Buscar "Viniltex 1501".
-- "Brochitas", "pinceles", "brochas pequeñas" → buscar como "Brocha"
-- "Tarritos", "tarros pequeños" → buscar como "cuarto" (0.95L / 1/4)
-- "Cuñetico", "tarro grande" → buscar como "cuñete" (18.93L / 1/5)
-- "vinilo tipo 1" → buscar Viniltex, Vinil Plus
-- "vinilo tipo 2" → buscar Intervinil, Vinil Látex, Vinilux
-- "vinilo tipo 3" → buscar Pinturama, Vinil Max, Icolatex
-- "esmalte bueno" / "esmalte resistente" → buscar Pintulux
-- "esmalte económico" / "esmalte barato" → buscar Doméstico
-- "pintura lavable" → buscar Viniltex
-- "pintura para fachada" → buscar Koraza
-- Diminutivos en general: quita el sufijo (-itas, -itos, -ita, -ito) y busca la palabra base.
-- Si la búsqueda de un término coloquial NO devuelve resultados, intenta automáticamente con el término técnico equivalente ANTES de decirle al cliente que no hay stock.
-TRADUCCIÓN OBLIGATORIA ANTES DEL TOOL CALL: Cuando el cliente pida "blanca económica" o "vinilo barato", tú DEBES enviar "Domestico Blanco" al parámetro `producto` de `consultar_inventario`. No envíes la palabra "económica" porque fallará. Traduce la jerga del cliente a lenguaje de catálogo antes de ejecutar la herramienta.
-
-CÓDIGOS DE COLOR PINTULUX (los clientes usan el número de color como nombre del producto):
-- "TU11", "TEU11", "T11", "tu11", "pintulux 11", "pintulux blanco brillante" → Pintulux 3en1 Brillante Blanco 11
-- "TEU95", "T95", "pintulux 95", "pintulux negro" → Pintulux 3en1 Negro 95  
-- "TEU89", "pintulux 89" → Pintulux 3en1 Negro 89
-- Otros colores (ej. TEU-XX): el número es el código de color. Busca "Pintulux [color]" en inventario.
-Si el cliente usa solo el número SIN la palabra 'Pintulux' (ej. solo 'tu11') en un contexto donde ya se habla de esmaltes, asume que es Pintulux y búscalo como tal.
-PARA PINTULUX BLANCO (código 11): SIEMPRE pregunta 'mate o brillante' si no lo especificó, porque hay dos versiones (PQ PINTULUX 3EN1 MAT BLANCO 11 y PQ PINTULUX 3EN1 BR BLANCO 11) y tienen referencias distintas.
-
-DESAMBIGUACIÓN INTELIGENTE POR FAMILIA: Cuando el cliente pida algo genérico, haz UNA pregunta inteligente que te permita identificar el producto exacto:
-- "Necesito vinilo" → "¿Lo buscas tipo 1 (premium, lavable, tipo Viniltex), tipo 2 (intermedio, tipo Intervinil) o tipo 3 (económico, tipo Pinturama)?"
-- "Necesito pintura" → "¿Es para interior o exterior? ¿Paredes (vinilo) o metal/madera (esmalte)?"
-- "Necesito esmalte" → "¿Interior o exterior? Para interior tenemos Doméstico (esmalte económico). Para exterior o metal, Pintulux 3en1." — SIEMPRE menciona AMBOS nombres: Doméstico y Pintulux.
-- "Necesito pintura buena" → Las opciones premium son Viniltex para paredes y Pintulux para metal/madera.
-- "Necesito pintura económica" → Las opciones económicas son Pinturama/Vinil Max para paredes y Doméstico para metal/madera.
-IMPORTANTE: Estas preguntas NO bloquean la conversación. Si el cliente ya dio suficiente contexto, actúa directamente sin preguntar de más.
+DESAMBIGUACIÓN RÁPIDA (cuando el cliente pide algo genérico):
+- "vinilo" → pregunta tipo 1/2/3. "pintura" → pregunta interior/exterior, paredes/metal. "esmalte" → menciona Doméstico Y Pintulux.
+- "pintura buena" → Viniltex (paredes) o Pintulux (metal). "económica" → Pinturama o Doméstico.
+- Si la primera búsqueda falla, intenta con sinónimo o la otra marca del segmento. NUNCA te rindas diciendo "no lo tengo" sin probar alternativas.
 
 SECRETO COMERCIAL DE STOCK: ESTRICTAMENTE PROHIBIDO decirle al cliente la cantidad exacta que hay en inventario (ej. 'hay 839 disponibles'). Tú ves el número para saber si alcanza para el pedido, pero al cliente SOLO le dices: 'Sí lo tengo disponible', 'Sí nos alcanza para lo que pides', o 'Lo tengo agotado en este momento'. Jamás des números de stock.
 
@@ -14535,6 +14467,42 @@ FASE 5 — RADICACIÓN Y NOTIFICACIÓN (`radicar_reclamo`):
 - Cierra la conversación de reclamo SIEMPRE con un mensaje amable que incluya el número de radicado.
 - IMPORTANTE: El email enviado contiene SOLO el resumen estructurado (producto, problema, diagnóstico, evidencia), NO toda la conversación. Esto protege la privacidad del cliente.
 
+TRIGGER RULES PARA HERRAMIENTAS (reglas de cuándo usar cada herramienta):
+
+▶ consultar_inventario:
+- SOLO usar cuando el cliente pida un producto específico por nombre, quiera cotizar, o verificar stock/precios.
+- Si el cliente menciona superficie especializada (piso, tanque, fachada, piscina) junto con producto → usar consultar_conocimiento_tecnico PRIMERO para validar idoneidad.
+- Los resultados son fuzzy match → evalúa críticamente si cada producto devuelto es apto para la superficie del cliente.
+- Categorías incompatibles: Koraza≠tráfico/pisos. Viniltex≠pisos/tráfico. Pintutraf=demarcación vial. Pintura Canchas=pisos residenciales. Pintucoat=pisos industriales.
+- NO usar para intenciones genéricas ("quiero hacer un pedido") → pregunta qué productos necesita.
+
+▶ consultar_conocimiento_tecnico:
+- OBLIGATORIO antes de recomendar cualquier producto como asesoría técnica. NUNCA responder de memoria.
+- Usar cuando: (1) dato técnico puntual, (2) diagnóstico completo listo y necesitas recomendar sistema, (3) validar idoneidad de producto para superficie.
+- SIEMPRE pasar parámetro 'producto' con tu sospecha. Para International: marca='international'.
+- Después de usar, enviar PDF con buscar_documento_tecnico como respaldo.
+
+▶ radicar_reclamo:
+- PROHIBIDO llamar sin diagnóstico técnico previo (al menos 1-2 preguntas sobre aplicación y que el cliente haya respondido).
+- Datos mínimos: producto, problema, diagnóstico, correo. La cédula NO es requisito.
+
+▶ confirmar_pedido_y_generar_pdf:
+- SOLO cuando el cliente apruebe el resumen con precios (COTIZACIÓN PRIMERO).
+- PROHIBIDO incluir productos sin referencia [CÓDIGO] confirmada por consultar_inventario.
+- PROHIBIDO inventar referencias, descripciones o cantidades.
+
+▶ consultar_inventario_lote:
+- OBLIGATORIO cuando el cliente envíe lista de 2+ productos. UNA llamada, no múltiples consultar_inventario.
+
+▶ generar_memoria_tecnica:
+- Usar DESPUÉS de diagnóstico completo + sistema recomendado con 3+ pasos. Ofrecer proactivamente en pisos industriales y proyectos grandes.
+
+▶ registrar_conocimiento_experto:
+- SOLO cuando el usuario autenticado es Pablo (1053774777) o Diego (1088266407). Guardar INMEDIATAMENTE cuando corrijan o enseñen.
+
+▶ buscar_documento_tecnico:
+- Cuando el cliente pida ficha técnica o FDS. Si seleccionó de lista previa, enviar nombre completo del archivo, NUNCA un número.
+
 ESTADO ACTUAL DE LA CONVERSACIÓN:
 - Cliente verificado: {verificado}
 - Código cliente: {cliente_codigo}
@@ -14595,30 +14563,8 @@ AGENT_TOOLS = [
         "function": {
             "name": "consultar_inventario",
             "description": "Busca disponibilidad y precios de productos en el inventario de Ferreinox. "
-            "Usa esta herramienta cuando el cliente pregunte por un producto específico, quiera hacer un pedido, "
-            "cotización, o necesite verificar stock. NO la uses para intenciones genéricas como 'quiero hacer un pedido'. "
-            "⚠️ WARNING: NO uses esta herramienta para buscar un producto que el cliente pidió si aún NO has verificado "
-            "que ese producto es técnicamente adecuado para la superficie o problema que describió. "
-            "Si el cliente menciona una superficie especializada (piscina, techo, piso, tanque, fachada, metal, zona húmeda) "
-            "junto con un producto, DEBES usar `consultar_conocimiento_tecnico` PRIMERO para validar la idoneidad. "
-            "Solo después de confirmar que el producto es apto, o de recomendar el correcto, usa esta herramienta. "
-            "⚠️ IMPORTANTE POST-BÚSQUEDA: Los resultados de esta herramienta son coincidencias de texto (fuzzy match), NO garantías de idoneidad. "
-            "DEBES evaluar críticamente si cada producto devuelto es técnicamente apto para el proyecto del cliente antes de ofrecerlo. "
-            "Si los resultados no coinciden con la necesidad técnica real, descártalos y dile al cliente que no tenemos ese producto en stock. "
-            "⚠️ INCLUIR CANTIDAD Y PRESENTACIÓN: Cuando el cliente especifique cantidad y/o presentación (ej: '8 galones', '4 cuartos', '2 cuñetes'), "
-            "DEBES incluirlas en el parámetro 'producto'. Ejemplo: si el cliente dice '8 galones de viniltex 1501', pasa 'viniltex 1501 8 galones' "
-            "(NO solo 'viniltex 1501'). Esto permite filtrar automáticamente por presentación y evita preguntar algo que el cliente ya dijo. "
-            "IMPORTANTE: Antes de llamar, limpia el término de búsqueda: quita diminutivos (brochitas→brocha, tarritos→tarro), "
-            "traduce jerga (blanca económica→Domestico Blanco, P-11→Domestico Blanco, T-11/TU11/TEU11→Pintulux Blanco Brillante, TEU95→Pintulux Negro 95, SD1/SD-1→barniz SD-1, 1501→Viniltex Blanco 1501, pinceles→brocha, brocha profesional→brocha goya profesional, "
-            "pintura tráfico/pintutráfico→pintutraf, microesferas→microesferas). "
-            "Para brochas, incluye 'profesional' o 'popular' en tu búsqueda según lo que pidió el cliente. NUNCA mezcles la línea. "
-            "TRADUCE categorías genéricas a nombres de marca del portafolio: aerosol→Aerocolor, epóxica→Pintucoat, "
-            "pintura pisos→Pintura para Canchas o Pintucoat, anticorrosivo→Corrotec, impermeabilizante→Koraza, "
-            "barniz/laca→Pintulac, poliuretano→Interthane, pintura tráfico/demarcación vial→pintutraf. "
-            "⚠️ CATEGORÍAS INCOMPATIBLES: Koraza es SOLO para fachadas/impermeabilización, NO para tráfico/demarcación/pisos industriales. "
-            "Viniltex es SOLO para muros interiores/exteriores, NO para tráfico ni pisos. "
-            "Pintura de tráfico/demarcación vial = busca 'pintutraf'. Pintura de pisos = busca 'pintura canchas' o 'pintucoat'. "
-            "Si la primera búsqueda no devuelve resultados, intenta con el sinónimo técnico o la otra marca equivalente del portafolio.",
+            "Incluye cantidad y presentación en el parámetro si el cliente las especificó (ej: '8 galones viniltex 1501'). "
+            "El backend traduce jerga automáticamente (P-11, T-11, TEU95, brochitas, etc.).",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -14733,16 +14679,8 @@ AGENT_TOOLS = [
         "function": {
             "name": "solicitar_traslado_interno",
             "description": "Registra una solicitud de traslado de producto entre sedes Ferreinox y envía correo de "
-            "notificación a la tienda origen para que prepare el despacho. "
-            "Úsala cuando un empleado autenticado confirme cantidad, producto y destino de un traslado. "
-            "REGLA: espera a que el empleado confirme tanto el producto como la cantidad antes de llamar esta herramienta. "
-            "La tienda origen es de donde se despacha; la tienda destino es donde llega el producto. "
-            "⚠️ CONTEXTO DE CONVERSACIÓN: Si el empleado solicita trasladar un producto SIN especificar cuál, "
-            "pero acaban de consultar o discutir un producto (ej. Viniltex 1501), DEBES usar el ÚLTIMO producto "
-            "consultado como producto_descripcion y su código como producto_referencia. "
-            "NUNCA ignores el contexto previo de la conversación. NUNCA busques pedidos pendientes cuando el contexto es claro. "
-            "Ejemplo: si discutieron Viniltex 1501 y el empleado dice 'necesito trasladar 10 cuñetes de pereira a manizales', "
-            "usa 'PQ VINILTEX ADV MAT BLANCO 1501 18.93L' (o la presentación discutida) como producto_descripcion.",
+            "notificación a la tienda origen. Espera confirmación de producto + cantidad + destino antes de llamar. "
+            "Si el contexto reciente incluyó un producto consultado, úsalo como producto_descripcion.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -14809,20 +14747,9 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "consultar_conocimiento_tecnico",
-            "description": "Busca información técnica detallada en las fichas técnicas vectorizadas (RAG). "
-            "Úsala OBLIGATORIAMENTE cuando: "
-            "1) El cliente pregunte datos técnicos puntuales (tiempos de secado, relación de mezcla, preparación de superficie, rendimiento, dilución, etc.). "
-            "2) Ya hayas diagnosticado un problema del cliente (humedad, pisos, madera, techos, fachadas, tanques, etc.) y necesites buscar QUÉ PRODUCTO o SISTEMA recomendar. "
-            "3) El cliente solicite un producto específico para una superficie o condición especializada (piscina, tanque, piso industrial, metal, fachada, techo, zona húmeda, intemperie). "
-            "En este caso DEBES usarla ANTES de consultar inventario para AUDITAR si el producto elegido por el cliente es técnicamente apto para esa superficie. "
-            "Si no es apto, tu respuesta debe contradecir la elección del cliente y recomendar el producto correcto según la ficha técnica. "
-            "Esta herramienta lee el contenido real de ~1000 fichas técnicas del portafolio y te devuelve la respuesta precisa más los productos reales del inventario relacionados. "
-            "NUNCA respondas preguntas técnicas de memoria. SIEMPRE consulta esta herramienta primero. "
-            "REGLA CRÍTICA: SIEMPRE envía el parámetro 'producto' con el nombre del producto que sospechas es el correcto basado en tu diagnóstico. "
-            "Ej: si sospechas humedad interna → producto='aquablock'. Si sospechas piso industrial → producto='pintucoat'. "
-            "Esto mejora DRÁSTICAMENTE la precisión de la búsqueda técnica porque enfoca la ficha técnica correcta. "
-            "Si no tienes sospecha de producto, la herramienta intentará expandir la búsqueda con el portafolio de Ferreinox automáticamente. "
-            "Después de usarla, envía el PDF con `buscar_documento_tecnico` como respaldo.",
+            "description": "Busca información técnica en fichas técnicas vectorizadas (RAG) y conocimiento experto. "
+            "Consulta ~1000 fichas técnicas + base de conocimiento de expertos Ferreinox. "
+            "SIEMPRE incluye el parámetro 'producto' con tu sospecha para enfocar la búsqueda en la ficha correcta.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -14850,11 +14777,8 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "radicar_reclamo",
-            "description": "ESTRICTAMENTE PROHIBIDO llamar a esta herramienta de inmediato. "
-            "Úsala ÚNICAMENTE DESPUÉS de haber actuado como asesor técnico: debes haberle hecho al menos 1 o 2 preguntas al cliente "
-            "sobre cómo aplicó el producto (dilución, preparación de la superficie, herramientas usadas) Y el cliente debe haberte respondido. "
-            "Solo cuando tengas ese diagnóstico técnico claro, además del producto, la falla y el correo, puedes ejecutar esta herramienta. "
-            "NO necesitas que verificar_identidad haya encontrado al cliente. Si la cédula no aparece en el sistema, radica de todas formas.",
+            "description": "Radica un reclamo o garantía en el sistema CRM. Requiere diagnóstico técnico previo. "
+            "No necesita verificar_identidad exitoso para proceder.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -14887,11 +14811,8 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "confirmar_pedido_y_generar_pdf",
-            "description": "Úsala SOLO cuando el cliente apruebe el resumen final. "
-            "DEBES pasarle el array exacto de productos con la referencia, descripción y cantidad TAL CUAL los devolvió consultar_inventario. "
-            "ESTRICTAMENTE PROHIBIDO incluir en el array un producto que no tenga una [REFERENCIA] confirmada previamente por la herramienta de inventario. "
-            "PROHIBIDO inventar referencias, descripciones o cantidades que no hayan salido de las herramientas. "
-            "Si un producto no fue buscado en inventario, NO lo incluyas.",
+            "description": "Genera el PDF de pedido/cotización cuando el cliente aprueba el resumen final. "
+            "Solo incluir productos con referencia confirmada por consultar_inventario.",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -15124,12 +15045,7 @@ AGENT_TOOLS = [
             "name": "consultar_inventario_lote",
             "description": (
                 "Busca disponibilidad y precios de MÚLTIPLES productos en UNA SOLA llamada. "
-                "⚠️ OBLIGATORIO: Cuando el cliente envíe una lista de 2 o más productos (pedido, cotización, lista de compras), "
-                "USA ESTA HERRAMIENTA en vez de llamar `consultar_inventario` varias veces. Esto es MUCHO más rápido. "
-                "Cada elemento del array debe ser un producto individual con cantidad y presentación. "
-                "Aplica las mismas reglas de traducción que consultar_inventario: "
-                "T-11→Pintulux Blanco Brillante 3en1, SD1→barniz SD-1, 1501→Viniltex Blanco 1501, "
-                "brocha profesional→brocha goya profesional, etc."
+                "OBLIGATORIO para listas de 2+ productos. El backend traduce jerga automáticamente."
             ),
             "parameters": {
                 "type": "object",
@@ -15217,7 +15133,9 @@ AGENT_TOOLS = [
 
 
 def _handle_tool_consultar_inventario(args, conversation_context):
-    producto = args.get("producto", "")
+    producto_raw = args.get("producto", "")
+    # ── Phase 20: Traducir jerga coloquial del cliente a términos de catálogo en Python ──
+    producto = translate_customer_jargon(producto_raw)
     # Skip NLU (OpenAI) call — the main LLM already parsed the product query via tool call
     base_request = extract_product_request(producto)
     base_request["nlu_processed"] = True
@@ -15385,6 +15303,8 @@ def _handle_tool_consultar_inventario_lote(args, conversation_context):
         if not producto_text:
             continue
         try:
+            # ── Phase 20: Traducir jerga coloquial antes de procesar ──
+            producto_text = translate_customer_jargon(producto_text)
             # Skip NLU (OpenAI) call for batch items — the main LLM already parsed them
             base_request = extract_product_request(producto_text)
             base_request["nlu_processed"] = True
