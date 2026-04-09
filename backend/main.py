@@ -3768,6 +3768,23 @@ def handle_pending_internal_transfer_flow(content: str, context: dict, conversat
     if not flow_payload:
         return None
 
+    # ── ENSEÑANZA tiene prioridad sobre el flujo de traslados ──
+    # Si un experto dice ENSEÑAR mientras hay un transfer flow activo,
+    # liberamos el flujo y dejamos pasar al LLM para registrar conocimiento.
+    _TEACHING_ESCAPE_SIGNALS = [
+        "ensenar", "ensenanza", "anota esto", "guarda esto", "aprender esto",
+        "enseñar", "enseñanza",
+        "la recomendacion esta mal", "la recomendación está mal",
+        "no es asi", "no es así", "eso esta mal", "eso está mal",
+        "te equivocaste", "la respuesta esta mal", "la respuesta está mal",
+    ]
+    _norm_teach = normalize_text_value(content)
+    if any(signal in _norm_teach for signal in _TEACHING_ESCAPE_SIGNALS):
+        # Clear the transfer flow and let the message pass to the LLM
+        if isinstance(conversation_context, dict):
+            conversation_context["internal_transfer_flow"] = None
+        return None
+
     normalized = normalize_text_value(content)
     if normalized in {"cancelar", "cancelar traslado", "salir", "no"}:
         return {
@@ -6535,47 +6552,76 @@ def seed_expert_knowledge_phase19():
 def fetch_expert_knowledge(query: str, limit: int = 8) -> list[dict]:
     """Fetch commercial expert knowledge matching the query context.
 
-    Uses ILIKE substring matching with ts_rank scoring from the existing GIN
-    index for relevance ordering.  Short technical terms (UV, NSF, pH, m2) are
-    now preserved (min 2 chars).
+    Uses an in-memory cache (refreshed every 120s) to avoid DB round-trips
+    on every tool call.  With ~50 rows this is negligible memory.
     """
     if not query:
         return []
     try:
-        engine = get_db_engine()
         normalized = normalize_text_value(query)
         terms = [t for t in normalized.split() if len(t) >= 2][:10]
         if not terms:
             return []
-        with engine.connect() as connection:
-            conditions = " OR ".join(
-                f"(contexto_tags ILIKE :t{i} OR nota_comercial ILIKE :t{i} OR COALESCE(producto_recomendado,'') ILIKE :t{i} OR COALESCE(producto_desestimado,'') ILIKE :t{i})"
-                for i in range(len(terms))
+
+        all_rows = _get_expert_knowledge_cache()
+
+        # Score each row by how many terms match
+        scored = []
+        for row in all_rows:
+            searchable = (
+                (row.get("contexto_tags") or "").lower()
+                + " " + (row.get("nota_comercial") or "").lower()
+                + " " + (row.get("producto_recomendado") or "").lower()
+                + " " + (row.get("producto_desestimado") or "").lower()
             )
-            # Count how many terms match (simple relevance score)
-            match_score = " + ".join(
-                f"CASE WHEN (contexto_tags ILIKE :t{i} OR nota_comercial ILIKE :t{i} OR COALESCE(producto_recomendado,'') ILIKE :t{i}) THEN 1 ELSE 0 END"
-                for i in range(len(terms))
-            )
-            params = {f"t{i}": f"%{t}%" for i, t in enumerate(terms)}
-            rows = connection.execute(
-                text(
-                    f"""
-                    SELECT id, contexto_tags, producto_recomendado, producto_desestimado,
-                           nota_comercial, tipo, nombre_experto, created_at,
-                           ({match_score}) AS relevance
-                    FROM public.agent_expert_knowledge
-                    WHERE activo = true AND ({conditions})
-                    ORDER BY relevance DESC, created_at DESC
-                    LIMIT :lim
-                    """
-                ),
-                {**params, "lim": limit},
-            ).mappings().all()
-            return [dict(r) for r in rows]
+            score = sum(1 for t in terms if t in searchable)
+            if score > 0:
+                scored.append((score, row))
+        scored.sort(key=lambda x: (-x[0], -(x[1].get("_ts") or 0)))
+        return [r for _, r in scored[:limit]]
     except Exception as exc:
         logger.debug("fetch_expert_knowledge error: %s", exc)
         return []
+
+
+# ── In-memory cache for expert knowledge (tiny table, avoids DB round-trips) ──
+_expert_knowledge_cache: list[dict] = []
+_expert_knowledge_cache_ts: float = 0.0
+_EXPERT_CACHE_TTL = 120  # seconds
+
+
+def _get_expert_knowledge_cache() -> list[dict]:
+    global _expert_knowledge_cache, _expert_knowledge_cache_ts
+    import time as _time
+    now = _time.time()
+    if _expert_knowledge_cache and (now - _expert_knowledge_cache_ts) < _EXPERT_CACHE_TTL:
+        return _expert_knowledge_cache
+    try:
+        engine = get_db_engine()
+        with engine.connect() as connection:
+            rows = connection.execute(
+                text(
+                    """SELECT id, contexto_tags, producto_recomendado, producto_desestimado,
+                              nota_comercial, tipo, nombre_experto, created_at
+                       FROM public.agent_expert_knowledge
+                       WHERE activo = true
+                       ORDER BY created_at DESC"""
+                )
+            ).mappings().all()
+            _expert_knowledge_cache = [
+                {**dict(r), "_ts": r["created_at"].timestamp() if r.get("created_at") else 0}
+                for r in rows
+            ]
+            _expert_knowledge_cache_ts = now
+    except Exception as exc:
+        logger.debug("_get_expert_knowledge_cache refresh error: %s", exc)
+    return _expert_knowledge_cache
+
+
+def invalidate_expert_knowledge_cache():
+    """Call after inserting new expert knowledge to force refresh on next read."""
+    global _expert_knowledge_cache_ts
+    _expert_knowledge_cache_ts = 0.0
 
 
 def fetch_product_price(referencia: str) -> Optional[dict]:
@@ -17665,6 +17711,7 @@ def _handle_tool_registrar_conocimiento_experto(args, conversation_context):
                 },
             ).fetchone()
         kid = row[0] if row else "?"
+        invalidate_expert_knowledge_cache()
         rec_txt = f" → recomendar: {producto_recomendado}" if producto_recomendado else ""
         des_txt = f" | evitar: {producto_desestimado}" if producto_desestimado else ""
         return json.dumps(
