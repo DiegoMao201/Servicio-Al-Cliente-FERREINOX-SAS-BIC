@@ -8101,6 +8101,27 @@ _FAREWELL_PATTERNS = re.compile(
 )
 
 
+def is_simple_greeting(user_message: str) -> bool:
+    """Detect simple greetings/farewells that don't need RAG enforcement."""
+    msg = (user_message or "").strip().lower()
+    if len(msg) < 3:
+        return True
+    _GREETING_WORDS = {
+        "hola", "buenas", "buenos días", "buenos dias", "buenas tardes",
+        "buenas noches", "hey", "ey", "hi", "hello", "qué tal", "que tal",
+        "cómo estás", "como estas", "gracias", "muchas gracias", "ok", "listo",
+        "dale", "perfecto", "sí", "si", "no", "vale", "chao", "adiós", "adios",
+        "hasta luego", "bye", "nos vemos",
+    }
+    # If the entire message is a greeting/short response
+    if msg in _GREETING_WORDS or msg.rstrip(".,!?¡¿ ") in _GREETING_WORDS:
+        return True
+    # Very short messages (< 15 chars) that are likely confirmations
+    if len(msg) < 15 and not any(w in msg for w in ["pintar", "pintura", "pint", "fachada", "piso", "techo", "reja", "madera", "humedad", "moho", "goteras", "óxido", "oxido"]):
+        return True
+    return False
+
+
 def detect_farewell(user_message: str) -> bool:
     return bool(_FAREWELL_PATTERNS.match(user_message.strip()))
 
@@ -13754,6 +13775,55 @@ TONO DE CONVERSACIÓN (REGLA DE ORO — HUMANIDAD):
 - Si el cliente comete un error técnico, corrígelo con gentileza: "Ojo con eso, lo que pasa es que..." en vez de "Eso es incorrecto."
 - Los emojis están bien con moderación (✅, 💡, ⚠️) pero no abuses. NO uses emojis en cada oración.
 
+══════════════════════════════════════════════════════════════════════════════
+PROTOCOLO UNIVERSAL INVIOLABLE (APLICA A CUALQUIER CASO SIN EXCEPCIÓN)
+══════════════════════════════════════════════════════════════════════════════
+\
+Este protocolo es tu LEY MÁXIMA. No importa qué pida el cliente — pintura, barniz, impermeabilizante, \
+esmalte, anticorrosivo, epóxico, herramientas, o lo que sea — SIEMPRE sigues estos 5 pasos EN ORDEN. \
+NO puedes saltarte NINGUNO. Si intentas ir al paso 3 sin completar el 1 y 2, tu respuesta será INCORRECTA.
+\
+PASO 1 — ESCUCHAR Y DIAGNOSTICAR (OBLIGATORIO, NO NEGOCIABLE):
+  Antes de nombrar CUALQUIER producto, DEBES entender el problema del cliente.
+  Preguntas MÍNIMAS que necesitas (máximo 2 por turno, no bombardees):
+  - ¿Qué superficie es? (pared, piso, metal, madera, techo, fachada...)
+  - ¿Qué condición tiene? (húmedo, oxidado, descascarado, moho, nuevo, viejo, agrietado...)
+  - ¿Interior o exterior?
+  - ¿Cuántos metros cuadrados? (OBLIGATORIO antes de cotizar)
+  Si el cliente ya te dio esta información en su mensaje, NO repitas preguntas que ya respondió.
+  Si falta información CRÍTICA, PREGUNTA antes de avanzar. Es mejor una pregunta de más que una recomendación incorrecta.
+\
+PASO 2 — CONSULTAR EL RAG (OBLIGATORIO, NO NEGOCIABLE):
+  Una vez que entiendas la superficie y condición del cliente, DEBES llamar \
+  `consultar_conocimiento_tecnico` con la superficie y producto sospechado ANTES de recomendar nada.
+  Esto te da: fichas técnicas, rendimientos, sistemas completos, experiencia de campo de Pablo y Diego.
+  TIENES PROHIBIDO dar recomendaciones técnicas de memoria. Tu memoria NO es confiable para datos \
+  técnicos (rendimientos, proporciones de mezcla, compatibilidad, tiempos de secado).
+  El RAG + Conocimiento Experto es tu ÚNICA fuente de verdad técnica.
+  Si el RAG no tiene datos para un caso, di honestamente que verificarás con un asesor especializado.
+\
+PASO 3 — RECOMENDAR SISTEMA COMPLETO (NUNCA un producto suelto):
+  Con la información del RAG, arma el SISTEMA COMPLETO:
+  Preparación de superficie → Tratamiento/sellador/imprimante → Producto principal → Acabado → Herramientas.
+  Si el cliente tiene un PROBLEMA de superficie (humedad, moho, óxido, goteras, grietas, descascarado), \
+  PRIMERO recetas el tratamiento, LUEGO el acabado. PROHIBIDO dar solo acabado cuando hay problema.
+\
+PASO 4 — COTIZAR CON DATOS REALES:
+  Calcula cantidades (m² / rendimiento del RAG = galones, redondear arriba).
+  Llama `consultar_inventario` para CADA producto del sistema.
+  Presenta: precio unitario con IVA (19%), cantidad, total por producto, GRAN TOTAL del sistema.
+  Si ofreces opciones (ej. Koraza vs Viniltex), CADA opción con su total INDEPENDIENTE. NUNCA sumes alternativas.
+  SIEMPRE da tu recomendación: "Para tu caso, yo te recomiendo [X] porque [razón técnica]."
+\
+PASO 5 — INCLUIR HERRAMIENTAS Y CERRAR:
+  Incluye herramientas de aplicación (rodillo, brocha, espátula, lija).
+  Confirma el pedido completo. Genera PDF si aplica.
+\
+REGLA DE HIERRO: Si no llamaste `consultar_conocimiento_tecnico` en esta conversación para \
+el tema que estás respondiendo, NO tienes autorización para recomendar productos técnicos. \
+Tu respuesta debe ser: hacer más preguntas diagnósticas O llamar al RAG primero.
+══════════════════════════════════════════════════════════════════════════════
+
 PRINCIPIO FUNDAMENTAL — VENDEMOS SISTEMAS, NO PRODUCTOS SUELTOS:
 \
 El 99% de los casos requieren sistemas completos. NUNCA recomiendes un solo producto. Siempre recomienda el sistema completo:
@@ -18145,6 +18215,74 @@ def generate_agent_reply_v2(
     total_ms = int((time.time() - t_start) * 1000)
     tool_names = [tc["name"] for tc in tool_calls_made]
     logger.info("Agent reply TOTAL: %dms | tools=%s | iterations=%d", total_ms, tool_names, iteration)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA DE PROTOCOLO: si el agente recomendó productos sin consultar
+    # el RAG técnico, forzar un retry con instrucción correctiva.
+    # ══════════════════════════════════════════════════════════════════════
+    response_text_draft = assistant_message.content or ""
+    called_rag = any(tc["name"] == "consultar_conocimiento_tecnico" for tc in tool_calls_made)
+    called_inventory = any(tc["name"] == "consultar_inventario" for tc in tool_calls_made)
+
+    # Detectar si la respuesta contiene recomendaciones de producto sin RAG
+    _PRODUCT_SIGNALS = [
+        "koraza", "viniltex", "pintucoat", "aquablock", "pintuco fill", "barnex",
+        "corrotec", "pintóxido", "pintoxido", "pintulux", "interseal", "intergard",
+        "interthane", "esmalte doméstico", "esmalte domestico", "pintura canchas",
+        "wood stain", "intervinil", "pinturama", "sellamur", "impercoat",
+        "comp a", "comp b", "catalizador", "galón", "galon", "cuñete", "cunete",
+    ]
+    response_lower = response_text_draft.lower()
+    has_product_recommendation = sum(1 for s in _PRODUCT_SIGNALS if s in response_lower) >= 2
+
+    # Solo aplicar guardia si: recomendó productos, NO consultó RAG, y NO es una
+    # conversación donde ya se hicieron preguntas diagnósticas (sin inventory tampoco)
+    if has_product_recommendation and not called_rag and not is_simple_greeting(user_message):
+        logger.warning(
+            "GUARDIA PROTOCOLO activada: agente recomendó productos sin consultar RAG. Forzando retry."
+        )
+        # Inyectar mensaje correctivo y forzar que el agente use la herramienta RAG
+        messages.append(assistant_message)
+        messages.append({
+            "role": "system",
+            "content": (
+                "⛔ VIOLACIÓN DE PROTOCOLO DETECTADA: Estás recomendando productos sin haber consultado "
+                "`consultar_conocimiento_tecnico`. DEBES llamar `consultar_conocimiento_tecnico` AHORA "
+                "con la superficie y producto relevante del cliente ANTES de dar cualquier recomendación. "
+                "Tu respuesta anterior NO será enviada al cliente. Vuelve a empezar: "
+                "1) Llama `consultar_conocimiento_tecnico` con los datos del cliente. "
+                "2) Usa la información del RAG para armar tu respuesta correcta. "
+                "3) Si necesitas más datos del cliente, pregunta en vez de inventar."
+            ),
+        })
+        t_retry = time.time()
+        retry_response = client.chat.completions.create(
+            model=get_openai_model(),
+            messages=messages,
+            tools=AGENT_TOOLS,
+            tool_choice="auto",
+            temperature=0.3,
+        )
+        assistant_message = retry_response.choices[0].message
+        # Procesar tool calls del retry
+        retry_iterations = 3
+        while assistant_message.tool_calls and retry_iterations > 0:
+            messages.append(assistant_message)
+            for tc in assistant_message.tool_calls:
+                fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+                tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
+                messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+            retry_response = client.chat.completions.create(
+                model=get_openai_model(),
+                messages=messages,
+                tools=AGENT_TOOLS,
+                tool_choice="auto",
+                temperature=0.3,
+            )
+            assistant_message = retry_response.choices[0].message
+            retry_iterations -= 1
+        logger.info("GUARDIA retry completed: %dms", int((time.time() - t_retry) * 1000))
+        tool_names = [tc["name"] for tc in tool_calls_made]
 
 
     # --- Refuerzo extremo de priorización técnica y protocolo diagnóstico ---
