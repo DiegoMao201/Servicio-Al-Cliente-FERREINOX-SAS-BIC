@@ -15280,23 +15280,43 @@ def _handle_tool_consultar_inventario(args, conversation_context):
         conversation_context["last_product_context"] = results[:10]
     clarification_required = should_ask_product_clarification(product_request, rows)
     clarification_question = build_best_product_clarification_question(product_request, rows) if clarification_required else None
-    return json.dumps(
-        {
-            "encontrados": len(results),
-            "productos": results,
-            "seguimiento_producto_previo": bool(product_request.get("followup_from_previous_product")),
-            "nlu_extraccion": product_request.get("nlu_extraction") or {},
-            "estrategia_ranking": "catalogo_curado_postgresql",
-            "requiere_aclaracion": clarification_required,
-            "pregunta_desambiguacion": clarification_question,
-            "mensaje": (
-                "Se recuperó el producto del mensaje anterior para resolver este seguimiento."
-                if product_request.get("followup_from_previous_product") else None
-            ),
-        },
-        ensure_ascii=False,
-        default=str,
-    )
+    # ── Conocimiento experto como señal adicional en inventario ──
+    _expert_query_parts = [producto]
+    for _r in results[:3]:
+        _expert_query_parts.append(_r.get("descripcion") or "")
+    _expert_inv = fetch_expert_knowledge(" ".join(_expert_query_parts), limit=4)
+    response_payload = {
+        "encontrados": len(results),
+        "productos": results,
+        "seguimiento_producto_previo": bool(product_request.get("followup_from_previous_product")),
+        "nlu_extraccion": product_request.get("nlu_extraction") or {},
+        "estrategia_ranking": "catalogo_curado_postgresql",
+        "requiere_aclaracion": clarification_required,
+        "pregunta_desambiguacion": clarification_question,
+        "mensaje": (
+            "Se recuperó el producto del mensaje anterior para resolver este seguimiento."
+            if product_request.get("followup_from_previous_product") else None
+        ),
+    }
+    if _expert_inv:
+        response_payload["conocimiento_experto_producto"] = [
+            {
+                "tipo": n["tipo"],
+                "contexto": n["contexto_tags"],
+                "recomendar": n.get("producto_recomendado"),
+                "evitar": n.get("producto_desestimado"),
+                "nota": n["nota_comercial"],
+            }
+            for n in _expert_inv
+        ]
+        response_payload["instruccion_conocimiento_experto"] = (
+            "💡 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE para este producto. "
+            "Lee 'conocimiento_experto_producto' ANTES de presentar resultados al cliente. "
+            "Si hay un 'evitar', NO lo recomiendes para este contexto. "
+            "Si hay reglas comerciales (sobre pedido, obligatorio cuarzo, preguntar m², etc.), APLÍCALAS. "
+            "Presenta las notas relevantes como '💡 Experiencia Ferreinox: [nota]'."
+        )
+    return json.dumps(response_payload, ensure_ascii=False, default=str)
 
 
 def _handle_tool_consultar_inventario_lote(args, conversation_context):
@@ -15400,15 +15420,32 @@ def _handle_tool_consultar_inventario_lote(args, conversation_context):
                 "error": str(exc),
             })
 
-    return json.dumps(
-        {
-            "total_buscados": len(all_results),
-            "resultados": all_results,
-            "estrategia_ranking": "catalogo_curado_postgresql",
-        },
-        ensure_ascii=False,
-        default=str,
-    )
+    # ── Conocimiento experto como señal adicional en lote ──
+    _lote_query_parts = [str(p) for p in productos[:8]]
+    _expert_lote = fetch_expert_knowledge(" ".join(_lote_query_parts), limit=6)
+    lote_payload = {
+        "total_buscados": len(all_results),
+        "resultados": all_results,
+        "estrategia_ranking": "catalogo_curado_postgresql",
+    }
+    if _expert_lote:
+        lote_payload["conocimiento_experto_producto"] = [
+            {
+                "tipo": n["tipo"],
+                "contexto": n["contexto_tags"],
+                "recomendar": n.get("producto_recomendado"),
+                "evitar": n.get("producto_desestimado"),
+                "nota": n["nota_comercial"],
+            }
+            for n in _expert_lote
+        ]
+        lote_payload["instruccion_conocimiento_experto"] = (
+            "💡 CONOCIMIENTO EXPERTO FERREINOX para este lote. "
+            "Lee 'conocimiento_experto_producto' ANTES de presentar resultados. "
+            "Aplica reglas comerciales (sobre pedido, obligatorio cuarzo, preguntar m², etc.). "
+            "Si hay un 'evitar', NO lo recomiendes."
+        )
+    return json.dumps(lote_payload, ensure_ascii=False, default=str)
 
 
 def _handle_tool_verificar_identidad(args, context, conversation_context):
@@ -16837,6 +16874,26 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
 
     commercial_draft["items"] = confirmed_items
     commercial_draft["store_filters"] = store_filters
+
+    # ── Conocimiento experto: alertas comerciales sobre los productos del pedido ──
+    _order_product_names = [it.get("descripcion_comercial", "") for it in items_pedido]
+    _expert_order = fetch_expert_knowledge(" ".join(_order_product_names), limit=6)
+    _expert_warnings = []
+    if _expert_order:
+        for _en in _expert_order:
+            _tipo = _en.get("tipo", "")
+            _nota = _en.get("nota_comercial", "")
+            if _tipo in ("contraindicacion", "correccion") or any(
+                kw in _nota.lower() for kw in ["sobre pedido", "prohibid", "obligatori", "nunca", "no usar", "no cotiz"]
+            ):
+                _expert_warnings.append({
+                    "tipo": _tipo,
+                    "contexto": _en.get("contexto_tags"),
+                    "nota": _nota,
+                    "evitar": _en.get("producto_desestimado"),
+                })
+    if _expert_warnings:
+        commercial_draft["alertas_conocimiento_experto"] = _expert_warnings
     commercial_draft["delivery_channel"] = "email" if canal_envio == "email" else "chat"
     commercial_draft["contact_email"] = correo_cliente or commercial_draft.get("contact_email")
     commercial_draft["items_confirmed"] = True
@@ -16942,6 +16999,19 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                 intent_detectado="pedido_icg_error",
             )
 
+    # ── Build expert knowledge warnings string for the LLM response ──
+    _alertas_experto_str = None
+    _alertas = commercial_draft.get("alertas_conocimiento_experto")
+    if _alertas:
+        _parts = []
+        for _a in _alertas:
+            _parts.append(f"[{_a.get('tipo','info')}] {_a.get('nota','')[:200]}")
+        _alertas_experto_str = (
+            "⚠️ ALERTAS DEL CONOCIMIENTO EXPERTO FERREINOX para este pedido: "
+            + " | ".join(_parts)
+            + " — INFORMA AL CLIENTE si alguna alerta afecta su pedido."
+        )
+
     if canal_envio == "email" and correo_cliente:
         try:
             subject = f"Pedido Ferreinox CRM-{context['conversation_id']}"
@@ -16967,6 +17037,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                  "order_id": order_id,
                  "export_icg": export_summary,
                  "export_error": export_error,
+                 "alertas_conocimiento_experto": _alertas_experto_str,
                  "mensaje": (
                      f"El PDF del pedido fue enviado al correo {correo_cliente} exitosamente."
                      + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
@@ -16997,6 +17068,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                  "order_id": order_id,
                  "export_icg": export_summary,
                  "export_error": export_error,
+                 "alertas_conocimiento_experto": _alertas_experto_str,
                  "mensaje": (
                      f"El PDF del pedido '{pdf_filename}' fue enviado por WhatsApp exitosamente."
                      + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
@@ -17017,6 +17089,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                          "order_id": order_id,
                          "export_icg": export_summary,
                          "export_error": export_error,
+                         "alertas_conocimiento_experto": _alertas_experto_str,
                          "mensaje": (
                              f"El PDF del pedido '{pdf_filename}' fue enviado por WhatsApp exitosamente."
                              + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
