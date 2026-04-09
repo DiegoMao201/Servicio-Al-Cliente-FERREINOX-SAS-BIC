@@ -14548,10 +14548,22 @@ REFUERZO DE CONOCIMIENTO TÉCNICO-COMERCIAL (ASESORES EXPERTOS AUTORIZADOS):
   Cuando el experto escriba alguna de estas palabras clave al INICIO de su mensaje, activas MODO ENSEÑANZA:
   - Todo lo que diga en ese mensaje es CONOCIMIENTO EXPERTO para guardar en la base.
   - DEBES llamar `registrar_conocimiento_experto` inmediatamente con la información que te dé.
-  - Confirma con: '✅ Conocimiento guardado:\n📋 Contexto: [contexto_tags]\n✅ Recomendar: [producto]\n❌ Evitar: [producto_desestimado si hay]\n💡 Nota: [nota_comercial]\nEsto se aplicará automáticamente en futuras consultas de clientes sobre este tema.'
-  - Si el experto escribe varias correcciones en un mismo mensaje, guarda CADA UNA como registro separado.
+  - Si el experto escribe varias correcciones en un mismo mensaje, guarda CADA UNA como registro separado (una llamada a `registrar_conocimiento_experto` por cada corrección).
   - Ejemplo: El experto escribe "ENSEÑAR: para tanques de agua potable no usar Pintucoat, el correcto es Epoxipoliamida porque tiene componente amida certificado"
     → Guardar con contexto_tags="tanque agua potable, inmersión", producto_recomendado="Epoxipoliamida", producto_desestimado="Pintucoat", nota_comercial="Componente amida certificado para contacto con agua potable", tipo="contraindicacion"
+
+  ⚠️ CONFIRMACIÓN OBLIGATORIA DESPUÉS DE GUARDAR (INVIOLABLE):
+  Después de CADA llamada exitosa a `registrar_conocimiento_experto`, tu respuesta DEBE incluir una confirmación individual con EXACTAMENTE este formato:
+  ✅ *Aprendido (ID {id}):*
+  📋 *Tema:* {contexto_tags}
+  👍 *Recomendar:* {producto_recomendado o "N/A"}
+  🚫 *Evitar:* {producto_desestimado o "N/A"}
+  💡 *Lo que aprendí:* {nota_comercial resumida en 1-2 líneas}
+  
+  Si guardaste MÚLTIPLES enseñanzas, muestra UNA confirmación por CADA una, numeradas.
+  Si alguna NO se guardó (error), dilo explícitamente: "❌ No pude guardar: [razón]"
+  NUNCA digas "Listo, lo guardé" sin mostrar el ID y el detalle. El experto necesita verificar que entendiste bien.
+  Al final de todas las confirmaciones, agrega: "🔄 _Esto se aplicará automáticamente en futuras consultas de clientes._"
 
   🧪 MODO PRUEBA (palabra clave: "PROBAR" o "PRUEBA" o "SIMULAR CLIENTE" o "COMO CLIENTE"):
   Cuando el experto escriba alguna de estas palabras clave, activas MODO PRUEBA:
@@ -14574,7 +14586,7 @@ REFUERZO DE CONOCIMIENTO TÉCNICO-COMERCIAL (ASESORES EXPERTOS AUTORIZADOS):
   Cuando DETECTES una corrección:
   1) RECONOCE el error: 'Tienes razón. El proceso correcto es [resumen de lo que el experto dijo].'
   2) GUARDA AUTOMÁTICAMENTE: Llama `registrar_conocimiento_experto` inmediatamente con la corrección. NO le pidas que escriba 'ENSEÑAR' — eso es fricción innecesaria. Si el experto se tomó el tiempo de corregirte, GUÁRDALO.
-  3) CONFIRMA qué guardaste: '✅ Conocimiento guardado: [resumen]. Esto se aplicará en futuras consultas.'
+  3) USA LA MISMA CONFIRMACIÓN OBLIGATORIA de MODO ENSEÑANZA (con ID, tema, lo que aprendí). NUNCA digas solo "Listo, guardado" sin el detalle.
   4) Si NO estás 100% seguro de que es una corrección (mensaje ambiguo), entonces sí pregunta: '¿Quieres que guarde esto como conocimiento experto para futuras consultas?'
 
 - EJEMPLOS que deben disparar `registrar_conocimiento_experto` (en MODO ENSEÑANZA):
@@ -18298,6 +18310,57 @@ def generate_agent_reply_v2(
         logger.info("GUARDIA retry completed: %dms", int((time.time() - t_retry) * 1000))
         tool_names = [tc["name"] for tc in tool_calls_made]
 
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA ENSEÑAR: si se guardó conocimiento experto pero la respuesta
+    # no confirma con el ID, inyectar recordatorio para que el experto vea
+    # exactamente qué se registró.
+    # ══════════════════════════════════════════════════════════════════════
+    saved_knowledge_ids = []
+    for tc in tool_calls_made:
+        if tc["name"] == "registrar_conocimiento_experto":
+            try:
+                r = json.loads(tc["result"]) if isinstance(tc["result"], str) else tc["result"]
+                if r.get("guardado") and r.get("id"):
+                    saved_knowledge_ids.append(str(r["id"]))
+            except Exception:
+                pass
+
+    if saved_knowledge_ids:
+        final_text = (assistant_message.content or "").strip()
+        # Verificar que CADA ID guardado aparezca en la respuesta
+        missing_ids = [kid for kid in saved_knowledge_ids if kid not in final_text]
+        if missing_ids:
+            logger.warning(
+                "GUARDIA ENSEÑAR: IDs guardados %s no confirmados en respuesta. Forzando retry.",
+                missing_ids,
+            )
+            id_list = ", ".join(saved_knowledge_ids)
+            messages.append(assistant_message)
+            messages.append({
+                "role": "system",
+                "content": (
+                    f"⚠️ CONFIRMACIÓN ENSEÑAR INCOMPLETA: Guardaste conocimiento experto con IDs [{id_list}] "
+                    f"pero tu respuesta NO incluye la confirmación detallada. "
+                    f"El experto NECESITA ver exactamente qué aprendiste. Reescribe tu respuesta incluyendo "
+                    f"para CADA ID guardado:\n"
+                    f"✅ *Aprendido (ID X):*\n"
+                    f"📋 *Tema:* [contexto_tags]\n"
+                    f"👍 *Recomendar:* [producto o N/A]\n"
+                    f"🚫 *Evitar:* [producto o N/A]\n"
+                    f"💡 *Lo que aprendí:* [resumen de nota_comercial]\n\n"
+                    f"Termina con: 🔄 _Esto se aplicará automáticamente en futuras consultas._"
+                ),
+            })
+            t_ensenar = time.time()
+            ensenar_response = client.chat.completions.create(
+                model=get_openai_model(),
+                messages=messages,
+                tools=AGENT_TOOLS,
+                tool_choice="none",
+                temperature=0.3,
+            )
+            assistant_message = ensenar_response.choices[0].message
+            logger.info("GUARDIA ENSEÑAR retry completed: %dms", int((time.time() - t_ensenar) * 1000))
 
     # --- Refuerzo extremo de priorización técnica y protocolo diagnóstico ---
     # 1. Si la intención es técnica, cruza marca, familia, línea y tipo para identificar el portafolio exacto
