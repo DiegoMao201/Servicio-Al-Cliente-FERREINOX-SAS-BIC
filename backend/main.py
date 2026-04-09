@@ -17526,8 +17526,9 @@ _AUTHORIZED_EXPERTS: dict[str, str] = {
 def _handle_tool_registrar_conocimiento_experto(args, conversation_context):
     """Save a commercial knowledge note from an authorized expert (Pablo Mafla or Diego García)."""
     # Guard: only authorized experts can save knowledge
-    internal_user = conversation_context.get("internal_user") or {}
-    cedula = str(internal_user.get("cedula") or "").strip()
+    internal_auth = conversation_context.get("internal_auth") or {}
+    emp_ctx = dict((internal_auth.get("employee_context") or {}))
+    cedula = str(emp_ctx.get("cedula") or "").strip()
     if cedula not in _AUTHORIZED_EXPERTS:
         return json.dumps(
             {
@@ -17603,8 +17604,9 @@ def _handle_tool_registrar_conocimiento_experto(args, conversation_context):
 def _handle_tool_procesar_documento_experto(args, conversation_context):
     """Ingest an expert-uploaded document into the RAG system after confirmation."""
     # Auth guard
-    internal_user = conversation_context.get("internal_user") or {}
-    cedula = str(internal_user.get("cedula") or "").strip()
+    internal_auth = conversation_context.get("internal_auth") or {}
+    emp_ctx = dict((internal_auth.get("employee_context") or {}))
+    cedula = str(emp_ctx.get("cedula") or "").strip()
     if cedula not in _AUTHORIZED_EXPERTS:
         return json.dumps(
             {"ingested": False, "mensaje": "Solo los asesores técnicos autorizados pueden subir documentos al RAG."},
