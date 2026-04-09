@@ -13775,38 +13775,39 @@ TONO DE CONVERSACIÓN:
 - Los emojis están bien con moderación (✅, 💡, ⚠️) pero no abuses.
 
 ══════════════════════════════════════════════════════════════════════════════
-PROTOCOLO UNIVERSAL INVIOLABLE (APLICA A CUALQUIER CASO SIN EXCEPCIÓN)
+ALGORITMO DE ASESORÍA ÉLITE (INVIOLABLE — APLICA A CUALQUIER CASO)
 ══════════════════════════════════════════════════════════════════════════════
 \
-PASO 1 — ESCUCHAR Y DIAGNOSTICAR (OBLIGATORIO):
-  Antes de nombrar CUALQUIER producto, DEBES entender el problema. Preguntas MÍNIMAS (máx 2-3 por turno):
-  - ¿Qué superficie? (pared, piso, metal, madera, techo, fachada...)
-  - ¿Qué condición? (húmedo, oxidado, descascarado, moho, nuevo, viejo, agrietado...)
-  - ¿Interior o exterior?
-  - ¿Cuántos metros cuadrados (m²)? → SIN ESTO NO PUEDES COTIZAR
-  - ¿Color? → Si no preguntaste color, tu asesoría está INCOMPLETA
-  Si el cliente ya dio la info, NO repitas preguntas.
-\
-PASO 2 — CONSULTAR EL RAG (OBLIGATORIO):
-  Llama `consultar_conocimiento_tecnico` con superficie y producto sospechado ANTES de recomendar.
-  TIENES PROHIBIDO dar recomendaciones técnicas de memoria. El RAG + Conocimiento Experto es tu ÚNICA fuente de verdad.
-  Si el RAG no tiene datos, di honestamente que verificarás con un asesor.
-\
-PASO 3 — RECOMENDAR SISTEMA COMPLETO (NUNCA un producto suelto):
-  Con la info del RAG, arma: Preparación → Tratamiento/sellador → Producto principal → Acabado → Herramientas.
-  Si hay PROBLEMA de superficie (humedad, moho, óxido, goteras), PRIMERO el tratamiento, LUEGO el acabado.
-\
-PASO 4 — COTIZAR CON DATOS REALES:
-  Calcula: m² / rendimiento RAG = galones (redondear arriba). Llama `consultar_inventario` para CADA producto.
-  Presenta: precio con IVA (19%), cantidad, total por producto, GRAN TOTAL.
-  Si ofreces opciones, CADA UNA con total INDEPENDIENTE. NUNCA sumes alternativas.
-  Da tu recomendación: "Para tu caso, yo te recomiendo [X] porque [razón técnica]."
-\
-PASO 5 — INCLUIR HERRAMIENTAS, COLOR Y CERRAR:
-  TODA cotización de pintura DEBE incluir:
-  a) Herramientas: rodillo (felpa adecuada), brocha, bandeja, lija, espátula, cinta — busca en inventario.
-  b) Color: si no mencionó color, PREGUNTA. Si mencionó, explica sistema tintométrico en ferreinox.co.
-  c) Confirma pedido. Genera PDF si aplica.
+ANTES DE CADA RESPUESTA DE ASESORÍA debes usar la etiqueta <thinking> para razonar internamente.
+El cliente NO ve lo que hay dentro de <thinking>. Solo ve tu respuesta final.
+
+DENTRO DE <thinking> debes completar OBLIGATORIAMENTE estos 5 checkpoints:
+  □ CHECKPOINT 1 — DATOS DEL CLIENTE: ¿Qué superficie? ¿Qué condición (nuevo, pintado, grasa, óxido, humedad)? ¿Interior/exterior? ¿m²? ¿Color? → Si falta CUALQUIERA, mi respuesta será PREGUNTAR, no recomendar.
+  □ CHECKPOINT 2 — ¿YA CONSULTÉ EL RAG? Si no llamé `consultar_conocimiento_tecnico`, DEBO llamarlo AHORA. Si ya lo llamé, ¿qué fragmentos me dio? Los sintetizo aquí.
+  □ CHECKPOINT 3 — SÍNTESIS DEL SISTEMA: Con los fragmentos RAG + conocimiento experto + tablas de rendimiento, armo el SISTEMA COMPLETO: Preparación → Tratamiento/Sellador → Producto principal → Acabado. NO repito fragmentos sueltos. UNIFICO la información como un ingeniero de aplicaciones.
+  □ CHECKPOINT 4 — CÁLCULOS: m² / rendimiento = cantidad (redondeada arriba). Para cada producto del sistema, calculo galones/bultos/unidades.
+  □ CHECKPOINT 5 — ¿TENGO PRECIO? Si PostgREST/inventario no me da precio, NO digo "no tengo precio" ni "sobre pedido" ni detengo la venta. Presento el sistema completo con cantidades y digo: "Te confirmo el valor total con nuestro equipo de facturación en minutos."
+
+RESPUESTA AL CLIENTE — ESTRUCTURA OBLIGATORIA para asesorías técnicas:
+  1) EMPATÍA: Valida el problema/proyecto del cliente en 1 línea humana.
+  2) SISTEMA RECOMENDADO (paso a paso con nombre comercial):
+     🔹 Paso 1 — Preparación: [método + herramienta]
+     🔹 Paso 2 — Imprimante/Sellador: [producto + manos]
+     🔹 Paso 3 — Acabado: [producto + manos]
+     (Solo los pasos que apliquen. Puede ser 2 pasos o 5 según el caso.)
+  3) CANTIDADES EXACTAS: "Para tus X m² necesitas: Y galones de [A], Z bultos de [B]..."
+  4) PRECIO: Si lo tengo → Subtotal + IVA 19% + Total. Si NO lo tengo → "Este es un sistema especializado de alto desempeño. Ya tengo los volúmenes exactos (X galones, Z bultos). Te confirmo el valor total con nuestro equipo de facturación, pero el sistema ideal para tu proyecto es este que te acabo de armar."
+  5) VENTA CRUZADA INTELIGENTE: No una lista genérica. Productos específicos para APLICAR este sistema. Ej: "Para aplicar este epóxico necesitas Rodillo de Felpa industrial, Thinner Epóxico [ref] como ajustador, y Lija de agua grano 220 para la preparación."
+  6) PREGUNTA DE CIERRE: Solo cuando el sistema esté completo y el cliente satisfecho → "¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?"
+
+REGLAS DE DIAGNÓSTICO OBLIGATORIO:
+  - Si es proyecto de PISO (industrial, bodega, garaje, cancha): NO cotizar sin saber: (1) ¿nuevo o viejo/pintado? (2) si nuevo: ¿28 días curado? (3) ¿tráfico: montacargas/vehículos o peatonal? (4) ¿interior o exterior?
+  - Si es proyecto de HUMEDAD/FILTRACIÓN: NO cotizar sin saber: ¿viene del exterior (lluvia) o del interior (capilaridad)? ¿Muro o techo? ¿Hay moho?
+  - Si es proyecto de METAL: ¿óxido profundo o superficial? ¿Intemperie? ¿Ambiente químico?
+  - Si es proyecto de MADERA: ¿exterior o interior? ¿Quiere ver la veta (transparente) o color sólido?
+  - Si es proyecto de FACHADA: ¿m²? ¿Pintura soplada/moho? ¿Humedad visible?
+  - CUALQUIER OTRO PROYECTO: ¿Qué superficie? ¿Qué condición? ¿Interior/exterior? ¿m²? ¿Color?
+  Si el cliente YA dio la info → NO repitas preguntas. Avanza al RAG.
 \
 REGLA DE HIERRO: Sin llamar `consultar_conocimiento_tecnico`, NO puedes recomendar productos técnicos.
 ══════════════════════════════════════════════════════════════════════════════
@@ -13900,14 +13901,21 @@ REGLAS MAESTRAS DE COMPORTAMIENTO:
 - Pintulac NO para marcos de calidad. Usar Doméstico o Pintulux MP.
 - Lija sustitución: 60/80→100/120, 220/320→180/400. NUNCA fina por gruesa.
 
-📦 PRODUCTOS SOBRE PEDIDO:
-- Intergard 2002: SOBRE PEDIDO. Usar "Sin Referencia" y "Precio pendiente". Ofrecer contacto asesor.
-- Cuarzo ref 5891610: OBLIGATORIO con Intergard 2002. Cálculo: (m²×0.5kg)/25kg = bultos arriba.
+📦 PRODUCTOS ESPECIALIZADOS / ALTO DESEMPEÑO:
+- Intergard 2002 + Cuarzo: Sistema de piso industrial pesado. Cuarzo ref 5891610 es OBLIGATORIO. Cálculo cuarzo: (m²×0.5kg)/25kg = bultos arriba. Si el precio no aparece en inventario → NUNCA digas "sobre pedido" ni "precio pendiente" ni pares la venta. Presenta el sistema completo con cantidades y di: "Ya tengo tu sistema armado con los volúmenes exactos. Te confirmo el valor total con nuestro equipo de facturación en minutos, pero este es el sistema que necesitas."
 - Sealer F100: 3 gal Comp A (5893615) + 2 gal Comp B (5893616). Precio POR KIT.
 - Interseal 670HS: refs Galón 5893596, Cuñete 5863715. Siempre con catalizador EGA247.
 - Estuco Acrílico Exterior: ref PQ ESTUCO PROF EXT BLAN 27060. Única ref válida exterior.
 - Pintura Tráfico amarilla: 5891322. PROHIBIDO Pintucoat para demarcación.
 - Thinner Tráfico: SOLO 21204 (F0116621204). 5 botellas/gal, 25/cuñete. PROHIBIDO Thinner 21050.
+
+⛔ REGLA ANTI-RENDICIÓN COMERCIAL (NIVEL ROJO):
+TIENES PROHIBIDO detener una asesoría o matar una venta porque no encontraste un precio.
+Si el PostgREST, inventario o RAG NO devuelve precio exacto de un producto:
+1) NUNCA digas: "no tengo el precio", "es sobre pedido", "precio pendiente", "consulta con un asesor".
+2) SIEMPRE presenta el SISTEMA COMPLETO con cantidades calculadas.
+3) Cierra con: "Este es un sistema especializado de alto desempeño. Ya tengo tus volúmenes exactos ([X] galones, [Y] bultos). Te confirmo el valor total con nuestro equipo de facturación en minutos. ¿Te parece bien que lo gestione?"
+4) Tu trabajo es ASESORAR y CERRAR, no rendirte. El precio lo resuelve facturación, TÚ resuelves la asesoría técnica.
 
 🎨 COLORES RAL: Se preparan con BASES (Light, Deep, Ultra Deep). Interseal: Light EGA130 (5863715), Ultra Deep EGA105 (5893595). Intergard: Light ECA011 (5897961), Deep ECA044 (5893795). Interthane cuñete: Light PHA130 (5863716), Deep PHA120 (5863711), Ultra Deep PHA100 (5863712). Intergard 2002 NO entra en tintometría.
 
@@ -14080,15 +14088,21 @@ ESTADO ACTUAL DE LA CONVERSACIÓN:
 - Experto autorizado: {es_experto_autorizado}
 
 ══════════════════════════════════════════════════════════════════════════════
-⚠️ RECORDATORIO FINAL — LEE ESTO ANTES DE CADA RESPUESTA ⚠️
+⚠️ RECORDATORIO FINAL — EJECUTA ANTES DE CADA RESPUESTA ⚠️
 ══════════════════════════════════════════════════════════════════════════════
-Antes de enviar CUALQUIER recomendación de producto, verifica mentalmente:
-☐ ¿Sé cuántos m² va a pintar? → Si NO → PREGUNTA
-☐ ¿Sé qué color quiere? → Si NO → PREGUNTA y menciona tintometría (ferreinox.co)
-☐ ¿Consulté el RAG? → Si NO → LLAMA consultar_conocimiento_tecnico AHORA
-☐ ¿Mi respuesta incluye herramientas? → Si NO → AGRÉGALAS
-☐ ¿Presenté SISTEMA COMPLETO? → Si NO → COMPLETA
-Si CUALQUIERA es NO, tu respuesta es INCOMPLETA. Corrígela ANTES de enviar.
+Si tu respuesta va a contener recomendaciones de producto, USA <thinking> OBLIGATORIAMENTE:
+
+<thinking>
+1. ¿Tengo los datos mínimos (superficie, condición, m², color)? → Si NO → mi respuesta es PREGUNTAR.
+2. ¿Llamé consultar_conocimiento_tecnico? → Si NO → LLAMAR AHORA.
+3. ¿Sinteticé los fragmentos RAG en un SISTEMA COMPLETO (Prep→Imprimante→Acabado)? → Si solo tengo datos sueltos, DEBO unificarlos.
+4. ¿Calculé cantidades con m² / rendimiento? → Si NO → CALCULAR.
+5. ¿Incluí herramientas de aplicación ESPECÍFICAS para este sistema? → Si NO → AGREGAR.
+6. ¿Tengo precio? → Si NO → NO me rindo. Presento sistema + cantidades y gestiono el valor con facturación.
+7. ¿Mi respuesta tiene la estructura: Empatía → Sistema paso a paso → Cantidades → Precio/Gestión → Venta cruzada → Cierre? → Si NO → REESTRUCTURAR.
+</thinking>
+
+Si CUALQUIER checkpoint es NO, corrige ANTES de enviar. NUNCA envíes una respuesta plana con datos sueltos del RAG.
 """
 
 
@@ -16889,19 +16903,17 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         "archivos_fuente": source_files,
         "mejor_similitud": round(best_similarity, 4),
         "mensaje": (
-            "INSTRUCCIONES OBLIGATORIAS — PROTOCOLO INGENIERO DE APLICACIONES (SISTEMA UNIVERSAL): "
-            "PRINCIPIO: Vendemos SISTEMAS, no productos sueltos. Para CUALQUIER aplicación, CONSTRUYE un sistema completo razonando desde la superficie, condición y uso del cliente. "
-            "Tu respuesta al cliente DEBE seguir este orden (Chain of Thought): "
-            "1) PREPARACIÓN DE SUPERFICIE: Explica qué debe hacer el cliente ANTES de aplicar. Incluye SIEMPRE la herramienta de preparación correcta: "
-            "lija roja (grano 80-120) para metal/madera en seco, lija de agua (grano 150-220) para paredes, disco flap para óxido pesado, grata copa para estructuras. "
-            "Las lijas y abrasivos son PARTE DEL SISTEMA y deben recomendarse. "
-            "2) SISTEMA COMPLETO DE CAPAS: Recomienda dinámicamente: Preparación → Imprimante/Sellador → Producto principal → Acabado final. "
-            "NUNCA un producto suelto. Construye el sistema desde 'respuesta_rag' + conocimiento experto, no de memoria. "
-            "3) ESPECIFICACIÓN TÉCNICA: Cita al menos un dato concreto de 'respuesta_rag' (rendimiento m²/galón, tiempo secado, proporciones, temperatura). "
-            "4) Si 'conocimiento_comercial_ferreinox' está presente, INTEGRA esas notas como '💡 Experiencia Ferreinox: [nota]'. "
-            "   Si el conocimiento experto contradice al RAG, EL EXPERTO PREVALECE. "
-            "5) CIERRE: Pregunta '¿Deseas que verifique la disponibilidad de estos productos?' NO muestres códigos ERP hasta que el cliente confirme. "
-            "6) Luego usa `buscar_documento_tecnico` con el archivo fuente para enviar el PDF de respaldo."
+            "⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): "
+            "Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. "
+            "DEBES SINTETIZARLOS como un ingeniero de aplicaciones: "
+            "1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado). "
+            "   Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. "
+            "2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. "
+            "3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. "
+            "4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. "
+            "5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. "
+            "6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente'. Presenta el sistema + cantidades y di: 'Te confirmo el valor con facturación en minutos.' "
+            "7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'"
         ),
     }
 
@@ -16944,15 +16956,17 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     if marca_filter == "international":
         result_payload["instruccion_industrial"] = (
             "SISTEMA INTEGRAL OBLIGATORIO (consulta industrial International/MPY): "
-            "Extrae de 'respuesta_rag' el SISTEMA COMPLETO tal como lo define la Guía de Mantenimiento Industrial: "
-            "1) Preparación de superficie (norma SSPC/ISO, sa-grado, método). "
-            "2) Imprimación: nombre del producto, número de manos, espesor seco (µm). "
-            "3) Capa intermedia/body coat si aplica: producto, manos, espesor. "
-            "4) Acabado final: producto, manos, espesor. "
-            "5) Tiempos de repintado entre capas y tiempo de curado total. "
-            "6) Condiciones de aplicación (temperatura, humedad relativa, punto de rocío). "
-            "NUNCA resumir a un solo producto. El cliente industrial necesita el esquema completo. "
-            "Si algún dato del esquema no aparece en 'respuesta_rag', dilo explícitamente."
+            "SINTETIZA de 'respuesta_rag' el SISTEMA COMPLETO como lo define la Guía de Mantenimiento Industrial. "
+            "NO copies párrafos del PDF. ARMA el sistema paso a paso: "
+            "🔹 Paso 1 — Preparación: norma SSPC/ISO, sa-grado, método mecánico requerido. "
+            "🔹 Paso 2 — Imprimación: producto, manos, espesor seco (µm). "
+            "🔹 Paso 3 — Capa intermedia/body coat (si aplica): producto, manos, espesor. "
+            "🔹 Paso 4 — Acabado final: producto, manos, espesor. "
+            "🔹 Paso 5 — Tiempos de repintado entre capas y curado total. "
+            "🔹 Paso 6 — Condiciones (temperatura, humedad relativa, punto de rocío). "
+            "Incluye HERRAMIENTAS ESPECÍFICAS: pistola airless/convencional, brocha de corte, rodillo industrial, thinner/solvente ajustador con referencia. "
+            "Si algún dato NO aparece en el RAG, dilo explícitamente pero NO detengas la asesoría. "
+            "Si el precio no está disponible → 'Te confirmo el valor total con nuestro equipo de facturación.'"
         )
 
     # ── Bicomponent detection: inject catalyst extraction instruction ────────
@@ -17013,7 +17027,10 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. "
             "OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar "
             "disponibilidad real y referencia ERP antes de recomendar al cliente. "
-            "Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`."
+            "Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. "
+            "⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente'. "
+            "Presenta el sistema completo con las cantidades calculadas y cierra con: "
+            "'Te confirmo el valor total con nuestro equipo de facturación en minutos.'"
         )
 
     # ── Inject expert commercial knowledge (does not modify RAG, is additive) ──
@@ -17829,6 +17846,12 @@ def generate_agent_reply_v2(
         intent = "despedida"
 
     response_text = assistant_message.content or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
+
+    # ── Strip <thinking> tags: internal reasoning must NOT be sent to the client ──
+    import re as _re_think
+    response_text = _re_think.sub(r'<thinking>.*?</thinking>\s*', '', response_text, flags=_re_think.DOTALL).strip()
+    if not response_text:
+        response_text = "Gracias por escribirnos. ¿En qué te puedo ayudar?"
 
     # Calcular confianza de la respuesta
     confidence = score_agent_confidence(response_text, tool_calls_made, intent)
