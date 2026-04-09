@@ -13785,13 +13785,15 @@ NO puedes saltarte NINGUNO. Si intentas ir al paso 3 sin completar el 1 y 2, tu 
 \
 PASO 1 — ESCUCHAR Y DIAGNOSTICAR (OBLIGATORIO, NO NEGOCIABLE):
   Antes de nombrar CUALQUIER producto, DEBES entender el problema del cliente.
-  Preguntas MÍNIMAS que necesitas (máximo 2 por turno, no bombardees):
+  Preguntas MÍNIMAS que necesitas (máximo 2-3 por turno, no bombardees):
   - ¿Qué superficie es? (pared, piso, metal, madera, techo, fachada...)
   - ¿Qué condición tiene? (húmedo, oxidado, descascarado, moho, nuevo, viejo, agrietado...)
   - ¿Interior o exterior?
-  - ¿Cuántos metros cuadrados? (OBLIGATORIO antes de cotizar)
+  - ¿Cuántos metros cuadrados (m²)? → SIN ESTO NO PUEDES COTIZAR, PUNTO.
+  - ¿Tiene algún color en mente? → Si no preguntaste color, tu asesoría está INCOMPLETA.
   Si el cliente ya te dio esta información en su mensaje, NO repitas preguntas que ya respondió.
-  Si falta información CRÍTICA, PREGUNTA antes de avanzar. Es mejor una pregunta de más que una recomendación incorrecta.
+  Si falta información CRÍTICA (m² o color), PREGUNTA antes de avanzar — NO inventes ni asumas datos.
+  Es mejor una pregunta de más que una recomendación incompleta.
 \
 PASO 2 — CONSULTAR EL RAG (OBLIGATORIO, NO NEGOCIABLE):
   Una vez que entiendas la superficie y condición del cliente, DEBES llamar \
@@ -13815,9 +13817,14 @@ PASO 4 — COTIZAR CON DATOS REALES:
   Si ofreces opciones (ej. Koraza vs Viniltex), CADA opción con su total INDEPENDIENTE. NUNCA sumes alternativas.
   SIEMPRE da tu recomendación: "Para tu caso, yo te recomiendo [X] porque [razón técnica]."
 \
-PASO 5 — INCLUIR HERRAMIENTAS Y CERRAR:
-  Incluye herramientas de aplicación (rodillo, brocha, espátula, lija).
-  Confirma el pedido completo. Genera PDF si aplica.
+PASO 5 — INCLUIR HERRAMIENTAS, COLOR Y CERRAR:
+  TODA cotización de pintura DEBE incluir:
+  a) Herramientas de aplicación: rodillo (con felpa adecuada), brocha, bandeja, lija, espátula, cinta de enmascarar.
+     Busca en inventario y cotiza junto con la pintura. El cliente NECESITA esto para aplicar.
+  b) Orientación de color: si el cliente no mencionó color, PREGUNTA. Si mencionó color, explica que 
+     los productos vienen en sistema tintométrico y que puede elegir su tono exacto en ferreinox.co 
+     o directamente en la tienda. Menciona si el producto viene solo en base o tiene colores listos.
+  c) Confirma el pedido completo. Genera PDF si aplica.
 \
 REGLA DE HIERRO: Si no llamaste `consultar_conocimiento_tecnico` en esta conversación para \
 el tema que estás respondiendo, NO tienes autorización para recomendar productos técnicos. \
@@ -14846,7 +14853,19 @@ TRASLADOS POR INSUFICIENCIA DE STOCK (flujo alternativo):
 CONSULTAS DE ESTADO DE TRASLADOS:
 - Si el empleado pregunta "¿qué traslados hay pendientes?" o "traslados activos" → responde consultando el contexto de conversación y si hay historial reciente de traslados en la sesión.
 
-Si no tienes un dato seguro, dilo honestamente y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos."""
+Si no tienes un dato seguro, dilo honestamente y ofrece el siguiente paso. Nunca inventes saldos, fechas o datos.
+
+══════════════════════════════════════════════════════════════════════════════
+⚠️ RECORDATORIO FINAL — LEE ESTO ANTES DE CADA RESPUESTA ⚠️
+══════════════════════════════════════════════════════════════════════════════
+Antes de enviar CUALQUIER recomendación de producto, verifica mentalmente:
+☐ ¿Sé cuántos m² va a pintar el cliente? → Si NO → PREGUNTA
+☐ ¿Sé qué color quiere? → Si NO → PREGUNTA y menciona tintometría (ferreinox.co)
+☐ ¿Consulté el RAG (`consultar_conocimiento_tecnico`)? → Si NO → LLAMA AHORA
+☐ ¿Mi respuesta incluye herramientas de aplicación? → Si NO → AGRÉGALAS
+☐ ¿Presenté SISTEMA COMPLETO (preparación + tratamiento + acabado)? → Si NO → COMPLETA
+Si CUALQUIERA de los ☐ anteriores es NO, tu respuesta es INCOMPLETA. Corrígela ANTES de enviar.
+"""
 
 
 AGENT_TOOLS = [
@@ -18309,6 +18328,105 @@ def generate_agent_reply_v2(
             retry_iterations -= 1
         logger.info("GUARDIA retry completed: %dms", int((time.time() - t_retry) * 1000))
         tool_names = [tc["name"] for tc in tool_calls_made]
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA DIAGNÓSTICO COMPLETO: si el agente recomienda productos pero
+    # la conversación NO tiene datos mínimos (m², color), forzar que pregunte.
+    # También verifica que la respuesta incluya herramientas/accesorios y
+    # orientación de color cuando aplique.
+    # ══════════════════════════════════════════════════════════════════════
+    response_text_draft = assistant_message.content or ""
+    response_lower_diag = response_text_draft.lower()
+    has_recommendation_diag = sum(1 for s in _PRODUCT_SIGNALS if s in response_lower_diag) >= 2
+
+    # Solo aplica a asesorías técnicas (no a saludos, ENSEÑAR, internos, etc.)
+    is_internal_user = bool((conversation_context.get("internal_auth") or {}).get("employee_context"))
+    is_ensenar_msg = any(kw in (user_message or "").lower() for kw in ["enseñar", "ensenar", "anota esto", "guarda esto", "aprender esto"])
+
+    if has_recommendation_diag and not is_simple_greeting(user_message) and not is_internal_user and not is_ensenar_msg:
+        # Construir texto completo de la conversación del cliente
+        all_user_text = " ".join(
+            (m.get("contenido") or "").lower()
+            for m in recent_messages
+            if m.get("direction") == "inbound"
+        ) + " " + (user_message or "").lower()
+
+        # ── Detectar datos faltantes ──
+        missing_data = []
+
+        # 1. Metros cuadrados
+        import re as _re_diag
+        has_m2 = bool(_re_diag.search(r'\d+\s*m[²2]|\d+\s*metros?\s*cuadrados?|\d+\s*mt[s2]?', all_user_text))
+        if not has_m2:
+            missing_data.append("METROS CUADRADOS (m²): No sabes cuánta área va a pintar. Sin esto no puedes calcular cantidades.")
+
+        # 2. Color / preferencia de color
+        _COLOR_SIGNALS = ["color", "hueso", "blanco", "beige", "gris", "azul", "verde",
+                          "rojo", "amarillo", "crema", "arena", "terracota", "café",
+                          "negro", "marfil", "tintometr", "tono", "tonalidad"]
+        has_color = any(c in all_user_text for c in _COLOR_SIGNALS)
+        # También verificar si el agente preguntó por color en su respuesta
+        agent_asked_color = any(c in response_lower_diag for c in ["color", "tintometr", "tono", "tonalidad"])
+        if not has_color and not agent_asked_color:
+            missing_data.append("COLOR: No sabes qué color quiere el cliente. DEBES preguntar y mencionar que ofrecemos tintometría en ferreinox.co.")
+
+        # 3. Herramientas/accesorios en la respuesta
+        _TOOL_SIGNALS = ["rodillo", "brocha", "lija", "felpa", "bandeja", "cinta",
+                         "thinner", "estopa", "espátula", "espatula", "herramienta",
+                         "accesorio", "aplicador"]
+        has_tools_in_response = any(t in response_lower_diag for t in _TOOL_SIGNALS)
+        if not has_tools_in_response:
+            missing_data.append("HERRAMIENTAS/ACCESORIOS: Tu cotización no incluye los accesorios necesarios para aplicar (rodillo, brocha, lija, felpa, etc.). SIEMPRE debes recomendar las herramientas.")
+
+        if missing_data:
+            missing_list = "\n".join(f"  - {m}" for m in missing_data)
+            logger.warning(
+                "GUARDIA DIAGNÓSTICO: respuesta bloqueada por datos faltantes: %s",
+                [m.split(":")[0] for m in missing_data],
+            )
+            messages.append(assistant_message)
+            messages.append({
+                "role": "system",
+                "content": (
+                    f"⛔ DIAGNÓSTICO INCOMPLETO — Tu respuesta NO será enviada al cliente.\n"
+                    f"Te faltan estos datos OBLIGATORIOS antes de recomendar productos:\n"
+                    f"{missing_list}\n\n"
+                    f"ACCIÓN REQUERIDA:\n"
+                    f"- Si te falta información del cliente (m², color): PREGÚNTALE de forma natural, "
+                    f"NO inventes cantidades ni asumas colores.\n"
+                    f"- Si te faltan herramientas en la cotización: agrégalas.\n"
+                    f"- Recuerda: toda cotización de pintura DEBE incluir accesorios de aplicación "
+                    f"y orientación de color (tintometría en ferreinox.co para colores no estándar).\n"
+                    f"Reescribe tu respuesta corrigiendo TODOS los puntos anteriores."
+                ),
+            })
+            t_diag = time.time()
+            diag_response = client.chat.completions.create(
+                model=get_openai_model(),
+                messages=messages,
+                tools=AGENT_TOOLS,
+                tool_choice="auto",
+                temperature=0.3,
+            )
+            assistant_message = diag_response.choices[0].message
+            # Process any tool calls from the retry
+            diag_retries = 3
+            while assistant_message.tool_calls and diag_retries > 0:
+                messages.append(assistant_message)
+                for tc in assistant_message.tool_calls:
+                    fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+                    tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
+                    messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+                diag_response = client.chat.completions.create(
+                    model=get_openai_model(),
+                    messages=messages,
+                    tools=AGENT_TOOLS,
+                    tool_choice="auto",
+                    temperature=0.3,
+                )
+                assistant_message = diag_response.choices[0].message
+                diag_retries -= 1
+            logger.info("GUARDIA DIAGNÓSTICO retry completed: %dms", int((time.time() - t_diag) * 1000))
 
     # ══════════════════════════════════════════════════════════════════════
     # GUARDIA ENSEÑAR: si se guardó conocimiento experto pero la respuesta
