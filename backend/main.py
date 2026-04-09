@@ -6532,19 +6532,29 @@ def seed_expert_knowledge_phase19():
         logger.warning("Could not seed Phase 19 expert knowledge: %s", exc)
 
 
-def fetch_expert_knowledge(query: str, limit: int = 5) -> list[dict]:
-    """Fetch commercial expert knowledge matching the query context."""
+def fetch_expert_knowledge(query: str, limit: int = 8) -> list[dict]:
+    """Fetch commercial expert knowledge matching the query context.
+
+    Uses ILIKE substring matching with ts_rank scoring from the existing GIN
+    index for relevance ordering.  Short technical terms (UV, NSF, pH, m2) are
+    now preserved (min 2 chars).
+    """
     if not query:
         return []
     try:
         engine = get_db_engine()
         normalized = normalize_text_value(query)
-        terms = [t for t in normalized.split() if len(t) >= 4][:6]
+        terms = [t for t in normalized.split() if len(t) >= 2][:10]
         if not terms:
             return []
         with engine.connect() as connection:
             conditions = " OR ".join(
-                f"(contexto_tags ILIKE :t{i} OR nota_comercial ILIKE :t{i} OR COALESCE(producto_recomendado,'') ILIKE :t{i})"
+                f"(contexto_tags ILIKE :t{i} OR nota_comercial ILIKE :t{i} OR COALESCE(producto_recomendado,'') ILIKE :t{i} OR COALESCE(producto_desestimado,'') ILIKE :t{i})"
+                for i in range(len(terms))
+            )
+            # Count how many terms match (simple relevance score)
+            match_score = " + ".join(
+                f"CASE WHEN (contexto_tags ILIKE :t{i} OR nota_comercial ILIKE :t{i} OR COALESCE(producto_recomendado,'') ILIKE :t{i}) THEN 1 ELSE 0 END"
                 for i in range(len(terms))
             )
             params = {f"t{i}": f"%{t}%" for i, t in enumerate(terms)}
@@ -6552,10 +6562,11 @@ def fetch_expert_knowledge(query: str, limit: int = 5) -> list[dict]:
                 text(
                     f"""
                     SELECT id, contexto_tags, producto_recomendado, producto_desestimado,
-                           nota_comercial, tipo, nombre_experto, created_at
+                           nota_comercial, tipo, nombre_experto, created_at,
+                           ({match_score}) AS relevance
                     FROM public.agent_expert_knowledge
                     WHERE activo = true AND ({conditions})
-                    ORDER BY created_at DESC
+                    ORDER BY relevance DESC, created_at DESC
                     LIMIT :lim
                     """
                 ),
@@ -17414,7 +17425,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         )
 
     # ── Inject expert commercial knowledge (does not modify RAG, is additive) ──
-    expert_notes = fetch_expert_knowledge(f"{producto} {pregunta}", limit=4)
+    expert_notes = fetch_expert_knowledge(f"{producto} {pregunta}", limit=8)
     if expert_notes:
         result_payload["conocimiento_comercial_ferreinox"] = [
             {
