@@ -14554,11 +14554,11 @@ REFUERZO DE CONOCIMIENTO TÉCNICO-COMERCIAL (ASESORES EXPERTOS AUTORIZADOS):
 
   ⚠️ CONFIRMACIÓN OBLIGATORIA DESPUÉS DE GUARDAR (INVIOLABLE):
   Después de CADA llamada exitosa a `registrar_conocimiento_experto`, tu respuesta DEBE incluir una confirmación individual con EXACTAMENTE este formato:
-  ✅ *Aprendido (ID {id}):*
-  📋 *Tema:* {contexto_tags}
-  👍 *Recomendar:* {producto_recomendado o "N/A"}
-  🚫 *Evitar:* {producto_desestimado o "N/A"}
-  💡 *Lo que aprendí:* {nota_comercial resumida en 1-2 líneas}
+  ✅ *Aprendido (ID [el_id_retornado]):*
+  📋 *Tema:* [contexto_tags que usaste]
+  👍 *Recomendar:* [producto_recomendado o "N/A"]
+  🚫 *Evitar:* [producto_desestimado o "N/A"]
+  💡 *Lo que aprendí:* [nota_comercial resumida en 1-2 líneas]
   
   Si guardaste MÚLTIPLES enseñanzas, muestra UNA confirmación por CADA una, numeradas.
   Si alguna NO se guardó (error), dilo explícitamente: "❌ No pude guardar: [razón]"
@@ -19280,6 +19280,7 @@ async def receive_whatsapp_webhook(request: Request):
                                 context,
                             )
                     except Exception as exc:
+                        logger.error("Agent reply FAILED for conversation %s: %s", context.get("conversation_id"), exc, exc_info=True)
                         ai_result = build_fallback_agent_result(content, str(exc))
 
                     response_text = ai_result.get("response_text") or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
