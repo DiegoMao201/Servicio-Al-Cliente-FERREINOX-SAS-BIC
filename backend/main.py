@@ -34,6 +34,26 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelna
 
 app = FastAPI(title="CRM Ferreinox Backend", version="2026.3")
 
+# ── Color formulas data (from LIBRO DE FORMULAS) ──
+_COLOR_FORMULAS: list[dict] = []
+_COLOR_FORMULAS_FILE = Path(__file__).resolve().parent.parent / "data" / "color_formulas.json"
+if _COLOR_FORMULAS_FILE.exists():
+    try:
+        _COLOR_FORMULAS = json.loads(_COLOR_FORMULAS_FILE.read_text(encoding="utf-8"))
+        logger.info("Loaded %d color formulas from %s", len(_COLOR_FORMULAS), _COLOR_FORMULAS_FILE)
+    except Exception as e:
+        logger.warning("Failed to load color formulas: %s", e)
+
+# ── International / AkzoNobel product reference (from INTERNATIONAL CODIGOS) ──
+_INTERNATIONAL_PRODUCTS: list[dict] = []
+_INTERNATIONAL_PRODUCTS_FILE = Path(__file__).resolve().parent.parent / "data" / "international_products.json"
+if _INTERNATIONAL_PRODUCTS_FILE.exists():
+    try:
+        _INTERNATIONAL_PRODUCTS = json.loads(_INTERNATIONAL_PRODUCTS_FILE.read_text(encoding="utf-8"))
+        logger.info("Loaded %d international product refs from %s", len(_INTERNATIONAL_PRODUCTS), _INTERNATIONAL_PRODUCTS_FILE)
+    except Exception as e:
+        logger.warning("Failed to load international products: %s", e)
+
 
 INTERNAL_ROLES = {"empleado", "vendedor", "gerente", "operador", "administrador"}
 INTERNAL_SCOPE_TYPES = {"cliente", "vendedor_codigo", "vendedor_nombre", "zona", "almacen"}
@@ -6694,6 +6714,56 @@ def invalidate_expert_knowledge_cache():
     """Call after inserting new expert knowledge to force refresh on next read."""
     global _expert_knowledge_cache_ts
     _expert_knowledge_cache_ts = 0.0
+
+
+# ── Color formula lookup (from LIBRO DE FORMULAS data) ──
+def lookup_color_base(color_name: str, producto: str = "") -> list[dict]:
+    """Find which BASE (Pastel/Tint/Deep/Accent) a color name requires.
+    Returns matching entries from the color formulas catalog."""
+    if not color_name or not _COLOR_FORMULAS:
+        return []
+    color_lower = color_name.lower().strip()
+    producto_lower = producto.lower().strip() if producto else ""
+    results = []
+    for entry in _COLOR_FORMULAS:
+        name_match = color_lower in entry["nombre"].lower()
+        code_match = color_lower == entry["codigo"].lower()
+        if not (name_match or code_match):
+            continue
+        if producto_lower and producto_lower not in entry["producto"].lower():
+            continue
+        results.append(entry)
+    # Deduplicate by (codigo, base) keeping first
+    seen = set()
+    unique = []
+    for r in results:
+        key = (r["codigo"], r["base"])
+        if key not in seen:
+            seen.add(key)
+            unique.append(r)
+    return unique[:10]
+
+
+# ── International product reference lookup ──
+def lookup_international_product(producto: str, base: str = "", ral: str = "") -> list[dict]:
+    """Find International/AkzoNobel product references with prices and catalyst info."""
+    if not producto or not _INTERNATIONAL_PRODUCTS:
+        return []
+    producto_lower = producto.lower().strip()
+    base_lower = base.lower().strip() if base else ""
+    ral_str = str(ral).strip() if ral else ""
+    results = []
+    for entry in _INTERNATIONAL_PRODUCTS:
+        prod_name = (entry.get("producto") or "").lower()
+        linea = (entry.get("linea") or "").lower()
+        if producto_lower not in prod_name and producto_lower not in linea:
+            continue
+        if base_lower and base_lower not in (entry.get("base") or "").lower():
+            continue
+        if ral_str and ral_str != (entry.get("ral") or "").strip():
+            continue
+        results.append(entry)
+    return results[:20]
 
 
 def fetch_product_price(referencia: str) -> Optional[dict]:
@@ -13911,45 +13981,80 @@ FASE 2 — RECOMENDACIÓN TÉCNICA (¿Qué sistema aplicar?):
       Ejemplo: "Corrotec + poliuretano" → "Corrotec es alquídico. El poliuretano lo remueve. Para lo que necesitas,
       el sistema correcto es Interseal (epóxico) + Interthane (PU), o Corrotec + Pintulux (todo alquídico)."
   - Sintetizo un SISTEMA COMPLETO paso a paso: Preparación → Imprimante/Sellador → Acabado.
-  - INCLUYO HERRAMIENTAS Y ACCESORIOS obligatorios para el sistema:
-    🔧 Rodillo (tipo específico: felpa corta/larga, espuma, etc.)
-    🔧 Brocha (tipo y tamaño según superficie)
+  - INCLUYO DILUYENTE/THINNER ESPECÍFICO del sistema (VENTA CRUZADA OBLIGATORIA):
+    🧴 Epóxicos/PU (Interseal, Interthane, Intergard) → Diluyente UFA151 (Ajustador International)
+    🧴 Pintucoat → Thinner Epóxico
+    🧴 Tráfico (Pintutraf) → Thinner 21204 (PROHIBIDO Thinner 21050)
+    🧴 Esmaltes alquídicos (Pintulux, Doméstico, Corrotec) → Varsol o Thinner corriente
+    🧴 Vinilos (Viniltex, Koraza, Intervinil) → Agua (no requiere compra de diluyente, pero mencionar)
+    ⛔ NUNCA omitas el diluyente. Es tan necesario como el catalizador para bicomponentes.
+  - INCLUYO HERRAMIENTAS Y ACCESORIOS del sistema CON PRECIOS (VENTA CRUZADA):
+    🔧 Rodillo (tipo específico: felpa corta para esmaltes, felpa larga para vinilos, espuma para epóxicos)
+    🔧 Brocha (tipo y tamaño según superficie — Goya Profesional para detalles)
     🔧 Lija (grano específico para la preparación)
     🔧 Bandeja para rodillo
     🔧 Extensión telescópica (si aplica por altura)
-    🔧 Thinner/Ajustador/Diluyente específico del sistema (NO genérico)
     🔧 Cinta de enmascarar (si aplica)
     🔧 Estopa o trapos (si aplica)
+    ⚡ REGLA DE PRECIOS EN HERRAMIENTAS: Las herramientas son VENTA CRUZADA. Al incluirlas en el sistema,
+    TAMBIÉN busca sus precios con `consultar_inventario_lote`. Preséntalas CON precio unitario.
+    Ejemplo: "🔧 Rodillo felpa corta 9\" — $X | 🔧 Brocha Goya 3\" — $X | 🔧 Lija 120 — $X"
+    Si no tienes precio de alguna herramienta, menciónala por nombre pero NO inventes un precio.
   - Si algún paso incluye un producto que NO vendemos (ej: hipoclorito, cemento blanco), lo menciono como preparación necesaria pero aclaro que no lo tenemos en tienda.
-  - PREGUNTA DE CIERRE FASE 2: Presento el sistema completo CON herramientas y pregunto:
+  - 🎨 COLORES: Si el producto admite colores y el cliente NO especificó color, agrega:
+    "Puedes ver nuestra gama completa de colores en www.ferreinox.co sección *Cartas de Colores*."
+    Si el cliente SÍ especificó un color → usa `consultar_base_color` para determinar qué BASE necesita
+    y busca esa base en inventario (ej: "Gris Basalto" → Base Deep → buscar "Viniltex Base Deep").
+  - Para productos INTERNATIONAL (Interseal, Interthane, Intergard): SIEMPRE usa `consultar_referencia_international`
+    para obtener precios EXACTOS y códigos de referencia. Estos precios YA INCLUYEN IVA.
+  
+  ⛔ REGLA DE SEPARACIÓN SISTEMA vs COTIZACIÓN (INVIOLABLE):
+  En FASE 2, presento el SISTEMA COMPLETO con herramientas y diluyente, pero SIN cotización completa.
+  La primera respuesta del sistema es TÉCNICA — muestra QUÉ productos usar, POR QUÉ, y CÓMO aplicarlos.
+  PREGUNTA DE CIERRE FASE 2:
     "¿Deseas que revise disponibilidad y precios del sistema completo?"
     Si el cliente ya dio m² → agrego: "Para [X] m², necesitarías [cantidades]. ¿Reviso precios?"
-  - REGLA ANTI-REPETICIÓN: Si el cliente YA me dio m² o cantidades en CUALQUIER mensaje anterior o en este mensaje, NO vuelvo a preguntar. Incluyo las cantidades calculadas Y pregunto si quiere precios.
   - SI EL CLIENTE CONFIRMA que quiere precios ("sí", "dale", "revisa", "cotízame") → paso a FASE 3.
   - SI EL CLIENTE RESPONDE OTRA COSA → respondo a su nueva intención sin dar precios.
+
+  ⚡ EXCEPCIÓN PEDIDO DIRECTO: Si el cliente NOMBRA productos específicos + da m² + pide cotización explícita
+  ("cotízame", "dame precios", "cuánto me cuesta") TODO en el MISMO mensaje → puedo ir directo a FASE 3.
+  Pero si solo dice "dame el sistema" o "necesito pintar X" → FASE 2 primero, luego confirmar.
 
 FASE 3 — COTIZACIÓN (¿Cuánto cuesta?):
   - CÁLCULO EN CASCADA: m²/rendimiento para TODAS las capas (si base=4 gal, acabado también se calcula para los mismos m²).
   - EFICIENCIA: >5 gal → cuñetes+galones (1 cuñete = 5 gal). Siempre la opción más barata sin preguntar.
   - BICOMPONENTES: 1 catalizador POR galón (4 gal = 4 catalizadores). Precio como KIT (A+B).
-  - Busco precios con `consultar_inventario_lote`. Si no encuentro, reformulo la búsqueda.
-  - IVA: Los precios del sistema son ANTES DE IVA. SIEMPRE calcula y muestra el IVA:
-    * Subtotal (sin IVA): suma de (precio_unitario × cantidad) de todos los ítems
-    * IVA 19%: Subtotal × 0.19
-    * **Total a Pagar: Subtotal + IVA**
-    * Ejemplo: si 8 galones a $78.908 = Subtotal $631.264 → IVA 19% $119.940 → **Total: $751.204**
+  - Para productos International → usa `consultar_referencia_international` para precios KIT EXACTOS (estos YA incluyen IVA).
+  - Para productos Pintuco/otros → usa `consultar_inventario_lote` (estos precios NO incluyen IVA → suma IVA 19%).
+  - HERRAMIENTAS Y DILUYENTE CON PRECIOS: Búscalos con `consultar_inventario_lote` e inclúyelos en la cotización.
+  - IVA: Los precios Pintuco/tercer party son ANTES DE IVA. Los precios International YA incluyen IVA.
+    * Para Pintuco: Subtotal (sin IVA) + IVA 19% = **Total a Pagar**
+    * Para International: Los precios KIT ya son con IVA → no sumes IVA de nuevo.
+    * Si mezclas ambos: calcula IVA SOLO sobre los productos que NO lo incluyen.
   - Si NO tengo precio de algún producto → cotizo lo que SÍ tengo y escalo al Asesor Técnico Comercial solo para los productos sin precio.
-  - Incluyo herramientas de aplicación (rodillo, lija, etc.) y cierre de venta.
+  - PRESENTACIÓN FINAL DE COTIZACIÓN:
+    📦 **Resumen de tu proyecto de pintura:**
+    [Lista de productos con cantidades, precios unitarios y subtotales]
+    [Herramientas con precios]
+    [Diluyente con precio]
+    💰 **Subtotal: $X | IVA 19%: $X | Total a Pagar: $X**
+    📋 "¿Deseas generar un pedido o necesitas la cotización formal en PDF?"
 
 RESPUESTA AL CLIENTE — ESTRUCTURA:
   Si estoy en FASE 2 (sin m² aún):
-    1) Empatía breve → 2) Sistema paso a paso (Prep→Imprimante→Acabado) → 3) Herramientas del sistema (rodillo, brocha, lija, bandeja, ajustador) → 4) "¿Cuántos m² y qué color? ¿Quieres que revise disponibilidad y precios?"
+    1) Empatía breve → 2) Sistema paso a paso (Prep→Imprimante→Acabado) → 3) Diluyente específico del sistema
+    → 4) Herramientas del sistema → 5) "¿Cuántos m² y qué color? Puedes ver nuestros colores en www.ferreinox.co sección Cartas de Colores. ¿Deseas que revise disponibilidad y precios?"
   Si estoy en FASE 2 (CON m²):
-    1) Empatía breve → 2) Sistema paso a paso → 3) Cantidades calculadas → 4) Herramientas del sistema → 5) "¿Deseas que revise disponibilidad y precios del sistema completo?"
+    1) Empatía breve → 2) Sistema paso a paso → 3) Cantidades calculadas → 4) Diluyente
+    → 5) Herramientas del sistema → 6) "¿Deseas que revise disponibilidad y precios del sistema completo?"
   Si estoy en FASE 3 (cliente CONFIRMÓ que quiere precios):
-    1) Empatía breve → 2) Sistema → 3) Cantidades optimizadas → 4) Precio total con herramientas → 5) Cierre
+    1) Empatía breve → 2) Sistema resumen → 3) Cantidades optimizadas → 4) Precio de cada producto (pinturas + catalizadores + diluyente + herramientas)
+    → 5) 📦 **Resumen de tu proyecto de pintura:** → Subtotal + IVA 19% = **Total a Pagar: $X**
+    → 6) "¿Deseas generar un pedido o necesitas la cotización formal en PDF?"
   Precios: precio_unitario × cantidad = subtotal_línea. Al final: Subtotal + IVA 19% = **Total a Pagar: $X**.
   Si NO tengo precio → cotizo lo que SÍ tengo + escalo precio faltante al Asesor Técnico Comercial.
+  ⚠️ HERRAMIENTAS Y DILUYENTE SIEMPRE CON PRECIO en FASE 3. Búscalos con consultar_inventario_lote.
 
 REGLAS DE DIAGNÓSTICO (preguntar SOLO si no tengo la info):
   - PISO industrial: ¿nuevo o viejo? ¿tráfico pesado o liviano? ¿interior/exterior?
@@ -14091,7 +14196,8 @@ JERARQUÍA DE PRODUCTOS:
 - Madera int color sólido: Esmalte Doméstico o Pintulux MP (NUNCA Pintulac — no lo manejamos).
 - Interiores: Viniltex (premium) → Intervinil (intermedio) → Pinturama (económico)
 - Satinado: Viniltex Acriltex = la línea satinada. NUNCA Viniltex Mate cuando pidan satinado.
-- Venta cruzada solventes: Interthane→UFA151, Pintucoat→Thinner Epóxico, Tráfico→Thinner 21204
+- Venta cruzada solventes: Interthane→UFA151, Pintucoat→Thinner Epóxico, Tráfico→Thinner 21204, Esmaltes→Varsol, Interseal→UFA151
+- HERRAMIENTAS = VENTA CRUZADA: Siempre busca precios de herramientas con consultar_inventario_lote e inclúyelos en la cotización.
 
 FAMILIAS DE PRODUCTO:
 • VINILOS (muros): Viniltex (premium) | Intervinil (intermedio) | Pinturama/Vinil Max (económico). Si dicen "vinilo" sin tipo: pregunta.
@@ -14162,6 +14268,18 @@ Si el PostgREST, inventario o RAG NO devuelve precio exacto de un producto:
 6) RUTA INTERNA (NO decir al cliente): Si el cliente acepta el contacto con el Asesor Técnico, la acción interna es enviar la solicitud completa (sistema recomendado + cantidades + datos del cliente) al correo tiendapintucopereira@ferreinox.co.
 
 🎨 COLORES RAL: Se preparan con BASES (Light, Deep, Ultra Deep). Interseal: Light EGA130 (5863715), Ultra Deep EGA105 (5893595). Intergard: Light ECA011 (5897961), Deep ECA044 (5893795). Interthane cuñete: Light PHA130 (5863716), Deep PHA120 (5863711), Ultra Deep PHA100 (5863712). Intergard 2002 NO entra en tintometría.
+
+🏭 PRECIOS REFERENCIA INTERNATIONAL (IVA INCLUIDO — usa consultar_referencia_international para datos exactos):
+  • Interseal 670HS Light: Kit galón $342,215 (base $277,875 + cat EGA247 $64,340) | Kit cuñete $1,395,768
+  • Interthane 990HS Light: Kit galón $349,600 (base $259,106 + cat PHA046 $90,494) | Kit cuñete $1,726,300
+  • Interthane 990HS Deep: Kit galón $449,100 (base $358,606 + cat $90,494) | Kit cuñete $2,034,500
+  • Intergard 740 Light: Kit galón $232,050 (base $157,818 + cat $74,232) | Kit cuñete $1,090,550
+  ⚠️ Estos precios YA INCLUYEN IVA. NO sumes IVA de nuevo al cotizar International.
+  ⚠️ Para colores RAL específicos, usa consultar_referencia_international(producto, ral=XXXX) para el precio exacto.
+
+🎨 COLORES PINTUCO: Usa `consultar_base_color` para determinar qué BASE necesita un color (Pastel/Tint/Deep/Accent).
+  Ejemplo: "Gris Basalto" código 1502 = Base Deep → buscar "Viniltex Base Deep galón" en inventario.
+  Si el cliente pide un color y no lo encuentras → derivar a www.ferreinox.co sección Cartas de Colores.
 
 REGLAS TÉCNICAS POR PRODUCTO:
 - KORAZA: SOLO fachadas exteriores, muros exteriores, terrazas. NO sellador de humedad interna. Para humedad interna → Aquablock.
@@ -14260,7 +14378,10 @@ PEDIDO DIRECTO DE ACCESORIOS/INSUMOS: Si el cliente pide DIRECTAMENTE un product
 Si el cliente NOMBRA explícitamente un producto específico (Pintucoat, Koraza, Viniltex, Intergard, Interthane, Corrotec, Barnex, etc.) y pide precio, cotización o unidades (Ej: "Cotízame el Pintucoat gris" o "Quiero 3 cuñetes de Koraza blanco"):
 [ACCIÓN OBLIGATORIA]: Se activa el protocolo de PEDIDO DIRECTO.
 [OVERRIDE]: TIENES ESTRICTAMENTE PROHIBIDO hacer las preguntas del protocolo diagnóstico de pisos, superficies, madera o fachadas.
-[EJECUCIÓN]: Salta directamente a consultar_conocimiento_tecnico (para armar sistema completo) y consultar_inventario, y entrega la cotización. Recuerda aplicar la Regla de la Trinidad si es un producto de alto desempeño (sumar catalizador + solvente/ajustador).
+[EJECUCIÓN]: Salta a consultar_conocimiento_tecnico (para armar sistema completo) y luego PRESENTA EL SISTEMA. 
+  ⚠️ PERO si el cliente NO dijo explícitamente "cotízame", "dame precios" o "cuánto cuesta", PRIMERO presenta el sistema y PREGUNTA: "¿Deseas que revise precios?"
+  ⚠️ Si el cliente SÍ pidió precios en el mismo mensaje → puedes ir directo a FASE 3 con consultar_inventario_lote + cotización.
+  Recuerda aplicar la Regla de la Trinidad si es un producto de alto desempeño (sumar catalizador + diluyente).
 
 CÓDIGOS FRACCIONARIOS: /1=galón (3.79L), /4=cuarto (0.95L), /5=cuñete (18.93L), /2=balde (9.46L). "8 galones 1501" = GALÓN, NO preguntes presentación.
 
@@ -14437,17 +14558,23 @@ Si tu respuesta va a contener recomendaciones de producto, USA <thinking>:
    → No → ¿Describe superficie/actividad genérica? → ASESORÍA. Preguntar primero.
 1b. ¿Tengo superficie + condición + contexto suficiente? → Si NO → PREGUNTAR (conversacional, 1-2 preguntas clave).
 2. ¿Llamé consultar_conocimiento_tecnico? → Si NO → LLAMAR AHORA.
-3. ¿Armé el SISTEMA COMPLETO (Prep→Imprimante→Acabado + HERRAMIENTAS: rodillo, brocha, lija, bandeja, ajustador)? → Si NO → ARMAR.
+3. ¿Armé el SISTEMA COMPLETO (Prep→Imprimante→Acabado + DILUYENTE específico + HERRAMIENTAS: rodillo, brocha, lija, bandeja)? → Si NO → ARMAR.
+3b. ¿Incluí el DILUYENTE/THINNER correcto para este sistema? (Epóxicos→UFA151, Esmaltes→Varsol, Tráfico→21204) → Si NO → AGREGAR.
 4. ¿El cliente ya dio m² o cantidades? (revisa TODA la conversación, incluido este mensaje)
-   → Si NO → Presento sistema técnico CON herramientas + pregunto m² y color + "¿Deseas que revise disponibilidad y precios?". FIN.
+   → Si NO → Presento sistema técnico CON herramientas + diluyente + pregunto m² y color + "¿Deseas que revise disponibilidad y precios?". FIN.
    → Si SÍ → VERIFICO MI MATEMÁTICA:
      * galones = m² ÷ rendimiento MÍNIMO (NUNCA el máximo). Redondear ARRIBA.
      * Ejemplo: 165m² ÷ 12 m²/gal = 13.75 → 14 galones. Si yo puse "2 galones" → ERROR. CORREGIR.
      * >5 gal → cuñetes+galones. 1 cuñete = 5 galones.
      * Calculo cantidades + presento sistema + "¿Deseas que revise disponibilidad y precios del sistema completo?" FIN.
-5. ¿El cliente CONFIRMÓ que quiere precios? ("sí", "dale", "revisa", "cotízame")
-   → Si SÍ → Busco precios con consultar_inventario_lote. Bicomponentes: KIT. Subtotal + IVA 19% = Total.
+5. ⛔ ¿El cliente CONFIRMÓ que quiere precios? ("sí", "dale", "revisa", "cotízame")
+   → Si SÍ → Ahora SÍ busco precios (consultar_inventario_lote + consultar_referencia_international).
+     * Para International: precios YA incluyen IVA. NO sumar IVA de nuevo.
+     * HERRAMIENTAS Y DILUYENTE: búscalos también con consultar_inventario_lote e inclúyelos CON precio.
+     * Subtotal + IVA 19% (solo products sin IVA) = Total.
+     * Cierre: "📦 Resumen de tu proyecto → Total → ¿Deseas generar un pedido o la cotización formal en PDF?"
    → Si NO (respondió otra cosa) → Respondo a la nueva intención sin dar precios.
+5b. 🎨 ¿El producto admite colores? → Mencionar: "Puedes ver colores en www.ferreinox.co sección Cartas de Colores."
 6. Precios: son ANTES DE IVA. Calcular Subtotal + IVA 19% = Total a Pagar.
 7. ¿Estoy repitiendo una pregunta que el cliente YA respondió? → Si SÍ → DETENERME y usar la info que ya tengo.
 8. ¿Estoy arrastrando productos de un pedido/tema ANTERIOR? → Si SÍ → DETENERME. Solo responder al tema ACTUAL.
@@ -14937,6 +15064,63 @@ AGENT_TOOLS = [
                     },
                 },
                 "required": ["confirmar_ingesta"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "consultar_base_color",
+            "description": (
+                "Busca qué BASE de pintura (Pastel, Tint, Deep, Accent) se necesita para preparar un color específico. "
+                "Usa esta herramienta cuando el cliente pida un color por nombre (ej: 'Gris Basalto', 'Verde Pino') "
+                "o por código (ej: '1502', '1507'). La base determina la referencia a buscar en inventario. "
+                "Ej: 'Gris Basalto' = Base Deep → buscar 'Viniltex Base Deep galón'. "
+                "Disponible para: Viniltex, Acriltex, Intervinil, Koraza, Pintulux, Acualux, Pintuco Fill, y +2000 colores del abanico Pintuco."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "color": {
+                        "type": "string",
+                        "description": "Nombre del color o código numérico. Ej: 'Gris Basalto', '1502', 'Verde Pino', 'Crema Sutil'.",
+                    },
+                    "producto": {
+                        "type": "string",
+                        "description": "Línea de producto específica (opcional). Ej: 'Viniltex', 'Koraza', 'Pintulux'. Si no se especifica, busca en todas las líneas.",
+                    },
+                },
+                "required": ["color"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "consultar_referencia_international",
+            "description": (
+                "Consulta la tabla de referencia de productos International/AkzoNobel (Interseal 670HS, Interthane 990, Intergard 740, Acrílica Mantenimiento). "
+                "Devuelve: códigos de referencia (base y catalizador), precios públicos IVA incluido, presentaciones (galón y cuñete), "
+                "y colores RAL disponibles. Usa esta herramienta SIEMPRE que cotices productos International para obtener precios EXACTOS y referencias correctas. "
+                "Los precios de esta tabla YA INCLUYEN IVA."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "producto": {
+                        "type": "string",
+                        "description": "Nombre del producto. Ej: 'Interseal', 'Interthane', 'Intergard', 'Acrilica Mantenimiento'.",
+                    },
+                    "base": {
+                        "type": "string",
+                        "description": "Base o tipo de color. Ej: 'Light', 'Deep', 'Ultra Deep'. Opcional.",
+                    },
+                    "ral": {
+                        "type": "string",
+                        "description": "Código RAL del color. Ej: '7038', '9003', '1015'. Opcional.",
+                    },
+                },
+                "required": ["producto"],
             },
         },
     },
@@ -17776,6 +17960,10 @@ def _execute_agent_tool(tool_call, context, conversation_context):
             result = _handle_tool_procesar_documento_experto(fn_args, conversation_context)
         elif fn_name == "generar_memoria_tecnica":
             result = _handle_tool_generar_memoria_tecnica(fn_args, conversation_context)
+        elif fn_name == "consultar_base_color":
+            result = _handle_tool_consultar_base_color(fn_args)
+        elif fn_name == "consultar_referencia_international":
+            result = _handle_tool_consultar_referencia_international(fn_args)
         else:
             result = json.dumps({"error": f"Herramienta desconocida: {fn_name}"}, ensure_ascii=False)
     except Exception as tool_exc:
@@ -17789,6 +17977,93 @@ def _execute_agent_tool(tool_call, context, conversation_context):
     elapsed_ms = int((time.time() - t0) * 1000)
     logger.info("Tool %s completed in %dms | args=%s", fn_name, elapsed_ms, json.dumps(fn_args, ensure_ascii=False)[:200])
     return fn_name, fn_args, result
+
+
+# ── Handler: consultar_base_color ──
+def _handle_tool_consultar_base_color(fn_args: dict) -> str:
+    color = fn_args.get("color", "")
+    producto = fn_args.get("producto", "")
+    results = lookup_color_base(color, producto)
+    if not results:
+        return json.dumps({
+            "encontrado": False,
+            "mensaje": f"No encontré el color '{color}' en el catálogo de fórmulas. El cliente puede visitar www.ferreinox.co sección Cartas de Colores para ver la gama completa. Si tiene el código del color (ej: 1502), búscalo por código.",
+        }, ensure_ascii=False)
+    items = []
+    for r in results:
+        items.append({
+            "codigo": r["codigo"],
+            "nombre_color": r["nombre"],
+            "base_requerida": r["base"],
+            "linea_producto": r["producto"],
+        })
+    return json.dumps({
+        "encontrado": True,
+        "colores": items,
+        "instruccion": (
+            "Usa la BASE indicada para buscar en inventario. "
+            "Ej: si base='Base Deep' y producto='Viniltex' → buscar 'Viniltex Base Deep galón'. "
+            "La tintometría se realiza en tienda con la fórmula del color. "
+            "Menciona al cliente: 'Puedes ver toda nuestra gama de colores en www.ferreinox.co sección Cartas de Colores'."
+        ),
+    }, ensure_ascii=False)
+
+
+# ── Handler: consultar_referencia_international ──
+def _handle_tool_consultar_referencia_international(fn_args: dict) -> str:
+    producto = fn_args.get("producto", "")
+    base = fn_args.get("base", "")
+    ral = fn_args.get("ral", "")
+    results = lookup_international_product(producto, base, ral)
+    if not results:
+        return json.dumps({
+            "encontrado": False,
+            "mensaje": f"No encontré '{producto}' en la tabla de referencia International. Usa consultar_inventario para buscar por nombre comercial.",
+        }, ensure_ascii=False)
+    items = []
+    for r in results:
+        entry = {"producto": r.get("producto", ""), "base": r.get("base", ""), "ral": r.get("ral", "")}
+        if r.get("kit_galon"):
+            entry["precio_kit_galon_iva_inc"] = r["kit_galon"]
+        if r.get("precio_galon"):
+            entry["precio_base_galon_iva_inc"] = r["precio_galon"]
+        if r.get("codigo_base_galon"):
+            entry["codigo_base_galon"] = r["codigo_base_galon"]
+        if r.get("codigo_cat_galon"):
+            entry["codigo_catalizador_galon"] = r["codigo_cat_galon"]
+        if r.get("precio_cat_galon"):
+            entry["precio_catalizador_galon_iva_inc"] = r["precio_cat_galon"]
+        if r.get("kit_cunete"):
+            entry["precio_kit_cunete_iva_inc"] = r["kit_cunete"]
+        if r.get("precio_cunete"):
+            entry["precio_base_cunete_iva_inc"] = r["precio_cunete"]
+        if r.get("codigo_cunete"):
+            entry["codigo_base_cunete"] = r["codigo_cunete"]
+        if r.get("codigo_cat_cunete"):
+            entry["codigo_catalizador_cunete"] = r["codigo_cat_cunete"]
+        if r.get("precio_cat_cunete"):
+            entry["precio_catalizador_cunete_iva_inc"] = r["precio_cat_cunete"]
+        # Acrilica Mantenimiento fields
+        if r.get("codigo_galon"):
+            entry["codigo_galon"] = r["codigo_galon"]
+            entry["precio_galon_iva_inc"] = r.get("precio_galon", "")
+        if r.get("codigo_cunete"):
+            entry["codigo_cunete"] = r["codigo_cunete"]
+            entry["precio_cunete_iva_inc"] = r.get("precio_cunete", "")
+        if r.get("tonalidad"):
+            entry["tonalidad"] = r["tonalidad"]
+        items.append(entry)
+    return json.dumps({
+        "encontrado": True,
+        "productos": items,
+        "total_resultados": len(items),
+        "instruccion": (
+            "⚠️ IMPORTANTE: Los precios de esta tabla YA INCLUYEN IVA. "
+            "NO sumes IVA de nuevo. El precio KIT galón = base + catalizador ya con IVA. "
+            "Para cotizar: precio_kit × cantidad = subtotal. El total YA es con IVA incluido. "
+            "Usa los CÓDIGOS de referencia para buscar disponibilidad con consultar_inventario."
+        ),
+    }, ensure_ascii=False)
 
 
 def generate_agent_reply_v2(
@@ -18333,6 +18608,61 @@ def generate_agent_reply_v2(
         tool_names = [tc["name"] for tc in tool_calls_made]
 
     # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA FLUJO-COMERCIAL: Si es el PRIMER mensaje de una asesoría
+    # (no hay cotización previa en el historial reciente) y el agente
+    # ya incluyó precios/cotización SIN que el cliente los pidiera,
+    # forzar reescritura sin precios (solo sistema técnico + "¿Deseas precios?")
+    # ══════════════════════════════════════════════════════════════════════
+    _resp_lower_fc = (assistant_message.content or "").lower() if assistant_message.content else ""
+    _user_lower_fc = (user_message or "").lower()
+    _has_prices_fc = "$" in _resp_lower_fc and sum(1 for s in ["subtotal", "total", "iva", "precio"] if s in _resp_lower_fc) >= 2
+    # Detect if this is a first-time system request (not a "sí"/"dale" confirmation)
+    _is_confirmation = any(s in _user_lower_fc for s in [
+        "sí", "si", "dale", "dale pues", "revisa", "cotízame", "cotizame",
+        "cuanto cuesta", "cuánto cuesta", "dame precio", "precio de",
+        "dame cotización", "dame cotizacion", "quiero comprar",
+    ])
+    # Check if there's already a quote in the recent messages (meaning client already saw prices)
+    _history_has_quote = any("$" in (msg.get("contenido") or "") and "total" in (msg.get("contenido") or "").lower()
+                            for msg in recent_messages[-6:] if msg.get("direction") == "outbound")
+    # Check if user explicitly asked for "sistema completo" / described surface (= advisory)
+    _is_advisory_request = any(s in _user_lower_fc for s in [
+        "sistema completo", "sistema de pintura", "necesito pintar", "quiero pintar",
+        "dame el sistema", "qué sistema", "que sistema", "cómo pinto", "como pinto",
+        "qué necesito para", "que necesito para", "qué pintura", "que pintura",
+    ])
+    if (_has_prices_fc and not _is_confirmation and not _history_has_quote and _is_advisory_request
+            and not is_simple_greeting(user_message)):
+        logger.warning(
+            "GUARDIA FLUJO-COMERCIAL: agente saltó a cotización sin confirmación del cliente. "
+            "Forzando reescritura sin precios (solo sistema técnico + pregunta)."
+        )
+        messages.append(assistant_message)
+        messages.append({
+            "role": "system",
+            "content": (
+                "⛔ VIOLACIÓN DE FLUJO: El cliente pidió una ASESORÍA o SISTEMA DE PINTURA, "
+                "pero tu respuesta ya incluye PRECIOS y COTIZACIÓN sin que el cliente los pidiera. "
+                "FLUJO CORRECTO: PRIMERO presenta el SISTEMA TÉCNICO completo "
+                "(preparación → imprimante → acabado + diluyente + herramientas) SIN PRECIOS. "
+                "AL FINAL pregunta: '¿Deseas que revise disponibilidad y precios del sistema completo?' "
+                "REESCRIBE tu respuesta SIN precios. Presenta solo el sistema técnico con cantidades "
+                "(si tienes m²) y pregunta si quiere ver precios. "
+                "INCLUYE: diluyente específico del sistema, herramientas de aplicación."
+            ),
+        })
+        t_flow = time.time()
+        flow_response = client.chat.completions.create(
+            model=get_openai_model(),
+            messages=messages,
+            tools=AGENT_TOOLS,
+            tool_choice="none",
+            temperature=0.3,
+        )
+        assistant_message = flow_response.choices[0].message
+        logger.info("GUARDIA FLUJO-COMERCIAL retry completed: %dms", int((time.time() - t_flow) * 1000))
+
+    # ══════════════════════════════════════════════════════════════════════
     # GUARDIA PREGUNTA-TÉCNICA → COTIZACIÓN INDEBIDA:
     # Si el usuario hizo una pregunta PURAMENTE TÉCNICA (secado, dilución,
     # rendimiento, mezcla, aplicación, preparación, garantía) pero la
@@ -18394,21 +18724,25 @@ def generate_agent_reply_v2(
     "poder cubriente", "cubrimiento", "opacidad", "brillo", "mate", "satinado", "semimate",
     "textura", "antideslizante", "color de fondo", "acabado", "terminado"
 ]
-    _COTIZACION_SIGNALS = ["$", "precio", "cotización", "cotizacion", "iva", "incluye iva", "total para", "subtotal"]
+    _COTIZACION_SIGNALS = ["$", "precio", "cotización", "cotizacion", "iva", "incluye iva", "total para", "subtotal", "total a pagar", "kit galón", "kit cuñete"]
     _tech_q_lower = (user_message or "").lower()
-    _tech_resp_lower = (assistant_message.content or "").lower()
+    _tech_resp_lower = (assistant_message.content or "").lower() if assistant_message.content else ""
     _is_tech_question = any(s in _tech_q_lower for s in _TECHNICAL_QUESTION_SIGNALS)
     _has_cotizacion = sum(1 for s in _COTIZACION_SIGNALS if s in _tech_resp_lower) >= 2
+    # Also detect long responses with prices (likely full quote repetition for a short technical question)
+    _is_long_price_response = len(_tech_resp_lower) > 800 and "$" in _tech_resp_lower and len(_tech_q_lower) < 80
     # Buy signals: palabras que indican intención de COMPRA, no consulta técnica.
     # OJO: "galones" y "galón" NO son buy signals — aparecen en preguntas técnicas de rendimiento.
     _no_buy_signal = not any(s in _tech_q_lower for s in [
         "quiero comprar", "necesito comprar", "cotízame", "cotizame",
         "cuanto cuesta", "cuánto cuesta", "hazme pedido", "pedir",
-        "dame precio", "precio de",
+        "dame precio", "precio de", "dame cotización", "dame cotizacion",
     ])
-    if _is_tech_question and _has_cotizacion and _no_buy_signal and not is_simple_greeting(user_message):
+    if _is_tech_question and (_has_cotizacion or _is_long_price_response) and _no_buy_signal and not is_simple_greeting(user_message):
         logger.warning(
-            "GUARDIA PREGUNTA-TÉCNICA: usuario hizo pregunta técnica pero respuesta tiene cotización. Forzando reescritura técnica."
+            "GUARDIA PREGUNTA-TÉCNICA: usuario hizo pregunta técnica pero respuesta tiene cotización. "
+            "tech_q=%s, cotiz_signals=%d, long_price=%s. Forzando reescritura técnica.",
+            _is_tech_question, sum(1 for s in _COTIZACION_SIGNALS if s in _tech_resp_lower), _is_long_price_response,
         )
         messages.append(assistant_message)
         messages.append({
@@ -18523,11 +18857,11 @@ def generate_agent_reply_v2(
                 ar_retries -= 1
             logger.info("GUARDIA ANTI-REPETICIÓN completed: %dms", int((time.time() - t_antirepeat) * 1000))
         else:
-            # ── Check for missing tools in response ──
+            # ── Check for missing tools/diluyente in response ──
             _TOOL_SIGNALS = ["rodillo", "brocha", "lija", "felpa", "bandeja", "cinta",
                              "thinner", "estopa", "espátula", "espatula", "herramienta",
                              "accesorio", "aplicador", "extensi", "ajustador", "diluyente",
-                             "solvente"]
+                             "solvente", "ufa151", "varsol", "21204"]
             has_tools_in_response = any(t in response_lower_diag for t in _TOOL_SIGNALS)
             # Check if response has a product recommendation (system/quotation)
             has_system_recommendation = has_recommendation_diag  # 2+ products mentioned
@@ -18541,17 +18875,18 @@ def generate_agent_reply_v2(
                 messages.append({
                     "role": "system",
                     "content": (
-                        "⛔ Tu recomendación NO incluye las herramientas de aplicación necesarias. "
+                        "⛔ Tu recomendación NO incluye las herramientas de aplicación ni el diluyente necesarios. "
                         "OBLIGATORIO agregar herramientas ESPECÍFICAS para este sistema:\n"
                         "🔧 Rodillo (tipo específico: felpa corta para esmaltes, felpa larga para vinilos, espuma para epóxicos)\n"
                         "🔧 Brocha (para remates y esquinas)\n"
                         "🔧 Lija (grano específico para la preparación de la superficie)\n"
                         "🔧 Bandeja para rodillo\n"
                         "🔧 Extensión telescópica (si la superficie es alta)\n"
-                        "🔧 Thinner/Ajustador/Diluyente específico del sistema (NO genérico)\n"
+                        "🧴 Diluyente/Thinner ESPECÍFICO del sistema: Epóxicos/PU→UFA151, Esmaltes→Varsol, Tráfico→21204\n"
                         "🔧 Cinta de enmascarar (para proteger bordes)\n"
-                        "Reescribe tu respuesta INCLUYENDO estas herramientas como parte integral del sistema, "
-                        "NO como un apéndice genérico al final."
+                        "Reescribe tu respuesta INCLUYENDO herramientas + diluyente como parte integral del sistema, "
+                        "NO como un apéndice genérico al final. "
+                        "Las herramientas y diluyente son VENTA CRUZADA — inclúyelos siempre."
                     ),
                 })
                 t_tools = time.time()
