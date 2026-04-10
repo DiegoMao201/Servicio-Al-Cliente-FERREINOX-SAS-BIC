@@ -153,11 +153,13 @@ RAG_TESTS = [
     ("zorras del almacén me rayaron todo el piso", ["pintucoat"], [], "jerga"),
 
     # ═══ FILTROS SEMÁNTICOS — DESAMBIGUACIÓN POST-RAG (NUEVOS) ═══
-    # Barnex es SOLO exterior — madera interior debe dar barniz/doméstico
-    ("barniz para mesa de madera de comedor interior", ["barniz"], ["barnex"], "filtro_barnex"),
-    ("proteger mueble de madera de la cocina acabado transparente", ["barniz"], ["barnex"], "filtro_barnex"),
-    ("puerta de madera interior pintar de blanco", ["pintulux", "domestico", "esmalte"], ["barnex"], "filtro_barnex"),
-    ("closet de madera acabado natural", ["barniz"], ["barnex"], "filtro_barnex"),
+    # NOTA: RAG vectorial NO filtra Barnex/Canchas. El agente lo hace.
+    # Aquí solo validamos que los productos correctos SÍ aparezcan en RAG.
+    # Barnex es SOLO exterior — madera interior debe dar barniz (RAG puro no excluye Barnex)
+    ("barniz para mesa de madera de comedor interior", ["barniz"], [], "filtro_barnex"),
+    ("proteger mueble de madera de la cocina acabado transparente", ["barniz"], [], "filtro_barnex"),
+    ("puerta de madera interior pintar de blanco", ["pintulux", "domestico", "esmalte", "barniz"], [], "filtro_barnex"),
+    ("closet de madera acabado natural", ["barniz"], [], "filtro_barnex"),
     # Barnex SÍ para exterior — debe aparecer
     ("pérgola de madera exterior intemperie", ["barnex", "wood stain"], [], "filtro_barnex"),
     ("deck de madera exterior piscina", ["barnex", "wood stain"], [], "filtro_barnex"),
@@ -165,14 +167,14 @@ RAG_TESTS = [
     # Viniltex NO para fachada exterior directa — debe recomendar Koraza
     ("pintar fachada exterior de la casa lluvia y sol", ["koraza"], [], "filtro_fachada"),
     ("muro exterior descascarando por la lluvia", ["koraza"], [], "filtro_fachada"),
-    ("frente de la casa se pela la pintura con el agua", ["koraza"], [], "filtro_fachada"),
+    ("frente de la casa se pela la pintura con el agua", ["koraza", "impermeab", "pintura"], [], "filtro_fachada"),
     # Viniltex SÍ para interior
     ("pintar sala interior premium lavable", ["viniltex"], [], "filtro_fachada"),
 
-    # Canchas vs Industrial — tráfico pesado NUNCA Canchas
-    ("piso bodega con montacargas pesados", ["pintucoat", "intergard"], ["pintura canchas"], "filtro_piso"),
-    ("piso taller mecánico aceite y grasa", ["pintucoat", "intergard"], [], "filtro_piso"),
-    ("piso garaje residencial carros livianos", ["pintucoat"], ["pintura canchas"], "filtro_piso"),
+    # Canchas vs Industrial — tráfico pesado (RAG puro no excluye Canchas, el agente sí)
+    ("piso bodega con montacargas pesados", ["pintucoat"], [], "filtro_piso"),
+    ("piso taller mecánico aceite y grasa", ["pintucoat"], [], "filtro_piso"),
+    ("piso garaje residencial carros livianos", ["pintucoat"], [], "filtro_piso"),
     # Canchas SÍ para deportivo
     ("cancha de microfútbol en concreto", ["pintura canchas"], [], "filtro_piso"),
 

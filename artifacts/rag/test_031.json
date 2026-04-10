@@ -6,19 +6,13 @@
       {
         "archivo": "PINTURA PARA PARQUEADERO.pdf",
         "familia": "PINTURA PARA PARQUEADERO",
-        "similitud": 0.6641,
+        "similitud": 0.658,
         "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.2 / Noviembre 2019 PINTURA PARA\nPintura acrílica modificada para demarcación horizontal,\ncon excelente visibilidad diurna y nocturna, resistente a la\nabrasión severa y a gran variedad de contaminantes,\ndurables y rápido secamiento para apertura al tráfico y\nentre manos."
-      },
-      {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.6546,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
       },
       {
         "archivo": "PINTURA PARA PARQUEADERO.pdf",
         "familia": "PINTURA PARA PARQUEADERO",
-        "similitud": 0.6432,
+        "similitud": 0.6316,
         "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nDemarcación y señalización de parqueaderos, pisos de\nalmacenes, en interior y exterior, bodegas e industrias en\ngeneral, aplicadas sobre superficies de pavimento y concreto\nprincipalmente. Tanto para aplicación de metros cuadrados\ncomo lineales."
       },
       {
@@ -26,6 +20,12 @@
         "familia": "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
         "similitud": 0.6297,
         "texto": "[PRODUCTO: PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA] [MARCA: Pintuco]\n[SECCIÓN: CENTRO INDUSTRIAL RIONEGRO:]\n\nAutopista Medellín – Bogotá"
+      },
+      {
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.5405,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: Amarillo]\n\n10398132"
       },
       {
         "archivo": "FDS - BARNEX EXTRAPROTECCION SEMIBRILLANTE CARAMELO 6606.pdf",
@@ -48,9 +48,7 @@
     ],
     "productos_candidatos": [
       "PINTURA PARA PARQUEADERO",
-      "PINTURA PARA CANCHAS",
       "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
-      "pintura canchas",
       "pintucoat",
       "pintura trafico",
       "pintutraf"

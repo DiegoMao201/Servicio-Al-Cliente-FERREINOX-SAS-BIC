@@ -22,10 +22,10 @@
         "texto": "[PRODUCTO: PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nSe usan para la demarcación y señalización de carreteras, calles, autopistas, parqueaderos, cachas deportivas, pisos de almacenes, bodegas e\nindustrias en general, aplicadas sobre superficies de pavimento, concreto, ladrillo y acero."
       },
       {
-        "archivo": "PINTURA ACRILICA PARA DEMARCACIÓN ICO.pdf",
-        "familia": "PINTURA ACRILICA PARA DEMARCACIÓN ICO",
-        "similitud": 0.673,
-        "texto": "[PRODUCTO: PINTURA ACRILICA PARA DEMARCACIÓN ICO] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la señalización y demarcación de pistas de aterrizaje, autopistas, carreteras, calles, parqueaderos, canchas deportivas, pisos de fábricas y\nbodegas."
+        "archivo": "PINTUTRAFICO ACRILICO BASE SOLVENTE.pdf",
+        "familia": "PINTUTRAFICO ACRILICO BASE SOLVENTE",
+        "similitud": 0.6578,
+        "texto": "[PRODUCTO: PINTUTRAFICO ACRILICO BASE SOLVENTE] [MARCA: Pintuco]\n[SECCIÓN: Demarcación]\n\ny\nseñalización\nde\ncarreteras,\ncalles,\nautopistas,\nparqueaderos, pisos de almacenes, bodegas e industrias en general,\naplicadas sobre superficies de pavimento y concreto principalmente."
       },
       {
         "archivo": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
@@ -55,8 +55,7 @@
     "productos_candidatos": [
       "PINTURA PARA PARQUEADERO",
       "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
-      "PINTURA ACRILICA PARA DEMARCACIÓN ICO",
-      "pintura canchas",
+      "PINTUTRAFICO ACRILICO BASE SOLVENTE",
       "pintucoat",
       "pintura trafico",
       "pintutraf"

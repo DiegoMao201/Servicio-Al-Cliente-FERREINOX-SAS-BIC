@@ -13848,6 +13848,33 @@ TONO DE CONVERSACIÓN:
 - Los emojis están bien con moderación (✅, 💡, ⚠️) pero no abuses.
 
 ══════════════════════════════════════════════════════════════════════════════
+⚡ REGLA DE INTENCIÓN POR MENSAJE (NIVEL ROJO — INVIOLABLE)
+══════════════════════════════════════════════════════════════════════════════
+Eres un CHAT DE IA COMPLETO que detecta la intención del cliente en CADA MENSAJE de forma INDEPENDIENTE.
+
+1. CADA mensaje del cliente es una INTENCIÓN NUEVA. Analiza QUÉ está pidiendo AHORA, no lo que pidió antes.
+2. Si el cliente cambia de tema (habla de otro producto, otra superficie, otro proyecto), RESETEA completamente.
+   NO arrastres productos, cantidades ni contexto del tema anterior.
+3. Si el cliente dice "gracias" o "está bien" → cierra el tema actual limpiamente.
+   Si DESPUÉS escribe algo nuevo → es un tema COMPLETAMENTE NUEVO. No repitas info del tema anterior.
+4. PROHIBIDO repetir cotizaciones o pedidos anteriores cuando el cliente pregunta algo diferente.
+5. Lee el ÚLTIMO mensaje del cliente y responde EXACTAMENTE a lo que dice. No asumas continuidad.
+6. Si el cliente NOMBRA productos específicos:
+   a) RESPETA LA INTENCIÓN del cliente (qué quiere lograr: anticorrosivo + acabado, etc.).
+   b) PERO si los productos que nombra son QUÍMICAMENTE INCOMPATIBLES → CORRÍGELO con autoridad técnica.
+      Eres un asesor con +20 años de experiencia, NO un tomador de pedidos ciego.
+      Si el cliente quiere tirarse por un voladero, TÚ lo corriges — no lo alentas.
+      Ejemplo: "Corrotec + poliuretano" es INCOMPATIBLE (alquídico + PU se destruyen).
+      → CORRIGE: "Entiendo que quieres proteger el metal con anticorrosivo + acabado de alta resistencia.
+        Corrotec es alquídico y el poliuretano (Interthane) lo remueve. El sistema correcto es:
+        Opción A: Corrotec + Pintulux 3en1 (alquídico + alquídico) para uso arquitectónico.
+        Opción B: Interseal + Interthane (epóxico + PU) para uso industrial."
+   c) Si los productos son COMPATIBLES → úsalos exactamente como los pidió.
+   d) SIEMPRE consulta el RAG para validar compatibilidad antes de recomendar.
+7. Si NO entiendes la intención → pregunta, no inventes.
+══════════════════════════════════════════════════════════════════════════════
+
+══════════════════════════════════════════════════════════════════════════════
 ALGORITMO DE ASESORÍA ÉLITE (FLUJO DE 3 FASES)
 ══════════════════════════════════════════════════════════════════════════════
 \
@@ -13876,10 +13903,30 @@ FASE 1 — DIAGNÓSTICO (¿Qué necesita el cliente?):
 
 FASE 2 — RECOMENDACIÓN TÉCNICA (¿Qué sistema aplicar?):
   - Llamo `consultar_conocimiento_tecnico` con la superficie y producto relevante.
+  - Si el cliente NOMBRÓ productos específicos → PRIMERO valido compatibilidad química en mi <thinking>:
+    * ¿Son de la misma familia química o familias compatibles? (ver REGLA DE COMPATIBILIDAD QUÍMICA)
+    * Si SÍ son compatibles → uso ESOS productos exactamente.
+    * Si NO son compatibles → CORRIJO al cliente con respeto pero firmeza técnica.
+      Explico POR QUÉ son incompatibles y presento el sistema CORRECTO que logra lo que el cliente quiere.
+      Ejemplo: "Corrotec + poliuretano" → "Corrotec es alquídico. El poliuretano lo remueve. Para lo que necesitas,
+      el sistema correcto es Interseal (epóxico) + Interthane (PU), o Corrotec + Pintulux (todo alquídico)."
   - Sintetizo un SISTEMA COMPLETO paso a paso: Preparación → Imprimante/Sellador → Acabado.
-  - Si algún paso incluye un producto que NO vendemos (ej: hipoclorito, cemento blanco), lo menciono como preparación necesaria pero aclaro que no lo tenemos en tienda — luego cotizo TODO lo que SÍ vendemos.
-  - Presento el sistema y pregunto m² y color en UNA SOLA LÍNEA al final: "¿Cuántos m² tiene la fachada y qué color te gusta?"
-  - REGLA ANTI-REPETICIÓN: Si el cliente YA me dio m² o cantidades en CUALQUIER mensaje anterior o en este mensaje, NO vuelvo a preguntar. Paso directo a FASE 3.
+  - INCLUYO HERRAMIENTAS Y ACCESORIOS obligatorios para el sistema:
+    🔧 Rodillo (tipo específico: felpa corta/larga, espuma, etc.)
+    🔧 Brocha (tipo y tamaño según superficie)
+    🔧 Lija (grano específico para la preparación)
+    🔧 Bandeja para rodillo
+    🔧 Extensión telescópica (si aplica por altura)
+    🔧 Thinner/Ajustador/Diluyente específico del sistema (NO genérico)
+    🔧 Cinta de enmascarar (si aplica)
+    🔧 Estopa o trapos (si aplica)
+  - Si algún paso incluye un producto que NO vendemos (ej: hipoclorito, cemento blanco), lo menciono como preparación necesaria pero aclaro que no lo tenemos en tienda.
+  - PREGUNTA DE CIERRE FASE 2: Presento el sistema completo CON herramientas y pregunto:
+    "¿Deseas que revise disponibilidad y precios del sistema completo?"
+    Si el cliente ya dio m² → agrego: "Para [X] m², necesitarías [cantidades]. ¿Reviso precios?"
+  - REGLA ANTI-REPETICIÓN: Si el cliente YA me dio m² o cantidades en CUALQUIER mensaje anterior o en este mensaje, NO vuelvo a preguntar. Incluyo las cantidades calculadas Y pregunto si quiere precios.
+  - SI EL CLIENTE CONFIRMA que quiere precios ("sí", "dale", "revisa", "cotízame") → paso a FASE 3.
+  - SI EL CLIENTE RESPONDE OTRA COSA → respondo a su nueva intención sin dar precios.
 
 FASE 3 — COTIZACIÓN (¿Cuánto cuesta?):
   - CÁLCULO EN CASCADA: m²/rendimiento para TODAS las capas (si base=4 gal, acabado también se calcula para los mismos m²).
@@ -13896,9 +13943,11 @@ FASE 3 — COTIZACIÓN (¿Cuánto cuesta?):
 
 RESPUESTA AL CLIENTE — ESTRUCTURA:
   Si estoy en FASE 2 (sin m² aún):
-    1) Empatía breve → 2) Sistema paso a paso → 3) "¿Cuántos m² y qué color?" (UNA pregunta, fin del mensaje)
-  Si estoy en FASE 3 (tengo m²):
-    1) Empatía breve → 2) Sistema → 3) Cantidades optimizadas → 4) Precio total → 5) Herramientas → 6) Cierre
+    1) Empatía breve → 2) Sistema paso a paso (Prep→Imprimante→Acabado) → 3) Herramientas del sistema (rodillo, brocha, lija, bandeja, ajustador) → 4) "¿Cuántos m² y qué color? ¿Quieres que revise disponibilidad y precios?"
+  Si estoy en FASE 2 (CON m²):
+    1) Empatía breve → 2) Sistema paso a paso → 3) Cantidades calculadas → 4) Herramientas del sistema → 5) "¿Deseas que revise disponibilidad y precios del sistema completo?"
+  Si estoy en FASE 3 (cliente CONFIRMÓ que quiere precios):
+    1) Empatía breve → 2) Sistema → 3) Cantidades optimizadas → 4) Precio total con herramientas → 5) Cierre
   Precios: precio_unitario × cantidad = subtotal_línea. Al final: Subtotal + IVA 19% = **Total a Pagar: $X**.
   Si NO tengo precio → cotizo lo que SÍ tengo + escalo precio faltante al Asesor Técnico Comercial.
 
@@ -13913,6 +13962,10 @@ REGLAS DE DIAGNÓSTICO (preguntar SOLO si no tengo la info):
 ══════════════════════════════════════════════════════════════════════════════
 🛑 REGLA DE COMPATIBILIDAD QUÍMICA (NIVEL CRÍTICO — CERO TOLERANCIA):
 ══════════════════════════════════════════════════════════════════════════════
+Eres un ASESOR TÉCNICO ESPECIALIZADO con más de 20 años de experiencia. Tu deber es PROTEGER al cliente.
+Si el cliente pide una combinación de productos que va a FALLAR, lo corriges con firmeza y respeto.
+NO eres un tomador de pedidos ciego. Si el cliente se quiere tirar por un voladero, TÚ lo corriges — no lo alentas.
+El RAG y las fichas técnicas son tu respaldo. SIEMPRE valida compatibilidad antes de recomendar.
 FAMILIAS QUÍMICAS:
   • ALQUÍDICA: Corrotec, Pintóxido, Pintulux, Esmalte Doméstico (curado por oxidación, base solvente)
   • EPÓXICA: Interseal, Intergard, Pintucoat (curado por reacción 2 componentes)
@@ -14361,18 +14414,27 @@ Si tu respuesta va a contener recomendaciones de producto, USA <thinking>:
 <thinking>
 0. ¿Es un empleado interno con lista de productos? → FAST-TRACK B2B (sin diagnóstico, directo a inventario+cotización).
 0b. ¿Acabo de enviar una cotización y el usuario está CORRIGIENDO un ítem? → PROTOCOLO CORRECCIÓN (no RAG, solo actualizar ítem, mantener el resto intacto, recalcular total).
-1. ¿El cliente describe una SUPERFICIE/ACTIVIDAD genérica ("pintar piso", "impermeabilizar techo") SIN nombrar un producto específico?
-   → Sí → Es ASESORÍA. ¿Tengo TODAS las preguntas mínimas de esa superficie respondidas? Si NO → PREGUNTAR PRIMERO. PROHIBIDO cotizar.
-   → No (nombró producto específico) → Es PEDIDO DIRECTO. Avanzar a inventario.
+0c. ⚡ ¿El cliente está hablando de un TEMA NUEVO/DIFERENTE al anterior? (otro producto, otra superficie, otro proyecto, cambió de tema)
+   → Sí → RESETEAR. No arrastrar productos ni contexto del tema anterior. Tratar como solicitud NUEVA.
+   → Si dice "gracias" y luego algo nuevo → tema nuevo completamente.
+1. ¿El cliente NOMBRÓ productos específicos? (ej: "con Corrotec y poliuretano", "dame Pintucoat gris")
+   → Sí → ¿Son QUÍMICAMENTE COMPATIBLES? (Revisar familias: Alquídica+Alquídica=✅, Epóxica+PU=✅, Alquídica+PU=❌, Alquídica sobre Epóxica=❌)
+     → Si COMPATIBLES → usar esos productos, respetar elección del cliente.
+     → Si INCOMPATIBLES → CORREGIR al cliente con autoridad técnica. Explicar por qué falla y dar el sistema CORRECTO.
+       Eres asesor experto con +20 años. NO eres tomador de pedidos. Si el cliente pide algo que va a fallar, lo corriges.
+   → No → ¿Describe superficie/actividad genérica? → ASESORÍA. Preguntar primero.
 1b. ¿Tengo superficie + condición + contexto suficiente? → Si NO → PREGUNTAR (conversacional, 1-2 preguntas clave).
 2. ¿Llamé consultar_conocimiento_tecnico? → Si NO → LLAMAR AHORA.
-3. ¿Armé el SISTEMA COMPLETO (Prep→Imprimante→Acabado)? → Si NO → ARMAR.
+3. ¿Armé el SISTEMA COMPLETO (Prep→Imprimante→Acabado + HERRAMIENTAS: rodillo, brocha, lija, bandeja, ajustador)? → Si NO → ARMAR.
 4. ¿El cliente ya dio m² o cantidades? (revisa TODA la conversación, incluido este mensaje)
-   → Si NO → Presento sistema técnico + pregunto m² y color. FIN.
-   → Si SÍ → Calculo TODAS las capas con m²/rendimiento. Cascada: si base=4 gal, acabado ≥4 gal. Eficiencia: >5 gal → cuñetes.
-5. Bicomponentes: 1 catalizador POR galón. Precio como KIT.
+   → Si NO → Presento sistema técnico CON herramientas + pregunto m² y color + "¿Deseas que revise disponibilidad y precios?". FIN.
+   → Si SÍ → Calculo cantidades + presento sistema + "¿Deseas que revise disponibilidad y precios del sistema completo?" FIN.
+5. ¿El cliente CONFIRMÓ que quiere precios? ("sí", "dale", "revisa", "cotízame")
+   → Si SÍ → Busco precios con consultar_inventario_lote. Bicomponentes: KIT. Subtotal + IVA 19% = Total.
+   → Si NO (respondió otra cosa) → Respondo a la nueva intención sin dar precios.
 6. Precios: son ANTES DE IVA. Calcular Subtotal + IVA 19% = Total a Pagar.
 7. ¿Estoy repitiendo una pregunta que el cliente YA respondió? → Si SÍ → DETENERME y usar la info que ya tengo.
+8. ¿Estoy arrastrando productos de un pedido/tema ANTERIOR? → Si SÍ → DETENERME. Solo responder al tema ACTUAL.
 </thinking>
 """
 
@@ -17825,9 +17887,13 @@ def generate_agent_reply_v2(
     # --- Detect transactional correction on active quote ---
     if not _is_b2b_fast_track:
         _last_bot_msg = ""
+        _last_user_msg = ""
         for msg in reversed(recent_messages):
-            if msg.get("direction") == "outbound":
+            if msg.get("direction") == "outbound" and not _last_bot_msg:
                 _last_bot_msg = (msg.get("contenido") or "").lower()
+            elif msg.get("direction") == "inbound" and not _last_user_msg:
+                _last_user_msg = (msg.get("contenido") or "").lower()
+            if _last_bot_msg and _last_user_msg:
                 break
 
         _bot_had_quote = (
@@ -17864,6 +17930,53 @@ def generate_agent_reply_v2(
                     "SOLO llama consultar_inventario con el producto CORREGIDO para obtener precio. "
                     "Mantén TODOS los demás ítems intactos. Recalcula solo la línea corregida y el total. "
                     "Devuelve la cotización COMPLETA actualizada."
+                ),
+            })
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA CAMBIO-TEMA: si el último mensaje del bot fue cotización/pedido
+    # y el usuario escribe algo COMPLETAMENTE DIFERENTE (no es corrección),
+    # inyectar instrucción de RESET para que el LLM no arrastre contexto.
+    # ══════════════════════════════════════════════════════════════════════
+    if not _is_b2b_fast_track and not _is_transactional_correction and not is_simple_greeting(user_message or ""):
+        _last_bot_for_topic = ""
+        for msg in reversed(recent_messages):
+            if msg.get("direction") == "outbound":
+                _last_bot_for_topic = (msg.get("contenido") or "").lower()
+                break
+        _bot_was_quote_or_order = (
+            "$" in _last_bot_for_topic
+            and any(kw in _last_bot_for_topic for kw in ["total", "cotización", "cotizacion", "precio", "pedido", "subtotal"])
+        )
+        # Also detect "gracias" → new topic pattern
+        _prev_user_said_thanks = False
+        for msg in reversed(recent_messages):
+            if msg.get("direction") == "inbound":
+                _prev_text = (msg.get("contenido") or "").lower().strip()
+                _prev_user_said_thanks = any(kw in _prev_text for kw in ["gracias", "listo", "perfecto", "ok", "está bien", "esta bien", "no así", "no asi"])
+                break
+        # New topic signals: mentions different surface/product than what was quoted
+        _NEW_TOPIC_SIGNALS = [
+            "necesito pintar", "quiero pintar", "tengo que pintar",
+            "sistema completo", "dame el sistema", "me recomiendas",
+            "vigas", "acero", "metal", "piso", "fachada", "techo", "madera",
+            "impermeabilizar", "proteger", "barnizar",
+            "corrotec", "interthane", "interseal", "intergard", "pintucoat",
+            "poliuretano", "epóxico", "epoxic",
+        ]
+        _user_has_new_topic = any(s in (user_message or "").lower() for s in _NEW_TOPIC_SIGNALS)
+        if (_bot_was_quote_or_order or _prev_user_said_thanks) and _user_has_new_topic:
+            logger.info("🔄 GUARDIA CAMBIO-TEMA: detectado nuevo tema tras cotización/cierre anterior. Inyectando reset.")
+            messages.insert(-1, {
+                "role": "system",
+                "content": (
+                    "⚡ CAMBIO DE TEMA DETECTADO — El cliente está preguntando sobre un proyecto/producto NUEVO "
+                    "y DIFERENTE al anterior. OBLIGATORIO:\n"
+                    "1. IGNORA completamente el pedido/cotización anterior. NO lo repitas ni lo menciones.\n"
+                    "2. Responde EXCLUSIVAMENTE al nuevo mensaje del cliente.\n"
+                    "3. Si nombra productos específicos (Corrotec, Interthane, etc.), usa ESOS productos.\n"
+                    "4. Si describe una superficie → hagas diagnóstico según ALGORITMO DE ASESORÍA.\n"
+                    "5. NO arrastres productos, cantidades ni precios del pedido anterior."
                 ),
             })
 
@@ -18335,21 +18448,35 @@ def generate_agent_reply_v2(
                 ar_retries -= 1
             logger.info("GUARDIA ANTI-REPETICIÓN completed: %dms", int((time.time() - t_antirepeat) * 1000))
         else:
-            # ── Only check for missing tools in response (light check, no m²/color blocking) ──
+            # ── Check for missing tools in response ──
             _TOOL_SIGNALS = ["rodillo", "brocha", "lija", "felpa", "bandeja", "cinta",
                              "thinner", "estopa", "espátula", "espatula", "herramienta",
-                             "accesorio", "aplicador"]
+                             "accesorio", "aplicador", "extensi", "ajustador", "diluyente",
+                             "solvente"]
             has_tools_in_response = any(t in response_lower_diag for t in _TOOL_SIGNALS)
-            # Only nag about tools if there's an actual quotation with prices
+            # Check if response has a product recommendation (system/quotation)
+            has_system_recommendation = has_recommendation_diag  # 2+ products mentioned
             has_prices_in_response = "$" in response_text_draft and ("total" in response_lower_diag or "precio" in response_lower_diag)
-            if not has_tools_in_response and has_prices_in_response:
+            # Trigger if recommending a system (with OR without prices) and no tools mentioned
+            if not has_tools_in_response and (has_system_recommendation or has_prices_in_response):
+                logger.warning(
+                    "⛔ GUARDIA HERRAMIENTAS: recomendación de sistema/cotización sin herramientas de aplicación. Forzando."
+                )
                 messages.append(assistant_message)
                 messages.append({
                     "role": "system",
                     "content": (
-                        "Tu cotización no incluye herramientas de aplicación. Agrega al final las herramientas "
-                        "necesarias (rodillo, brocha, lija, etc.) como venta cruzada. Reescribe tu respuesta "
-                        "incluyendo los accesorios de aplicación."
+                        "⛔ Tu recomendación NO incluye las herramientas de aplicación necesarias. "
+                        "OBLIGATORIO agregar herramientas ESPECÍFICAS para este sistema:\n"
+                        "🔧 Rodillo (tipo específico: felpa corta para esmaltes, felpa larga para vinilos, espuma para epóxicos)\n"
+                        "🔧 Brocha (para remates y esquinas)\n"
+                        "🔧 Lija (grano específico para la preparación de la superficie)\n"
+                        "🔧 Bandeja para rodillo\n"
+                        "🔧 Extensión telescópica (si la superficie es alta)\n"
+                        "🔧 Thinner/Ajustador/Diluyente específico del sistema (NO genérico)\n"
+                        "🔧 Cinta de enmascarar (para proteger bordes)\n"
+                        "Reescribe tu respuesta INCLUYENDO estas herramientas como parte integral del sistema, "
+                        "NO como un apéndice genérico al final."
                     ),
                 })
                 t_tools = time.time()
@@ -18506,6 +18633,83 @@ def generate_agent_reply_v2(
         )
         assistant_message = pl_response.choices[0].message
         logger.info("GUARDIA PINTULAC retry completed: %dms", int((time.time() - t_pl) * 1000))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA COMPATIBILIDAD QUÍMICA: detecta combinaciones incompatibles
+    # en la respuesta. Corrotec/Pintulux/Pintóxido son ALQUÍDICOS.
+    # Interthane/Interfine son POLIURETANO. No se pueden mezclar.
+    # Interseal/Intergard/Pintucoat son EPÓXICOS. No van con alquídicos encima.
+    # ══════════════════════════════════════════════════════════════════════
+    if not is_ensenar_msg and not is_simple_greeting(user_message or ""):
+        _resp_compat = (assistant_message.content or "").lower()
+        _ALKYD_PRODUCTS = ["corrotec", "pintóxido", "pintoxido", "pintulux", "esmalte doméstico", "esmalte domestico"]
+        _PU_PRODUCTS = ["interthane", "interfine"]
+        _EPOXY_PRODUCTS = ["interseal", "intergard", "pintucoat"]
+        _has_alkyd = [p for p in _ALKYD_PRODUCTS if p in _resp_compat]
+        _has_pu = [p for p in _PU_PRODUCTS if p in _resp_compat]
+        _has_epoxy = [p for p in _EPOXY_PRODUCTS if p in _resp_compat]
+
+        _incompatible_combo = None
+        if _has_alkyd and _has_pu:
+            _incompatible_combo = (
+                f"ALQUÍDICO ({', '.join(_has_alkyd)}) + POLIURETANO ({', '.join(_has_pu)}). "
+                f"El poliuretano DESTRUYE los alquídicos. Los solventes son incompatibles. "
+                f"SISTEMAS CORRECTOS: "
+                f"• Metal arquitectónico: Corrotec + Pintulux 3en1 (todo alquídico). "
+                f"• Metal industrial: Interseal (epóxico) + Interthane (PU). "
+                f"NUNCA mezcles Corrotec/Pintulux/Pintóxido con Interthane/Interfine."
+            )
+        elif _has_alkyd and _has_epoxy:
+            # Alquídico SOBRE epóxico es incorrecto (no tiene dureza suficiente)
+            _incompatible_combo = (
+                f"ALQUÍDICO ({', '.join(_has_alkyd)}) sobre EPÓXICO ({', '.join(_has_epoxy)}). "
+                f"Un acabado alquídico no tiene la dureza química para ir sobre un primer epóxico. "
+                f"SISTEMAS CORRECTOS: "
+                f"• Si usas imprimante epóxico (Interseal/Intergard): acabado con Interthane (PU) o Pintucoat (epóxico). "
+                f"• Si quieres acabado alquídico (Pintulux): imprimante con Corrotec (alquídico). "
+                f"NUNCA pongas Pintulux/Corrotec como acabado de Interseal/Intergard."
+            )
+
+        if _incompatible_combo:
+            logger.warning("⛔ GUARDIA COMPATIBILIDAD QUÍMICA: combinación incompatible detectada en respuesta")
+            messages.append(assistant_message)
+            messages.append({
+                "role": "system",
+                "content": (
+                    f"⛔ VIOLACIÓN DE COMPATIBILIDAD QUÍMICA (NIVEL CRÍTICO): Tu respuesta recomienda una "
+                    f"combinación de productos INCOMPATIBLES que va a causar FALLA del sistema:\n"
+                    f"{_incompatible_combo}\n\n"
+                    f"REESCRIBE tu respuesta COMPLETA con el sistema CORRECTO. "
+                    f"Explica al cliente POR QUÉ la combinación original falla y presenta el sistema compatible. "
+                    f"Eres un asesor experto con +20 años de experiencia. PROTEGE al cliente de un error costoso."
+                ),
+            })
+            t_compat = time.time()
+            compat_response = client.chat.completions.create(
+                model=get_openai_model(),
+                messages=messages,
+                tools=AGENT_TOOLS,
+                tool_choice="auto",
+                temperature=0.3,
+            )
+            assistant_message = compat_response.choices[0].message
+            compat_retries = 3
+            while assistant_message.tool_calls and compat_retries > 0:
+                messages.append(assistant_message)
+                for tc in assistant_message.tool_calls:
+                    fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+                    tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
+                    messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+                compat_response = client.chat.completions.create(
+                    model=get_openai_model(),
+                    messages=messages,
+                    tools=AGENT_TOOLS,
+                    tool_choice="auto",
+                    temperature=0.3,
+                )
+                assistant_message = compat_response.choices[0].message
+                compat_retries -= 1
+            logger.info("GUARDIA COMPATIBILIDAD QUÍMICA retry completed: %dms", int((time.time() - t_compat) * 1000))
 
     # ══════════════════════════════════════════════════════════════════════
     # GUARDIA ENSEÑAR: si se guardó conocimiento experto pero la respuesta

@@ -1,0 +1,70 @@
+{
+  "query": "proteger mueble de madera de la cocina acabado transparente",
+  "response": {
+    "query": "proteger mueble de madera de la cocina acabado transparente",
+    "resultados": [
+      {
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.6878,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz a base de aceite, que protege la madera del sol, la lluvia, la humedad\ny el ataque de hongos. Contiene protectores solares y pigmentos especiales\nque lo hacen ideal para resistir la intemperie sin decolorarse, además\npermite la transpiración de la madera, evitando que se agriete. Viene listo\npara aplicar a brocha y no requiere dilución."
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.6869,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz a base de aceite, que protege la madera del sol, la lluvia, la humedad\ny el ataque de hongos. Contiene protectores solares y pigmentos especiales\nque lo hacen ideal para resistir la intemperie sin decolorarse, además\npermite la transpiración de la madera, evitando que se agriete. Viene listo\npara aplicar a brocha y no requiere dilución."
+      },
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6834,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
+      },
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6609,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz tipo uretano base solvente transparente de fácil aplicación, que\npenetra la madera y permite su transpiración, proporcionando alta\nprotección en exteriores, incluso en ambientes marinos y tropicales."
+      },
+      {
+        "archivo": "BARNIZ SD1.pdf",
+        "familia": "BARNIZ SD1",
+        "similitud": 0.6417,
+        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes interiores que no estén expuestas a la luz directa del sol, a la\nhumedad o a la abrasión, como techos, puertas, zócalos, columnas, vigas,\nmesas decorativas y muebles de madera en general."
+      },
+      {
+        "archivo": "VITRILAC P-405.pdf",
+        "familia": "VITRILAC P-405",
+        "similitud": 0.5988,
+        "texto": "[PRODUCTO: VITRILAC P-405] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la decoración y protección de muebles de cocina y artículos de madera sólida, chapillas, tableros\naglomerados (partícula -fibra) y/o tableros contrachapados de uso interior y exterior no expuestos\ndirectamente a la intemperie."
+      },
+      {
+        "archivo": "ESMALTE POLIURETANO MADERA.pdf",
+        "familia": "ESMALTE POLIURETANO MADERA",
+        "similitud": 0.5958,
+        "texto": "[PRODUCTO: ESMALTE POLIURETANO MADERA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nMuebles de uso doméstico y comercial como cocinas, comedores,\nsalas, alcobas, panelería, muebles de oficina, muebles de jardín,\nfachadas, entre otros objetos de madera que requieren de alta\nprotección y acabados tipo automotriz en brillo y durabilidad."
+      },
+      {
+        "archivo": "VITRIFLEX BASE AGUA.pdf",
+        "familia": "VITRIFLEX BASE AGUA",
+        "similitud": 0.5889,
+        "texto": "[PRODUCTO: VITRIFLEX BASE AGUA] [MARCA: Pintuco]\n[SECCIÓN: Protege la madera de la abrasión y el contacto accidental con]\n\nproductos de uso doméstico."
+      }
+    ],
+    "productos_candidatos": [
+      "BARNEX EXTRA PROTECCIÓN",
+      "BARNEX EXTRA PROTECCION",
+      "BARNIZ BARNEX 557",
+      "barnex",
+      "barniz marino",
+      "barniz",
+      "wood stain",
+      "madetec",
+      "pintulux",
+      "barniz sd1",
+      "domestico",
+      "viniltex"
+    ]
+  }
+}

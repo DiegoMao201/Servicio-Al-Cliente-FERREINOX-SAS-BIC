@@ -4,10 +4,22 @@
     "query": "pintura económica para cielo raso bodega",
     "resultados": [
       {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.6381,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6803,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: En repinte]\n\nsobre color diferente\n30 a 40 m2 /gal\na 2 manos."
+      },
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6716,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: En repinte 40 a 50 m2 /gal]\n\nsobre color igual o similar a 2 manos."
+      },
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6702,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: En repinte 30 a 40 m2 /gal]\n\nsobre color diferente a 2 manos."
       },
       {
         "archivo": "PINTURA CIELOS.pdf",
@@ -28,18 +40,6 @@
         "texto": "[PRODUCTO: PINTURAMA] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para pintar superficies interiores no expuestas al polvo y a]\n\nfricciones, tales como techos y cielorrasos. Disponible en una amplia gama\nde colores."
       },
       {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.5986,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15 m2/gal a 2 manos."
-      },
-      {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.5979,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Asfalto o madera]\n\n8 - 10 m2/gal a 3 manos.\n\nEl rendimiento práctico puede variar dependiendo de la calidad y el tipo de sustrato, las condiciones\natmosféricas y la experiencia del aplicador. Se sugiere hacer pruebas de rendimiento previas para\ndeterminar el rendimiento real del producto. INSTRUCCIONES DE USO"
-      },
-      {
         "archivo": "FDS - INTERGARD 740 RAL7000 RM PARTE A.pdf",
         "familia": "FDS - INTERGARD 740 RAL7000 RM PARTE A",
         "similitud": 0.5818,
@@ -53,16 +53,13 @@
       }
     ],
     "productos_candidatos": [
-      "PINTURA PARA CANCHAS",
+      "Viniltex-advanced",
       "PINTURA CIELOS",
-      "PINTURA SUPER CUBRIENTE",
-      "PINTURAMA",
-      "pinturama",
+      "viniltex",
       "pintura cielos",
       "pintucoat",
       "intergard 740",
-      "pintura canchas",
-      "viniltex",
+      "pinturama",
       "vinil max",
       "domestico"
     ]

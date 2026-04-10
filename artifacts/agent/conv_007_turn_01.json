@@ -1,25 +1,227 @@
 {
-  "user": "El muro exterior de la casa está descascarando por el sol, necesito repintarlo",
+  "user": "Tengo una pared interior en estuco de 82 metros cuadrados. Cotízame Viniltex Advanced Blanco.",
   "result": {
-    "response_text": "Para repintar el muro exterior que está descascarando por el sol, te recomiendo el siguiente sistema:\n\n1. **Preparación**: Asegúrate de que la superficie esté seca, limpia y libre de polvo, grasa y pintura deteriorada. Raspa bien las áreas descascaradas y, si hay fisuras mayores a 0.2 mm, sélalas con Pintuco® Fix Professional.\n\n2. **Imprimante**: Aplica un sellador como el Sellomax® para evitar manchas blanquecinas debido a la alcalinidad de la superficie.\n\n3. **Acabado**: Utiliza Koraza, que es ideal para fachadas exteriores. Este producto tiene un rendimiento de aproximadamente 8-10 m² por galón a dos manos.\n\n💡 **Experiencia Ferreinox**: Es fundamental no pintar sobre una base dañada. Si el muro tiene problemas de humedad o la base está en mal estado, es recomendable reparar o tumbar la base antes de aplicar Koraza.\n\n¿Me puedes indicar cuántos m² tiene el muro y qué color te gustaría usar?",
-    "intent": "asesoria_tecnica",
+    "response_text": "Para tu pared interior en estuco de 82 m², aquí tienes el sistema recomendado utilizando **Viniltex Advanced Blanco**:\n\n1. **Preparación de la superficie**: Asegúrate de que la pared esté limpia, libre de polvo y cualquier contaminante. Si hay pintura deteriorada, raspa hasta llegar al sustrato original.\n   \n2. **Imprimante/Sellador**: Si hay humedad o problemas de salitre, es recomendable aplicar **Aquablock Ultra** antes de cualquier acabado. Este producto actúa como barrera contra la humedad.\n\n3. **Acabado**: Aplica **Viniltex Advanced** en dos manos. Este producto tiene un rendimiento de 20 a 25 m² por galón, por lo que necesitarás aproximadamente 4 galones para cubrir los 82 m².\n\nAhora, aquí están las opciones de **Viniltex Advanced Blanco** disponibles:\n\n- **Viniltex Advanced Blanco 3.79L**: $78,908 (IVA incluido)\n- **Viniltex Advanced Blanco 18.93L**: $83,950 (IVA incluido)\n\nPara tu caso, es más eficiente optar por el cuñete de 18.93L. Así que necesitarías 4 galones, lo que equivale a 1 cuñete.\n\n**Total a Pagar: $335,800** (por el cuñete de 18.93L)\n\nAdemás, necesitarás algunas herramientas de aplicación para facilitar el trabajo:\n\n- **Rodillo de felpa**: Ideal para aplicar la pintura de manera uniforme.\n- **Brocha**: Para áreas de detalle y esquinas.\n- **Lija fina (grano 180)**: Para preparar la superficie antes de aplicar el Viniltex.\n\n¿Te gustaría que te arme la cotización formal incluyendo las herramientas o prefieres realizar el pedido directamente?",
+    "intent": "consulta_productos",
     "tool_calls": [
       {
         "name": "consultar_conocimiento_tecnico",
         "args": {
-          "pregunta": "sistema para repintar muro exterior descascarado por sol",
-          "producto": "Koraza"
+          "pregunta": "sistema para pintar pared interior en estuco",
+          "producto": "Viniltex Advanced"
         },
-        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: KORAZA IMPERMEABLE.pdf]\\n[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\\n[SECCIÓN: Preparación de la superficie a pintar:]\\n\\nAntes de aplicar verifique que la superficie esté seca,\\nlimpia, libre de\\npolvo,\\ngrasa,\\nhongos y\\npintura\\ndeteriorada. En sustratos con cal retire la cal suelta\\ncon rasqueta, lija o cepillo. Fisuras sin movimiento\\nsuperiores a 0.2 mm, juntas de dilatación y fisuras\\ncon movimiento deben ser selladas con Pintuco® Fix\\nProfessional. En concreto repare los poros con\\nEstuco Acrílico Exterior Doble Protección Pintuco®\\nRef. 27060. Si requiere un acabado liso aplique dos a\\ntres\\nmanos\\nde\\n\\n---\\n\\n[Fuente: KORAZA IMPERMEABLE.pdf]\\n[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\\n[SECCIÓN: En obra nueva sobre]\\n\\nrevoque\\n8 - 10 m²/gal a 2 manos\\n*El rendimiento puede variar dependiendo del método y\\nherramientas de aplicación, así como el\\nestado de\\nrugosidad de la superficie y del color a cubrir.\\n\\n---\\n\\n[Fuente: KORAZA 5.pdf]\\n[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\\n[SECCIÓN: 1. Preparación de la Superficie a pintar]\\n\\nAntes de aplicar, verifique que la superficie esté\\nseca, limpia, libre de polvo, grasa y pintura\\ndeteriorada. En sustratos con cal, retire la cal\\nsuelta con rasqueta, lija o cepillo y aplique dos\\nmanos de Sellador Pintuco ® Antialcalino\\nSellomax® Ref. 10270 ó 10272. Para grietas,\\nfisuras y juntas (con movimiento) de más de 1,5\\nmm deben ser selladas con Pintuco® Fix\\nProfesional y luego aplique Koraza®. En\\nconcreto repare los poros y grietas con Revofast\\no Revomastic Pintuco®. En obra nueva aplique\\nuna mano de Sellomax® Ref. 10270 ó 10272\\npara evitar manchas blanquesinas debido a la\\nalcalinidad de la superficie. Si requiere un\\nacabado\\nliso\\naplique\\n\\n---\\n\\n[Fuente: KORAZA 5.pdf]\\n[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\\n[SECCIÓN: USOS]\\n\\nRecomendada para ambientes exteriores, para decorar y proteger fachadas y patios; revocados y\\nestucados, en bloque a la vista, ladrillo sin esmaltar, tejas y láminas de fibro-cemento.\\n\\n*Para la elección adecuada del color te recomendamos utilizar los colores marcados en el abanico\\ncon el simbolo del “sol” ☼ los cuales garantizan la retención del color por 5 años siguiendo las\\nrecomendaciones de aplicación.\", \"archivos_fuente\": [\"KORAZA IMPERMEABLE.pdf\", \"KORAZA 5.pdf\", \"KORAZA DOBLE VIDA.pdf\"], \"mejor_similitud\": 0.7117, \"mensaje\": \"⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. DEBES SINTETIZARLOS como un ingeniero de aplicaciones: 1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado).    Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. 2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. 3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. 4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. 5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. 6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' 7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'\", \"productos_inventario_relacionados\": [{\"codigo\": \"5894181\", \"descripcion\": \"P7 KORAZA ELASTOMERICA GEN ACCENT 18.93L\", \"etiqueta_auditable\": \"[5894181] - P7 KORAZA ELASTOMERICA GEN ACCENT 18.93L\", \"marca\": \"56\", \"presentacion\": \"cuñete\", \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"5894180\", \"descripcion\": \"P7 KORAZA ELASTOMERICA GEN DEEP 18.93L\", \"etiqueta_auditable\": \"[5894180] - P7 KORAZA ELASTOMERICA GEN DEEP 18.93L\", \"marca\": \"56\", \"presentacion\": \"cuñete\", \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"10368017\", \"descripcion\": \"KORAZA ELASTOMERICA 2651 NOGAL 5 GL\", \"etiqueta_auditable\": \"[10368017] - KORAZA ELASTOMERICA 2651 NOGAL 5 GL\", \"marca\": \"24\", \"presentacion\": \"galon\", \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"10385614\", \"descripcion\": \"KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL\", \"etiqueta_auditable\": \"[10385614] - KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL\", \"marca\": \"24\", \"presentacion\": \"cuñete\", \"disponible\": false, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. ⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema completo con cantidades calculadas para TODOS los productos y cierra con: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'\", \"conocimiento_comercial_ferreinox\": [{\"id\": 4, \"tipo\": \"uso_especifico\", \"contexto\": \"metal, oxidado, rejas, portones, tobogan, intemperie, exterior, corrosion\", \"recomendar\": \"Pintóxido + Corrotec + Pintulux 3en1\", \"evitar\": null, \"nota\": \"Para metal oxidado a la intemperie SIEMPRE recomendar el sistema completo de 3 capas: 1) Preparación con disco flap o grata + Pintóxido (convertidor de óxido si hay óxido profundo). 2) Corrotec o Corrotec Premium como anticorrosivo (2 manos). 3) Pintulux 3en1 como acabado final (protección UV y estética). NUNCA recomendar solo el anticorrosivo sin el acabado. Sin Pintulux, el Corrotec se degrada en meses.\"}, {\"id\": 83, \"tipo\": \"contraindicacion\", \"contexto\": \"compatibilidad, acabados, epóxicos, poliuretanos\", \"recomendar\": \"N/A\", \"evitar\": \"epóxicos como acabado final\", \"nota\": \"Es importante no dejar epóxicos expuestos al sol como acabado, siempre usar un acabado resistente a UV en exterior, y el sistema se compone de anticorrosivo + acabado. A mayor exigencia, usar poliuretano.\"}, {\"id\": 77, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, exterior, compatibilidad, acabados, UV\", \"recomendar\": \"acabados alquídicos, acrílicos, Intergard 740\", \"evitar\": \"dejar epóxicos expuestos al sol como acabado\", \"nota\": \"Es fundamental no dejar epóxicos expuestos al sol como acabado, a menos que se trate de Intergard 740. Siempre se debe usar un acabado resistente a UV en exterior. El sistema se compone de un anticorrosivo y un acabado, y a mayor exigencia, se debe usar poliuretano. Los anticorrosivos epóxicos requieren un acabado para exterior, mientras que los acabados alquídicos o acrílicos pueden aplicarse sobre epóxicos.\"}, {\"id\": 76, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, exterior, resistencia UV, anticorrosivos, epóxicos, acabados\", \"recomendar\": \"Corrotec Premium, Pintulux 3 en 1, Interseal 670HS, Interthane 990, Intergard 740\", \"evitar\": \"epóxicos como acabado final\", \"nota\": \"En estructuras metálicas exteriores, el sistema es similar al de interior, pero se debe considerar la resistencia a la radiación UV. Los epóxicos son adecuados solo como anticorrosivos, no deben usarse como acabado final, ya que la radiación UV puede deteriorarlos rápidamente. Se recomienda un sistema básico con anticorrosivo alquídico y un acabado resistente a la intemperie, un sistema intermedio con imprimante epóxico y acabados alquídicos o acrílicos, y un sistema de alto desempeño con Interseal 670HS y poliuretano para mayor durabilidad.\"}, {\"id\": 72, \"tipo\": \"preferencia\", \"contexto\": \"sistemas pisos exteriores, tráfico liviano, tráfico medio, tráfico alto, pintura acrílica, Interseal 670HS, Interthane 990\", \"recomendar\": \"pintura acrílica de mantenimiento, Interseal 670HS, Interthane 990\", \"evitar\": \"sistemas de menor desempeño\", \"nota\": \"Los sistemas para pisos exteriores se seleccionan según el nivel de tráfico y deben resistir sol (UV), lluvia y desgaste. Para tráfico liviano, se recomienda pintura acrílica de mantenimiento. Para tráfico medio, se usa Interseal 670HS como base y pintura acrílica como acabado. Para tráfico alto, se recomienda Interseal 670HS como imprimante y Interthane 990 como acabado, que es un sistema industrial de alto desempeño.\"}, {\"id\": 63, \"tipo\": \"preferencia\", \"contexto\": \"fachada, humedad, estuco, base soplada, preparacion, revoque\", \"recomendar\": \"Koraza\", \"evitar\": null, \"nota\": \"Si el cliente va a pintar una fachada con problemas de humedad y actualmente tiene estuco o textura, es OBLIGATORIO indicarle que revise el estado de esa base. Si la base esta mala o soplada, se debe tumbar ABSOLUTAMENTE TODO hasta el revoque y comenzar un sistema nuevo desde cero. Esa es la UNICA garantia de curar la humedad y asegurar el desempeno de la Koraza. NO se puede pintar sobre una base danada.\"}, {\"id\": 51, \"tipo\": \"preferencia\", \"contexto\": \"solvente tráfico, thinner 21204, botellas, venta fraccionada\", \"recomendar\": \"Thinner 21204\", \"evitar\": \"Thinner 21050\", \"nota\": \"El único solvente autorizado para cotizar con Pintura de Tráfico (Acrílica) es el Thinner 21204. Su referencia exacta en el sistema es F0116621204. TIENES PROHIBIDO cotizar el Thinner 21050 (UFA151) para pintura de tráfico. Ese guárdalo exclusivamente para la línea de poliuretanos. El Thinner 21204 se comercializa y calcula por botellas. Si vendes 1 Galón de Pintura de Tráfico, DEBES cotizar obligatoriamente 5 botellas del Thinner 21204. Si vendes 1 Cuñete (5 Galones) de Pintura de Tráfico, DEBES cotizar obligatoriamente 25 botellas del Thinner 21204.\"}, {\"id\": 25, \"tipo\": \"contraindicacion\", \"contexto\": \"madera, exterior, pérgolas, intemperie\", \"recomendar\": \"Barnex Extra Protección o Wood Stain\", \"evitar\": \"Sellador para madera\", \"nota\": \"NUNCA recomiendes sellador antes del Barnex o Wood Stain. Estos productos son de poro abierto y necesitan penetrar directamente en la madera cruda. Si aplicas sellador, el producto se descascara con el sol.\"}], \"instruccion_conocimiento_comercial\": \"⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. REGLAS OBLIGATORIAS: 1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. 2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. 3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. 4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' SEPARADO de la información de la ficha técnica. 5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente.\"}"
+        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: Viniltex-advanced.pdf]\\n[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\\n[SECCIÓN: Estuco]\\n\\nacrílico\\nexterior\\ndoble\\nprotección\\nPintuco® Ref. 27060\\nEn muros de ladrillo, lavar bien la superficie,\\neliminando polvo y residuos sueltos y todo tipo\\nde contaminantes, dejar secar y aplicar el Vinitex\\nAdvanced®\\n\\n---\\n\\n[Fuente: VINILTEX ADVANCE.pdf]\\n[PRODUCTO: VINILTEX ADVANCE] [MARCA: Pintuco]\\n[SECCIÓN: Elimine]\\n\\nlos\\nacabados\\ndeteriorados,\\ncales,\\ncarburos\\ny\\nhumedades\\ncon\\nrasqueta o lija. Resane los agujeros y otros defectos\\nque puedan afectar el acabado final de la superficie\\ncon Estuco Premium Interior Pintuco® Ref. 17060.\\nPara superficies con pintura brillante, lije (lija #180)\\nsuavemente para suprimir el brillo. Para superficies\\ncon pintura acabado mate, limpie y seque bien.\\n2. Preparación del producto y aplicación: Mezcle\\nViniltex® Advanced mate con una espátula limpia\\npara obtener completa homogeneidad. Diluya con\\nagua limpia según el equipo de aplicación a usar de\\nacuerdo con la siguiente tabla:\\n\\n---\\n\\n[Fuente: Viniltex-advanced.pdf]\\n[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\\n[SECCIÓN: Para aplicación en interiores:]\\n\\nAntes de aplicar Viniltex® Advanced verifique\\nque la superficie esté seca y libre de polvo,\\nmugre, grasa y pintura deteriorada.\\n\\n---\\n\\n[Fuente: Viniltex-advanced.pdf]\\n[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\\n[SECCIÓN: En repinte]\\n\\nsobre color diferente\\n30 a 40 m2 /gal\\na 2 manos.\", \"archivos_fuente\": [\"Viniltex-advanced.pdf\", \"VINILTEX ADVANCE.pdf\"], \"mejor_similitud\": 0.7561, \"mensaje\": \"⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. DEBES SINTETIZARLOS como un ingeniero de aplicaciones: 1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado).    Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. 2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. 3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. 4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. 5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. 6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' 7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'\", \"productos_inventario_relacionados\": [{\"codigo\": \"5891101\", \"descripcion\": \"PQ VINILTEX ADV MAT BLANCO 1501 18.93L\", \"etiqueta_auditable\": \"[5891101] - PQ VINILTEX ADV MAT BLANCO 1501 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5891110\", \"descripcion\": \"PQ VINILTEX ADV MAT PASTEL 117174 18.93L\", \"etiqueta_auditable\": \"[5891110] - PQ VINILTEX ADV MAT PASTEL 117174 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5892240\", \"descripcion\": \"PQ VINILTEX ADV MAT BLANCO 1501 3.79L PE\", \"etiqueta_auditable\": \"[5892240] - PQ VINILTEX ADV MAT BLANCO 1501 3.79L PE\", \"marca\": \"58\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5891879\", \"descripcion\": \"P7 INTERVINIL PRO 200 MAT BL 2596 18.93L\", \"etiqueta_auditable\": \"[5891879] - P7 INTERVINIL PRO 200 MAT BL 2596 18.93L\", \"marca\": \"56\", \"presentacion\": \"cuñete\", \"disponible\": true, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. ⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema completo con cantidades calculadas para TODOS los productos y cierra con: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'\", \"conocimiento_comercial_ferreinox\": [{\"id\": 52, \"tipo\": \"preferencia\", \"contexto\": \"humedad, sistema completo, rendimientos, colores\", \"recomendar\": \"Aquablock Ultra, Viniltex Advanced\", \"evitar\": null, \"nota\": \"Rendimientos reales: Aquablock Ultra rinde 18-20 m2 por galon (aplicando dos manos bien cargadas con brocha). Viniltex Advanced rinde de 20 a 25 m2 por galon (a dos manos). Sistema completo: Raspar pintura suelta, aplicar Aquablock Ultra, aplicar Estuco Acrilico para nivelar, y acabado con Viniltex Advanced.\"}, {\"id\": 6, \"tipo\": \"uso_especifico\", \"contexto\": \"humedad interna, base muro, salitre, ampollas, pared húmeda, revoque quemado, meteorizado\", \"recomendar\": \"Aquablock Ultra (ANTES del estuco), Revofast de Pintuco (si revoque dañado), Estuco Acrílico (DESPUÉS del Aquablock), Viniltex Advanced\", \"evitar\": null, \"nota\": \"PROCESO CORRECTO HUMEDAD INTERNA: 1) Raspar muy bien hasta el sustrato original (revoque). Si el revoque está meteorizado o 'quemado', reemplazarlo con revoque acondicionado con ligante/impermeabilizante o con Revofast de Pintuco (seca rápido, 48h para siguiente paso). 2) Aplicar 1ª mano de Aquablock Ultra CON BROCHA para cargar buen producto sobre la superficie. Dejar secar bien (puede ser de un día para otro según condiciones ambiente). 3) Aplicar 2ª mano de Aquablock Ultra. Esperar 24 horas. 4) Aplicar Estuco Acrílico para nivelar (el estuco va DESPUÉS del Aquablock, NUNCA antes). 5) Acabado con Viniltex Advanced. ORDEN CRÍTICO: Aquablock → Estuco → Pintura. Nunca Estuco → Aquablock.\"}, {\"id\": 63, \"tipo\": \"preferencia\", \"contexto\": \"fachada, humedad, estuco, base soplada, preparacion, revoque\", \"recomendar\": \"Koraza\", \"evitar\": null, \"nota\": \"Si el cliente va a pintar una fachada con problemas de humedad y actualmente tiene estuco o textura, es OBLIGATORIO indicarle que revise el estado de esa base. Si la base esta mala o soplada, se debe tumbar ABSOLUTAMENTE TODO hasta el revoque y comenzar un sistema nuevo desde cero. Esa es la UNICA garantia de curar la humedad y asegurar el desempeno de la Koraza. NO se puede pintar sobre una base danada.\"}, {\"id\": 37, \"tipo\": \"preferencia\", \"contexto\": \"fachadas, pintura, estuco, Koraza, Viniltex, preparación\", \"recomendar\": \"Koraza, PQ KORAZA PINT IMPER, Viniltex Advanced, Vinilico, Vinil Plus, Intervinil, Vinilux, Vinil Latex, Pinturama, Estuco Acrílico, Pintuco Flex\", \"evitar\": null, \"nota\": \"1. NUNCA olvides preguntar los metros cuadrados (m²) en el primer mensaje. 2. Jerarquía de productos: Premium Koraza, Tipo 1 Viniltex Advanced, Tipo 2 Intervinil, Tipo 3 Pinturama. 3. Incluir Estuco Acrílico y Pintuco Flex si hay grietas. 4. Preparación con Lija Abracol y Brocha Goya Profesional.\"}, {\"id\": 76, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, exterior, resistencia UV, anticorrosivos, epóxicos, acabados\", \"recomendar\": \"Corrotec Premium, Pintulux 3 en 1, Interseal 670HS, Interthane 990, Intergard 740\", \"evitar\": \"epóxicos como acabado final\", \"nota\": \"En estructuras metálicas exteriores, el sistema es similar al de interior, pero se debe considerar la resistencia a la radiación UV. Los epóxicos son adecuados solo como anticorrosivos, no deben usarse como acabado final, ya que la radiación UV puede deteriorarlos rápidamente. Se recomienda un sistema básico con anticorrosivo alquídico y un acabado resistente a la intemperie, un sistema intermedio con imprimante epóxico y acabados alquídicos o acrílicos, y un sistema de alto desempeño con Interseal 670HS y poliuretano para mayor durabilidad.\"}, {\"id\": 75, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, interior, bajo techo, sin humedad, preparación, compatibilidad, sistemas\", \"recomendar\": \"N/A\", \"evitar\": \"N/A\", \"nota\": \"Las reglas clave incluyen no aplicar epóxicos o poliuretanos sobre anticorrosivos alquídicos, y la compatibilidad de sistemas debe ser considerada: anticorrosivo alquídico solo con acabados alquídicos, y anticorrosivo epóxico puede recibir acabados epóxicos, poliuretanos, acrílicos o alquídicos.\"}, {\"id\": 74, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, interior, bajo techo, sin humedad, sistemas, anticorrosivo, alquídico, epóxico, desempeño, presupuesto\", \"recomendar\": \"Corrotec Premium, anticorrosivo 513, Pintulux 3 en 1, Primer Epóxico 10046, Primer Epóxico 10050, Interseal 670HS, Pintucoat, Intergard 740, Epoxipoliamida, Pintucoat Plus, Interthane 990\", \"evitar\": \"N/A\", \"nota\": \"En estructuras metálicas interiores sin humedad, el sistema se selecciona según el nivel de desempeño requerido y el presupuesto del cliente. Se recomienda un sistema básico con anticorrosivo alquídico y Pintulux 3 en 1 para estructuras convencionales, un sistema intermedio con imprimante epóxico para mayor durabilidad, y un sistema alto desempeño con Interseal 670HS para condiciones exigentes.\"}, {\"id\": 70, \"tipo\": \"preferencia\", \"contexto\": \"piso interior, tráfico alto, montacargas, epóxico, industrial, alto desempeño\", \"recomendar\": \"sistema epóxico industrial\", \"evitar\": \"epóxicos de tráfico liviano o medio\", \"nota\": \"Para un piso interior con tráfico alto y uso de montacargas, se recomienda un sistema epóxico industrial de alto desempeño, diseñado para tráfico pesado. Este sistema debe incluir un imprimante epóxico industrial y un recubrimiento epóxico de alto espesor. Es importante eliminar completamente los recubrimientos existentes y preparar adecuadamente la superficie para garantizar la adherencia y durabilidad del recubrimiento.\"}], \"instruccion_conocimiento_comercial\": \"⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. REGLAS OBLIGATORIAS: 1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. 2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. 3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. 4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' SEPARADO de la información de la ficha técnica. 5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente.\"}"
+      },
+      {
+        "name": "consultar_inventario",
+        "args": {
+          "producto": "Viniltex Advanced blanco galon"
+        },
+        "result": "{\"encontrados\": 10, \"productos\": [{\"codigo\": \"5892240\", \"descripcion\": \"PQ VINILTEX ADV MAT BLANCO 1501 3.79L PE\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT BLANCO 1501 3.79L PE\", \"etiqueta_auditable\": \"[5892240] - PQ VINILTEX ADV MAT BLANCO 1501 3.79L PE\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"viniltex_blanco\", \"producto_padre_busqueda\": \"viniltex blanco\", \"pregunta_desambiguacion\": \"Tengo Viniltex Blanco. ¿Lo llevas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 78908, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890636\", \"descripcion\": \"PQ VINILTEX ADV MAT BLANCO 1501 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT BLANCO 1501 3.79L\", \"etiqueta_auditable\": \"[5890636] - PQ VINILTEX ADV MAT BLANCO 1501 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"VINILTEX ADVANCED\", \"tipo_marca\": \"VINILO TIPO 1\", \"familia\": \"BLANCO\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0101001281_VINILTEX\", \"descripcion_larga\": \"VINILTEX BLANCO 1501 GALON\", \"tipo\": \"A1\"}, \"disponible\": true, \"precio_iva_incluido\": 83950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890677\", \"descripcion\": \"PQ VINILTEX ADV MAT B PASTE 117174 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT B PASTE 117174 3.79L\", \"etiqueta_auditable\": \"[5890677] - PQ VINILTEX ADV MAT B PASTE 117174 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"viniltex_base_pastel\", \"producto_padre_busqueda\": \"viniltex base pastel\", \"pregunta_desambiguacion\": \"Tengo Viniltex Base Pastel. ¿La buscas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 83950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890680\", \"descripcion\": \"PQ VINILTEX ADV MAT ACCEN B 117177 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT ACCEN B 117177 3.79L\", \"etiqueta_auditable\": \"[5890680] - PQ VINILTEX ADV MAT ACCEN B 117177 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"viniltex_adv_mat_accen\", \"producto_padre_busqueda\": \"viniltex adv mat accen\", \"pregunta_desambiguacion\": \"Tengo Pq Viniltex Adv Mat Accen B 117177 9.46L y cuarto con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 83950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890679\", \"descripcion\": \"PQ VINILTEX ADV MAT DEEP 117176 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT DEEP 117176 3.79L\", \"etiqueta_auditable\": \"[5890679] - PQ VINILTEX ADV MAT DEEP 117176 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"viniltex_base_deep\", \"producto_padre_busqueda\": \"viniltex base deep\", \"pregunta_desambiguacion\": \"Tengo Viniltex Base Deep. ¿La buscas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 83950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890634\", \"descripcion\": \"PQ VINILTEX ADV MAT BLAN PURO 1520 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT BLAN PURO 1520 3.79L\", \"etiqueta_auditable\": \"[5890634] - PQ VINILTEX ADV MAT BLAN PURO 1520 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"viniltex_blanco\", \"producto_padre_busqueda\": \"viniltex blanco\", \"pregunta_desambiguacion\": \"Tengo Viniltex Blanco. ¿Lo llevas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 83950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890653\", \"descripcion\": \"PQ VINILTEX ADV MAT NEGRO 1559 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT NEGRO 1559 3.79L\", \"etiqueta_auditable\": \"[5890653] - PQ VINILTEX ADV MAT NEGRO 1559 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"viniltex_adv_mat_negro\", \"producto_padre_busqueda\": \"viniltex adv mat negro\", \"pregunta_desambiguacion\": \"Tengo Negro cuarto y Negro galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 83950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890654\", \"descripcion\": \"PQ VINILTEX ADV MAT ROJO VIVO 1560 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT ROJO VIVO 1560 3.79L\", \"etiqueta_auditable\": \"[5890654] - PQ VINILTEX ADV MAT ROJO VIVO 1560 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"viniltex_adv_mat_vivo_rojo\", \"producto_padre_busqueda\": \"viniltex adv mat vivo rojo\", \"pregunta_desambiguacion\": \"Tengo Rojo cuarto y Rojo galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 83950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890681\", \"descripcion\": \"PQ VINILTEX ADV MAT AMAR OTON 1553 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT AMAR OTON 1553 3.79L\", \"etiqueta_auditable\": \"[5890681] - PQ VINILTEX ADV MAT AMAR OTON 1553 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"viniltex_adv_mat_amar\", \"producto_padre_busqueda\": \"viniltex adv mat amar\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 83950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890629\", \"descripcion\": \"PQ VINILTEX ADV MAT AMARI ORO 1570 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT AMARI ORO 1570 3.79L\", \"etiqueta_auditable\": \"[5890629] - PQ VINILTEX ADV MAT AMARI ORO 1570 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"viniltex_adv_mat_amari\", \"producto_padre_busqueda\": \"viniltex adv mat amari\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 83950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": false, \"pregunta_desambiguacion\": null, \"mensaje\": null, \"conocimiento_experto_producto\": [{\"tipo\": \"preferencia\", \"contexto\": \"humedad, sistema completo, rendimientos, colores\", \"recomendar\": \"Aquablock Ultra, Viniltex Advanced\", \"evitar\": null, \"nota\": \"Rendimientos reales: Aquablock Ultra rinde 18-20 m2 por galon (aplicando dos manos bien cargadas con brocha). Viniltex Advanced rinde de 20 a 25 m2 por galon (a dos manos). Sistema completo: Raspar pintura suelta, aplicar Aquablock Ultra, aplicar Estuco Acrilico para nivelar, y acabado con Viniltex Advanced.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"fachadas, pintura, estuco, Koraza, Viniltex, preparación\", \"recomendar\": \"Koraza, PQ KORAZA PINT IMPER, Viniltex Advanced, Vinilico, Vinil Plus, Intervinil, Vinilux, Vinil Latex, Pinturama, Estuco Acrílico, Pintuco Flex\", \"evitar\": null, \"nota\": \"1. NUNCA olvides preguntar los metros cuadrados (m²) en el primer mensaje. 2. Jerarquía de productos: Premium Koraza, Tipo 1 Viniltex Advanced, Tipo 2 Intervinil, Tipo 3 Pinturama. 3. Incluir Estuco Acrílico y Pintuco Flex si hay grietas. 4. Preparación con Lija Abracol y Brocha Goya Profesional.\"}, {\"tipo\": \"uso_especifico\", \"contexto\": \"humedad interna, base muro, salitre, ampollas, pared húmeda, revoque quemado, meteorizado\", \"recomendar\": \"Aquablock Ultra (ANTES del estuco), Revofast de Pintuco (si revoque dañado), Estuco Acrílico (DESPUÉS del Aquablock), Viniltex Advanced\", \"evitar\": null, \"nota\": \"PROCESO CORRECTO HUMEDAD INTERNA: 1) Raspar muy bien hasta el sustrato original (revoque). Si el revoque está meteorizado o 'quemado', reemplazarlo con revoque acondicionado con ligante/impermeabilizante o con Revofast de Pintuco (seca rápido, 48h para siguiente paso). 2) Aplicar 1ª mano de Aquablock Ultra CON BROCHA para cargar buen producto sobre la superficie. Dejar secar bien (puede ser de un día para otro según condiciones ambiente). 3) Aplicar 2ª mano de Aquablock Ultra. Esperar 24 horas. 4) Aplicar Estuco Acrílico para nivelar (el estuco va DESPUÉS del Aquablock, NUNCA antes). 5) Acabado con Viniltex Advanced. ORDEN CRÍTICO: Aquablock → Estuco → Pintura. Nunca Estuco → Aquablock.\"}, {\"tipo\": \"uso_especifico\", \"contexto\": \"moho, hongo, hipoclorito, cloro, fachada, preparacion\", \"recomendar\": \"Hipoclorito de sodio\", \"evitar\": null, \"nota\": \"Para eliminar moho/hongo en fachadas: lavar con hipoclorito diluido en proporcion 1 parte de hipoclorito por 8 a 10 partes de agua. ADVERTENCIA OBLIGATORIA para el cliente: esta mezcla SOLO es funcional durante 1 hora (maximo hora y media) despues de preparada; luego de ese tiempo pierde TODO su efecto para matar el hongo. Preparar solo la cantidad que se va a usar de inmediato.\"}], \"instruccion_conocimiento_experto\": \"💡 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE para este producto. Lee 'conocimiento_experto_producto' ANTES de presentar resultados al cliente. Si hay un 'evitar', NO lo recomiendes para este contexto. Si hay reglas comerciales (sobre pedido, obligatorio cuarzo, preguntar m², etc.), APLÍCALAS. Presenta las notas relevantes como '💡 Experiencia Ferreinox: [nota]'.\"}"
       }
     ],
-    "context_updates": {},
+    "context_updates": {
+      "last_product_request": {
+        "core_terms": [
+          "viniltex",
+          "advanced",
+          "blanco",
+          "galon",
+          "galones",
+          "gal",
+          "3.79l",
+          "3.79"
+        ],
+        "search_terms": [
+          "viniltex",
+          "viniltex adv",
+          "viniltex advanced",
+          "vinilico",
+          "vinilo",
+          "vtx",
+          "vinilo premium",
+          "vinilo tipo 1",
+          "1501",
+          "viniltex blanco",
+          "viniltex blanco 1501",
+          "1525",
+          "viniltex amarillo",
+          "viniltex amarillo vivo 1525"
+        ],
+        "requested_quantity": null,
+        "requested_unit": "galon",
+        "quantity_expression": null,
+        "product_codes": [],
+        "brand_filters": [
+          "viniltex",
+          "pintuco"
+        ],
+        "direction_filters": [],
+        "size_filters": [],
+        "store_filters": [],
+        "original_query": "viniltex advanced blanco galon",
+        "nlu_processed": true
+      },
+      "last_product_query": "viniltex advanced blanco galon",
+      "last_product_context": [
+        {
+          "codigo": "5892240",
+          "descripcion": "PQ VINILTEX ADV MAT BLANCO 1501 3.79L PE",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT BLANCO 1501 3.79L PE",
+          "etiqueta_auditable": "[5892240] - PQ VINILTEX ADV MAT BLANCO 1501 3.79L PE",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "viniltex_blanco",
+          "producto_padre_busqueda": "viniltex blanco",
+          "pregunta_desambiguacion": "Tengo Viniltex Blanco. ¿Lo llevas en cuarto, galón o cuñete?",
+          "disponible": true,
+          "precio_iva_incluido": 78908,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890636",
+          "descripcion": "PQ VINILTEX ADV MAT BLANCO 1501 3.79L",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT BLANCO 1501 3.79L",
+          "etiqueta_auditable": "[5890636] - PQ VINILTEX ADV MAT BLANCO 1501 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "VINILTEX ADVANCED",
+            "tipo_marca": "VINILO TIPO 1",
+            "familia": "BLANCO",
+            "aplicacion": "DECORATIVO",
+            "categoria": "PN1D0101001281_VINILTEX",
+            "descripcion_larga": "VINILTEX BLANCO 1501 GALON",
+            "tipo": "A1"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 83950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890677",
+          "descripcion": "PQ VINILTEX ADV MAT B PASTE 117174 3.79L",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT B PASTE 117174 3.79L",
+          "etiqueta_auditable": "[5890677] - PQ VINILTEX ADV MAT B PASTE 117174 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "viniltex_base_pastel",
+          "producto_padre_busqueda": "viniltex base pastel",
+          "pregunta_desambiguacion": "Tengo Viniltex Base Pastel. ¿La buscas en cuarto, galón o cuñete?",
+          "disponible": true,
+          "precio_iva_incluido": 83950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890680",
+          "descripcion": "PQ VINILTEX ADV MAT ACCEN B 117177 3.79L",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT ACCEN B 117177 3.79L",
+          "etiqueta_auditable": "[5890680] - PQ VINILTEX ADV MAT ACCEN B 117177 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "viniltex_adv_mat_accen",
+          "producto_padre_busqueda": "viniltex adv mat accen",
+          "pregunta_desambiguacion": "Tengo Pq Viniltex Adv Mat Accen B 117177 9.46L y cuarto con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 83950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890679",
+          "descripcion": "PQ VINILTEX ADV MAT DEEP 117176 3.79L",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT DEEP 117176 3.79L",
+          "etiqueta_auditable": "[5890679] - PQ VINILTEX ADV MAT DEEP 117176 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "viniltex_base_deep",
+          "producto_padre_busqueda": "viniltex base deep",
+          "pregunta_desambiguacion": "Tengo Viniltex Base Deep. ¿La buscas en cuarto, galón o cuñete?",
+          "disponible": true,
+          "precio_iva_incluido": 83950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890634",
+          "descripcion": "PQ VINILTEX ADV MAT BLAN PURO 1520 3.79L",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT BLAN PURO 1520 3.79L",
+          "etiqueta_auditable": "[5890634] - PQ VINILTEX ADV MAT BLAN PURO 1520 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "viniltex_blanco",
+          "producto_padre_busqueda": "viniltex blanco",
+          "pregunta_desambiguacion": "Tengo Viniltex Blanco. ¿Lo llevas en cuarto, galón o cuñete?",
+          "disponible": true,
+          "precio_iva_incluido": 83950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890653",
+          "descripcion": "PQ VINILTEX ADV MAT NEGRO 1559 3.79L",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT NEGRO 1559 3.79L",
+          "etiqueta_auditable": "[5890653] - PQ VINILTEX ADV MAT NEGRO 1559 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "viniltex_adv_mat_negro",
+          "producto_padre_busqueda": "viniltex adv mat negro",
+          "pregunta_desambiguacion": "Tengo Negro cuarto y Negro galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 83950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890654",
+          "descripcion": "PQ VINILTEX ADV MAT ROJO VIVO 1560 3.79L",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT ROJO VIVO 1560 3.79L",
+          "etiqueta_auditable": "[5890654] - PQ VINILTEX ADV MAT ROJO VIVO 1560 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "viniltex_adv_mat_vivo_rojo",
+          "producto_padre_busqueda": "viniltex adv mat vivo rojo",
+          "pregunta_desambiguacion": "Tengo Rojo cuarto y Rojo galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 83950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890681",
+          "descripcion": "PQ VINILTEX ADV MAT AMAR OTON 1553 3.79L",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT AMAR OTON 1553 3.79L",
+          "etiqueta_auditable": "[5890681] - PQ VINILTEX ADV MAT AMAR OTON 1553 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "viniltex_adv_mat_amar",
+          "producto_padre_busqueda": "viniltex adv mat amar",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 83950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890629",
+          "descripcion": "PQ VINILTEX ADV MAT AMARI ORO 1570 3.79L",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT AMARI ORO 1570 3.79L",
+          "etiqueta_auditable": "[5890629] - PQ VINILTEX ADV MAT AMARI ORO 1570 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "viniltex_adv_mat_amari",
+          "producto_padre_busqueda": "viniltex adv mat amari",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 83950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        }
+      ]
+    },
     "should_create_task": false,
     "confidence": {
       "score": 1.0,
       "level": "alta",
       "signals": [
-        "rag_used"
+        "rag_used",
+        "inventory_used"
       ]
     },
     "is_farewell": false

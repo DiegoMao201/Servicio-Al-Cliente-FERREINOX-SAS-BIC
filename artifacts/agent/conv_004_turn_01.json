@@ -1,15 +1,315 @@
 {
-  "user": "Tengo un closet de madera que quiero proteger, acabado transparente, está en la habitación",
+  "user": "Tengo una estructura metálica de una nave industrial, necesito un sistema de protección de alto desempeño",
   "result": {
-    "response_text": "Para proteger tu closet de madera en el interior y lograr un acabado transparente, te recomiendo usar un barniz. Para este caso, el **Barniz Marino** es una excelente opción, ya que proporciona una buena protección y resalta la veta de la madera.\n\nEl sistema sería el siguiente:\n\n1. **Preparación**: Lijar la superficie con lija fina para asegurar una buena adherencia.\n2. **Aplicación del Barniz**: Aplicar el Barniz Marino en dos manos para obtener un acabado duradero y resistente.\n\n¿Te gustaría saber cuántos metros cuadrados tiene el closet y qué cantidad de barniz necesitas?",
-    "intent": "consulta_general",
-    "tool_calls": [],
-    "context_updates": {},
+    "response_text": "Para proteger adecuadamente la estructura metálica de tu nave industrial, te propongo el siguiente sistema de alto desempeño:\n\n1. **Preparación de la superficie**: Asegúrate de limpiar bien la superficie, eliminando cualquier óxido o contaminante. Esto puede incluir granallado o escarificado.\n\n2. **Imprimante**: Utiliza **Interseal 670HS EGA130** (Kit A+B) como imprimante. Este producto es ideal para proteger contra la corrosión y tiene un rendimiento de 12 a 16 m² por galón.\n\n3. **Catalizador**: Necesitarás el **catalizador EGA247** (0.5L) para el Interseal. Este es un componente obligatorio para que el sistema funcione correctamente.\n\n4. **Acabado**: Aplica **Interthane 990** como acabado. Este recubrimiento proporciona alta resistencia a la intemperie y a productos químicos.\n\nAhora, para poder cotizarte, necesito saber cuántos m² tiene la estructura y qué color te gustaría utilizar.",
+    "intent": "consulta_productos",
+    "tool_calls": [
+      {
+        "name": "consultar_conocimiento_tecnico",
+        "args": {
+          "pregunta": "sistema de protección para estructura metálica de nave industrial",
+          "producto": "Interseal",
+          "marca": "International"
+        },
+        "result": "{\"encontrado\": false, \"respuesta_rag\": null, \"mensaje\": \"No encontré información técnica vectorizada para esa consulta. Intenta con `buscar_documento_tecnico` para enviar el PDF completo.\"}"
+      },
+      {
+        "name": "consultar_conocimiento_tecnico",
+        "args": {
+          "pregunta": "sistema de protección para estructura metálica en ambiente industrial",
+          "producto": "Intergard",
+          "marca": "International"
+        },
+        "result": "{\"encontrado\": false, \"respuesta_rag\": null, \"mensaje\": \"No encontré información técnica vectorizada para esa consulta. Intenta con `buscar_documento_tecnico` para enviar el PDF completo.\"}"
+      },
+      {
+        "name": "consultar_conocimiento_tecnico",
+        "args": {
+          "pregunta": "catalizador para Interseal",
+          "producto": "Interseal",
+          "marca": "International"
+        },
+        "result": "{\"encontrado\": false, \"respuesta_rag\": null, \"mensaje\": \"No encontré información técnica vectorizada para esa consulta. Intenta con `buscar_documento_tecnico` para enviar el PDF completo.\"}"
+      },
+      {
+        "name": "consultar_inventario",
+        "args": {
+          "producto": "Comp B catalizador Interseal"
+        },
+        "result": "{\"encontrados\": 10, \"productos\": [{\"codigo\": \"F51060587\", \"descripcion\": \"INTERSEAL 670 EGA 247/3,7 L CATALIZADOR\", \"descripcion_exacta\": \"INTERSEAL 670 EGA 247/3,7 L CATALIZADOR\", \"etiqueta_auditable\": \"[F51060587] - INTERSEAL 670 EGA 247/3,7 L CATALIZADOR\", \"marca\": \"0\", \"presentacion\": null, \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"NaN\", \"tipo_marca\": \"NaN\", \"familia\": \"NaN\", \"aplicacion\": \"NaN\", \"categoria\": \"MANTENIMIENTO\", \"descripcion_larga\": \"NaN\", \"tipo\": \"NaN\"}, \"disponible\": false, \"precio_iva_incluido\": 245204, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"lista_precio\": \"franquicia\", \"⚠️_BICOMPONENTE_OBLIGATORIO\": {\"advertencia\": \"ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.\", \"catalizador_codigo\": \"\", \"catalizador_descripcion\": \"Interseal COMP B catalizador — consultar ficha técnica Internacional\", \"proporcion\": \"\", \"nota\": \"Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.\"}}, {\"codigo\": \"5863715\", \"descripcion\": \"INTERSEAL 670HS EGA130/20L/AA7\", \"descripcion_exacta\": \"INTERSEAL 670HS EGA130/20L/AA7\", \"etiqueta_auditable\": \"[5863715] - INTERSEAL 670HS EGA130/20L/AA7\", \"marca\": \"54\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"interseal_ega130_aa7\", \"producto_padre_busqueda\": \"interseal ega130 aa7\", \"pregunta_desambiguacion\": \"Tengo cuñete y galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 849349, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"⚠️_BICOMPONENTE_OBLIGATORIO\": {\"advertencia\": \"ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.\", \"catalizador_codigo\": \"\", \"catalizador_descripcion\": \"Interseal COMP B catalizador — consultar ficha técnica Internacional\", \"proporcion\": \"\", \"nota\": \"Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.\"}}, {\"codigo\": \"5893596\", \"descripcion\": \"INTERSEAL 670HS EGA130/3.7L/AA7\", \"descripcion_exacta\": \"INTERSEAL 670HS EGA130/3.7L/AA7\", \"etiqueta_auditable\": \"[5893596] - INTERSEAL 670HS EGA130/3.7L/AA7\", \"marca\": \"54\", \"presentacion\": \"galon\", \"familia_consulta\": \"interseal_ega130_aa7\", \"producto_padre_busqueda\": \"interseal ega130 aa7\", \"pregunta_desambiguacion\": \"Tengo cuñete y galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 174966, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"productos_complementarios\": [{\"referencia\": \"EGA247\", \"descripcion\": \"Catalizador INTERSEAL 670HS EGA247/0.5L/AA7\", \"tipo\": \"catalizador\", \"proporcion\": \"0.5L\", \"notas\": \"Siempre recomendar con catalizador adicional.\", \"stock_total\": null}], \"⚠️_BICOMPONENTE_OBLIGATORIO\": {\"advertencia\": \"ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.\", \"catalizador_codigo\": \"\", \"catalizador_descripcion\": \"Interseal COMP B catalizador — consultar ficha técnica Internacional\", \"proporcion\": \"\", \"nota\": \"Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.\"}}, {\"codigo\": \"5893643\", \"descripcion\": \"INTERSEAL 670HS EGA247/0.5L/AA7\", \"descripcion_exacta\": \"INTERSEAL 670HS EGA247/0.5L/AA7\", \"etiqueta_auditable\": \"[5893643] - INTERSEAL 670HS EGA247/0.5L/AA7\", \"marca\": \"54\", \"presentacion\": null, \"familia_consulta\": \"interseal_ega247_aa7\", \"producto_padre_busqueda\": \"interseal ega247 aa7\", \"pregunta_desambiguacion\": \"Tengo Interseal 670Hs Ega247/0.5L/Aa7 y galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 54067, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"⚠️_BICOMPONENTE_OBLIGATORIO\": {\"advertencia\": \"ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.\", \"catalizador_codigo\": \"\", \"catalizador_descripcion\": \"Interseal COMP B catalizador — consultar ficha técnica Internacional\", \"proporcion\": \"\", \"nota\": \"Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.\"}}, {\"codigo\": \"5891355\", \"descripcion\": \"INTERSEAL 670 EGA247/3.7L/AA7\", \"descripcion_exacta\": \"INTERSEAL 670 EGA247/3.7L/AA7\", \"etiqueta_auditable\": \"[5891355] - INTERSEAL 670 EGA247/3.7L/AA7\", \"marca\": \"54\", \"presentacion\": \"galon\", \"familia_consulta\": \"interseal_ega247_aa7\", \"producto_padre_busqueda\": \"interseal ega247 aa7\", \"pregunta_desambiguacion\": \"Tengo Interseal 670Hs Ega247/0.5L/Aa7 y galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 245204, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"⚠️_BICOMPONENTE_OBLIGATORIO\": {\"advertencia\": \"ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.\", \"catalizador_codigo\": \"\", \"catalizador_descripcion\": \"Interseal COMP B catalizador — consultar ficha técnica Internacional\", \"proporcion\": \"\", \"nota\": \"Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.\"}}, {\"codigo\": \"5863713\", \"descripcion\": \"INTERSEAL 670HS EGA105/20L/AA7\", \"descripcion_exacta\": \"INTERSEAL 670HS EGA105/20L/AA7\", \"etiqueta_auditable\": \"[5863713] - INTERSEAL 670HS EGA105/20L/AA7\", \"marca\": \"54\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"interseal_ega105_aa7\", \"producto_padre_busqueda\": \"interseal ega105 aa7\", \"pregunta_desambiguacion\": \"Tengo cuñete y galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 767408, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"⚠️_BICOMPONENTE_OBLIGATORIO\": {\"advertencia\": \"ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.\", \"catalizador_codigo\": \"\", \"catalizador_descripcion\": \"Interseal COMP B catalizador — consultar ficha técnica Internacional\", \"proporcion\": \"\", \"nota\": \"Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.\"}}, {\"codigo\": \"5893595\", \"descripcion\": \"INTERSEAL 670HS EGA105/3.7L/AA7\", \"descripcion_exacta\": \"INTERSEAL 670HS EGA105/3.7L/AA7\", \"etiqueta_auditable\": \"[5893595] - INTERSEAL 670HS EGA105/3.7L/AA7\", \"marca\": \"54\", \"presentacion\": \"galon\", \"familia_consulta\": \"interseal_ega105_aa7\", \"producto_padre_busqueda\": \"interseal ega105 aa7\", \"pregunta_desambiguacion\": \"Tengo cuñete y galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 158086, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"⚠️_BICOMPONENTE_OBLIGATORIO\": {\"advertencia\": \"ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.\", \"catalizador_codigo\": \"\", \"catalizador_descripcion\": \"Interseal COMP B catalizador — consultar ficha técnica Internacional\", \"proporcion\": \"\", \"nota\": \"Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.\"}}, {\"codigo\": \"5929926\", \"descripcion\": \"INTERSEAL 670 41A046/3.7L/AA7\", \"descripcion_exacta\": \"INTERSEAL 670 41A046/3.7L/AA7\", \"etiqueta_auditable\": \"[5929926] - INTERSEAL 670 41A046/3.7L/AA7\", \"marca\": \"54\", \"presentacion\": \"galon\", \"familia_consulta\": \"interseal_41a046_aa7\", \"producto_padre_busqueda\": \"interseal 41a046 aa7\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 285241, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"⚠️_BICOMPONENTE_OBLIGATORIO\": {\"advertencia\": \"ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.\", \"catalizador_codigo\": \"\", \"catalizador_descripcion\": \"Interseal COMP B catalizador — consultar ficha técnica Internacional\", \"proporcion\": \"\", \"nota\": \"Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.\"}}, {\"codigo\": \"5892079\", \"descripcion\": \"INTERSEAL 670HS EGH017/20L/AA7\", \"descripcion_exacta\": \"INTERSEAL 670HS EGH017/20L/AA7\", \"etiqueta_auditable\": \"[5892079] - INTERSEAL 670HS EGH017/20L/AA7\", \"marca\": \"54\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"interseal_egh017_aa7\", \"producto_padre_busqueda\": \"interseal egh017 aa7\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 937593, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"⚠️_BICOMPONENTE_OBLIGATORIO\": {\"advertencia\": \"ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.\", \"catalizador_codigo\": \"\", \"catalizador_descripcion\": \"Interseal COMP B catalizador — consultar ficha técnica Internacional\", \"proporcion\": \"\", \"nota\": \"Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.\"}}, {\"codigo\": \"5891370\", \"descripcion\": \"INTERSEAL 670HS EGA056/3.7L/AA7\", \"descripcion_exacta\": \"INTERSEAL 670HS EGA056/3.7L/AA7\", \"etiqueta_auditable\": \"[5891370] - INTERSEAL 670HS EGA056/3.7L/AA7\", \"marca\": \"54\", \"presentacion\": \"galon\", \"familia_consulta\": \"interseal_ega056_aa7\", \"producto_padre_busqueda\": \"interseal ega056 aa7\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 272519, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"⚠️_BICOMPONENTE_OBLIGATORIO\": {\"advertencia\": \"ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.\", \"catalizador_codigo\": \"\", \"catalizador_descripcion\": \"Interseal COMP B catalizador — consultar ficha técnica Internacional\", \"proporcion\": \"\", \"nota\": \"Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.\"}}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": true, \"pregunta_desambiguacion\": \"Tengo cuñete y galón con rotación. ¿Cuál necesitas?\", \"mensaje\": null, \"conocimiento_experto_producto\": [{\"tipo\": \"preferencia\", \"contexto\": \"imprimante, concreto poroso, tráfico pesado\", \"recomendar\": \"Interseal 670HS Gris RAL 7038\", \"evitar\": \"Pintucoat\", \"nota\": \"Beneficios: 83% de sólidos, ideal para ganar espesor (6 a 9 mils). Rendimiento: 12 a 16 m² por galón. Referencias obligatorias: Galón (5893596), Cuñete (5863715). REGLA BICOMPONENTE: Siempre lleva su catalizador INTERSEAL 670HS EGA247/0.5L/AA7.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas exteriores, resistencia UV, anticorrosivos, acabados, durabilidad\", \"recomendar\": \"Corrotec Premium, Pintulux 3 en 1, Interseal 670HS, Interthane 990\", \"evitar\": \"epóxicos como acabado final\", \"nota\": \"En estructuras metálicas exteriores, el sistema es similar al de interior, pero con una condición crítica: resistencia a radiación UV. Los epóxicos se pueden usar solo como anticorrosivos, no deben dejarse como acabado final, y la radiación UV deteriora rápidamente los epóxicos. Se recomienda un sistema completo que incluya un anticorrosivo y un acabado resistente a UV.\"}, {\"tipo\": \"uso_especifico\", \"contexto\": \"sistema alto desempeño exterior, Interseal 670HS, Interthane 990\", \"recomendar\": \"Interseal 670HS, Interthane 990\", \"evitar\": \"N/A\", \"nota\": \"El sistema alto desempeño exterior incluye Interseal 670HS como anticorrosivo y Interthane 990 como acabado. Este sistema ofrece la mayor durabilidad y protección contra UV y clima.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, exterior, resistencia UV, anticorrosivos, epóxicos, acabados\", \"recomendar\": \"Corrotec Premium, Pintulux 3 en 1, Interseal 670HS, Interthane 990, Intergard 740\", \"evitar\": \"epóxicos como acabado final\", \"nota\": \"En estructuras metálicas exteriores, el sistema es similar al de interior, pero se debe considerar la resistencia a la radiación UV. Los epóxicos son adecuados solo como anticorrosivos, no deben usarse como acabado final, ya que la radiación UV puede deteriorarlos rápidamente. Se recomienda un sistema básico con anticorrosivo alquídico y un acabado resistente a la intemperie, un sistema intermedio con imprimante epóxico y acabados alquídicos o acrílicos, y un sistema de alto desempeño con Interseal 670HS y poliuretano para mayor durabilidad.\"}], \"instruccion_conocimiento_experto\": \"💡 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE para este producto. Lee 'conocimiento_experto_producto' ANTES de presentar resultados al cliente. Si hay un 'evitar', NO lo recomiendes para este contexto. Si hay reglas comerciales (sobre pedido, obligatorio cuarzo, preguntar m², etc.), APLÍCALAS. Presenta las notas relevantes como '💡 Experiencia Ferreinox: [nota]'.\"}"
+      }
+    ],
+    "context_updates": {
+      "last_product_request": {
+        "core_terms": [
+          "comp",
+          "catalizador",
+          "interseal"
+        ],
+        "search_terms": [
+          "comp",
+          "catalizador",
+          "interseal",
+          "epoxica international",
+          "epoxica akzonobel"
+        ],
+        "requested_quantity": null,
+        "requested_unit": null,
+        "quantity_expression": null,
+        "product_codes": [],
+        "brand_filters": [
+          "international",
+          "akzonobel",
+          "interseal"
+        ],
+        "direction_filters": [],
+        "size_filters": [],
+        "store_filters": [],
+        "original_query": "comp b catalizador interseal",
+        "nlu_processed": true
+      },
+      "last_product_query": "comp b catalizador interseal",
+      "last_product_context": [
+        {
+          "codigo": "F51060587",
+          "descripcion": "INTERSEAL 670 EGA 247/3,7 L CATALIZADOR",
+          "descripcion_exacta": "INTERSEAL 670 EGA 247/3,7 L CATALIZADOR",
+          "etiqueta_auditable": "[F51060587] - INTERSEAL 670 EGA 247/3,7 L CATALIZADOR",
+          "marca": "0",
+          "presentacion": null,
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "NaN",
+            "tipo_marca": "NaN",
+            "familia": "NaN",
+            "aplicacion": "NaN",
+            "categoria": "MANTENIMIENTO",
+            "descripcion_larga": "NaN",
+            "tipo": "NaN"
+          },
+          "disponible": false,
+          "precio_iva_incluido": 245204,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "lista_precio": "franquicia",
+          "⚠️_BICOMPONENTE_OBLIGATORIO": {
+            "advertencia": "ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.",
+            "catalizador_codigo": "",
+            "catalizador_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
+            "proporcion": "",
+            "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas."
+          }
+        },
+        {
+          "codigo": "5863715",
+          "descripcion": "INTERSEAL 670HS EGA130/20L/AA7",
+          "descripcion_exacta": "INTERSEAL 670HS EGA130/20L/AA7",
+          "etiqueta_auditable": "[5863715] - INTERSEAL 670HS EGA130/20L/AA7",
+          "marca": "54",
+          "presentacion": "cuñete",
+          "familia_consulta": "interseal_ega130_aa7",
+          "producto_padre_busqueda": "interseal ega130 aa7",
+          "pregunta_desambiguacion": "Tengo cuñete y galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 849349,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "⚠️_BICOMPONENTE_OBLIGATORIO": {
+            "advertencia": "ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.",
+            "catalizador_codigo": "",
+            "catalizador_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
+            "proporcion": "",
+            "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas."
+          }
+        },
+        {
+          "codigo": "5893596",
+          "descripcion": "INTERSEAL 670HS EGA130/3.7L/AA7",
+          "descripcion_exacta": "INTERSEAL 670HS EGA130/3.7L/AA7",
+          "etiqueta_auditable": "[5893596] - INTERSEAL 670HS EGA130/3.7L/AA7",
+          "marca": "54",
+          "presentacion": "galon",
+          "familia_consulta": "interseal_ega130_aa7",
+          "producto_padre_busqueda": "interseal ega130 aa7",
+          "pregunta_desambiguacion": "Tengo cuñete y galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 174966,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "productos_complementarios": [
+            {
+              "referencia": "EGA247",
+              "descripcion": "Catalizador INTERSEAL 670HS EGA247/0.5L/AA7",
+              "tipo": "catalizador",
+              "proporcion": "0.5L",
+              "notas": "Siempre recomendar con catalizador adicional.",
+              "stock_total": null
+            }
+          ],
+          "⚠️_BICOMPONENTE_OBLIGATORIO": {
+            "advertencia": "ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.",
+            "catalizador_codigo": "",
+            "catalizador_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
+            "proporcion": "",
+            "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas."
+          }
+        },
+        {
+          "codigo": "5893643",
+          "descripcion": "INTERSEAL 670HS EGA247/0.5L/AA7",
+          "descripcion_exacta": "INTERSEAL 670HS EGA247/0.5L/AA7",
+          "etiqueta_auditable": "[5893643] - INTERSEAL 670HS EGA247/0.5L/AA7",
+          "marca": "54",
+          "presentacion": null,
+          "familia_consulta": "interseal_ega247_aa7",
+          "producto_padre_busqueda": "interseal ega247 aa7",
+          "pregunta_desambiguacion": "Tengo Interseal 670Hs Ega247/0.5L/Aa7 y galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 54067,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "⚠️_BICOMPONENTE_OBLIGATORIO": {
+            "advertencia": "ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.",
+            "catalizador_codigo": "",
+            "catalizador_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
+            "proporcion": "",
+            "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas."
+          }
+        },
+        {
+          "codigo": "5891355",
+          "descripcion": "INTERSEAL 670 EGA247/3.7L/AA7",
+          "descripcion_exacta": "INTERSEAL 670 EGA247/3.7L/AA7",
+          "etiqueta_auditable": "[5891355] - INTERSEAL 670 EGA247/3.7L/AA7",
+          "marca": "54",
+          "presentacion": "galon",
+          "familia_consulta": "interseal_ega247_aa7",
+          "producto_padre_busqueda": "interseal ega247 aa7",
+          "pregunta_desambiguacion": "Tengo Interseal 670Hs Ega247/0.5L/Aa7 y galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 245204,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "⚠️_BICOMPONENTE_OBLIGATORIO": {
+            "advertencia": "ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.",
+            "catalizador_codigo": "",
+            "catalizador_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
+            "proporcion": "",
+            "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas."
+          }
+        },
+        {
+          "codigo": "5863713",
+          "descripcion": "INTERSEAL 670HS EGA105/20L/AA7",
+          "descripcion_exacta": "INTERSEAL 670HS EGA105/20L/AA7",
+          "etiqueta_auditable": "[5863713] - INTERSEAL 670HS EGA105/20L/AA7",
+          "marca": "54",
+          "presentacion": "cuñete",
+          "familia_consulta": "interseal_ega105_aa7",
+          "producto_padre_busqueda": "interseal ega105 aa7",
+          "pregunta_desambiguacion": "Tengo cuñete y galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 767408,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "⚠️_BICOMPONENTE_OBLIGATORIO": {
+            "advertencia": "ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.",
+            "catalizador_codigo": "",
+            "catalizador_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
+            "proporcion": "",
+            "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas."
+          }
+        },
+        {
+          "codigo": "5893595",
+          "descripcion": "INTERSEAL 670HS EGA105/3.7L/AA7",
+          "descripcion_exacta": "INTERSEAL 670HS EGA105/3.7L/AA7",
+          "etiqueta_auditable": "[5893595] - INTERSEAL 670HS EGA105/3.7L/AA7",
+          "marca": "54",
+          "presentacion": "galon",
+          "familia_consulta": "interseal_ega105_aa7",
+          "producto_padre_busqueda": "interseal ega105 aa7",
+          "pregunta_desambiguacion": "Tengo cuñete y galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 158086,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "⚠️_BICOMPONENTE_OBLIGATORIO": {
+            "advertencia": "ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.",
+            "catalizador_codigo": "",
+            "catalizador_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
+            "proporcion": "",
+            "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas."
+          }
+        },
+        {
+          "codigo": "5929926",
+          "descripcion": "INTERSEAL 670 41A046/3.7L/AA7",
+          "descripcion_exacta": "INTERSEAL 670 41A046/3.7L/AA7",
+          "etiqueta_auditable": "[5929926] - INTERSEAL 670 41A046/3.7L/AA7",
+          "marca": "54",
+          "presentacion": "galon",
+          "familia_consulta": "interseal_41a046_aa7",
+          "producto_padre_busqueda": "interseal 41a046 aa7",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 285241,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "⚠️_BICOMPONENTE_OBLIGATORIO": {
+            "advertencia": "ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.",
+            "catalizador_codigo": "",
+            "catalizador_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
+            "proporcion": "",
+            "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas."
+          }
+        },
+        {
+          "codigo": "5892079",
+          "descripcion": "INTERSEAL 670HS EGH017/20L/AA7",
+          "descripcion_exacta": "INTERSEAL 670HS EGH017/20L/AA7",
+          "etiqueta_auditable": "[5892079] - INTERSEAL 670HS EGH017/20L/AA7",
+          "marca": "54",
+          "presentacion": "cuñete",
+          "familia_consulta": "interseal_egh017_aa7",
+          "producto_padre_busqueda": "interseal egh017 aa7",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 937593,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "⚠️_BICOMPONENTE_OBLIGATORIO": {
+            "advertencia": "ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.",
+            "catalizador_codigo": "",
+            "catalizador_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
+            "proporcion": "",
+            "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas."
+          }
+        },
+        {
+          "codigo": "5891370",
+          "descripcion": "INTERSEAL 670HS EGA056/3.7L/AA7",
+          "descripcion_exacta": "INTERSEAL 670HS EGA056/3.7L/AA7",
+          "etiqueta_auditable": "[5891370] - INTERSEAL 670HS EGA056/3.7L/AA7",
+          "marca": "54",
+          "presentacion": "galon",
+          "familia_consulta": "interseal_ega056_aa7",
+          "producto_padre_busqueda": "interseal ega056 aa7",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 272519,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "⚠️_BICOMPONENTE_OBLIGATORIO": {
+            "advertencia": "ESTE PRODUCTO ES BICOMPONENTE. NUNCA cotizar sin catalizador.",
+            "catalizador_codigo": "",
+            "catalizador_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
+            "proporcion": "",
+            "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas."
+          }
+        }
+      ]
+    },
     "should_create_task": false,
     "confidence": {
       "score": 1.0,
       "level": "alta",
-      "signals": []
+      "signals": [
+        "rag_used",
+        "inventory_used"
+      ]
     },
     "is_farewell": false
   }

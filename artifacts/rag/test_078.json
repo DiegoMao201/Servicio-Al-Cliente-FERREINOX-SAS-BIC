@@ -1,0 +1,63 @@
+{
+  "query": "barniz para mesa de madera de comedor interior",
+  "response": {
+    "query": "barniz para mesa de madera de comedor interior",
+    "resultados": [
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6832,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
+      },
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6477,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz tipo uretano base solvente transparente de fácil aplicación, que\npenetra la madera y permite su transpiración, proporcionando alta\nprotección en exteriores, incluso en ambientes marinos y tropicales."
+      },
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6468,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Versión 1 / 2015]\n\nBARNEX®"
+      },
+      {
+        "archivo": "BARNIZ SD1.pdf",
+        "familia": "BARNIZ SD1",
+        "similitud": 0.6407,
+        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes interiores que no estén expuestas a la luz directa del sol, a la\nhumedad o a la abrasión, como techos, puertas, zócalos, columnas, vigas,\nmesas decorativas y muebles de madera en general."
+      },
+      {
+        "archivo": "ESMALTE POLIURETANO MADERA.pdf",
+        "familia": "ESMALTE POLIURETANO MADERA",
+        "similitud": 0.5952,
+        "texto": "[PRODUCTO: ESMALTE POLIURETANO MADERA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nMuebles de uso doméstico y comercial como cocinas, comedores,\nsalas, alcobas, panelería, muebles de oficina, muebles de jardín,\nfachadas, entre otros objetos de madera que requieren de alta\nprotección y acabados tipo automotriz en brillo y durabilidad."
+      },
+      {
+        "archivo": "WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES (1).pdf",
+        "familia": "WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES",
+        "similitud": 0.5758,
+        "texto": "[PRODUCTO: WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara presellar y colorear muebles y artículos en madera sólida, chapillas,\ntableros aglomerados (partícula-fibra) y/o tableros contrachapados con el fin\nde darle uniformidad al color e imitar otros tipos de maderas."
+      },
+      {
+        "archivo": "ESMALTE POLIURETANO MADERA.pdf",
+        "familia": "ESMALTE POLIURETANO MADERA",
+        "similitud": 0.5741,
+        "texto": "[PRODUCTO: ESMALTE POLIURETANO MADERA] [MARCA: Pintuco]\n[SECCIÓN: Acabado Poliuretano en dos componentes que protege y da un]\n\nacabado final tipo Premium a la madera de uso interior y exterior, que\nva a estar expuesta a intemperie y a humedad permanente. Puede ser\nusado en madera sólida, chapillas, tableros aglomerados (partícula-\nfibra) y/o tableros contrachapados."
+      }
+    ],
+    "productos_candidatos": [
+      "BARNIZ BARNEX 557",
+      "BARNIZ SD1",
+      "barnex",
+      "barniz",
+      "barniz marino",
+      "barniz sd1",
+      "wood stain",
+      "madetec",
+      "pintulux",
+      "viniltex",
+      "intervinil"
+    ]
+  }
+}

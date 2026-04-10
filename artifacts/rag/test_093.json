@@ -1,0 +1,50 @@
+{
+  "query": "pintar silla plástica del jardín",
+  "response": {
+    "query": "pintar silla plástica del jardín",
+    "resultados": [
+      {
+        "archivo": "PRIMER PARA PLASTICOS (Copia en conflicto de usuario-PC 2019-01-28).pdf",
+        "familia": "PRIMER PARA PLASTICOS",
+        "similitud": 0.512,
+        "texto": "[PRODUCTO: PRIMER PARA PLASTICOS] [MARCA: Pintuco]\n[SECCIÓN: COLOR]\n\n10007191\n28600"
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.5039,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+      },
+      {
+        "archivo": "PLASTICO EN FRIO EN LLANA.pdf",
+        "familia": "PLASTICO EN FRIO EN LLANA",
+        "similitud": 0.4891,
+        "texto": "[PRODUCTO: PLASTICO EN FRIO EN LLANA] [MARCA: Pintuco]\n[SECCIÓN: CUMPLIMIENTO DE NORMAS]\n\n Pintura diseñada según la norma NTC 1360. USOS\nPara la demarcación y señalización de autopistas, carreteras,\nespecialmente recomendada para pasos peatonales, zonas\nescolares, ciclo rutas, avisos en la carretera y zonas donde se\npresente abrasión severa por parte de los vehículos y peatones VENTAJAS Y BENEFICIOS\n\n 100% sólidos\n Rápido secado\n Flexibilidad\n Permite aplicaciones especiales (relieve)\n Du"
+      },
+      {
+        "archivo": "PRODUCTOS MANTENIMIENTO.pdf",
+        "familia": "PRODUCTOS MANTENIMIENTO",
+        "similitud": 0.4835,
+        "texto": "[PRODUCTO: PRODUCTOS MANTENIMIENTO] [MARCA: Pintuco]\n[SECCIÓN: USOS:]\n\n•\nPara eliminar pinturas o barnices deteriorados o en buen estado.\n•\nNo se recomienda su uso sobre superficies de plástico, fibras de vidrio ya que\neste producto podría atacarlos\n•\nNo aplicar sobre concretos ni asfaltos."
+      },
+      {
+        "archivo": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
+        "familia": "FDS- PINTURA CANCHAS BASE ACCENT",
+        "similitud": 0.4832,
+        "texto": "[PRODUCTO: FDS- PINTURA CANCHAS BASE ACCENT] [MARCA: Pintuco]\n[SECCIÓN: Legislación relacionada con la gestión de residuos:]\n\n10221353 FABRICADO CONSTRUCCION PINTURA PARA CANCHAS"
+      },
+      {
+        "archivo": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
+        "familia": "FDS- PINTURA CANCHAS BASE ACCENT",
+        "similitud": 0.4825,
+        "texto": "[PRODUCTO: FDS- PINTURA CANCHAS BASE ACCENT] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\n10221353 FABRICADO CONSTRUCCION PINTURA PARA CANCHAS"
+      }
+    ],
+    "productos_candidatos": [
+      "PRIMER PARA PLASTICOS",
+      "PINTURA PARA CANCHAS",
+      "PLASTICO EN FRIO EN LLANA",
+      "PRODUCTOS MANTENIMIENTO"
+    ]
+  }
+}

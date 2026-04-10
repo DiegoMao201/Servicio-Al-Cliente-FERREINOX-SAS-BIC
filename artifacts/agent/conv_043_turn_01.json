@@ -1,7 +1,7 @@
 {
   "user": "Muchas gracias por todo, eso es todo por hoy",
   "result": {
-    "response_text": "¡De nada! Si necesitas algo más en el futuro, aquí estaré para ayudarte. ¡Que tengas un excelente día! 😊",
+    "response_text": "¡Con gusto! Si necesitas ayuda en el futuro, aquí estaré. ¡Que tengas un excelente día! 😊",
     "intent": "consulta_general",
     "tool_calls": [],
     "context_updates": {},

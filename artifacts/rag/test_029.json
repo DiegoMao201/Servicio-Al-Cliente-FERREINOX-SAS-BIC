@@ -4,22 +4,22 @@
     "query": "andén de concreto exterior",
     "resultados": [
       {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.7038,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+        "archivo": "PINTUCOAT.pdf",
+        "familia": "PINTUCOAT",
+        "similitud": 0.6222,
+        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: Versión 7 / Junio 2021]\n\nabrasivo mínimo a grado comercial con remoción completa de la escama de laminación (SSPC-SP6,\nestándar Sueco SA-2), y para mayor durabilidad deben ser preparados cerca de metal blanco (SSPC-SP10).\nAntes de aplicar el Pintucoat®, proteja el metal con una Pintura Anticorrosiva Pintuco® apropiada. En\nmaderas selle bien con una mano de Pintucoat® diluido al 20% por volumen con Ajustador Pintuco® Ref.\n21209. En concreto y fibro"
       },
       {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.6588,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15 m2/gal a 2 manos."
+        "archivo": "PINTUCOAT.pdf",
+        "familia": "PINTUCOAT",
+        "similitud": 0.6222,
+        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nIdeal para proteger y decorar superficies de metal, pisos en\nconcreto, fibro-cemento y madera en ambientes interiores o\nexteriores expuestos a alta contaminación industrial o que\nrequieran de alta resistencia química. Únicamente en ambientes\ninteriores este producto puede ser utilizado sin pintura de acabado;\nen ambientes exteriores requiere de acabado para evitar la\ndecoloración y entizamiento con el sol.\nUsado en pisos industriales, inter"
       },
       {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.645,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Acabado antideslizante.\n Alta resistencia al desgaste.\n Lista para usar, fácil de aplicar.\n Excelente durabilidad de los colores en exterior.\n Producto base agua, amigable con el usuario y el medio ambiente.\n Disponible en más de 200 colores por Sistema de Colores Pintuco®."
+        "archivo": "PINTUCOAT.pdf",
+        "familia": "PINTUCOAT",
+        "similitud": 0.6205,
+        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: Zonas de tráfico medio:]\n\no Se recomienda hacer una imprimación con Pintucoat® Ref. 516 o 517 y dar acabado\ncon Esmalte Poliuretano Ref. 11304 o 11324 con catalizador Ref. 11351 en relación de\nmezcla 1:1\no Se puede utilizar barniz poliuretano para pisos, como acabado final.\n* Para mayor información consultar con servicio técnico.\n\nNOTA: Únicamente en ambientes interiores este producto puede ser utilizado sin pintura de acabado; en\nambientes exteri"
       },
       {
         "archivo": "Doors And Frame (1).pdf",
@@ -53,9 +53,9 @@
       }
     ],
     "productos_candidatos": [
-      "PINTURA PARA CANCHAS",
+      "PINTUCOAT",
       "Doors And Frame",
-      "pintura canchas"
+      "pintucoat"
     ]
   }
 }

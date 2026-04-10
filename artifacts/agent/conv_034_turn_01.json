@@ -1,7 +1,7 @@
 {
   "user": "Necesito rodillos para pintar, ¿qué tienen?",
   "result": {
-    "response_text": "Aquí tienes algunas opciones de rodillos para pintar que tenemos disponibles:\n\n1. **PQ FELPA ANTIGOTA 9 PULG 3/8**  \n   - **Precio:** $7,143  \n   - **Descripción:** Felpa antigota ideal para pintar.\n\n2. **FELPA ANTIGOTA EXTERIOR 9 PU 3/4 PINTUCO**  \n   - **Precio:** $14,118  \n   - **Descripción:** Felpa antigota para exteriores, perfecta para superficies más grandes.\n\n3. **FELPA PROFESIONAL TEXTURAS 9 PULGADAS**  \n   - **Precio:** $18,235  \n   - **Descripción:** Felpa profesional diseñada para texturas.\n\n4. **PISTOLA PARA PINTAR PAINTREADY SPRAYER**  \n   - **Precio:** $442,773  \n   - **Descripción:** Pistola para pintar, ideal para trabajos más grandes y rápidos.\n\nSi necesitas más información sobre alguno de estos productos o quieres hacer un pedido, ¡dímelo! 😊",
+    "response_text": "Aquí tienes algunas opciones de rodillos para pintar que tenemos disponibles:\n\n1. **PQ FELPA ANTIGOTA 9 PULG 3/8**  \n   - Precio: **$7,143**  \n   - Ideal para aplicaciones de pintura.\n\n2. **FELPA ANTIGOTA EXTERIOR 9 PU 3/4 PINTUCO**  \n   - Precio: **$14,118**  \n   - Perfecto para exteriores.\n\n3. **FELPA PROFESIONAL TEXTURAS 9 PULGADAS**  \n   - Precio: **$18,235**  \n   - Diseñado para texturas.\n\n4. **PISTOLA PARA PINTAR PAINTREADY SPRAYER**  \n   - Precio: **$442,773**  \n   - Ideal para aplicaciones más rápidas y eficientes.\n\n¿Te interesa alguno de estos rodillos o necesitas más información sobre alguno en particular?",
     "intent": "consulta_productos",
     "tool_calls": [
       {

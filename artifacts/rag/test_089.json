@@ -1,0 +1,63 @@
+{
+  "query": "piso taller mecánico aceite y grasa",
+  "response": {
+    "query": "piso taller mecánico aceite y grasa",
+    "resultados": [
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6087,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Secamiento al manejo]\n\n1 – 2\nh RENDIMIENTO APROXIMADO"
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.604,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nlo se debe realizar un lavado con Construcleaner® Mantenimiento de\nFachadas para eliminar grasas y otros contaminantes y lijar para eliminar el brillo de la pintura. Si tiene\npintura con problemas de adherencia esta debe retirarse por medios mecánicos hasta dejar la superficie\ncompletamente limpia.\n\nSuperficie Asfalto y Madera: Las superficies en asfalto deben tener mínimo 28 días de instaladas. La\nlimpiez"
+      },
+      {
+        "archivo": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
+        "familia": "FDS- PINTURA CANCHAS BASE ACCENT",
+        "similitud": 0.6029,
+        "texto": "[PRODUCTO: FDS- PINTURA CANCHAS BASE ACCENT]\n[SECCIÓN: GENERAL]\n\n10221353 FABRICADO CONSTRUCCION PINTURA PARA CANCHAS"
+      },
+      {
+        "archivo": "C-Floor PU385 BARNIZ MATE.pdf",
+        "familia": "C-Floor PU385 BARNIZ MATE",
+        "similitud": 0.6006,
+        "texto": "[PRODUCTO: C-Floor PU385 BARNIZ MATE] [MARCA: Pintuco]\n[SECCIÓN: Aceite de coches]\n\n+\n+\n+"
+      },
+      {
+        "archivo": "C-FLOOR E225 Sat.pdf",
+        "familia": "C-FLOOR E225 Sat",
+        "similitud": 0.5823,
+        "texto": "[PRODUCTO: C-FLOOR E225 Sat] [MARCA: Pintuco]\n[SECCIÓN: Aceite de coches]\n\n+\n+\n+"
+      },
+      {
+        "archivo": "EQUIPOS GRACO.pdf",
+        "familia": "EQUIPOS GRACO",
+        "similitud": 0.5718,
+        "texto": "[PRODUCTO: EQUIPOS GRACO] [MARCA: Pintuco]\n[SECCIÓN: Imprimadores y pinturas a base]\n\nde aceite Acrílicos • Rellenos\npara bloques Recubrimiento\nanticorrosivo • Materiales\nelastoméricos Compuesto\npara juntas Materiales de capa\ndelgada Cortafuegos • Yesos | Látex para interiores/exteriores"
+      },
+      {
+        "archivo": "EQUIPOS GRACO.pdf",
+        "familia": "EQUIPOS GRACO",
+        "similitud": 0.4787,
+        "texto": "[PRODUCTO: EQUIPOS GRACO] [MARCA: Pintuco]\n[SECCIÓN: Recubrimientos a base]\n\nde aceite, esmaltes,\nlátex, relleno de\nbloques, materiales\nelastoméricos, epoxis,\nyeso y otros materiales\nde alta viscosidad"
+      },
+      {
+        "archivo": "EQUIPOS GRACO.pdf",
+        "familia": "EQUIPOS GRACO",
+        "similitud": 0.4738,
+        "texto": "[PRODUCTO: EQUIPOS GRACO] [MARCA: Pintuco]\n[SECCIÓN: Látex para interiores/exteriores]\n\n• Imprimadores a base de aceite\nEpoxis • Rellenos para bloques\nRecubrimiento anticorrosivo •"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTURA PARA CANCHAS",
+      "C-Floor PU385 BARNIZ MATE",
+      "C-FLOOR E225 Sat",
+      "pintucoat",
+      "pintura canchas"
+    ]
+  }
+}

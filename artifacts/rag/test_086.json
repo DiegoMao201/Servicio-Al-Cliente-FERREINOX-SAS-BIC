@@ -1,0 +1,51 @@
+{
+  "query": "frente de la casa se pela la pintura con el agua",
+  "response": {
+    "query": "frente de la casa se pela la pintura con el agua",
+    "resultados": [
+      {
+        "archivo": "PINTURA ACRIL CEMENTO IMPERMEABLE.pdf",
+        "familia": "PINTURA ACRIL CEMENTO IMPERMEABLE",
+        "similitud": 0.539,
+        "texto": "[PRODUCTO: PINTURA ACRIL CEMENTO IMPERMEABLE] [MARCA: Pintuco]\n[SECCIÓN: Lavado de equipo]\n\nAgua."
+      },
+      {
+        "archivo": "PINTURA CEMENTOS IMPERMEABLE 27519.pdf",
+        "familia": "PINTURA CEMENTOS IMPERMEABLE 27519",
+        "similitud": 0.5345,
+        "texto": "[PRODUCTO: PINTURA CEMENTOS IMPERMEABLE 27519] [MARCA: Pintuco]\n[SECCIÓN: Lavado de los equipos de]\n\naplicación\nInmediatamente con agua."
+      },
+      {
+        "archivo": "PERMEX BASE AGUA 13421.pdf",
+        "familia": "PERMEX BASE AGUA 13421",
+        "similitud": 0.5222,
+        "texto": "[PRODUCTO: PERMEX BASE AGUA 13421] [MARCA: Pintuco]\n[SECCIÓN: Secado al aire]\n\n1 hora (a 25° C)\n2 horas para repintar\nNota: Sobre el Permex base de agua es posible aplicar pintura de acabado."
+      },
+      {
+        "archivo": "DOMESTICO.pdf",
+        "familia": "DOMESTICO",
+        "similitud": 0.5158,
+        "texto": "[PRODUCTO: DOMESTICO] [MARCA: Pintuco]\n[SECCIÓN: Elimine]\n\ncompletamente\nla\npintura en mal estado con una rasqueta, lije la\nsuperficie\ncon\npapel\nabrasive,\nlimpie\ny\nluego\naplique Esmalte Doméstico®."
+      },
+      {
+        "archivo": "PINTURA CEMENTOS IMPERMEABLE 27519.pdf",
+        "familia": "PINTURA CEMENTOS IMPERMEABLE 27519",
+        "similitud": 0.5155,
+        "texto": "[PRODUCTO: PINTURA CEMENTOS IMPERMEABLE 27519] [MARCA: Pintuco]\n[SECCIÓN: Antes de la aplicación del producto se debe saturar la superficie con agua]\n\nevitando empozamientos."
+      },
+      {
+        "archivo": "PINTURAMA.pdf",
+        "familia": "PINTURAMA",
+        "similitud": 0.5136,
+        "texto": "[PRODUCTO: PINTURAMA] [MARCA: Pintuco]\n[SECCIÓN: EQUIPOS DE APLICACIÓN]\n\nPINTURAMA® | *AGUA"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTURA ACRIL CEMENTO IMPERMEABLE",
+      "PINTURA CEMENTOS IMPERMEABLE 27519",
+      "PERMEX BASE AGUA 13421",
+      "DOMESTICO",
+      "domestico"
+    ]
+  }
+}

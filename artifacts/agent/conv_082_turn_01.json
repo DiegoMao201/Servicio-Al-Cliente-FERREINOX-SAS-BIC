@@ -1,0 +1,29 @@
+{
+  "user": "Las paredes de la planta procesadora de alimentos necesitan pintura que se pueda lavar con presión",
+  "result": {
+    "response_text": "Parece que no encontré información técnica específica en el sistema sobre un recubrimiento epóxico grado alimenticio. Sin embargo, puedo recomendarte un sistema general que suele ser efectivo para este tipo de aplicaciones:\n\n1. **Preparación de la superficie**: Asegúrate de que las paredes estén limpias y libres de contaminantes. Si hay pintura anterior, raspa o lija para asegurar una buena adherencia.\n\n2. **Imprimante**: Utiliza un imprimante epóxico que ayude a mejorar la adherencia del acabado. Esto es crucial en ambientes donde se requiere limpieza frecuente.\n\n3. **Acabado**: Aplica un recubrimiento epóxico que sea adecuado para contacto con alimentos y que resista la limpieza a presión. \n\nTe recomiendo que consultes con un asesor técnico especializado para obtener un producto específico que cumpla con las normativas de seguridad alimentaria.\n\n¿Te gustaría que te ayude a buscar productos específicos para este sistema? Si es así, por favor indícame el área en m² que necesitas cubrir.",
+    "intent": "asesoria_tecnica",
+    "tool_calls": [
+      {
+        "name": "consultar_conocimiento_tecnico",
+        "args": {
+          "pregunta": "sistema epóxico grado alimenticio para paredes en planta procesadora de alimentos",
+          "producto": "epóxico",
+          "marca": "International"
+        },
+        "result": "{\"encontrado\": false, \"respuesta_rag\": null, \"mensaje\": \"No encontré información técnica vectorizada para esa consulta. Intenta con `buscar_documento_tecnico` para enviar el PDF completo.\"}"
+      }
+    ],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.85,
+      "level": "alta",
+      "signals": [
+        "low:no encontr",
+        "rag_used"
+      ]
+    },
+    "is_farewell": false
+  }
+}

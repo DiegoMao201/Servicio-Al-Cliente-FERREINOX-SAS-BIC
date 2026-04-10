@@ -1,0 +1,16 @@
+{
+  "user": "Necesito anticorrosivo",
+  "result": {
+    "response_text": "Claro, ¿puedes decirme un poco más sobre la superficie que necesitas tratar? ¿Es metal nuevo o oxidado? ¿Está expuesto a la intemperie? Esto me ayudará a recomendarte el producto adecuado.",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": []
+    },
+    "is_farewell": false
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "query": "puerta de madera interior pintar de blanco",
+  "response": {
+    "query": "puerta de madera interior pintar de blanco",
+    "resultados": [
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6177,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
+      },
+      {
+        "archivo": "BARNIZ SD1.pdf",
+        "familia": "BARNIZ SD1",
+        "similitud": 0.6039,
+        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes interiores que no estén expuestas a la luz directa del sol, a la\nhumedad o a la abrasión, como techos, puertas, zócalos, columnas, vigas,\nmesas decorativas y muebles de madera en general."
+      },
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6038,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz tipo uretano base solvente transparente de fácil aplicación, que\npenetra la madera y permite su transpiración, proporcionando alta\nprotección en exteriores, incluso en ambientes marinos y tropicales."
+      },
+      {
+        "archivo": "VINILTEX PRO 450.pdf",
+        "familia": "VINILTEX PRO 450",
+        "similitud": 0.567,
+        "texto": "[PRODUCTO: VINILTEX PRO 450] [MARCA: Pintuco]\n[SECCIÓN: COLORES]\n\nBlanco – Blanco almendra"
+      },
+      {
+        "archivo": "DRYWALL TIPO 2.pdf",
+        "familia": "DRYWALL TIPO 2",
+        "similitud": 0.5603,
+        "texto": "[PRODUCTO: DRYWALL TIPO 2] [MARCA: Pintuco]\n[SECCIÓN: Color Blanco]\n\nBlancura 77 %WB"
+      },
+      {
+        "archivo": "INTERVINIL PRO 400.pdf",
+        "familia": "INTERVINIL PRO 400",
+        "similitud": 0.5427,
+        "texto": "[PRODUCTO: INTERVINIL PRO 400] [MARCA: Pintuco]\n[SECCIÓN: Color Blanco]\n\nBlancura 80 % WB"
+      },
+      {
+        "archivo": "PINTUOBRA PRO INTERIOR.pdf",
+        "familia": "PINTUOBRA PRO INTERIOR",
+        "similitud": 0.5364,
+        "texto": "[PRODUCTO: PINTUOBRA PRO INTERIOR] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para decorar y proteger muros y cielos rasos de residencias, oﬁcinas, salas de conferencias y ediﬁcaciones\nen general, en ambientes interiores bajo sombra. Para uso en obra nueva como en repintes."
+      },
+      {
+        "archivo": "PINTURA CIELOS.pdf",
+        "familia": "PINTURA CIELOS",
+        "similitud": 0.5277,
+        "texto": "[PRODUCTO: PINTURA CIELOS] [MARCA: Pintuco]\n[SECCIÓN: Blanco]\n\n-"
+      }
+    ],
+    "productos_candidatos": [
+      "BARNIZ BARNEX 557",
+      "BARNIZ SD1",
+      "VINILTEX PRO 450",
+      "viniltex",
+      "barnex",
+      "barniz marino",
+      "barniz",
+      "wood stain",
+      "madetec",
+      "pintulux",
+      "barniz sd1",
+      "domestico"
+    ]
+  }
+}

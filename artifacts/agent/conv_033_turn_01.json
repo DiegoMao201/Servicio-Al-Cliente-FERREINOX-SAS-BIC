@@ -1,7 +1,7 @@
 {
   "user": "¿Tienen thinner en galón?",
   "result": {
-    "response_text": "Sí, tenemos varias opciones de thinner en galón. Aquí te dejo algunas:\n\n1. **Thinner Corriente Galón**  \n   - **Precio:** $27,647  \n   - ✅ Disponible\n\n2. **MPY Thinner 21050 UFA151 (3.7L)**  \n   - **Precio:** $89,610  \n   - ✅ Disponible\n\n3. **Thinner Universal P502 MEG AC (3.78L)**  \n   - **Precio:** $62,662  \n   - ✅ Disponible\n\n4. **Meg Diluyente 21125 AC (3.78L)**  \n   - **Precio:** $60,040  \n   - ✅ Disponible\n\nSi necesitas alguno de estos, solo dímelo y te ayudo con la compra. 😊",
+    "response_text": "Sí, tenemos varias opciones de thinner en galón. Aquí te dejo algunas:\n\n1. **Thinner Corriente Galón**  \n   - **Precio:** $27,647  \n   - ✅ Disponible\n\n2. **MPY Thinner 21050 UFA151 (3.7L)**  \n   - **Precio:** $89,610  \n   - ✅ Disponible\n\n3. **Thinner Universal P502 MEG AC (3.78L)**  \n   - **Precio:** $62,662  \n   - ✅ Disponible\n\n4. **Meg Diluyente 21125 AC (3.78L)**  \n   - **Precio:** $60,040  \n   - ✅ Disponible\n\nSi necesitas alguno de estos, solo házmelo saber y te ayudo con el pedido. 😊",
     "intent": "consulta_productos",
     "tool_calls": [
       {

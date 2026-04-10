@@ -1,7 +1,7 @@
 {
   "user": "Necesito lijas al agua para preparar una pared",
   "result": {
-    "response_text": "Tengo varias opciones de lijas al agua disponibles. Aquí te menciono algunas:\n\n1. **Lija 150 Agua Abracol** - **Total a Pagar: $1,849**\n2. **Lija 180 Agua Abracol** - **Total a Pagar: $1,849**\n3. **Lija 80 Agua Abracol** - **Total a Pagar: $1,933**\n4. **Lija 220 Agua Abracol** - **Total a Pagar: $1,513**\n5. **Lija 320 Agua Abracol** - **Total a Pagar: $1,513**\n6. **Lija 100 Agua Abracol** - **Total a Pagar: $1,933**\n7. **Lija 400 Agua Abracol** - **Total a Pagar: $1,513**\n\n💡 **Experiencia Ferreinox:** Para la preparación de paredes, es recomendable usar lijas de grano entre 80 y 150. Si necesitas más información o deseas realizar un pedido, ¡dímelo!",
+    "response_text": "He encontrado varias opciones de lijas al agua, pero algunas no están disponibles en este momento. Aquí te dejo las que sí están:\n\n1. **Lija 150 Agua Abracol**: $1,849 ✅\n2. **Lija 180 Agua Abracol**: $1,849 ✅\n3. **Lija 80 Agua Abracol**: $1,933 ✅\n4. **Lija 220 Agua Abracol**: $1,513 ✅\n5. **Lija 320 Agua Abracol**: $1,513 ✅\n6. **Lija 100 Agua Abracol**: $1,933 ✅\n7. **Lija 400 Agua Abracol**: $1,513 ✅\n\n💡 **Experiencia Ferreinox**: Para preparar una pared, es recomendable usar lijas de grano 80 o 100 para iniciar y luego finalizar con grano 220 o 320 para un acabado suave.\n\n¿Te gustaría pedir alguna de estas lijas? Si es así, ¿cuál prefieres?",
     "intent": "consulta_productos",
     "tool_calls": [
       {

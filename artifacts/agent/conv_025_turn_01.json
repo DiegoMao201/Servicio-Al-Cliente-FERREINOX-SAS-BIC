@@ -1,0 +1,273 @@
+{
+  "user": "Necesito esmalte, ¿qué tienen?",
+  "result": {
+    "response_text": "Para poder recomendarte el esmalte más adecuado, necesito saber un poco más sobre tu proyecto. ¿Qué tipo de superficie vas a pintar (madera, metal, concreto)? ¿Es para interior o exterior? Esto me ayudará a darte la mejor opción.",
+    "intent": "asesoria_tecnica",
+    "tool_calls": [
+      {
+        "name": "consultar_inventario",
+        "args": {
+          "producto": "esmalte"
+        },
+        "result": "{\"encontrados\": 10, \"productos\": [{\"codigo\": \"5891951\", \"descripcion\": \"PQ PINTULUX 3EN1 BR NEGRO 95 3.79L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR NEGRO 95 3.79L\", \"etiqueta_auditable\": \"[5891951] - PQ PINTULUX 3EN1 BR NEGRO 95 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"PINTULUX 3 EN 1\", \"tipo_marca\": \"ESMALTES\", \"familia\": \"READY MIX\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0102007564_564 - PINTULUX 3 EN 1\", \"descripcion_larga\": \"ESMALTE PINTULUX TEU NEGRO 95 1 GL\", \"tipo\": \"A1\"}, \"disponible\": true, \"precio_iva_incluido\": 115042, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5892414\", \"descripcion\": \"PQ PINTULUX 3EN1 MAT NEGRO 89 3.79L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 MAT NEGRO 89 3.79L\", \"etiqueta_auditable\": \"[5892414] - PQ PINTULUX 3EN1 MAT NEGRO 89 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"PINTULUX 3 EN 1\", \"tipo_marca\": \"ESMALTES\", \"familia\": \"READY MIX\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"ESMALTE PINTULUX TEU NEGRO MATE 89 1 GL\", \"tipo\": \"NaN\"}, \"disponible\": true, \"precio_iva_incluido\": 115042, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5892236\", \"descripcion\": \"PQ PINTULUX 3EN1 BR BLANCO 11 3.79L PE\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR BLANCO 11 3.79L PE\", \"etiqueta_auditable\": \"[5892236] - PQ PINTULUX 3EN1 BR BLANCO 11 3.79L PE\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"PINTULUX 3 EN 1\", \"tipo_marca\": \"ESMALTES\", \"familia\": \"BLANCO\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"ESMALTE PINTULUX TEU BLANCO 11 PRECIO ESPECIAL 1 G\", \"tipo\": \"NaN\"}, \"disponible\": true, \"precio_iva_incluido\": 95714, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5891953\", \"descripcion\": \"PQ PINTULUX 3EN1 BR AMARILLO 18 3.79L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR AMARILLO 18 3.79L\", \"etiqueta_auditable\": \"[5891953] - PQ PINTULUX 3EN1 BR AMARILLO 18 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"PINTULUX 3 EN 1\", \"tipo_marca\": \"ESMALTES\", \"familia\": \"READY MIX\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0102007564_564 - PINTULUX 3 EN 1\", \"descripcion_larga\": \"ESMALTE PINTULUX TEU AMARILLO 18 1 GL\", \"tipo\": \"A1\"}, \"disponible\": true, \"precio_iva_incluido\": 115042, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5892802\", \"descripcion\": \"PQ PINTULUX 3EN1 BR NEGRO 95 3.79L PE\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR NEGRO 95 3.79L PE\", \"etiqueta_auditable\": \"[5892802] - PQ PINTULUX 3EN1 BR NEGRO 95 3.79L PE\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"PINTULUX 3 EN 1\", \"tipo_marca\": \"ESMALTES\", \"familia\": \"READY MIX\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"ESMALTE PINTULUX TEU NEGRO 95 PRECIO ESPECIAL 1 GL\", \"tipo\": \"NaN\"}, \"disponible\": true, \"precio_iva_incluido\": 95714, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5891959\", \"descripcion\": \"PQ PINTULUX 3EN1 BR VERD ESMER 53 3.79L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR VERD ESMER 53 3.79L\", \"etiqueta_auditable\": \"[5891959] - PQ PINTULUX 3EN1 BR VERD ESMER 53 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"PINTULUX 3 EN 1\", \"tipo_marca\": \"ESMALTES\", \"familia\": \"READY MIX\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0102007564_564 - PINTULUX 3 EN 1\", \"descripcion_larga\": \"ESMALTE PINTULUX TEU VERDE ESMERALDA 53 1 GL\", \"tipo\": \"A1\"}, \"disponible\": true, \"precio_iva_incluido\": 115042, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5892758\", \"descripcion\": \"PQ PINTULUX 3EN1 BR BASE PASTEL 3.79L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR BASE PASTEL 3.79L\", \"etiqueta_auditable\": \"[5892758] - PQ PINTULUX 3EN1 BR BASE PASTEL 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"PINTULUX 3 EN 1\", \"tipo_marca\": \"ESMALTES\", \"familia\": \"BASE PASTEL\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"ESMALTE PINTULUX TEU BASE PASTEL GALON\", \"tipo\": \"NaN\"}, \"disponible\": true, \"precio_iva_incluido\": 115042, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890895\", \"descripcion\": \"PQ DOMESTICO BR BLANCO P-11 3.79L\", \"descripcion_exacta\": \"PQ DOMESTICO BR BLANCO P-11 3.79L\", \"etiqueta_auditable\": \"[5890895] - PQ DOMESTICO BR BLANCO P-11 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"domestico_blanco_p11\", \"producto_padre_busqueda\": \"domestico blanco\", \"pregunta_desambiguacion\": \"Tengo Doméstico Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 81429, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5891949\", \"descripcion\": \"PQ PINTULUX 3EN1 BR BLANCO 11 3.79L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR BLANCO 11 3.79L\", \"etiqueta_auditable\": \"[5891949] - PQ PINTULUX 3EN1 BR BLANCO 11 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"pintulux_blanco_brillante\", \"producto_padre_busqueda\": \"pintulux blanco brillante\", \"pregunta_desambiguacion\": \"Tengo Pintulux Blanco Brillante. ¿Lo buscas en cuarto o galón?\", \"disponible\": true, \"precio_iva_incluido\": 115042, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5891963\", \"descripcion\": \"PQ PINTULUX 3EN1 BR GRIS PLATA 84 3.79L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR GRIS PLATA 84 3.79L\", \"etiqueta_auditable\": \"[5891963] - PQ PINTULUX 3EN1 BR GRIS PLATA 84 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"pintulux_3en1_plata_gris\", \"producto_padre_busqueda\": \"pintulux 3en1 plata gris\", \"pregunta_desambiguacion\": \"Tengo Gris cuarto y Gris galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 115042, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": true, \"pregunta_desambiguacion\": \"Tengo varias opciones de color en esa línea. ¿Cuál color necesitas exactamente?\", \"mensaje\": null, \"conocimiento_experto_producto\": [{\"tipo\": \"preferencia\", \"contexto\": \"madera exterior, madera interior, barniz, sellador, color sólido\", \"recomendar\": \"Barnex Extra Protección, Wood Stain, Esmalte Doméstico, Pintulux MP\", \"evitar\": \"sellador para madera, Pintulac\", \"nota\": \"1. Para madera exterior a la intemperie, está prohibido recomendar sellador. Barnex o Wood Stain van directo sobre la madera cruda. 2. Barnex y Wood Stain son productos diferentes, no se mezclan. 3. Pintulac no es adecuado para marcos interiores; se debe usar Esmalte Doméstico o Pintulux MP. 4. Siempre preguntar el color del marco antes de cotizar. 5. Incluir herramientas: Removedor Pintuco, Lija Abracol gruesa (80-100), Lija Abracol fina (220), Brocha Goya Profesional.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"metales, óxido, rejas, puertas, estructuras metálicas\", \"recomendar\": \"Pintóxido, Corrotec, Pintulux 3 en 1, Brocha Goya Profesional\", \"evitar\": null, \"nota\": \"Sistema de alta protección para estructuras metálicas expuestas a la intemperie con óxido severo. Incluir preparación mecánica y abrasivos de Abracol.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"fachadas, pintura, estuco, Koraza, Viniltex, preparación\", \"recomendar\": \"Koraza, PQ KORAZA PINT IMPER, Viniltex Advanced, Vinilico, Vinil Plus, Intervinil, Vinilux, Vinil Latex, Pinturama, Estuco Acrílico, Pintuco Flex\", \"evitar\": null, \"nota\": \"1. NUNCA olvides preguntar los metros cuadrados (m²) en el primer mensaje. 2. Jerarquía de productos: Premium Koraza, Tipo 1 Viniltex Advanced, Tipo 2 Intervinil, Tipo 3 Pinturama. 3. Incluir Estuco Acrílico y Pintuco Flex si hay grietas. 4. Preparación con Lija Abracol y Brocha Goya Profesional.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"venta de esmaltes, color sólido\", \"recomendar\": null, \"evitar\": null, \"nota\": \"Es un error de ventas no preguntar el color. Siempre que el sistema lleve un acabado de color sólido (como Pintulux MP o Doméstico), TIENES ESTRICTAMENTE PROHIBIDO cotizar o avanzar sin preguntarle al cliente: '¿En qué color deseas pintar el marco?'. Necesitas ese dato para buscar la referencia.\"}], \"instruccion_conocimiento_experto\": \"💡 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE para este producto. Lee 'conocimiento_experto_producto' ANTES de presentar resultados al cliente. Si hay un 'evitar', NO lo recomiendes para este contexto. Si hay reglas comerciales (sobre pedido, obligatorio cuarzo, preguntar m², etc.), APLÍCALAS. Presenta las notas relevantes como '💡 Experiencia Ferreinox: [nota]'.\"}"
+      },
+      {
+        "name": "consultar_conocimiento_tecnico",
+        "args": {
+          "pregunta": "¿Qué tipo de esmalte es adecuado para el uso decorativo en interiores y exteriores?",
+          "producto": "esmalte"
+        },
+        "result": "{\"encontrado\": true, \"respuesta_rag\": \"\", \"archivos_fuente\": [\"FDS - ESMALTE SINTETICO PINTULUX VERDE TURQUESA 44.pdf\", \"FDS - ESMALTE SINTETICO PINTULUX VERDE TURQUESA 44 _ 10014364-10012470-10171677 _COL (Versión 5) (1).pdf\", \"FDS - ESMALTE DOMESTICO CREMA P-7.pdf\", \"FDS - ESMALTE PINTULUX TEU GRIS PLATA 84.pdf\"], \"mejor_similitud\": 0.5865, \"mensaje\": \"⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. DEBES SINTETIZARLOS como un ingeniero de aplicaciones: 1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado).    Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. 2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. 3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. 4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. 5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. 6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' 7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'\", \"productos_inventario_relacionados\": [{\"codigo\": \"10017718\", \"descripcion\": \"ESMALTE SINTETICO PINTULUX MARFIL 5 1/8\", \"etiqueta_auditable\": \"[10017718] - ESMALTE SINTETICO PINTULUX MARFIL 5 1/8\", \"marca\": \"0\", \"presentacion\": null, \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"10017720\", \"descripcion\": \"ESMALTE SINTETICO PINTULUX CREMA 12 1/8\", \"etiqueta_auditable\": \"[10017720] - ESMALTE SINTETICO PINTULUX CREMA 12 1/8\", \"marca\": \"0\", \"presentacion\": null, \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"5891101\", \"descripcion\": \"PQ VINILTEX ADV MAT BLANCO 1501 18.93L\", \"etiqueta_auditable\": \"[5891101] - PQ VINILTEX ADV MAT BLANCO 1501 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5892240\", \"descripcion\": \"PQ VINILTEX ADV MAT BLANCO 1501 3.79L PE\", \"etiqueta_auditable\": \"[5892240] - PQ VINILTEX ADV MAT BLANCO 1501 3.79L PE\", \"marca\": \"58\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. ⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema completo con cantidades calculadas para TODOS los productos y cierra con: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'\", \"conocimiento_comercial_ferreinox\": [{\"id\": 34, \"tipo\": \"preferencia\", \"contexto\": \"madera exterior, madera interior, barniz, sellador, color sólido\", \"recomendar\": \"Barnex Extra Protección, Wood Stain, Esmalte Doméstico, Pintulux MP\", \"evitar\": \"sellador para madera, Pintulac\", \"nota\": \"1. Para madera exterior a la intemperie, está prohibido recomendar sellador. Barnex o Wood Stain van directo sobre la madera cruda. 2. Barnex y Wood Stain son productos diferentes, no se mezclan. 3. Pintulac no es adecuado para marcos interiores; se debe usar Esmalte Doméstico o Pintulux MP. 4. Siempre preguntar el color del marco antes de cotizar. 5. Incluir herramientas: Removedor Pintuco, Lija Abracol gruesa (80-100), Lija Abracol fina (220), Brocha Goya Profesional.\"}, {\"id\": 28, \"tipo\": \"preferencia\", \"contexto\": \"venta de esmaltes, color sólido\", \"recomendar\": null, \"evitar\": null, \"nota\": \"Es un error de ventas no preguntar el color. Siempre que el sistema lleve un acabado de color sólido (como Pintulux MP o Doméstico), TIENES ESTRICTAMENTE PROHIBIDO cotizar o avanzar sin preguntarle al cliente: '¿En qué color deseas pintar el marco?'. Necesitas ese dato para buscar la referencia.\"}, {\"id\": 8, \"tipo\": \"uso_especifico\", \"contexto\": \"piso concreto, piso industrial, piso bodega, montacargas, estibadores, diagnostico piso\", \"recomendar\": null, \"evitar\": null, \"nota\": \"PROTOCOLO DIAGNOSTICO OBLIGATORIO PARA PISOS: Antes de recomendar CUALQUIER producto para pisos, se deben hacer 4 preguntas obligatorias: (1) Estado del piso: es concreto nuevo/obra gris o viejo/ya pintado? Si ya esta pintado, que tipo de pintura tiene? (2) Si es nuevo: ya cumplio los 28 DIAS de curado del concreto/mortero? La humedad residual de la mezcla de cemento destruye cualquier recubrimiento. (3) Cual va a ser el uso del piso: trafico constante de montacargas/estibadores, solo peatonal, o mixto? (4) Es piso interior o exterior? En exterior el epoxico se entiza con el sol y requiere acabado poliuretano Interthane. Tambien preguntar por grasas/aceites y productos quimicos que puedan derramarse.\"}, {\"id\": 76, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, exterior, resistencia UV, anticorrosivos, epóxicos, acabados\", \"recomendar\": \"Corrotec Premium, Pintulux 3 en 1, Interseal 670HS, Interthane 990, Intergard 740\", \"evitar\": \"epóxicos como acabado final\", \"nota\": \"En estructuras metálicas exteriores, el sistema es similar al de interior, pero se debe considerar la resistencia a la radiación UV. Los epóxicos son adecuados solo como anticorrosivos, no deben usarse como acabado final, ya que la radiación UV puede deteriorarlos rápidamente. Se recomienda un sistema básico con anticorrosivo alquídico y un acabado resistente a la intemperie, un sistema intermedio con imprimante epóxico y acabados alquídicos o acrílicos, y un sistema de alto desempeño con Interseal 670HS y poliuretano para mayor durabilidad.\"}, {\"id\": 71, \"tipo\": \"preferencia\", \"contexto\": \"piso interior, tráfico medio, comercial, epóxico\", \"recomendar\": \"recubrimiento epóxico de media/alta resistencia\", \"evitar\": \"productos de tráfico liviano\", \"nota\": \"Para un piso interior con tráfico medio, se recomienda un recubrimiento epóxico de mayor resistencia que el decorativo, apto para uso comercial y tránsito frecuente. La preparación debe incluir limpieza profunda y lijado o escarificado para asegurar un buen perfil de anclaje.\"}, {\"id\": 31, \"tipo\": \"preferencia\", \"contexto\": \"presentaciones, esmaltes, acabados\", \"recomendar\": \"opción seleccionada por el cliente (Mate o Brillante)\", \"evitar\": \"listar todas las variantes de esmaltes en pantalla\", \"nota\": \"Cuando busques esmaltes o pinturas y el inventario devuelva múltiples opciones de tamaño o acabado, pregunta primero al cliente qué opción desea antes de mostrar precios y disponibilidad.\"}, {\"id\": 77, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, exterior, compatibilidad, acabados, UV\", \"recomendar\": \"acabados alquídicos, acrílicos, Intergard 740\", \"evitar\": \"dejar epóxicos expuestos al sol como acabado\", \"nota\": \"Es fundamental no dejar epóxicos expuestos al sol como acabado, a menos que se trate de Intergard 740. Siempre se debe usar un acabado resistente a UV en exterior. El sistema se compone de un anticorrosivo y un acabado, y a mayor exigencia, se debe usar poliuretano. Los anticorrosivos epóxicos requieren un acabado para exterior, mientras que los acabados alquídicos o acrílicos pueden aplicarse sobre epóxicos.\"}, {\"id\": 74, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, interior, bajo techo, sin humedad, sistemas, anticorrosivo, alquídico, epóxico, desempeño, presupuesto\", \"recomendar\": \"Corrotec Premium, anticorrosivo 513, Pintulux 3 en 1, Primer Epóxico 10046, Primer Epóxico 10050, Interseal 670HS, Pintucoat, Intergard 740, Epoxipoliamida, Pintucoat Plus, Interthane 990\", \"evitar\": \"N/A\", \"nota\": \"En estructuras metálicas interiores sin humedad, el sistema se selecciona según el nivel de desempeño requerido y el presupuesto del cliente. Se recomienda un sistema básico con anticorrosivo alquídico y Pintulux 3 en 1 para estructuras convencionales, un sistema intermedio con imprimante epóxico para mayor durabilidad, y un sistema alto desempeño con Interseal 670HS para condiciones exigentes.\"}], \"instruccion_conocimiento_comercial\": \"⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. REGLAS OBLIGATORIAS: 1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. 2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. 3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. 4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' SEPARADO de la información de la ficha técnica. 5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente.\"}"
+      }
+    ],
+    "context_updates": {
+      "last_product_request": {
+        "core_terms": [
+          "esmalte"
+        ],
+        "search_terms": [
+          "esmalte",
+          "pintulux",
+          "domestico",
+          "esmalte sintetico",
+          "pintulux 3en1",
+          "pintulux 3 en 1",
+          "pintulux 3-en-1",
+          "3en1",
+          "3 en 1",
+          "3-en-1",
+          "esmalte pintulux",
+          "esmalte exterior",
+          "esmalte bueno",
+          "esmalte resistente"
+        ],
+        "requested_quantity": null,
+        "requested_unit": null,
+        "quantity_expression": null,
+        "product_codes": [],
+        "brand_filters": [],
+        "direction_filters": [],
+        "size_filters": [],
+        "store_filters": [],
+        "original_query": "esmalte",
+        "nlu_processed": true
+      },
+      "last_product_query": "esmalte",
+      "last_product_context": [
+        {
+          "codigo": "5891951",
+          "descripcion": "PQ PINTULUX 3EN1 BR NEGRO 95 3.79L",
+          "descripcion_exacta": "PQ PINTULUX 3EN1 BR NEGRO 95 3.79L",
+          "etiqueta_auditable": "[5891951] - PQ PINTULUX 3EN1 BR NEGRO 95 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "PINTULUX 3 EN 1",
+            "tipo_marca": "ESMALTES",
+            "familia": "READY MIX",
+            "aplicacion": "DECORATIVO",
+            "categoria": "PN1D0102007564_564 - PINTULUX 3 EN 1",
+            "descripcion_larga": "ESMALTE PINTULUX TEU NEGRO 95 1 GL",
+            "tipo": "A1"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 115042,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5892414",
+          "descripcion": "PQ PINTULUX 3EN1 MAT NEGRO 89 3.79L",
+          "descripcion_exacta": "PQ PINTULUX 3EN1 MAT NEGRO 89 3.79L",
+          "etiqueta_auditable": "[5892414] - PQ PINTULUX 3EN1 MAT NEGRO 89 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "PINTULUX 3 EN 1",
+            "tipo_marca": "ESMALTES",
+            "familia": "READY MIX",
+            "aplicacion": "DECORATIVO",
+            "categoria": "SIN ASIGNAR",
+            "descripcion_larga": "ESMALTE PINTULUX TEU NEGRO MATE 89 1 GL",
+            "tipo": "NaN"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 115042,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5892236",
+          "descripcion": "PQ PINTULUX 3EN1 BR BLANCO 11 3.79L PE",
+          "descripcion_exacta": "PQ PINTULUX 3EN1 BR BLANCO 11 3.79L PE",
+          "etiqueta_auditable": "[5892236] - PQ PINTULUX 3EN1 BR BLANCO 11 3.79L PE",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "PINTULUX 3 EN 1",
+            "tipo_marca": "ESMALTES",
+            "familia": "BLANCO",
+            "aplicacion": "DECORATIVO",
+            "categoria": "SIN ASIGNAR",
+            "descripcion_larga": "ESMALTE PINTULUX TEU BLANCO 11 PRECIO ESPECIAL 1 G",
+            "tipo": "NaN"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 95714,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5891953",
+          "descripcion": "PQ PINTULUX 3EN1 BR AMARILLO 18 3.79L",
+          "descripcion_exacta": "PQ PINTULUX 3EN1 BR AMARILLO 18 3.79L",
+          "etiqueta_auditable": "[5891953] - PQ PINTULUX 3EN1 BR AMARILLO 18 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "PINTULUX 3 EN 1",
+            "tipo_marca": "ESMALTES",
+            "familia": "READY MIX",
+            "aplicacion": "DECORATIVO",
+            "categoria": "PN1D0102007564_564 - PINTULUX 3 EN 1",
+            "descripcion_larga": "ESMALTE PINTULUX TEU AMARILLO 18 1 GL",
+            "tipo": "A1"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 115042,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5892802",
+          "descripcion": "PQ PINTULUX 3EN1 BR NEGRO 95 3.79L PE",
+          "descripcion_exacta": "PQ PINTULUX 3EN1 BR NEGRO 95 3.79L PE",
+          "etiqueta_auditable": "[5892802] - PQ PINTULUX 3EN1 BR NEGRO 95 3.79L PE",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "PINTULUX 3 EN 1",
+            "tipo_marca": "ESMALTES",
+            "familia": "READY MIX",
+            "aplicacion": "DECORATIVO",
+            "categoria": "SIN ASIGNAR",
+            "descripcion_larga": "ESMALTE PINTULUX TEU NEGRO 95 PRECIO ESPECIAL 1 GL",
+            "tipo": "NaN"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 95714,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5891959",
+          "descripcion": "PQ PINTULUX 3EN1 BR VERD ESMER 53 3.79L",
+          "descripcion_exacta": "PQ PINTULUX 3EN1 BR VERD ESMER 53 3.79L",
+          "etiqueta_auditable": "[5891959] - PQ PINTULUX 3EN1 BR VERD ESMER 53 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "PINTULUX 3 EN 1",
+            "tipo_marca": "ESMALTES",
+            "familia": "READY MIX",
+            "aplicacion": "DECORATIVO",
+            "categoria": "PN1D0102007564_564 - PINTULUX 3 EN 1",
+            "descripcion_larga": "ESMALTE PINTULUX TEU VERDE ESMERALDA 53 1 GL",
+            "tipo": "A1"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 115042,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5892758",
+          "descripcion": "PQ PINTULUX 3EN1 BR BASE PASTEL 3.79L",
+          "descripcion_exacta": "PQ PINTULUX 3EN1 BR BASE PASTEL 3.79L",
+          "etiqueta_auditable": "[5892758] - PQ PINTULUX 3EN1 BR BASE PASTEL 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "PINTULUX 3 EN 1",
+            "tipo_marca": "ESMALTES",
+            "familia": "BASE PASTEL",
+            "aplicacion": "DECORATIVO",
+            "categoria": "SIN ASIGNAR",
+            "descripcion_larga": "ESMALTE PINTULUX TEU BASE PASTEL GALON",
+            "tipo": "NaN"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 115042,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890895",
+          "descripcion": "PQ DOMESTICO BR BLANCO P-11 3.79L",
+          "descripcion_exacta": "PQ DOMESTICO BR BLANCO P-11 3.79L",
+          "etiqueta_auditable": "[5890895] - PQ DOMESTICO BR BLANCO P-11 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "domestico_blanco_p11",
+          "producto_padre_busqueda": "domestico blanco",
+          "pregunta_desambiguacion": "Tengo Doméstico Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
+          "disponible": true,
+          "precio_iva_incluido": 81429,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5891949",
+          "descripcion": "PQ PINTULUX 3EN1 BR BLANCO 11 3.79L",
+          "descripcion_exacta": "PQ PINTULUX 3EN1 BR BLANCO 11 3.79L",
+          "etiqueta_auditable": "[5891949] - PQ PINTULUX 3EN1 BR BLANCO 11 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "pintulux_blanco_brillante",
+          "producto_padre_busqueda": "pintulux blanco brillante",
+          "pregunta_desambiguacion": "Tengo Pintulux Blanco Brillante. ¿Lo buscas en cuarto o galón?",
+          "disponible": true,
+          "precio_iva_incluido": 115042,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5891963",
+          "descripcion": "PQ PINTULUX 3EN1 BR GRIS PLATA 84 3.79L",
+          "descripcion_exacta": "PQ PINTULUX 3EN1 BR GRIS PLATA 84 3.79L",
+          "etiqueta_auditable": "[5891963] - PQ PINTULUX 3EN1 BR GRIS PLATA 84 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "pintulux_3en1_plata_gris",
+          "producto_padre_busqueda": "pintulux 3en1 plata gris",
+          "pregunta_desambiguacion": "Tengo Gris cuarto y Gris galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 115042,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        }
+      ]
+    },
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": [
+        "rag_used",
+        "inventory_used"
+      ]
+    },
+    "is_farewell": false
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "query": "pérgola de madera exterior intemperie",
+  "response": {
+    "query": "pérgola de madera exterior intemperie",
+    "resultados": [
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6261,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.6227,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\nno estén expuestos a la abrasión. No apto para uso en pisos."
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.6219,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\nno estén expuestos a la abrasión. No apto para uso en pisos."
+      },
+      {
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.5811,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.5794,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: Protección]\n\nSol\n&"
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.5753,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: Recomendada]\n\npara\nambientes\nexteriores,\npara\ndecorar\ny proteger fachadas y patios revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar,\ntejas y láminas de fibrocemento. Disponible en una\namplia gama de colores gracias a la Tecnología\nSuperior de Color Pintuco® Colortech®."
+      },
+      {
+        "archivo": "KORAZA 5.pdf",
+        "familia": "KORAZA 5",
+        "similitud": 0.5654,
+        "texto": "[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas y patios; revocados y\nestucados, en bloque a la vista, ladrillo sin esmaltar, tejas y láminas de fibro-cemento.\n\n*Para la elección adecuada del color te recomendamos utilizar los colores marcados en el abanico\ncon el simbolo del “sol” ☼ los cuales garantizan la retención del color por 5 años siguiendo las\nrecomendaciones de aplicación."
+      },
+      {
+        "archivo": "KORAZA 5.pdf",
+        "familia": "KORAZA 5",
+        "similitud": 0.5521,
+        "texto": "[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\n[SECCIÓN: Acrílico]\n\nProfesional® para Exteriores Pintuco® Ref."
+      }
+    ],
+    "productos_candidatos": [
+      "BARNIZ BARNEX 557",
+      "BARNEX EXTRA PROTECCION",
+      "BARNEX EXTRA PROTECCIÓN",
+      "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+      "koraza",
+      "barnex",
+      "koraza sol y lluvia",
+      "barniz marino",
+      "barniz",
+      "wood stain",
+      "madetec",
+      "pintulux"
+    ]
+  }
+}

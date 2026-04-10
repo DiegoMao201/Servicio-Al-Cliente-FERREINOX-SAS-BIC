@@ -1,0 +1,65 @@
+{
+  "query": "muro exterior descascarando por la lluvia",
+  "response": {
+    "query": "muro exterior descascarando por la lluvia",
+    "resultados": [
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6479,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para decorar y proteger muros y cielos rasos de residencias, oficinas, zonas de alto\ntráfico y edificaciones en general, en ambientes interiores y exteriores. Disponible en una amplia\ngama de colores.\n* En exteriores, la estabilidad de los colores del abanico que no están marcados con el símbolo del\n“sol” ☼, dependerá de las condiciones de intemperismo en las que se aplique."
+      },
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6376,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: Estuco]\n\nacrílico\nexterior\ndoble\nprotección\nPintuco® Ref. 27060\nEn muros de ladrillo, lavar bien la superficie,\neliminando polvo y residuos sueltos y todo tipo\nde contaminantes, dejar secar y aplicar el Vinitex\nAdvanced®"
+      },
+      {
+        "archivo": "VINILTEX VIDA.pdf",
+        "familia": "VINILTEX VIDA",
+        "similitud": 0.622,
+        "texto": "[PRODUCTO: VINILTEX VIDA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para decorar y proteger muros y cielos rasos de residencias,\noficinas, zonas de alto tráfico y edificaciones en general, en ambientes interiores y\nexteriores bajo sombra."
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.5998,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: D1644]\n\nKORAZA® PROTECCIÓN\nSOL & LLUVIA PINTURA"
+      },
+      {
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.5946,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
+      },
+      {
+        "archivo": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA.pdf",
+        "familia": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA",
+        "similitud": 0.5342,
+        "texto": "[PRODUCTO: ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA] [MARCA: Pintuco]\n[SECCIÓN: CUMPLIMIENTO DE NORMA Y APORTE SOSTENIBLE]\n\nResistencia prolongada al sol y la lluvia, mantiene durabilidad\nincluso en climas exteriores"
+      },
+      {
+        "archivo": "PINTUCO FILL 12.pdf",
+        "familia": "PINTUCO FILL 12",
+        "similitud": 0.5323,
+        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nRecubrimiento acrílico impermeable y flexible, para\nevitar\nel\npaso\nde\nhumedad\ny\nfiltraciones\nen\ncubiertas y terrazas. Mejorado con fibras que le\npermiten puentear fisuras existentes hasta de 1 mm\ny distribuir los esfuerzos de tensión evitando que se\nproduzca rompimiento de la película. Diseñado para\ndar\nuna\nóptima\ndurabilidad\nde\nsu\npelícula\nimpermeabilizante de hasta 12 años siempre y\ncuando\nse\nsigan\nlas\nrecomendaciones\nde\nprep"
+      },
+      {
+        "archivo": "MASCOAT DT1.pdf",
+        "familia": "MASCOAT DT1",
+        "similitud": 0.5267,
+        "texto": "[PRODUCTO: MASCOAT DT1] [MARCA: Pintuco]\n[SECCIÓN: Este recubrimiento asfáltico ayudará a eliminar las]\n\nmarcas en las aplicaciones a paredes verticales. El\nrecubrimiento asfáltico debería estar seco para to-\ncarlo antes de el siguiente paso. El espesor típico de\nrecubrimiento no debe exceder los 20-22 mils (0,5-\n0,55 mm) de humedad. El recubrimiento puede reapli-\ncarse una vez que cada capa esté totalmente seca.\nCalor (>140˚F, >60˚C): Por favor, consulte con Mascoat."
+      }
+    ],
+    "productos_candidatos": [
+      "Viniltex-advanced",
+      "VINILTEX VIDA",
+      "KORAZA IMPERMEABLE",
+      "koraza",
+      "viniltex",
+      "koraza sol y lluvia",
+      "estuco anti humedad"
+    ]
+  }
+}

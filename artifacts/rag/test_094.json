@@ -1,0 +1,63 @@
+{
+  "query": "acabado poliuretano maquinaria industrial",
+  "response": {
+    "query": "acabado poliuretano maquinaria industrial",
+    "resultados": [
+      {
+        "archivo": "INTERTHANE 990.pdf",
+        "familia": "INTERTHANE 990",
+        "similitud": 0.6126,
+        "texto": "[PRODUCTO: INTERTHANE 990] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nAcabado de poliuretano acrílico acrílico alifático de dos componentes que proporciona una excelente durabilidad y\nun repintado a largo plazo."
+      },
+      {
+        "archivo": "THINNER POLIURETANO 21050.pdf",
+        "familia": "THINNER POLIURETANO 21050",
+        "similitud": 0.6072,
+        "texto": "[PRODUCTO: THINNER POLIURETANO 21050] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para la dilución de Poliuretanos de Mantenimiento]\n\nIndustrial, Vitriflex® Alto Tráfico y Sistema Poliuretano Maderas."
+      },
+      {
+        "archivo": "INTERTHANE 990.pdf",
+        "familia": "INTERTHANE 990",
+        "similitud": 0.5757,
+        "texto": "[PRODUCTO: INTERTHANE 990] [MARCA: Pintuco]\n[SECCIÓN: Poliuretano Alifatico]\n\nInterthane 990 está disponible en una gama de acabados metálicos - para mayor información por favor consultar el\ndocumento separado de Procedimientos de Trabajo Metálico de Interthane 990.\n\nEl nivel de brillo y el acabado de la superficie dependen del método de aplicación. Cuando sea posible, evitar el uso\nde una mezcla de métodos de aplicación.\n\nLos mejores resultados en cuanto a brillo y aspecto se obtienen siempre m"
+      },
+      {
+        "archivo": "POLIURETANO RÁPIDO SECADO.pdf",
+        "familia": "POLIURETANO RÁPIDO SECADO",
+        "similitud": 0.5638,
+        "texto": "[PRODUCTO: POLIURETANO RÁPIDO SECADO] [MARCA: Pintuco]\n[SECCIÓN: POLIURETANO RÁPIDO SECADO Acabado para decoración y protecci]\n\nAcabado para decoración y protección de superficies metálicas, de fibra de\nde fibra de vidrio o madera industrial"
+      },
+      {
+        "archivo": "POLIURETANO ALTOS SOLIDOS.pdf",
+        "familia": "POLIURETANO ALTOS SOLIDOS",
+        "similitud": 0.5599,
+        "texto": "[PRODUCTO: POLIURETANO ALTOS SOLIDOS] [MARCA: Pintuco]\n[SECCIÓN: Los siguientes equipos de aplicación se han encontrado apropiados para]\n\nla aplicación, sin embargo se pueden utilizar otros equipos equivalentes.\nPISTOLA CONVENCIONAL (con aire)"
+      },
+      {
+        "archivo": "POLIURETANO MADERA P.pdf",
+        "familia": "POLIURETANO MADERA P",
+        "similitud": 0.5566,
+        "texto": "[PRODUCTO: POLIURETANO MADERA P] [MARCA: Pintuco]\n[SECCIÓN: Producto de 2 componentes que mezclados adecuadamente proporcionan]\n\nun acabado con alto rendimiento y desempeño, con excelente dureza,\nresistencia físico química y flexibilidad, sobre muebles y objetos de madera\npara uso interior y exterior."
+      },
+      {
+        "archivo": "POLIURETANO ALTOS SOLIDOS.pdf",
+        "familia": "POLIURETANO ALTOS SOLIDOS",
+        "similitud": 0.546,
+        "texto": "[PRODUCTO: POLIURETANO ALTOS SOLIDOS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la decoración y protección de superficies metálicas, de fibra de vidrio o\nde madera en cubiertas, superestructuras, camarotes y cascos de barcos.\nPara exterior de tanques, maquinaria, equipos y estructuras.\nPara botes de madera expuestos a la intemperie, en ambientes industriales\nde alta contaminación."
+      },
+      {
+        "archivo": "POLIURETANO ALTOS SOLIDOS ALUMINIO 11397 (1).pdf",
+        "familia": "POLIURETANO ALTOS SOLIDOS ALUMINIO 11397",
+        "similitud": 0.5444,
+        "texto": "[PRODUCTO: POLIURETANO ALTOS SOLIDOS ALUMINIO 11397] [MARCA: Pintuco]\n[SECCIÓN: APLICACIÓN]\n\nLos siguientes equipos de aplicación se han encontrado apropiados para la aplicacion, sin embargo se\npueden utilizar otros equipos equivalentes.\nPISTOLA CONVENCIONAL (Aire)"
+      }
+    ],
+    "productos_candidatos": [
+      "INTERTHANE 990",
+      "THINNER POLIURETANO 21050",
+      "POLIURETANO RÁPIDO SECADO",
+      "interthane",
+      "poliuretano"
+    ]
+  }
+}

@@ -22,21 +22,15 @@
         "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\nno estén expuestos a la abrasión. No apto para uso en pisos."
       },
       {
-        "archivo": "PINTULACA 7527.pdf",
-        "familia": "PINTULACA 7527",
-        "similitud": 0.5709,
-        "texto": "[PRODUCTO: PINTULACA 7527] [MARCA: Pintuco]\n[SECCIÓN: Cuarto de galón]\n\nDESCRIPCIÓN: Lacas nitrocelulósicas que se caracterizan por su gran brillo, excelente acabado, resistentes a la\nintemperie, de alto contenido de sólidos para mayor rendimiento con menos manos de aplicación, y en\ncolores entremezclables para obtener otros colores policromados de secamiento al aire y fácil de aplicar\nen todo tipo de ambientes.\n\nUSOS: Para el acabado final en el repintado de vehículos, electrodomésticos y recub"
-      },
-      {
-        "archivo": "PINTULACA.pdf",
-        "familia": "PINTULACA",
-        "similitud": 0.5651,
-        "texto": "[PRODUCTO: PINTULACA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nComúnmente usados para el acabado final en el repintado de vehículos y electrodomésticos.\nElementos metálicos, fibra de vidrio o madera que requieran ser recubiertos por necesidades estéticas.\nPara usos diferentes se recomienda seguir la asesoría técnica."
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.5785,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz tipo uretano base solvente transparente de fácil aplicación, que\npenetra la madera y permite su transpiración, proporcionando alta\nprotección en exteriores, incluso en ambientes marinos y tropicales."
       },
       {
         "archivo": "BARNIZ SD1.pdf",
         "familia": "BARNIZ SD1",
-        "similitud": 0.5642,
+        "similitud": 0.5649,
         "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes interiores que no estén expuestas a la luz directa del sol, a la\nhumedad o a la abrasión, como techos, puertas, zócalos, columnas, vigas,\nmesas decorativas y muebles de madera en general."
       },
       {
@@ -50,16 +44,20 @@
         "familia": "WOOD STAIN IMPREGNANTE PARA MADERAS",
         "similitud": 0.5009,
         "texto": "[PRODUCTO: WOOD STAIN IMPREGNANTE PARA MADERAS] [MARCA: Pintuco]\n[SECCIÓN: Haga clic aquí para escribir]\n\nDa color, penetra y protege"
+      },
+      {
+        "archivo": "WOOD STAIN IMPREGNANTE PARA MADERAS.pdf",
+        "familia": "WOOD STAIN IMPREGNANTE PARA MADERAS",
+        "similitud": 0.4965,
+        "texto": "[PRODUCTO: WOOD STAIN IMPREGNANTE PARA MADERAS] [MARCA: Pintuco]\n[SECCIÓN: COLOR]\n\n28130\n10348112"
       }
     ],
     "productos_candidatos": [
       "BARNIZ BARNEX 557",
       "BARNEX EXTRA PROTECCIÓN",
       "BARNEX EXTRA PROTECCION",
-      "PINTULACA 7527",
-      "pintulac",
-      "domestico",
       "barnex",
+      "barniz marino",
       "barniz",
       "wood stain",
       "madetec",

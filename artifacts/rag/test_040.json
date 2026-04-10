@@ -12,7 +12,7 @@
       {
         "archivo": "BARNIZ BARNEX 557.pdf",
         "familia": "BARNIZ BARNEX 557",
-        "similitud": 0.6582,
+        "similitud": 0.659,
         "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz tipo uretano base solvente transparente de fácil aplicación, que\npenetra la madera y permite su transpiración, proporcionando alta\nprotección en exteriores, incluso en ambientes marinos y tropicales."
       },
       {
@@ -34,34 +34,33 @@
         "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: Protección contra:]\n\n Lluvia\n Sol\n Hongos e Insectos"
       },
       {
-        "archivo": "PINTULACA.pdf",
-        "familia": "PINTULACA",
-        "similitud": 0.634,
-        "texto": "[PRODUCTO: PINTULACA] [MARCA: Pintuco]\n[SECCIÓN: Lacas nitro con excelente brillo y acabado y muy buena]\n\nresistencia a la intemperie"
-      },
-      {
-        "archivo": "PINTULACA.pdf",
-        "familia": "PINTULACA",
-        "similitud": 0.6243,
-        "texto": "[PRODUCTO: PINTULACA] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n\u0001 Buena resistencia a la intemperie\n\u0001 Excelente acabado\n\u0001 Secado rápido"
-      },
-      {
         "archivo": "IMPREGNANTE ECO.pdf",
         "familia": "IMPREGNANTE ECO",
         "similitud": 0.5912,
         "texto": "[PRODUCTO: IMPREGNANTE ECO] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nIdeal en pisos, decks, pisos de zonas húmedas, muebles, estructuras como\npérgolas, fachadas y balcones fabricados en todo tipo de maderas que van a estar\nexpuestos a ambientes exteriores e interiores."
+      },
+      {
+        "archivo": "WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES (1).pdf",
+        "familia": "WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES",
+        "similitud": 0.5765,
+        "texto": "[PRODUCTO: WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES] [MARCA: Pintuco]\n[SECCIÓN: Versión 2 / Mayo 2020]\n\ndebe mantener los recipientes bien tapados para evitar contaminaciones y evaporación del material\nvolátil.\nEl tiempo de secado al tacto es de 3 horas, el de manejo es de 5 horas y el tiempo de curado total es de\n3 días a temperatura ambiente (25°C). Tenga en cuenta que los tiempos de secado mencionados\npueden variar de acuerdo con la temperatura ambiental y el espesor de película aplicad"
+      },
+      {
+        "archivo": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA.pdf",
+        "familia": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA",
+        "similitud": 0.5646,
+        "texto": "[PRODUCTO: ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA] [MARCA: Pintuco]\n[SECCIÓN: Puede dejarse hasta 6 meses a la]\n\nintemperie sin ser protegido con pinturas.\n•"
       }
     ],
     "productos_candidatos": [
       "BARNIZ BARNEX 557",
       "BARNEX EXTRA PROTECCION",
       "barnex",
-      "pintulac",
+      "barniz marino",
       "barniz",
       "wood stain",
       "madetec",
-      "pintulux",
-      "barniz marino"
+      "pintulux"
     ]
   }
 }

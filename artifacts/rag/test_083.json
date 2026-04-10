@@ -1,0 +1,67 @@
+{
+  "query": "deck de madera exterior piscina",
+  "response": {
+    "query": "deck de madera exterior piscina",
+    "resultados": [
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6617,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
+      },
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6355,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz tipo uretano base solvente transparente de fácil aplicación, que\npenetra la madera y permite su transpiración, proporcionando alta\nprotección en exteriores, incluso en ambientes marinos y tropicales."
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.608,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz a base de aceite, que protege la madera del sol, la lluvia, la humedad\ny el ataque de hongos. Contiene protectores solares y pigmentos especiales\nque lo hacen ideal para resistir la intemperie sin decolorarse, además\npermite la transpiración de la madera, evitando que se agriete. Viene listo\npara aplicar a brocha y no requiere dilución."
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.6035,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\nno estén expuestos a la abrasión. No apto para uso en pisos."
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.6027,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\nno estén expuestos a la abrasión. No apto para uso en pisos."
+      },
+      {
+        "archivo": "IMPREGNANTE ECO.pdf",
+        "familia": "IMPREGNANTE ECO",
+        "similitud": 0.5996,
+        "texto": "[PRODUCTO: IMPREGNANTE ECO] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nIdeal en pisos, decks, pisos de zonas húmedas, muebles, estructuras como\npérgolas, fachadas y balcones fabricados en todo tipo de maderas que van a estar\nexpuestos a ambientes exteriores e interiores."
+      },
+      {
+        "archivo": "WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES (1).pdf",
+        "familia": "WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES",
+        "similitud": 0.5208,
+        "texto": "[PRODUCTO: WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES] [MARCA: Pintuco]\n[SECCIÓN: Versión 2 / Mayo 2020]\n\ndebe mantener los recipientes bien tapados para evitar contaminaciones y evaporación del material\nvolátil.\nEl tiempo de secado al tacto es de 3 horas, el de manejo es de 5 horas y el tiempo de curado total es de\n3 días a temperatura ambiente (25°C). Tenga en cuenta que los tiempos de secado mencionados\npueden variar de acuerdo con la temperatura ambiental y el espesor de película aplicad"
+      },
+      {
+        "archivo": "CANCHAS Y PISOS.pdf",
+        "familia": "CANCHAS Y PISOS",
+        "similitud": 0.4872,
+        "texto": "[PRODUCTO: CANCHAS Y PISOS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas,\nen diferentes sustratos como concreto, madera o asfalto en interior y exterior."
+      }
+    ],
+    "productos_candidatos": [
+      "BARNIZ BARNEX 557",
+      "BARNEX EXTRA PROTECCION",
+      "BARNEX EXTRA PROTECCIÓN",
+      "barnex",
+      "barniz marino",
+      "barniz",
+      "wood stain",
+      "madetec",
+      "pintulux"
+    ]
+  }
+}

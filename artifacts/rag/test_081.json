@@ -1,0 +1,67 @@
+{
+  "query": "closet de madera acabado natural",
+  "response": {
+    "query": "closet de madera acabado natural",
+    "resultados": [
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6183,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz tipo uretano base solvente transparente de fácil aplicación, que\npenetra la madera y permite su transpiración, proporcionando alta\nprotección en exteriores, incluso en ambientes marinos y tropicales."
+      },
+      {
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6152,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
+      },
+      {
+        "archivo": "BARNIZ SD1.pdf",
+        "familia": "BARNIZ SD1",
+        "similitud": 0.6082,
+        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes interiores que no estén expuestas a la luz directa del sol, a la\nhumedad o a la abrasión, como techos, puertas, zócalos, columnas, vigas,\nmesas decorativas y muebles de madera en general."
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.5921,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz a base de aceite, que protege la madera del sol, la lluvia, la humedad\ny el ataque de hongos. Contiene protectores solares y pigmentos especiales\nque lo hacen ideal para resistir la intemperie sin decolorarse, además\npermite la transpiración de la madera, evitando que se agriete. Viene listo\npara aplicar a brocha y no requiere dilución."
+      },
+      {
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.5908,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz a base de aceite, que protege la madera del sol, la lluvia, la humedad\ny el ataque de hongos. Contiene protectores solares y pigmentos especiales\nque lo hacen ideal para resistir la intemperie sin decolorarse, además\npermite la transpiración de la madera, evitando que se agriete. Viene listo\npara aplicar a brocha y no requiere dilución."
+      },
+      {
+        "archivo": "ESMALTE POLIURETANO MADERA.pdf",
+        "familia": "ESMALTE POLIURETANO MADERA",
+        "similitud": 0.5291,
+        "texto": "[PRODUCTO: ESMALTE POLIURETANO MADERA] [MARCA: Pintuco]\n[SECCIÓN: Acabado Poliuretano en dos componentes que protege y da un]\n\nacabado final tipo Premium a la madera de uso interior y exterior, que\nva a estar expuesta a intemperie y a humedad permanente. Puede ser\nusado en madera sólida, chapillas, tableros aglomerados (partícula-\nfibra) y/o tableros contrachapados."
+      },
+      {
+        "archivo": "MADEBORDER.pdf",
+        "familia": "MADEBORDER",
+        "similitud": 0.5202,
+        "texto": "[PRODUCTO: MADEBORDER] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.0 / 2017 Ideal para resanar madera natural o en MDF"
+      },
+      {
+        "archivo": "DOMESTICO.pdf",
+        "familia": "DOMESTICO",
+        "similitud": 0.5192,
+        "texto": "[PRODUCTO: DOMESTICO] [MARCA: Pintuco]\n[SECCIÓN: En madera:]\n\nm²/gal a 2 manos"
+      }
+    ],
+    "productos_candidatos": [
+      "BARNIZ BARNEX 557",
+      "BARNIZ SD1",
+      "BARNEX EXTRA PROTECCIÓN",
+      "barnex",
+      "barniz marino",
+      "barniz",
+      "wood stain",
+      "madetec",
+      "pintulux"
+    ]
+  }
+}

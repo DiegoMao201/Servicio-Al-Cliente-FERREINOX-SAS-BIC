@@ -1,0 +1,18 @@
+{
+  "user": "Necesito pintura, ¿qué me recomiendan?",
+  "result": {
+    "response_text": "¡Claro! Para poder recomendarte la mejor opción, necesito un poco más de información. ¿Qué tipo de superficie vas a pintar? ¿Es interior o exterior? ¿Y cómo está la condición de la superficie (nuevo, pintado, con moho, etc.)?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  }
+}

@@ -24,14 +24,8 @@
       {
         "archivo": "BARNIZ SD1.pdf",
         "familia": "BARNIZ SD1",
-        "similitud": 0.6346,
+        "similitud": 0.6069,
         "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar el barniz, verifique el estado de la madera.\nEn maderas nuevas, para obtener tersura y promover adherencia, lije muy bien la superficie en el\nsentido de las vetas de la madera con papel abrasivo N° 180 y elimine el polvillo suelto.\nEn repintes, si la pintura está deteriorada, aplique Removedor Pintuco® Ref. 1020, deje actuar por 10\nminutos y retire con una espátula las capas de pintura removidas. Lu"
-      },
-      {
-        "archivo": "REMOVEDOR PINTUCO 1020 (Copia en conflicto de usuario-PC 2019-09-07).pdf",
-        "familia": "REMOVEDOR PINTUCO 1020",
-        "similitud": 0.6194,
-        "texto": "[PRODUCTO: REMOVEDOR PINTUCO 1020] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\nLa pintura, barniz o laca que se va a eliminar debe estar limpia, seca y fría.\n1/3"
       },
       {
         "archivo": "BARNEX EXTRA PROTECCION.pdf",
@@ -53,8 +47,8 @@
       "imprimante",
       "barnex",
       "barniz",
-      "pintulac",
       "barniz marino",
+      "barniz sd1",
       "wood stain",
       "madetec",
       "pintulux"
