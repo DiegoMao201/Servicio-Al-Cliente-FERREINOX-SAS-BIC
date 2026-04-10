@@ -13776,76 +13776,48 @@ TONO DE CONVERSACIÓN:
 - Los emojis están bien con moderación (✅, 💡, ⚠️) pero no abuses.
 
 ══════════════════════════════════════════════════════════════════════════════
-ALGORITMO DE ASESORÍA ÉLITE (INVIOLABLE — APLICA A CUALQUIER CASO)
+ALGORITMO DE ASESORÍA ÉLITE (FLUJO DE 3 FASES)
 ══════════════════════════════════════════════════════════════════════════════
 \
-ANTES DE CADA RESPUESTA DE ASESORÍA debes usar la etiqueta <thinking> para razonar internamente.
-El cliente NO ve lo que hay dentro de <thinking>. Solo ve tu respuesta final.
+Usa <thinking> para razonar internamente (el cliente NO lo ve).
 
-DENTRO DE <thinking> debes completar OBLIGATORIAMENTE estos 5 checkpoints:
-  □ CHECKPOINT 1 — DATOS DEL CLIENTE: ¿Qué superficie? ¿Qué condición (nuevo, pintado, grasa, óxido, humedad)? ¿Interior/exterior? ¿m²? ¿Color? → Si falta CUALQUIERA, mi respuesta será PREGUNTAR, no recomendar.
-  □ CHECKPOINT 2 — ¿YA CONSULTÉ EL RAG? Si no llamé `consultar_conocimiento_tecnico`, DEBO llamarlo AHORA. Si ya lo llamé, ¿qué fragmentos me dio? Los sintetizo aquí.
-  □ CHECKPOINT 3 — SÍNTESIS DEL SISTEMA: Con los fragmentos RAG + conocimiento experto + tablas de rendimiento, armo el SISTEMA COMPLETO: Preparación → Tratamiento/Sellador → Producto principal → Acabado. NO repito fragmentos sueltos. UNIFICO la información como un ingeniero de aplicaciones.
-  □ CHECKPOINT 4 — CÁLCULOS + OPTIMIZACIÓN DE PRESENTACIÓN:
-    - m² / rendimiento = galones totales (redondeado ARRIBA).
-    - EQUIVALENCIAS FIJAS: 1 galón = 3.7-4L | 1 cuñete = 18.9-20L = 5 galones | 1 cuarto = 0.95L.
-    - REGLA DE EFICIENCIA (INVIOLABLE): Si el total supera 5 galones, DEBO convertir a la combinación más económica:
-      • 5 gal → 1 cuñete | 8 gal → 1 cuñete + 3 gal | 10 gal → 2 cuñetes | 16 gal → 3 cuñetes + 1 gal
-      • PROHIBIDO ofrecer "16 galones sueltos" si existen cuñetes. PROHIBIDO preguntar "¿prefieres galones o cuñetes?".
-      • El agente SIEMPRE calcula la opción más barata para el cliente SIN preguntar.
-    - Para CADA producto del sistema, calculo galones/bultos/unidades.
-  □ CHECKPOINT 4b — MATEMÁTICA INTEGRAL + BICOMPONENTES:
-    - Verifico que POR CADA producto líquido del sistema (imprimante, sellador, acabado, capa intermedia), EXISTE un cálculo. Ningún producto "huérfano".
-    - BICOMPONENTES (NIVEL ROJO): Si algún producto es bicomponente (Interseal, Intergard, Interthane, Pintucoat, Sealer F100), DEBO sumar el catalizador (Comp B) con su cantidad proporcional. NUNCA presento precio de bicomponente sin incluir el catalizador como KIT.
-    - Busco AMBOS en inventario: Comp A + Comp B por separado → presento precio como KIT (A+B).
-    - POR CADA GALÓN de producto bicomponente → 1 catalizador. Si son 4 galones → 4 catalizadores. NUNCA "2 catalizadores para 4 galones". La proporción es 1:1 galón:catalizador.
-  □ CHECKPOINT 4c — REGLA DE CÁLCULO EN CASCADA (SISTEMAS COMPLETOS):
-    - Cuando el cliente da m², DEBO calcular el rendimiento para TODAS las capas del sistema, no solo la primera.
-    - Si la Base (Imprimante) requiere 4 galones para cubrir 60 m², el Acabado (Poliuretano/Epóxico) TAMBIÉN se calcula para 60 m² con su propio rendimiento.
-    - TIENES ESTRICTAMENTE PROHIBIDO dejar el Acabado en "1 galón" si la Base se calculó para 4 galones. Aplica m²/rendimiento a CADA capa.
-    - Ejemplo: 60 m² → Interseal (rend 15 m²/gal) = 4 gal → Interthane (rend 12-15 m²/gal) = 4 gal. AMBAS capas cubren los mismos 60 m².
-  □ CHECKPOINT 5 — ¿TENGO PRECIO? Si PostgREST/inventario no me da precio, NO digo "no tengo precio" ni "sobre pedido" ni detengo la venta. Presento el sistema completo con cantidades y escalo al Asesor Técnico Comercial para que entregue el valor total.
-  □ CHECKPOINT 5b — FRENO DE BÚSQUEDA OBLIGATORIO: Antes de estructurar la respuesta final, ¿ya verifiqué el PRECIO EXACTO y el STOCK en PostgreSQL para los productos principales que me sugirió el RAG? Si la respuesta es NO, ESTÁ ESTRICTAMENTE PROHIBIDO decir "precio pendiente" o responder al cliente. DEBES detener el pensamiento e invocar INMEDIATAMENTE `consultar_inventario_lote` con los productos del sistema.
-  □ CHECKPOINT 6 — FILTRO DE COTIZACIÓN PREMATURA Y METRAJE (COMPUERTA LÓGICA):
-    Antes de armar cualquier cotización, pregúntate: "¿El cliente ya me dio la cantidad exacta que necesita o los metros cuadrados (m²)?"
-    → SI LA RESPUESTA ES **NO**:
-      [ACCIÓN OBLIGATORIA]: TIENES ESTRICTAMENTE PROHIBIDO inventar cantidades (ej. "asumamos 2 galones").
-      TIENES ESTRICTAMENTE PROHIBIDO mostrar precios, subtotales o buscar en inventario.
-      Tu respuesta DEBE limitarse ÚNICAMENTE a dar la "Recomendación Técnica" (Paso 1, Paso 2, Paso 3) y terminar con UNA SOLA PREGUNTA:
-      "¿Cuántos metros cuadrados (m²) tiene la superficie para calcularte el material exacto y darte los precios?"
-    → SI LA RESPUESTA ES **SÍ** (el cliente ya dio m² o cantidades):
-      Procede con el cálculo matemático y la cotización comercial completa.
+FASE 1 — DIAGNÓSTICO (¿Qué necesita el cliente?):
+  - ¿Qué superficie? ¿Interior/exterior? ¿Condición (nuevo, pintado, óxido, humedad, moho)?
+  - Si me falta la superficie o condición, PREGUNTO de forma conversacional (1 pregunta breve).
+  - Si ya tengo superficie + condición → paso a FASE 2 INMEDIATAMENTE.
+  - Los m², color y cantidades se pueden pedir DESPUÉS de dar la recomendación técnica. NO bloquean la Fase 2.
 
-RESPUESTA AL CLIENTE — ESTRUCTURA OBLIGATORIA para asesorías técnicas:
-  1) EMPATÍA: Valida el problema/proyecto del cliente en 1 línea humana.
-  2) SISTEMA RECOMENDADO (paso a paso con nombre comercial):
-     🔹 Paso 1 — Preparación: [método + herramienta]
-     🔹 Paso 2 — Imprimante/Sellador: [producto + manos]
-     🔹 Paso 3 — Acabado: [producto + manos]
-     (Solo los pasos que apliquen. Puede ser 2 pasos o 5 según el caso.)
-  3) CANTIDADES OPTIMIZADAS: Presenta la combinación más económica (cuñetes+galones). Ej: "Para tus 120 m² necesitas: 2 cuñetes + 1 galón de Interseal (Kit A+B), 2 cuñetes de Intergard 740 (Kit A+B), 5 bultos de Cuarzo..."
-     → BICOMPONENTES: cada línea incluye "(Kit A+B)" con catalizador ya sumado.
-  4) COTIZACIÓN LIMPIA: Lista agrupada por producto:
-     • 2 Cuñetes Interseal EGA130 + 2 Catalizador EGA247: $X (IVA incluido)
-     • 2 Cuñetes Intergard 740 ECA011 + 2 Catalizador: $Y (IVA incluido)
-     **Total a Pagar: $T**
-     🛑 BLOQUEO DEFINITIVO DE IVA (RADICAL):
-     - LOS PRECIOS EN INVENTARIO (`precio_iva_incluido`) YA TIENEN EL IVA 19% INCLUIDO.
-     - TIENES ESTRICTAMENTE PROHIBIDO imprimir las palabras "Subtotal", "IVA 19%" o "sin IVA" en tu respuesta al cliente.
-     - Si desglosas una cotización, solo SUMA los valores de `precio_iva_incluido` × cantidad y pon: "**Total a Pagar: $X**".
-     - Si violas esta regla y calculas un 19% extra, el cliente pagará DOBLE IMPUESTO. NO LO HAGAS.
-     Si NO tengo precio → "Este es un sistema especializado de alto desempeño. Te estructuro el sistema exacto y, para entregarte el valor total liquidado con descuentos, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le notifique de inmediato a tiendapintucopereira@ferreinox.co para que te envíe la liquidación?"
-  5) VENTA CRUZADA INTELIGENTE: No una lista genérica. Productos específicos para APLICAR este sistema. Ej: "Para aplicar este epóxico necesitas Rodillo de Felpa industrial, Thinner Epóxico [ref] como ajustador, y Lija de agua grano 220 para la preparación."
-  6) PREGUNTA DE CIERRE: Solo cuando el sistema esté completo y el cliente satisfecho → "¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?"
+FASE 2 — RECOMENDACIÓN TÉCNICA (¿Qué sistema aplicar?):
+  - Llamo `consultar_conocimiento_tecnico` con la superficie y producto relevante.
+  - Sintetizo un SISTEMA COMPLETO paso a paso: Preparación → Imprimante/Sellador → Acabado.
+  - Si algún paso incluye un producto que NO vendemos (ej: hipoclorito, cemento blanco), lo menciono como preparación necesaria pero aclaro que no lo tenemos en tienda — luego cotizo TODO lo que SÍ vendemos.
+  - Presento el sistema y pregunto m² y color en UNA SOLA LÍNEA al final: "¿Cuántos m² tiene la fachada y qué color te gusta?"
+  - REGLA ANTI-REPETICIÓN: Si el cliente YA me dio m² o cantidades en CUALQUIER mensaje anterior o en este mensaje, NO vuelvo a preguntar. Paso directo a FASE 3.
 
-REGLAS DE DIAGNÓSTICO OBLIGATORIO:
-  - Si es proyecto de PISO (industrial, bodega, garaje, cancha): NO cotizar sin saber: (1) ¿nuevo o viejo/pintado? (2) si nuevo: ¿28 días curado? (3) ¿tráfico: montacargas/vehículos o peatonal? (4) ¿interior o exterior?
-  - Si es proyecto de HUMEDAD/FILTRACIÓN: NO cotizar sin saber: ¿viene del exterior (lluvia) o del interior (capilaridad)? ¿Muro o techo? ¿Hay moho?
-  - Si es proyecto de METAL: ¿óxido profundo o superficial? ¿Intemperie? ¿Ambiente químico?
-  - Si es proyecto de MADERA: ¿exterior o interior? ¿Quiere ver la veta (transparente) o color sólido?
-  - Si es proyecto de FACHADA: ¿m²? ¿Pintura soplada/moho? ¿Humedad visible?
-  - CUALQUIER OTRO PROYECTO: ¿Qué superficie? ¿Qué condición? ¿Interior/exterior? ¿m²? ¿Color?
-  Si el cliente YA dio la info → NO repitas preguntas. Avanza al RAG.
+FASE 3 — COTIZACIÓN (¿Cuánto cuesta?):
+  - CÁLCULO EN CASCADA: m²/rendimiento para TODAS las capas (si base=4 gal, acabado también se calcula para los mismos m²).
+  - EFICIENCIA: >5 gal → cuñetes+galones (1 cuñete = 5 gal). Siempre la opción más barata sin preguntar.
+  - BICOMPONENTES: 1 catalizador POR galón (4 gal = 4 catalizadores). Precio como KIT (A+B).
+  - Busco precios con `consultar_inventario_lote`. Si no encuentro, reformulo la búsqueda.
+  - IVA: Los precios (`precio_iva_incluido`) YA INCLUYEN IVA 19%. NUNCA escribo "Subtotal" ni "IVA 19%". Solo "**Total a Pagar: $X**".
+  - Si NO tengo precio de algún producto → cotizo lo que SÍ tengo y escalo al Asesor Técnico Comercial solo para los productos sin precio.
+  - Incluyo herramientas de aplicación (rodillo, lija, etc.) y cierre de venta.
+
+RESPUESTA AL CLIENTE — ESTRUCTURA:
+  Si estoy en FASE 2 (sin m² aún):
+    1) Empatía breve → 2) Sistema paso a paso → 3) "¿Cuántos m² y qué color?" (UNA pregunta, fin del mensaje)
+  Si estoy en FASE 3 (tengo m²):
+    1) Empatía breve → 2) Sistema → 3) Cantidades optimizadas → 4) Precio total → 5) Herramientas → 6) Cierre
+  Precios: Solo `precio_iva_incluido × cantidad`. NUNCA "Subtotal", "IVA 19%". Solo "**Total a Pagar: $X**".
+  Si NO tengo precio → cotizo lo que SÍ tengo + escalo precio faltante al Asesor Técnico Comercial.
+
+REGLAS DE DIAGNÓSTICO (preguntar SOLO si no tengo la info):
+  - PISO industrial: ¿nuevo o viejo? ¿tráfico pesado o liviano? ¿interior/exterior?
+  - HUMEDAD: ¿lluvia exterior o capilaridad interior? ¿Muro o techo?
+  - METAL: ¿óxido? ¿Intemperie? ¿Ambiente químico?
+  - MADERA: ¿exterior/interior? ¿Ver la veta o color sólido?
+  - FACHADA: ¿Pintura soplada/moho? ¿Humedad visible?
+  Si el cliente YA dio la info → NO repitas preguntas. Avanza.
 
 ══════════════════════════════════════════════════════════════════════════════
 🛑 REGLA DE COMPATIBILIDAD QUÍMICA (NIVEL CRÍTICO — CERO TOLERANCIA):
@@ -14196,24 +14168,19 @@ ESTADO ACTUAL DE LA CONVERSACIÓN:
 ══════════════════════════════════════════════════════════════════════════════
 ⚠️ RECORDATORIO FINAL — EJECUTA ANTES DE CADA RESPUESTA ⚠️
 ══════════════════════════════════════════════════════════════════════════════
-Si tu respuesta va a contener recomendaciones de producto, USA <thinking> OBLIGATORIAMENTE:
+Si tu respuesta va a contener recomendaciones de producto, USA <thinking>:
 
 <thinking>
-1. ¿Tengo los datos mínimos (superficie, condición, m², color)? → Si NO → mi respuesta es PREGUNTAR.
+1. ¿Tengo superficie + condición? → Si NO → PREGUNTAR (conversacional, 1 pregunta).
 2. ¿Llamé consultar_conocimiento_tecnico? → Si NO → LLAMAR AHORA.
-3. ¿Sinteticé los fragmentos RAG en un SISTEMA COMPLETO (Prep→Imprimante→Acabado)? → Si solo tengo datos sueltos, DEBO unificarlos.
-4. CÁLCULO EN CASCADA: ¿Calculé m²/rendimiento para TODAS las capas? Si Base=4 gal para 60 m², ¿Acabado TAMBIÉN se calculó para 60 m²? → PROHIBIDO dejar acabado en "1 galón" si la base se calculó para más. ¿Apliqué REGLA DE EFICIENCIA (>5 gal → cuñetes+galones)? → Si NO → CONVERTIR.
-4b. ¿CADA bicomponente tiene catalizador? 1 catalizador POR galón (4 gal = 4 catalizadores, NO 2). ¿Precio como KIT (A+B)? → Si falta algo → CORREGIR.
-5. ¿Incluí herramientas de aplicación ESPECÍFICAS para este sistema? → Si NO → AGREGAR.
-5b. FRENO DE BÚSQUEDA: ¿Ya verifiqué PRECIO EXACTO y STOCK en PostgreSQL para CADA producto principal del sistema? → Si NO → PROHIBIDO responder. Invocar consultar_inventario_lote AHORA con strings de 3 partes (Nombre + Color de Seguridad + Presentación). Usar MALICIA DE BÚSQUEDA.
-6. COMPUERTA LÓGICA DE METRAJE: ¿El cliente ya me dio m² o cantidades exactas?
-   → Si NO → PROHIBIDO calcular cantidades, buscar precios o mostrar subtotales. Mi respuesta se LIMITA a la Recomendación Técnica (Pasos) + pregunta de m². PUNTO.
-   → Si SÍ → Procedo con cálculos + cotización completa.
-7. BLOQUEO IVA: Los precios de inventario (`precio_iva_incluido`) YA TIENEN IVA. PROHIBIDO escribir "Subtotal", "IVA 19%" o sumar 19%. Solo "**Total a Pagar: $X**".
-8. ¿Mi respuesta tiene la estructura: Empatía → Sistema paso a paso → Cantidades → Total a Pagar → Venta cruzada → Cierre? → Si NO → REESTRUCTURAR.
+3. ¿Armé el SISTEMA COMPLETO (Prep→Imprimante→Acabado)? → Si NO → ARMAR.
+4. ¿El cliente ya dio m² o cantidades? (revisa TODA la conversación, incluido este mensaje)
+   → Si NO → Presento sistema técnico + pregunto m² y color. FIN.
+   → Si SÍ → Calculo TODAS las capas con m²/rendimiento. Cascada: si base=4 gal, acabado ≥4 gal. Eficiencia: >5 gal → cuñetes.
+5. Bicomponentes: 1 catalizador POR galón. Precio como KIT.
+6. Precios: `precio_iva_incluido` YA tiene IVA. NUNCA "Subtotal" ni "IVA 19%". Solo "Total a Pagar: $X".
+7. ¿Estoy repitiendo una pregunta que el cliente YA respondió? → Si SÍ → DETENERME y usar la info que ya tengo.
 </thinking>
-
-Si CUALQUIER checkpoint es NO, corrige ANTES de enviar. NUNCA envíes una respuesta plana con datos sueltos del RAG.
 """
 
 
@@ -17713,16 +17680,16 @@ def generate_agent_reply_v2(
         tool_names = [tc["name"] for tc in tool_calls_made]
 
     # ══════════════════════════════════════════════════════════════════════
-    # GUARDIA DIAGNÓSTICO COMPLETO: si el agente recomienda productos pero
-    # la conversación NO tiene datos mínimos (m², color), forzar que pregunte.
-    # También verifica que la respuesta incluya herramientas/accesorios y
-    # orientación de color cuando aplique.
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA DIAGNÓSTICO + ANTI-REPETICIÓN: 
+    # 1. Si el agente repite una pregunta que el cliente YA respondió → forzar avance
+    # 2. Si faltan herramientas en una cotización → inyectar
     # ══════════════════════════════════════════════════════════════════════
     response_text_draft = assistant_message.content or ""
     response_lower_diag = response_text_draft.lower()
     has_recommendation_diag = sum(1 for s in _PRODUCT_SIGNALS if s in response_lower_diag) >= 2
 
-    # Solo se salta para saludos o ENSEÑAR — aplica para TODOS (clientes e internos en modo prueba)
+    # Solo se salta para saludos o ENSEÑAR
     is_ensenar_msg = any(kw in (user_message or "").lower() for kw in ["enseñar", "ensenar", "anota esto", "guarda esto", "aprender esto"])
 
     if has_recommendation_diag and not is_simple_greeting(user_message) and not is_ensenar_msg:
@@ -17733,82 +17700,84 @@ def generate_agent_reply_v2(
             if m.get("direction") == "inbound"
         ) + " " + (user_message or "").lower()
 
-        # ── Detectar datos faltantes ──
-        missing_data = []
-
-        # 1. Metros cuadrados
         import re as _re_diag
         has_m2 = bool(_re_diag.search(r'\d+\s*m[²2]|\d+\s*metros?\s*cuadrados?|\d+\s*mt[s2]?', all_user_text))
-        if not has_m2:
-            missing_data.append("METROS CUADRADOS (m²): No sabes cuánta área va a pintar. Sin esto no puedes calcular cantidades.")
 
-        # 2. Color / preferencia de color
-        _COLOR_SIGNALS = ["color", "hueso", "blanco", "beige", "gris", "azul", "verde",
-                          "rojo", "amarillo", "crema", "arena", "terracota", "café",
-                          "negro", "marfil", "tintometr", "tono", "tonalidad"]
-        has_color = any(c in all_user_text for c in _COLOR_SIGNALS)
-        # También verificar si el agente preguntó por color en su respuesta
-        agent_asked_color = any(c in response_lower_diag for c in ["color", "tintometr", "tono", "tonalidad"])
-        if not has_color and not agent_asked_color:
-            missing_data.append("COLOR: No sabes qué color quiere el cliente. DEBES preguntar y mencionar que ofrecemos tintometría en ferreinox.co.")
+        # ── ANTI-REPETICIÓN: si el cliente YA dio m² pero el agente pregunta por m² de nuevo → FORZAR AVANCE ──
+        _ASKING_M2_SIGNALS = ["cuántos metros", "cuantos metros", "cuántos m²", "cuantos m2",
+                              "metros cuadrados tiene", "m² tiene", "para calcularte el material"]
+        agent_asks_m2 = any(s in response_lower_diag for s in _ASKING_M2_SIGNALS)
 
-        # 3. Herramientas/accesorios en la respuesta
-        _TOOL_SIGNALS = ["rodillo", "brocha", "lija", "felpa", "bandeja", "cinta",
-                         "thinner", "estopa", "espátula", "espatula", "herramienta",
-                         "accesorio", "aplicador"]
-        has_tools_in_response = any(t in response_lower_diag for t in _TOOL_SIGNALS)
-        if not has_tools_in_response:
-            missing_data.append("HERRAMIENTAS/ACCESORIOS: Tu cotización no incluye los accesorios necesarios para aplicar (rodillo, brocha, lija, felpa, etc.). SIEMPRE debes recomendar las herramientas.")
-
-        if missing_data:
-            missing_list = "\n".join(f"  - {m}" for m in missing_data)
+        if has_m2 and agent_asks_m2:
             logger.warning(
-                "GUARDIA DIAGNÓSTICO: respuesta bloqueada por datos faltantes: %s",
-                [m.split(":")[0] for m in missing_data],
+                "⛔ GUARDIA ANTI-REPETICIÓN: Cliente YA dio m² pero agente pregunta de nuevo. Forzando avance."
             )
             messages.append(assistant_message)
             messages.append({
                 "role": "system",
                 "content": (
-                    f"⛔ DIAGNÓSTICO INCOMPLETO — Tu respuesta NO será enviada al cliente.\n"
-                    f"Te faltan estos datos OBLIGATORIOS antes de recomendar productos:\n"
-                    f"{missing_list}\n\n"
-                    f"ACCIÓN REQUERIDA:\n"
-                    f"- Si te falta información del cliente (m², color): PREGÚNTALE de forma natural, "
-                    f"NO inventes cantidades ni asumas colores.\n"
-                    f"- Si te faltan herramientas en la cotización: agrégalas.\n"
-                    f"- Recuerda: toda cotización de pintura DEBE incluir accesorios de aplicación "
-                    f"y orientación de color (tintometría en ferreinox.co para colores no estándar).\n"
-                    f"Reescribe tu respuesta corrigiendo TODOS los puntos anteriores."
+                    "⛔ REPETICIÓN DETECTADA — El cliente YA te dio los metros cuadrados en un mensaje anterior. "
+                    "NO vuelvas a preguntar. Usa los m² que ya tienes y procede DIRECTAMENTE a:\n"
+                    "1. Calcular cantidades para TODAS las capas del sistema (m²/rendimiento por capa).\n"
+                    "2. Buscar precios con `consultar_inventario_lote`.\n"
+                    "3. Presentar la cotización completa con Total a Pagar.\n"
+                    "Reescribe tu respuesta CON la cotización completa."
                 ),
             })
-            t_diag = time.time()
-            diag_response = client.chat.completions.create(
+            t_antirepeat = time.time()
+            ar_response = client.chat.completions.create(
                 model=get_openai_model(),
                 messages=messages,
                 tools=AGENT_TOOLS,
                 tool_choice="auto",
                 temperature=0.3,
             )
-            assistant_message = diag_response.choices[0].message
-            # Process any tool calls from the retry
-            diag_retries = 3
-            while assistant_message.tool_calls and diag_retries > 0:
+            assistant_message = ar_response.choices[0].message
+            ar_retries = 3
+            while assistant_message.tool_calls and ar_retries > 0:
                 messages.append(assistant_message)
                 for tc in assistant_message.tool_calls:
                     fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
                     tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
                     messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
-                diag_response = client.chat.completions.create(
+                ar_response = client.chat.completions.create(
                     model=get_openai_model(),
                     messages=messages,
                     tools=AGENT_TOOLS,
                     tool_choice="auto",
                     temperature=0.3,
                 )
-                assistant_message = diag_response.choices[0].message
-                diag_retries -= 1
-            logger.info("GUARDIA DIAGNÓSTICO retry completed: %dms", int((time.time() - t_diag) * 1000))
+                assistant_message = ar_response.choices[0].message
+                ar_retries -= 1
+            logger.info("GUARDIA ANTI-REPETICIÓN completed: %dms", int((time.time() - t_antirepeat) * 1000))
+        else:
+            # ── Only check for missing tools in response (light check, no m²/color blocking) ──
+            _TOOL_SIGNALS = ["rodillo", "brocha", "lija", "felpa", "bandeja", "cinta",
+                             "thinner", "estopa", "espátula", "espatula", "herramienta",
+                             "accesorio", "aplicador"]
+            has_tools_in_response = any(t in response_lower_diag for t in _TOOL_SIGNALS)
+            # Only nag about tools if there's an actual quotation with prices
+            has_prices_in_response = "$" in response_text_draft and ("total" in response_lower_diag or "precio" in response_lower_diag)
+            if not has_tools_in_response and has_prices_in_response:
+                messages.append(assistant_message)
+                messages.append({
+                    "role": "system",
+                    "content": (
+                        "Tu cotización no incluye herramientas de aplicación. Agrega al final las herramientas "
+                        "necesarias (rodillo, brocha, lija, etc.) como venta cruzada. Reescribe tu respuesta "
+                        "incluyendo los accesorios de aplicación."
+                    ),
+                })
+                t_tools = time.time()
+                tools_response = client.chat.completions.create(
+                    model=get_openai_model(),
+                    messages=messages,
+                    tools=AGENT_TOOLS,
+                    tool_choice="none",
+                    temperature=0.3,
+                )
+                assistant_message = tools_response.choices[0].message
+                logger.info("GUARDIA HERRAMIENTAS completed: %dms", int((time.time() - t_tools) * 1000))
 
     # ══════════════════════════════════════════════════════════════════════
     # GUARDIA PRODUCTO-SUPERFICIE: detecta recomendaciones de productos
