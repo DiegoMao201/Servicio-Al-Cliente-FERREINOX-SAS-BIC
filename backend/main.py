@@ -10,6 +10,7 @@ import uuid
 import hmac
 import hashlib
 import secrets
+import asyncio
 from difflib import SequenceMatcher
 from datetime import date, timedelta, datetime
 from html import escape
@@ -13797,6 +13798,12 @@ DENTRO DE <thinking> debes completar OBLIGATORIAMENTE estos 5 checkpoints:
     - Verifico que POR CADA producto líquido del sistema (imprimante, sellador, acabado, capa intermedia), EXISTE un cálculo. Ningún producto "huérfano".
     - BICOMPONENTES (NIVEL ROJO): Si algún producto es bicomponente (Interseal, Intergard, Interthane, Pintucoat, Sealer F100), DEBO sumar el catalizador (Comp B) con su cantidad proporcional. NUNCA presento precio de bicomponente sin incluir el catalizador como KIT.
     - Busco AMBOS en inventario: Comp A + Comp B por separado → presento precio como KIT (A+B).
+    - POR CADA GALÓN de producto bicomponente → 1 catalizador. Si son 4 galones → 4 catalizadores. NUNCA "2 catalizadores para 4 galones". La proporción es 1:1 galón:catalizador.
+  □ CHECKPOINT 4c — REGLA DE CÁLCULO EN CASCADA (SISTEMAS COMPLETOS):
+    - Cuando el cliente da m², DEBO calcular el rendimiento para TODAS las capas del sistema, no solo la primera.
+    - Si la Base (Imprimante) requiere 4 galones para cubrir 60 m², el Acabado (Poliuretano/Epóxico) TAMBIÉN se calcula para 60 m² con su propio rendimiento.
+    - TIENES ESTRICTAMENTE PROHIBIDO dejar el Acabado en "1 galón" si la Base se calculó para 4 galones. Aplica m²/rendimiento a CADA capa.
+    - Ejemplo: 60 m² → Interseal (rend 15 m²/gal) = 4 gal → Interthane (rend 12-15 m²/gal) = 4 gal. AMBAS capas cubren los mismos 60 m².
   □ CHECKPOINT 5 — ¿TENGO PRECIO? Si PostgREST/inventario no me da precio, NO digo "no tengo precio" ni "sobre pedido" ni detengo la venta. Presento el sistema completo con cantidades y escalo al Asesor Técnico Comercial para que entregue el valor total.
   □ CHECKPOINT 5b — FRENO DE BÚSQUEDA OBLIGATORIO: Antes de estructurar la respuesta final, ¿ya verifiqué el PRECIO EXACTO y el STOCK en PostgreSQL para los productos principales que me sugirió el RAG? Si la respuesta es NO, ESTÁ ESTRICTAMENTE PROHIBIDO decir "precio pendiente" o responder al cliente. DEBES detener el pensamiento e invocar INMEDIATAMENTE `consultar_inventario_lote` con los productos del sistema.
   □ CHECKPOINT 6 — FILTRO DE COTIZACIÓN PREMATURA Y METRAJE (COMPUERTA LÓGICA):
@@ -13819,14 +13826,14 @@ RESPUESTA AL CLIENTE — ESTRUCTURA OBLIGATORIA para asesorías técnicas:
   3) CANTIDADES OPTIMIZADAS: Presenta la combinación más económica (cuñetes+galones). Ej: "Para tus 120 m² necesitas: 2 cuñetes + 1 galón de Interseal (Kit A+B), 2 cuñetes de Intergard 740 (Kit A+B), 5 bultos de Cuarzo..."
      → BICOMPONENTES: cada línea incluye "(Kit A+B)" con catalizador ya sumado.
   4) COTIZACIÓN LIMPIA: Lista agrupada por producto:
-     • 2 Cuñetes Interseal EGA130 + 2 Catalizador EGA247: $X
-     • 2 Cuñetes Intergard 740 ECA011 + 2 Catalizador: $Y
-     Subtotal (sin IVA): $Z | IVA 19%: $W | **Total con IVA: $T**
-     ⚠️ REGLA IVA ABSOLUTA: Los datos de inventario te dan `precio_base_sin_iva` (SIN IVA) y `precio_con_iva_19` (YA CON 19%).
-     → Usa `precio_base_sin_iva` × cantidad para calcular subtotal.
-     → Suma 19% UNA SOLA VEZ para obtener total.
-     → NUNCA digas "el precio ya incluye IVA" si usas precio_base_sin_iva.
-     → NUNCA sumes IVA adicional al precio_con_iva_19.
+     • 2 Cuñetes Interseal EGA130 + 2 Catalizador EGA247: $X (IVA incluido)
+     • 2 Cuñetes Intergard 740 ECA011 + 2 Catalizador: $Y (IVA incluido)
+     **Total a Pagar: $T**
+     🛑 BLOQUEO DEFINITIVO DE IVA (RADICAL):
+     - LOS PRECIOS EN INVENTARIO (`precio_iva_incluido`) YA TIENEN EL IVA 19% INCLUIDO.
+     - TIENES ESTRICTAMENTE PROHIBIDO imprimir las palabras "Subtotal", "IVA 19%" o "sin IVA" en tu respuesta al cliente.
+     - Si desglosas una cotización, solo SUMA los valores de `precio_iva_incluido` × cantidad y pon: "**Total a Pagar: $X**".
+     - Si violas esta regla y calculas un 19% extra, el cliente pagará DOBLE IMPUESTO. NO LO HAGAS.
      Si NO tengo precio → "Este es un sistema especializado de alto desempeño. Te estructuro el sistema exacto y, para entregarte el valor total liquidado con descuentos, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le notifique de inmediato a tiendapintucopereira@ferreinox.co para que te envíe la liquidación?"
   5) VENTA CRUZADA INTELIGENTE: No una lista genérica. Productos específicos para APLICAR este sistema. Ej: "Para aplicar este epóxico necesitas Rodillo de Felpa industrial, Thinner Epóxico [ref] como ajustador, y Lija de agua grano 220 para la preparación."
   6) PREGUNTA DE CIERRE: Solo cuando el sistema esté completo y el cliente satisfecho → "¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?"
@@ -14195,15 +14202,15 @@ Si tu respuesta va a contener recomendaciones de producto, USA <thinking> OBLIGA
 1. ¿Tengo los datos mínimos (superficie, condición, m², color)? → Si NO → mi respuesta es PREGUNTAR.
 2. ¿Llamé consultar_conocimiento_tecnico? → Si NO → LLAMAR AHORA.
 3. ¿Sinteticé los fragmentos RAG en un SISTEMA COMPLETO (Prep→Imprimante→Acabado)? → Si solo tengo datos sueltos, DEBO unificarlos.
-4. ¿Calculé cantidades con m² / rendimiento? → Si NO → CALCULAR. ¿Apliqué REGLA DE EFICIENCIA (>5 gal → cuñetes+galones)? → Si NO → CONVERTIR.
-4b. ¿CADA producto líquido tiene cálculo? ¿Todo bicomponente tiene su catalizador (Comp B) sumado con precio KIT? → Si falta algo → CORREGIR AHORA. Ningún producto huérfano, ningún bicomponente sin catalizador.
+4. CÁLCULO EN CASCADA: ¿Calculé m²/rendimiento para TODAS las capas? Si Base=4 gal para 60 m², ¿Acabado TAMBIÉN se calculó para 60 m²? → PROHIBIDO dejar acabado en "1 galón" si la base se calculó para más. ¿Apliqué REGLA DE EFICIENCIA (>5 gal → cuñetes+galones)? → Si NO → CONVERTIR.
+4b. ¿CADA bicomponente tiene catalizador? 1 catalizador POR galón (4 gal = 4 catalizadores, NO 2). ¿Precio como KIT (A+B)? → Si falta algo → CORREGIR.
 5. ¿Incluí herramientas de aplicación ESPECÍFICAS para este sistema? → Si NO → AGREGAR.
 5b. FRENO DE BÚSQUEDA: ¿Ya verifiqué PRECIO EXACTO y STOCK en PostgreSQL para CADA producto principal del sistema? → Si NO → PROHIBIDO responder. Invocar consultar_inventario_lote AHORA con strings de 3 partes (Nombre + Color de Seguridad + Presentación). Usar MALICIA DE BÚSQUEDA.
 6. COMPUERTA LÓGICA DE METRAJE: ¿El cliente ya me dio m² o cantidades exactas?
    → Si NO → PROHIBIDO calcular cantidades, buscar precios o mostrar subtotales. Mi respuesta se LIMITA a la Recomendación Técnica (Pasos) + pregunta de m². PUNTO.
    → Si SÍ → Procedo con cálculos + cotización completa.
-7. ¿Tengo precio? → Si NO → ¿Reformulé con MALICIA DE BÚSQUEDA? Si ya lo intenté → presento sistema + cantidades y escalo al Asesor Técnico Comercial. NUNCA menciono "facturación".
-8. ¿Mi respuesta tiene la estructura: Empatía → Sistema paso a paso → Cantidades → Precio/Gestión → Venta cruzada → Cierre? → Si NO → REESTRUCTURAR.
+7. BLOQUEO IVA: Los precios de inventario (`precio_iva_incluido`) YA TIENEN IVA. PROHIBIDO escribir "Subtotal", "IVA 19%" o sumar 19%. Solo "**Total a Pagar: $X**".
+8. ¿Mi respuesta tiene la estructura: Empatía → Sistema paso a paso → Cantidades → Total a Pagar → Venta cruzada → Cierre? → Si NO → REESTRUCTURAR.
 </thinking>
 
 Si CUALQUIER checkpoint es NO, corrige ANTES de enviar. NUNCA envíes una respuesta plana con datos sueltos del RAG.
@@ -14887,13 +14894,12 @@ def _handle_tool_consultar_inventario(args, conversation_context):
         price_info = fetch_product_price(str(ref_code))
         if price_info and price_info.get("precio_mejor"):
             pvp = float(price_info["precio_mejor"])
-            item["precio_base_sin_iva"] = pvp
-            item["precio_con_iva_19"] = round(pvp * 1.19)
-            item["nota_precio"] = "precio_base_sin_iva NO incluye IVA. precio_con_iva_19 YA incluye 19%. NUNCA sumes IVA adicional al precio_con_iva_19."
+            item["precio_iva_incluido"] = round(pvp)
+            item["nota_precio"] = "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
             if price_info.get("pvp_franquicia") and not price_info.get("pvp_sap"):
                 item["lista_precio"] = "franquicia"
         elif not precio:
-            item["precio_base_sin_iva"] = None
+            item["precio_iva_incluido"] = None
             item["precio_nota"] = "Precio pendiente de confirmación"
         # --- Companion/complementary products ---
         ref_for_companion = item.get("codigo") or ""
@@ -14940,8 +14946,7 @@ def _handle_tool_consultar_inventario(args, conversation_context):
                         cat_price_info = fetch_product_price(cat_code)
                         if cat_price_info and cat_price_info.get("precio_mejor"):
                             cat_pvp = float(cat_price_info["precio_mejor"])
-                            item["⚠️_BICOMPONENTE_OBLIGATORIO"]["catalizador_precio_base_sin_iva"] = cat_pvp
-                            item["⚠️_BICOMPONENTE_OBLIGATORIO"]["catalizador_precio_con_iva_19"] = round(cat_pvp * 1.19)
+                            item["⚠️_BICOMPONENTE_OBLIGATORIO"]["catalizador_precio_iva_incluido"] = round(cat_pvp)
                     break
 
         results.append(item)
@@ -15058,11 +15063,10 @@ def _handle_tool_consultar_inventario_lote(args, conversation_context):
                 price_info = fetch_product_price(str(ref_code))
                 if price_info and price_info.get("precio_mejor"):
                     pvp = float(price_info["precio_mejor"])
-                    item["precio_base_sin_iva"] = pvp
-                    item["precio_con_iva_19"] = round(pvp * 1.19)
-                    item["nota_precio"] = "precio_base_sin_iva NO incluye IVA. precio_con_iva_19 YA incluye 19%. NUNCA sumes IVA adicional al precio_con_iva_19."
+                    item["precio_iva_incluido"] = round(pvp)
+                    item["nota_precio"] = "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
                 elif not item.get("precio"):
-                    item["precio_base_sin_iva"] = None
+                    item["precio_iva_incluido"] = None
                     item["precio_nota"] = "Precio pendiente de confirmación"
                 items.append(item)
 
@@ -18106,6 +18110,38 @@ def generate_agent_reply_v2(
                 response_text_bicomp = (assistant_message.content or "").lower()
 
     # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA ANTI-IVA-DOBLE: si la respuesta contiene "Subtotal" + "IVA 19%"
+    # o cualquier cálculo de 19% adicional, lo elimina quirúrgicamente.
+    # Este es un BLOQUEO DURO por regex — no depende del LLM.
+    # ══════════════════════════════════════════════════════════════════════
+    response_text_iva_check = assistant_message.content or ""
+    import re as _re_iva
+    _IVA_DOUBLE_PATTERNS = [
+        # "Subtotal (sin IVA): $1,302,824" or "Subtotal: $X"
+        r'\*?\*?Subtotal[^:\n]*:\s*\$[\d.,]+\*?\*?\s*\n?',
+        # "IVA 19%: $247,037" or "IVA (19%): $X"
+        r'\*?\*?IVA\s*\(?\s*19\s*%?\s*\)?\s*:\s*\$[\d.,]+\*?\*?\s*\n?',
+        # "Total con IVA: $X" → replace with "Total a Pagar: $X"
+        r'Total con IVA',
+    ]
+    iva_violations_found = False
+    for pattern in _IVA_DOUBLE_PATTERNS[:2]:
+        if _re_iva.search(pattern, response_text_iva_check, _re_iva.IGNORECASE):
+            iva_violations_found = True
+            response_text_iva_check = _re_iva.sub(pattern, '', response_text_iva_check, flags=_re_iva.IGNORECASE)
+    # Replace "Total con IVA" → "Total a Pagar"
+    response_text_iva_check = _re_iva.sub(r'Total con IVA', 'Total a Pagar', response_text_iva_check, flags=_re_iva.IGNORECASE)
+    # Replace "sin IVA" → remove
+    response_text_iva_check = _re_iva.sub(r'\(?\s*sin IVA\s*\)?', '', response_text_iva_check, flags=_re_iva.IGNORECASE)
+    if iva_violations_found:
+        logger.warning("⛔ GUARDIA ANTI-IVA-DOBLE: Eliminadas líneas de Subtotal/IVA 19%% de la respuesta.")
+    if response_text_iva_check != (assistant_message.content or ""):
+        # Patch the assistant_message content directly
+        assistant_message = type(assistant_message).model_construct(
+            **{**assistant_message.__dict__, "content": response_text_iva_check.strip()}
+        )
+
+    # ══════════════════════════════════════════════════════════════════════
     # GUARDIA ANTI-RENDICIÓN COMERCIAL: detecta si el agente se rinde
     # y desvía al asesor cuando TIENE datos suficientes para responder.
     # ══════════════════════════════════════════════════════════════════════
@@ -18130,11 +18166,11 @@ def generate_agent_reply_v2(
                     r = json.loads(tc["result"]) if isinstance(tc["result"], str) else tc["result"]
                     if isinstance(r, dict) and r.get("productos"):
                         inventory_had_results = any(
-                            p.get("precio_base_sin_iva") for p in r["productos"]
+                            p.get("precio_iva_incluido") for p in r["productos"]
                         )
                     elif isinstance(r, dict) and r.get("resultados"):
                         for res in r["resultados"]:
-                            if any(p.get("precio_base_sin_iva") for p in (res.get("productos") or [])):
+                            if any(p.get("precio_iva_incluido") for p in (res.get("productos") or [])):
                                 inventory_had_results = True
                 except Exception:
                     pass
@@ -18926,6 +18962,142 @@ def reset_conversation_context(conversation_id: int):
     return {"status": "ok", "conversation_id": conversation_id, "message": "Contexto limpiado"}
 
 
+# ══════════════════════════════════════════════════════════════════════════════
+# DEBOUNCE / BUFFER DE MENSAJES WHATSAPP
+# Cuando un usuario envía varios mensajes rápidos ("60 mts", "blanco"), los
+# acumula durante DEBOUNCE_WINDOW_SECONDS y los concatena en un solo mensaje
+# antes de enviarlo al LLM. Evita "choques de trenes" y saludos falsos.
+# ══════════════════════════════════════════════════════════════════════════════
+DEBOUNCE_WINDOW_SECONDS = float(os.getenv("WA_DEBOUNCE_SECONDS", "4.0"))
+
+# In-memory buffer: {phone_number: {"messages": [...], "timer_task": asyncio.Task, "context": ..., "meta": [...]}}
+_wa_message_buffer: dict[str, dict] = {}
+_wa_buffer_lock = asyncio.Lock()
+
+
+async def _flush_debounce_buffer(phone_number: str):
+    """Called after the debounce window expires. Concatenates buffered messages
+    and processes them as a single unified message."""
+    await asyncio.sleep(DEBOUNCE_WINDOW_SECONDS)
+
+    async with _wa_buffer_lock:
+        buf = _wa_message_buffer.pop(phone_number, None)
+    if not buf or not buf["messages"]:
+        return
+
+    # Concatenate all buffered text messages into one
+    unified_content = " ".join(buf["messages"])
+    first_meta = buf["meta"][0]  # Use context/meta from the first message
+
+    logger.info(
+        "DEBOUNCE FLUSH: %s → %d mensajes unificados: '%s'",
+        phone_number, len(buf["messages"]), unified_content[:200],
+    )
+
+    # Process the unified message through the normal pipeline
+    try:
+        context = first_meta["context"]
+        conversation_context = first_meta["conversation_context"]
+        recent_messages = first_meta["recent_messages"]
+
+        ai_result = handle_internal_whatsapp_message(unified_content, context, conversation_context)
+        if ai_result is None:
+            ai_result = generate_agent_reply_v2(
+                context.get("nombre_visible"),
+                conversation_context,
+                recent_messages,
+                unified_content,
+                context,
+            )
+
+        response_text = ai_result.get("response_text") or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
+
+        try:
+            outbound_payload = send_whatsapp_text_message(context["telefono_e164"], response_text)
+            provider_message_id = None
+            if outbound_payload.get("messages"):
+                provider_message_id = outbound_payload["messages"][0].get("id")
+            store_outbound_message(
+                context["conversation_id"],
+                provider_message_id,
+                "text",
+                response_text,
+                outbound_payload,
+                intent_detectado=ai_result.get("intent"),
+            )
+        except Exception as exc:
+            store_outbound_message(
+                context["conversation_id"],
+                None,
+                "system",
+                f"No fue posible enviar respuesta: {exc}",
+                {"error": str(exc), "response_text": response_text},
+                intent_detectado=ai_result.get("intent"),
+            )
+
+        # Send technical document if applicable
+        source_filename = ai_result.get("technical_source_filename") if isinstance(ai_result, dict) else None
+        if source_filename:
+            try:
+                doc_entry = find_technical_document_entry_by_name(source_filename)
+                if doc_entry:
+                    _send_document_and_respond(doc_entry, context)
+            except Exception:
+                pass
+
+        # Update conversation context
+        context_updates = {
+            "intent": ai_result.get("intent"),
+            "last_direct_intent": ai_result.get("intent"),
+            "verified": conversation_context.get("verified", False),
+            "verified_document": conversation_context.get("verified_document"),
+            "verified_cliente_codigo": conversation_context.get("verified_cliente_codigo"),
+            "awaiting_verification": False,
+        }
+        extra_context_updates = ai_result.get("context_updates") or {}
+        if extra_context_updates:
+            context_updates.update(extra_context_updates)
+
+        confidence = ai_result.get("confidence") or {}
+        if confidence:
+            context_updates["last_confidence"] = confidence
+
+        if confidence and confidence.get("level") in ("baja", "media"):
+            evaluate_and_create_alert(
+                context["conversation_id"],
+                context.get("cliente_id"),
+                unified_content,
+                ai_result,
+                confidence,
+            )
+
+        if ai_result.get("is_farewell"):
+            context_updates["conversation_closed"] = True
+            context_updates["close_reason"] = "farewell_detected"
+            try:
+                close_conversation(
+                    context["conversation_id"],
+                    context_updates,
+                    summary=f"Conversación cerrada por despedida del cliente. Último intent: {ai_result.get('intent')}",
+                    final_status="gestionado",
+                )
+            except Exception:
+                update_conversation_context(
+                    context["conversation_id"],
+                    context_updates,
+                    summary=unified_content[:200],
+                )
+        else:
+            update_conversation_context(
+                context["conversation_id"],
+                context_updates,
+                summary=unified_content[:200],
+            )
+
+    except Exception as exc:
+        logger.error("DEBOUNCE FLUSH ERROR for %s: %s", phone_number, exc, exc_info=True)
+
+
 @app.post("/webhooks/whatsapp")
 async def receive_whatsapp_webhook(request: Request):
     payload = await request.json()
@@ -19098,6 +19270,51 @@ async def receive_whatsapp_webhook(request: Request):
                         )
 
                 if content and message_type in {"text", "button", "interactive", "document", "image"}:
+                    # ── DEBOUNCE: buffer plain text messages to concatenate rapid-fire inputs ──
+                    if message_type == "text" and DEBOUNCE_WINDOW_SECONDS > 0:
+                        async with _wa_buffer_lock:
+                            phone_key = from_number or context.get("telefono_e164", "unknown")
+                            if phone_key in _wa_message_buffer:
+                                # Append to existing buffer
+                                _wa_message_buffer[phone_key]["messages"].append(content)
+                                # Cancel the previous timer and restart
+                                old_task = _wa_message_buffer[phone_key].get("timer_task")
+                                if old_task and not old_task.done():
+                                    old_task.cancel()
+                                # Update recent_messages to latest for best context
+                                _wa_message_buffer[phone_key]["meta"][0]["recent_messages"] = recent_messages
+                                _wa_message_buffer[phone_key]["meta"][0]["conversation_context"] = conversation_context
+                                _wa_message_buffer[phone_key]["timer_task"] = asyncio.create_task(
+                                    _flush_debounce_buffer(phone_key)
+                                )
+                                logger.info("DEBOUNCE BUFFER: +1 msg for %s (total: %d)", phone_key, len(_wa_message_buffer[phone_key]["messages"]))
+                            else:
+                                # First message — start the buffer
+                                buf_meta = {
+                                    "context": context,
+                                    "conversation_context": conversation_context,
+                                    "recent_messages": recent_messages,
+                                }
+                                _wa_message_buffer[phone_key] = {
+                                    "messages": [content],
+                                    "meta": [buf_meta],
+                                    "timer_task": asyncio.create_task(
+                                        _flush_debounce_buffer(phone_key)
+                                    ),
+                                }
+                                logger.info("DEBOUNCE BUFFER: started for %s", phone_key)
+
+                        # Store inbound but DON'T generate AI response yet — debounce will handle it
+                        processed_messages.append({
+                            "conversation_id": context["conversation_id"],
+                            "telefono": context["telefono_e164"],
+                            "message_type": message_type,
+                            "provider_message_id": message.get("id"),
+                            "debounce_buffered": True,
+                        })
+                        continue
+
+                    # ── Non-debounced path: documents, images, buttons, interactive ──
                     try:
                         ai_result = handle_internal_whatsapp_message(content, context, conversation_context)
                         if ai_result is None:
