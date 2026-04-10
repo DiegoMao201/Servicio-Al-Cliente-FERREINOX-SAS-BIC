@@ -13859,6 +13859,21 @@ FASE 1 — DIAGNÓSTICO (¿Qué necesita el cliente?):
   - Si ya tengo superficie + condición → paso a FASE 2 INMEDIATAMENTE.
   - Los m², color y cantidades se pueden pedir DESPUÉS de dar la recomendación técnica. NO bloquean la Fase 2.
 
+  ⛔ REGLA CRÍTICA FASE 1 — ASESORÍA ≠ PEDIDO DIRECTO:
+  "necesito pintar un piso" es ASESORÍA → OBLIGATORIO preguntar ANTES de recomendar.
+  "necesito un Pintucoat gris" es PEDIDO DIRECTO → ir al inventario.
+  Si el cliente describe una SUPERFICIE o ACTIVIDAD genérica (pintar, impermeabilizar, proteger, barnizar)
+  sin nombrar un producto específico → SIEMPRE es ASESORÍA. NUNCA saltes a cotización.
+
+  PREGUNTAS MÍNIMAS POR SUPERFICIE (antes de recomendar):
+  • PISO: ¿Nuevo o ya tiene pintura? ¿Interior/exterior? ¿Tráfico liviano (casa), medio (local) o pesado (bodega/industria)?
+  • FACHADA/MURO EXTERIOR: ¿Tiene humedad/filtraciones? ¿Pintura anterior descascarando?
+  • MURO INTERIOR: ¿Nuevo o repintura? ¿Hay humedad o moho?
+  • MADERA: ¿Interior/exterior? ¿Acabado natural (transparente) o color sólido? ¿Nuevo o restauración?
+  • METAL: ¿Interior/exterior? ¿Ya tiene óxido? ¿Tipo de estructura (reja, tanque, tubería)?
+  • TECHO: ¿Material (eternit, zinc, concreto)? ¿Filtra agua?
+  Si el cliente ya proporcionó estas respuestas en mensajes anteriores, NO repitas. Avanza a FASE 2.
+
 FASE 2 — RECOMENDACIÓN TÉCNICA (¿Qué sistema aplicar?):
   - Llamo `consultar_conocimiento_tecnico` con la superficie y producto relevante.
   - Sintetizo un SISTEMA COMPLETO paso a paso: Preparación → Imprimante/Sellador → Acabado.
@@ -14346,7 +14361,10 @@ Si tu respuesta va a contener recomendaciones de producto, USA <thinking>:
 <thinking>
 0. ¿Es un empleado interno con lista de productos? → FAST-TRACK B2B (sin diagnóstico, directo a inventario+cotización).
 0b. ¿Acabo de enviar una cotización y el usuario está CORRIGIENDO un ítem? → PROTOCOLO CORRECCIÓN (no RAG, solo actualizar ítem, mantener el resto intacto, recalcular total).
-1. ¿Tengo superficie + condición? → Si NO → PREGUNTAR (conversacional, 1 pregunta).
+1. ¿El cliente describe una SUPERFICIE/ACTIVIDAD genérica ("pintar piso", "impermeabilizar techo") SIN nombrar un producto específico?
+   → Sí → Es ASESORÍA. ¿Tengo TODAS las preguntas mínimas de esa superficie respondidas? Si NO → PREGUNTAR PRIMERO. PROHIBIDO cotizar.
+   → No (nombró producto específico) → Es PEDIDO DIRECTO. Avanzar a inventario.
+1b. ¿Tengo superficie + condición + contexto suficiente? → Si NO → PREGUNTAR (conversacional, 1-2 preguntas clave).
 2. ¿Llamé consultar_conocimiento_tecnico? → Si NO → LLAMAR AHORA.
 3. ¿Armé el SISTEMA COMPLETO (Prep→Imprimante→Acabado)? → Si NO → ARMAR.
 4. ¿El cliente ya dio m² o cantidades? (revisa TODA la conversación, incluido este mensaje)
@@ -17955,6 +17973,82 @@ def generate_agent_reply_v2(
     called_rag = any(tc["name"] == "consultar_conocimiento_tecnico" for tc in tool_calls_made)
     called_inventory = any(tc["name"] == "consultar_inventario" for tc in tool_calls_made)
     called_any_tool = len(tool_calls_made) > 0
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA ASESORÍA: si el usuario describió una superficie/actividad
+    # genérica SIN nombrar producto específico, y el agente saltó directo
+    # a cotización sin hacer preguntas diagnósticas → forzar diagnóstico.
+    # "necesito pintar un piso" → ASESORÍA (preguntar primero)
+    # "necesito un Pintucoat gris" → PEDIDO DIRECTO (ok cotizar)
+    # ══════════════════════════════════════════════════════════════════════
+    if not _is_b2b_fast_track and not _is_transactional_correction and not is_simple_greeting(user_message or ""):
+        _user_lower_asesoria = (user_message or "").lower()
+        # Señales de superficie/actividad genérica
+        _SURFACE_ACTIVITY_SIGNALS = [
+            "pintar", "impermeabilizar", "proteger", "recubrir", "barnizar", "lacar",
+            "piso", "fachada", "techo", "muro", "pared", "reja", "estructura",
+            "madera", "puerta", "mueble", "mesa", "bodega", "garaje", "terraza",
+            "baño", "cocina", "cielo raso", "cancha", "metal", "tanque", "cubierta",
+        ]
+        # Productos específicos que indican PEDIDO DIRECTO (el cliente sabe lo que quiere)
+        _SPECIFIC_PRODUCT_NAMES = [
+            "koraza", "viniltex", "pintucoat", "intervinil", "pinturama",
+            "interseal", "intergard", "interthane", "corrotec", "pintóxido", "pintoxido",
+            "pintulux", "barnex", "barniz marino", "esmalte doméstico", "esmalte domestico",
+            "aquablock", "impercoat", "sellamur", "aerocolor", "wood stain",
+            "pintura canchas", "wash primer", "primer 50rs",
+        ]
+        _has_surface_signal = any(s in _user_lower_asesoria for s in _SURFACE_ACTIVITY_SIGNALS)
+        _has_specific_product = any(p in _user_lower_asesoria for p in _SPECIFIC_PRODUCT_NAMES)
+        _response_lower_asesoria = response_text_draft.lower()
+        _has_quotation = "$" in response_text_draft and any(
+            kw in _response_lower_asesoria for kw in ["total", "cotización", "cotizacion", "subtotal", "iva"]
+        )
+        _has_diagnostic_questions = any(
+            q in _response_lower_asesoria for q in [
+                "?", "¿", "cuántos m", "cuantos m", "qué color", "que color",
+                "interior o exterior", "nuevo o", "tiene pintura", "tráfico",
+                "trafico", "qué tipo", "que tipo", "cuéntame", "cuentame",
+                "para poder recomendarte", "necesito saber",
+            ]
+        )
+
+        if _has_surface_signal and not _has_specific_product and _has_quotation and not _has_diagnostic_questions:
+            logger.warning(
+                "⛔ GUARDIA ASESORÍA: agente saltó diagnóstico — cotizó sin preguntar. surface_signal=True, product=False, quotation=True"
+            )
+            messages.append(assistant_message)
+            messages.append({
+                "role": "system",
+                "content": (
+                    "⛔ VIOLACIÓN DE PROTOCOLO DE ASESORÍA: El cliente describió una necesidad genérica "
+                    "(superficie o actividad) sin pedir un producto específico. Esto es una ASESORÍA, "
+                    "NO un pedido directo. PROHIBIDO cotizar sin diagnosticar primero.\n\n"
+                    "REESCRIBE tu respuesta. En vez de cotizar, haz las PREGUNTAS DIAGNÓSTICAS "
+                    "mínimas para esta superficie:\n"
+                    "- PISO: ¿Nuevo o ya tiene pintura? ¿Interior/exterior? ¿Tráfico liviano, medio o pesado?\n"
+                    "- FACHADA: ¿Tiene humedad/filtraciones? ¿Pintura descascarando?\n"
+                    "- MURO INTERIOR: ¿Nuevo o repintura? ¿Humedad o moho?\n"
+                    "- MADERA: ¿Interior/exterior? ¿Acabado natural o color sólido?\n"
+                    "- METAL: ¿Interior/exterior? ¿Ya tiene óxido?\n"
+                    "- TECHO: ¿Material (eternit, zinc, concreto)? ¿Filtra agua?\n\n"
+                    "Haz 1-2 preguntas clave de forma CONVERSACIONAL y BREVE. "
+                    "NO cotices. NO busques inventario. NO llames consultar_inventario. "
+                    "Puedes llamar consultar_conocimiento_tecnico para INFORMARTE internamente, "
+                    "pero tu respuesta al cliente debe ser SOLO preguntas diagnósticas."
+                ),
+            })
+            t_asesoria = time.time()
+            asesoria_response = client.chat.completions.create(
+                model=get_openai_model(),
+                messages=messages,
+                tools=AGENT_TOOLS,
+                tool_choice="none",  # NO tools — just ask questions
+                temperature=0.3,
+            )
+            assistant_message = asesoria_response.choices[0].message
+            response_text_draft = assistant_message.content or ""
+            logger.info("GUARDIA ASESORÍA retry completed: %dms", int((time.time() - t_asesoria) * 1000))
 
     # ── SEÑALES DE PROBLEMA TÉCNICO en el INPUT del usuario ──
     _PROBLEM_SIGNALS = [
