@@ -13528,8 +13528,8 @@ def build_agent_prompt(
                 "4. REFERENCIA AUDITABLE OBLIGATORIA: cuando confirmes inventario o muestres opciones con referencia, usa la descripción exacta que viene del ERP/backend. No la reescribas ni cambies base, tint, paste, color o modelo. Si el JSON trae `visibilidad_tienda_exacta=false`, no confirmes stock para esa sede: aclara que recuperaste la referencia correcta pero no tienes desglose exacto de esa tienda en la vista actual.\n"
                 "5. PIENSA ANTES DE ACTUAR: clasifica mentalmente la intención del cliente antes de responder.\n"
                 "   - Si el cliente plantea un PROBLEMA GENERAL (ej. humedad, pintar un techo, proteger un metal, tratar madera, recubrir una fachada, un tanque, una piscina, sellar grietas, o CUALQUIER problema de superficie), primero activa un EMBUDO DE DIAGNÓSTICO. NO recomiendes nada todavía y NO uses RAG todavía.\n"
-                "   - Si pregunta un dato técnico puntual sobre un producto ya identificado (ej. catalizador, tiempo de secado, dilución, rendimiento, preparación de superficie), ahí sí usa `consultar_conocimiento_tecnico` para buscar el dato exacto en las fichas técnicas vectorizadas ANTES de responder. NUNCA respondas preguntas técnicas de memoria.\n"
-                "   - Si pide comprar o verificar disponibilidad de un producto → INVENTARIO, ahí sí consulta la base.\n"
+                "   - Si pregunta un dato técnico puntual sobre un producto ya identificado (ej. catalizador, tiempo de secado, dilución, rendimiento, preparación de superficie, proporción de mezcla, cuántas manos, vida útil, garantía), ahí sí usa `consultar_conocimiento_tecnico` para buscar el dato exacto en las fichas técnicas vectorizadas ANTES de responder. NUNCA respondas preguntas técnicas de memoria. ⛔ PROHIBIDO saltar a cotización/inventario cuando la pregunta es puramente técnica. Responde el dato técnico y PUNTO. Solo ofrece cotización si el cliente la pide explícitamente.\n"
+                "   - Si pide comprar o verificar disponibilidad de un producto → INVENTARIO, ahí sí consulta la base. Señales de compra: 'quiero X galones', 'cuánto cuesta', 'precio', 'cotízame', 'necesito comprar'. Si NO hay señal de compra, NO llames inventario.\n"
                 "   - Si dice reclamo, queja, garantía → RECLAMO, activa empatía y protocolo paso a paso. NO crees ticket hasta tener producto, problema y correo.\n"
                 "   - Si pide cartera, saldos → CARTERA, valida identidad primero.\n"
                 "6. NUNCA busques verbos o intenciones como parámetro de inventario. 'necesito hacer un pedido' es una INTENCIÓN, no un producto.\n"
@@ -17819,6 +17819,77 @@ def generate_agent_reply_v2(
             retry_iterations2 -= 1
         logger.info("GUARDIA PROBLEMA-SIN-RAG retry completed: %dms", int((time.time() - t_retry2) * 1000))
         tool_names = [tc["name"] for tc in tool_calls_made]
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA PREGUNTA-TÉCNICA → COTIZACIÓN INDEBIDA:
+    # Si el usuario hizo una pregunta PURAMENTE TÉCNICA (secado, dilución,
+    # rendimiento, mezcla, aplicación, preparación, garantía) pero la
+    # respuesta contiene precios/cotización → forzar reescritura técnica.
+    # ══════════════════════════════════════════════════════════════════════
+    _TECHNICAL_QUESTION_SIGNALS = [
+        "tiempo de secado", "cuanto seca", "cuánto seca", "cuanto demora",
+        "cuánto demora", "como se aplica", "cómo se aplica", "como aplico",
+        "cómo aplico", "cuantas manos", "cuántas manos", "manos de pintura",
+        "rendimiento", "cuanto rinde", "cuánto rinde", "dilución", "dilucion",
+        "diluir", "como se prepara", "cómo se prepara", "preparar la superficie",
+        "proporción de mezcla", "proporcion de mezcla", "mezcla con catalizador",
+        "vida útil", "vida util", "garantía", "garantia", "cuantos años",
+        "cuántos años", "cuanto dura", "cuánto dura", "tiempo de repintado",
+        "entre manos", "secado al tacto", "secado final", "curado",
+    ]
+    _COTIZACION_SIGNALS = ["$", "precio", "cotización", "cotizacion", "iva", "incluye iva", "total para"]
+    _tech_q_lower = (user_message or "").lower()
+    _tech_resp_lower = (assistant_message.content or "").lower()
+    _is_tech_question = any(s in _tech_q_lower for s in _TECHNICAL_QUESTION_SIGNALS)
+    _has_cotizacion = sum(1 for s in _COTIZACION_SIGNALS if s in _tech_resp_lower) >= 2
+    _no_buy_signal = not any(s in _tech_q_lower for s in [
+        "quiero", "necesito comprar", "cotízame", "cotizame", "precio",
+        "cuanto cuesta", "cuánto cuesta", "galones", "galón", "galon",
+    ])
+    if _is_tech_question and _has_cotizacion and _no_buy_signal and not is_simple_greeting(user_message):
+        logger.warning(
+            "GUARDIA PREGUNTA-TÉCNICA: usuario hizo pregunta técnica pero respuesta tiene cotización. Forzando reescritura técnica."
+        )
+        messages.append(assistant_message)
+        messages.append({
+            "role": "system",
+            "content": (
+                "⛔ VIOLACIÓN: El cliente hizo una PREGUNTA TÉCNICA puntual "
+                "(tiempo de secado, dilución, rendimiento, preparación, etc.) "
+                "pero tu respuesta incluye PRECIOS y COTIZACIÓN. "
+                "El cliente NO pidió precios ni cotización. "
+                "REESCRIBE tu respuesta respondiendo SOLO el dato técnico que preguntó. "
+                "Usa la información de `consultar_conocimiento_tecnico`. "
+                "NO incluyas precios, inventario ni cotización. "
+                "Si el dato técnico no está disponible, dilo honestamente."
+            ),
+        })
+        t_tech = time.time()
+        tech_response = client.chat.completions.create(
+            model=get_openai_model(),
+            messages=messages,
+            tools=AGENT_TOOLS,
+            tool_choice="auto",
+            temperature=0.3,
+        )
+        assistant_message = tech_response.choices[0].message
+        tech_retries = 2
+        while assistant_message.tool_calls and tech_retries > 0:
+            messages.append(assistant_message)
+            for tc in assistant_message.tool_calls:
+                fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+                tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
+                messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+            tech_response = client.chat.completions.create(
+                model=get_openai_model(),
+                messages=messages,
+                tools=AGENT_TOOLS,
+                tool_choice="auto",
+                temperature=0.3,
+            )
+            assistant_message = tech_response.choices[0].message
+            tech_retries -= 1
+        logger.info("GUARDIA PREGUNTA-TÉCNICA retry completed: %dms", int((time.time() - t_tech) * 1000))
 
     # ══════════════════════════════════════════════════════════════════════
     # ══════════════════════════════════════════════════════════════════════
