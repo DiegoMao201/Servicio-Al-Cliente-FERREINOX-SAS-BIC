@@ -13843,6 +13843,10 @@ Si detectas que un cliente mezcla familias incompatibles, CORRÍGELO INMEDIATAME
 ══════════════════════════════════════════════════════════════════════════════
 \
 REGLA DE HIERRO: Sin llamar `consultar_conocimiento_tecnico`, NO puedes recomendar productos técnicos.
+Aunque CREAS saber la respuesta por entrenamiento, SIEMPRE debes llamar al RAG primero.
+Tu conocimiento base puede estar desactualizado o incompleto — las fichas técnicas del RAG son la fuente de verdad.
+Si el cliente pregunta algo técnico (rendimiento, preparación, aplicación, secado, dilución) → RAG OBLIGATORIO.
+Si vas a nombrar un producto específico (Koraza, Viniltex, Corrotec, etc.) → RAG OBLIGATORIO.
 ══════════════════════════════════════════════════════════════════════════════
 
 ══════════════════════════════════════════════════════════════════════════════
@@ -14073,7 +14077,9 @@ ORDEN COMERCIAL: Los productos del inventario ya vienen ordenados por coincidenc
 
 COMPUERTA AMBIGÜEDAD: Si `requiere_aclaracion=true` → usa `pregunta_desambiguacion` antes de avanzar.
 
-DESAMBIGUACIÓN: "vinilo"→pregunta tipo. "pintura"→pregunta interior/exterior. "esmalte"→menciona Doméstico Y Pintulux. Si primera búsqueda falla, intenta sinónimo.
+DESAMBIGUACIÓN: "vinilo"→pregunta tipo (Tipo 1 económico/Tipo 2 intermedio como Intervinil/Tipo 3 premium como Viniltex). "pintura"→pregunta interior/exterior. "esmalte"→menciona Doméstico (interior) Y Pintulux (exterior/metal). Si primera búsqueda falla, intenta sinónimo.
+
+PEDIDO DIRECTO DE ACCESORIOS/INSUMOS: Si el cliente pide DIRECTAMENTE un producto de ferretería (lija, rodillo, brocha, cinta, thinner, removedor, disco, grata, masilla, sellador, estopa), llama `consultar_inventario` INMEDIATAMENTE con ese producto. NO hagas diagnóstico previo — el cliente sabe lo que quiere.
 
 CÓDIGOS FRACCIONARIOS: /1=galón (3.79L), /4=cuarto (0.95L), /5=cuñete (18.93L), /2=balde (9.46L). "8 galones 1501" = GALÓN, NO preguntes presentación.
 
@@ -17653,10 +17659,14 @@ def generate_agent_reply_v2(
         "corrotec", "pintóxido", "pintoxido", "pintulux", "interseal", "intergard",
         "interthane", "esmalte doméstico", "esmalte domestico", "pintura canchas",
         "wood stain", "intervinil", "pinturama", "sellamur", "impercoat",
-        "comp a", "comp b", "catalizador", "galón", "galon", "cuñete", "cunete",
+        "wash primer", "estuco anti humedad", "pintura cielos", "pintulaca",
+        "barniz barnex", "aerocolor", "anticorrosivo", "pintura parqueadero",
+        "pintura tráfico", "pintura trafico", "epoxi poliamida", "intergard 740",
+        "doméstico", "domestico",
     ]
     response_lower = response_text_draft.lower()
-    has_product_recommendation = sum(1 for s in _PRODUCT_SIGNALS if s in response_lower) >= 2
+    # Umbral = 1: basta con nombrar UN producto específico sin RAG
+    has_product_recommendation = sum(1 for s in _PRODUCT_SIGNALS if s in response_lower) >= 1
 
     # Solo aplicar guardia si: recomendó productos, NO consultó RAG, y NO es una
     # conversación donde ya se hicieron preguntas diagnósticas (sin inventory tampoco)
