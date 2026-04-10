@@ -20446,6 +20446,84 @@ def reset_conversation_context(conversation_id: int):
     return {"status": "ok", "conversation_id": conversation_id, "message": "Contexto limpiado"}
 
 
+@app.post("/admin/cleanup-phone")
+def admin_cleanup_phone(request: Request, payload: dict = Body(...)):
+    """
+    Limpiar COMPLETAMENTE el historial de conversación de un teléfono.
+    Borra mensajes, resetea contexto, o borra toda la conversación.
+    Requiere x-admin-key.
+    
+    Body: {"phone": "3205046277", "mode": "full"}
+    Modes:
+      - "context": Solo resetear contexto (mantiene mensajes)
+      - "messages": Borrar mensajes (mantiene conversación)  
+      - "full": Borrar mensajes + resetear contexto (fresh start)
+    """
+    admin_key = request.headers.get("x-admin-key", "")
+    if admin_key != os.getenv("ADMIN_KEY", "ferreinox_admin_2024"):
+        raise HTTPException(status_code=403, detail="Admin key inválida")
+
+    phone_raw = str(payload.get("phone", "")).strip()
+    mode = str(payload.get("mode", "full")).strip().lower()
+    if not phone_raw:
+        raise HTTPException(status_code=400, detail="Falta 'phone'")
+
+    # Normalizar teléfono a E.164
+    phone_e164 = phone_raw if phone_raw.startswith("+") else f"+57{phone_raw}"
+
+    engine = get_db_engine()
+    result = {"phone": phone_e164, "mode": mode}
+
+    with engine.begin() as conn:
+        # Buscar contacto
+        contact = conn.execute(
+            text("SELECT id FROM public.whatsapp_contacto WHERE telefono_e164 = :phone"),
+            {"phone": phone_e164},
+        ).mappings().one_or_none()
+
+        if not contact:
+            return {"status": "ok", "message": f"No se encontró contacto para {phone_e164}", **result}
+
+        contacto_id = contact["id"]
+
+        # Buscar conversaciones
+        convs = conn.execute(
+            text("SELECT id FROM public.agent_conversation WHERE contacto_id = :cid"),
+            {"cid": contacto_id},
+        ).mappings().all()
+        conv_ids = [c["id"] for c in convs]
+        result["conversations_found"] = len(conv_ids)
+
+        if not conv_ids:
+            return {"status": "ok", "message": "No tiene conversaciones", **result}
+
+        if mode in ("messages", "full"):
+            del_msgs = conn.execute(
+                text("DELETE FROM public.agent_message WHERE conversation_id = ANY(:ids)"),
+                {"ids": conv_ids},
+            )
+            result["messages_deleted"] = del_msgs.rowcount
+
+        if mode in ("context", "full"):
+            conn.execute(
+                text("""
+                    UPDATE public.agent_conversation
+                    SET contexto = '{}'::jsonb,
+                        resumen = 'Limpieza admin manual',
+                        estado = 'abierta',
+                        updated_at = now(),
+                        last_message_at = now() - interval '4 hours'
+                    WHERE contacto_id = :cid
+                """),
+                {"cid": contacto_id},
+            )
+            result["contexts_reset"] = len(conv_ids)
+
+    result["status"] = "ok"
+    result["message"] = f"Limpieza '{mode}' completada para {phone_e164}"
+    return result
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # DEBOUNCE / BUFFER DE MENSAJES WHATSAPP
 # Cuando un usuario envía varios mensajes rápidos ("60 mts", "blanco"), los
