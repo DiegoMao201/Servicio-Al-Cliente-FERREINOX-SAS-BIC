@@ -151,6 +151,39 @@ RAG_TESTS = [
     ("necesito algo pa que no se oxide más el portón", ["corrotec", "pintoxido"], [], "jerga"),
     ("el techo de eternit se me está pelando todo", ["pintuco fill", "koraza"], [], "jerga"),
     ("zorras del almacén me rayaron todo el piso", ["pintucoat"], [], "jerga"),
+
+    # ═══ FILTROS SEMÁNTICOS — DESAMBIGUACIÓN POST-RAG (NUEVOS) ═══
+    # Barnex es SOLO exterior — madera interior debe dar barniz/doméstico
+    ("barniz para mesa de madera de comedor interior", ["barniz"], ["barnex"], "filtro_barnex"),
+    ("proteger mueble de madera de la cocina acabado transparente", ["barniz"], ["barnex"], "filtro_barnex"),
+    ("puerta de madera interior pintar de blanco", ["pintulux", "domestico", "esmalte"], ["barnex"], "filtro_barnex"),
+    ("closet de madera acabado natural", ["barniz"], ["barnex"], "filtro_barnex"),
+    # Barnex SÍ para exterior — debe aparecer
+    ("pérgola de madera exterior intemperie", ["barnex", "wood stain"], [], "filtro_barnex"),
+    ("deck de madera exterior piscina", ["barnex", "wood stain"], [], "filtro_barnex"),
+
+    # Viniltex NO para fachada exterior directa — debe recomendar Koraza
+    ("pintar fachada exterior de la casa lluvia y sol", ["koraza"], [], "filtro_fachada"),
+    ("muro exterior descascarando por la lluvia", ["koraza"], [], "filtro_fachada"),
+    ("frente de la casa se pela la pintura con el agua", ["koraza"], [], "filtro_fachada"),
+    # Viniltex SÍ para interior
+    ("pintar sala interior premium lavable", ["viniltex"], [], "filtro_fachada"),
+
+    # Canchas vs Industrial — tráfico pesado NUNCA Canchas
+    ("piso bodega con montacargas pesados", ["pintucoat", "intergard"], ["pintura canchas"], "filtro_piso"),
+    ("piso taller mecánico aceite y grasa", ["pintucoat", "intergard"], [], "filtro_piso"),
+    ("piso garaje residencial carros livianos", ["pintucoat"], ["pintura canchas"], "filtro_piso"),
+    # Canchas SÍ para deportivo
+    ("cancha de microfútbol en concreto", ["pintura canchas"], [], "filtro_piso"),
+
+    # Pintulac NO manejamos — nunca debe aparecer
+    ("laca para mueble de madera interior", ["barniz", "domestico"], [], "filtro_pintulac"),
+
+    # Plásticos
+    ("pintar silla plástica del jardín", ["primer", "plastico"], [], "filtro_plastico"),
+
+    # Industrial International
+    ("acabado poliuretano maquinaria industrial", ["interthane"], [], "filtro_industrial"),
 ]
 
 
@@ -1130,6 +1163,310 @@ AGENT_CONVERSATIONS = [
                 {
                     "response_contains": ["Kit", "completo"],
                     "response_excludes": ["solo", "Parte A sin catalizador"],
+                },
+            ),
+        ],
+    },
+
+    # ══════════════════════════════════════════════════════════════════════
+    # 🔬 FILTROS SEMÁNTICOS — DESAMBIGUACIÓN POST-RAG
+    # Valida que las guardias de desambiguación corrijan la "miopía" del RAG
+    # ══════════════════════════════════════════════════════════════════════
+
+    # ── FILTRO BARNEX: interior vs exterior ──
+    {
+        "name": "MESA MADERA INTERIOR → Barniz/Doméstico, NUNCA Barnex",
+        "category": "filtro_barnex_interior",
+        "turns": [
+            (
+                "Quiero barnizar una mesa de comedor de madera, es interior",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_excludes": ["Barnex", "barnex", "Pintulac", "pintulac"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "PUERTA MADERA INTERIOR COLOR BLANCO → Pintulux/Doméstico",
+        "category": "filtro_barnex_interior",
+        "turns": [
+            (
+                "Necesito pintar una puerta de madera interior de color blanco",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Pintulux", "pintulux", "Doméstico", "domestico", "Esmalte", "esmalte"],
+                    "response_excludes": ["Barnex", "barnex", "Pintulac", "pintulac"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "MUEBLE COCINA MADERA LACA → Barniz interior, NO Barnex",
+        "category": "filtro_barnex_interior",
+        "turns": [
+            (
+                "Quiero lacar los muebles de la cocina, son de madera, quedaron sin acabado",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_excludes": ["Barnex", "barnex", "Pintulac", "pintulac"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "CLOSET MADERA ACABADO NATURAL INTERIOR → NO Barnex",
+        "category": "filtro_barnex_interior",
+        "turns": [
+            (
+                "Tengo un closet de madera que quiero proteger, acabado transparente, está en la habitación",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_excludes": ["Barnex", "barnex", "Pintulac", "pintulac"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "PÉRGOLA EXTERIOR → SÍ Barnex/Wood Stain",
+        "category": "filtro_barnex_exterior",
+        "turns": [
+            (
+                "Tengo una pérgola de madera a la intemperie, quiero protegerla con acabado transparente",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Barnex", "barnex", "Wood Stain", "wood stain"],
+                    "response_excludes": ["Pintulac", "pintulac"],
+                },
+            ),
+        ],
+    },
+
+    # ── FILTRO FACHADA: Viniltex vs Koraza ──
+    {
+        "name": "FACHADA EXTERIOR LLUVIA → Koraza, NUNCA Viniltex principal",
+        "category": "filtro_fachada",
+        "turns": [
+            (
+                "La fachada de mi casa se pela cada vez que llueve fuerte, necesito pintarla",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Koraza", "koraza"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "MURO EXTERIOR DESCASCARANDO SOL → Koraza",
+        "category": "filtro_fachada",
+        "turns": [
+            (
+                "El muro exterior de la casa está descascarando por el sol, necesito repintarlo",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Koraza", "koraza"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "FRENTE CASA EXTERIOR → Koraza como acabado principal",
+        "category": "filtro_fachada",
+        "turns": [
+            (
+                "Voy a pintar todo el frente de la casa, está a la intemperie y llueve mucho",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Koraza", "koraza"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "SALA INTERIOR → SÍ Viniltex (premium)",
+        "category": "filtro_fachada",
+        "turns": [
+            (
+                "Quiero pintar la sala de mi casa, algo de buena calidad que sea lavable",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Viniltex", "viniltex"],
+                },
+            ),
+        ],
+    },
+
+    # ── FILTRO PISOS: Canchas vs Industrial vs Garaje ──
+    {
+        "name": "BODEGA MONTACARGAS → Intergard 2002, NUNCA Canchas",
+        "category": "filtro_piso_industrial",
+        "turns": [
+            (
+                "El piso de la bodega se me está dañando, pasan montacargas todo el día",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_excludes": ["Canchas", "canchas"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "TALLER MECÁNICO ACEITE → Epóxico, NUNCA Canchas",
+        "category": "filtro_piso_industrial",
+        "turns": [
+            (
+                "Necesito pintar el piso del taller mecánico, le cae aceite y grasa de los carros",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Pintucoat", "pintucoat", "Intergard", "intergard", "epóx", "epox"],
+                    "response_excludes": ["Canchas", "canchas"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "CANCHA DEPORTIVA → SÍ Pintura Canchas",
+        "category": "filtro_piso_industrial",
+        "turns": [
+            (
+                "Vamos a pintar la cancha de baloncesto del colegio, es de concreto",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Canchas", "canchas"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "FÁBRICA ESTIBADORES TRÁFICO PESADO → Intergard 2002",
+        "category": "filtro_piso_industrial",
+        "turns": [
+            (
+                "El piso de la planta de producción necesita repintarse, pasan estibadores pesados y montacargas",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Intergard", "intergard", "2002"],
+                    "response_excludes": ["Canchas", "canchas"],
+                },
+            ),
+        ],
+    },
+
+    # ── FILTRO PINTULAC: producto NO manejado ──
+    {
+        "name": "PINTULAC → Nunca recomendar, NO manejamos",
+        "category": "filtro_pintulac",
+        "turns": [
+            (
+                "Necesito Pintulac para un mueble de madera",
+                {
+                    "response_excludes": ["Pintulac", "pintulac"],
+                },
+            ),
+        ],
+    },
+
+    # ── CONTEXTO AMBIGUO: el material define el sistema ──
+    {
+        "name": "SILLA SIN MATERIAL → Debe preguntar si madera o metal",
+        "category": "filtro_ambiguo",
+        "turns": [
+            (
+                "Quiero pintar unas sillas del jardín",
+                {
+                    "check_diagnostic": True,
+                },
+            ),
+        ],
+    },
+    {
+        "name": "PUERTA SIN MATERIAL → Debe preguntar si madera o metal",
+        "category": "filtro_ambiguo",
+        "turns": [
+            (
+                "Necesito pintar unas puertas",
+                {
+                    "check_diagnostic": True,
+                },
+            ),
+        ],
+    },
+    {
+        "name": "MESA METÁLICA EXTERIOR OXIDADA → Corrotec, no barniz",
+        "category": "filtro_ambiguo",
+        "turns": [
+            (
+                "Tengo una mesa de metal del jardín que está oxidada, quiero pintarla",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Corrotec", "corrotec", "anticorrosivo", "Pintóxido", "pintoxido"],
+                    "response_excludes": ["Barnex", "barnex", "Pintulac", "pintulac"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "MESA MADERA COMEDOR → Barniz interior, no Barnex ni anticorrosivo",
+        "category": "filtro_ambiguo",
+        "turns": [
+            (
+                "Quiero proteger la mesa del comedor, es de madera, acabado natural transparente",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_excludes": ["Barnex", "barnex", "Corrotec", "corrotec", "Pintulac", "pintulac"],
+                },
+            ),
+        ],
+    },
+
+    # ── QUERY EXPANSION INDUSTRIAL ──
+    {
+        "name": "PLANTA ALIMENTOS → Epóxico sanitario, no vinilo",
+        "category": "filtro_expansion_industrial",
+        "turns": [
+            (
+                "Las paredes de la planta procesadora de alimentos necesitan pintura que se pueda lavar con presión",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_excludes": ["Viniltex", "viniltex", "Canchas", "canchas"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "SENDERO PEATONAL PARQUE → Pintura Canchas",
+        "category": "filtro_expansion_industrial",
+        "turns": [
+            (
+                "Necesito pintar un sendero peatonal de concreto en un parque",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Canchas", "canchas", "sendero", "peatonal"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "CICLORUTA ASFALTO → Pintura Canchas",
+        "category": "filtro_expansion_industrial",
+        "turns": [
+            (
+                "Vamos a pintar una cicloruta nueva de asfalto",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                },
+            ),
+        ],
+    },
+    {
+        "name": "TANQUE METÁLICO INDUSTRIAL → Anticorrosivo + epóxico",
+        "category": "filtro_expansion_industrial",
+        "turns": [
+            (
+                "Tenemos unos tanques metálicos de almacenamiento industrial que necesitan protección anticorrosiva",
+                {
+                    "tools_called": ["consultar_conocimiento_tecnico"],
+                    "response_contains": ["Corrotec", "corrotec", "anticorrosivo", "Intergard", "intergard", "epóx", "epox"],
                 },
             ),
         ],

@@ -778,8 +778,8 @@ PINTUCO_PRODUCT_TAXONOMY = {
     },
     "lacas_barnices": {
         "descripcion": "Acabados transparentes o semitransparentes para madera",
-        "marcas": ["Pintulac", "Barniz Marino"],
-        "uso": "Muebles, puertas de madera, pisos de madera, decks, artesanías",
+        "marcas": ["Barniz Marino", "Barniz SD1"],
+        "uso": "Muebles, puertas de madera interior. Para exterior usar Barnex o Wood Stain. NO manejamos Pintulac.",
     },
     "poliuretanos": {
         "descripcion": "Acabados industriales de alta resistencia química y UV",
@@ -943,15 +943,15 @@ PORTFOLIO_CATEGORY_MAP = {
     "proteccion metalica": ["corrotec", "pintulux", "anticorrosivo"],
 
     # ── MADERA ──
-    "barniz": ["barniz", "barnex", "pintulac", "barniz marino"],
-    "madera": ["barnex", "pintulac", "barniz", "wood stain", "madetec", "pintulux"],
+    "barniz": ["barniz", "barnex", "barniz marino", "barniz sd1"],
+    "madera": ["barnex", "barniz marino", "barniz", "wood stain", "madetec", "pintulux"],
     "madera exterior": ["barnex", "wood stain", "barniz marino"],
-    "madera interior": ["pintulac", "barniz", "madetec"],
-    "laca": ["pintulac", "laca"],
+    "madera interior": ["barniz marino", "barniz sd1", "domestico", "pintulux"],
+    "laca": ["barniz marino", "barniz sd1"],
     "deck": ["barnex", "wood stain", "barniz marino"],
     "pergola": ["barnex", "wood stain"],
-    "mueble": ["pintulac", "barniz", "madetec"],
-    "puerta madera": ["pintulac", "pintulux", "barniz", "barnex"],
+    "mueble": ["barniz marino", "barniz sd1", "domestico"],
+    "puerta madera": ["pintulux", "domestico", "barniz", "barnex"],
 
     # ── PRODUCTO NOMBRES DIRECTOS (lookup cuando mencionan el producto por nombre) ──
     "viniltex": ["viniltex", "viniltex adv", "acriltex viniltex"],
@@ -967,7 +967,7 @@ PORTFOLIO_CATEGORY_MAP = {
     "wash primer": ["wash primer", "imprimante", "corrotec"],
     "impercoat": ["impercoat", "pintuco fill", "tela de refuerzo"],
     "intervinil": ["intervinil", "viniltex", "vinil latex"],
-    "pintulac": ["pintulac", "barniz", "barnex"],
+    "pintulac": ["barniz marino", "barniz sd1", "domestico"],
     "catalizador": ["catalizador", "pintucoat", "interseal"],
     "diluir": ["viniltex", "pintulo", "domestico"],
     "diluyente": ["thinner", "agua destilada", "disolvente"],
@@ -1244,8 +1244,8 @@ DIAGNOSTIC_QUESTION_TREE = {
         "logica_producto": {
             "exterior/intemperie": {"producto": "barnex", "confianza": "alta",
                 "razon": "Barnex Extra Protección o Wood Stain: protección UV, lluvia, resiste intemperie"},
-            "interior transparente": {"producto": "pintulac", "confianza": "alta",
-                "razon": "Pintulac: acabado brillante o mate transparente para muebles e interiores"},
+            "interior transparente": {"producto": "barniz marino", "confianza": "alta",
+                "razon": "Barniz Marino o Barniz SD1: acabado brillante o mate transparente para muebles e interiores. NO manejamos Pintulac."},
             "interior color": {"producto": "pintulux", "confianza": "media",
                 "razon": "Pintulux sobre madera interior cuando se quiere color sólido"},
         },
@@ -13875,6 +13875,19 @@ Diccionario de traducción mental (ejemplos — aplica el mismo principio para C
 | "piso nuevo sin pintar" | "concreto nuevo curado 28 días primera aplicación" |
 
 REGLA: Al buscar por CONCEPTOS TÉCNICOS en lugar de palabras literales, siempre encontrarás la ficha correcta sin importar qué jerga use el cliente.
+
+Traducciones ADICIONALES para contextos industriales y especiales:
+| Cliente dice | Tú buscas en RAG |
+|---|---|
+| "planta procesadora de alimentos" / "área de alimentos" / "zona sanitaria" | "epóxico grado alimenticio sanitario resistencia limpieza desinfección pisos paredes" |
+| "tanque industrial" / "tubería metálica" / "estructura industrial" | "anticorrosivo industrial epóxico poliuretano protección estructura metálica" |
+| "sendero peatonal" / "cicloruta" / "ciclovía" / "camino concreto" | "pintura canchas alto tráfico peatonal exterior concreto asfalto sendero" |
+| "rampa vehicular" / "estacionamiento" / "parqueadero" | "pintura piso epóxica tráfico vehicular concreto garaje parqueadero" |
+| "silla" / "mesa" / "mueble" (sin material) | PREGUNTA: ¿es de madera o metálica? El material cambia todo el sistema |
+| "puerta" / "ventana" / "reja" (sin material) | PREGUNTA: ¿es de madera o hierro/metal? El sistema cambia completamente |
+| "piso nuevo" / "piso sin pintar" | "concreto nuevo sin recubrimiento primera aplicación curado 28 días" |
+| "acabado brillante piso" | "intergard 740 epóxico brillante piso industrial" |
+| "protección contra fuego" / "resistencia al fuego" | "intumescente interchar protección pasiva contra incendios" |
 ══════════════════════════════════════════════════════════════════════════════
 
 SISTEMAS POR SUPERFICIE (referencia rápida — SIEMPRE consulta RAG para detalles):
@@ -13884,7 +13897,7 @@ SISTEMAS POR SUPERFICIE (referencia rápida — SIEMPRE consulta RAG para detall
 | Metal oxidado | Lija/disco flap/grata | Pintóxido (convertidor) → Corrotec (anticorrosivo) → Pintulux 3en1 (acabado) |
 | Metal nuevo/galvanizado | Lija fina | Wash Primer → Corrotec → Pintulux 3en1 |
 | Madera exterior (veta) | Ninguna (poro abierto) | Barnex Extra Protección o Wood Stain (SIN sellador antes) |
-| Madera interior | Lija fina | Pintulac (transparente) o Pintulux MP (color sólido) |
+| Madera interior | Lija fina | Barniz Marino/SD1 (transparente) o Pintulux/Doméstico (color sólido). ⛔ NO Pintulac |
 | Humedad interna | Raspar hasta revoque | Aquablock Ultra (brocha, 2 manos) → Estuco Acrílico → Viniltex |
 | Fachada con moho/humedad | Raspar + hipoclorito (1:8) | Pintuco Fill (lluvia directa) o Aquablock (capilaridad) → Estuco Exterior → Koraza |
 | Fachada sin humedad | Lijar/raspar | Estuco Exterior si grietas → Koraza |
@@ -13919,7 +13932,7 @@ JERARQUÍA DE PRODUCTOS:
 - Fachadas: Premium=Koraza → Tipo 1=Viniltex Advanced → Tipo 2=Intervinil → Tipo 3=Pinturama
 - Pisos: Canchas deportivas=Pintura Canchas → Garaje/parqueadero/residencial=Pintucoat → Industrial medio=Pintucoat/Intergard 740 → Industrial pesado=Intergard 2002+cuarzo
 - Madera ext transparente: Barnex Extra Protección o Wood Stain (SIN sellador)
-- Madera int color sólido: Esmalte Doméstico o Pintulux MP (NO Pintulac para marcos de calidad)
+- Madera int color sólido: Esmalte Doméstico o Pintulux MP (NUNCA Pintulac — no lo manejamos).
 - Interiores: Viniltex (premium) → Intervinil (intermedio) → Pinturama (económico)
 - Satinado: Viniltex Acriltex = la línea satinada. NUNCA Viniltex Mate cuando pidan satinado.
 - Venta cruzada solventes: Interthane→UFA151, Pintucoat→Thinner Epóxico, Tráfico→Thinner 21204
@@ -13933,7 +13946,7 @@ FAMILIAS DE PRODUCTO:
 • EPÓXICAS: Pintucoat (Pintuco) | Interseal, Intergard (International). Todos requieren catalizador.
 • INTERNATIONAL/MPY: Intergard→Interseal→Interthane/Interfine. Interchar=intumescente. SIEMPRE usa consultar_conocimiento_tecnico(marca='international').
 • ANTICORROSIVOS: Corrotec + Pintóxido (convertidor) + Wash Primer (galvanizado)
-• BARNICES: Pintulac (interior) | Barnex + Wood Stain (exterior). Para pérgola/deck: menciona AMBOS.
+• BARNICES: Barniz Marino / Barniz SD1 (interior) | Barnex + Wood Stain (exterior). Para pérgola/deck: Barnex o Wood Stain. ⛔ PINTULAC: NO lo manejamos, PROHIBIDO recomendar.
 • TRÁFICO: Pintutraf (demarcación vial). Koraza/Viniltex/Pintulux NO sirven para tráfico.
 • ABRASIVOS: Lija, Disco Flap, Grata, Removedor. Si piden tipo específico → consultar_inventario directo sin diagnóstico.
 
@@ -13971,7 +13984,7 @@ REGLAS MAESTRAS DE COMPORTAMIENTO:
 - Pintucoat = resistencia MEDIA. Para montacargas → Intergard 2002 + cuarzo.
 - Pintucoat en exterior → OBLIGA Interthane encima (epóxico entiza con sol).
 - Sellador para madera: NUNCA antes de Barnex/Wood Stain exterior (poro abierto, van directo).
-- Pintulac NO para marcos de calidad. Usar Doméstico o Pintulux MP.
+- Pintulac NO para marcos de calidad. NO MANEJAMOS Pintulac. Usar Doméstico o Pintulux MP o Barniz Marino.
 - Lija sustitución: 60/80→100/120, 220/320→180/400. NUNCA fina por gruesa.
 
 📦 PRODUCTOS ESPECIALIZADOS / ALTO DESEMPEÑO:
@@ -17937,10 +17950,24 @@ def generate_agent_reply_v2(
             "interior residencial",
         ),
         (
-            ["fachada", "muro exterior"],
-            ["pintucoat", "interseal", "intergard"],
-            "Koraza (fachada exterior) o Viniltex (exterior económico)",
+            ["fachada", "muro exterior", "pared exterior", "frente casa"],
+            ["pintucoat", "interseal", "intergard", "viniltex"],
+            "Koraza Sol y Lluvia o Koraza Elastomérica (fachada exterior)",
             "fachada exterior",
+        ),
+        # ── GUARDIA BARNEX vs INTERIOR ──
+        (
+            ["mesa interior", "mueble interior", "puerta interior", "closet", "mueble cocina"],
+            ["barnex"],
+            "Barniz Marino o Barniz SD1 (madera interior) o Esmalte Doméstico/Pintulux (color sólido)",
+            "madera interior",
+        ),
+        # ── GUARDIA INDUSTRIAL PESADO ──
+        (
+            ["montacargas", "estibador", "zorras", "carretas pesadas", "tráfico pesado"],
+            ["pintura canchas", "viniltex", "koraza"],
+            "Intergard 2002 + cuarzo (piso industrial tráfico pesado)",
+            "piso industrial pesado",
         ),
     ]
 
@@ -17993,6 +18020,36 @@ def generate_agent_reply_v2(
                     ps_retries -= 1
                 logger.info("GUARDIA PRODUCTO-SUPERFICIE retry completed: %dms", int((time.time() - t_ps) * 1000))
                 break  # Only fix the first mismatch found
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA PINTULAC: producto que NO manejamos. Si aparece en respuesta,
+    # reemplazar por la alternativa correcta.
+    # ══════════════════════════════════════════════════════════════════════
+    response_text_pintulac = (assistant_message.content or "").lower()
+    if "pintulac" in response_text_pintulac and not is_ensenar_msg:
+        logger.warning("GUARDIA PINTULAC: respuesta menciona Pintulac — producto NO manejado")
+        messages.append(assistant_message)
+        messages.append({
+            "role": "system",
+            "content": (
+                "⛔ ERROR DE PRODUCTO: Tu respuesta menciona 'Pintulac'. "
+                "Ferreinox NO maneja Pintulac en su portafolio. "
+                "REESCRIBE tu respuesta reemplazando TODAS las menciones de Pintulac: "
+                "- Para madera interior acabado transparente → Barniz Marino o Barniz SD1. "
+                "- Para madera interior color sólido → Esmalte Doméstico o Pintulux. "
+                "NUNCA menciones Pintulac al cliente."
+            ),
+        })
+        t_pl = time.time()
+        pl_response = client.chat.completions.create(
+            model=get_openai_model(),
+            messages=messages,
+            tools=AGENT_TOOLS,
+            tool_choice="auto",
+            temperature=0.3,
+        )
+        assistant_message = pl_response.choices[0].message
+        logger.info("GUARDIA PINTULAC retry completed: %dms", int((time.time() - t_pl) * 1000))
 
     # ══════════════════════════════════════════════════════════════════════
     # GUARDIA ENSEÑAR: si se guardó conocimiento experto pero la respuesta
