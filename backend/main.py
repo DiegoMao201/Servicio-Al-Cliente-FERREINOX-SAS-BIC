@@ -17768,21 +17768,26 @@ def generate_agent_reply_v2(
     # --- Detect B2B Fast-Track: internal employee + product list ---
     _is_internal = bool(internal_auth)
     if _is_internal and not is_simple_greeting(user_message):
-        _product_list_lines = [
-            ln.strip() for ln in (user_message or "").split("\n") if ln.strip()
-        ]
+        # Split by newlines, commas, " y " (as list separator) to handle WhatsApp single-line lists
+        _raw_msg = (user_message or "")
+        _segments = _re_trans.split(r'[\n,]|\s+y\s+(?=\d)', _raw_msg)
+        _product_list_lines = [seg.strip() for seg in _segments if seg and seg.strip()]
         _b2b_line_pattern = _re_trans.compile(
-            r'^\d+\s+(?:galones?|cuartos?|brochas?|unidades?|cajas?|paquetes?|rollos?|metros?|litros?|cuñetes?|tarros?)\b',
+            r'\d+\s+(?:galones?|cuartos?|brochas?|unidades?|cajas?|paquetes?|rollos?|metros?|litros?|cuñetes?|tarros?|cintas?|cerraduras?|latas?)\b',
             _re_trans.IGNORECASE,
         )
         _b2b_ref_pattern = _re_trans.compile(
-            r'^\d+\s+(?:gal(?:ones?)?|cuartos?|und?)\s+\w+',
+            r'\d+\s+(?:gal(?:ones?)?|cuartos?|und?|uds?)\s+\w+',
             _re_trans.IGNORECASE,
         )
         _b2b_matches = sum(
             1 for ln in _product_list_lines
             if _b2b_line_pattern.search(ln) or _b2b_ref_pattern.search(ln)
         )
+        # Also detect "pedido" keyword + at least 1 quantity mention as B2B signal
+        _has_pedido_kw = bool(_re_trans.search(r'(?:hazme|hacer|haz)\s+(?:un\s+)?pedido|pedido\s+r[aá]pido|pedir\b', _raw_msg, _re_trans.IGNORECASE))
+        if _has_pedido_kw and _b2b_matches >= 1:
+            _b2b_matches = max(_b2b_matches, 2)  # Force threshold
         if _b2b_matches >= 2:
             _is_b2b_fast_track = True
             logger.info("🚀 B2B FAST-TRACK activado: empleado interno con lista de %d productos", _b2b_matches)
@@ -18317,6 +18322,14 @@ def generate_agent_reply_v2(
             ["pintura canchas", "viniltex", "koraza"],
             "Intergard 2002 + cuarzo (piso industrial tráfico pesado)",
             "piso industrial pesado",
+        ),
+        # ── GUARDIA PISO GENÉRICO ──
+        (
+            ["piso", "suelo", "piso interior", "piso bodega", "piso concreto",
+             "piso cemento", "piso residencial", "piso comercial"],
+            ["viniltex", "koraza", "intervinil", "pinturama"],
+            "Pintucoat (epóxica residencial/comercial) o Pintura Canchas (deportivo) o Intergard 2002 (industrial pesado)",
+            "piso/suelo",
         ),
     ]
 
