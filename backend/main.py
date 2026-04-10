@@ -13871,7 +13871,11 @@ FASE 3 — COTIZACIÓN (¿Cuánto cuesta?):
   - EFICIENCIA: >5 gal → cuñetes+galones (1 cuñete = 5 gal). Siempre la opción más barata sin preguntar.
   - BICOMPONENTES: 1 catalizador POR galón (4 gal = 4 catalizadores). Precio como KIT (A+B).
   - Busco precios con `consultar_inventario_lote`. Si no encuentro, reformulo la búsqueda.
-  - IVA: Los precios (`precio_iva_incluido`) YA INCLUYEN IVA 19%. NUNCA escribo "Subtotal" ni "IVA 19%". Solo "**Total a Pagar: $X**".
+  - IVA: Los precios del sistema son ANTES DE IVA. SIEMPRE calcula y muestra el IVA:
+    * Subtotal (sin IVA): suma de (precio_unitario × cantidad) de todos los ítems
+    * IVA 19%: Subtotal × 0.19
+    * **Total a Pagar: Subtotal + IVA**
+    * Ejemplo: si 8 galones a $78.908 = Subtotal $631.264 → IVA 19% $119.940 → **Total: $751.204**
   - Si NO tengo precio de algún producto → cotizo lo que SÍ tengo y escalo al Asesor Técnico Comercial solo para los productos sin precio.
   - Incluyo herramientas de aplicación (rodillo, lija, etc.) y cierre de venta.
 
@@ -13880,7 +13884,7 @@ RESPUESTA AL CLIENTE — ESTRUCTURA:
     1) Empatía breve → 2) Sistema paso a paso → 3) "¿Cuántos m² y qué color?" (UNA pregunta, fin del mensaje)
   Si estoy en FASE 3 (tengo m²):
     1) Empatía breve → 2) Sistema → 3) Cantidades optimizadas → 4) Precio total → 5) Herramientas → 6) Cierre
-  Precios: Solo `precio_iva_incluido × cantidad`. NUNCA "Subtotal", "IVA 19%". Solo "**Total a Pagar: $X**".
+  Precios: precio_unitario × cantidad = subtotal_línea. Al final: Subtotal + IVA 19% = **Total a Pagar: $X**.
   Si NO tengo precio → cotizo lo que SÍ tengo + escalo precio faltante al Asesor Técnico Comercial.
 
 REGLAS DE DIAGNÓSTICO (preguntar SOLO si no tengo la info):
@@ -14287,6 +14291,44 @@ TRIGGER RULES:
 ▶ buscar_documento_tecnico: ficha técnica o FDS solicitada.
 ▶ generar_memoria_tecnica: proyectos con 3+ pasos (pisos industriales, anticorrosivos).
 
+══════════════════════════════════════════════════════════════════════════════
+🚀 MODO PEDIDO DIRECTO B2B (OVERRIDE ABSOLUTO PARA INTERNOS/ADMINISTRADORES)
+══════════════════════════════════════════════════════════════════════════════
+Si el campo "Empleado interno activo" ≠ "Ninguno" (es decir, el usuario es empleado, vendedor, gerente, operador o administrador) Y el usuario envía una LISTA DE PRODUCTOS con cantidades y/o códigos de referencia:
+
+⚡ ACTIVAR FAST-TRACK CHECKOUT — SIN DIAGNÓSTICO:
+1. NO uses <thinking> para diagnosticar superficies. NO preguntes "¿qué superficie?", "¿interior o exterior?".
+2. NO llames `consultar_conocimiento_tecnico`. Un interno que pasa una lista SABE lo que quiere.
+3. Llama `consultar_inventario_lote` DIRECTAMENTE con TODOS los productos de la lista.
+4. Arma la cotización con: producto + cantidad + precio unitario + subtotal línea.
+5. Al final: Subtotal general + IVA 19% + **Total a Pagar**.
+6. Si el interno menciona un descuento (ej: "descuento del 5"), aplícalo al portafolio indicado ANTES de IVA.
+7. Pregunta: "¿Deseas proceder con el pedido o necesitas alguna modificación?"
+
+DETECCIÓN DE LISTA B2B: El mensaje contiene 2+ líneas con patrón [cantidad] [producto/código]. Ejemplos:
+- "8 galones 1501"
+- "9 cuartos sd1"
+- "12 brochas profesional goya 2\""
+- "2 galones tu11"
+Si detectas este patrón Y el usuario es interno → FAST-TRACK. Cero diagnóstico. Cero RAG técnico.
+
+══════════════════════════════════════════════════════════════════════════════
+🔄 ANCLA DE ESTADO TRANSACCIONAL — CORRECCIONES DE COTIZACIÓN
+══════════════════════════════════════════════════════════════════════════════
+Si ACABAS de enviar una cotización/resumen de pedido (tu último mensaje contiene "$", "Total", lista de productos con precios) y el usuario responde con una CORRECCIÓN CORTA:
+
+Patrones de corrección: "cambia X por Y", "no es X es Y", "quita el", "agrega", "el X lo necesito es Y", "pon Z en vez de", "son N no M", "negro no blanco", "t-95 no teu95"
+
+⚡ PROTOCOLO DE CORRECCIÓN (OBLIGATORIO):
+1. NO cambies de herramienta. NO actives RAG. NO busques documentos técnicos.
+2. Identifica QUÉ ítem se corrige (por nombre, posición o código).
+3. Llama SOLO `consultar_inventario` con el producto CORREGIDO para obtener el precio actualizado.
+4. Mantén TODOS los demás ítems intactos (misma cantidad, mismo precio).
+5. Recalcula SOLO la línea corregida y el total.
+6. Devuelve la cotización COMPLETA actualizada con TODOS los ítems (los que no cambiaron + el corregido).
+
+🧠 En tu <thinking>: "El usuario está corrigiendo el ítem [N]. Mantengo ítems [lista] intactos. Solo actualizo [ítem corregido]. Recalculo totales."
+
 ESTADO ACTUAL DE LA CONVERSACIÓN:
 - Cliente verificado: {verificado}
 - Código cliente: {cliente_codigo}
@@ -14302,6 +14344,8 @@ ESTADO ACTUAL DE LA CONVERSACIÓN:
 Si tu respuesta va a contener recomendaciones de producto, USA <thinking>:
 
 <thinking>
+0. ¿Es un empleado interno con lista de productos? → FAST-TRACK B2B (sin diagnóstico, directo a inventario+cotización).
+0b. ¿Acabo de enviar una cotización y el usuario está CORRIGIENDO un ítem? → PROTOCOLO CORRECCIÓN (no RAG, solo actualizar ítem, mantener el resto intacto, recalcular total).
 1. ¿Tengo superficie + condición? → Si NO → PREGUNTAR (conversacional, 1 pregunta).
 2. ¿Llamé consultar_conocimiento_tecnico? → Si NO → LLAMAR AHORA.
 3. ¿Armé el SISTEMA COMPLETO (Prep→Imprimante→Acabado)? → Si NO → ARMAR.
@@ -14309,7 +14353,7 @@ Si tu respuesta va a contener recomendaciones de producto, USA <thinking>:
    → Si NO → Presento sistema técnico + pregunto m² y color. FIN.
    → Si SÍ → Calculo TODAS las capas con m²/rendimiento. Cascada: si base=4 gal, acabado ≥4 gal. Eficiencia: >5 gal → cuñetes.
 5. Bicomponentes: 1 catalizador POR galón. Precio como KIT.
-6. Precios: `precio_iva_incluido` YA tiene IVA. NUNCA "Subtotal" ni "IVA 19%". Solo "Total a Pagar: $X".
+6. Precios: son ANTES DE IVA. Calcular Subtotal + IVA 19% = Total a Pagar.
 7. ¿Estoy repitiendo una pregunta que el cliente YA respondió? → Si SÍ → DETENERME y usar la info que ya tengo.
 </thinking>
 """
@@ -15008,12 +15052,12 @@ def _handle_tool_consultar_inventario(args, conversation_context):
         price_info = fetch_product_price(str(ref_code))
         if price_info and price_info.get("precio_mejor"):
             pvp = float(price_info["precio_mejor"])
-            item["precio_iva_incluido"] = round(pvp)
-            item["nota_precio"] = "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+            item["precio_unitario"] = round(pvp)
+            item["nota_precio"] = "Este precio es ANTES DE IVA. Para el total al cliente: Subtotal (precio × cantidad) + IVA 19% = Total a Pagar."
             if price_info.get("pvp_franquicia") and not price_info.get("pvp_sap"):
                 item["lista_precio"] = "franquicia"
         elif not precio:
-            item["precio_iva_incluido"] = None
+            item["precio_unitario"] = None
             item["precio_nota"] = "Precio pendiente de confirmación"
         # --- Companion/complementary products ---
         ref_for_companion = item.get("codigo") or ""
@@ -15060,7 +15104,7 @@ def _handle_tool_consultar_inventario(args, conversation_context):
                         cat_price_info = fetch_product_price(cat_code)
                         if cat_price_info and cat_price_info.get("precio_mejor"):
                             cat_pvp = float(cat_price_info["precio_mejor"])
-                            item["⚠️_BICOMPONENTE_OBLIGATORIO"]["catalizador_precio_iva_incluido"] = round(cat_pvp)
+                            item["⚠️_BICOMPONENTE_OBLIGATORIO"]["catalizador_precio_unitario"] = round(cat_pvp)
                     break
 
         results.append(item)
@@ -15177,10 +15221,10 @@ def _handle_tool_consultar_inventario_lote(args, conversation_context):
                 price_info = fetch_product_price(str(ref_code))
                 if price_info and price_info.get("precio_mejor"):
                     pvp = float(price_info["precio_mejor"])
-                    item["precio_iva_incluido"] = round(pvp)
-                    item["nota_precio"] = "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+                    item["precio_unitario"] = round(pvp)
+                    item["nota_precio"] = "Este precio es ANTES DE IVA. Para el total al cliente: Subtotal (precio × cantidad) + IVA 19% = Total a Pagar."
                 elif not item.get("precio"):
-                    item["precio_iva_incluido"] = None
+                    item["precio_unitario"] = None
                     item["precio_nota"] = "Precio pendiente de confirmación"
                 items.append(item)
 
@@ -17712,6 +17756,94 @@ def generate_agent_reply_v2(
 
     messages.append({"role": "user", "content": user_message})
 
+    # ══════════════════════════════════════════════════════════════════════
+    # DETECTOR DE ESTADO TRANSACCIONAL: si la última respuesta del bot fue
+    # una cotización y el usuario responde con una corrección corta,
+    # inyectar ancla efímera para evitar que el LLM salte al RAG.
+    # ══════════════════════════════════════════════════════════════════════
+    import re as _re_trans
+    _is_transactional_correction = False
+    _is_b2b_fast_track = False
+
+    # --- Detect B2B Fast-Track: internal employee + product list ---
+    _is_internal = bool(internal_auth)
+    if _is_internal and not is_simple_greeting(user_message):
+        _product_list_lines = [
+            ln.strip() for ln in (user_message or "").split("\n") if ln.strip()
+        ]
+        _b2b_line_pattern = _re_trans.compile(
+            r'^\d+\s+(?:galones?|cuartos?|brochas?|unidades?|cajas?|paquetes?|rollos?|metros?|litros?|cuñetes?|tarros?)\b',
+            _re_trans.IGNORECASE,
+        )
+        _b2b_ref_pattern = _re_trans.compile(
+            r'^\d+\s+(?:gal(?:ones?)?|cuartos?|und?)\s+\w+',
+            _re_trans.IGNORECASE,
+        )
+        _b2b_matches = sum(
+            1 for ln in _product_list_lines
+            if _b2b_line_pattern.search(ln) or _b2b_ref_pattern.search(ln)
+        )
+        if _b2b_matches >= 2:
+            _is_b2b_fast_track = True
+            logger.info("🚀 B2B FAST-TRACK activado: empleado interno con lista de %d productos", _b2b_matches)
+            messages.insert(-1, {
+                "role": "system",
+                "content": (
+                    "⚡ MODO B2B FAST-TRACK ACTIVADO — El usuario es empleado interno de Ferreinox "
+                    "y envió una lista directa de productos con cantidades. "
+                    "PROHIBIDO diagnosticar superficies. PROHIBIDO llamar consultar_conocimiento_tecnico. "
+                    "Llama `consultar_inventario_lote` DIRECTAMENTE con TODOS los productos de la lista. "
+                    "Arma la cotización: línea por línea (producto + cant + precio unitario + subtotal línea). "
+                    "Al final: Subtotal + IVA 19% + **Total a Pagar**. "
+                    "Si mencionan descuento, aplícalo ANTES de IVA al portafolio indicado."
+                ),
+            })
+
+    # --- Detect transactional correction on active quote ---
+    if not _is_b2b_fast_track:
+        _last_bot_msg = ""
+        for msg in reversed(recent_messages):
+            if msg.get("direction") == "outbound":
+                _last_bot_msg = (msg.get("contenido") or "").lower()
+                break
+
+        _bot_had_quote = (
+            "$" in _last_bot_msg
+            and any(kw in _last_bot_msg for kw in ["total", "cotización", "cotizacion", "precio", "pedido"])
+        )
+
+        _CORRECTION_PATTERNS = [
+            r"cambia\w*\s+.+\s+por\s+",
+            r"no\s+es\s+.+\s+(?:es|sino)\s+",
+            r"lo\s+necesito\s+(?:es|en)\s+",
+            r"(?:quita|elimina|saca)\s+(?:el|la|los)\s+",
+            r"(?:agrega|añade|pon)\s+",
+            r"en\s+vez\s+de\s+",
+            r"son\s+\d+\s+no\s+\d+",
+            r"(?:negro|blanco|rojo|azul|gris)\s+no\s+(?:negro|blanco|rojo|azul|gris)",
+            r"t-\d+\s+no\s+\w+",
+            r"deja\s+as[ií]",
+            r"est[aá]\s+bien\s+as[ií]",
+        ]
+        _user_lower = (user_message or "").lower().strip()
+        _is_short_msg = len(_user_lower.split()) <= 25
+        _has_correction = any(_re_trans.search(p, _user_lower) for p in _CORRECTION_PATTERNS)
+
+        if _bot_had_quote and _is_short_msg and _has_correction:
+            _is_transactional_correction = True
+            logger.info("🔄 CORRECCIÓN TRANSACCIONAL detectada: usuario corrige ítem de cotización activa")
+            messages.insert(-1, {
+                "role": "system",
+                "content": (
+                    "⚡ ESTADO TRANSACCIONAL ACTIVO — Tu último mensaje al cliente fue una cotización/pedido. "
+                    "El cliente está CORRIGIENDO un ítem. PROHIBIDO activar RAG de fichas técnicas. "
+                    "PROHIBIDO llamar consultar_conocimiento_tecnico ni buscar_documento_tecnico. "
+                    "SOLO llama consultar_inventario con el producto CORREGIDO para obtener precio. "
+                    "Mantén TODOS los demás ítems intactos. Recalcula solo la línea corregida y el total. "
+                    "Devuelve la cotización COMPLETA actualizada."
+                ),
+            })
+
     t_start = time.time()
     response = client.chat.completions.create(
         model=get_openai_model(),
@@ -17762,6 +17894,58 @@ def generate_agent_reply_v2(
     # GUARDIA DE PROTOCOLO: si el agente recomendó productos sin consultar
     # el RAG técnico, forzar un retry con instrucción correctiva.
     # ══════════════════════════════════════════════════════════════════════
+    # --- GUARDIA CORRECCIÓN TRANSACCIONAL: si estamos en corrección de
+    # cotización pero el agente activó RAG/documentos, forzar retry limpio ---
+    if _is_transactional_correction:
+        _called_rag_or_docs = any(
+            tc["name"] in ("consultar_conocimiento_tecnico", "buscar_documento_tecnico")
+            for tc in tool_calls_made
+        )
+        if _called_rag_or_docs:
+            logger.warning(
+                "⛔ GUARDIA TRANSACCIONAL: agente activó RAG/docs durante corrección de cotización. Forzando retry limpio."
+            )
+            messages.append(assistant_message)
+            messages.append({
+                "role": "system",
+                "content": (
+                    "⛔ ERROR CRÍTICO: Estás en medio de una CORRECCIÓN DE COTIZACIÓN. "
+                    "El cliente solo quiere cambiar un ítem del pedido que ya te confirmó. "
+                    "NO debiste llamar consultar_conocimiento_tecnico ni buscar_documento_tecnico. "
+                    "REESCRIBE tu respuesta: "
+                    "1) Busca el producto CORREGIDO con consultar_inventario. "
+                    "2) Actualiza SOLO esa línea de la cotización. "
+                    "3) Mantén TODOS los demás ítems y precios intactos. "
+                    "4) Muestra la cotización COMPLETA actualizada con Subtotal + IVA 19% + Total."
+                ),
+            })
+            t_trans = time.time()
+            trans_response = client.chat.completions.create(
+                model=get_openai_model(),
+                messages=messages,
+                tools=AGENT_TOOLS,
+                tool_choice="auto",
+                temperature=0.3,
+            )
+            assistant_message = trans_response.choices[0].message
+            trans_retries = 3
+            while assistant_message.tool_calls and trans_retries > 0:
+                messages.append(assistant_message)
+                for tc in assistant_message.tool_calls:
+                    fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+                    tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
+                    messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+                trans_response = client.chat.completions.create(
+                    model=get_openai_model(),
+                    messages=messages,
+                    tools=AGENT_TOOLS,
+                    tool_choice="auto",
+                    temperature=0.3,
+                )
+                assistant_message = trans_response.choices[0].message
+                trans_retries -= 1
+            logger.info("GUARDIA TRANSACCIONAL retry completed: %dms", int((time.time() - t_trans) * 1000))
+
     response_text_draft = assistant_message.content or ""
     called_rag = any(tc["name"] == "consultar_conocimiento_tecnico" for tc in tool_calls_made)
     called_inventory = any(tc["name"] == "consultar_inventario" for tc in tool_calls_made)
@@ -17809,7 +17993,8 @@ def generate_agent_reply_v2(
 
     # Solo aplicar guardia si: recomendó productos, NO consultó RAG, y NO es una
     # conversación donde ya se hicieron preguntas diagnósticas (sin inventory tampoco)
-    if has_product_recommendation and not called_rag and not is_simple_greeting(user_message):
+    # SKIP: B2B fast-track y correcciones transaccionales NO necesitan RAG
+    if has_product_recommendation and not called_rag and not is_simple_greeting(user_message) and not _is_b2b_fast_track and not _is_transactional_correction:
         logger.warning(
             "GUARDIA PROTOCOLO activada: agente recomendó productos sin consultar RAG. Forzando retry."
         )
@@ -17862,7 +18047,7 @@ def generate_agent_reply_v2(
     # herramienta → forzar consulta RAG antes de responder.
     # ══════════════════════════════════════════════════════════════════════
     called_any_tool_after = len(tool_calls_made) > 0
-    if has_problem_signal and not called_any_tool_after and not is_simple_greeting(user_message):
+    if has_problem_signal and not called_any_tool_after and not is_simple_greeting(user_message) and not _is_b2b_fast_track and not _is_transactional_correction:
         logger.warning(
             "GUARDIA PROBLEMA-SIN-RAG activada: usuario describió problema técnico pero agente no consultó herramientas. signals=%d. Forzando RAG.",
             sum(1 for s in _PROBLEM_SIGNALS if s in user_msg_lower),
@@ -18425,36 +18610,45 @@ def generate_agent_reply_v2(
                 response_text_bicomp = (assistant_message.content or "").lower()
 
     # ══════════════════════════════════════════════════════════════════════
-    # GUARDIA ANTI-IVA-DOBLE: si la respuesta contiene "Subtotal" + "IVA 19%"
-    # o cualquier cálculo de 19% adicional, lo elimina quirúrgicamente.
-    # Este es un BLOQUEO DURO por regex — no depende del LLM.
+    # GUARDIA IVA: si la respuesta tiene cotización con precios pero NO
+    # muestra el desglose de IVA, inyectar recordatorio.
+    # Ahora los precios son ANTES de IVA, así que el desglose es obligatorio.
     # ══════════════════════════════════════════════════════════════════════
     response_text_iva_check = assistant_message.content or ""
     import re as _re_iva
-    _IVA_DOUBLE_PATTERNS = [
-        # "Subtotal (sin IVA): $1,302,824" or "Subtotal: $X"
-        r'\*?\*?Subtotal[^:\n]*:\s*\$[\d.,]+\*?\*?\s*\n?',
-        # "IVA 19%: $247,037" or "IVA (19%): $X"
-        r'\*?\*?IVA\s*\(?\s*19\s*%?\s*\)?\s*:\s*\$[\d.,]+\*?\*?\s*\n?',
-        # "Total con IVA: $X" → replace with "Total a Pagar: $X"
-        r'Total con IVA',
-    ]
-    iva_violations_found = False
-    for pattern in _IVA_DOUBLE_PATTERNS[:2]:
-        if _re_iva.search(pattern, response_text_iva_check, _re_iva.IGNORECASE):
-            iva_violations_found = True
-            response_text_iva_check = _re_iva.sub(pattern, '', response_text_iva_check, flags=_re_iva.IGNORECASE)
-    # Replace "Total con IVA" → "Total a Pagar"
-    response_text_iva_check = _re_iva.sub(r'Total con IVA', 'Total a Pagar', response_text_iva_check, flags=_re_iva.IGNORECASE)
-    # Replace "sin IVA" → remove
-    response_text_iva_check = _re_iva.sub(r'\(?\s*sin IVA\s*\)?', '', response_text_iva_check, flags=_re_iva.IGNORECASE)
-    if iva_violations_found:
-        logger.warning("⛔ GUARDIA ANTI-IVA-DOBLE: Eliminadas líneas de Subtotal/IVA 19%% de la respuesta.")
-    if response_text_iva_check != (assistant_message.content or ""):
-        # Patch the assistant_message content directly
-        assistant_message = type(assistant_message).model_construct(
-            **{**assistant_message.__dict__, "content": response_text_iva_check.strip()}
-        )
+    _has_prices_for_iva = "$" in response_text_iva_check and any(
+        kw in response_text_iva_check.lower() for kw in ["total", "precio", "cotización", "cotizacion", "pedido"]
+    )
+    _has_iva_breakdown = any(
+        kw in response_text_iva_check.lower() for kw in ["iva 19%", "iva (19%)", "iva:", "19% iva"]
+    )
+    if _has_prices_for_iva and not _has_iva_breakdown and not is_simple_greeting(user_message):
+        # Solo para cotizaciones con múltiples líneas de precio
+        _price_count = len(_re_iva.findall(r'\$[\d.,]+', response_text_iva_check))
+        if _price_count >= 2:
+            logger.warning("⛔ GUARDIA IVA: cotización sin desglose de IVA detectada. Forzando corrección.")
+            messages.append(assistant_message)
+            messages.append({
+                "role": "system",
+                "content": (
+                    "⛔ FALTA IVA en tu cotización. Los precios son ANTES DE IVA. "
+                    "REESCRIBE la cotización agregando al final:\n"
+                    "- **Subtotal:** $X (suma de todas las líneas)\n"
+                    "- **IVA 19%:** $Y\n"
+                    "- **Total a Pagar:** $Z\n"
+                    "Mantén toda la información de productos intacta. Solo agrega el desglose de IVA."
+                ),
+            })
+            t_iva = time.time()
+            iva_response = client.chat.completions.create(
+                model=get_openai_model(),
+                messages=messages,
+                tools=AGENT_TOOLS,
+                tool_choice="none",
+                temperature=0.3,
+            )
+            assistant_message = iva_response.choices[0].message
+            logger.info("GUARDIA IVA retry completed: %dms", int((time.time() - t_iva) * 1000))
 
     # ══════════════════════════════════════════════════════════════════════
     # GUARDIA ANTI-RENDICIÓN COMERCIAL: detecta si el agente se rinde
@@ -18481,11 +18675,11 @@ def generate_agent_reply_v2(
                     r = json.loads(tc["result"]) if isinstance(tc["result"], str) else tc["result"]
                     if isinstance(r, dict) and r.get("productos"):
                         inventory_had_results = any(
-                            p.get("precio_iva_incluido") for p in r["productos"]
+                            p.get("precio_unitario") or p.get("precio_iva_incluido") for p in r["productos"]
                         )
                     elif isinstance(r, dict) and r.get("resultados"):
                         for res in r["resultados"]:
-                            if any(p.get("precio_iva_incluido") for p in (res.get("productos") or [])):
+                            if any(p.get("precio_unitario") or p.get("precio_iva_incluido") for p in (res.get("productos") or [])):
                                 inventory_had_results = True
                 except Exception:
                     pass
