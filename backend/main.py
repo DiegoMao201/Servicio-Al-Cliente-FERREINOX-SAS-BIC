@@ -764,7 +764,7 @@ PINTUCO_PRODUCT_TAXONOMY = {
     "pisos": {
         "descripcion": "Pinturas especiales para pisos de concreto y cemento",
         "marcas": ["Pintura para Canchas", "Pintucoat", "Intergard 740", "Intergard 2002"],
-        "uso": "Pisos de concreto, andenes, garajes (Canchas). Pisos industriales de tráfico MEDIO acabado mate (Pintucoat). Pisos industriales acabado brillante resistencia media (Intergard 740). Pisos industriales alta resistencia con cuarzo (Intergard 2002 + Cuarzo ref 5891610).",
+        "uso": "Pisos de concreto canchas deportivas, senderos peatonales, ciclo rutas (Canchas). Garajes y parqueaderos residenciales (Pintucoat). Pisos industriales de tráfico MEDIO acabado mate (Pintucoat). Pisos industriales acabado brillante resistencia media (Intergard 740). Pisos industriales alta resistencia con cuarzo (Intergard 2002 + Cuarzo ref 5891610).",
     },
     "epoxicas": {
         "descripcion": "Recubrimientos de alto desempeño, dos componentes (resina + catalizador)",
@@ -888,31 +888,31 @@ PORTFOLIO_CATEGORY_MAP = {
     "impermeabilizar": ["pintuco fill", "impercoat", "aquablock", "koraza"],
 
     # ── PISOS ──
-    "pintura piso": ["pintura canchas", "pintucoat"],
-    "piso": ["pintura canchas", "pintucoat"],
-    "pisos": ["pintura canchas", "pintucoat"],
+    "pintura piso": ["pintucoat", "pintura canchas"],
+    "piso": ["pintucoat", "pintura canchas"],
+    "pisos": ["pintucoat", "pintura canchas"],
     "piso industrial": ["pintucoat", "intergard 740", "intergard 2002"],
-    "piso cemento": ["pintura canchas"],
-    "piso concreto": ["pintura canchas"],
+    "piso cemento": ["pintucoat"],
+    "piso concreto": ["pintucoat"],
     "piso trafico": ["pintucoat", "intergard 740", "intergard 2002"],
     "piso fabrica": ["intergard 2002", "pintucoat"],
-    "piso bodega": ["pintucoat", "intergard 740", "pintura canchas"],
-    "bodega": ["pintucoat", "intergard 740", "pintura canchas"],
-    "garaje": ["pintura canchas", "pintucoat"],
-    "anden": ["pintura canchas"],
-    "parqueadero": ["pintura canchas", "pintucoat", "pintura trafico"],
+    "piso bodega": ["pintucoat", "intergard 740"],
+    "bodega": ["pintucoat", "intergard 740"],
+    "garaje": ["pintucoat"],
+    "anden": ["pintucoat"],
+    "parqueadero": ["pintucoat", "pintura trafico"],
     "montacargas": ["intergard 2002"],
     "trafico pesado": ["intergard 2002"],
-    "piso garaje": ["pintura canchas", "pintucoat"],
+    "piso garaje": ["pintucoat"],
 
     # ── CANCHAS / DEMARCACIÓN ──
     "cancha": ["pintura canchas"],
     "canchas": ["pintura canchas"],
     "microfutbol": ["pintura canchas"],
     "demarcacion": ["pintutraf", "pintura trafico", "demarcacion vial"],
-    "trafico": ["pintutraf", "pintura trafico", "pintura canchas"],
+    "trafico": ["pintutraf", "pintura trafico"],
     "senalizacion": ["pintutraf", "pintura trafico"],
-    "lineas": ["pintutraf", "pintura trafico", "pintura canchas"],
+    "lineas": ["pintutraf", "pintura trafico"],
 
     # ── EPÓXICAS ──
     "epoxica": ["pintucoat", "interseal", "intergard", "epoxica"],
@@ -1206,9 +1206,9 @@ DIAGNOSTIC_QUESTION_TREE = {
                 "razon": "Intergard 740 es epóxico bicomponente de resistencia MEDIA con acabado BRILLANTE. "
                          "Ideal cuando el cliente quiere piso industrial con más brillo que el Pintucoat (que es mate). "
                          "Sistema: Interseal gris RAL 7038 (imprimante) → Intergard 740 (2-3 manos)."},
-            "residencial/liviano": {"producto": "pintura canchas", "confianza": "alta",
-                "razon": "Pintura para Canchas: acrílica monocomponente para garajes, andenes, canchas deportivas, patios. "
-                         "Más fácil de aplicar y más económica, pero NO resiste tráfico de montacargas."},
+            "residencial/liviano": {"producto": "pintucoat", "confianza": "alta",
+                "razon": "Pintucoat: epóxico bicomponente para garajes, andenes, parqueaderos. "
+                         "Resistente al tráfico vehicular liviano y medio. Pintura para Canchas es SOLO para canchas deportivas."},
             "cancha deportiva": {"producto": "pintura canchas", "confianza": "alta",
                 "razon": "Pintura para Canchas: acabado antideslizante, resistente al desgaste y UV. Ideal para canchas y andenes."},
             "piso viejo ya pintado": {"producto": "pintucoat", "confianza": "media",
@@ -1421,8 +1421,8 @@ PRODUCT_TECHNICAL_HARD_RULES = {
         "no_es_para": "NO es para pisos, NO es para piscinas, NO es para metal desnudo, NO es para inmersión en agua.",
     },
     "pintura canchas": {
-        "es_para": "Pintura para pisos de concreto: canchas deportivas, andenes, garajes, bodegas.",
-        "no_es_para": "NO es para tráfico vehicular pesado ni pisos industriales (para tráfico medio usar Pintucoat, para pesado Intergard 2002 + cuarzo).",
+        "es_para": "Pintura EXCLUSIVA para canchas deportivas, escenarios deportivos, senderos peatonales y ciclo rutas.",
+        "no_es_para": "NO es para garajes, NO es para parqueaderos, NO es para bodegas, NO es para tráfico vehicular. Para garajes usar Pintucoat, para industrial Intergard 2002 + cuarzo.",
     },
 }
 
@@ -13890,7 +13890,8 @@ SISTEMAS POR SUPERFICIE (referencia rápida — SIEMPRE consulta RAG para detall
 | Fachada sin humedad | Lijar/raspar | Estuco Exterior si grietas → Koraza |
 | Techo goteras concreto | Limpiar | Malla si grietas → Pintuco Fill |
 | Techo fibrocemento/eternit | Limpiar | Pintuco Fill → Koraza (AMBOS obligatorios) |
-| Piso residencial/cancha/garaje | Lija mecánica | Pintura para Canchas (acrílica) |
+| Piso cancha deportiva/sendero/cicloruta | Lija mecánica | Pintura para Canchas (acrílica) |
+| Piso garaje/parqueadero/andén residencial | Lija mecánica / escarificado | Pintucoat (epóxica) |
 | Piso industrial medio | Escarificado/granallado | Interseal gris RAL 7038 (imprimante) → Pintucoat (mate) o Intergard 740 (brillante) |
 | Piso industrial pesado | Escarificado/granallado | Interseal RAL 7038 → Intergard 2002 + cuarzo ref 5891610 |
 | Interiores | Lija de agua 150-220 | Viniltex (premium) / Intervinil (intermedio) / Pinturama (económico) |
@@ -13906,7 +13907,7 @@ IMPORTANTE: Estos son guías de referencia. Para CADA caso real, llama `consulta
 | Aquablock Ultra | 18-20 m²/gal (2 manos) | Aplicar con BROCHA bien cargada |
 | Pintuco Fill | 12-15 m²/gal (2 manos) | Ejemplo: 60m² → 5 gal |
 | Estuco Acrílico Ext | 4-6 m²/gal | Según irregularidad |
-| Pintura Canchas | 8-10 m²/gal (2 manos) | Para pisos residenciales/canchas |
+| Pintura Canchas | 8-10 m²/gal (2 manos) | SOLO canchas deportivas/senderos/ciclorutas |
 | Pintucoat | 8-10 m²/gal (2 manos) | Epóxica industrial |
 | Interseal 670HS | 12-16 m²/gal | |
 | Intergard 2002 | 12-16 m²/gal | |
@@ -13916,7 +13917,7 @@ IMPORTANTE: Estos son guías de referencia. Para CADA caso real, llama `consulta
 
 JERARQUÍA DE PRODUCTOS:
 - Fachadas: Premium=Koraza → Tipo 1=Viniltex Advanced → Tipo 2=Intervinil → Tipo 3=Pinturama
-- Pisos: Residencial=Pintura Canchas → Industrial medio=Pintucoat/Intergard 740 → Industrial pesado=Intergard 2002+cuarzo
+- Pisos: Canchas deportivas=Pintura Canchas → Garaje/parqueadero/residencial=Pintucoat → Industrial medio=Pintucoat/Intergard 740 → Industrial pesado=Intergard 2002+cuarzo
 - Madera ext transparente: Barnex Extra Protección o Wood Stain (SIN sellador)
 - Madera int color sólido: Esmalte Doméstico o Pintulux MP (NO Pintulac para marcos de calidad)
 - Interiores: Viniltex (premium) → Intervinil (intermedio) → Pinturama (económico)
@@ -13928,7 +13929,7 @@ FAMILIAS DE PRODUCTO:
 • ESMALTES (metal/madera): Pintulux 3en1 (exterior) | Doméstico (interior). Si dicen "esmalte": menciona AMBOS.
   ⚠️ Pintulux ≠ poliuretano. Pintulux=esmalte alquídico residencial. Interthane=poliuretano industrial.
 • FACHADAS: Koraza (SOLO exterior) | Pintuco Fill (barrera lluvia) | Aquablock (barrera capilaridad) | Sellamur
-• PISOS: Pintura Canchas (residencial) | Pintucoat (industrial). Pintulux blanco (código 11): MATE(10) vs BRILLANTE(11) → pregunta.
+• PISOS: Pintura Canchas (SOLO canchas deportivas/senderos/ciclorutas) | Pintucoat (garajes, parqueaderos, pisos industriales). Pintulux blanco (código 11): MATE(10) vs BRILLANTE(11) → pregunta.
 • EPÓXICAS: Pintucoat (Pintuco) | Interseal, Intergard (International). Todos requieren catalizador.
 • INTERNATIONAL/MPY: Intergard→Interseal→Interthane/Interfine. Interchar=intumescente. SIEMPRE usa consultar_conocimiento_tecnico(marca='international').
 • ANTICORROSIVOS: Corrotec + Pintóxido (convertidor) + Wash Primer (galvanizado)
@@ -13999,7 +14000,7 @@ REGLAS TÉCNICAS POR PRODUCTO:
 - AQUABLOCK: Barrera humedad, USO PRINCIPAL muros interiores con filtración/capilaridad. Para fachadas con lluvia directa → Pintuco Fill.
 - PINTUCO FILL: Impermeabilizante techos/cubiertas/terrazas. NO piscinas.
 - INTERTHANE: ÚNICO poliuretano del portafolio. BICOMPONENTE: A + catalizador PHA046. Galón: A 3.7L + PHA046 0.5L.
-- PINTURA CANCHAS: Acrílica para pisos residenciales, garajes, andenes, canchas deportivas. NO confundir con Pintucoat (industrial).
+- PINTURA CANCHAS: Acrílica EXCLUSIVA para canchas deportivas, escenarios deportivos, senderos peatonales y ciclo rutas. PROHIBIDO recomendar para garajes, parqueaderos, bodegas o andenes vehiculares → usar Pintucoat.
 - PINTUTRAF: Demarcación vial. Koraza/Viniltex/Pintulux NO sirven para tráfico.
 
 REGLA BICOMPONENTES (NIVEL ROJO — INVIOLABLE):
@@ -17920,14 +17921,14 @@ def generate_agent_reply_v2(
         (
             ["cancha", "canchas", "cancha deportiva"],
             ["pintucoat", "interseal", "intergard"],
-            "Pintura para Canchas (acrílica, para pisos residenciales/deportivos)",
+            "Pintura para Canchas (acrílica, SOLO para canchas deportivas/senderos/ciclorutas)",
             "cancha deportiva",
         ),
         (
-            ["garaje", "garage", "andén", "anden", "residencial"],
-            ["pintucoat", "interseal", "intergard 2002"],
-            "Pintura para Canchas (acrílica, tráfico liviano/residencial)",
-            "piso residencial",
+            ["garaje", "garage", "andén", "anden", "parqueadero"],
+            ["pintura canchas", "interseal", "intergard 2002"],
+            "Pintucoat (epóxica, para garajes/parqueaderos/andenes)",
+            "piso garaje/parqueadero",
         ),
         (
             ["sala", "habitación", "habitacion", "cuarto", "alcoba", "muro interior"],

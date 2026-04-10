@@ -84,11 +84,11 @@ RAG_TESTS = [
 
     # ═══ PISOS ═══
     ("piso de bodega industrial con tráfico de montacargas", ["pintucoat"], ["koraza"], "piso"),
-    ("garaje residencial piso de concreto", ["pintura canchas", "pintucoat"], ["koraza"], "piso"),
+    ("garaje residencial piso de concreto", ["pintucoat"], ["koraza"], "piso"),
     ("cancha de microfútbol hay que pintarla", ["pintura canchas"], ["koraza"], "piso"),
-    ("andén de concreto exterior", ["pintura canchas"], [], "piso"),
+    ("andén de concreto exterior", ["pintucoat"], [], "piso"),
     ("piso de planta de producción con estibadoras pesadas", ["pintucoat"], ["koraza"], "piso"),
-    ("rampa de parqueadero con tráfico vehicular", ["pintura canchas", "pintucoat"], [], "piso"),
+    ("rampa de parqueadero con tráfico vehicular", ["pintucoat"], [], "piso"),
 
     # ═══ INTERIORES ═══
     ("pintar sala de la casa, calidad premium lavable", ["viniltex"], ["koraza"], "interior"),
@@ -114,7 +114,7 @@ RAG_TESTS = [
     ("necesito pintar un tobogán metálico de un parque", ["corrotec", "pintulux"], [], "especial"),
     ("baranda de hierro que está oxidada a la intemperie", ["corrotec", "pintoxido"], [], "especial"),
     ("juego infantil de metal al aire libre", ["corrotec", "pintulux"], [], "especial"),
-    ("señalización vial en pavimento de parqueadero", ["pintura canchas", "pintura trafico"], [], "especial"),
+    ("señalización vial en pavimento de parqueadero", ["pintura trafico", "pintutraf"], [], "especial"),
 
     # ═══ PISCINAS (GAP - NO VENDEN) ═══
     ("pintura especial para piscina de concreto", [], [], "gap_piscina"),
@@ -142,7 +142,7 @@ RAG_TESTS = [
     ("la casa se está cayendo a pedazos por el aguacero", ["koraza"], [], "jerga"),
     ("le está saliendo como un polvo blanco a la pared", ["aquablock", "estuco anti humedad"], [], "jerga"),
     ("el hierro se lo está comiendo el óxido", ["corrotec", "pintoxido"], [], "jerga"),
-    ("qué le echo al piso del parqueadero para que quede bonito", ["pintucoat", "pintura canchas"], [], "jerga"),
+    ("qué le echo al piso del parqueadero para que quede bonito", ["pintucoat"], [], "jerga"),
     ("la terraza se me llueve toda y se moja abajo", ["pintuco fill", "impercoat"], [], "jerga"),
     ("esa reja ya está muy fea, cómo la recupero", ["corrotec", "pintoxido"], [], "jerga"),
     ("las carretas pesadas me están dañando el piso", ["pintucoat"], [], "jerga"),
@@ -289,7 +289,7 @@ AGENT_CONVERSATIONS = [
         ],
     },
     {
-        "name": "PISO GARAJE → DIAGNÓSTICO TRÁFICO → CANCHAS o PINTUCOAT",
+        "name": "PISO GARAJE → DIAGNÓSTICO TRÁFICO → PINTUCOAT",
         "category": "diagnostico_tecnico",
         "turns": [
             (
@@ -301,8 +301,8 @@ AGENT_CONVERSATIONS = [
             (
                 "Es tráfico liviano, solo carros livianos de la casa",
                 {
-                    "tools_called": ["consultar_conocimiento_tecnico"],
-                    "response_contains": ["Canchas", "canchas", "Pintucoat", "pintucoat"],
+                    "response_contains": ["Pintucoat", "pintucoat"],
+                    "response_excludes": ["Canchas", "canchas"],
                 },
             ),
         ],
@@ -444,7 +444,7 @@ AGENT_CONVERSATIONS = [
                 "Necesito pintar la señalización de un parqueadero, líneas amarillas y blancas en el piso",
                 {
                     "tools_called": ["consultar_conocimiento_tecnico"],
-                    "response_contains": ["tráfico", "trafico", "canchas", "Canchas", "señalización", "demarcación"],
+                    "response_contains": ["tráfico", "trafico", "señalización", "demarcación", "Pintutraf", "pintutraf"],
                 },
             ),
         ],
