@@ -18788,6 +18788,9 @@ def generate_agent_reply_v2(
         "quiero comprar", "necesito comprar", "cotízame", "cotizame",
         "cuanto cuesta", "cuánto cuesta", "hazme pedido", "pedir",
         "dame precio", "precio de", "dame cotización", "dame cotizacion",
+        "revisa precios", "revísame precios", "revisame precios",
+        "dale precios", "muéstrame precio", "muestrame precio",
+        "revisa disponibilidad", "revisa precio",
     ])
     if _is_tech_question and (_has_cotizacion or _is_long_price_response) and _no_buy_signal and not is_simple_greeting(user_message):
         logger.warning(
@@ -18804,8 +18807,9 @@ def generate_agent_reply_v2(
                 "pero tu respuesta incluye PRECIOS y COTIZACIÓN. "
                 "El cliente NO pidió precios ni cotización. "
                 "REESCRIBE tu respuesta respondiendo SOLO el dato técnico que preguntó. "
-                "Usa la información de `consultar_conocimiento_tecnico`. "
-                "NO incluyas precios, inventario ni cotización. "
+                f"La pregunta del cliente fue: '{user_message}'. "
+                "Usa la información de `consultar_conocimiento_tecnico` que ya tienes en contexto. "
+                "PROHIBIDO incluir el símbolo $, precios, inventario, cotización o totales. "
                 "Si el dato técnico no está disponible, dilo honestamente."
             ),
         })
@@ -18813,27 +18817,29 @@ def generate_agent_reply_v2(
         tech_response = client.chat.completions.create(
             model=get_openai_model(),
             messages=messages,
-            tools=AGENT_TOOLS,
-            tool_choice="auto",
-            temperature=0.3,
+            tool_choice="none",
+            temperature=0.2,
         )
         assistant_message = tech_response.choices[0].message
-        tech_retries = 2
-        while assistant_message.tool_calls and tech_retries > 0:
+        # Post-check: si TODAVÍA tiene precios, forzar una última reescritura ultra-restrictiva
+        _recheck_resp = (assistant_message.content or "").lower()
+        if "$" in _recheck_resp and sum(1 for s in _COTIZACION_SIGNALS if s in _recheck_resp) >= 2:
+            logger.warning("GUARDIA PREGUNTA-TÉCNICA: retry TODAVÍA tiene precios. Forzando 2do intento.")
             messages.append(assistant_message)
-            for tc in assistant_message.tool_calls:
-                fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
-                tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
-                messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+            messages.append({
+                "role": "system",
+                "content": (
+                    "⛔ TODAVÍA hay precios en tu respuesta. ELIMINA TODO precio, $, cotización. "
+                    "Responde ÚNICAMENTE con el dato técnico solicitado en 1-3 párrafos."
+                ),
+            })
             tech_response = client.chat.completions.create(
                 model=get_openai_model(),
                 messages=messages,
-                tools=AGENT_TOOLS,
-                tool_choice="auto",
-                temperature=0.3,
+                tool_choice="none",
+                temperature=0.1,
             )
             assistant_message = tech_response.choices[0].message
-            tech_retries -= 1
         logger.info("GUARDIA PREGUNTA-TÉCNICA retry completed: %dms", int((time.time() - t_tech) * 1000))
 
     # ══════════════════════════════════════════════════════════════════════
