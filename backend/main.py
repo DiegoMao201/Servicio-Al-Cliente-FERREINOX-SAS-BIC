@@ -17663,6 +17663,29 @@ def generate_agent_reply_v2(
     response_text_draft = assistant_message.content or ""
     called_rag = any(tc["name"] == "consultar_conocimiento_tecnico" for tc in tool_calls_made)
     called_inventory = any(tc["name"] == "consultar_inventario" for tc in tool_calls_made)
+    called_any_tool = len(tool_calls_made) > 0
+
+    # ── SEÑALES DE PROBLEMA TÉCNICO en el INPUT del usuario ──
+    _PROBLEM_SIGNALS = [
+        # Superficies / sustratos
+        "piso", "fachada", "techo", "muro", "pared", "reja", "estructura",
+        "cielo raso", "bodega", "planta", "nave", "tanque", "cubierta",
+        "terraza", "baño", "cocina", "garaje", "parqueadero", "cancha",
+        # Síntomas
+        "humedad", "filtra", "gotea", "moho", "hongo", "salitre", "ampolla",
+        "pela", "descascar", "oxid", "corrosión", "corrosion", "deteriora",
+        "agua", "mancha", "sopla", "entiza", "grieta", "fisura", "llueve",
+        # Jerga colombiana
+        "carreta", "zorra", "estibador", "montacarga", "aguacero",
+        # Actividades técnicas
+        "pintar", "impermeabilizar", "proteger", "recubrir", "barnizar",
+        "señalización", "señalizacion", "demarcación", "demarcacion",
+        # Sustancias / ambientes
+        "químic", "quimic", "humo", "grasa", "aceite", "ácido", "acido",
+        "industrial", "tráfico", "trafico",
+    ]
+    user_msg_lower = user_message.lower()
+    has_problem_signal = sum(1 for s in _PROBLEM_SIGNALS if s in user_msg_lower) >= 2
 
     # Detectar si la respuesta contiene recomendaciones de producto sin RAG
     _PRODUCT_SIGNALS = [
@@ -17726,6 +17749,58 @@ def generate_agent_reply_v2(
             assistant_message = retry_response.choices[0].message
             retry_iterations -= 1
         logger.info("GUARDIA retry completed: %dms", int((time.time() - t_retry) * 1000))
+        tool_names = [tc["name"] for tc in tool_calls_made]
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA PROBLEMA-SIN-RAG: si el usuario describió un problema técnico
+    # (superficie + síntoma/actividad) pero el agente NO llamó ninguna
+    # herramienta → forzar consulta RAG antes de responder.
+    # ══════════════════════════════════════════════════════════════════════
+    called_any_tool_after = len(tool_calls_made) > 0
+    if has_problem_signal and not called_any_tool_after and not is_simple_greeting(user_message):
+        logger.warning(
+            "GUARDIA PROBLEMA-SIN-RAG activada: usuario describió problema técnico pero agente no consultó herramientas. signals=%d. Forzando RAG.",
+            sum(1 for s in _PROBLEM_SIGNALS if s in user_msg_lower),
+        )
+        messages.append(assistant_message)
+        messages.append({
+            "role": "system",
+            "content": (
+                "⛔ VIOLACIÓN DE PROTOCOLO: El cliente describió un problema técnico concreto "
+                "(superficie, síntoma o actividad) pero tú NO llamaste ninguna herramienta. "
+                "DEBES llamar `consultar_conocimiento_tecnico` AHORA con la consulta del cliente. "
+                "Tu respuesta anterior NO será enviada. Vuelve a empezar: "
+                "1) Llama `consultar_conocimiento_tecnico` con los datos del cliente. "
+                "2) Si el cliente ya dio suficiente contexto, recomienda basándote en el RAG. "
+                "3) Si necesitas más datos, haz UNA sola pregunta y TAMBIÉN llama al RAG."
+            ),
+        })
+        t_retry2 = time.time()
+        retry_response2 = client.chat.completions.create(
+            model=get_openai_model(),
+            messages=messages,
+            tools=AGENT_TOOLS,
+            tool_choice="auto",
+            temperature=0.3,
+        )
+        assistant_message = retry_response2.choices[0].message
+        retry_iterations2 = 3
+        while assistant_message.tool_calls and retry_iterations2 > 0:
+            messages.append(assistant_message)
+            for tc in assistant_message.tool_calls:
+                fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+                tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
+                messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+            retry_response2 = client.chat.completions.create(
+                model=get_openai_model(),
+                messages=messages,
+                tools=AGENT_TOOLS,
+                tool_choice="auto",
+                temperature=0.3,
+            )
+            assistant_message = retry_response2.choices[0].message
+            retry_iterations2 -= 1
+        logger.info("GUARDIA PROBLEMA-SIN-RAG retry completed: %dms", int((time.time() - t_retry2) * 1000))
         tool_names = [tc["name"] for tc in tool_calls_made]
 
     # ══════════════════════════════════════════════════════════════════════
