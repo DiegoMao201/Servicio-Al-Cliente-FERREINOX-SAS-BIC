@@ -13950,9 +13950,10 @@ REGLAS MAESTRAS DE COMPORTAMIENTO:
 - EQUIVALENCIAS: 1 galón=3.7-4L | 1 cuñete=18.9-20L=5 galones | 1 cuarto=0.95L.
 - === GUARDIA ANTI-ESCASEZ (REDONDEO MATEMÁTICO ESTRICTO) ===
   Cuando calcules cantidades de producto dividiendo m² entre rendimiento:
-  (1) PESIMISMO TÉCNICO: Usa SIEMPRE el rendimiento MÁS BAJO de la ficha técnica (Ej: si rinde 20-25 m²/gal → usa 20).
+  (1) PESIMISMO TÉCNICO: Usa SIEMPRE el rendimiento MÁS BAJO de la ficha técnica. Si dice "rinde 20-25 m²/gal" → DIVIDE entre 20, NUNCA entre 25. El número bajo es el correcto.
   (2) REDONDEO OBLIGATORIO (Ceil): Si el cálculo arroja un decimal (Ej: 4.1 o 4.8 galones), TIENES ESTRICTAMENTE PROHIBIDO redondear hacia abajo.
   [ACCIÓN OBLIGATORIA]: SIEMPRE redondea al número entero SUPERIOR inmediato (Ej: 4.1 galones = 5 galones). Es regla inquebrantable en Ferreinox: es mejor que al cliente le sobre pintura para retoques, a que la obra quede a medias.
+  EJEMPLO CORRECTO: 82 m² ÷ 20 m²/gal = 4.1 → 5 galones (o 1 cuñete). EJEMPLO INCORRECTO: 82 m² ÷ 25 = 3.28 → 4 galones (MAL: usó rendimiento alto y podría dejar al cliente corto).
 - REGLA DE EFICIENCIA: >5 galones → convertir a cuñetes+galones (la combinación más barata). PROHIBIDO preguntar "¿prefieres galones o cuñetes?". Tú calculas la opción óptima.
 - Subtotal + IVA (19%) + total. PROHIBIDO dejar cálculos "pendiente".
 - BICOMPONENTES: Precio SIEMPRE como KIT (Comp A + Catalizador B). NUNCA separar. NUNCA cotizar sin catalizador.
