@@ -18817,6 +18817,7 @@ def generate_agent_reply_v2(
         tech_response = client.chat.completions.create(
             model=get_openai_model(),
             messages=messages,
+            tools=AGENT_TOOLS,
             tool_choice="none",
             temperature=0.2,
         )
@@ -18836,6 +18837,7 @@ def generate_agent_reply_v2(
             tech_response = client.chat.completions.create(
                 model=get_openai_model(),
                 messages=messages,
+                tools=AGENT_TOOLS,
                 tool_choice="none",
                 temperature=0.1,
             )
