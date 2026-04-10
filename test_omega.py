@@ -79,12 +79,12 @@ def _agent_request(payload, retries=MAX_RETRIES):
                 time.sleep(wait)
             continue
         except requests.exceptions.HTTPError as e:
-            # 524 = Cloudflare timeout (>100s) — retry once
-            if hasattr(e, 'response') and e.response is not None and e.response.status_code == 524:
+            # 524 = Cloudflare timeout, 502/503 = server restarting — retry
+            if hasattr(e, 'response') and e.response is not None and e.response.status_code in (502, 503, 524):
                 last_error = e
                 if attempt < retries:
-                    wait = 10
-                    print(f"  ⏳ Cloudflare 524 timeout (intento {attempt}/{retries}), reintentando en {wait}s...")
+                    wait = 15 if e.response.status_code == 524 else 10
+                    print(f"  ⏳ HTTP {e.response.status_code} (intento {attempt}/{retries}), reintentando en {wait}s...")
                     time.sleep(wait)
                 continue
             raise e
