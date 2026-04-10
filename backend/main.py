@@ -690,14 +690,38 @@ PORTFOLIO_ALIASES = {
     "goya profesional": ["goya profesional", "brocha profesional", "profesional goya", "brocha profe goya", "brocha prof goya", "goya profe", "goya prof"],
     "rodillo": ["rodillo", "rodillos", "felpa", "mini rodillo"],
     "lija": ["lija", "lijas", "papel lija", "lija agua", "lija al agua"],
-    # ── ADHESIVOS / PEGANTES ──
-    "abracol": ["abracol"],
-    "yale": ["yale"],
-    "goya": ["goya"],
+    # ── ADHESIVOS / PEGANTES (Abracol catalog) ──
+    "abracol": ["abracol", "lija abracol", "disco abracol", "fibrodisco abracol"],
+    "yale": ["yale", "cerradura yale", "candado yale", "manija yale", "antipanico yale", "barra antipanico"],
+    "goya": ["goya", "brocha goya", "rodillo goya", "bandeja goya", "goya popular", "goya profesional"],
     "smith": ["smith", "cinta smith", "tirro smith"],
     "afix": ["afix", "silicona afix", "espuma afix", "epoxi afix"],
-    "segurex": ["segurex"],
-    "artecola": ["artecola"],
+    "segurex": ["segurex", "cerradura segurex", "candado segurex", "manija segurex", "cerrojo segurex"],
+    "artecola": ["artecola", "pegante artecola", "adhesivo artecola", "cola artecola"],
+    "tekbond": ["tekbond", "aerosol tekbond", "adhesivo tekbond", "silicona tekbond", "cinta tekbond", "espuma tekbond"],
+    "induma": ["induma", "bisagra induma", "pasador induma", "balde induma", "herraje induma"],
+    "norton": ["norton", "disco norton", "lija norton", "disco corte norton", "disco desbaste norton"],
+    "carborundum": ["carborundum", "beartex", "disco carborundum", "lija carborundum"],
+    "phillips": ["phillips", "cerradura phillips", "manija phillips", "cerrojo phillips"],
+    "inafer": ["inafer", "bisagra inafer", "herraje inafer"],
+    "delta": ["delta", "pegante delta", "adhesivo delta", "madera delta"],
+    # ── CERRADURAS / SEGURIDAD (extendido Abracol catalog) ──
+    "candado": ["candado", "candado yale", "candado segurex", "candado dorado"],
+    "cerrojo": ["cerrojo", "cerrojo yale", "cerrojo segurex", "cerrojo doble"],
+    "manija": ["manija", "manija yale", "manija phillips", "manija segurex", "manija puerta"],
+    "antipanico": ["antipanico", "barra antipanico", "antipanico yale", "barra de panico"],
+    # ── ABRASIVOS (extendido Abracol catalog) ──
+    "fibrodisco": ["fibrodisco", "fibrodiscos", "disco fibra", "disco lija"],
+    "disco corte": ["disco corte", "disco de corte", "disco corte norton", "disco corte metal"],
+    "disco desbaste": ["disco desbaste", "disco de desbaste", "disco desbaste norton"],
+    "copa": ["copa", "grata copa", "copa abrasivo"],
+    "lija roja": ["lija roja", "lija al seco", "lija seco"],
+    "beartex": ["beartex", "beartex norton", "abrasivo no tejido"],
+    # ── CINTAS / ADHESIVOS (extendido Abracol catalog) ──
+    "cinta enmascarar": ["cinta enmascarar", "cinta masking", "masking tape", "cinta pintor", "tirro"],
+    "cinta teflon": ["cinta teflon", "teflon", "cinta teflón"],
+    "silicona": ["silicona", "silicona afix", "silicona tekbond", "sellador silicona"],
+    "espuma poliuretano": ["espuma poliuretano", "espuma expansiva", "espuma tekbond", "espuma afix"],
     "pl285": ["pl285", "pl 285", "pegante pl285", "pegante madera"],
     "montana": ["montana", "montana 94", "aerosol montana"],
     # ── DISOLVENTES / COMPLEMENTARIOS ──
@@ -1102,6 +1126,52 @@ PORTFOLIO_CATEGORY_MAP = {
     "verdoso": ["aquablock", "viniltex"],
     "mohoso": ["aquablock", "viniltex"],
     "moho": ["aquablock", "viniltex"],
+
+    # ── CERRADURAS / SEGURIDAD (Abracol: Yale, Segurex, Phillips) ──
+    "cerradura": ["cerradura", "cerradura yale", "cerradura segurex", "cerradura phillips"],
+    "candado": ["candado", "candado yale", "candado segurex"],
+    "chapa": ["cerradura", "cerradura yale", "cerradura segurex"],
+    "manija": ["manija", "manija yale", "manija phillips", "manija segurex"],
+    "antipanico": ["antipanico", "barra antipanico", "yale antipanico"],
+    "barra antipanico": ["antipanico", "barra antipanico", "yale antipanico"],
+    "cerrojo": ["cerrojo", "cerrojo yale", "cerrojo segurex"],
+    "pasador": ["pasador", "pasador induma", "pasador puerta"],
+
+    # ── FERRETERÍA / HERRAJES (Abracol: Induma, Inafer) ──
+    "bisagra": ["bisagra", "bisagra induma", "bisagra inafer"],
+    "herraje": ["herraje", "bisagra", "pasador", "induma", "inafer"],
+    "balde": ["balde", "balde induma", "balde construccion"],
+
+    # ── ADHESIVOS / SELLADORES (Abracol: Tekbond, Artecola, Delta, Afix) ──
+    "adhesivo": ["adhesivo", "pegante", "tekbond", "artecola", "delta", "afix"],
+    "pegante": ["pegante", "adhesivo", "tekbond", "artecola", "delta"],
+    "pegante madera": ["pegante madera", "artecola", "delta", "pl285"],
+    "cola": ["cola", "pegante", "artecola", "delta"],
+    "silicona": ["silicona", "silicona afix", "silicona tekbond", "sellador silicona"],
+    "espuma expansiva": ["espuma poliuretano", "espuma tekbond", "espuma afix"],
+    "cinta": ["cinta", "cinta enmascarar", "cinta smith", "cinta teflon", "cinta tekbond"],
+    "masking": ["cinta enmascarar", "masking tape", "tirro", "cinta smith"],
+    "tirro": ["cinta enmascarar", "masking tape", "tirro", "cinta smith"],
+
+    # ── ABRASIVOS DETALLADOS (Abracol: Abracol, Norton, Carborundum) ──
+    "lija agua": ["lija agua", "lija al agua", "lija abracol"],
+    "lija seco": ["lija roja", "lija al seco", "lija seco abracol"],
+    "fibrodisco": ["fibrodisco", "disco fibra", "fibrodiscos abracol"],
+    "disco corte": ["disco corte", "disco corte norton", "disco corte metal"],
+    "disco desbaste": ["disco desbaste", "disco desbaste norton"],
+    "copa": ["copa", "grata copa", "copa abrasivo"],
+    "beartex": ["beartex", "abrasivo no tejido", "beartex norton"],
+
+    # ── AEROSOLES DETALLADOS (Abracol: Tekbond) ──
+    "aerosol alta temperatura": ["aerosol alta temperatura", "tekbond alta temperatura", "pintura alta temp"],
+    "spray metalizado": ["aerosol metalizado", "tekbond metalizado", "spray metalizado"],
+
+    # ── HERRAMIENTAS DE PINTURA (Abracol: Goya, Atlas) ──
+    "brocha": ["brocha", "brocha goya", "brocha atlas", "pincel"],
+    "rodillo": ["rodillo", "rodillo goya", "rodillo atlas", "felpa", "mini rodillo"],
+    "bandeja": ["bandeja", "bandeja goya", "bandeja pintura"],
+    "espátula": ["espatula", "espatula goya", "espatula atlas"],
+    "herramientas pintura": ["brocha", "rodillo", "bandeja", "espatula", "goya", "atlas"],
 }
 
 # ── Árbol de preguntas diagnósticas basadas en conocimiento técnico ──────
@@ -5635,6 +5705,7 @@ def fetch_smart_product_rows(
             f"""
             SELECT p.producto_codigo, p.referencia, p.descripcion, p.marca, p.departamentos, p.stock_total, p.costo_promedio_und, p.stock_por_tienda,
                    p.linea_clasificacion, p.marca_clasificacion, p.familia_clasificacion, p.aplicacion_clasificacion, p.cat_producto, p.descripcion_ebs, p.tipo_articulo,
+                   p.nombre_comercial_abracol, p.familia_abracol, p.descripcion_larga_abracol, p.portafolio_abracol,
                    ({match_score_sql}) AS match_score,
                    COALESCE(rot.rotation_score, 0) AS rotation_score
             FROM mv_productos p
@@ -12684,6 +12755,7 @@ def fetch_products_from_catalog(connection, where_clause: str, params: dict, mat
             f"""
             SELECT producto_codigo, referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
                    linea_clasificacion, marca_clasificacion, familia_clasificacion, aplicacion_clasificacion, cat_producto, descripcion_ebs, tipo_articulo,
+                   nombre_comercial_abracol, familia_abracol, descripcion_larga_abracol, portafolio_abracol,
                    ({match_score_sql}) AS match_score
             FROM mv_productos
             WHERE {where_clause}
@@ -14898,6 +14970,22 @@ def _handle_tool_consultar_inventario(args, conversation_context):
             clasificacion["tipo"] = _ta
         if clasificacion:
             item["clasificacion"] = clasificacion
+        # Abracol enrichment: nombre comercial, familia, descripcion larga, portafolio
+        _ab_nc = row.get("nombre_comercial_abracol")
+        _ab_fa = row.get("familia_abracol")
+        _ab_dl = row.get("descripcion_larga_abracol")
+        _ab_pf = row.get("portafolio_abracol")
+        if _ab_nc or _ab_fa or _ab_dl:
+            abracol = {}
+            if _ab_nc:
+                abracol["nombre_comercial"] = _ab_nc
+            if _ab_fa:
+                abracol["familia"] = _ab_fa
+            if _ab_dl:
+                abracol["descripcion_detallada"] = _ab_dl
+            if _ab_pf:
+                abracol["portafolio"] = _ab_pf
+            item["info_catalogo_complementario"] = abracol
         stock = parse_numeric_value(row.get("stock_total"))
         # Solo indicar disponible/no disponible, NUNCA cantidades exactas
         item["disponible"] = (stock or 0) > 0
@@ -19110,6 +19198,130 @@ async def admin_importar_articulos_maestro(
             os.unlink(tmp.name)
         except OSError:
             pass
+
+
+# ADMIN: Importar catálogo Abracol desde Dropbox
+@app.post("/admin/importar-catalogo-abracol")
+async def admin_importar_catalogo_abracol(
+    request: Request,
+    x_admin_key: str = Header(None, alias="x-admin-key"),
+):
+    """
+    Importa el catálogo enriquecido de Abracol desde Dropbox (hoja Productos).
+    Enriquece search_blob de mv_productos con nombre_comercial, familia y descripcion_larga.
+
+    curl -X POST https://apicrm.datovatenexuspro.com/admin/importar-catalogo-abracol \\
+         -H 'x-admin-key: ferreinox_admin_2024'
+    """
+    if x_admin_key != os.getenv("ADMIN_API_KEY", "ferreinox_admin_2024"):
+        raise HTTPException(status_code=403, detail="Admin key inválida")
+
+    try:
+        from io import BytesIO
+        import pandas as pd
+        from frontend.config import get_dropbox_sources
+        from frontend.dropbox_sync_service import get_dropbox_client
+
+        # 1. Download from Dropbox
+        sources = get_dropbox_sources()
+        rotacion = None
+        for key, cfg in sources.items():
+            if "rotaci" in key.lower():
+                rotacion = cfg
+                break
+        if not rotacion:
+            raise HTTPException(status_code=500, detail="No se encontró config dropbox_rotacion")
+
+        dbx = get_dropbox_client(rotacion)
+        folder = rotacion.get("folder", "/data")
+        result = dbx.files_list_folder(folder)
+        abracol_path = None
+        for entry in result.entries:
+            if "abracol" in entry.name.lower() and entry.name.lower().endswith((".xlsx", ".xls")):
+                abracol_path = entry.path_lower
+                break
+        if not abracol_path:
+            raise HTTPException(status_code=404, detail=f"No se encontró archivo Abracol en {folder}")
+
+        _, response = dbx.files_download(abracol_path)
+        df = pd.read_excel(BytesIO(response.content), sheet_name="Productos", dtype=str)
+
+        # 2. Upsert into DB
+        engine = get_engine()
+        upsert_sql = """
+        INSERT INTO public.abracol_productos (
+            codigo, nombre_comercial, descripcion, grano, medida,
+            familia, empaque, portafolio, descripcion_larga, search_keywords
+        ) VALUES (
+            :codigo, :nombre_comercial, :descripcion, :grano, :medida,
+            :familia, :empaque, :portafolio, :descripcion_larga, :search_keywords
+        )
+        ON CONFLICT (codigo) DO UPDATE SET
+            nombre_comercial = EXCLUDED.nombre_comercial,
+            descripcion = EXCLUDED.descripcion,
+            grano = EXCLUDED.grano, medida = EXCLUDED.medida,
+            familia = EXCLUDED.familia, empaque = EXCLUDED.empaque,
+            portafolio = EXCLUDED.portafolio,
+            descripcion_larga = EXCLUDED.descripcion_larga,
+            search_keywords = EXCLUDED.search_keywords,
+            updated_at = now();
+        """
+
+        rows = []
+        for _, row in df.iterrows():
+            codigo = (row.get("CODIGO") or "").strip()
+            if not codigo:
+                continue
+            sk_parts = [row.get(c) or "" for c in ["NOMBRE COMERCIAL", "DESCRIPCION", "FAMILIA", "PORTAFOLIO", "GRANO", "MEDIDA", "DESCRIPCION_LARGA"]]
+            rows.append({
+                "codigo": codigo,
+                "nombre_comercial": (row.get("NOMBRE COMERCIAL") or "").strip() or None,
+                "descripcion": (row.get("DESCRIPCION") or "").strip() or None,
+                "grano": (row.get("GRANO") or "").strip() or None,
+                "medida": (row.get("MEDIDA") or "").strip() or None,
+                "familia": (row.get("FAMILIA") or "").strip() or None,
+                "empaque": (row.get("EMPAQUE") or "").strip() or None,
+                "portafolio": (row.get("PORTAFOLIO") or "").strip() or None,
+                "descripcion_larga": (row.get("DESCRIPCION_LARGA") or "").strip() or None,
+                "search_keywords": " ".join(p.strip() for p in sk_parts if p.strip()).lower(),
+            })
+
+        with engine.begin() as conn:
+            # Ensure table exists
+            conn.execute(text("""
+                CREATE TABLE IF NOT EXISTS public.abracol_productos (
+                    codigo varchar(20) PRIMARY KEY,
+                    nombre_comercial text, descripcion text, grano varchar(60),
+                    medida varchar(120), familia varchar(200), empaque varchar(20),
+                    portafolio varchar(60), descripcion_larga text, search_keywords text,
+                    created_at timestamptz DEFAULT now(), updated_at timestamptz DEFAULT now()
+                )
+            """))
+            # Batch upsert
+            for i in range(0, len(rows), 200):
+                conn.execute(text(upsert_sql), rows[i:i+200])
+            # Refresh search matview to include new Abracol data
+            try:
+                conn.execute(text("REFRESH MATERIALIZED VIEW mv_productos"))
+            except Exception:
+                pass
+
+        portafolios = {}
+        for r in rows:
+            p = r.get("portafolio") or "SIN_PORTAFOLIO"
+            portafolios[p] = portafolios.get(p, 0) + 1
+
+        return {
+            "exito": True,
+            "productos_importados": len(rows),
+            "portafolios": portafolios,
+            "mensaje": f"Se importaron {len(rows)} productos Abracol y se refrescó mv_productos.",
+        }
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Error importando catálogo Abracol: {exc}") from exc
 
 
 @app.get("/agent/clientes/{cliente_codigo}/contexto")

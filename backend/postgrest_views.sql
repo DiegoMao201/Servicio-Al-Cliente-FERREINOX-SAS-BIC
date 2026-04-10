@@ -743,70 +743,107 @@ WHERE s.producto_codigo IS NOT NULL;
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_rotation_prod ON mv_product_rotation (producto_codigo);
 
 -- ══════════════════════════════════════════════════════════════════════════════
+-- ══════════════════════════════════════════════════════════════════════════════
+-- abracol_productos: Enriched catalog from Abracol Excel (Dropbox)
+-- Created here to ensure LEFT JOIN in mv_productos works even before import
+-- ══════════════════════════════════════════════════════════════════════════════
+CREATE TABLE IF NOT EXISTS public.abracol_productos (
+    codigo varchar(20) PRIMARY KEY,
+    nombre_comercial text,
+    descripcion text,
+    grano varchar(60),
+    medida varchar(120),
+    familia varchar(200),
+    empaque varchar(20),
+    portafolio varchar(60),
+    descripcion_larga text,
+    search_keywords text,
+    created_at timestamptz DEFAULT now(),
+    updated_at timestamptz DEFAULT now()
+);
+
 -- mv_productos: Materialized product catalog for fast ILIKE search
 -- Pre-computes search_blob/search_compact + GIN trigram index
+-- Enriched with Abracol catalog (nombre_comercial, familia_abracol, descripcion_larga)
 -- Refresh: REFRESH MATERIALIZED VIEW CONCURRENTLY mv_productos;
 -- ══════════════════════════════════════════════════════════════════════════════
 DROP MATERIALIZED VIEW IF EXISTS mv_productos CASCADE;
 CREATE MATERIALIZED VIEW mv_productos AS
 SELECT
-    referencia_normalizada AS producto_codigo,
-    MAX(referencia) AS referencia,
-    MAX(descripcion) AS descripcion,
-    MAX(descripcion_normalizada) AS descripcion_normalizada,
-    MAX(marca) AS marca,
-    MAX(marca_normalizada) AS marca_normalizada,
-    STRING_AGG(DISTINCT departamento, ', ' ORDER BY departamento) AS departamentos,
-    COALESCE(SUM(stock_disponible), 0) AS stock_total,
-    AVG(costo_promedio_und) AS costo_promedio_und,
-    COALESCE(SUM(unidades_vendidas), 0) AS unidades_vendidas,
-    AVG(lead_time_proveedor) AS lead_time_proveedor,
-    AVG(historial_ventas) AS historial_ventas,
+    inv.referencia_normalizada AS producto_codigo,
+    MAX(inv.referencia) AS referencia,
+    MAX(inv.descripcion) AS descripcion,
+    MAX(inv.descripcion_normalizada) AS descripcion_normalizada,
+    MAX(inv.marca) AS marca,
+    MAX(inv.marca_normalizada) AS marca_normalizada,
+    STRING_AGG(DISTINCT inv.departamento, ', ' ORDER BY inv.departamento) AS departamentos,
+    COALESCE(SUM(inv.stock_disponible), 0) AS stock_total,
+    AVG(inv.costo_promedio_und) AS costo_promedio_und,
+    COALESCE(SUM(inv.unidades_vendidas), 0) AS unidades_vendidas,
+    AVG(inv.lead_time_proveedor) AS lead_time_proveedor,
+    AVG(inv.historial_ventas) AS historial_ventas,
     STRING_AGG(
-        almacen_nombre || ': ' || COALESCE(stock_disponible::text, '0'),
+        inv.almacen_nombre || ': ' || COALESCE(inv.stock_disponible::text, '0'),
         '; '
-        ORDER BY almacen_nombre
-    ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
+        ORDER BY inv.almacen_nombre
+    ) FILTER (WHERE COALESCE(inv.stock_disponible, 0) > 0) AS stock_por_tienda,
+    -- search_blob enriched with Abracol catalog metadata
     public.fn_normalize_text(
-        COALESCE(MAX(descripcion), '') || ' ' ||
-        COALESCE(MAX(referencia), '') || ' ' ||
-        COALESCE(MAX(marca), '') || ' ' ||
-        COALESCE(STRING_AGG(DISTINCT departamento, ' ' ORDER BY departamento), '') || ' ' ||
-        REPLACE(COALESCE(MAX(descripcion), ''), '-', ' ') || ' ' ||
-        REPLACE(COALESCE(MAX(referencia), ''), '-', ' ') || ' ' ||
-        REPLACE(COALESCE(MAX(descripcion), ''), '/', ' ') || ' ' ||
-        REPLACE(COALESCE(MAX(referencia), ''), '/', ' ') || ' ' ||
-        COALESCE(MAX(linea_clasificacion), '') || ' ' ||
-        COALESCE(MAX(sublinea_clasificacion), '') || ' ' ||
-        COALESCE(MAX(marca_clasificacion), '') || ' ' ||
-        COALESCE(MAX(familia_clasificacion), '') || ' ' ||
-        COALESCE(MAX(subfamilia_clasificacion), '') || ' ' ||
-        COALESCE(MAX(aplicacion_clasificacion), '') || ' ' ||
-        COALESCE(MAX(cat_producto), '') || ' ' ||
-        COALESCE(MAX(descripcion_ebs), '') || ' ' ||
-        COALESCE(MAX(tipo_articulo), '')
+        COALESCE(MAX(inv.descripcion), '') || ' ' ||
+        COALESCE(MAX(inv.referencia), '') || ' ' ||
+        COALESCE(MAX(inv.marca), '') || ' ' ||
+        COALESCE(STRING_AGG(DISTINCT inv.departamento, ' ' ORDER BY inv.departamento), '') || ' ' ||
+        REPLACE(COALESCE(MAX(inv.descripcion), ''), '-', ' ') || ' ' ||
+        REPLACE(COALESCE(MAX(inv.referencia), ''), '-', ' ') || ' ' ||
+        REPLACE(COALESCE(MAX(inv.descripcion), ''), '/', ' ') || ' ' ||
+        REPLACE(COALESCE(MAX(inv.referencia), ''), '/', ' ') || ' ' ||
+        COALESCE(MAX(inv.linea_clasificacion), '') || ' ' ||
+        COALESCE(MAX(inv.sublinea_clasificacion), '') || ' ' ||
+        COALESCE(MAX(inv.marca_clasificacion), '') || ' ' ||
+        COALESCE(MAX(inv.familia_clasificacion), '') || ' ' ||
+        COALESCE(MAX(inv.subfamilia_clasificacion), '') || ' ' ||
+        COALESCE(MAX(inv.aplicacion_clasificacion), '') || ' ' ||
+        COALESCE(MAX(inv.cat_producto), '') || ' ' ||
+        COALESCE(MAX(inv.descripcion_ebs), '') || ' ' ||
+        COALESCE(MAX(inv.tipo_articulo), '') || ' ' ||
+        -- Abracol enrichment: nombre comercial + familia + descripcion larga + portafolio
+        COALESCE(MAX(ab.nombre_comercial), '') || ' ' ||
+        COALESCE(MAX(ab.familia), '') || ' ' ||
+        COALESCE(MAX(ab.descripcion_larga), '') || ' ' ||
+        COALESCE(MAX(ab.portafolio), '') || ' ' ||
+        COALESCE(MAX(ab.grano), '') || ' ' ||
+        COALESCE(MAX(ab.medida), '')
     ) AS search_blob,
     public.fn_keep_alnum(
-        COALESCE(MAX(descripcion), '') || ' ' ||
-        COALESCE(MAX(referencia), '') || ' ' ||
-        COALESCE(MAX(marca), '') || ' ' ||
-        COALESCE(MAX(familia_clasificacion), '') || ' ' ||
-        COALESCE(MAX(descripcion_ebs), '') || ' ' ||
-        COALESCE(MAX(cat_producto), '') || ' ' ||
-        REPLACE(COALESCE(MAX(descripcion), ''), '-', '') || ' ' ||
-        REPLACE(COALESCE(MAX(descripcion), ''), ' ', '')
+        COALESCE(MAX(inv.descripcion), '') || ' ' ||
+        COALESCE(MAX(inv.referencia), '') || ' ' ||
+        COALESCE(MAX(inv.marca), '') || ' ' ||
+        COALESCE(MAX(inv.familia_clasificacion), '') || ' ' ||
+        COALESCE(MAX(inv.descripcion_ebs), '') || ' ' ||
+        COALESCE(MAX(inv.cat_producto), '') || ' ' ||
+        REPLACE(COALESCE(MAX(inv.descripcion), ''), '-', '') || ' ' ||
+        REPLACE(COALESCE(MAX(inv.descripcion), ''), ' ', '') || ' ' ||
+        -- Abracol compact: nombre comercial + familia
+        COALESCE(MAX(ab.nombre_comercial), '') || ' ' ||
+        COALESCE(MAX(ab.familia), '')
     ) AS search_compact,
-    MAX(linea_clasificacion) AS linea_clasificacion,
-    MAX(sublinea_clasificacion) AS sublinea_clasificacion,
-    MAX(marca_clasificacion) AS marca_clasificacion,
-    MAX(familia_clasificacion) AS familia_clasificacion,
-    MAX(aplicacion_clasificacion) AS aplicacion_clasificacion,
-    MAX(cat_producto) AS cat_producto,
-    MAX(descripcion_ebs) AS descripcion_ebs,
-    MAX(tipo_articulo) AS tipo_articulo
-FROM public.vw_inventario_agente
+    MAX(inv.linea_clasificacion) AS linea_clasificacion,
+    MAX(inv.sublinea_clasificacion) AS sublinea_clasificacion,
+    MAX(inv.marca_clasificacion) AS marca_clasificacion,
+    MAX(inv.familia_clasificacion) AS familia_clasificacion,
+    MAX(inv.aplicacion_clasificacion) AS aplicacion_clasificacion,
+    MAX(inv.cat_producto) AS cat_producto,
+    MAX(inv.descripcion_ebs) AS descripcion_ebs,
+    MAX(inv.tipo_articulo) AS tipo_articulo,
+    -- Abracol enrichment columns
+    MAX(ab.nombre_comercial) AS nombre_comercial_abracol,
+    MAX(ab.familia) AS familia_abracol,
+    MAX(ab.descripcion_larga) AS descripcion_larga_abracol,
+    MAX(ab.portafolio) AS portafolio_abracol
+FROM public.vw_inventario_agente inv
+LEFT JOIN public.abracol_productos ab ON ab.codigo = inv.referencia
 GROUP BY
-    referencia_normalizada;
+    inv.referencia_normalizada;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mv_productos_codigo ON mv_productos (producto_codigo);
 CREATE INDEX IF NOT EXISTS idx_mv_productos_search_blob_trgm ON mv_productos USING GIN (search_blob gin_trgm_ops);
