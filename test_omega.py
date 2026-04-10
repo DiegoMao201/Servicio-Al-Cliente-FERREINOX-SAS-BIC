@@ -68,7 +68,16 @@ def _agent_request(payload, retries=MAX_RETRIES):
             resp.raise_for_status()
             data = resp.json()
             if data.get("error"):
-                raise RuntimeError(data["error"])
+                err_msg = str(data["error"])
+                # 429 rate limit — retry after short wait
+                if "rate_limit" in err_msg or "429" in err_msg:
+                    last_error = RuntimeError(err_msg)
+                    if attempt < retries:
+                        wait = 8
+                        print(f"  ⏳ Rate limit 429 (intento {attempt}/{retries}), reintentando en {wait}s...")
+                        time.sleep(wait)
+                    continue
+                raise RuntimeError(err_msg)
             elapsed_ms = int((time.time() - t0) * 1000)
             return data.get("result") or {}, elapsed_ms
         except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
