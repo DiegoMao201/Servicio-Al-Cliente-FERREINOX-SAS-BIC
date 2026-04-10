@@ -1,0 +1,56 @@
+{
+  "query": "tiempo de secado entre manos de pintucoat epóxico",
+  "response": {
+    "query": "tiempo de secado entre manos de pintucoat epóxico",
+    "resultados": [
+      {
+        "archivo": "corrotec-primer-epoxico-10070-13350.pdf",
+        "familia": "corrotec-primer-epoxico-10070-13350",
+        "similitud": 0.7073,
+        "texto": "[PRODUCTO: corrotec-primer-epoxico-10070-13350] [MARCA: Pintuco]\n[SECCIÓN: Secamiento segundas]\n\nmanos(horas)"
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.7043,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: Tiempo de secamiento Segundas manos]\n\n2 horas"
+      },
+      {
+        "archivo": "PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO.pdf",
+        "familia": "PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO",
+        "similitud": 0.6987,
+        "texto": "[PRODUCTO: PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO] [MARCA: Pintuco]\n[SECCIÓN: M A N T E N I M I E N T O Y M A R I N A S VENTAJAS]\n\nRápido secado:\n•Al tacto de 30 a 45 minutos.\n•Segundas manos 2 horas y secado total 5\nhoras.\nRelación de mezcla 1:1, presentación en ¼ de\ngalón, galón y cuñete de 5 galones.\nSobre el primer epóxico de rápido secado se\npueden aplicar acabados:\n•Alquidicos (después de 6 horas)\n•Acrílicas de rápido secado\n•Epoxicos (Pintucoat®)\n•Esmaltes Poliuretanos PRIMER EPÓXI"
+      },
+      {
+        "archivo": "CORROTEC EPOXI ZINC 2K 10073.pdf",
+        "familia": "CORROTEC EPOXI ZINC 2K 10073",
+        "similitud": 0.6889,
+        "texto": "[PRODUCTO: CORROTEC EPOXI ZINC 2K 10073] [MARCA: Pintuco]\n[SECCIÓN: Secamiento segundas]\n\nmanos(horas)"
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.6882,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: Secamiento al tacto]\n\nSecamiento al manejo ( 25°C y 60% H.R. ) | 1 - 2 horas\n4 - 6 horas\nTiempo de secamiento Segundas manos | 2 horas\nTiempo de secamiento a 25°C Aplicar vinilos o esmaltes | 24 horas"
+      },
+      {
+        "archivo": "PRIMER EPOXI RAPIDO SECADO 50RS.pdf",
+        "familia": "PRIMER EPOXI RAPIDO SECADO 50RS",
+        "similitud": 0.6873,
+        "texto": "[PRODUCTO: PRIMER EPOXI RAPIDO SECADO 50RS] [MARCA: Pintuco]\n[SECCIÓN: Este producto sólo debe ser diluido con los diluyentes International]\n\ne\nrevuelve muy bien con una espátula hasta obtener una mezcla uniforme. El\ntiempo de secado al tacto es de 20 minutos, entre manos (capas) es de 2 a 3\nhoras y el tiempo de secado total es de 72 horas a una temperatura de 25 °C.\nPara el lavado de equipos utilice el International Ref. 21204 o GTA007.\n\nPara obtener un rendimiento óptimo, se recomienda que la "
+      }
+    ],
+    "productos_candidatos": [
+      "corrotec-primer-epoxico-10070-13350",
+      "IMPERCOAT 7A",
+      "PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO",
+      "CORROTEC EPOXI ZINC 2K 10073",
+      "pintucoat",
+      "corrotec",
+      "impercoat",
+      "epoxica industrial",
+      "anticorrosiva epoxica",
+      "viniltex"
+    ]
+  }
+}

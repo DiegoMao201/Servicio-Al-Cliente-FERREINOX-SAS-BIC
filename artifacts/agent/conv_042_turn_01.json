@@ -1,0 +1,16 @@
+{
+  "user": "Hola buenos días",
+  "result": {
+    "response_text": "¡Bienvenido a Ferreinox! Soy FERRO, tu Asistente Técnico de IA. ¿Qué tienes en mente hoy?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": []
+    },
+    "is_farewell": false
+  }
+}

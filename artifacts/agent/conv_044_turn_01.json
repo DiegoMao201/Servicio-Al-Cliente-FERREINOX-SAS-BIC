@@ -1,0 +1,19 @@
+{
+  "user": "¿Ustedes venden cemento o arena?",
+  "result": {
+    "response_text": "En Ferreinox nos especializamos en recubrimientos, soluciones constructivas y ferretería especializada, pero no manejamos cemento ni arena. Si necesitas ayuda con algún proyecto específico relacionado con recubrimientos o pintura, ¡aquí estoy para ayudarte!",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.75,
+      "level": "alta",
+      "signals": [
+        "med:no manejamos",
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  }
+}

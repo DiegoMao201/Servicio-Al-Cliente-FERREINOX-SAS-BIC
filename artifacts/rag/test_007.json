@@ -1,58 +1,64 @@
 {
-  "query": "fachada deteriorada por lluvia y sol, se pela",
+  "query": "muro de contención enterrado filtra agua",
   "response": {
-    "query": "fachada deteriorada por lluvia y sol, se pela",
+    "query": "muro de contención enterrado filtra agua",
     "resultados": [
       {
-        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
-        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
-        "similitud": 0.608,
-        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6898,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: DESCRIPCIÓN]\n\nAQUABLOCK® ULTRA es un impermeabilizante acrílico\nbase agua de alto desempeño para uso interior y exterior,\nposee resinas acrílicas, fungicidas y micro partículas que\npenetran el sustrato, lo sellan e inhiben el paso de la\nhumedad\npor\ncapilaridad\no\npresión\nnegativa,\nAQUABLOCK® ULTRA genera triple protección gracias a\nsu\ntecnología\nSellamur®\nque\nle\npermite\nsellar,\nimpermeabilizar y pintar en un solo paso y que le\nproporciona\nuna\npotente resisten"
       },
       {
-        "archivo": "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE.pdf",
-        "familia": "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE",
-        "similitud": 0.6048,
-        "texto": "[PRODUCTO: FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.689,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: Aqua block ultra]\n\nSella, impermeabiliza y pinta"
       },
       {
-        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
-        "familia": "KORAZA PRO 750 ELASTOMERICA",
-        "similitud": 0.5954,
-        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas, patios y terrazas revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar y tejas. Para el Sistema de Junta Perdida en fachadas\nfibrocemento."
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6501,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: Se usa como tratamiento correctivo y preventivo de]\n\nhumedades por nivel freático o presión negativa en\nmuros de contención, sótanos, bodegas, cuartos útiles o\nviviendas. Funciona como una pintura impermeable de\nalta blancura, para sellar y proteger contra la humedad\nparedes y muros interiores o exteriores que pueden estar\nexpuestos a contacto directo con la tierra en al menos\nuna de sus caras, o donde se presente aparición de\nhumedades en muros causados por"
       },
       {
-        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
-        "familia": "KORAZA PRO 750 ELASTOMERICA",
-        "similitud": 0.5788,
-        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nKoraza® PRO Elastomérica, es una Pintura Exterior de Alta Resistencia, base agua, fabricada a partir de polímeros\n100% acrílicos de acabado mate y alta elongación, lo cual permite que el acabado se desempeñe en forma elástica\nconservando su forma sin romperse, permitiendo ocultar fisuras hasta de 1 milímetro. Forma una barrera plástica\nque la hace impermeable a la lluvia y resistente a los rayos del sol. Koraza® PRO"
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.5246,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: PRODUCTOS COMPLEMENTARIOS]\n\n• Sellamur 3 en 1: Impermeabilizante de humedad freatica o ascendente"
       },
       {
-        "archivo": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA.pdf",
-        "familia": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA",
-        "similitud": 0.569,
-        "texto": "[PRODUCTO: ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA] [MARCA: Pintuco]\n[SECCIÓN: Resiste condiciones climáticas tropicales]\n\nadversas (humedad, altas temperaturas,\nbrisa\nmarina,\nsalitre,\nprecipitaciones\nfrecuentes, etc.)\n•"
+        "archivo": "FDS - SELLOMAX ANTI ALCALINO.pdf",
+        "familia": "FDS - SELLOMAX ANTI ALCALINO",
+        "similitud": 0.5045,
+        "texto": "[PRODUCTO: FDS - SELLOMAX ANTI ALCALINO]\n[SECCIÓN: Suelo húmedo]\n\nSí"
       },
       {
-        "archivo": "KORAZA 5.pdf",
-        "familia": "KORAZA 5",
-        "similitud": 0.5617,
-        "texto": "[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas y patios; revocados y\nestucados, en bloque a la vista, ladrillo sin esmaltar, tejas y láminas de fibro-cemento.\n\n*Para la elección adecuada del color te recomendamos utilizar los colores marcados en el abanico\ncon el simbolo del “sol” ☼ los cuales garantizan la retención del color por 5 años siguiendo las\nrecomendaciones de aplicación."
+        "archivo": "SILICONITE 7 3103.pdf",
+        "familia": "SILICONITE 7 3103",
+        "similitud": 0.4816,
+        "texto": "[PRODUCTO: SILICONITE 7 3103] [MARCA: Pintuco]\n[SECCIÓN: Para evitar la penetración de agua en sustratos]\n\nminerales porosos como ladrillo, concreto, piedra,\npañetes y morteros. Como hidrófugo protector en\nculatas y tejas de barro para evitar formación de\nhongos y musgo."
       },
       {
-        "archivo": "KORAZA IMPERMEABLE.pdf",
-        "familia": "KORAZA IMPERMEABLE",
-        "similitud": 0.5585,
-        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: Forma una película flexible e impermeable que genera]\n\nmayor resistencia a la lluvia previniendo la aparición\nde microfisuras y evitando la filtración del agua y\nposterior\nampollamiento\nde la\npintura."
+        "archivo": "MORTERO IMPERMEABLE.pdf",
+        "familia": "MORTERO IMPERMEABLE",
+        "similitud": 0.4656,
+        "texto": "[PRODUCTO: MORTERO IMPERMEABLE] [MARCA: Pintuco]\n[SECCIÓN: Gris cemento]\n\n-"
+      },
+      {
+        "archivo": "MORTERO IMPERMEABLE.pdf",
+        "familia": "MORTERO IMPERMEABLE",
+        "similitud": 0.4653,
+        "texto": "[PRODUCTO: MORTERO IMPERMEABLE] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Fácil de preparar, no requiere adiciones de agua, solo mezcle los 2 componentes del kit.\n Excelente adherencia, no requiere imprimantes ni puentes de adherencia.\n Puede aplicarse sobre superficies húmedas. Se puede poner en funcionamiento a los 7 días.\n Permite que la superficie respire, impermeable al agua líquida pero permeable al vapor de agua.\n No es corrosivo ni tóxico, por lo tanto, se puede usar imper"
       }
     ],
     "productos_candidatos": [
-      "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
-      "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE",
-      "KORAZA PRO 750 ELASTOMERICA",
-      "koraza",
-      "koraza sol y lluvia",
-      "koraza elastomerica"
+      "AQUABLOCK ULTRA",
+      "ESTUCO ANTI HUMEDAD",
+      "estuco anti humedad",
+      "aquablock",
+      "aquablock ultra",
+      "sellamur"
     ]
   }
 }

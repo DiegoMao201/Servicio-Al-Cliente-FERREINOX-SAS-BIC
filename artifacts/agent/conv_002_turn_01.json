@@ -1,7 +1,7 @@
 {
-  "user": "Tengo un problema de humedad en una pared interior, sale salitre blanco",
+  "user": "Necesito pintar una puerta de madera interior de color blanco",
   "result": {
-    "response_text": "Para abordar el problema de humedad y salitre en la pared interior, necesito hacerte un par de preguntas:\n\n1. ¿La humedad aparece en toda la pared o solo en una parte específica?\n2. ¿Viene de la base del muro o de la parte superior? \n\nEsto me ayudará a recomendarte el producto adecuado.",
+    "response_text": "Claro que sí, para pintar una puerta de madera interior, primero necesito saber si la puerta ya está pintada o si es nueva. ¿Está en buen estado o tiene algún daño que debamos considerar?",
     "intent": "consulta_general",
     "tool_calls": [],
     "context_updates": {},

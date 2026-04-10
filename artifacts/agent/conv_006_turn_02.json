@@ -1,125 +1,16 @@
 {
-  "user": "Quiero que se vea la veta de la madera, acabado transparente",
+  "user": "Es tráfico liviano, solo carros livianos de la casa",
   "result": {
-    "response_text": "Para proteger tu pérgola de madera y que se vea la veta, te recomiendo usar **Barnex Extra Protección**. Este barniz a base de aceite es ideal para exteriores, protege del sol y la lluvia, y permite que la madera transpire.\n\nTengo disponibles las siguientes presentaciones:\n\n1. ✅ [5890530] - **MH BARNEX EXTRA SB CAOBA 6605 0.95L** (cuarto): Disponible\n2. ✅ [5890927] - **MH BARNEX EXTRA SB CAOBA 6605 3.79L** (galón): Disponible\n3. ✅ [5890527] - **MH BARNEX EXTRA BR INCOLORO 6602 0.95L** (cuarto): Disponible\n4. ✅ [5890928] - **MH BARNEX EXTRA SB CARAMELO 6606 3.79L** (galón): Disponible\n\n¿Cuál presentación prefieres: cuarto o galón?",
-    "intent": "consulta_productos",
-    "tool_calls": [
-      {
-        "name": "consultar_conocimiento_tecnico",
-        "args": {
-          "producto": "barnex",
-          "pregunta": "barniz transparente exterior pérgola madera veta"
-        },
-        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: BARNIZ BARNEX 557.pdf]\\n[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\\n[SECCIÓN: DESCRIPCIÓN]\\n\\nBarniz tipo uretano base solvente transparente de fácil aplicación, que\\npenetra la madera y permite su transpiración, proporcionando alta\\nprotección en exteriores, incluso en ambientes marinos y tropicales.\\n\\n---\\n\\n[Fuente: BARNIZ BARNEX 557.pdf]\\n[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\\n\\nambientes exteriores expuestas al roce moderado, como pasamanos,\\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos.\\n\\n---\\n\\n[Fuente: BARNEX EXTRA PROTECCIÓN.pdf]\\n[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\\n[SECCIÓN: BARNIZ]\\n\\nPINTUCO®\\n\\n---\\n\\n[Fuente: BARNEX EXTRA PROTECCIÓN.pdf]\\n[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\\n[SECCIÓN: DESCRIPCIÓN]\\n\\nBarniz a base de aceite, que protege la madera del sol, la lluvia, la humedad\\ny el ataque de hongos. Contiene protectores solares y pigmentos especiales\\nque lo hacen ideal para resistir la intemperie sin decolorarse, además\\npermite la transpiración de la madera, evitando que se agriete. Viene listo\\npara aplicar a brocha y no requiere dilución.\", \"archivos_fuente\": [\"BARNIZ BARNEX 557.pdf\", \"BARNEX EXTRA PROTECCIÓN.pdf\", \"BARNEX EXTRA PROTECCION.pdf\"], \"mejor_similitud\": 0.7048, \"mensaje\": \"INSTRUCCIONES OBLIGATORIAS: 1) Lee 'respuesta_rag' y extrae DATOS CONCRETOS: nombres de catalizadores/componentes, proporciones exactas (ej. '4:1'), tiempos (ej. 'secado al tacto: 30 min'), rendimientos, temperaturas. 2) Tu respuesta al cliente DEBE incluir al menos un dato específico numérico o un nombre de producto extraído de 'respuesta_rag'. 3) PROHIBIDO decir frases genéricas como 'un agente de curado específico' o 'según las condiciones'. Cita el dato real. 4) Luego usa `buscar_documento_tecnico` con el nombre del archivo fuente para enviar el PDF como respaldo.\", \"productos_inventario_relacionados\": [{\"codigo\": \"5890540\", \"descripcion\": \"MEG PINTULACA BLANCO 7519 AC 0.94L\", \"etiqueta_auditable\": \"[5890540] - MEG PINTULACA BLANCO 7519 AC 0.94L\", \"marca\": \"57\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890966\", \"descripcion\": \"MEG PINTULACA OCRE 7574 AC 3.78L\", \"etiqueta_auditable\": \"[5890966] - MEG PINTULACA OCRE 7574 AC 3.78L\", \"marca\": \"57\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890530\", \"descripcion\": \"MH BARNEX EXTRA SB CAOBA 6605 0.95L\", \"etiqueta_auditable\": \"[5890530] - MH BARNEX EXTRA SB CAOBA 6605 0.95L\", \"marca\": \"59\", \"presentacion\": \"cuarto\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890927\", \"descripcion\": \"MH BARNEX EXTRA SB CAOBA 6605 3.79L\", \"etiqueta_auditable\": \"[5890927] - MH BARNEX EXTRA SB CAOBA 6605 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`.\"}"
-      },
-      {
-        "name": "consultar_inventario",
-        "args": {
-          "producto": "barnex extra protección"
-        },
-        "result": "{\"encontrados\": 5, \"productos\": [{\"codigo\": \"5890530\", \"descripcion\": \"MH BARNEX EXTRA SB CAOBA 6605 0.95L\", \"descripcion_exacta\": \"MH BARNEX EXTRA SB CAOBA 6605 0.95L\", \"etiqueta_auditable\": \"[5890530] - MH BARNEX EXTRA SB CAOBA 6605 0.95L\", \"marca\": \"59\", \"presentacion\": \"cuarto\", \"familia_consulta\": \"barnex_extra_caoba\", \"producto_padre_busqueda\": \"barnex extra caoba\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 14.0}, {\"codigo\": \"5890927\", \"descripcion\": \"MH BARNEX EXTRA SB CAOBA 6605 3.79L\", \"descripcion_exacta\": \"MH BARNEX EXTRA SB CAOBA 6605 3.79L\", \"etiqueta_auditable\": \"[5890927] - MH BARNEX EXTRA SB CAOBA 6605 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"familia_consulta\": \"barnex_extra_caoba\", \"producto_padre_busqueda\": \"barnex extra caoba\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 8.0}, {\"codigo\": \"5890527\", \"descripcion\": \"MH BARNEX EXTRA BR INCOLORO 6602 0.95L\", \"descripcion_exacta\": \"MH BARNEX EXTRA BR INCOLORO 6602 0.95L\", \"etiqueta_auditable\": \"[5890527] - MH BARNEX EXTRA BR INCOLORO 6602 0.95L\", \"marca\": \"59\", \"presentacion\": \"cuarto\", \"familia_consulta\": \"barnex_extra_incoloro\", \"producto_padre_busqueda\": \"barnex extra incoloro\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 59.0}, {\"codigo\": \"5890928\", \"descripcion\": \"MH BARNEX EXTRA SB CARAMELO 6606 3.79L\", \"descripcion_exacta\": \"MH BARNEX EXTRA SB CARAMELO 6606 3.79L\", \"etiqueta_auditable\": \"[5890928] - MH BARNEX EXTRA SB CARAMELO 6606 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"familia_consulta\": \"barnex_extra_caramelo\", \"producto_padre_busqueda\": \"barnex extra caramelo\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 39.0}, {\"codigo\": \"5890528\", \"descripcion\": \"MH BARNEX EXTRA SB INCOLORO 6603 0.95L\", \"descripcion_exacta\": \"MH BARNEX EXTRA SB INCOLORO 6603 0.95L\", \"etiqueta_auditable\": \"[5890528] - MH BARNEX EXTRA SB INCOLORO 6603 0.95L\", \"marca\": \"59\", \"presentacion\": \"cuarto\", \"familia_consulta\": \"barnex_extra_incoloro\", \"producto_padre_busqueda\": \"barnex extra incoloro\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 35.0}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {\"cantidad_inferida\": null, \"presentacion_canonica_inferida\": null, \"producto_base\": \"barnex extra proteccion\", \"color\": null, \"acabado\": null}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": true, \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"mensaje\": null}"
-      },
-      {
-        "name": "consultar_inventario",
-        "args": {
-          "producto": "barnex"
-        },
-        "result": "{\"encontrados\": 5, \"productos\": [{\"codigo\": \"5890524\", \"descripcion\": \"MH BARNEX BR INCOLORO 557 0.95L\", \"descripcion_exacta\": \"MH BARNEX BR INCOLORO 557 0.95L\", \"etiqueta_auditable\": \"[5890524] - MH BARNEX BR INCOLORO 557 0.95L\", \"marca\": \"59\", \"presentacion\": \"cuarto\", \"familia_consulta\": \"barnex_incoloro\", \"producto_padre_busqueda\": \"barnex incoloro\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 57.0}, {\"codigo\": \"5890920\", \"descripcion\": \"MH BARNEX BR INCOLORO 557 3.79L\", \"descripcion_exacta\": \"MH BARNEX BR INCOLORO 557 3.79L\", \"etiqueta_auditable\": \"[5890920] - MH BARNEX BR INCOLORO 557 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"familia_consulta\": \"barnex_incoloro\", \"producto_padre_busqueda\": \"barnex incoloro\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 15.0}, {\"codigo\": \"5890530\", \"descripcion\": \"MH BARNEX EXTRA SB CAOBA 6605 0.95L\", \"descripcion_exacta\": \"MH BARNEX EXTRA SB CAOBA 6605 0.95L\", \"etiqueta_auditable\": \"[5890530] - MH BARNEX EXTRA SB CAOBA 6605 0.95L\", \"marca\": \"59\", \"presentacion\": \"cuarto\", \"familia_consulta\": \"barnex_extra_caoba\", \"producto_padre_busqueda\": \"barnex extra caoba\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 14.0}, {\"codigo\": \"5890929\", \"descripcion\": \"MH BARNEX EXTRA SB NOGAL 6609 3.79L\", \"descripcion_exacta\": \"MH BARNEX EXTRA SB NOGAL 6609 3.79L\", \"etiqueta_auditable\": \"[5890929] - MH BARNEX EXTRA SB NOGAL 6609 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"familia_consulta\": \"barnex_extra_nogal\", \"producto_padre_busqueda\": \"barnex extra nogal\", \"pregunta_desambiguacion\": null, \"stock_total\": 13.0}, {\"codigo\": \"5890927\", \"descripcion\": \"MH BARNEX EXTRA SB CAOBA 6605 3.79L\", \"descripcion_exacta\": \"MH BARNEX EXTRA SB CAOBA 6605 3.79L\", \"etiqueta_auditable\": \"[5890927] - MH BARNEX EXTRA SB CAOBA 6605 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"familia_consulta\": \"barnex_extra_caoba\", \"producto_padre_busqueda\": \"barnex extra caoba\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 8.0}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": true, \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"mensaje\": null}"
-      }
-    ],
-    "context_updates": {
-      "last_product_request": {
-        "core_terms": [
-          "barnex"
-        ],
-        "search_terms": [
-          "barnex"
-        ],
-        "requested_quantity": null,
-        "requested_unit": null,
-        "quantity_expression": null,
-        "product_codes": [],
-        "brand_filters": [],
-        "direction_filters": [],
-        "size_filters": [],
-        "store_filters": [],
-        "original_query": "barnex",
-        "color_filters": [],
-        "finish_filters": [],
-        "nlu_processed": true,
-        "nlu_extraction": null
-      },
-      "last_product_query": "barnex",
-      "last_product_context": [
-        {
-          "codigo": "5890524",
-          "descripcion": "MH BARNEX BR INCOLORO 557 0.95L",
-          "descripcion_exacta": "MH BARNEX BR INCOLORO 557 0.95L",
-          "etiqueta_auditable": "[5890524] - MH BARNEX BR INCOLORO 557 0.95L",
-          "marca": "59",
-          "presentacion": "cuarto",
-          "familia_consulta": "barnex_incoloro",
-          "producto_padre_busqueda": "barnex incoloro",
-          "pregunta_desambiguacion": "Tengo cuarto y galón con rotación. ¿Cuál necesitas?",
-          "stock_total": 57.0
-        },
-        {
-          "codigo": "5890920",
-          "descripcion": "MH BARNEX BR INCOLORO 557 3.79L",
-          "descripcion_exacta": "MH BARNEX BR INCOLORO 557 3.79L",
-          "etiqueta_auditable": "[5890920] - MH BARNEX BR INCOLORO 557 3.79L",
-          "marca": "59",
-          "presentacion": "galon",
-          "familia_consulta": "barnex_incoloro",
-          "producto_padre_busqueda": "barnex incoloro",
-          "pregunta_desambiguacion": "Tengo cuarto y galón con rotación. ¿Cuál necesitas?",
-          "stock_total": 15.0
-        },
-        {
-          "codigo": "5890530",
-          "descripcion": "MH BARNEX EXTRA SB CAOBA 6605 0.95L",
-          "descripcion_exacta": "MH BARNEX EXTRA SB CAOBA 6605 0.95L",
-          "etiqueta_auditable": "[5890530] - MH BARNEX EXTRA SB CAOBA 6605 0.95L",
-          "marca": "59",
-          "presentacion": "cuarto",
-          "familia_consulta": "barnex_extra_caoba",
-          "producto_padre_busqueda": "barnex extra caoba",
-          "pregunta_desambiguacion": "Tengo cuarto y galón con rotación. ¿Cuál necesitas?",
-          "stock_total": 14.0
-        },
-        {
-          "codigo": "5890929",
-          "descripcion": "MH BARNEX EXTRA SB NOGAL 6609 3.79L",
-          "descripcion_exacta": "MH BARNEX EXTRA SB NOGAL 6609 3.79L",
-          "etiqueta_auditable": "[5890929] - MH BARNEX EXTRA SB NOGAL 6609 3.79L",
-          "marca": "59",
-          "presentacion": "galon",
-          "familia_consulta": "barnex_extra_nogal",
-          "producto_padre_busqueda": "barnex extra nogal",
-          "pregunta_desambiguacion": null,
-          "stock_total": 13.0
-        },
-        {
-          "codigo": "5890927",
-          "descripcion": "MH BARNEX EXTRA SB CAOBA 6605 3.79L",
-          "descripcion_exacta": "MH BARNEX EXTRA SB CAOBA 6605 3.79L",
-          "etiqueta_auditable": "[5890927] - MH BARNEX EXTRA SB CAOBA 6605 3.79L",
-          "marca": "59",
-          "presentacion": "galon",
-          "familia_consulta": "barnex_extra_caoba",
-          "producto_padre_busqueda": "barnex extra caoba",
-          "pregunta_desambiguacion": "Tengo cuarto y galón con rotación. ¿Cuál necesitas?",
-          "stock_total": 8.0
-        }
-      ]
-    },
+    "response_text": "Perfecto, gracias por la información. Para un piso de garaje con tráfico liviano, te recomiendo un sistema de pintura acrílica específico para canchas y pisos residenciales. \n\nAquí te dejo el sistema que te sugiero:\n\n1. **Preparación**: Asegúrate de limpiar bien el piso y, si es necesario, lija ligeramente para mejorar la adherencia.\n2. **Pintura**: Utiliza una pintura para canchas, que es ideal para este tipo de tráfico.\n\nAhora, ¿cuántos m² tiene el garaje y qué color te gustaría usar?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
     "should_create_task": false,
     "confidence": {
-      "score": 1.0,
+      "score": 0.9,
       "level": "alta",
       "signals": [
-        "rag_used",
-        "inventory_used"
+        "technical_without_tools"
       ]
     },
     "is_farewell": false

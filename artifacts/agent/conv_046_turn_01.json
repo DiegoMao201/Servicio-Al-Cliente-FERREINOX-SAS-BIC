@@ -1,0 +1,16 @@
+{
+  "user": "Las carretas pesadas del almacén me están dañando el piso de la bodega",
+  "result": {
+    "response_text": "¡Qué fastidio! Pero tranquilo, que eso tiene solución. Para un piso que soporta tráfico pesado, como el de tu bodega, lo ideal es un sistema epóxico que ofrezca alta resistencia.\n\nPrimero, necesito saber si el piso es nuevo o ya está pintado. ¿Me puedes contar un poco más sobre eso?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": []
+    },
+    "is_farewell": false
+  }
+}

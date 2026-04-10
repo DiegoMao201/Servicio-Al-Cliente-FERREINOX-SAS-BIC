@@ -1,0 +1,48 @@
+{
+  "query": "temperatura mínima de aplicación para epóxicos",
+  "response": {
+    "query": "temperatura mínima de aplicación para epóxicos",
+    "resultados": [
+      {
+        "archivo": "FDS- CATALIZADOR EPOXIAMIDA 13229.pdf",
+        "familia": "FDS- CATALIZADOR EPOXIAMIDA 13229",
+        "similitud": 0.618,
+        "texto": "[PRODUCTO: FDS- CATALIZADOR EPOXIAMIDA 13229]\n[SECCIÓN: Temperatura mínima:]\n\n5 ºC"
+      },
+      {
+        "archivo": "FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050.pdf",
+        "familia": "FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050",
+        "similitud": 0.6176,
+        "texto": "[PRODUCTO: FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050]\n[SECCIÓN: Temperatura mínima:]\n\n5 ºC"
+      },
+      {
+        "archivo": "primer-epoxi-zinc.pdf",
+        "familia": "primer-epoxi-zinc",
+        "similitud": 0.6124,
+        "texto": "[PRODUCTO: primer-epoxi-zinc] [MARCA: Pintuco]\n[SECCIÓN: Máxima]\n\n32 °C\n40 °C\n40 °C\n85 % EQUIPOS DE APLICACI\nLos siguientes equipos de aplicación se han encontrado apropiados para la aplicación. Sin embargo se\npueden utilizar otros equipos equivalentes. PISTOLA CONVENCIONAL (Con aire)MARCA Y MODELOPICO DE\nDevilbiss MBC-510 o JGA\nE\n704\nBinks N° 18 0 62\n66\n66PB\nUtilice mangueras mínimo de 1/2” y de una longitud no superior a 16 metros, si se requieren longitudes\nmayores aumente el diámetro de la m"
+      },
+      {
+        "archivo": "FDS- EPOXICA BASE SOLVENTE BLANCO 13580.pdf",
+        "familia": "FDS- EPOXICA BASE SOLVENTE BLANCO 13580",
+        "similitud": 0.6114,
+        "texto": "[PRODUCTO: FDS- EPOXICA BASE SOLVENTE BLANCO 13580]\n[SECCIÓN: Temperatura mínima:]\n\n5 ºC"
+      },
+      {
+        "archivo": "ADHESIVO EPOXICO PARA CONCRETO 127517-k.pdf",
+        "familia": "ADHESIVO EPOXICO PARA CONCRETO 127517-k",
+        "similitud": 0.6069,
+        "texto": "[PRODUCTO: ADHESIVO EPOXICO PARA CONCRETO 127517-k] [MARCA: Pintuco]\n[SECCIÓN: Temperatura del substrato]\n\nMínima 10°C – Máxima 40°C"
+      },
+      {
+        "archivo": "ADHESIVO EPOXICO PARA CONCRETO 127517-k.pdf",
+        "familia": "ADHESIVO EPOXICO PARA CONCRETO 127517-k",
+        "similitud": 0.6069,
+        "texto": "[PRODUCTO: ADHESIVO EPOXICO PARA CONCRETO 127517-k] [MARCA: Pintuco]\n[SECCIÓN: Temperatura del substrato]\n\nMínima 10°C – Máxima 40°C"
+      }
+    ],
+    "productos_candidatos": [
+      "primer-epoxi-zinc",
+      "ADHESIVO EPOXICO PARA CONCRETO 127517-k"
+    ]
+  }
+}

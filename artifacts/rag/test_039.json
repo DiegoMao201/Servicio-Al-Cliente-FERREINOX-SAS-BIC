@@ -1,64 +1,69 @@
 {
-  "query": "cuántas manos de koraza debo aplicar en fachada",
+  "query": "puerta de madera la quiero pintar de color",
   "response": {
-    "query": "cuántas manos de koraza debo aplicar en fachada",
+    "query": "puerta de madera la quiero pintar de color",
     "resultados": [
       {
-        "archivo": "KORAZA IMPERMEABLE.pdf",
-        "familia": "KORAZA IMPERMEABLE",
-        "similitud": 0.6827,
-        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: En obra nueva sobre]\n\nrevoque\n8 - 10 m²/gal a 2 manos\n*El rendimiento puede variar dependiendo del método y\nherramientas de aplicación, así como el\nestado de\nrugosidad de la superficie y del color a cubrir."
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6291,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
       },
       {
-        "archivo": "KORAZA IMPERMEABLE.pdf",
-        "familia": "KORAZA IMPERMEABLE",
-        "similitud": 0.6614,
-        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: En repinte sobre]\n\ncolor igual o similar\n20 - 25 m²/gal a 2 manos"
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.6035,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\nno estén expuestos a la abrasión. No apto para uso en pisos."
       },
       {
-        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
-        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
-        "similitud": 0.659,
-        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: En obra nueva sobre]\n\nrevoque\n8 - 10 m²/gal a 2 manos\n*El rendimiento puede variar dependiendo del método y\nherramientas de aplicación, así como el\nestado de\nrugosidad de la superficie y del color a cubrir."
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.6013,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\nno estén expuestos a la abrasión. No apto para uso en pisos."
       },
       {
-        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
-        "familia": "KORAZA PRO 750 ELASTOMERICA",
-        "similitud": 0.6382,
-        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas, patios y terrazas revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar y tejas. Para el Sistema de Junta Perdida en fachadas\nfibrocemento."
+        "archivo": "PINTULACA 7527.pdf",
+        "familia": "PINTULACA 7527",
+        "similitud": 0.5709,
+        "texto": "[PRODUCTO: PINTULACA 7527] [MARCA: Pintuco]\n[SECCIÓN: Cuarto de galón]\n\nDESCRIPCIÓN: Lacas nitrocelulósicas que se caracterizan por su gran brillo, excelente acabado, resistentes a la\nintemperie, de alto contenido de sólidos para mayor rendimiento con menos manos de aplicación, y en\ncolores entremezclables para obtener otros colores policromados de secamiento al aire y fácil de aplicar\nen todo tipo de ambientes.\n\nUSOS: Para el acabado final en el repintado de vehículos, electrodomésticos y recub"
       },
       {
-        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
-        "familia": "KORAZA PRO 750 ELASTOMERICA",
-        "similitud": 0.6172,
-        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: Preparación del Producto y Aplicación]\n\nMezcle Koraza® PRO Elastomérica con una espátula limpia hasta obtener su completa uniformidad. Diluya con agua\nsegún el equipo de aplicación a usar de acuerdo con la siguiente tabla:"
+        "archivo": "PINTULACA.pdf",
+        "familia": "PINTULACA",
+        "similitud": 0.5651,
+        "texto": "[PRODUCTO: PINTULACA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nComúnmente usados para el acabado final en el repintado de vehículos y electrodomésticos.\nElementos metálicos, fibra de vidrio o madera que requieran ser recubiertos por necesidades estéticas.\nPara usos diferentes se recomienda seguir la asesoría técnica."
       },
       {
-        "archivo": "FDS - KORAZA LADRILLO 2674.pdf",
-        "familia": "FDS - KORAZA LADRILLO 2674",
-        "similitud": 0.5996,
-        "texto": "[PRODUCTO: FDS - KORAZA LADRILLO 2674] [MARCA: Koraza]\n[SECCIÓN: Proteccion]\n\nobligatoria de la\nmanos"
+        "archivo": "BARNIZ SD1.pdf",
+        "familia": "BARNIZ SD1",
+        "similitud": 0.5642,
+        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes interiores que no estén expuestas a la luz directa del sol, a la\nhumedad o a la abrasión, como techos, puertas, zócalos, columnas, vigas,\nmesas decorativas y muebles de madera en general."
       },
       {
-        "archivo": "FDS - KORAZA LADRILLO 2674.pdf",
-        "familia": "FDS - KORAZA LADRILLO 2674",
-        "similitud": 0.5753,
-        "texto": "[PRODUCTO: FDS - KORAZA LADRILLO 2674] [MARCA: Koraza]\n[SECCIÓN: No aplicable]\n\n10.5"
+        "archivo": "BARNIZ SD1.pdf",
+        "familia": "BARNIZ SD1",
+        "similitud": 0.547,
+        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: BARNIZ]\n\nPINTUCO®"
       },
       {
-        "archivo": "FDS - KORAZA BASE ACCENT 27477.pdf",
-        "familia": "FDS - KORAZA BASE ACCENT 27477",
-        "similitud": 0.5706,
-        "texto": "[PRODUCTO: FDS - KORAZA BASE ACCENT 27477] [MARCA: Koraza]\n[SECCIÓN: Protección]\n\nobligatoria de la\nmanos"
+        "archivo": "WOOD STAIN IMPREGNANTE PARA MADERAS.pdf",
+        "familia": "WOOD STAIN IMPREGNANTE PARA MADERAS",
+        "similitud": 0.5009,
+        "texto": "[PRODUCTO: WOOD STAIN IMPREGNANTE PARA MADERAS] [MARCA: Pintuco]\n[SECCIÓN: Haga clic aquí para escribir]\n\nDa color, penetra y protege"
       }
     ],
     "productos_candidatos": [
-      "KORAZA IMPERMEABLE",
-      "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
-      "KORAZA PRO 750 ELASTOMERICA",
-      "koraza",
-      "koraza sol y lluvia",
-      "koraza elastomerica"
+      "BARNIZ BARNEX 557",
+      "BARNEX EXTRA PROTECCIÓN",
+      "BARNEX EXTRA PROTECCION",
+      "PINTULACA 7527",
+      "pintulac",
+      "domestico",
+      "barnex",
+      "barniz",
+      "wood stain",
+      "madetec",
+      "pintulux"
     ]
   }
 }

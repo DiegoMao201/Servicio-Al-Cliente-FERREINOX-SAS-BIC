@@ -1,0 +1,18 @@
+{
+  "user": "Vamos a pintar una cicloruta nueva de asfalto",
+  "result": {
+    "response_text": "¡Perfecto! Para pintar una cicloruta en asfalto, necesitamos asegurarnos de utilizar una pintura adecuada para tráfico. \n\nTe recomiendo usar **Pintura para Canchas**, que es específicamente diseñada para este tipo de aplicaciones. \n\nAntes de continuar, ¿me podrías confirmar cuántos metros cuadrados tiene la cicloruta? Esto me ayudará a calcular la cantidad de pintura que necesitas.",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  }
+}

@@ -1,67 +1,61 @@
 {
-  "query": "con qué lijo una pared pintada antes de repintar",
+  "query": "andén de concreto exterior",
   "response": {
-    "query": "con qué lijo una pared pintada antes de repintar",
+    "query": "andén de concreto exterior",
     "resultados": [
       {
-        "archivo": "VINILTEX ULTRALAVABLE.pdf",
-        "familia": "VINILTEX ULTRALAVABLE",
-        "similitud": 0.6696,
-        "texto": "[PRODUCTO: VINILTEX ULTRALAVABLE] [MARCA: Pintuco]\n[SECCIÓN: INSTRUCCIONES DE USO]\n\n1. Preparación de la superficie a pintar: Antes de\naplicar\nViniltex®"
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.7038,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
       },
       {
-        "archivo": "VINILTEX PRO 650 (2).pdf",
-        "familia": "VINILTEX PRO 650",
-        "similitud": 0.6641,
-        "texto": "[PRODUCTO: VINILTEX PRO 650] [MARCA: Pintuco]\n[SECCIÓN: Deje]\n\ntranscurrir\n1\nhora\nde\nsecado\naproximadamente para aplicar la segunda mano\n(secamiento a 25°C y 60% de humedad relativa).\nLave con agua los equipos de aplicación. Para evitar\nel deterioro prematuro de la superficie pintada, se\nrecomienda no limpiarla con agua y jabón antes de\ntranscurridos 28 días después de la aplicación.\n✓Se recomienda un espesor mínimo de 2 manos\npara\nque\nla\npintura\ncumpla\ncon\nexcelente\ndesempeño en lavabilidad, re"
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6588,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15 m2/gal a 2 manos."
       },
       {
-        "archivo": "FICHA TECNICA VINILTEX ULTRALAVABLE 2024 - copia.pdf",
-        "familia": "FICHA TECNICA VINILTEX ULTRALAVABLE 2024 - copia",
-        "similitud": 0.6583,
-        "texto": "[PRODUCTO: FICHA TECNICA VINILTEX ULTRALAVABLE 2024 - copia] [MARCA: Pintuco]\n[SECCIÓN: INSTRUCCIONES DE USO]\n\n1. Preparación de la superficie a pintar: Antes de\naplicar\nViniltex®"
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.645,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Acabado antideslizante.\n Alta resistencia al desgaste.\n Lista para usar, fácil de aplicar.\n Excelente durabilidad de los colores en exterior.\n Producto base agua, amigable con el usuario y el medio ambiente.\n Disponible en más de 200 colores por Sistema de Colores Pintuco®."
       },
       {
-        "archivo": "ESTUCOR LISTO.pdf",
-        "familia": "ESTUCOR LISTO",
-        "similitud": 0.6261,
-        "texto": "[PRODUCTO: ESTUCOR LISTO] [MARCA: Pintuco]\n[SECCIÓN: Verifique que no existan residuos de polvo o estuco]\n\nantes de realizar el proceso de pintura. No se\nrequiere imprimación antes de pintar"
+        "archivo": "Doors And Frame (1).pdf",
+        "familia": "Doors And Frame",
+        "similitud": 0.5288,
+        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Interior and]\n\nexterior"
       },
       {
-        "archivo": "ESTUCOR MOLDURAS.pdf",
-        "familia": "ESTUCOR MOLDURAS",
-        "similitud": 0.6197,
-        "texto": "[PRODUCTO: ESTUCOR MOLDURAS] [MARCA: Pintuco]\n[SECCIÓN: Verifique que no existan residuos de polvo]\n\no estuco antes de realizar el proceso de\npintura\n"
+        "archivo": "Doors And Frame (1).pdf",
+        "familia": "Doors And Frame",
+        "similitud": 0.5287,
+        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Wall]\n\n6˝ concrete block\n43"
       },
       {
-        "archivo": "IMPADOC LISTO.pdf",
-        "familia": "IMPADOC LISTO",
-        "similitud": 0.6196,
-        "texto": "[PRODUCTO: IMPADOC LISTO] [MARCA: Pintuco]\n[SECCIÓN: Estucolisto]\n\n1. Retire el polvo y las partículas sueltas de las superficies a aplicar. Use mascarilla para polvos durante su preparación.\n3. Para llenar, aplique el Estucolisto más denso con una llana metálica, extendiéndolo en capas verticales y horizontales\nde forma alternada, dejando secar lo suficiente para aplicar la segunda capa. Para pulir la consistencia puede ser más\nfluida.\nEntre capa y capa afine o asiente el producto con la llana,"
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.5213,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Wall]\n\n6˝ concrete block\n43"
       },
       {
-        "archivo": "DRYWALL TIPO 2.pdf",
-        "familia": "DRYWALL TIPO 2",
-        "similitud": 0.5805,
-        "texto": "[PRODUCTO: DRYWALL TIPO 2] [MARCA: Pintuco]\n[SECCIÓN: Antes de aplicar verifique que la superficie esté]\n\nseca, libre de polvo, mugre, grasa y pintura\ndeteriorada. Elimine los acabados deteriorados con\nespátula o lija. Utilice Ultra Mastic Joint Compound\npara el tratamiento de juntas, nivelación y\npreparación de las placas de yeso antes de pintar.\nTambién para resanar grietas, agujeros y otros\ndefectos que puedan afectar el acabado final de la\nsuperficie. Lije suavemente las superficies con\npint"
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.4911,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Interior and]\n\nexterior"
       },
       {
-        "archivo": "PINTULACA 7527.pdf",
-        "familia": "PINTULACA 7527",
-        "similitud": 0.5582,
-        "texto": "[PRODUCTO: PINTULACA 7527] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\nel metal quedó descubierto.\n• Cuando la Base esté bien seca se lija en húmedo con papel No. 360 - 400, se limpian los residuos y\nse seca bien.\n• Para repintes sobre pinturas en buen estado, se limpian con Ajustador PINTUCO REF. 121.110 para\nque no ataque la pintura antigua y eliminar ceras y grasas. Se lija en húmedo con papel No. 360 - 400\npara eliminar el brillo, se aplica la Base Pintulaca ref. 7213 donde el met"
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.4787,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Full glass entrance door]\n\nconstruction"
       }
     ],
     "productos_candidatos": [
-      "VINILTEX ULTRALAVABLE",
-      "VINILTEX PRO 650",
-      "FICHA TECNICA VINILTEX ULTRALAVABLE 2024 - copia",
-      "ESTUCOR LISTO",
-      "viniltex",
-      "viniltex ultralavable",
-      "lija",
-      "estuco",
-      "imprimante"
+      "PINTURA PARA CANCHAS",
+      "Doors And Frame",
+      "pintura canchas"
     ]
   }
 }

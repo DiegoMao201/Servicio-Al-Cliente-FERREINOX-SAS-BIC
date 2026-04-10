@@ -1,0 +1,273 @@
+{
+  "user": "Necesito 3 cuñetes de Koraza blanco",
+  "result": {
+    "response_text": "Para tu proyecto de pintura con Koraza, aquí tienes el sistema recomendado para fachadas exteriores:\n\n1. **Preparación de la superficie**: Asegúrate de que la base esté en buen estado. Si hay humedad o estuco dañado, es necesario repararlo antes de aplicar cualquier pintura. Si la base está mala o soplada, se debe tumbar todo hasta el revoque y comenzar de nuevo.\n\n2. **Imprimante/Sellador**: No se requiere un imprimante específico para Koraza, pero asegúrate de que la superficie esté limpia y libre de polvo.\n\n3. **Producto**: Koraza Mat Blanco 2650 (18.93L) es ideal para decorar y proteger fachadas. Este producto es resistente a la humedad y a los microorganismos.\n\n4. **Acabado**: Aplica al menos dos manos de Koraza para asegurar una buena cobertura y durabilidad.\n\n### Rendimiento\n- **Koraza**: Rinde entre 20 a 25 m² por galón (2 manos).\n\n### Herramientas necesarias\n- Rodillo de felpa para una aplicación uniforme.\n- Brochas para detalles.\n- Lija Abracol para preparar la superficie.\n\nAhora, para proceder con tu pedido, ¿cuántos metros cuadrados tienes que cubrir? Esto me ayudará a calcular la cantidad exacta de producto que necesitas.",
+    "intent": "asesoria_tecnica",
+    "tool_calls": [
+      {
+        "name": "consultar_inventario",
+        "args": {
+          "producto": "3 cuñetes Koraza blanco"
+        },
+        "result": "{\"encontrados\": 10, \"productos\": [{\"codigo\": \"5891122\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 18.93L\", \"etiqueta_auditable\": \"[5891122] - PQ KORAZA MAT BLANCO 2650 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5893858\", \"descripcion\": \"PQ KORAZA PINT IMPER BLANCO 4032 18.93L\", \"descripcion_exacta\": \"PQ KORAZA PINT IMPER BLANCO 4032 18.93L\", \"etiqueta_auditable\": \"[5893858] - PQ KORAZA PINT IMPER BLANCO 4032 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 532689, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5891346\", \"descripcion\": \"PQ KORAZA MAT BASE ACCENT 127477 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT BASE ACCENT 127477 18.93L\", \"etiqueta_auditable\": \"[5891346] - PQ KORAZA MAT BASE ACCENT 127477 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_mat_accent\", \"producto_padre_busqueda\": \"koraza mat accent\", \"pregunta_desambiguacion\": \"Tengo Pq Koraza Mat Base Accent 27477 9.46L y cuarto con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5901921\", \"descripcion\": \"PQ KORAZA MAT DEEP BASE 127476 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT DEEP BASE 127476 18.93L\", \"etiqueta_auditable\": \"[5901921] - PQ KORAZA MAT DEEP BASE 127476 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_base_deep\", \"producto_padre_busqueda\": \"koraza base deep\", \"pregunta_desambiguacion\": \"Tengo Koraza Base Deep. ¿La buscas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5892202\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 18.93L PE\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 18.93L PE\", \"etiqueta_auditable\": \"[5892202] - PQ KORAZA MAT BLANCO 2650 18.93L PE\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"BLANCO\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"KORAZA BLANCO 2650 CANECA PRECIO ESPECIAL 5 GL\", \"tipo\": \"NaN\"}, \"disponible\": true, \"precio_iva_incluido\": 436050, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5901920\", \"descripcion\": \"PQ KORAZA MAT BASE PASTEL 127474 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT BASE PASTEL 127474 18.93L\", \"etiqueta_auditable\": \"[5901920] - PQ KORAZA MAT BASE PASTEL 127474 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_base_pastel\", \"producto_padre_busqueda\": \"koraza base pastel\", \"pregunta_desambiguacion\": \"Tengo Koraza Base Pastel. ¿La buscas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5891144\", \"descripcion\": \"PQ KORAZA MAT BAS TINT 127475 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT BAS TINT 127475 18.93L\", \"etiqueta_auditable\": \"[5891144] - PQ KORAZA MAT BAS TINT 127475 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_mat_bas_tint\", \"producto_padre_busqueda\": \"koraza mat bas tint\", \"pregunta_desambiguacion\": \"Tengo cuñete y galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5892117\", \"descripcion\": \"PQ KORAZA PROTECCION 3EN1 MAT BLA 18.93L\", \"descripcion_exacta\": \"PQ KORAZA PROTECCION 3EN1 MAT BLA 18.93L\", \"etiqueta_auditable\": \"[5892117] - PQ KORAZA PROTECCION 3EN1 MAT BLA 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA PROTECCION 3EN1\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"BLANCO\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0101005752\", \"descripcion_larga\": \"KORAZA PROTECCION 3EN1 BLANCO CANECA 5 GL\", \"tipo\": \"NaN\"}, \"disponible\": true, \"precio_iva_incluido\": 504118, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5891127\", \"descripcion\": \"PQ KORAZA MAT ROJO 2660 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT ROJO 2660 18.93L\", \"etiqueta_auditable\": \"[5891127] - PQ KORAZA MAT ROJO 2660 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_mat_rojo\", \"producto_padre_busqueda\": \"koraza mat rojo\", \"pregunta_desambiguacion\": \"Tengo Rojo cuñete y Rojo galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5893881\", \"descripcion\": \"PQ KORAZA PINT IMPER ACCENT 38219 18.93L\", \"descripcion_exacta\": \"PQ KORAZA PINT IMPER ACCENT 38219 18.93L\", \"etiqueta_auditable\": \"[5893881] - PQ KORAZA PINT IMPER ACCENT 38219 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_pint_imper_accent\", \"producto_padre_busqueda\": \"koraza pint imper accent\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 532689, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": false, \"pregunta_desambiguacion\": null, \"mensaje\": null, \"conocimiento_experto_producto\": [{\"tipo\": \"preferencia\", \"contexto\": \"fachadas, pintura, estuco, Koraza, Viniltex, preparación\", \"recomendar\": \"Koraza, PQ KORAZA PINT IMPER, Viniltex Advanced, Vinilico, Vinil Plus, Intervinil, Vinilux, Vinil Latex, Pinturama, Estuco Acrílico, Pintuco Flex\", \"evitar\": null, \"nota\": \"1. NUNCA olvides preguntar los metros cuadrados (m²) en el primer mensaje. 2. Jerarquía de productos: Premium Koraza, Tipo 1 Viniltex Advanced, Tipo 2 Intervinil, Tipo 3 Pinturama. 3. Incluir Estuco Acrílico y Pintuco Flex si hay grietas. 4. Preparación con Lija Abracol y Brocha Goya Profesional.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"fachada, humedad, estuco, base soplada, preparacion, revoque\", \"recomendar\": \"Koraza\", \"evitar\": null, \"nota\": \"Si el cliente va a pintar una fachada con problemas de humedad y actualmente tiene estuco o textura, es OBLIGATORIO indicarle que revise el estado de esa base. Si la base esta mala o soplada, se debe tumbar ABSOLUTAMENTE TODO hasta el revoque y comenzar un sistema nuevo desde cero. Esa es la UNICA garantia de curar la humedad y asegurar el desempeno de la Koraza. NO se puede pintar sobre una base danada.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Pintuco Fill\", \"evitar\": \"Aquablock Ultra, Koraza\", \"nota\": \"El rendimiento de Pintuco Fill es de 12 a 15 m² por galón, no 3-5 m².\"}, {\"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Koraza\", \"evitar\": \"Aquablock Ultra, Pintuco Fill\", \"nota\": \"El rendimiento de Koraza es de 20 a 25 m² por galón, no 10-12 m².\"}], \"instruccion_conocimiento_experto\": \"💡 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE para este producto. Lee 'conocimiento_experto_producto' ANTES de presentar resultados al cliente. Si hay un 'evitar', NO lo recomiendes para este contexto. Si hay reglas comerciales (sobre pedido, obligatorio cuarzo, preguntar m², etc.), APLÍCALAS. Presenta las notas relevantes como '💡 Experiencia Ferreinox: [nota]'.\"}"
+      },
+      {
+        "name": "consultar_inventario",
+        "args": {
+          "producto": "catalizador Koraza"
+        },
+        "result": "{\"encontrados\": 10, \"productos\": [{\"codigo\": \"5894180\", \"descripcion\": \"P7 KORAZA ELASTOMERICA GEN DEEP 18.93L\", \"descripcion_exacta\": \"P7 KORAZA ELASTOMERICA GEN DEEP 18.93L\", \"etiqueta_auditable\": \"[5894180] - P7 KORAZA ELASTOMERICA GEN DEEP 18.93L\", \"marca\": \"56\", \"presentacion\": \"cuñete\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"disponible\": false, \"precio_iva_incluido\": 600000, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5894179\", \"descripcion\": \"P7 KORAZA ELASTOMERICA GEN TINT 18.93L\", \"descripcion_exacta\": \"P7 KORAZA ELASTOMERICA GEN TINT 18.93L\", \"etiqueta_auditable\": \"[5894179] - P7 KORAZA ELASTOMERICA GEN TINT 18.93L\", \"marca\": \"56\", \"presentacion\": \"cuñete\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"disponible\": false, \"precio_iva_incluido\": 600000, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5894181\", \"descripcion\": \"P7 KORAZA ELASTOMERICA GEN ACCENT 18.93L\", \"descripcion_exacta\": \"P7 KORAZA ELASTOMERICA GEN ACCENT 18.93L\", \"etiqueta_auditable\": \"[5894181] - P7 KORAZA ELASTOMERICA GEN ACCENT 18.93L\", \"marca\": \"56\", \"presentacion\": \"cuñete\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"disponible\": false, \"precio_iva_incluido\": 600000, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5894178\", \"descripcion\": \"P7 KORAZA ELASTOMERICA GEN PASTEL 18.93L\", \"descripcion_exacta\": \"P7 KORAZA ELASTOMERICA GEN PASTEL 18.93L\", \"etiqueta_auditable\": \"[5894178] - P7 KORAZA ELASTOMERICA GEN PASTEL 18.93L\", \"marca\": \"56\", \"presentacion\": \"cuñete\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"disponible\": false, \"precio_iva_incluido\": 600000, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"20011043\", \"descripcion\": \"KORAZA ELASTOMERICA NE159-T GALERIA 5 GL\", \"descripcion_exacta\": \"KORAZA ELASTOMERICA NE159-T GALERIA 5 GL\", \"etiqueta_auditable\": \"[20011043] - KORAZA ELASTOMERICA NE159-T GALERIA 5 GL\", \"marca\": \"24\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA ELASTOMERICA\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"COLORES TINT\", \"aplicacion\": \"CONSTRUCCION\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"KORAZA ELASTOMERICA NE159-T GALERIA CLASICA CANECA\", \"tipo\": \"NaN\"}, \"disponible\": false, \"precio_iva_incluido\": null, \"precio_nota\": \"Precio pendiente de confirmación\"}, {\"codigo\": \"10385614\", \"descripcion\": \"KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL\", \"descripcion_exacta\": \"KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL\", \"etiqueta_auditable\": \"[10385614] - KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL\", \"marca\": \"24\", \"presentacion\": \"cuñete\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA ELASTOMERICA\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"READY MIX\", \"aplicacion\": \"CONSTRUCCION\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"KORAZA ELASTOMERICA 2798 BALSO CANECA 5 GL\", \"tipo\": \"NaN\"}, \"disponible\": false, \"precio_iva_incluido\": null, \"precio_nota\": \"Precio pendiente de confirmación\"}, {\"codigo\": \"10386775\", \"descripcion\": \"KORAZA ELASTOMERICA 158TX8A GRIS VIVA 5G\", \"descripcion_exacta\": \"KORAZA ELASTOMERICA 158TX8A GRIS VIVA 5G\", \"etiqueta_auditable\": \"[10386775] - KORAZA ELASTOMERICA 158TX8A GRIS VIVA 5G\", \"marca\": \"24\", \"presentacion\": null, \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA ELASTOMERICA\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"COLORES ACCENT\", \"aplicacion\": \"CONSTRUCCION\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"KORAZA ELASTOMERICA 158TX8A GRIS VIVA ENVIGADO 5 G\", \"tipo\": \"NaN\"}, \"disponible\": false, \"precio_iva_incluido\": null, \"precio_nota\": \"Precio pendiente de confirmación\"}, {\"codigo\": \"10396297\", \"descripcion\": \"KORAZA ELASTOMERICA BASE DEEP PREP 5G\", \"descripcion_exacta\": \"KORAZA ELASTOMERICA BASE DEEP PREP 5G\", \"etiqueta_auditable\": \"[10396297] - KORAZA ELASTOMERICA BASE DEEP PREP 5G\", \"marca\": \"24\", \"presentacion\": null, \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA ELASTOMERICA\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"BASE DEEP\", \"aplicacion\": \"CONSTRUCCION\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"KORAZA ELASTOMERICA BASE DEEP 27036 CANECA PREP 5\", \"tipo\": \"NaN\"}, \"disponible\": false, \"precio_iva_incluido\": null, \"precio_nota\": \"Precio pendiente de confirmación\"}, {\"codigo\": \"10393541\", \"descripcion\": \"KORAZA ELASTOMERICA AZ091 NEGRO ZARZA 5G\", \"descripcion_exacta\": \"KORAZA ELASTOMERICA AZ091 NEGRO ZARZA 5G\", \"etiqueta_auditable\": \"[10393541] - KORAZA ELASTOMERICA AZ091 NEGRO ZARZA 5G\", \"marca\": \"24\", \"presentacion\": null, \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA ELASTOMERICA\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"READY MIX\", \"aplicacion\": \"CONSTRUCCION\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"KORAZA ELASTOMERICA AZ091 NEGRO ZARZAMORA CANECA 5\", \"tipo\": \"NaN\"}, \"disponible\": false, \"precio_iva_incluido\": null, \"precio_nota\": \"Precio pendiente de confirmación\"}, {\"codigo\": \"20011048\", \"descripcion\": \"KORAZA ELASTOMERICA TR042-D FLOR SILV 5G\", \"descripcion_exacta\": \"KORAZA ELASTOMERICA TR042-D FLOR SILV 5G\", \"etiqueta_auditable\": \"[20011048] - KORAZA ELASTOMERICA TR042-D FLOR SILV 5G\", \"marca\": \"24\", \"presentacion\": null, \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA ELASTOMERICA\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"COLORES DEEP\", \"aplicacion\": \"CONSTRUCCION\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"KORAZA ELASTOMERICA TR042-D FLORA SILVESTRE CANECA\", \"tipo\": \"NaN\"}, \"disponible\": false, \"precio_iva_incluido\": null, \"precio_nota\": \"Precio pendiente de confirmación\"}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": false, \"pregunta_desambiguacion\": null, \"mensaje\": null, \"conocimiento_experto_producto\": [{\"tipo\": \"preferencia\", \"contexto\": \"fachada, humedad, estuco, base soplada, preparacion, revoque\", \"recomendar\": \"Koraza\", \"evitar\": null, \"nota\": \"Si el cliente va a pintar una fachada con problemas de humedad y actualmente tiene estuco o textura, es OBLIGATORIO indicarle que revise el estado de esa base. Si la base esta mala o soplada, se debe tumbar ABSOLUTAMENTE TODO hasta el revoque y comenzar un sistema nuevo desde cero. Esa es la UNICA garantia de curar la humedad y asegurar el desempeno de la Koraza. NO se puede pintar sobre una base danada.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Pintuco Fill\", \"evitar\": \"Aquablock Ultra, Koraza\", \"nota\": \"El rendimiento de Pintuco Fill es de 12 a 15 m² por galón, no 3-5 m².\"}, {\"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Koraza\", \"evitar\": \"Aquablock Ultra, Pintuco Fill\", \"nota\": \"El rendimiento de Koraza es de 20 a 25 m² por galón, no 10-12 m².\"}, {\"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Aquablock Ultra\", \"evitar\": \"Koraza, Pintuco Fill\", \"nota\": \"El Aquablock Ultra tiene un rendimiento real de 18 a 20 m² por galón, aplicado en 2 manos. Koraza rinde de 20 a 25 m² por galón. Pintuco Fill rinde entre 12 a 15 m² por galón.\"}], \"instruccion_conocimiento_experto\": \"💡 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE para este producto. Lee 'conocimiento_experto_producto' ANTES de presentar resultados al cliente. Si hay un 'evitar', NO lo recomiendes para este contexto. Si hay reglas comerciales (sobre pedido, obligatorio cuarzo, preguntar m², etc.), APLÍCALAS. Presenta las notas relevantes como '💡 Experiencia Ferreinox: [nota]'.\"}"
+      },
+      {
+        "name": "consultar_conocimiento_tecnico",
+        "args": {
+          "pregunta": "sistema para pintar fachada exterior con Koraza",
+          "producto": "Koraza"
+        },
+        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: KORAZA IMPERMEABLE.pdf]\\n[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\\n[SECCIÓN: Recomendada]\\n\\npara\\nambientes\\nexteriores,\\npara\\ndecorar\\ny proteger fachadas y patios revocados,\\nestucados, en bloque a la vista, ladrillo sin esmaltar,\\ntejas y láminas de fibrocemento. Disponible en una\\namplia gama de colores gracias a la Tecnología\\nSuperior de Color Pintuco® Colortech®.\\n\\n---\\n\\n[Fuente: KORAZA 5.pdf]\\n[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\\n[SECCIÓN: USOS]\\n\\nRecomendada para ambientes exteriores, para decorar y proteger fachadas y patios; revocados y\\nestucados, en bloque a la vista, ladrillo sin esmaltar, tejas y láminas de fibro-cemento.\\n\\n*Para la elección adecuada del color te recomendamos utilizar los colores marcados en el abanico\\ncon el simbolo del “sol” ☼ los cuales garantizan la retención del color por 5 años siguiendo las\\nrecomendaciones de aplicación.\\n\\n---\\n\\n[Fuente: KORAZA PRO 750 ELASTOMERICA.pdf]\\n[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\\n[SECCIÓN: USOS]\\n\\nRecomendada para ambientes exteriores, para decorar y proteger fachadas, patios y terrazas revocados,\\nestucados, en bloque a la vista, ladrillo sin esmaltar y tejas. Para el Sistema de Junta Perdida en fachadas\\nfibrocemento.\\n\\n---\\n\\n[Fuente: KORAZA DOBLE VIDA.pdf]\\n[PRODUCTO: KORAZA DOBLE VIDA] [MARCA: Pintuco]\\n[SECCIÓN: Recomendada para decorar y proteger superficies de difícil repinte en ambientes]\\n\\nexteriores. Para decorar y proteger fachadas en concreto, mortero, fibrocemento y\\nladrillo, en ambientes urbanos, industriales y con altísimo desempeño en ambientes\\ncosteros por su resistencia a la humedad y a los microorganismos (posee un poderoso\\nfungicida de alto espectro). Su fórmula avanzada que protege el concreto de la\\ncarbonatación, hace a Koraza® Doble Vida 10, ideal para proteger infraestructura como\\npuentes, sardineles y obras de patrimonio público como casas, iglesias y monumentos.\", \"archivos_fuente\": [\"KORAZA IMPERMEABLE.pdf\", \"KORAZA 5.pdf\", \"KORAZA PRO 750 ELASTOMERICA.pdf\", \"KORAZA DOBLE VIDA.pdf\"], \"mejor_similitud\": 0.729, \"mensaje\": \"⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. DEBES SINTETIZARLOS como un ingeniero de aplicaciones: 1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado).    Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. 2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. 3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. 4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. 5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. 6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' 7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'\", \"productos_inventario_relacionados\": [{\"codigo\": \"5894181\", \"descripcion\": \"P7 KORAZA ELASTOMERICA GEN ACCENT 18.93L\", \"etiqueta_auditable\": \"[5894181] - P7 KORAZA ELASTOMERICA GEN ACCENT 18.93L\", \"marca\": \"56\", \"presentacion\": \"cuñete\", \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"5894180\", \"descripcion\": \"P7 KORAZA ELASTOMERICA GEN DEEP 18.93L\", \"etiqueta_auditable\": \"[5894180] - P7 KORAZA ELASTOMERICA GEN DEEP 18.93L\", \"marca\": \"56\", \"presentacion\": \"cuñete\", \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"10368017\", \"descripcion\": \"KORAZA ELASTOMERICA 2651 NOGAL 5 GL\", \"etiqueta_auditable\": \"[10368017] - KORAZA ELASTOMERICA 2651 NOGAL 5 GL\", \"marca\": \"24\", \"presentacion\": \"galon\", \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"10385614\", \"descripcion\": \"KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL\", \"etiqueta_auditable\": \"[10385614] - KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL\", \"marca\": \"24\", \"presentacion\": \"cuñete\", \"disponible\": false, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. ⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema completo con cantidades calculadas para TODOS los productos y cierra con: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'\", \"conocimiento_comercial_ferreinox\": [{\"id\": 63, \"tipo\": \"preferencia\", \"contexto\": \"fachada, humedad, estuco, base soplada, preparacion, revoque\", \"recomendar\": \"Koraza\", \"evitar\": null, \"nota\": \"Si el cliente va a pintar una fachada con problemas de humedad y actualmente tiene estuco o textura, es OBLIGATORIO indicarle que revise el estado de esa base. Si la base esta mala o soplada, se debe tumbar ABSOLUTAMENTE TODO hasta el revoque y comenzar un sistema nuevo desde cero. Esa es la UNICA garantia de curar la humedad y asegurar el desempeno de la Koraza. NO se puede pintar sobre una base danada.\"}, {\"id\": 37, \"tipo\": \"preferencia\", \"contexto\": \"fachadas, pintura, estuco, Koraza, Viniltex, preparación\", \"recomendar\": \"Koraza, PQ KORAZA PINT IMPER, Viniltex Advanced, Vinilico, Vinil Plus, Intervinil, Vinilux, Vinil Latex, Pinturama, Estuco Acrílico, Pintuco Flex\", \"evitar\": null, \"nota\": \"1. NUNCA olvides preguntar los metros cuadrados (m²) en el primer mensaje. 2. Jerarquía de productos: Premium Koraza, Tipo 1 Viniltex Advanced, Tipo 2 Intervinil, Tipo 3 Pinturama. 3. Incluir Estuco Acrílico y Pintuco Flex si hay grietas. 4. Preparación con Lija Abracol y Brocha Goya Profesional.\"}, {\"id\": 4, \"tipo\": \"uso_especifico\", \"contexto\": \"metal, oxidado, rejas, portones, tobogan, intemperie, exterior, corrosion\", \"recomendar\": \"Pintóxido + Corrotec + Pintulux 3en1\", \"evitar\": null, \"nota\": \"Para metal oxidado a la intemperie SIEMPRE recomendar el sistema completo de 3 capas: 1) Preparación con disco flap o grata + Pintóxido (convertidor de óxido si hay óxido profundo). 2) Corrotec o Corrotec Premium como anticorrosivo (2 manos). 3) Pintulux 3en1 como acabado final (protección UV y estética). NUNCA recomendar solo el anticorrosivo sin el acabado. Sin Pintulux, el Corrotec se degrada en meses.\"}, {\"id\": 70, \"tipo\": \"preferencia\", \"contexto\": \"piso interior, tráfico alto, montacargas, epóxico, industrial, alto desempeño\", \"recomendar\": \"sistema epóxico industrial\", \"evitar\": \"epóxicos de tráfico liviano o medio\", \"nota\": \"Para un piso interior con tráfico alto y uso de montacargas, se recomienda un sistema epóxico industrial de alto desempeño, diseñado para tráfico pesado. Este sistema debe incluir un imprimante epóxico industrial y un recubrimiento epóxico de alto espesor. Es importante eliminar completamente los recubrimientos existentes y preparar adecuadamente la superficie para garantizar la adherencia y durabilidad del recubrimiento.\"}, {\"id\": 68, \"tipo\": \"preferencia\", \"contexto\": \"tráfico pesado, preparación de superficies, pisos industriales, estibadoras, carretas, resistencia mecánica\", \"recomendar\": \"Intergard 2002\", \"evitar\": \"Pintucoat\", \"nota\": \"Para tráfico pesado, se debe usar un sistema de imprimante epóxico como Interseal 670HS y un acabado Intergard 2002 mezclado con arena de cuarzo. El cuarzo es esencial para la resistencia mecánica y antideslizante que soportan las llantas. Además, la preparación de superficies ya pintadas debe incluir un lavado y desengrase profundo con detergente industrial antes de escarificar o lijar.\"}, {\"id\": 67, \"tipo\": \"preferencia\", \"contexto\": \"sistema acero virgen, acabado poliuretano, Intergard 2002, Interseal 670HS, Interthane 990\", \"recomendar\": \"Interthane 990\", \"evitar\": \"Intergard 2002\", \"nota\": \"El Intergard 2002 es un Epóxico y se tiza con el sol. El sistema correcto para acero virgen con Acabado Poliuretano es: Imprimante Epóxico (Interseal 670HS) + Acabado Poliuretano (Interthane 990).\"}, {\"id\": 66, \"tipo\": \"preferencia\", \"contexto\": \"sistema acero virgen, acabado poliuretano, Intergard 2002, Interseal 670HS, Interthane 990\", \"recomendar\": \"Interthane 990\", \"evitar\": \"Intergard 2002\", \"nota\": \"El Intergard 2002 es un Epóxico y se tiza con el sol. El sistema correcto para acero virgen con Acabado Poliuretano es: Imprimante Epóxico (Interseal 670HS) + Acabado Poliuretano (Interthane 990).\"}, {\"id\": 62, \"tipo\": \"uso_especifico\", \"contexto\": \"moho, hongo, hipoclorito, cloro, fachada, preparacion\", \"recomendar\": \"Hipoclorito de sodio\", \"evitar\": null, \"nota\": \"Para eliminar moho/hongo en fachadas: lavar con hipoclorito diluido en proporcion 1 parte de hipoclorito por 8 a 10 partes de agua. ADVERTENCIA OBLIGATORIA para el cliente: esta mezcla SOLO es funcional durante 1 hora (maximo hora y media) despues de preparada; luego de ese tiempo pierde TODO su efecto para matar el hongo. Preparar solo la cantidad que se va a usar de inmediato.\"}], \"instruccion_conocimiento_comercial\": \"⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. REGLAS OBLIGATORIAS: 1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. 2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. 3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. 4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' SEPARADO de la información de la ficha técnica. 5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente.\"}"
+      }
+    ],
+    "context_updates": {
+      "last_product_request": {
+        "core_terms": [
+          "catalizador",
+          "koraza"
+        ],
+        "search_terms": [
+          "catalizador",
+          "koraza",
+          "impermeabilizante koraza",
+          "koraza elastomerica",
+          "koraza elastomerico",
+          "pintura fachada",
+          "pintura exterior fachada",
+          "pintura canchas",
+          "pintura para canchas",
+          "pintura de cancha",
+          "canchas"
+        ],
+        "requested_quantity": null,
+        "requested_unit": null,
+        "quantity_expression": null,
+        "product_codes": [],
+        "brand_filters": [
+          "koraza",
+          "pintuco"
+        ],
+        "direction_filters": [],
+        "size_filters": [],
+        "store_filters": [],
+        "original_query": "catalizador koraza",
+        "nlu_processed": true
+      },
+      "last_product_query": "catalizador koraza",
+      "last_product_context": [
+        {
+          "codigo": "5894180",
+          "descripcion": "P7 KORAZA ELASTOMERICA GEN DEEP 18.93L",
+          "descripcion_exacta": "P7 KORAZA ELASTOMERICA GEN DEEP 18.93L",
+          "etiqueta_auditable": "[5894180] - P7 KORAZA ELASTOMERICA GEN DEEP 18.93L",
+          "marca": "56",
+          "presentacion": "cuñete",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "disponible": false,
+          "precio_iva_incluido": 600000,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5894179",
+          "descripcion": "P7 KORAZA ELASTOMERICA GEN TINT 18.93L",
+          "descripcion_exacta": "P7 KORAZA ELASTOMERICA GEN TINT 18.93L",
+          "etiqueta_auditable": "[5894179] - P7 KORAZA ELASTOMERICA GEN TINT 18.93L",
+          "marca": "56",
+          "presentacion": "cuñete",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "disponible": false,
+          "precio_iva_incluido": 600000,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5894181",
+          "descripcion": "P7 KORAZA ELASTOMERICA GEN ACCENT 18.93L",
+          "descripcion_exacta": "P7 KORAZA ELASTOMERICA GEN ACCENT 18.93L",
+          "etiqueta_auditable": "[5894181] - P7 KORAZA ELASTOMERICA GEN ACCENT 18.93L",
+          "marca": "56",
+          "presentacion": "cuñete",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "disponible": false,
+          "precio_iva_incluido": 600000,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5894178",
+          "descripcion": "P7 KORAZA ELASTOMERICA GEN PASTEL 18.93L",
+          "descripcion_exacta": "P7 KORAZA ELASTOMERICA GEN PASTEL 18.93L",
+          "etiqueta_auditable": "[5894178] - P7 KORAZA ELASTOMERICA GEN PASTEL 18.93L",
+          "marca": "56",
+          "presentacion": "cuñete",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "disponible": false,
+          "precio_iva_incluido": 600000,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "20011043",
+          "descripcion": "KORAZA ELASTOMERICA NE159-T GALERIA 5 GL",
+          "descripcion_exacta": "KORAZA ELASTOMERICA NE159-T GALERIA 5 GL",
+          "etiqueta_auditable": "[20011043] - KORAZA ELASTOMERICA NE159-T GALERIA 5 GL",
+          "marca": "24",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "KORAZA ELASTOMERICA",
+            "tipo_marca": "VINILOS EXTERIORES",
+            "familia": "COLORES TINT",
+            "aplicacion": "CONSTRUCCION",
+            "categoria": "SIN ASIGNAR",
+            "descripcion_larga": "KORAZA ELASTOMERICA NE159-T GALERIA CLASICA CANECA",
+            "tipo": "NaN"
+          },
+          "disponible": false,
+          "precio_iva_incluido": null,
+          "precio_nota": "Precio pendiente de confirmación"
+        },
+        {
+          "codigo": "10385614",
+          "descripcion": "KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL",
+          "descripcion_exacta": "KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL",
+          "etiqueta_auditable": "[10385614] - KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL",
+          "marca": "24",
+          "presentacion": "cuñete",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "KORAZA ELASTOMERICA",
+            "tipo_marca": "VINILOS EXTERIORES",
+            "familia": "READY MIX",
+            "aplicacion": "CONSTRUCCION",
+            "categoria": "SIN ASIGNAR",
+            "descripcion_larga": "KORAZA ELASTOMERICA 2798 BALSO CANECA 5 GL",
+            "tipo": "NaN"
+          },
+          "disponible": false,
+          "precio_iva_incluido": null,
+          "precio_nota": "Precio pendiente de confirmación"
+        },
+        {
+          "codigo": "10386775",
+          "descripcion": "KORAZA ELASTOMERICA 158TX8A GRIS VIVA 5G",
+          "descripcion_exacta": "KORAZA ELASTOMERICA 158TX8A GRIS VIVA 5G",
+          "etiqueta_auditable": "[10386775] - KORAZA ELASTOMERICA 158TX8A GRIS VIVA 5G",
+          "marca": "24",
+          "presentacion": null,
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "KORAZA ELASTOMERICA",
+            "tipo_marca": "VINILOS EXTERIORES",
+            "familia": "COLORES ACCENT",
+            "aplicacion": "CONSTRUCCION",
+            "categoria": "SIN ASIGNAR",
+            "descripcion_larga": "KORAZA ELASTOMERICA 158TX8A GRIS VIVA ENVIGADO 5 G",
+            "tipo": "NaN"
+          },
+          "disponible": false,
+          "precio_iva_incluido": null,
+          "precio_nota": "Precio pendiente de confirmación"
+        },
+        {
+          "codigo": "10396297",
+          "descripcion": "KORAZA ELASTOMERICA BASE DEEP PREP 5G",
+          "descripcion_exacta": "KORAZA ELASTOMERICA BASE DEEP PREP 5G",
+          "etiqueta_auditable": "[10396297] - KORAZA ELASTOMERICA BASE DEEP PREP 5G",
+          "marca": "24",
+          "presentacion": null,
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "KORAZA ELASTOMERICA",
+            "tipo_marca": "VINILOS EXTERIORES",
+            "familia": "BASE DEEP",
+            "aplicacion": "CONSTRUCCION",
+            "categoria": "SIN ASIGNAR",
+            "descripcion_larga": "KORAZA ELASTOMERICA BASE DEEP 27036 CANECA PREP 5",
+            "tipo": "NaN"
+          },
+          "disponible": false,
+          "precio_iva_incluido": null,
+          "precio_nota": "Precio pendiente de confirmación"
+        },
+        {
+          "codigo": "10393541",
+          "descripcion": "KORAZA ELASTOMERICA AZ091 NEGRO ZARZA 5G",
+          "descripcion_exacta": "KORAZA ELASTOMERICA AZ091 NEGRO ZARZA 5G",
+          "etiqueta_auditable": "[10393541] - KORAZA ELASTOMERICA AZ091 NEGRO ZARZA 5G",
+          "marca": "24",
+          "presentacion": null,
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "KORAZA ELASTOMERICA",
+            "tipo_marca": "VINILOS EXTERIORES",
+            "familia": "READY MIX",
+            "aplicacion": "CONSTRUCCION",
+            "categoria": "SIN ASIGNAR",
+            "descripcion_larga": "KORAZA ELASTOMERICA AZ091 NEGRO ZARZAMORA CANECA 5",
+            "tipo": "NaN"
+          },
+          "disponible": false,
+          "precio_iva_incluido": null,
+          "precio_nota": "Precio pendiente de confirmación"
+        },
+        {
+          "codigo": "20011048",
+          "descripcion": "KORAZA ELASTOMERICA TR042-D FLOR SILV 5G",
+          "descripcion_exacta": "KORAZA ELASTOMERICA TR042-D FLOR SILV 5G",
+          "etiqueta_auditable": "[20011048] - KORAZA ELASTOMERICA TR042-D FLOR SILV 5G",
+          "marca": "24",
+          "presentacion": null,
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "KORAZA ELASTOMERICA",
+            "tipo_marca": "VINILOS EXTERIORES",
+            "familia": "COLORES DEEP",
+            "aplicacion": "CONSTRUCCION",
+            "categoria": "SIN ASIGNAR",
+            "descripcion_larga": "KORAZA ELASTOMERICA TR042-D FLORA SILVESTRE CANECA",
+            "tipo": "NaN"
+          },
+          "disponible": false,
+          "precio_iva_incluido": null,
+          "precio_nota": "Precio pendiente de confirmación"
+        }
+      ]
+    },
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.95,
+      "level": "alta",
+      "signals": [
+        "low:no se",
+        "rag_used",
+        "inventory_used"
+      ]
+    },
+    "is_farewell": false
+  }
+}

@@ -1,110 +1,25 @@
 {
-  "user": "El óxido está bastante profundo, las rejas están a la intemperie",
+  "user": "Quiero que se vea la veta de la madera, acabado transparente",
   "result": {
-    "response_text": "Para tratar el óxido profundo en tus rejas, te recomiendo el siguiente sistema:\n\n1. **Corrotec** (anticorrosivo): Este producto es ideal para superficies metálicas expuestas a la intemperie. Se aplica como primera capa para inhibir la corrosión.\n2. **Pintulux 3en1** (acabado): Se aplica como capa final para proteger y embellecer.\n\n### Disponibilidad:\n- ✅ **[5890866] - PQ CORROTEC PREMIUM MAT GRIS 507 3.79L**: Disponible.\n- ❌ **[10015682] - CORROTEC PRIMER EPOXICO 13350 PARTE B 5G**: Agotado.\n\n¿Te gustaría proceder con el Corrotec Premium?",
-    "intent": "consulta_productos",
+    "response_text": "Para proteger tu pérgola de madera a la intemperie y asegurarte de que se vea la veta natural, te recomiendo el siguiente sistema:\n\n1. **Preparación**: Limpia bien la superficie de la madera. Si hay barniz viejo, utiliza un **Removedor Pintuco** y raspa con espátula. Luego, asienta con una lija Abracol gruesa (80-100) y finaliza con una lija fina (220-320).\n\n2. **Aplicación del producto**: Utiliza **Barnex Extra Protección**. Este barniz a base de aceite protege la madera del sol, la lluvia y la humedad, permitiendo la transpiración de la madera y evitando que se agriete. Viene listo para aplicar con brocha y no requiere dilución.\n\n3. **Mantenimiento**: Es recomendable aplicar una segunda mano después de que la primera se haya secado completamente para asegurar una buena protección.\n\nPara la aplicación, necesitarás herramientas como una **Brocha Goya Profesional** para un acabado óptimo.\n\nAhora, necesito saber cuántos metros cuadrados tiene tu pérgola para poder cotizarte la cantidad adecuada de producto. ¿Me puedes indicar eso, por favor?",
+    "intent": "asesoria_tecnica",
     "tool_calls": [
       {
         "name": "consultar_conocimiento_tecnico",
         "args": {
-          "producto": "corrotec",
-          "pregunta": "sistema anticorrosivo óxido profundo intemperie"
+          "pregunta": "sistema para proteger pérgola de madera a la intemperie, acabado transparente, que se vea la veta",
+          "producto": "Barnex Extra Protección"
         },
-        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: CORROTEC EPOXI ZINC 2K 10073.pdf]\\n[PRODUCTO: CORROTEC EPOXI ZINC 2K 10073] [MARCA: Pintuco]\\n[SECCIÓN: Ideal para la imprimación de superficies metálicas en entornos]\\n\\nagresivos que exigen alta protección anticorrosiva.\\n\\n---\\n\\n[Fuente: corrotec-primer-epoxico-10070-13350.pdf]\\n[PRODUCTO: corrotec-primer-epoxico-10070-13350] [MARCA: Pintuco]\\n[SECCIÓN: DESCRIPCIÓN]\\n\\nRecubrimiento anticorrosivo, inhibidor de la corrosión en dos componentes, para superficies de acero, que\\npresenta alto espesor por mano. Sus pigmentos de protección son de tipo ecológico (fosfato de zinc,\\ndióxido de titanio e inertes).\\n\\n---\\n\\n[Fuente: CORROTEC.pdf]\\n[PRODUCTO: CORROTEC] [MARCA: Pintuco]\\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\\n\\n✓ Preparador de superficies ferrosas y galvanizadas\\n✓ Transformador de sales y óxidos impermeables\\n✓ Ideal para uso en áreas de difícil acceso para preparación\\nmanual-mecánica.\\n✓ Producto en un solo componente, fácil de aplicar\\n\\n---\\n\\n[Fuente: CORROTEC PREMIUM.pdf]\\n[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\\n[SECCIÓN: Producto]\\n\\nformulado\\ncon\\npigmentos y aditivos inhibidores de la corrosión.\", \"archivos_fuente\": [\"CORROTEC EPOXI ZINC 2K 10073.pdf\", \"corrotec-primer-epoxico-10070-13350.pdf\", \"CORROTEC.pdf\", \"CORROTEC PREMIUM.pdf\"], \"mejor_similitud\": 0.6709, \"mensaje\": \"INSTRUCCIONES OBLIGATORIAS: 1) Lee 'respuesta_rag' y extrae DATOS CONCRETOS: nombres de catalizadores/componentes, proporciones exactas (ej. '4:1'), tiempos (ej. 'secado al tacto: 30 min'), rendimientos, temperaturas. 2) Tu respuesta al cliente DEBE incluir al menos un dato específico numérico o un nombre de producto extraído de 'respuesta_rag'. 3) PROHIBIDO decir frases genéricas como 'un agente de curado específico' o 'según las condiciones'. Cita el dato real. 4) Luego usa `buscar_documento_tecnico` con el nombre del archivo fuente para enviar el PDF como respaldo.\", \"productos_inventario_relacionados\": [{\"codigo\": \"10703102\", \"descripcion\": \"KIT EPOXI ZINC 110073301 Y CAT 110074101\", \"etiqueta_auditable\": \"[10703102] - KIT EPOXI ZINC 110073301 Y CAT 110074101\", \"marca\": \"0\", \"presentacion\": null, \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"20017942\", \"descripcion\": \"EPOXI ZINC IND 10073 2K PART A GRIS 2.4G\", \"etiqueta_auditable\": \"[20017942] - EPOXI ZINC IND 10073 2K PART A GRIS 2.4G\", \"marca\": \"24\", \"presentacion\": null, \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"10015682\", \"descripcion\": \"CORROTEC PRIMER EPOXICO 13350 PARTE B 5G\", \"etiqueta_auditable\": \"[10015682] - CORROTEC PRIMER EPOXICO 13350 PARTE B 5G\", \"marca\": \"24\", \"presentacion\": null, \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"5890866\", \"descripcion\": \"PQ CORROTEC PREMIUM MAT GRIS 507 3.79L\", \"etiqueta_auditable\": \"[5890866] - PQ CORROTEC PREMIUM MAT GRIS 507 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`.\"}"
-      },
-      {
-        "name": "consultar_inventario",
-        "args": {
-          "producto": "corrotec premium mat gris 3.79L"
-        },
-        "result": "{\"encontrados\": 1, \"productos\": [{\"codigo\": \"5890811\", \"descripcion\": \"TE VINIL LATEX MAT BLANCO 65232 3.79L\", \"descripcion_exacta\": \"TE VINIL LATEX MAT BLANCO 65232 3.79L\", \"etiqueta_auditable\": \"[5890811] - TE VINIL LATEX MAT BLANCO 65232 3.79L\", \"marca\": \"63\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"VINIL LATEX\", \"tipo_marca\": \"VINILO TIPO 2\", \"familia\": \"BLANCO\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1F0401002269_VINIL LATEX\", \"descripcion_larga\": \"VINIL LATEX BLANCO 65232 1 GL\", \"tipo\": \"A1\"}, \"stock_total\": 143.0}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {\"cantidad_inferida\": 1.0, \"presentacion_canonica_inferida\": \"galon\", \"producto_base\": \"corrotec premium mat\", \"color\": \"gris\", \"acabado\": null}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": false, \"pregunta_desambiguacion\": null, \"mensaje\": null}"
-      },
-      {
-        "name": "consultar_inventario",
-        "args": {
-          "producto": "corrotec primer epoxico 13350 parte b 5g"
-        },
-        "result": "{\"encontrados\": 1, \"productos\": [{\"codigo\": \"10015682\", \"descripcion\": \"CORROTEC PRIMER EPOXICO 13350 PARTE B 5G\", \"descripcion_exacta\": \"CORROTEC PRIMER EPOXICO 13350 PARTE B 5G\", \"etiqueta_auditable\": \"[10015682] - CORROTEC PRIMER EPOXICO 13350 PARTE B 5G\", \"marca\": \"24\", \"presentacion\": null, \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"CORROTEC\", \"tipo_marca\": \"PRIMER - ANTICORROSIVO\", \"familia\": \"ATOXICO\", \"aplicacion\": \"RAD\", \"categoria\": \"PN3M0111030026_ANTICORROSIVA EPOXICA\", \"descripcion_larga\": \"CORROTEC PRIMER EPOXICO 13350 PARTE B 5 GL\", \"tipo\": \"A1\"}, \"stock_total\": 0.0}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": false, \"pregunta_desambiguacion\": null, \"mensaje\": null}"
+        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: BARNEX EXTRA PROTECCIÓN.pdf]\\n[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\\n[SECCIÓN: DESCRIPCIÓN]\\n\\nBarniz a base de aceite, que protege la madera del sol, la lluvia, la humedad\\ny el ataque de hongos. Contiene protectores solares y pigmentos especiales\\nque lo hacen ideal para resistir la intemperie sin decolorarse, además\\npermite la transpiración de la madera, evitando que se agriete. Viene listo\\npara aplicar a brocha y no requiere dilución.\\n\\n---\\n\\n[Fuente: BARNEX EXTRA PROTECCION.pdf]\\n[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\\n[SECCIÓN: DESCRIPCIÓN]\\n\\nBarniz a base de aceite, que protege la madera del sol, la lluvia, la humedad\\ny el ataque de hongos. Contiene protectores solares y pigmentos especiales\\nque lo hacen ideal para resistir la intemperie sin decolorarse, además\\npermite la transpiración de la madera, evitando que se agriete. Viene listo\\npara aplicar a brocha y no requiere dilución.\\n\\n---\\n\\n[Fuente: BARNEX EXTRA PROTECCIÓN.pdf]\\n[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\\n[SECCIÓN: USOS]\\n\\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\\nno estén expuestos a la abrasión. No apto para uso en pisos.\\n\\n---\\n\\n[Fuente: BARNEX EXTRA PROTECCIÓN.pdf]\\n[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\\n[SECCIÓN: Versión 1 / 2015]\\n\\nBARNEX®\", \"archivos_fuente\": [\"BARNEX EXTRA PROTECCIÓN.pdf\", \"BARNEX EXTRA PROTECCION.pdf\"], \"mejor_similitud\": 0.7382, \"mensaje\": \"⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. DEBES SINTETIZARLOS como un ingeniero de aplicaciones: 1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado).    Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. 2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. 3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. 4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. 5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. 6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' 7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'\", \"productos_inventario_relacionados\": [{\"codigo\": \"5890924\", \"descripcion\": \"MH BARNEX EXTRA BR INCOLORO 6602 3.79L\", \"etiqueta_auditable\": \"[5890924] - MH BARNEX EXTRA BR INCOLORO 6602 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890925\", \"descripcion\": \"MH BARNEX EXTRA SB INCOLORO 6603 3.79L\", \"etiqueta_auditable\": \"[5890925] - MH BARNEX EXTRA SB INCOLORO 6603 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890920\", \"descripcion\": \"MH BARNEX BR INCOLORO 557 3.79L\", \"etiqueta_auditable\": \"[5890920] - MH BARNEX BR INCOLORO 557 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890524\", \"descripcion\": \"MH BARNEX BR INCOLORO 557 0.95L\", \"etiqueta_auditable\": \"[5890524] - MH BARNEX BR INCOLORO 557 0.95L\", \"marca\": \"59\", \"presentacion\": \"cuarto\", \"disponible\": true, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. ⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema completo con cantidades calculadas para TODOS los productos y cierra con: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'\", \"conocimiento_comercial_ferreinox\": [{\"id\": 34, \"tipo\": \"preferencia\", \"contexto\": \"madera exterior, madera interior, barniz, sellador, color sólido\", \"recomendar\": \"Barnex Extra Protección, Wood Stain, Esmalte Doméstico, Pintulux MP\", \"evitar\": \"sellador para madera, Pintulac\", \"nota\": \"1. Para madera exterior a la intemperie, está prohibido recomendar sellador. Barnex o Wood Stain van directo sobre la madera cruda. 2. Barnex y Wood Stain son productos diferentes, no se mezclan. 3. Pintulac no es adecuado para marcos interiores; se debe usar Esmalte Doméstico o Pintulux MP. 4. Siempre preguntar el color del marco antes de cotizar. 5. Incluir herramientas: Removedor Pintuco, Lija Abracol gruesa (80-100), Lija Abracol fina (220), Brocha Goya Profesional.\"}, {\"id\": 25, \"tipo\": \"contraindicacion\", \"contexto\": \"madera, exterior, pérgolas, intemperie\", \"recomendar\": \"Barnex Extra Protección o Wood Stain\", \"evitar\": \"Sellador para madera\", \"nota\": \"NUNCA recomiendes sellador antes del Barnex o Wood Stain. Estos productos son de poro abierto y necesitan penetrar directamente en la madera cruda. Si aplicas sellador, el producto se descascara con el sol.\"}, {\"id\": 26, \"tipo\": \"preferencia\", \"contexto\": \"madera, herramientas, aplicación, brochas\", \"recomendar\": \"Brocha Goya Profesional\", \"evitar\": null, \"nota\": \"Siempre que recomiendes productos para madera, DEBES incluir en el sistema la herramienta de aplicación. Recomienda explícitamente \\\"Brocha Goya Profesional\\\" (evitar la línea popular para estos acabados porque suelta pelo y daña el barniz).\"}, {\"id\": 24, \"tipo\": \"preferencia\", \"contexto\": \"madera, preparación, abrasivos, Abracol\", \"recomendar\": \"Removedor Pintuco + Lija Abracol grano 80 o 100 + Lija Abracol grano 220 o 320\", \"evitar\": null, \"nota\": \"Es un error técnico intentar quitar barniz viejo solo con lija 220 (se empasta). El sistema correcto es aplicar Removedor Pintuco, raspar con espátula, asentar con lija gruesa Abracol (80-100) y dar el acabado final con lija fina Abracol (220-320). SIEMPRE especifica la marca Abracol para lijas.\"}, {\"id\": 23, \"tipo\": \"preferencia\", \"contexto\": \"madera, protocolo, preparación, herramientas\", \"recomendar\": null, \"evitar\": null, \"nota\": \"TIENES ESTRICTAMENTE PROHIBIDO recomendar nombres de productos (Barnex, Pintulac, etc.) en el primer mensaje. Tu ÚNICA respuesta debe ser diagnosticar: \\\"¿La madera es exterior o interior? ¿Quieres un acabado transparente (que se vea la veta natural) o prefieres un color sólido?\\\" Solo recomiendas cuando el cliente responda.\"}, {\"id\": 76, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, exterior, resistencia UV, anticorrosivos, epóxicos, acabados\", \"recomendar\": \"Corrotec Premium, Pintulux 3 en 1, Interseal 670HS, Interthane 990, Intergard 740\", \"evitar\": \"epóxicos como acabado final\", \"nota\": \"En estructuras metálicas exteriores, el sistema es similar al de interior, pero se debe considerar la resistencia a la radiación UV. Los epóxicos son adecuados solo como anticorrosivos, no deben usarse como acabado final, ya que la radiación UV puede deteriorarlos rápidamente. Se recomienda un sistema básico con anticorrosivo alquídico y un acabado resistente a la intemperie, un sistema intermedio con imprimante epóxico y acabados alquídicos o acrílicos, y un sistema de alto desempeño con Interseal 670HS y poliuretano para mayor durabilidad.\"}, {\"id\": 75, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, interior, bajo techo, sin humedad, preparación, compatibilidad, sistemas\", \"recomendar\": \"N/A\", \"evitar\": \"N/A\", \"nota\": \"Las reglas clave incluyen no aplicar epóxicos o poliuretanos sobre anticorrosivos alquídicos, y la compatibilidad de sistemas debe ser considerada: anticorrosivo alquídico solo con acabados alquídicos, y anticorrosivo epóxico puede recibir acabados epóxicos, poliuretanos, acrílicos o alquídicos.\"}, {\"id\": 70, \"tipo\": \"preferencia\", \"contexto\": \"piso interior, tráfico alto, montacargas, epóxico, industrial, alto desempeño\", \"recomendar\": \"sistema epóxico industrial\", \"evitar\": \"epóxicos de tráfico liviano o medio\", \"nota\": \"Para un piso interior con tráfico alto y uso de montacargas, se recomienda un sistema epóxico industrial de alto desempeño, diseñado para tráfico pesado. Este sistema debe incluir un imprimante epóxico industrial y un recubrimiento epóxico de alto espesor. Es importante eliminar completamente los recubrimientos existentes y preparar adecuadamente la superficie para garantizar la adherencia y durabilidad del recubrimiento.\"}], \"instruccion_conocimiento_comercial\": \"⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. REGLAS OBLIGATORIAS: 1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. 2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. 3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. 4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' SEPARADO de la información de la ficha técnica. 5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente.\"}"
       }
     ],
-    "context_updates": {
-      "last_product_request": {
-        "core_terms": [
-          "corrotec",
-          "primer",
-          "epoxico",
-          "parte",
-          "5g",
-          "pintucoat"
-        ],
-        "search_terms": [
-          "corrotec",
-          "anticorrosivo pintuco",
-          "anticorrosivo",
-          "anti corrosivo",
-          "corrotec premium",
-          "primer",
-          "epoxico",
-          "parte",
-          "5g",
-          "pintucoat",
-          "epoxica pintuco",
-          "epoxica",
-          "epoxy",
-          "epoxi pintuco"
-        ],
-        "requested_quantity": null,
-        "requested_unit": null,
-        "quantity_expression": null,
-        "product_codes": [
-          "13350"
-        ],
-        "brand_filters": [
-          "pintuco",
-          "corrotec",
-          "pintucoat"
-        ],
-        "direction_filters": [],
-        "size_filters": [],
-        "store_filters": [],
-        "original_query": "corrotec primer epoxico 13350 parte b 5g",
-        "color_filters": [],
-        "finish_filters": [],
-        "nlu_processed": true,
-        "nlu_extraction": null
-      },
-      "last_product_query": "corrotec primer epoxico 13350 parte b 5g",
-      "last_product_context": [
-        {
-          "codigo": "10015682",
-          "descripcion": "CORROTEC PRIMER EPOXICO 13350 PARTE B 5G",
-          "descripcion_exacta": "CORROTEC PRIMER EPOXICO 13350 PARTE B 5G",
-          "etiqueta_auditable": "[10015682] - CORROTEC PRIMER EPOXICO 13350 PARTE B 5G",
-          "marca": "24",
-          "presentacion": null,
-          "familia_consulta": null,
-          "producto_padre_busqueda": null,
-          "pregunta_desambiguacion": null,
-          "clasificacion": {
-            "linea": "CORROTEC",
-            "tipo_marca": "PRIMER - ANTICORROSIVO",
-            "familia": "ATOXICO",
-            "aplicacion": "RAD",
-            "categoria": "PN3M0111030026_ANTICORROSIVA EPOXICA",
-            "descripcion_larga": "CORROTEC PRIMER EPOXICO 13350 PARTE B 5 GL",
-            "tipo": "A1"
-          },
-          "stock_total": 0.0
-        }
-      ]
-    },
+    "context_updates": {},
     "should_create_task": false,
     "confidence": {
       "score": 1.0,
       "level": "alta",
       "signals": [
-        "rag_used",
-        "inventory_used"
+        "rag_used"
       ]
     },
     "is_farewell": false

@@ -1,150 +1,25 @@
 {
-  "user": "Es de metal y tiene algo de óxido, está a la intemperie siempre",
+  "user": "El óxido está bastante profundo, las rejas están a la intemperie",
   "result": {
-    "response_text": "Para el tobogán metálico con óxido a la intemperie, te recomiendo el siguiente sistema:\n\n1. **Pintóxido**: Para tratar el óxido profundo. Aplícalo y deja actuar durante 4 horas.\n2. **Corrotec Premium**: Anticorrosivo que protege el metal. \n3. **Pintulux 3en1**: Acabado final que proporciona resistencia y durabilidad.\n\n### Disponibilidad:\n- ✅ [5890866] - PQ CORROTEC PREMIUM MAT GRIS 507 3.79L: Disponible\n- ✅ [5892759] - PQ PINTULUX 3EN1 BR BASE TINT 3.79L: Disponible\n- ✅ [5892754] - PQ PINTULUX 3EN1 BR DEEP BASE 3.79L: Disponible\n\n¿Te gustaría que confirme la disponibilidad de Pintóxido y proceda con el pedido?",
-    "intent": "consulta_productos",
+    "response_text": "Aquí tienes el sistema completo que te recomiendo para tratar las rejas con óxido profundo a la intemperie:\n\n1. **Preparación de la Superficie**: Lija o usa un disco flap para eliminar el óxido visible. Asegúrate de que la superficie esté limpia y libre de polvo.\n\n2. **Imprimante/Convertidor**: Aplica **Pintóxido** (convertidor de óxido) para transformar el óxido en sales. Deja actuar durante 4 horas para que realice su función correctamente.\n\n3. **Anticorrosivo**: Aplica **Corrotec** como anticorrosivo. Se recomienda aplicar dos manos para asegurar una buena protección.\n\n4. **Acabado**: Finaliza con **Pintulux 3en1** para darle un acabado estético y protección UV.\n\nEste sistema es ideal para estructuras metálicas expuestas a la intemperie y garantiza una buena durabilidad. \n\nAhora, ¿cuántos m² necesitas cubrir y qué color te gustaría para el acabado?",
+    "intent": "asesoria_tecnica",
     "tool_calls": [
       {
         "name": "consultar_conocimiento_tecnico",
         "args": {
-          "producto": "corrotec",
-          "pregunta": "sistema anticorrosivo para tobogán metálico con óxido profundo a la intemperie"
+          "pregunta": "sistema para tratar metal oxidado a intemperie",
+          "producto": "Corrotec"
         },
-        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: CORROTEC EPOXI ZINC 2K 10073.pdf]\\n[PRODUCTO: CORROTEC EPOXI ZINC 2K 10073] [MARCA: Pintuco]\\n[SECCIÓN: Ideal para la imprimación de superficies metálicas en entornos]\\n\\nagresivos que exigen alta protección anticorrosiva.\\n\\n---\\n\\n[Fuente: corrotec-primer-epoxico-10070-13350.pdf]\\n[PRODUCTO: corrotec-primer-epoxico-10070-13350] [MARCA: Pintuco]\\n[SECCIÓN: DESCRIPCIÓN]\\n\\nRecubrimiento anticorrosivo, inhibidor de la corrosión en dos componentes, para superficies de acero, que\\npresenta alto espesor por mano. Sus pigmentos de protección son de tipo ecológico (fosfato de zinc,\\ndióxido de titanio e inertes).\\n\\n---\\n\\n[Fuente: CORROTEC.pdf]\\n[PRODUCTO: CORROTEC] [MARCA: Pintuco]\\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\\n\\n✓ Preparador de superficies ferrosas y galvanizadas\\n✓ Transformador de sales y óxidos impermeables\\n✓ Ideal para uso en áreas de difícil acceso para preparación\\nmanual-mecánica.\\n✓ Producto en un solo componente, fácil de aplicar\\n\\n---\\n\\n[Fuente: CORROTEC.pdf]\\n[PRODUCTO: CORROTEC] [MARCA: Pintuco]\\n[SECCIÓN: Preparación del producto y Aplicación]\\n\\nAplique al metal el producto con una brocha de cerda natural o sumerja el objeto metálico en Pintóxido\\nhasta humedecerlo bien, dejando actuar el producto durante 4 horas para que la transformación del óxido\\nsea completa (a 25°C), y luego retire el objeto para exponerlo al aire. Se debe procurar que el producto\\npenetre muy bien en las zonas oxidadas para que ataque el óxido incrustado profundamente, lo cual se\\nobserva con la aparición de un polvillo blanco (sales) en las zonas que estaban oxidadas. Luego elimine con\\ncepillo fibra o de alambre, o con una estopa limpia las sales blancas y el exceso de Pintóxido, y proceda\\ncon la aplicación de inmediato de una anticorrosiva Pintuco® apropiada para el metal y al ambiente donde\\nestará expuesto. Se recomienda evitar la aplicación de Pintóxido en lugares con excesiva ventilación\\nporque pierde su efectividad y su uso en metales que van a ser protegidos con pinturas para altas\\ntemperaturas (evite el uso de Pintóxido y otros acondicionadores). El metal debe estar a una temperatura\\ninferior a 30°C evitando que el producto pierda su eficiencia. Para objetos metálicos en exteriores, se\\nrecomienda aplicar el Pintóxido en las primeras horas de la mañana o por la tarde cuando la temperatura\\nhaya disminuido. Tenga en cuenta que el tiempo de actuación del producto mencionado puede variar de\\nacuerdo con la temperatura ambiental y el espesor de película aplicado.\", \"archivos_fuente\": [\"CORROTEC EPOXI ZINC 2K 10073.pdf\", \"corrotec-primer-epoxico-10070-13350.pdf\", \"CORROTEC.pdf\", \"CORROTEC PREMIUM.pdf\"], \"mejor_similitud\": 0.6498, \"mensaje\": \"INSTRUCCIONES OBLIGATORIAS: 1) Lee 'respuesta_rag' y extrae DATOS CONCRETOS: nombres de catalizadores/componentes, proporciones exactas (ej. '4:1'), tiempos (ej. 'secado al tacto: 30 min'), rendimientos, temperaturas. 2) Tu respuesta al cliente DEBE incluir al menos un dato específico numérico o un nombre de producto extraído de 'respuesta_rag'. 3) PROHIBIDO decir frases genéricas como 'un agente de curado específico' o 'según las condiciones'. Cita el dato real. 4) Luego usa `buscar_documento_tecnico` con el nombre del archivo fuente para enviar el PDF como respaldo.\", \"productos_inventario_relacionados\": [{\"codigo\": \"10703102\", \"descripcion\": \"KIT EPOXI ZINC 110073301 Y CAT 110074101\", \"etiqueta_auditable\": \"[10703102] - KIT EPOXI ZINC 110073301 Y CAT 110074101\", \"marca\": \"0\", \"presentacion\": null, \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"20017942\", \"descripcion\": \"EPOXI ZINC IND 10073 2K PART A GRIS 2.4G\", \"etiqueta_auditable\": \"[20017942] - EPOXI ZINC IND 10073 2K PART A GRIS 2.4G\", \"marca\": \"24\", \"presentacion\": null, \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"10015682\", \"descripcion\": \"CORROTEC PRIMER EPOXICO 13350 PARTE B 5G\", \"etiqueta_auditable\": \"[10015682] - CORROTEC PRIMER EPOXICO 13350 PARTE B 5G\", \"marca\": \"24\", \"presentacion\": null, \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"5890866\", \"descripcion\": \"PQ CORROTEC PREMIUM MAT GRIS 507 3.79L\", \"etiqueta_auditable\": \"[5890866] - PQ CORROTEC PREMIUM MAT GRIS 507 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`.\"}"
-      },
-      {
-        "name": "consultar_inventario",
-        "args": {
-          "producto": "corrotec"
-        },
-        "result": "{\"encontrados\": 5, \"productos\": [{\"codigo\": \"5890866\", \"descripcion\": \"PQ CORROTEC PREMIUM MAT GRIS 507 3.79L\", \"descripcion_exacta\": \"PQ CORROTEC PREMIUM MAT GRIS 507 3.79L\", \"etiqueta_auditable\": \"[5890866] - PQ CORROTEC PREMIUM MAT GRIS 507 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"corrotec_premium_mat_gris\", \"producto_padre_busqueda\": \"corrotec premium mat gris\", \"pregunta_desambiguacion\": \"Tengo Gris cuarto y Gris galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 110.0}, {\"codigo\": \"5890475\", \"descripcion\": \"PQ CORROTEC PREMIUM MAT ROJO 310 0.95L\", \"descripcion_exacta\": \"PQ CORROTEC PREMIUM MAT ROJO 310 0.95L\", \"etiqueta_auditable\": \"[5890475] - PQ CORROTEC PREMIUM MAT ROJO 310 0.95L\", \"marca\": \"58\", \"presentacion\": \"cuarto\", \"familia_consulta\": \"corrotec_premium_mat_rojo\", \"producto_padre_busqueda\": \"corrotec premium mat rojo\", \"pregunta_desambiguacion\": \"Tengo Rojo cuarto y Rojo galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 64.0}, {\"codigo\": \"5890864\", \"descripcion\": \"PQ CORROTEC PREMIUM MAT ROJO 310 3.79L\", \"descripcion_exacta\": \"PQ CORROTEC PREMIUM MAT ROJO 310 3.79L\", \"etiqueta_auditable\": \"[5890864] - PQ CORROTEC PREMIUM MAT ROJO 310 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"corrotec_premium_mat_rojo\", \"producto_padre_busqueda\": \"corrotec premium mat rojo\", \"pregunta_desambiguacion\": \"Tengo Rojo cuarto y Rojo galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 64.0}, {\"codigo\": \"5890477\", \"descripcion\": \"PQ CORROTEC PREMIUM MAT GRIS 507 0.95L\", \"descripcion_exacta\": \"PQ CORROTEC PREMIUM MAT GRIS 507 0.95L\", \"etiqueta_auditable\": \"[5890477] - PQ CORROTEC PREMIUM MAT GRIS 507 0.95L\", \"marca\": \"58\", \"presentacion\": \"cuarto\", \"familia_consulta\": \"corrotec_premium_mat_gris\", \"producto_padre_busqueda\": \"corrotec premium mat gris\", \"pregunta_desambiguacion\": \"Tengo Gris cuarto y Gris galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 28.0}, {\"codigo\": \"5890863\", \"descripcion\": \"PQ CORROTEC PREMIUM MAT NEGRO 200 3.79L\", \"descripcion_exacta\": \"PQ CORROTEC PREMIUM MAT NEGRO 200 3.79L\", \"etiqueta_auditable\": \"[5890863] - PQ CORROTEC PREMIUM MAT NEGRO 200 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"corrotec_premium_mat_negro\", \"producto_padre_busqueda\": \"corrotec premium mat negro\", \"pregunta_desambiguacion\": \"Tengo Negro cuarto y Negro galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 51.0}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {\"cantidad_inferida\": null, \"presentacion_canonica_inferida\": null, \"producto_base\": \"corrotec\", \"color\": null, \"acabado\": null}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": true, \"pregunta_desambiguacion\": \"Tengo Gris cuarto y Gris galón con rotación. ¿Cuál necesitas?\", \"mensaje\": null}"
-      },
-      {
-        "name": "consultar_inventario",
-        "args": {
-          "producto": "pintulux 3en1"
-        },
-        "result": "{\"encontrados\": 5, \"productos\": [{\"codigo\": \"5892753\", \"descripcion\": \"PQ PINTULUX 3EN1 BR DEEP BASE 0.95L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR DEEP BASE 0.95L\", \"etiqueta_auditable\": \"[5892753] - PQ PINTULUX 3EN1 BR DEEP BASE 0.95L\", \"marca\": \"58\", \"presentacion\": \"cuarto\", \"familia_consulta\": \"pintulux_3en1_deep\", \"producto_padre_busqueda\": \"pintulux 3en1 deep\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 106.0}, {\"codigo\": \"5892760\", \"descripcion\": \"PQ PINTULUX 3EN1 BR BASE TINT 0.95L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR BASE TINT 0.95L\", \"etiqueta_auditable\": \"[5892760] - PQ PINTULUX 3EN1 BR BASE TINT 0.95L\", \"marca\": \"58\", \"presentacion\": \"cuarto\", \"familia_consulta\": \"pintulux_3en1_tint\", \"producto_padre_busqueda\": \"pintulux 3en1 tint\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 55.0}, {\"codigo\": \"5892759\", \"descripcion\": \"PQ PINTULUX 3EN1 BR BASE TINT 3.79L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR BASE TINT 3.79L\", \"etiqueta_auditable\": \"[5892759] - PQ PINTULUX 3EN1 BR BASE TINT 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"pintulux_3en1_tint\", \"producto_padre_busqueda\": \"pintulux 3en1 tint\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 47.0}, {\"codigo\": \"5892754\", \"descripcion\": \"PQ PINTULUX 3EN1 BR DEEP BASE 3.79L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR DEEP BASE 3.79L\", \"etiqueta_auditable\": \"[5892754] - PQ PINTULUX 3EN1 BR DEEP BASE 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"pintulux_3en1_deep\", \"producto_padre_busqueda\": \"pintulux 3en1 deep\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 39.0}, {\"codigo\": \"5891965\", \"descripcion\": \"PQ PINTULUX 3EN1 BR CAOBA 76 3.79L\", \"descripcion_exacta\": \"PQ PINTULUX 3EN1 BR CAOBA 76 3.79L\", \"etiqueta_auditable\": \"[5891965] - PQ PINTULUX 3EN1 BR CAOBA 76 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"pintulux_3en1_caoba\", \"producto_padre_busqueda\": \"pintulux 3en1 caoba\", \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"stock_total\": 41.0}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {\"cantidad_inferida\": null, \"presentacion_canonica_inferida\": null, \"producto_base\": \"pintulux 3en1\", \"color\": null, \"acabado\": null}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": true, \"pregunta_desambiguacion\": \"Tengo cuarto y galón con rotación. ¿Cuál necesitas?\", \"mensaje\": null}"
+        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: CORROTEC.pdf]\\n[PRODUCTO: CORROTEC] [MARCA: Pintuco]\\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\\n\\ntransformando en sales, los óxidos de hierro duros e\\nimpermeables que son difíciles de eliminar con limpieza tipo\\nmanual- mecánica.\\n\\n---\\n\\n[Fuente: CORROTEC.pdf]\\n[PRODUCTO: CORROTEC] [MARCA: Pintuco]\\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\\n\\n✓ Preparador de superficies ferrosas y galvanizadas\\n✓ Transformador de sales y óxidos impermeables\\n✓ Ideal para uso en áreas de difícil acceso para preparación\\nmanual-mecánica.\\n✓ Producto en un solo componente, fácil de aplicar\\n\\n---\\n\\n[Fuente: CORROTEC.pdf]\\n[PRODUCTO: CORROTEC] [MARCA: Pintuco]\\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\\n\\nde hierro que es difícil de suprimir manualmente con papeles de\\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\\nmecánicamente con cepillos eléctricos giratorios, para limpieza\\nde tipo mecánico.\\n\\n---\\n\\n[Fuente: CORROTEC.pdf]\\n[PRODUCTO: CORROTEC] [MARCA: Pintuco]\\n[SECCIÓN: Preparación del producto y Aplicación]\\n\\nAplique al metal el producto con una brocha de cerda natural o sumerja el objeto metálico en Pintóxido\\nhasta humedecerlo bien, dejando actuar el producto durante 4 horas para que la transformación del óxido\\nsea completa (a 25°C), y luego retire el objeto para exponerlo al aire. Se debe procurar que el producto\\npenetre muy bien en las zonas oxidadas para que ataque el óxido incrustado profundamente, lo cual se\\nobserva con la aparición de un polvillo blanco (sales) en las zonas que estaban oxidadas. Luego elimine con\\ncepillo fibra o de alambre, o con una estopa limpia las sales blancas y el exceso de Pintóxido, y proceda\\ncon la aplicación de inmediato de una anticorrosiva Pintuco® apropiada para el metal y al ambiente donde\\nestará expuesto. Se recomienda evitar la aplicación de Pintóxido en lugares con excesiva ventilación\\nporque pierde su efectividad y su uso en metales que van a ser protegidos con pinturas para altas\\ntemperaturas (evite el uso de Pintóxido y otros acondicionadores). El metal debe estar a una temperatura\\ninferior a 30°C evitando que el producto pierda su eficiencia. Para objetos metálicos en exteriores, se\\nrecomienda aplicar el Pintóxido en las primeras horas de la mañana o por la tarde cuando la temperatura\\nhaya disminuido. Tenga en cuenta que el tiempo de actuación del producto mencionado puede variar de\\nacuerdo con la temperatura ambiental y el espesor de película aplicado.\", \"archivos_fuente\": [\"CORROTEC.pdf\", \"CORROTEC EPOXI ZINC 2K 10073.pdf\"], \"mejor_similitud\": 0.6914, \"mensaje\": \"⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. DEBES SINTETIZARLOS como un ingeniero de aplicaciones: 1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado).    Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. 2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. 3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. 4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. 5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. 6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' 7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'\", \"productos_inventario_relacionados\": [{\"codigo\": \"5890866\", \"descripcion\": \"PQ CORROTEC PREMIUM MAT GRIS 507 3.79L\", \"etiqueta_auditable\": \"[5890866] - PQ CORROTEC PREMIUM MAT GRIS 507 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890863\", \"descripcion\": \"PQ CORROTEC PREMIUM MAT NEGRO 200 3.79L\", \"etiqueta_auditable\": \"[5890863] - PQ CORROTEC PREMIUM MAT NEGRO 200 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890999\", \"descripcion\": \"PQ PINTULUX DESOXID PINTOXIDO 514 3.79L\", \"etiqueta_auditable\": \"[5890999] - PQ PINTULUX DESOXID PINTOXIDO 514 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"10368017\", \"descripcion\": \"KORAZA ELASTOMERICA 2651 NOGAL 5 GL\", \"etiqueta_auditable\": \"[10368017] - KORAZA ELASTOMERICA 2651 NOGAL 5 GL\", \"marca\": \"24\", \"presentacion\": \"galon\", \"disponible\": false, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. ⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema completo con cantidades calculadas para TODOS los productos y cierra con: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'\", \"conocimiento_comercial_ferreinox\": [{\"id\": 4, \"tipo\": \"uso_especifico\", \"contexto\": \"metal, oxidado, rejas, portones, tobogan, intemperie, exterior, corrosion\", \"recomendar\": \"Pintóxido + Corrotec + Pintulux 3en1\", \"evitar\": null, \"nota\": \"Para metal oxidado a la intemperie SIEMPRE recomendar el sistema completo de 3 capas: 1) Preparación con disco flap o grata + Pintóxido (convertidor de óxido si hay óxido profundo). 2) Corrotec o Corrotec Premium como anticorrosivo (2 manos). 3) Pintulux 3en1 como acabado final (protección UV y estética). NUNCA recomendar solo el anticorrosivo sin el acabado. Sin Pintulux, el Corrotec se degrada en meses.\"}, {\"id\": 46, \"tipo\": \"preferencia\", \"contexto\": \"metales, óxido, rejas, puertas, estructuras metálicas\", \"recomendar\": \"Pintóxido, Corrotec, Pintulux 3 en 1, Brocha Goya Profesional\", \"evitar\": null, \"nota\": \"Sistema de alta protección para estructuras metálicas expuestas a la intemperie con óxido severo. Incluir preparación mecánica y abrasivos de Abracol.\"}, {\"id\": 70, \"tipo\": \"preferencia\", \"contexto\": \"piso interior, tráfico alto, montacargas, epóxico, industrial, alto desempeño\", \"recomendar\": \"sistema epóxico industrial\", \"evitar\": \"epóxicos de tráfico liviano o medio\", \"nota\": \"Para un piso interior con tráfico alto y uso de montacargas, se recomienda un sistema epóxico industrial de alto desempeño, diseñado para tráfico pesado. Este sistema debe incluir un imprimante epóxico industrial y un recubrimiento epóxico de alto espesor. Es importante eliminar completamente los recubrimientos existentes y preparar adecuadamente la superficie para garantizar la adherencia y durabilidad del recubrimiento.\"}, {\"id\": 68, \"tipo\": \"preferencia\", \"contexto\": \"tráfico pesado, preparación de superficies, pisos industriales, estibadoras, carretas, resistencia mecánica\", \"recomendar\": \"Intergard 2002\", \"evitar\": \"Pintucoat\", \"nota\": \"Para tráfico pesado, se debe usar un sistema de imprimante epóxico como Interseal 670HS y un acabado Intergard 2002 mezclado con arena de cuarzo. El cuarzo es esencial para la resistencia mecánica y antideslizante que soportan las llantas. Además, la preparación de superficies ya pintadas debe incluir un lavado y desengrase profundo con detergente industrial antes de escarificar o lijar.\"}, {\"id\": 67, \"tipo\": \"preferencia\", \"contexto\": \"sistema acero virgen, acabado poliuretano, Intergard 2002, Interseal 670HS, Interthane 990\", \"recomendar\": \"Interthane 990\", \"evitar\": \"Intergard 2002\", \"nota\": \"El Intergard 2002 es un Epóxico y se tiza con el sol. El sistema correcto para acero virgen con Acabado Poliuretano es: Imprimante Epóxico (Interseal 670HS) + Acabado Poliuretano (Interthane 990).\"}, {\"id\": 66, \"tipo\": \"preferencia\", \"contexto\": \"sistema acero virgen, acabado poliuretano, Intergard 2002, Interseal 670HS, Interthane 990\", \"recomendar\": \"Interthane 990\", \"evitar\": \"Intergard 2002\", \"nota\": \"El Intergard 2002 es un Epóxico y se tiza con el sol. El sistema correcto para acero virgen con Acabado Poliuretano es: Imprimante Epóxico (Interseal 670HS) + Acabado Poliuretano (Interthane 990).\"}, {\"id\": 65, \"tipo\": \"contraindicacion\", \"contexto\": \"recubrimiento epóxico, poliuretano, anticorrosivo, alquídico, Corrotec, Pintóxido, Intergard, Interseal, aplicación\", \"recomendar\": \"Interseal\", \"evitar\": \"Corrotec\", \"nota\": \"Nunca puedes aplicar un recubrimiento Epóxico o Poliuretano (como Intergard, Interseal o Interthane) sobre un anticorrosivo Alquídico (como Corrotec o Pintóxido). El epóxico remueve y arruga la base alquídica. Los sistemas epóxicos siempre deben llevar base epóxica (ej. Interseal).\"}, {\"id\": 64, \"tipo\": \"contraindicacion\", \"contexto\": \"recubrimiento epóxico, poliuretano, anticorrosivo, alquídico, Corrotec, Pintóxido, Intergard, Interseal, aplicación\", \"recomendar\": \"Interseal\", \"evitar\": \"Corrotec\", \"nota\": \"Nunca puedes aplicar un recubrimiento Epóxico o Poliuretano (como Intergard, Interseal o Interthane) sobre un anticorrosivo Alquídico (como Corrotec o Pintóxido). El epóxico remueve y arruga la base alquídica. Los sistemas epóxicos siempre deben llevar base epóxica (ej. Interseal).\"}], \"instruccion_conocimiento_comercial\": \"⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. REGLAS OBLIGATORIAS: 1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. 2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. 3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. 4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' SEPARADO de la información de la ficha técnica. 5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente.\"}"
       }
     ],
-    "context_updates": {
-      "last_product_request": {
-        "core_terms": [
-          "pintulux",
-          "3en1",
-          "pintulux 3en1"
-        ],
-        "search_terms": [
-          "pintulux",
-          "pintulux 3en1",
-          "pintulux 3 en 1",
-          "pintulux 3-en-1",
-          "3en1",
-          "3 en 1",
-          "3-en-1",
-          "esmalte pintulux",
-          "esmalte exterior",
-          "esmalte bueno",
-          "esmalte resistente",
-          "t11",
-          "t-11",
-          "t 11"
-        ],
-        "requested_quantity": null,
-        "requested_unit": null,
-        "quantity_expression": null,
-        "product_codes": [],
-        "brand_filters": [
-          "pintulux",
-          "pintuco"
-        ],
-        "direction_filters": [],
-        "size_filters": [],
-        "store_filters": [],
-        "original_query": "pintulux 3en1",
-        "color_filters": [],
-        "finish_filters": [],
-        "nlu_processed": true,
-        "nlu_extraction": {
-          "cantidad_inferida": null,
-          "presentacion_canonica_inferida": null,
-          "producto_base": "pintulux 3en1",
-          "color": null,
-          "acabado": null
-        },
-        "canonical_product": "pintulux 3en1"
-      },
-      "last_product_query": "pintulux 3en1",
-      "last_product_context": [
-        {
-          "codigo": "5892753",
-          "descripcion": "PQ PINTULUX 3EN1 BR DEEP BASE 0.95L",
-          "descripcion_exacta": "PQ PINTULUX 3EN1 BR DEEP BASE 0.95L",
-          "etiqueta_auditable": "[5892753] - PQ PINTULUX 3EN1 BR DEEP BASE 0.95L",
-          "marca": "58",
-          "presentacion": "cuarto",
-          "familia_consulta": "pintulux_3en1_deep",
-          "producto_padre_busqueda": "pintulux 3en1 deep",
-          "pregunta_desambiguacion": "Tengo cuarto y galón con rotación. ¿Cuál necesitas?",
-          "stock_total": 106.0
-        },
-        {
-          "codigo": "5892760",
-          "descripcion": "PQ PINTULUX 3EN1 BR BASE TINT 0.95L",
-          "descripcion_exacta": "PQ PINTULUX 3EN1 BR BASE TINT 0.95L",
-          "etiqueta_auditable": "[5892760] - PQ PINTULUX 3EN1 BR BASE TINT 0.95L",
-          "marca": "58",
-          "presentacion": "cuarto",
-          "familia_consulta": "pintulux_3en1_tint",
-          "producto_padre_busqueda": "pintulux 3en1 tint",
-          "pregunta_desambiguacion": "Tengo cuarto y galón con rotación. ¿Cuál necesitas?",
-          "stock_total": 55.0
-        },
-        {
-          "codigo": "5892759",
-          "descripcion": "PQ PINTULUX 3EN1 BR BASE TINT 3.79L",
-          "descripcion_exacta": "PQ PINTULUX 3EN1 BR BASE TINT 3.79L",
-          "etiqueta_auditable": "[5892759] - PQ PINTULUX 3EN1 BR BASE TINT 3.79L",
-          "marca": "58",
-          "presentacion": "galon",
-          "familia_consulta": "pintulux_3en1_tint",
-          "producto_padre_busqueda": "pintulux 3en1 tint",
-          "pregunta_desambiguacion": "Tengo cuarto y galón con rotación. ¿Cuál necesitas?",
-          "stock_total": 47.0
-        },
-        {
-          "codigo": "5892754",
-          "descripcion": "PQ PINTULUX 3EN1 BR DEEP BASE 3.79L",
-          "descripcion_exacta": "PQ PINTULUX 3EN1 BR DEEP BASE 3.79L",
-          "etiqueta_auditable": "[5892754] - PQ PINTULUX 3EN1 BR DEEP BASE 3.79L",
-          "marca": "58",
-          "presentacion": "galon",
-          "familia_consulta": "pintulux_3en1_deep",
-          "producto_padre_busqueda": "pintulux 3en1 deep",
-          "pregunta_desambiguacion": "Tengo cuarto y galón con rotación. ¿Cuál necesitas?",
-          "stock_total": 39.0
-        },
-        {
-          "codigo": "5891965",
-          "descripcion": "PQ PINTULUX 3EN1 BR CAOBA 76 3.79L",
-          "descripcion_exacta": "PQ PINTULUX 3EN1 BR CAOBA 76 3.79L",
-          "etiqueta_auditable": "[5891965] - PQ PINTULUX 3EN1 BR CAOBA 76 3.79L",
-          "marca": "58",
-          "presentacion": "galon",
-          "familia_consulta": "pintulux_3en1_caoba",
-          "producto_padre_busqueda": "pintulux 3en1 caoba",
-          "pregunta_desambiguacion": "Tengo cuarto y galón con rotación. ¿Cuál necesitas?",
-          "stock_total": 41.0
-        }
-      ]
-    },
+    "context_updates": {},
     "should_create_task": false,
     "confidence": {
       "score": 1.0,
       "level": "alta",
       "signals": [
-        "rag_used",
-        "inventory_used"
+        "rag_used"
       ]
     },
     "is_farewell": false

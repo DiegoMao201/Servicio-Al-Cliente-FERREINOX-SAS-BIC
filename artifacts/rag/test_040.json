@@ -1,66 +1,67 @@
 {
-  "query": "rendimiento por galón de pintuco fill 7",
+  "query": "deck de madera exterior expuesto a lluvia",
   "response": {
-    "query": "rendimiento por galón de pintuco fill 7",
+    "query": "deck de madera exterior expuesto a lluvia",
     "resultados": [
       {
-        "archivo": "IMPERCOAT 7A.pdf",
-        "familia": "IMPERCOAT 7A",
-        "similitud": 0.7887,
-        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: Espesor recomendado]\n\n2 - 3 manos(15 a 20 mils)\nRendimiento práctico aproximado(Acabado)\n\n\n4 - 5 m² / galón"
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6711,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
       },
       {
-        "archivo": "IMPERCOAT 7A.pdf",
-        "familia": "IMPERCOAT 7A",
-        "similitud": 0.7496,
-        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: PRESENTACION]\n\ncuñete de 5 gal, galón"
+        "archivo": "BARNIZ BARNEX 557.pdf",
+        "familia": "BARNIZ BARNEX 557",
+        "similitud": 0.6582,
+        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz tipo uretano base solvente transparente de fácil aplicación, que\npenetra la madera y permite su transpiración, proporcionando alta\nprotección en exteriores, incluso en ambientes marinos y tropicales."
       },
       {
-        "archivo": "IMPERCOAT 7A.pdf",
-        "familia": "IMPERCOAT 7A",
-        "similitud": 0.741,
-        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: REFERENCIAS Y]\n\nCOLORES | 27504 Blanco\n27507 Verde Amazonas | 27505 Gris | 27506 Rojo teja\nPRESENTACION | cuñete de 5 gal, galón\nDESCRIPCIÓN | Producto diseñado con resinas acrílicas de alta elongación, garantizando resistencia\na la intemperie, excelente adherencia, flexibilidad y resistencia al agua.\nUSOS | Se utiliza para la Impermeabilización de muros, terrazas sobre ladrillo, ladrillo\nvitrificado o concreto.\nNota. No se debe utilizar en inm"
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.6574,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: Protección contra:]\n\n✓ Lluvia\n✓ Sol\n✓ Hongos e Insectos"
       },
       {
-        "archivo": "PINTUCO FILL 7.pdf",
-        "familia": "PINTUCO FILL 7",
-        "similitud": 0.6907,
-        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: Fill]\n\n7"
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.6536,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz a base de aceite, que protege la madera del sol, la lluvia, la humedad\ny el ataque de hongos. Contiene protectores solares y pigmentos especiales\nque lo hacen ideal para resistir la intemperie sin decolorarse, además\npermite la transpiración de la madera, evitando que se agriete. Viene listo\npara aplicar a brocha y no requiere dilución."
       },
       {
-        "archivo": "PINTUCO FILL 7.pdf",
-        "familia": "PINTUCO FILL 7",
-        "similitud": 0.687,
-        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: Lisas]\n\n5 - 6 m2/ gal"
-      },
-      {
-        "archivo": "PINTUCO FILL 7.pdf",
-        "familia": "PINTUCO FILL 7",
-        "similitud": 0.6698,
-        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: Líquido viscoso]\n\n%"
-      },
-      {
-        "archivo": "IMPERCOAT 7A.pdf",
-        "familia": "IMPERCOAT 7A",
-        "similitud": 0.6282,
-        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: Peso neto por galón]\n\n5.03 kilos"
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.6494,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: Protección contra:]\n\n Lluvia\n Sol\n Hongos e Insectos"
       },
       {
         "archivo": "PINTULACA.pdf",
         "familia": "PINTULACA",
-        "similitud": 0.6276,
-        "texto": "[PRODUCTO: PINTULACA] [MARCA: Pintuco]\n[SECCIÓN: RENDIMIENTO]\n\n35-47 m2/gal rendimiento teórico para un espesor de 3 mills"
+        "similitud": 0.634,
+        "texto": "[PRODUCTO: PINTULACA] [MARCA: Pintuco]\n[SECCIÓN: Lacas nitro con excelente brillo y acabado y muy buena]\n\nresistencia a la intemperie"
+      },
+      {
+        "archivo": "PINTULACA.pdf",
+        "familia": "PINTULACA",
+        "similitud": 0.6243,
+        "texto": "[PRODUCTO: PINTULACA] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n\u0001 Buena resistencia a la intemperie\n\u0001 Excelente acabado\n\u0001 Secado rápido"
+      },
+      {
+        "archivo": "IMPREGNANTE ECO.pdf",
+        "familia": "IMPREGNANTE ECO",
+        "similitud": 0.5912,
+        "texto": "[PRODUCTO: IMPREGNANTE ECO] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nIdeal en pisos, decks, pisos de zonas húmedas, muebles, estructuras como\npérgolas, fachadas y balcones fabricados en todo tipo de maderas que van a estar\nexpuestos a ambientes exteriores e interiores."
       }
     ],
     "productos_candidatos": [
-      "IMPERCOAT 7A",
-      "PINTUCO FILL 7",
-      "pintuco fill",
-      "impercoat",
-      "fill 7",
-      "fill 12",
-      "koraza",
-      "viniltex"
+      "BARNIZ BARNEX 557",
+      "BARNEX EXTRA PROTECCION",
+      "barnex",
+      "pintulac",
+      "barniz",
+      "wood stain",
+      "madetec",
+      "pintulux",
+      "barniz marino"
     ]
   }
 }

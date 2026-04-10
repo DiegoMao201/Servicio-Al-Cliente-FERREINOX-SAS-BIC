@@ -1,63 +1,65 @@
 {
-  "query": "garaje residencial piso de concreto",
+  "query": "reja de hierro toda oxidada, se está comiendo",
   "response": {
-    "query": "garaje residencial piso de concreto",
+    "query": "reja de hierro toda oxidada, se está comiendo",
     "resultados": [
       {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.6623,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15 m2/gal a 2 manos."
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.6041,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
       },
       {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.6384,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+        "archivo": "FDS - PINTOXIDO 514.pdf",
+        "familia": "FDS - PINTOXIDO 514",
+        "similitud": 0.5892,
+        "texto": "[PRODUCTO: FDS - PINTOXIDO 514]\n[SECCIÓN: Ingestión]\n\n:\n:\n:"
       },
       {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.6211,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: INDICACIONES IMPORTANTES/PRECAUCIONES]\n\n Chequear condiciones de la loza de concreto que no vayan a afectar la adherencia del producto,\ntales como curadores, capas de lechada o endurecedores.\n Si la superficie es en concreto nuevo o nunca ha sido pintado, es obligatorio aplicar como\nimprimante pintura epóxica Base Solvente de Pintuco.\n La garantía del producto depende de la frecuencia, tipo de uso de la cancha y el número de\nmanos qu"
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.5804,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
       },
       {
-        "archivo": "PINTUCOAT.pdf",
-        "familia": "PINTUCOAT",
-        "similitud": 0.6084,
-        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: Versión 7 / Junio 2021]\n\nabrasivo mínimo a grado comercial con remoción completa de la escama de laminación (SSPC-SP6,\nestándar Sueco SA-2), y para mayor durabilidad deben ser preparados cerca de metal blanco (SSPC-SP10).\nAntes de aplicar el Pintucoat®, proteja el metal con una Pintura Anticorrosiva Pintuco® apropiada. En\nmaderas selle bien con una mano de Pintucoat® diluido al 20% por volumen con Ajustador Pintuco® Ref.\n21209. En concreto y fibro"
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.571,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Versión 5 / Abril 2022]\n\nCORROTEC DESOXIDANTE PINTÓXIDO®"
       },
       {
-        "archivo": "PINTURA EPOXICA PARA CONCRETO.pdf",
-        "familia": "PINTURA EPOXICA PARA CONCRETO",
-        "similitud": 0.6082,
-        "texto": "[PRODUCTO: PINTURA EPOXICA PARA CONCRETO] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar verifique que la superficie esté seca, libre de polvo, mugre, grasa y/o pintura deteriorada. Para\nrepintes sobre pinturas epóxicas en buenas condiciones, se debe lijar en seco para eliminarles el brillo y promover\nperfil de anclaje. Tener especial cuidado al aplicar sobre pinturas no epóxicas ya que pueden removerse o\nablandarse. Las pinturas deterioradas se deben eliminar por med"
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.5694,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
       },
       {
-        "archivo": "PINTUCOAT.pdf",
-        "familia": "PINTUCOAT",
-        "similitud": 0.6014,
-        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: Zonas de tráfico medio:]\n\no Se recomienda hacer una imprimación con Pintucoat® Ref. 516 o 517 y dar acabado\ncon Esmalte Poliuretano Ref. 11304 o 11324 con catalizador Ref. 11351 en relación de\nmezcla 1:1\no Se puede utilizar barniz poliuretano para pisos, como acabado final.\n* Para mayor información consultar con servicio técnico.\n\nNOTA: Únicamente en ambientes interiores este producto puede ser utilizado sin pintura de acabado; en\nambientes exteri"
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.5694,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
       },
       {
-        "archivo": "CANCHAS Y PISOS.pdf",
-        "familia": "CANCHAS Y PISOS",
-        "similitud": 0.4775,
-        "texto": "[PRODUCTO: CANCHAS Y PISOS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15m2/gal. a 2 manos"
+        "archivo": "FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050.pdf",
+        "familia": "FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050",
+        "similitud": 0.4821,
+        "texto": "[PRODUCTO: FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050] [MARCA: Pintuco]\n[SECCIÓN: DL50 oral]\n\n3350 mg/kg"
       },
       {
-        "archivo": "PINTURA PARA PARQUEADERO.pdf",
-        "familia": "PINTURA PARA PARQUEADERO",
-        "similitud": 0.4745,
-        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: Espesor seco recomendado]\n\n175\n225"
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.4675,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nAplique al metal el producto con una brocha de cerda natural o sumerja el objeto metálico en Pintóxido\nhasta humedecerlo bien, dejando actuar el producto durante 4 horas para que la transformación del óxido\nsea completa (a 25°C), y luego retire el objeto para exponerlo al aire. Se debe procurar que el producto\npenetre muy bien en las zonas oxidadas para que ataque el óxido incrustado profundamente, lo cual s"
       }
     ],
     "productos_candidatos": [
-      "PINTURA PARA CANCHAS",
-      "PINTUCOAT",
-      "pintucoat",
-      "imprimante",
-      "pintura canchas"
+      "CORROTEC",
+      "PINTOXIDO",
+      "corrotec",
+      "pintoxido",
+      "anticorrosivo",
+      "pintulux",
+      "wash primer"
     ]
   }
 }

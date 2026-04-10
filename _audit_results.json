@@ -1,0 +1,813 @@
+[
+  {
+    "scenario": {
+      "q": "pintar piso garaje residencial carros livianos",
+      "ok": [
+        "pintucoat"
+      ],
+      "bad": [
+        "pintura canchas",
+        "koraza"
+      ],
+      "cat": "piso"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTURA PARA CANCHAS', 'PINTUCOAT', 'pintucoat', 'pintura canchas']"
+  },
+  {
+    "scenario": {
+      "q": "piso cancha de baloncesto escenario deportivo",
+      "ok": [
+        "pintura canchas"
+      ],
+      "bad": [
+        "pintucoat",
+        "koraza"
+      ],
+      "cat": "piso"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTURA PARA CANCHAS', 'CANCHAS Y PISOS', 'pintucoat', 'pintura canchas']"
+  },
+  {
+    "scenario": {
+      "q": "sendero peatonal concreto parque",
+      "ok": [
+        "pintura canchas"
+      ],
+      "bad": [
+        "pintucoat",
+        "intergard"
+      ],
+      "cat": "piso"
+    },
+    "status": "FAIL",
+    "details": "Candidatos: ['HOJA DE SEGURIDAD CONSTRUCLEANER MANTENIMIENTO DE FACHADAS 3100', 'HOJA DE SEGURIDAD PINTURA PARA CANCHAS BLANCO 27590', 'HOJA DE SEGURIDAD ACRILTEX BLANCO 2761', 'HOJA DE SEGURIDAD PINTUCOAT PLUS', 'pintucoat'] | FALTA producto correcto: ['pintura canchas']\n    RAG texto[0]: [PRODUCTO: HOJA DE SEGURIDAD CONSTRUCLEANER MANTENIMIENTO DE FACHADAS 3100]\n[SECCIÓN: Protección]\n\nobligatoria de los\npies"
+  },
+  {
+    "scenario": {
+      "q": "cicloruta asfalto exterior",
+      "ok": [
+        "pintura canchas"
+      ],
+      "bad": [
+        "pintucoat"
+      ],
+      "cat": "piso"
+    },
+    "status": "FAIL",
+    "details": "Candidatos: ['PEGANTE DE TACHAS 13752', 'EMULSION ASFALTICA', 'PLASTICO EN FRIO', 'emulsion asfaltica'] | FALTA producto correcto: ['pintura canchas']\n    RAG texto[0]: [PRODUCTO: PEGANTE DE TACHAS 13752] [MARCA: Pintuco]\n[SECCIÓN: Sustratos]\n\nAsfalto y concreto."
+  },
+  {
+    "scenario": {
+      "q": "piso bodega con montacargas pesados",
+      "ok": [
+        "intergard 2002",
+        "intergard"
+      ],
+      "bad": [
+        "pintura canchas"
+      ],
+      "cat": "piso"
+    },
+    "status": "FAIL",
+    "details": "Candidatos: ['PINTURA PARA CANCHAS', 'PINTUCOAT', 'EQUIPOS GRACO', 'C-Floor PU385 BARNIZ MATE', 'pintucoat'] | PRODUCTO INCORRECTO en top: ['pintura canchas']\n    RAG texto[0]: [PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, mad"
+  },
+  {
+    "scenario": {
+      "q": "piso fábrica tráfico pesado estibadores",
+      "ok": [
+        "intergard 2002",
+        "intergard"
+      ],
+      "bad": [
+        "pintura canchas",
+        "pintucoat"
+      ],
+      "cat": "piso"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA', 'PINTURA PARA CANCHAS', 'PINTUCOAT', 'C-Floor PU385 BARNIZ MATE', 'pintucoat']"
+  },
+  {
+    "scenario": {
+      "q": "piso parqueadero centro comercial vehículos",
+      "ok": [
+        "pintucoat"
+      ],
+      "bad": [
+        "pintura canchas"
+      ],
+      "cat": "piso"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTURA PARA PARQUEADERO', 'PINTURA PARA CANCHAS', 'PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA', 'pintucoat', 'pintura canchas']"
+  },
+  {
+    "scenario": {
+      "q": "rampa vehicular edificio estacionamiento",
+      "ok": [
+        "pintucoat"
+      ],
+      "bad": [
+        "pintura canchas"
+      ],
+      "cat": "piso"
+    },
+    "status": "FAIL",
+    "details": "Candidatos: ['steelcraft techdat 2016'] | FALTA producto correcto: ['pintucoat']\n    RAG texto[0]: [PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Full]\n\nglass\nentrance\nLevel 1: Light commercial"
+  },
+  {
+    "scenario": {
+      "q": "andén entrada casa concreto",
+      "ok": [
+        "pintucoat"
+      ],
+      "bad": [
+        "koraza",
+        "viniltex"
+      ],
+      "cat": "piso"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTUCOAT', 'Doors And Frame', 'pintucoat']"
+  },
+  {
+    "scenario": {
+      "q": "piso industrial planta alimentos químicos",
+      "ok": [
+        "pintucoat",
+        "intergard"
+      ],
+      "bad": [
+        "pintura canchas",
+        "viniltex"
+      ],
+      "cat": "piso"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTUCOAT', 'PINTURA PARA CANCHAS', 'ESTABILIDAD DE PRODUCTOS2', 'PINTUCOAT PLUS', 'pintucoat']"
+  },
+  {
+    "scenario": {
+      "q": "mesa de madera interior acabado transparente",
+      "ok": [
+        "pintulac",
+        "barniz"
+      ],
+      "bad": [
+        "barnex",
+        "koraza",
+        "viniltex"
+      ],
+      "cat": "madera"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTULUX TRES EN UNO', 'BARNIZ SD1', 'BARNIZ BARNEX 557', 'pintulux-maxima-proteccion-brillante-1', 'pintulux']"
+  },
+  {
+    "scenario": {
+      "q": "pérgola madera exterior intemperie proteger veta",
+      "ok": [
+        "barnex",
+        "wood stain"
+      ],
+      "bad": [
+        "pintulac",
+        "koraza",
+        "viniltex"
+      ],
+      "cat": "madera"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['BARNEX EXTRA PROTECCION', 'BARNEX EXTRA PROTECCIÓN', 'VARETA', 'barnex', 'koraza']"
+  },
+  {
+    "scenario": {
+      "q": "puerta madera interior color blanco",
+      "ok": [
+        "pintulux",
+        "esmalte"
+      ],
+      "bad": [
+        "barnex",
+        "koraza"
+      ],
+      "cat": "madera"
+    },
+    "status": "FAIL",
+    "details": "Candidatos: ['BARNIZ BARNEX 557', 'BARNIZ SD1', 'VINILTEX PRO 450', 'Doors And Frame', 'viniltex'] | FALTA producto correcto: ['esmalte'] | PRODUCTO INCORRECTO en top: ['barnex']\n    RAG texto[0]: [PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, "
+  },
+  {
+    "scenario": {
+      "q": "deck madera exterior piscina sol lluvia",
+      "ok": [
+        "barnex",
+        "wood stain"
+      ],
+      "bad": [
+        "pintulac",
+        "viniltex"
+      ],
+      "cat": "madera"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['BARNIZ BARNEX 557', 'BARNEX EXTRA PROTECCION', 'IMPREGNANTE ECO', 'barnex', 'pintulac']"
+  },
+  {
+    "scenario": {
+      "q": "closet madera interior acabado natural",
+      "ok": [
+        "pintulac",
+        "barniz"
+      ],
+      "bad": [
+        "barnex",
+        "koraza"
+      ],
+      "cat": "madera"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTULUX TRES EN UNO', 'BARNIZ SD1', 'BARNIZ BARNEX 557', 'pintulux', 'barnex']"
+  },
+  {
+    "scenario": {
+      "q": "cerca madera finca exterior intemperie",
+      "ok": [
+        "barnex",
+        "wood stain"
+      ],
+      "bad": [
+        "pintulac"
+      ],
+      "cat": "madera"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['BARNIZ BARNEX 557', 'BASE INMUNIZANTE BARNEX', 'BARNEX EXTRA PROTECCIÓN', 'KORAZA IMPERMEABLE', 'koraza']"
+  },
+  {
+    "scenario": {
+      "q": "mueble cocina madera laca brillante",
+      "ok": [
+        "pintulac",
+        "barniz",
+        "laca"
+      ],
+      "bad": [
+        "barnex",
+        "koraza"
+      ],
+      "cat": "madera"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['LACA CATALIZADA', 'PINTULUX TRES EN UNO', 'BARNIZ BARNEX 557', 'pintulux', 'domestico']"
+  },
+  {
+    "scenario": {
+      "q": "reja hierro nueva sin pintar exterior",
+      "ok": [
+        "corrotec",
+        "anticorrosivo",
+        "pintulux"
+      ],
+      "bad": [
+        "viniltex",
+        "koraza",
+        "pintucoat"
+      ],
+      "cat": "metal"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['ANTICORROSIVO INDUSTRIAL 210003', 'DOMESTICO', 'ANTICORROSIVA FENOLICA MATE AMARILLA', 'domestico', 'corrotec']"
+  },
+  {
+    "scenario": {
+      "q": "reja vieja muy oxidada óxido profundo",
+      "ok": [
+        "corrotec",
+        "pintoxido",
+        "anticorrosivo"
+      ],
+      "bad": [
+        "viniltex",
+        "koraza"
+      ],
+      "cat": "metal"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTOXIDO', 'CORROTEC', 'corrotec', 'pintoxido', 'anticorrosivo']"
+  },
+  {
+    "scenario": {
+      "q": "estructura acero galvanizado nueva",
+      "ok": [
+        "wash primer",
+        "corrotec"
+      ],
+      "bad": [
+        "viniltex",
+        "pintucoat",
+        "koraza"
+      ],
+      "cat": "metal"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['steelcraft techdat 2016', 'corrotec', 'anticorrosivo', 'intergard', 'wash primer']"
+  },
+  {
+    "scenario": {
+      "q": "tubería metálica industrial exterior",
+      "ok": [
+        "corrotec",
+        "intergard",
+        "anticorrosivo"
+      ],
+      "bad": [
+        "viniltex",
+        "koraza"
+      ],
+      "cat": "metal"
+    },
+    "status": "WARN",
+    "details": "Candidatos: ['ANTICORROSIVO INDUSTRIAL 210003', 'ANTICORROSIVO AMARILLO  505', 'steelcraft techdat 2016', 'corrotec', 'pintulux'] | FALTA producto correcto: ['intergard']\n    RAG texto[0]: [PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger puertas, ventanas, rejas, pasamanos y otros\nobjetos metálicos en ambientes interiores o exteriores de climas"
+  },
+  {
+    "scenario": {
+      "q": "portón metálico casa exterior",
+      "ok": [
+        "corrotec",
+        "pintulux",
+        "anticorrosivo"
+      ],
+      "bad": [
+        "viniltex",
+        "koraza"
+      ],
+      "cat": "metal"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTULUX TRES EN UNO', 'ANTICORROSIVO INDUSTRIAL 210003', 'PINTULUX MAXIMA PROTECCION', 'pintulux', 'corrotec']"
+  },
+  {
+    "scenario": {
+      "q": "silla metálica exterior jardín oxidada",
+      "ok": [
+        "corrotec",
+        "pintoxido",
+        "pintulux"
+      ],
+      "bad": [
+        "viniltex",
+        "koraza",
+        "pintucoat"
+      ],
+      "cat": "metal"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['ANTICORROSIVA FENOLICA MATE AMARILLA', 'ANTICORROSIVO TERINSA', 'ANTICORROSIVO AMARILLO  505', 'CORROTEC', 'corrotec']"
+  },
+  {
+    "scenario": {
+      "q": "tanque metálico almacenamiento industrial",
+      "ok": [
+        "corrotec",
+        "intergard",
+        "anticorrosivo"
+      ],
+      "bad": [
+        "viniltex"
+      ],
+      "cat": "metal"
+    },
+    "status": "WARN",
+    "details": "Candidatos: ['PRODUCTOS MANTENIMIENTO', 'ANTICORROSIVO AMARILLO  505', 'EPÓXI ALTOS SOLIDOS 13200 201 202', 'CORROTEC', 'corrotec'] | FALTA producto correcto: ['intergard']\n    RAG texto[0]: [PRODUCTO: PRODUCTOS MANTENIMIENTO] [MARCA: Pintuco]\n[SECCIÓN: La protección anticorrosiva a tanques de acero de almacenamiento de]\n\nproducto tales como: petróleo crudo, agua potable y una selecta gam"
+  },
+  {
+    "scenario": {
+      "q": "barandal escalera hierro interior",
+      "ok": [
+        "corrotec",
+        "pintulux",
+        "anticorrosivo"
+      ],
+      "bad": [
+        "koraza",
+        "viniltex"
+      ],
+      "cat": "metal"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTOXIDO', 'ANTICORROSIVO INDUSTRIAL 210003', 'steelcraft techdat 2016', 'corrotec', 'pintoxido']"
+  },
+  {
+    "scenario": {
+      "q": "pintar sala casa interior calidad premium",
+      "ok": [
+        "viniltex"
+      ],
+      "bad": [
+        "koraza",
+        "pintucoat"
+      ],
+      "cat": "interior"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['INTERVINIL', 'Viniltex-advanced', 'viniltex', 'intervinil']"
+  },
+  {
+    "scenario": {
+      "q": "pintar habitación interior económico",
+      "ok": [
+        "pinturama",
+        "intervinil",
+        "vinil"
+      ],
+      "bad": [
+        "koraza",
+        "pintucoat"
+      ],
+      "cat": "interior"
+    },
+    "status": "WARN",
+    "details": "Candidatos: ['INTERVINIL', 'INTERVINI ANTI BACTERIAL', 'Viniltex-advanced', 'viniltex', 'intervinil'] | FALTA producto correcto: ['pinturama']\n    RAG texto[0]: [PRODUCTO: INTERVINIL] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nIntervinil® es una pintura para interiores, lavable, de\nalto rendimiento\ny cubrimiento\nen\nmenos\nmanos.\nCuenta con excelente adherencia. "
+  },
+  {
+    "scenario": {
+      "q": "pintar fachada casa exterior lluvia sol",
+      "ok": [
+        "koraza"
+      ],
+      "bad": [
+        "viniltex",
+        "pintucoat",
+        "aquablock"
+      ],
+      "cat": "exterior"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['KORAZA SOL Y LLUVIA IMPERMEABILIZANTE', 'FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE', 'KORAZA PRO 750 ELASTOMERICA', 'koraza', 'koraza sol y lluvia']"
+  },
+  {
+    "scenario": {
+      "q": "muro interior con humedad salitre blanco filtrando",
+      "ok": [
+        "aquablock"
+      ],
+      "bad": [
+        "koraza",
+        "viniltex",
+        "pintucoat"
+      ],
+      "cat": "humedad"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['AQUABLOCK ULTRA', 'ESTUCO ANTI HUMEDAD', 'estuco anti humedad', 'aquablock', 'aquablock ultra']"
+  },
+  {
+    "scenario": {
+      "q": "baño con hongos negros humedad paredes",
+      "ok": [
+        "aquablock",
+        "viniltex"
+      ],
+      "bad": [
+        "koraza",
+        "pintucoat"
+      ],
+      "cat": "humedad"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['aquablock', 'aquablock ultra', 'sellamur', 'estuco anti humedad', 'sika']"
+  },
+  {
+    "scenario": {
+      "q": "pared exterior descascarando lluvia directa",
+      "ok": [
+        "koraza"
+      ],
+      "bad": [
+        "aquablock",
+        "viniltex",
+        "pintucoat"
+      ],
+      "cat": "exterior"
+    },
+    "status": "FAIL",
+    "details": "Candidatos: ['Viniltex-advanced', 'FICHA TECNICA VINILTEX ULTRALAVABLE 2024 - copia', 'VINILTEX PRO 450', 'KORAZA SOL Y LLUVIA IMPERMEABILIZANTE', 'koraza'] | PRODUCTO INCORRECTO en top: ['viniltex']\n    RAG texto[0]: [PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para decorar y proteger muros y cielos rasos de residencias, oficinas, zonas de alto\ntráfico y edificaciones en general, en "
+  },
+  {
+    "scenario": {
+      "q": "cielo raso bodega económico",
+      "ok": [
+        "pinturama",
+        "intervinil",
+        "vinil",
+        "viniltex"
+      ],
+      "bad": [
+        "koraza",
+        "pintucoat"
+      ],
+      "cat": "interior"
+    },
+    "status": "WARN",
+    "details": "Candidatos: ['PINTURA CIELOS', 'Viniltex-advanced', 'viniltex', 'pintura cielos', 'pintucoat'] | FALTA producto correcto: ['intervinil']\n    RAG texto[0]: [PRODUCTO: PINTURA CIELOS] [MARCA: Pintuco]\n[SECCIÓN: Resistencia a la abrasión]\n\nN/A"
+  },
+  {
+    "scenario": {
+      "q": "acabado satinado pared interior elegante",
+      "ok": [
+        "viniltex",
+        "acriltex"
+      ],
+      "bad": [
+        "koraza",
+        "pintucoat",
+        "pinturama"
+      ],
+      "cat": "interior"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['ACRILTEX VINILTEX', 'Viniltex-advanced', 'INTERVINIL', 'ESMALTE POLIURETANO MADERA', 'viniltex']"
+  },
+  {
+    "scenario": {
+      "q": "terraza con goteras filtra agua lluvia",
+      "ok": [
+        "pintuco fill",
+        "impercoat"
+      ],
+      "bad": [
+        "koraza",
+        "viniltex",
+        "pintucoat"
+      ],
+      "cat": "techo"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['AQUABLOCK ULTRA', 'ESTUCO ANTI HUMEDAD', 'SILICONITE 7 3103', 'estuco anti humedad', 'aquablock']"
+  },
+  {
+    "scenario": {
+      "q": "techo eternit fibrocemento cubierta",
+      "ok": [
+        "pintuco fill",
+        "koraza"
+      ],
+      "bad": [
+        "viniltex",
+        "pintucoat",
+        "aquablock"
+      ],
+      "cat": "techo"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTUCO FILL 12', 'PINTUCO FILL 7', 'IMPERCOAT 7A', 'AISLANTE PARA TECHOS', 'pintuco fill']"
+  },
+  {
+    "scenario": {
+      "q": "losa concreto terraza impermeabilizar",
+      "ok": [
+        "pintuco fill",
+        "impercoat"
+      ],
+      "bad": [
+        "viniltex",
+        "pintucoat"
+      ],
+      "cat": "techo"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTUCO FILL 12', 'PINTUCO FILL 7', 'IMPERCOAT 7A', 'pintuco fill', 'impercoat']"
+  },
+  {
+    "scenario": {
+      "q": "cubierta plana edificio goteras grietas",
+      "ok": [
+        "pintuco fill",
+        "impercoat"
+      ],
+      "bad": [
+        "koraza solo",
+        "viniltex"
+      ],
+      "cat": "techo"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTUCO FILL 12', 'PINTUCO FILL 7', 'IMPERCOAT 7A', 'pintuco fill', 'imprimante']"
+  },
+  {
+    "scenario": {
+      "q": "pintar mesa metálica jardín exterior oxidada",
+      "ok": [
+        "corrotec",
+        "pintoxido",
+        "pintulux"
+      ],
+      "bad": [
+        "barnex",
+        "pintulac",
+        "viniltex"
+      ],
+      "cat": "ambiguo"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['CORROTEC', 'PINTULUX 3 EN 1 MATE', 'PINTULUX TRES EN UNO', 'CORROTEC PREMIUM', 'corrotec']"
+  },
+  {
+    "scenario": {
+      "q": "pintar mesa madera comedor interior",
+      "ok": [
+        "pintulac",
+        "barniz",
+        "pintulux"
+      ],
+      "bad": [
+        "barnex",
+        "koraza",
+        "corrotec"
+      ],
+      "cat": "ambiguo"
+    },
+    "status": "FAIL",
+    "details": "Candidatos: ['BARNIZ BARNEX 557', 'BARNEX EXTRA PROTECCION', 'BARNIZ SD1', 'barnex', 'pintulac'] | PRODUCTO INCORRECTO en top: ['barnex']\n    RAG texto[0]: [PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, "
+  },
+  {
+    "scenario": {
+      "q": "pintar silla plástica jardín",
+      "ok": [
+        "aerocolor"
+      ],
+      "bad": [
+        "viniltex",
+        "koraza",
+        "corrotec"
+      ],
+      "cat": "ambiguo"
+    },
+    "status": "FAIL",
+    "details": "Candidatos: ['PRIMER PARA PLASTICOS', 'PINTURA PARA CANCHAS', 'PLASTICO EN FRIO EN LLANA'] | FALTA producto correcto: ['aerocolor']\n    RAG texto[0]: [PRODUCTO: PRIMER PARA PLASTICOS] [MARCA: Pintuco]\n[SECCIÓN: COLOR]\n\n10007191\n28600"
+  },
+  {
+    "scenario": {
+      "q": "proteger piso concreto taller mecánico aceite grasa",
+      "ok": [
+        "pintucoat",
+        "intergard"
+      ],
+      "bad": [
+        "pintura canchas",
+        "viniltex"
+      ],
+      "cat": "ambiguo"
+    },
+    "status": "WARN",
+    "details": "Candidatos: ['PINTUCOAT', 'PINTURA PARA CANCHAS', 'PINTUCOAT PLUS', 'pintucoat', 'pintura canchas'] | FALTA producto correcto: ['intergard']\n    RAG texto[0]: [PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nIdeal para proteger y decorar superficies de metal, pisos en\nconcreto, fibro-cemento y madera en ambientes interiores o\nexteriores expuestos a a"
+  },
+  {
+    "scenario": {
+      "q": "señalización líneas amarillas parqueadero piso",
+      "ok": [
+        "pintutraf",
+        "pintura trafico"
+      ],
+      "bad": [
+        "viniltex",
+        "koraza"
+      ],
+      "cat": "ambiguo"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTURA PARA PARQUEADERO', 'PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA', 'PINTURA ACRILICA PARA DEMARCACIÓN ICO', 'pintucoat', 'pintura canchas']"
+  },
+  {
+    "scenario": {
+      "q": "demarcación vial carretera pavimento",
+      "ok": [
+        "pintutraf",
+        "pintura trafico"
+      ],
+      "bad": [
+        "pintura canchas",
+        "viniltex"
+      ],
+      "cat": "ambiguo"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA', 'PINTUTRAFICO ACRILICO BASE SOLVENTE', 'PINTUTRAFICO ACRILICA BASE AGUA', 'pintutraf', 'pintura trafico']"
+  },
+  {
+    "scenario": {
+      "q": "estructura metálica nave industrial protección fuego",
+      "ok": [
+        "interchar"
+      ],
+      "bad": [
+        "viniltex",
+        "koraza",
+        "pintucoat"
+      ],
+      "cat": "industrial"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['pintulux-maxima-proteccion-brillante-1', 'PINTULUX MAXIMA PROTECCION', 'C-THERM IC600 WB', 'C-THERM IC600', 'pintulux']"
+  },
+  {
+    "scenario": {
+      "q": "acabado poliuretano sobre epóxica maquinaria",
+      "ok": [
+        "interthane",
+        "interfine"
+      ],
+      "bad": [
+        "pintulux",
+        "viniltex"
+      ],
+      "cat": "industrial"
+    },
+    "status": "WARN",
+    "details": "Candidatos: ['PRIMER EPOXICO 10046', 'C-Floor PU385 BARNIZ MATE', 'PINTUCOAT', 'Interseal 670 HS', 'pintucoat'] | FALTA producto correcto: ['interfine']\n    RAG texto[0]: [PRODUCTO: PRIMER EPOXICO 10046] [MARCA: Pintuco]\n[SECCIÓN: Solo es apropiado repintar Epoxy primer 10046/13229 por otros acabados]\n\npoliuretanos."
+  },
+  {
+    "scenario": {
+      "q": "piso industrial alto desempeño brillante",
+      "ok": [
+        "intergard 740",
+        "intergard"
+      ],
+      "bad": [
+        "pintura canchas",
+        "viniltex"
+      ],
+      "cat": "industrial"
+    },
+    "status": "PASS",
+    "details": "Candidatos: ['PINTURA PARA CANCHAS', 'PINTUCOAT', 'PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO', 'TERCOAT BRILLANTE', 'pintucoat']"
+  },
+  {
+    "scenario": {
+      "q": "ambiente marino salino estructura costera acero",
+      "ok": [
+        "intergard",
+        "interseal",
+        "corrotec"
+      ],
+      "bad": [
+        "viniltex",
+        "pintura canchas"
+      ],
+      "cat": "industrial"
+    },
+    "status": "WARN",
+    "details": "Candidatos: ['ANTICORROSIVO AMARILLO  505', 'Intergard 740', 'TERCOAT BRILLANTE', 'intergard', 'corrotec'] | FALTA producto correcto: ['interseal']\n    RAG texto[0]: [PRODUCTO: ANTICORROSIVO AMARILLO  505] [MARCA: Pintuco]\n[SECCIÓN: ANTICORROSIVA FENÓLICA MATE AMARILLA 505 Ideal para pro]\n\nIdeal para proteger estructuras metálicas en general, exterior de tanques y"
+  },
+  {
+    "scenario": {
+      "q": "pared planta procesadora alimentos limpieza constante",
+      "ok": [
+        "pintucoat",
+        "intergard",
+        "epoxica"
+      ],
+      "bad": [
+        "viniltex",
+        "koraza",
+        "pintura canchas"
+      ],
+      "cat": "industrial"
+    },
+    "status": "FAIL",
+    "details": "Candidatos: ['PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO', 'IMPADOC LISTO', 'PASTA PULIDORA 120025', 'CONSTRUCLEANER LIMPIADOR NO CORROSIVO'] | FALTA producto correcto: ['pintucoat', 'intergard', 'epoxica']\n    RAG texto[0]: [PRODUCTO: PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO] [MARCA: Pintuco]\n[SECCIÓN: Es ideal para áreas que requieren]\n\nproductos con bajo VOC y que resistan\nprocesos de limpieza y desinfección como\npla"
+  },
+  {
+    "scenario": {
+      "q": "pintura especial para piscina de concreto",
+      "ok": [
+        "__gap__"
+      ],
+      "bad": [
+        "pintucoat",
+        "aquablock",
+        "pintuco fill"
+      ],
+      "cat": "gap"
+    },
+    "status": "WARN",
+    "details": "GAP product: RAG returns products that might mislead. Candidatos: ['PINTURA CEMENTOS IMPERMEABLE 27519', 'PINTURA EPOXICA PARA CONCRETO', 'PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO']"
+  },
+  {
+    "scenario": {
+      "q": "pintura para tanque de agua potable inmersión",
+      "ok": [
+        "__gap__"
+      ],
+      "bad": [
+        "pintucoat",
+        "aquablock"
+      ],
+      "cat": "gap"
+    },
+    "status": "WARN",
+    "details": "GAP product: RAG returns products that might mislead. Candidatos: ['PINTUNOV 12-120', 'PINTUCOAT', 'PINTURA CEMENTOS IMPERMEABLE 27519', 'PINTOXIDO']"
+  }
+]

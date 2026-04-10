@@ -1,0 +1,56 @@
+{
+  "query": "proporción de mezcla del pintucoat con catalizador",
+  "response": {
+    "query": "proporción de mezcla del pintucoat con catalizador",
+    "resultados": [
+      {
+        "archivo": "PINTUCOAT PLUS.pdf",
+        "familia": "PINTUCOAT PLUS",
+        "similitud": 0.7437,
+        "texto": "[PRODUCTO: PINTUCOAT PLUS] [MARCA: Pintuco]\n[SECCIÓN: Mezcla por volumen]\n\n1:1 por volumen (Pintura / Catalizador)"
+      },
+      {
+        "archivo": "EPOXI POLIAMIDA.pdf",
+        "familia": "EPOXI POLIAMIDA",
+        "similitud": 0.7163,
+        "texto": "[PRODUCTO: EPOXI POLIAMIDA] [MARCA: Pintuco]\n[SECCIÓN: Mezcla por volumen]\n\n3:1 x volumen (Pintura /Catalizador)"
+      },
+      {
+        "archivo": "PINTUCOAT BASE AGUA.pdf",
+        "familia": "PINTUCOAT BASE AGUA",
+        "similitud": 0.7155,
+        "texto": "[PRODUCTO: PINTUCOAT BASE AGUA] [MARCA: Pintuco]\n[SECCIÓN: Mezcla por volumen]\n\n9:1 por volumen (Pintura/Catalizador)"
+      },
+      {
+        "archivo": "corrotec-primer-epoxico-10070-13350.pdf",
+        "familia": "corrotec-primer-epoxico-10070-13350",
+        "similitud": 0.7042,
+        "texto": "[PRODUCTO: corrotec-primer-epoxico-10070-13350] [MARCA: Pintuco]\n[SECCIÓN: Mezcla por volumen]\n\n1:1 Primer/Catalizador"
+      },
+      {
+        "archivo": "PINTUCOAT PLUS.pdf",
+        "familia": "PINTUCOAT PLUS",
+        "similitud": 0.702,
+        "texto": "[PRODUCTO: PINTUCOAT PLUS] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nRevuelva bien con espátula limpia cada componente hasta obtener su completa uniformidad. Mezcle 1\nparte por volumen del componente A, con 1 parte por volumen del componente B. Y revuelva bien con\nuna espátula limpia hasta obtener una mezcla uniforme, un agitador mecánico es recomendado para\nhomogenizar. Deje en reposo durante 15 minutos antes de iniciar la aplicación. Prepare únicamente la\ncantidad de m"
+      },
+      {
+        "archivo": "EPOXIPOLIAMIDA.pdf",
+        "familia": "EPOXIPOLIAMIDA",
+        "similitud": 0.6977,
+        "texto": "[PRODUCTO: EPOXIPOLIAMIDA] [MARCA: Pintuco]\n[SECCIÓN: Mezcla por volumen]\n\n3:1 x volumen (Pintura /Catalizador)"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTUCOAT PLUS",
+      "EPOXI POLIAMIDA",
+      "PINTUCOAT BASE AGUA",
+      "corrotec-primer-epoxico-10070-13350",
+      "pintucoat",
+      "corrotec",
+      "epoxica industrial",
+      "anticorrosiva epoxica",
+      "catalizador",
+      "interseal"
+    ]
+  }
+}

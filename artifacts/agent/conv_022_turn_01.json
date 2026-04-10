@@ -1,0 +1,29 @@
+{
+  "user": "Tenemos unos tanques metálicos de almacenamiento industrial que necesitan protección anticorrosiva",
+  "result": {
+    "response_text": "Parece que no encontré información técnica específica para el sistema anticorrosivo de tanques metálicos. Sin embargo, puedo recomendarte un sistema general que suele funcionar bien en estos casos.\n\nPara la protección anticorrosiva de tanques metálicos, te sugiero el siguiente sistema:\n\n1. **Preparación de la superficie**: Lijar o granallar para eliminar óxido y asegurar una buena adherencia.\n2. **Imprimante**: Usar un anticorrosivo como **Corrotec** para proteger el metal.\n3. **Acabado**: Aplicar un esmalte como **Pintulux 3en1** para dar un acabado durable y estéticamente agradable.\n\n¿Los tanques tienen óxido visible o están en buen estado? También, ¿cuántos metros cuadrados necesitas cubrir? Esto me ayudará a ajustar la recomendación.",
+    "intent": "asesoria_tecnica",
+    "tool_calls": [
+      {
+        "name": "consultar_conocimiento_tecnico",
+        "args": {
+          "pregunta": "sistema anticorrosivo para tanques metálicos de almacenamiento industrial",
+          "producto": "tanques metálicos",
+          "marca": "International"
+        },
+        "result": "{\"encontrado\": false, \"respuesta_rag\": null, \"mensaje\": \"No encontré información técnica vectorizada para esa consulta. Intenta con `buscar_documento_tecnico` para enviar el PDF completo.\"}"
+      }
+    ],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.85,
+      "level": "alta",
+      "signals": [
+        "low:no encontr",
+        "rag_used"
+      ]
+    },
+    "is_farewell": false
+  }
+}

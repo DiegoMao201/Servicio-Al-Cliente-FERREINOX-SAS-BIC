@@ -1,0 +1,62 @@
+{
+  "query": "zorras del almacén me rayaron todo el piso",
+  "response": {
+    "query": "zorras del almacén me rayaron todo el piso",
+    "resultados": [
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.5592,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.0 / 2018 Recubrimiento Acrílico Antidesliza"
+      },
+      {
+        "archivo": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
+        "familia": "FDS- PINTURA CANCHAS BASE ACCENT",
+        "similitud": 0.5549,
+        "texto": "[PRODUCTO: FDS- PINTURA CANCHAS BASE ACCENT] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\n10221353 FABRICADO CONSTRUCCION PINTURA PARA CANCHAS"
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.5492,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+      },
+      {
+        "archivo": "CANCHAS Y PISOS.pdf",
+        "familia": "CANCHAS Y PISOS",
+        "similitud": 0.5439,
+        "texto": "[PRODUCTO: CANCHAS Y PISOS] [MARCA: Pintuco]\n[SECCIÓN: Los colores con una brocha pueden requerir]\n\ncapas adicionales"
+      },
+      {
+        "archivo": "FDS - CATALIZADOR PINTURAS EPOXI INCOLORO 13227.pdf",
+        "familia": "FDS - CATALIZADOR PINTURAS EPOXI INCOLORO 13227",
+        "similitud": 0.5384,
+        "texto": "[PRODUCTO: FDS - CATALIZADOR PINTURAS EPOXI INCOLORO 13227] [MARCA: Pintuco]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      },
+      {
+        "archivo": "FDS - PINTUTRAFICO ACRIL NEGRO 13756.pdf",
+        "familia": "FDS - PINTUTRAFICO ACRIL NEGRO 13756",
+        "similitud": 0.421,
+        "texto": "[PRODUCTO: FDS - PINTUTRAFICO ACRIL NEGRO 13756] [MARCA: Pintuco]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      },
+      {
+        "archivo": "FDS - PINTUTRAFICO ACRIL B.SOLV MOD AMARILLO 1G.pdf",
+        "familia": "FDS - PINTUTRAFICO ACRIL B.SOLV MOD AMARILLO 1G",
+        "similitud": 0.418,
+        "texto": "[PRODUCTO: FDS - PINTUTRAFICO ACRIL B.SOLV MOD AMARILLO 1G] [MARCA: Pintuco]\n[SECCIÓN: Suelo seco]\n\nSí"
+      },
+      {
+        "archivo": "FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050.pdf",
+        "familia": "FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050",
+        "similitud": 0.4171,
+        "texto": "[PRODUCTO: FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050] [MARCA: Pintuco]\n[SECCIÓN: Suelo seco]\n\nSí"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTURA PARA CANCHAS",
+      "CANCHAS Y PISOS",
+      "pintura canchas",
+      "pintucoat"
+    ]
+  }
+}

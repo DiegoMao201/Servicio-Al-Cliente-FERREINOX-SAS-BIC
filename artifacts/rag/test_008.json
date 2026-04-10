@@ -1,64 +1,50 @@
 {
-  "query": "pintar frente de la casa que aguante intemperie",
+  "query": "la pintura se sopla y sale agua detrás",
   "response": {
-    "query": "pintar frente de la casa que aguante intemperie",
+    "query": "la pintura se sopla y sale agua detrás",
     "resultados": [
       {
-        "archivo": "BARNEX EXTRA PROTECCION.pdf",
-        "familia": "BARNEX EXTRA PROTECCION",
-        "similitud": 0.638,
-        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nBARNEX®"
+        "archivo": "PINTURA SUPER CUBRIENTE.pdf",
+        "familia": "PINTURA SUPER CUBRIENTE",
+        "similitud": 0.5414,
+        "texto": "[PRODUCTO: PINTURA SUPER CUBRIENTE] [MARCA: Pintuco]\n[SECCIÓN: CUBRIENTE]\n\n*AGUA"
       },
       {
-        "archivo": "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE.pdf",
-        "familia": "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE",
-        "similitud": 0.6359,
-        "texto": "[PRODUCTO: FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Importante tener presente que únicamente se pueden]\n\naplicar los colores del abanico que se encuentren\nmarcados con el símbolo del sol ☼, para asegurar\nla retención/duración del color con el paso del\ntiempo."
+        "archivo": "PERMEX BASE AGUA 13421.pdf",
+        "familia": "PERMEX BASE AGUA 13421",
+        "similitud": 0.5396,
+        "texto": "[PRODUCTO: PERMEX BASE AGUA 13421] [MARCA: Pintuco]\n[SECCIÓN: Secado al aire]\n\n1 hora (a 25° C)\n2 horas para repintar\nNota: Sobre el Permex base de agua es posible aplicar pintura de acabado."
       },
       {
-        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
-        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
-        "similitud": 0.6336,
-        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Recomendada]\n\npara\nambientes\nexteriores,\npara\ndecorar\ny proteger fachadas y patios revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar,\ntejas y láminas de fibrocemento. Disponible en una\namplia gama de colores gracias a la Tecnología\nSuperior de Color Pintuco® Colortech®."
+        "archivo": "PINTURA ACRIL CEMENTO IMPERMEABLE.pdf",
+        "familia": "PINTURA ACRIL CEMENTO IMPERMEABLE",
+        "similitud": 0.5366,
+        "texto": "[PRODUCTO: PINTURA ACRIL CEMENTO IMPERMEABLE] [MARCA: Pintuco]\n[SECCIÓN: Lavado de equipo]\n\nAgua."
       },
       {
-        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
-        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
-        "similitud": 0.6311,
-        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Importante tener presente que únicamente se pueden]\n\naplicar los colores del abanico que se encuentren\nmarcados con el símbolo del sol ☼, para asegurar\nla retención/duración del color con el paso del\ntiempo."
+        "archivo": "PINTURA ACRILICA PARA MANTENIMIENTO.pdf",
+        "familia": "PINTURA ACRILICA PARA MANTENIMIENTO",
+        "similitud": 0.5311,
+        "texto": "[PRODUCTO: PINTURA ACRILICA PARA MANTENIMIENTO] [MARCA: Pintuco]\n[SECCIÓN: TIEMPOS DE SECAMIENTO]\n\nHumedad relativa del 60%"
       },
       {
-        "archivo": "BARNEX EXTRA PROTECCION.pdf",
-        "familia": "BARNEX EXTRA PROTECCION",
-        "similitud": 0.6304,
-        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: BARNIZ]\n\nPINTUCO®"
+        "archivo": "PINTURAMA.pdf",
+        "familia": "PINTURAMA",
+        "similitud": 0.5305,
+        "texto": "[PRODUCTO: PINTURAMA] [MARCA: Pintuco]\n[SECCIÓN: EQUIPOS DE APLICACIÓN]\n\nPINTURAMA® | *AGUA"
       },
       {
-        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
-        "familia": "BARNEX EXTRA PROTECCIÓN",
-        "similitud": 0.63,
-        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: BARNIZ]\n\nPINTUCO®"
-      },
-      {
-        "archivo": "KORAZA 5.pdf",
-        "familia": "KORAZA 5",
-        "similitud": 0.6126,
-        "texto": "[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas y patios; revocados y\nestucados, en bloque a la vista, ladrillo sin esmaltar, tejas y láminas de fibro-cemento.\n\n*Para la elección adecuada del color te recomendamos utilizar los colores marcados en el abanico\ncon el simbolo del “sol” ☼ los cuales garantizan la retención del color por 5 años siguiendo las\nrecomendaciones de aplicación."
-      },
-      {
-        "archivo": "FDS - ESTUCO ACRILICO PARA EXTERIOR BLANCO 27060.pdf",
-        "familia": "FDS - ESTUCO ACRILICO PARA EXTERIOR BLANCO 27060",
-        "similitud": 0.4677,
-        "texto": "[PRODUCTO: FDS - ESTUCO ACRILICO PARA EXTERIOR BLANCO 27060] [MARCA: Pintuco]\n[SECCIÓN: No relevante]\n\nSECCIÓN 5: MEDIDAS DE LUCHA CONTRA INCENDIOS\n5.1"
+        "archivo": "PINTURA SUPER CUBRIENTE.pdf",
+        "familia": "PINTURA SUPER CUBRIENTE",
+        "similitud": 0.5276,
+        "texto": "[PRODUCTO: PINTURA SUPER CUBRIENTE] [MARCA: Pintuco]\n[SECCIÓN: Secamiento entre manos]\n\n1 - 2"
       }
     ],
     "productos_candidatos": [
-      "BARNEX EXTRA PROTECCION",
-      "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE",
-      "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
-      "koraza",
-      "barnex",
-      "koraza sol y lluvia"
+      "PINTURA SUPER CUBRIENTE",
+      "PERMEX BASE AGUA 13421",
+      "PINTURA ACRIL CEMENTO IMPERMEABLE",
+      "PINTURA ACRILICA PARA MANTENIMIENTO"
     ]
   }
 }

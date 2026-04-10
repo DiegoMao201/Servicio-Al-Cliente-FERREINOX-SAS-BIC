@@ -1,67 +1,69 @@
 {
-  "query": "la casa se está cayendo a pedazos por el aguacero",
+  "query": "baranda de hierro que está oxidada a la intemperie",
   "response": {
-    "query": "la casa se está cayendo a pedazos por el aguacero",
+    "query": "baranda de hierro que está oxidada a la intemperie",
     "resultados": [
       {
-        "archivo": "CORROTEC PREMIUM.pdf",
-        "familia": "CORROTEC PREMIUM",
-        "similitud": 0.5026,
-        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Sistema de gestión]\n\nambiental"
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.582,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
       },
       {
-        "archivo": "FDS- ACRILICA MANTENIMIENTO 13796 AZUL.pdf",
-        "familia": "FDS- ACRILICA MANTENIMIENTO 13796 AZUL",
-        "similitud": 0.4981,
-        "texto": "[PRODUCTO: FDS- ACRILICA MANTENIMIENTO 13796 AZUL] [MARCA: Pintuco]\n[SECCIÓN: Productos de]\n\ndescomposición peligrosos"
+        "archivo": "BARNEX EXTRA PROTECCION.pdf",
+        "familia": "BARNEX EXTRA PROTECCION",
+        "similitud": 0.558,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nBARNEX®"
       },
       {
-        "archivo": "FDS- ACRILICA MANTENIMIENTO VERDE 13795.pdf",
-        "familia": "FDS- ACRILICA MANTENIMIENTO VERDE 13795",
-        "similitud": 0.4921,
-        "texto": "[PRODUCTO: FDS- ACRILICA MANTENIMIENTO VERDE 13795]\n[SECCIÓN: Productos de]\n\ndescomposición térmica\npeligrosos"
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.554,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Para evitar el deterioro prematuro de la superficie]\n\npintada, evite lavarla con agua y jabón antes de\ntranscurridos 30 días después de la aplicación."
       },
       {
-        "archivo": "FDS- ACRILICA MANTENIMIENTO VERDE 13795.pdf",
-        "familia": "FDS- ACRILICA MANTENIMIENTO VERDE 13795",
-        "similitud": 0.491,
-        "texto": "[PRODUCTO: FDS- ACRILICA MANTENIMIENTO VERDE 13795]\n[SECCIÓN: Palabra de advertencia]\n\n: Peligro"
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.5501,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: Versión 1 / 2015]\n\nBARNEX®"
       },
       {
-        "archivo": "KORAZA IMPERMEABLE.pdf",
-        "familia": "KORAZA IMPERMEABLE",
-        "similitud": 0.4866,
-        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: KORAZA]\n\n® PROTECCIÓN\nSOL & LLUVIA PINTURA"
+        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
+        "familia": "BARNEX EXTRA PROTECCIÓN",
+        "similitud": 0.5492,
+        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\nno estén expuestos a la abrasión. No apto para uso en pisos."
       },
       {
-        "archivo": "CORROTEC PREMIUM.pdf",
-        "familia": "CORROTEC PREMIUM",
-        "similitud": 0.4808,
-        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Sistema de gestión]\n\nde calidad"
+        "archivo": "ALTA TEMPERATURA GRIS 902.pdf",
+        "familia": "ALTA TEMPERATURA GRIS 902",
+        "similitud": 0.522,
+        "texto": "[PRODUCTO: ALTA TEMPERATURA GRIS 902] [MARCA: Pintuco]\n[SECCIÓN: Ideal para proteger y decorar exteriormente superficies]\n\nmetálicas sometidos a temperaturas entre 150°C y 400°C"
       },
       {
-        "archivo": "FDS - INTERGARD 740 RAL7000 RM PARTE A.pdf",
-        "familia": "FDS - INTERGARD 740 RAL7000 RM PARTE A",
-        "similitud": 0.4662,
-        "texto": "[PRODUCTO: FDS - INTERGARD 740 RAL7000 RM PARTE A] [MARCA: Intergard]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+        "archivo": "C- THERM HB 990 OUTDOOR.pdf",
+        "familia": "C- THERM HB 990 OUTDOOR",
+        "similitud": 0.5045,
+        "texto": "[PRODUCTO: C- THERM HB 990 OUTDOOR] [MARCA: Pintuco]\n[SECCIÓN: PRINCIPALES]\n\nProtección contra el fuego de estructuras de acero."
       },
       {
-        "archivo": "FDS - INTERGARD 740 RAL7000 RM PARTE A.pdf",
-        "familia": "FDS - INTERGARD 740 RAL7000 RM PARTE A",
-        "similitud": 0.4577,
-        "texto": "[PRODUCTO: FDS - INTERGARD 740 RAL7000 RM PARTE A] [MARCA: Pintuco]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+        "archivo": "PRODUCTOS MANTENIMIENTO.pdf",
+        "familia": "PRODUCTOS MANTENIMIENTO",
+        "similitud": 0.5004,
+        "texto": "[PRODUCTO: PRODUCTOS MANTENIMIENTO] [MARCA: Pintuco]\n[SECCIÓN: Alta Resistencia a la intemperie]\n\n•\nPara proteger y decorar cabinas, puertas, ventanas, estructuras, en\ninteriores y exteriores."
       }
     ],
     "productos_candidatos": [
-      "CORROTEC PREMIUM",
-      "KORAZA IMPERMEABLE",
-      "corrotec",
+      "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+      "BARNEX EXTRA PROTECCION",
+      "BARNEX EXTRA PROTECCIÓN",
       "koraza",
+      "barnex",
+      "koraza sol y lluvia",
+      "corrotec",
+      "pintoxido",
       "anticorrosivo",
-      "intergard",
-      "wash primer",
-      "viniltex",
-      "koraza sol y lluvia"
+      "pintulux",
+      "wash primer"
     ]
   }
 }

@@ -1,70 +1,64 @@
 {
-  "query": "estructura de acero nueva sin pintar a la intemperie",
+  "query": "cubierta de fibrocemento eternit que se llueve",
   "response": {
-    "query": "estructura de acero nueva sin pintar a la intemperie",
+    "query": "cubierta de fibrocemento eternit que se llueve",
     "resultados": [
       {
-        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
-        "familia": "BARNEX EXTRA PROTECCIÓN",
-        "similitud": 0.6084,
-        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: Disponible en acabados brillante incoloro y semibrillante incoloro o]\n\ncoloreado."
+        "archivo": "PINTUCO FILL 7.pdf",
+        "familia": "PINTUCO FILL 7",
+        "similitud": 0.6766,
+        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nImpermeabilización flexible de placas, cubiertas,\ncanaletas. En terrazas y estructuras en mortero,\nconcreto, ladrillo, tejas de arcilla cocida, zinc o\naluminio."
       },
       {
-        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
-        "familia": "BARNEX EXTRA PROTECCIÓN",
-        "similitud": 0.6066,
-        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: Versión 1 / 2015]\n\nBARNEX®"
+        "archivo": "PINTUCO FILL 12.pdf",
+        "familia": "PINTUCO FILL 12",
+        "similitud": 0.6754,
+        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: Para]\n\nimpermeabilización\nflexible\nde\nplacas,\ncubiertas y canaletas. En terrazas y estructuras en\nconcreto, mortero, tejas de barro, fibrocemento,\nzinc"
       },
       {
-        "archivo": "BARNEX EXTRA PROTECCION.pdf",
-        "familia": "BARNEX EXTRA PROTECCION",
-        "similitud": 0.6064,
-        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: Disponible en acabados brillante incoloro y semibrillante incoloro o]\n\ncoloreado."
+        "archivo": "PINTUCO FILL 12.pdf",
+        "familia": "PINTUCO FILL 12",
+        "similitud": 0.6727,
+        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nRecubrimiento acrílico impermeable y flexible, para\nevitar\nel\npaso\nde\nhumedad\ny\nfiltraciones\nen\ncubiertas y terrazas. Mejorado con fibras que le\npermiten puentear fisuras existentes hasta de 1 mm\ny distribuir los esfuerzos de tensión evitando que se\nproduzca rompimiento de la película. Diseñado para\ndar\nuna\nóptima\ndurabilidad\nde\nsu\npelícula\nimpermeabilizante de hasta 12 años siempre y\ncuando\nse\nsigan\nlas\nrecomendaciones\nde\nprep"
+      },
+      {
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.5723,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas, patios y terrazas revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar y tejas. Para el Sistema de Junta Perdida en fachadas\nfibrocemento."
       },
       {
         "archivo": "KORAZA IMPERMEABLE.pdf",
         "familia": "KORAZA IMPERMEABLE",
-        "similitud": 0.5874,
-        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: D1644]\n\nKORAZA® PROTECCIÓN\nSOL & LLUVIA PINTURA"
+        "similitud": 0.5629,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: Recomendada]\n\npara\nambientes\nexteriores,\npara\ndecorar\ny proteger fachadas y patios revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar,\ntejas y láminas de fibrocemento. Disponible en una\namplia gama de colores gracias a la Tecnología\nSuperior de Color Pintuco® Colortech®."
       },
       {
         "archivo": "KORAZA IMPERMEABLE.pdf",
         "familia": "KORAZA IMPERMEABLE",
-        "similitud": 0.5778,
-        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: KORAZA]\n\n® PROTECCIÓN\nSOL & LLUVIA PINTURA"
+        "similitud": 0.559,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: En obra nueva sobre]\n\nrevoque\n8 - 10 m²/gal a 2 manos\n*El rendimiento puede variar dependiendo del método y\nherramientas de aplicación, así como el\nestado de\nrugosidad de la superficie y del color a cubrir."
       },
       {
-        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
-        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
-        "similitud": 0.5756,
-        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
+        "archivo": "EMULSION ASFALTICA.pdf",
+        "familia": "EMULSION ASFALTICA",
+        "similitud": 0.5387,
+        "texto": "[PRODUCTO: EMULSION ASFALTICA] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.0 / 2018 Con Fibras para Impermeabilizar Te\nEmulsión asfáltica en base acuosa con fibras de refuerzo seleccionadas para impermeabilización en frío\nde terrazas y cubiertas en mortero, concreto o madera, evitando el paso de humedad y filtraciones.\nElástica y reforzada con fibras que le permiten absorber leves movimientos del sustrato asegurando la\nimpermeabilidad."
       },
       {
-        "archivo": "EPOXI ESTRUCTURAS.pdf",
-        "familia": "EPOXI ESTRUCTURAS",
-        "similitud": 0.5489,
-        "texto": "[PRODUCTO: EPOXI ESTRUCTURAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nIdeal para proteger y decorar e superficies de metal, concreto, asbesto-cemento y madera en ambientes\ninteriores y exteriores expuestos a conminación industrial de agresividad media o que requieran un lavado\nfrecuente, alta dureza y resistencia mecánica. El producto puede ser utilizado como auto imprimante\ncuando la preparación de superficie es mínimo grado comercial de acuerdo al estándar SSPC-SP6 y cuando\nla estructura va a estar "
-      },
-      {
-        "archivo": "EPOXI ESTRUCTURAS.pdf",
-        "familia": "EPOXI ESTRUCTURAS",
-        "similitud": 0.5476,
-        "texto": "[PRODUCTO: EPOXI ESTRUCTURAS] [MARCA: Pintuco]\n[SECCIÓN: PINTURA EPOXI ESTRUCTURAS Ideal para proteger y decorar estruc]\n\nIdeal para proteger y decorar estructuras metálicas, exterior de tanques y t\ntanques y tuberías, y equipos en zonas de alta contaminación"
+        "archivo": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA.pdf",
+        "familia": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA",
+        "similitud": 0.526,
+        "texto": "[PRODUCTO: ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA] [MARCA: Pintuco]\n[SECCIÓN: CUMPLIMIENTO DE NORMA Y APORTE SOSTENIBLE]\n\nResistencia prolongada al sol y la lluvia, mantiene durabilidad\nincluso en climas exteriores"
       }
     ],
     "productos_candidatos": [
-      "BARNEX EXTRA PROTECCIÓN",
-      "BARNEX EXTRA PROTECCION",
-      "KORAZA IMPERMEABLE",
+      "PINTUCO FILL 7",
+      "PINTUCO FILL 12",
+      "KORAZA PRO 750 ELASTOMERICA",
       "koraza",
-      "barnex",
-      "koraza sol y lluvia",
-      "corrotec",
-      "anticorrosivo",
-      "intergard",
-      "wash primer",
-      "imprimante",
-      "fondo"
+      "pintuco fill",
+      "impercoat"
     ]
   }
 }

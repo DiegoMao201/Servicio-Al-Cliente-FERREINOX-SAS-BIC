@@ -1,0 +1,18 @@
+{
+  "user": "Tenemos una planta industrial con mucho humo químico y necesitamos proteger las paredes y pisos",
+  "result": {
+    "response_text": "Entiendo, eso suena como un reto importante. Para proteger las paredes y pisos en un ambiente con humo químico, es crucial utilizar productos que ofrezcan resistencia química y durabilidad.\n\nPrimero, necesito saber un poco más sobre las superficies que deseas tratar:\n\n1. ¿Las paredes son de concreto, metal o algún otro material?\n2. ¿Y los pisos? ¿Son de concreto, cerámica, o algún otro tipo?\n3. ¿Hay alguna condición específica, como humedad o daño previo en las superficies?\n\nCon esta información, podré recomendarte un sistema adecuado.",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  }
+}

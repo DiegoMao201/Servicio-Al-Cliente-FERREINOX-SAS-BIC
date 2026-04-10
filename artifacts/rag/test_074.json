@@ -1,0 +1,52 @@
+{
+  "query": "la pintura se puso como amarillenta y polvosa",
+  "response": {
+    "query": "la pintura se puso como amarillenta y polvosa",
+    "resultados": [
+      {
+        "archivo": "PINTULACA 7527.pdf",
+        "familia": "PINTULACA 7527",
+        "similitud": 0.5595,
+        "texto": "[PRODUCTO: PINTULACA 7527] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\nel metal quedó descubierto.\n• Cuando la Base esté bien seca se lija en húmedo con papel No. 360 - 400, se limpian los residuos y\nse seca bien.\n• Para repintes sobre pinturas en buen estado, se limpian con Ajustador PINTUCO REF. 121.110 para\nque no ataque la pintura antigua y eliminar ceras y grasas. Se lija en húmedo con papel No. 360 - 400\npara eliminar el brillo, se aplica la Base Pintulaca ref. 7213 donde el met"
+      },
+      {
+        "archivo": "PINTULACA 7527.pdf",
+        "familia": "PINTULACA 7527",
+        "similitud": 0.533,
+        "texto": "[PRODUCTO: PINTULACA 7527] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\n• La superficie que se va a pintar debe estar completamente limpia, seca y libre de partículas sueltas,\nmugre, grasa, aceite y óxido.\n• Los metales deformados se enderezan con las herramientas apropiadas. Las partes con oxidación\nsevera se cambian.\n• La oxidación superficial se elimina con papel de lija, rasqueta, cepillo de alambre, máquina pulidora.\n• La oxidación profunda con Pintóxido ref. 514 de PINTUCO.\n• Las"
+      },
+      {
+        "archivo": "DOMESTICO.pdf",
+        "familia": "DOMESTICO",
+        "similitud": 0.5328,
+        "texto": "[PRODUCTO: DOMESTICO] [MARCA: Pintuco]\n[SECCIÓN: Superficies]\n\ncon\npintura\ndeteriorada:"
+      },
+      {
+        "archivo": "PINTULACA 7527.pdf",
+        "familia": "PINTULACA 7527",
+        "similitud": 0.526,
+        "texto": "[PRODUCTO: PINTULACA 7527] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\ner de buena calidad luego se aplica Base Pintulaca y con Masilla Pintulaca ref. 119.139 ó\n119.143, se suprimen las imperfecciones pequeñas.\n• Al día siguiente se lija en húmedo con papel No. 180 - 220, se aplica de nuevo la Base Pintulaca, se\nlija con papel No. 360 - 400, se limpia y seca bien.\n2/5\n\nPREPARACIÓN DE SUPERFICIE: • La superficie que se va a pintar debe estar completamente limpia, seca y libre de partíc"
+      },
+      {
+        "archivo": "PINTULAC NEGRO MATIZ 7589.pdf",
+        "familia": "PINTULAC NEGRO MATIZ 7589",
+        "similitud": 0.5243,
+        "texto": "[PRODUCTO: PINTULAC NEGRO MATIZ 7589] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\n• La superficie debe estar completamente limpia, seca y libre de partículas sueltas, mugre, grasas,\naceites y óxidos.\n• Las pinturas agrietadas, con ampollas o desprendimientos, se eliminan con removedor PINTUCO ref.\n1020.\n• La fibra de vidrio si es nueva, se desengrasa con un dulceabrigo limpio humedecido en Thinner\nPINTUCO ref. 121.014 de PINTUCO.\n• Si tienen pinturas en buenas condiciones, se lijan en"
+      },
+      {
+        "archivo": "PINTULACA 7527.pdf",
+        "familia": "PINTULACA 7527",
+        "similitud": 0.5227,
+        "texto": "[PRODUCTO: PINTULACA 7527] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\nntigua y eliminar ceras y grasas. Se lija en húmedo con papel No. 360 - 400\npara eliminar el brillo, se aplica la Base Pintulaca ref. 7213 donde el metal quedó descubierto, se lija con\npapel No. 360 - 400, se limpia y seca bien.\n• Las fibras de vidrio, si son nuevas, se lijan en húmedo con papel No. 180 - 220 y se desengrasan con\nun dulce abrigo limpio y humedecido en Thinner PINTUCO ref. 121.014 y se les aplica Ba"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTULACA 7527",
+      "DOMESTICO",
+      "pintulac",
+      "domestico",
+      "wash primer",
+      "pintoxido"
+    ]
+  }
+}

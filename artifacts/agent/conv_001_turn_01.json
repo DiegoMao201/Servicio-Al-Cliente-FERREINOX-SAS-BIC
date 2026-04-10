@@ -1,7 +1,7 @@
 {
-  "user": "Hola buenas tardes",
+  "user": "Quiero barnizar una mesa de comedor de madera, es interior",
   "result": {
-    "response_text": "¡Buenas tardes! ¿En qué puedo ayudarte hoy?",
+    "response_text": "¡Perfecto! Para barnizar una mesa de comedor de madera en interior, te recomiendo un sistema sencillo:\n\n1. **Preparación**: Lija la superficie de la mesa con lija fina para asegurar una buena adherencia del barniz.\n2. **Barniz**: Aplica un **Barniz Marino** o **Barniz SD1** para obtener un acabado transparente y duradero.\n\n¿Te gustaría que te ayude con las cantidades que necesitas? Si es así, ¿cuántos metros cuadrados tiene la mesa?",
     "intent": "consulta_general",
     "tool_calls": [],
     "context_updates": {},

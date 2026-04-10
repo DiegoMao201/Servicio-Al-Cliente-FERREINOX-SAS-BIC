@@ -1,17 +1,15 @@
 {
-  "user": "Tengo unas rejas muy oxidadas, se las está comiendo el óxido",
+  "user": "Tengo un closet de madera que quiero proteger, acabado transparente, está en la habitación",
   "result": {
-    "response_text": "¿El óxido es profundo (se está comiendo el metal) o es superficial (solo manchas)? ¿Está a la intemperie?",
+    "response_text": "Para proteger tu closet de madera en el interior y lograr un acabado transparente, te recomiendo usar un barniz. Para este caso, el **Barniz Marino** es una excelente opción, ya que proporciona una buena protección y resalta la veta de la madera.\n\nEl sistema sería el siguiente:\n\n1. **Preparación**: Lijar la superficie con lija fina para asegurar una buena adherencia.\n2. **Aplicación del Barniz**: Aplicar el Barniz Marino en dos manos para obtener un acabado duradero y resistente.\n\n¿Te gustaría saber cuántos metros cuadrados tiene el closet y qué cantidad de barniz necesitas?",
     "intent": "consulta_general",
     "tool_calls": [],
     "context_updates": {},
     "should_create_task": false,
     "confidence": {
-      "score": 0.9,
+      "score": 1.0,
       "level": "alta",
-      "signals": [
-        "technical_without_tools"
-      ]
+      "signals": []
     },
     "is_farewell": false
   }

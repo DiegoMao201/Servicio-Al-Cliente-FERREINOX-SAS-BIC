@@ -1,68 +1,70 @@
 {
-  "query": "cepillo metálico para limpiar estructura oxidada",
+  "query": "pintura económica para cielo raso bodega",
   "response": {
-    "query": "cepillo metálico para limpiar estructura oxidada",
+    "query": "pintura económica para cielo raso bodega",
     "resultados": [
       {
-        "archivo": "CORROTEC.pdf",
-        "familia": "CORROTEC",
-        "similitud": 0.7209,
-        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6381,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
       },
       {
-        "archivo": "PINTULUX 3 EN 1 BRILLANTE.pdf",
-        "familia": "PINTULUX 3 EN 1 BRILLANTE",
-        "similitud": 0.6708,
-        "texto": "[PRODUCTO: PINTULUX 3 EN 1 BRILLANTE] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nEsmalte alquídico que evita lijar en superficies con oxidación leve, contiene\nanticorrosivo y da un hermoso acabado brillante. Diseñado para aplicar directo al\nmetal con una excelente adherencia, durable y resistente a la corrosión.\nPrepara, protege y decora en un solo paso. Producto formulado sin plomo ni cromo."
+        "archivo": "PINTURA CIELOS.pdf",
+        "familia": "PINTURA CIELOS",
+        "similitud": 0.633,
+        "texto": "[PRODUCTO: PINTURA CIELOS] [MARCA: Pintuco]\n[SECCIÓN: Brocha o rodillo]\n\n1 galón\n25%\n1.0"
       },
       {
-        "archivo": "PINTULUX 3 EN 1 MATE.pdf",
-        "familia": "PINTULUX 3 EN 1 MATE",
-        "similitud": 0.6708,
-        "texto": "[PRODUCTO: PINTULUX 3 EN 1 MATE] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nEsmalte alquídico que evita lijar en superficies con oxidación leve, contiene anticorrosivo\ny da un hermoso acabado mate. Diseñado para aplicar directo al metal con una excelente\nadherencia, durable y resistente a la corrosión. Prepara, protege y decora en un solo\npaso. Producto formulado sin plomo ni cromo."
+        "archivo": "PINTURA SUPER CUBRIENTE.pdf",
+        "familia": "PINTURA SUPER CUBRIENTE",
+        "similitud": 0.6281,
+        "texto": "[PRODUCTO: PINTURA SUPER CUBRIENTE] [MARCA: Pintuco]\n[SECCIÓN: Brocha o Rodillo]\n\n1 galón\n 25%"
       },
       {
-        "archivo": "PINTULUX 3 EN 1 BRILLANTE.pdf",
-        "familia": "PINTULUX 3 EN 1 BRILLANTE",
-        "similitud": 0.6629,
-        "texto": "[PRODUCTO: PINTULUX 3 EN 1 BRILLANTE] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para proteger y decorar superficies y/o artículos de metal y madera]\n\nen ambientes interiores y exteriores como estructuras metálicas, puertas, portones,\nventanas, rejas, marcos, etc. Puede ser aplicado sobre superficies metálicas oxidadas,\nya que por su diseño Pintulux 3 en 1 funciona como inhibidor de óxido que brinda una\nexcelente protección y da un acabado brillante, simplificando el proceso de aplicación."
+        "archivo": "PINTURAMA.pdf",
+        "familia": "PINTURAMA",
+        "similitud": 0.625,
+        "texto": "[PRODUCTO: PINTURAMA] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para pintar superficies interiores no expuestas al polvo y a]\n\nfricciones, tales como techos y cielorrasos. Disponible en una amplia gama\nde colores."
       },
       {
-        "archivo": "CORROTEC.pdf",
-        "familia": "CORROTEC",
-        "similitud": 0.6571,
-        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.5986,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15 m2/gal a 2 manos."
       },
       {
-        "archivo": "CORROTEC PREMIUM.pdf",
-        "familia": "CORROTEC PREMIUM",
-        "similitud": 0.6524,
-        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Removedor]\n\nPintuco®\nRef.1020\ny\nherramientas mecánicas tales como rasquetas, lijas\no cepillos. En metales no ferrosos como aluminio,\nzinc,\nhojalata,\ngalvanizados\ny\nmetales\npulidos\naplique una mano (capa) delgada de Wash Primer\nPintuco® Ref.509A/509B para promover adherencia\ndel anticorrosivo.\n2. Preparación del producto y aplicación: Mezcle\nel Corrotec® Premium con una espátula limpia\nhasta obtener su completa uniformidad. Diluya el\nproduct"
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.5979,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Asfalto o madera]\n\n8 - 10 m2/gal a 3 manos.\n\nEl rendimiento práctico puede variar dependiendo de la calidad y el tipo de sustrato, las condiciones\natmosféricas y la experiencia del aplicador. Se sugiere hacer pruebas de rendimiento previas para\ndeterminar el rendimiento real del producto. INSTRUCCIONES DE USO"
       },
       {
-        "archivo": "ANTICORROSIVA FENOLICA MATE AMARILLA.pdf",
-        "familia": "ANTICORROSIVA FENOLICA MATE AMARILLA",
-        "similitud": 0.6375,
-        "texto": "[PRODUCTO: ANTICORROSIVA FENOLICA MATE AMARILLA] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.0 / 2017 Ideal para proteger estructuras metálicas en general, exterio"
+        "archivo": "FDS - INTERGARD 740 RAL7000 RM PARTE A.pdf",
+        "familia": "FDS - INTERGARD 740 RAL7000 RM PARTE A",
+        "similitud": 0.5818,
+        "texto": "[PRODUCTO: FDS - INTERGARD 740 RAL7000 RM PARTE A] [MARCA: Pintuco]\n[SECCIÓN: No relevante]\n\np-xileno"
       },
       {
-        "archivo": "ANTICORROSIVO AMARILLO  505.pdf",
-        "familia": "ANTICORROSIVO AMARILLO  505",
-        "similitud": 0.6332,
-        "texto": "[PRODUCTO: ANTICORROSIVO AMARILLO  505] [MARCA: Pintuco]\n[SECCIÓN: ANTICORROSIVA FENÓLICA MATE AMARILLA 505 Ideal para pro]\n\nIdeal para proteger estructuras metálicas en general, exterior de tanques y\ntanques y tuberías expuestas a ambientes de corrosividad"
+        "archivo": "FDS - INTERGARD 740 RAL7000 RM PARTE A.pdf",
+        "familia": "FDS - INTERGARD 740 RAL7000 RM PARTE A",
+        "similitud": 0.578,
+        "texto": "[PRODUCTO: FDS - INTERGARD 740 RAL7000 RM PARTE A] [MARCA: Pintuco]\n[SECCIÓN: Género]\n\nm-xileno"
       }
     ],
     "productos_candidatos": [
-      "CORROTEC",
-      "PINTULUX 3 EN 1 BRILLANTE",
-      "PINTULUX 3 EN 1 MATE",
-      "corrotec",
-      "pintulux",
-      "anticorrosivo",
-      "wash primer",
-      "pintoxido",
-      "grata",
-      "grata copa"
+      "PINTURA PARA CANCHAS",
+      "PINTURA CIELOS",
+      "PINTURA SUPER CUBRIENTE",
+      "PINTURAMA",
+      "pinturama",
+      "pintura cielos",
+      "pintucoat",
+      "intergard 740",
+      "pintura canchas",
+      "viniltex",
+      "vinil max",
+      "domestico"
     ]
   }
 }

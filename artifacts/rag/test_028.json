@@ -1,69 +1,48 @@
 {
-  "query": "puerta de madera la quiero pintar de color",
+  "query": "cancha de microfútbol hay que pintarla",
   "response": {
-    "query": "puerta de madera la quiero pintar de color",
+    "query": "cancha de microfútbol hay que pintarla",
     "resultados": [
       {
-        "archivo": "BARNIZ BARNEX 557.pdf",
-        "familia": "BARNIZ BARNEX 557",
-        "similitud": 0.6291,
-        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6611,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
       },
       {
-        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
-        "familia": "BARNEX EXTRA PROTECCIÓN",
-        "similitud": 0.6035,
-        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\nno estén expuestos a la abrasión. No apto para uso en pisos."
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6472,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\ntura para Canchas con otros productos que puedan alterar sus propiedades. Para repinte aplique 1\nmano sin diluir de Pintura para canchas sobre la superficie previamente lavada con limpiador\nConstrucleaner® Mantenimiento Fachadas.\nEl tiempo para realizar el repinte dependerá de la frecuencia de uso.\n\nVersión 1.0 / 2018\nSuperficie Asfalto y Madera: Revuelva el producto en su envase original con una espátula "
       },
       {
-        "archivo": "BARNEX EXTRA PROTECCION.pdf",
-        "familia": "BARNEX EXTRA PROTECCION",
-        "similitud": 0.6013,
-        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\nno estén expuestos a la abrasión. No apto para uso en pisos."
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6354,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nRecubrimiento acrílico base agua para demarcación, decoración y protección de diferentes escenarios\ndeportivos."
       },
       {
-        "archivo": "PINTULACA 7527.pdf",
-        "familia": "PINTULACA 7527",
-        "similitud": 0.5709,
-        "texto": "[PRODUCTO: PINTULACA 7527] [MARCA: Pintuco]\n[SECCIÓN: Cuarto de galón]\n\nDESCRIPCIÓN: Lacas nitrocelulósicas que se caracterizan por su gran brillo, excelente acabado, resistentes a la\nintemperie, de alto contenido de sólidos para mayor rendimiento con menos manos de aplicación, y en\ncolores entremezclables para obtener otros colores policromados de secamiento al aire y fácil de aplicar\nen todo tipo de ambientes.\n\nUSOS: Para el acabado final en el repintado de vehículos, electrodomésticos y recub"
+        "archivo": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
+        "familia": "FDS- PINTURA CANCHAS BASE ACCENT",
+        "similitud": 0.562,
+        "texto": "[PRODUCTO: FDS- PINTURA CANCHAS BASE ACCENT] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\n10221353 FABRICADO CONSTRUCCION PINTURA PARA CANCHAS"
       },
       {
-        "archivo": "PINTULACA.pdf",
-        "familia": "PINTULACA",
-        "similitud": 0.5651,
-        "texto": "[PRODUCTO: PINTULACA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nComúnmente usados para el acabado final en el repintado de vehículos y electrodomésticos.\nElementos metálicos, fibra de vidrio o madera que requieran ser recubiertos por necesidades estéticas.\nPara usos diferentes se recomienda seguir la asesoría técnica."
+        "archivo": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
+        "familia": "FDS- PINTURA CANCHAS BASE ACCENT",
+        "similitud": 0.5539,
+        "texto": "[PRODUCTO: FDS- PINTURA CANCHAS BASE ACCENT]\n[SECCIÓN: GENERAL]\n\n10221353 FABRICADO CONSTRUCCION PINTURA PARA CANCHAS"
       },
       {
-        "archivo": "BARNIZ SD1.pdf",
-        "familia": "BARNIZ SD1",
-        "similitud": 0.5642,
-        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes interiores que no estén expuestas a la luz directa del sol, a la\nhumedad o a la abrasión, como techos, puertas, zócalos, columnas, vigas,\nmesas decorativas y muebles de madera en general."
-      },
-      {
-        "archivo": "BARNIZ SD1.pdf",
-        "familia": "BARNIZ SD1",
-        "similitud": 0.547,
-        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: BARNIZ]\n\nPINTUCO®"
-      },
-      {
-        "archivo": "WOOD STAIN IMPREGNANTE PARA MADERAS.pdf",
-        "familia": "WOOD STAIN IMPREGNANTE PARA MADERAS",
-        "similitud": 0.5009,
-        "texto": "[PRODUCTO: WOOD STAIN IMPREGNANTE PARA MADERAS] [MARCA: Pintuco]\n[SECCIÓN: Haga clic aquí para escribir]\n\nDa color, penetra y protege"
+        "archivo": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
+        "familia": "FDS- PINTURA CANCHAS BASE ACCENT",
+        "similitud": 0.5524,
+        "texto": "[PRODUCTO: FDS- PINTURA CANCHAS BASE ACCENT] [MARCA: Pintuco]\n[SECCIÓN: SGA:]\n\n10221353 FABRICADO CONSTRUCCION PINTURA PARA CANCHAS"
       }
     ],
     "productos_candidatos": [
-      "BARNIZ BARNEX 557",
-      "BARNEX EXTRA PROTECCIÓN",
-      "BARNEX EXTRA PROTECCION",
-      "PINTULACA 7527",
-      "pintulac",
-      "domestico",
-      "barnex",
-      "barniz",
-      "wood stain",
-      "madetec",
-      "pintulux"
+      "PINTURA PARA CANCHAS",
+      "pintura canchas"
     ]
   }
 }

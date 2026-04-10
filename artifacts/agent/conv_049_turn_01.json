@@ -1,0 +1,16 @@
+{
+  "user": "Las zorras del almacén me rayaron todo el piso de la bodega",
+  "result": {
+    "response_text": "¡Qué fastidio! Pero tranquilo, que eso tiene solución. Para poder ayudarte mejor, necesito saber un par de cosas: ¿el piso es nuevo o ya estaba pintado? Y, ¿qué tipo de tráfico tiene, pesado o liviano?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": []
+    },
+    "is_farewell": false
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "query": "la terraza se me llueve toda y se moja abajo",
+  "response": {
+    "query": "la terraza se me llueve toda y se moja abajo",
+    "resultados": [
+      {
+        "archivo": "PINTUCO FILL 7.pdf",
+        "familia": "PINTUCO FILL 7",
+        "similitud": 0.6624,
+        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nPintuco® Fill 7 Antihongos\nimpermeabilizante para cubiertas y terrazas,\nfuerte barrera contra el agua"
+      },
+      {
+        "archivo": "PINTUCO FILL 12.pdf",
+        "familia": "PINTUCO FILL 12",
+        "similitud": 0.6554,
+        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: Impermeabilizante para cubiertas y terrazas]\n\nRugosas: 3 - 4 m2/ gal"
+      },
+      {
+        "archivo": "PINTUCO FILL 7.pdf",
+        "familia": "PINTUCO FILL 7",
+        "similitud": 0.6514,
+        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintuco® Fill 7 Antihongos es un recubrimiento\nacrílico impermeable y flexible, para evitar el paso\nde humedad y filtraciones en cubiertas y terrazas."
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.6228,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE]\n\nSUPERFICIE | • La superficie que se va a impermeabilizar, debe ser sólida, completamente\nlimpia, seca y libre de partículas sueltas.\n• Las pinturas deterioradas, se eliminan con rasqueta y agua a presión.\n• Es Recomendable lavar con Hidrolavadora (presión de 1000 a 3000\nlibras/pulgada²)\n• Los resanes de grietas, huecos se deben hacer con el “ Mortero de Reparación”,\nRef. 27525/27526, o con la “Base Adhesiva para Impermeabilizar"
+      },
+      {
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.6208,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: APLICACIÓN]\n\n• Recomendamos aplicar 1 mano de imprimante Sellomax ref.10270 o 10272\nespecialmente cuando se aplica sobre ladrillo vitrificado, para disminuir\nhumedades, mejorar adherencia y desempeño.\n• Si hay grietas de más de 1mm de ancho o empates entre losas, es necesario\nreforzar el sistema colocando una malla o tela de fibra de vidrio traslapando 10 cm\na cada lado de la grieta.(La fibra debe quedar embebida en el impermeabilizante\nROOF MA"
+      },
+      {
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.6121,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: En repinte sobre]\n\ncolor diferente\n15 - 20 m²/gal a 2 manos"
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.5304,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: KORAZA]\n\n® PROTECCIÓN\nSOL & LLUVIA PINTURA"
+      },
+      {
+        "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
+        "similitud": 0.521,
+        "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
+      }
+    ],
+    "productos_candidatos": [
+      "PINTUCO FILL 7",
+      "PINTUCO FILL 12",
+      "IMPERCOAT 7A",
+      "pintuco fill",
+      "imprimante",
+      "impercoat",
+      "koraza"
+    ]
+  }
+}

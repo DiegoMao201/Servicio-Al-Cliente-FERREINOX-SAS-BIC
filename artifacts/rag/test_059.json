@@ -1,0 +1,68 @@
+{
+  "query": "se puede diluir el viniltex con agua y cuánto",
+  "response": {
+    "query": "se puede diluir el viniltex con agua y cuánto",
+    "resultados": [
+      {
+        "archivo": "VINILTEX ULTRALAVABLE.pdf",
+        "familia": "VINILTEX ULTRALAVABLE",
+        "similitud": 0.6995,
+        "texto": "[PRODUCTO: VINILTEX ULTRALAVABLE] [MARCA: Pintuco]\n[SECCIÓN: Diluir con]\n\nAgua*"
+      },
+      {
+        "archivo": "VINILTEX ADVANCE.pdf",
+        "familia": "VINILTEX ADVANCE",
+        "similitud": 0.6958,
+        "texto": "[PRODUCTO: VINILTEX ADVANCE] [MARCA: Pintuco]\n[SECCIÓN: Diluir con]\n\nAgua*"
+      },
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6919,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: Diluya con agua según el equipo de aplicación a]\n\nusar de acuerdo con la siguiente tabla:"
+      },
+      {
+        "archivo": "FICHA TECNICA VINILTEX ULTRALAVABLE 2024.pdf",
+        "familia": "FICHA TECNICA VINILTEX ULTRALAVABLE 2024",
+        "similitud": 0.6752,
+        "texto": "[PRODUCTO: FICHA TECNICA VINILTEX ULTRALAVABLE 2024] [MARCA: Pintuco]\n[SECCIÓN: Diluir con]\n\nAgua*"
+      },
+      {
+        "archivo": "VINILTEX PRO 450.pdf",
+        "familia": "VINILTEX PRO 450",
+        "similitud": 0.6714,
+        "texto": "[PRODUCTO: VINILTEX PRO 450] [MARCA: Pintuco]\n[SECCIÓN: PARA DILUIR]\n\n% AGUA"
+      },
+      {
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6649,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: Solvente para dilución]\n\ny limpieza"
+      },
+      {
+        "archivo": "FDS - VINILTEX ADVANCED BASE TINT  117175.pdf",
+        "familia": "FDS - VINILTEX ADVANCED BASE TINT  117175",
+        "similitud": 0.6405,
+        "texto": "[PRODUCTO: FDS - VINILTEX ADVANCED BASE TINT  117175] [MARCA: Viniltex]\n[SECCIÓN: Solubilidad en agua a 20 ºC:]\n\nNo relevante *"
+      },
+      {
+        "archivo": "HOJA DE SEGURIDAD VINILTEX ADVANCED BLANCO 1501.pdf",
+        "familia": "HOJA DE SEGURIDAD VINILTEX ADVANCED BLANCO 1501",
+        "similitud": 0.6346,
+        "texto": "[PRODUCTO: HOJA DE SEGURIDAD VINILTEX ADVANCED BLANCO 1501] [MARCA: Viniltex]\n[SECCIÓN: Solubilidad en agua a 20 ºC:]\n\nNo relevante *"
+      }
+    ],
+    "productos_candidatos": [
+      "VINILTEX ULTRALAVABLE",
+      "VINILTEX ADVANCE",
+      "Viniltex-advanced",
+      "FICHA TECNICA VINILTEX ULTRALAVABLE 2024",
+      "viniltex",
+      "viniltex ultralavable",
+      "viniltex adv",
+      "acriltex viniltex",
+      "pintulo",
+      "domestico"
+    ]
+  }
+}

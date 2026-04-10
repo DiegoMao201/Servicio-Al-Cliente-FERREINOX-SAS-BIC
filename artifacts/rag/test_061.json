@@ -1,0 +1,64 @@
+{
+  "query": "qué rodillo usar para koraza en fachada",
+  "response": {
+    "query": "qué rodillo usar para koraza en fachada",
+    "resultados": [
+      {
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.6333,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas, patios y terrazas revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar y tejas. Para el Sistema de Junta Perdida en fachadas\nfibrocemento."
+      },
+      {
+        "archivo": "KORAZA 5.pdf",
+        "familia": "KORAZA 5",
+        "similitud": 0.6229,
+        "texto": "[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas y patios; revocados y\nestucados, en bloque a la vista, ladrillo sin esmaltar, tejas y láminas de fibro-cemento.\n\n*Para la elección adecuada del color te recomendamos utilizar los colores marcados en el abanico\ncon el simbolo del “sol” ☼ los cuales garantizan la retención del color por 5 años siguiendo las\nrecomendaciones de aplicación."
+      },
+      {
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.6202,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: EQUIPOS DE APLICACIÓN]\n\nKoraza® PRO Elastomérica"
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.611,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: En obra nueva sobre]\n\nrevoque\n8 - 10 m²/gal a 2 manos\n*El rendimiento puede variar dependiendo del método y\nherramientas de aplicación, así como el\nestado de\nrugosidad de la superficie y del color a cubrir."
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.6061,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: Recomendada]\n\npara\nambientes\nexteriores,\npara\ndecorar\ny proteger fachadas y patios revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar,\ntejas y láminas de fibrocemento. Disponible en una\namplia gama de colores gracias a la Tecnología\nSuperior de Color Pintuco® Colortech®."
+      },
+      {
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.606,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: Preparación del Producto y Aplicación]\n\nMezcle Koraza® PRO Elastomérica con una espátula limpia hasta obtener su completa uniformidad. Diluya con agua\nsegún el equipo de aplicación a usar de acuerdo con la siguiente tabla:"
+      },
+      {
+        "archivo": "KORAZA DOBLE VIDA.pdf",
+        "familia": "KORAZA DOBLE VIDA",
+        "similitud": 0.5921,
+        "texto": "[PRODUCTO: KORAZA DOBLE VIDA] [MARCA: Pintuco]\n[SECCIÓN: Recomendada para decorar y proteger superficies de difícil repinte en ambientes]\n\nexteriores. Para decorar y proteger fachadas en concreto, mortero, fibrocemento y\nladrillo, en ambientes urbanos, industriales y con altísimo desempeño en ambientes\ncosteros por su resistencia a la humedad y a los microorganismos (posee un poderoso\nfungicida de alto espectro). Su fórmula avanzada que protege el concreto de la\ncarbonatación, hace a Koraza® Dob"
+      },
+      {
+        "archivo": "FDS - KORAZA LADRILLO 2674.pdf",
+        "familia": "FDS - KORAZA LADRILLO 2674",
+        "similitud": 0.5803,
+        "texto": "[PRODUCTO: FDS - KORAZA LADRILLO 2674] [MARCA: Koraza]\n[SECCIÓN: Usos específicos finales:]\n\nSalvo las indicaciones ya especificadas no es preciso realizar ninguna recomendación especial en cuanto a los usos de este\nproducto."
+      }
+    ],
+    "productos_candidatos": [
+      "KORAZA PRO 750 ELASTOMERICA",
+      "KORAZA 5",
+      "KORAZA IMPERMEABLE",
+      "koraza",
+      "koraza sol y lluvia",
+      "koraza elastomerica"
+    ]
+  }
+}

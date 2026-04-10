@@ -1,126 +1,25 @@
 {
-  "user": "Necesito lijas al agua para preparar una pared",
+  "user": "Quiero proteger la mesa del comedor, es de madera, acabado natural transparente",
   "result": {
-    "response_text": "Tengo varias opciones de lijas al agua Abracol. ¿Qué número de grano buscas? Aquí tienes algunas opciones:\n\n- Lija 60\n- Lija 80\n- Lija 180\n- Lija 320\n- Lija 2000\n\nDime cuál prefieres.",
-    "intent": "consulta_productos",
+    "response_text": "Para proteger tu mesa de comedor de madera con un acabado natural transparente, te recomiendo usar **Barnex Extra Protección**. Este barniz a base de aceite es ideal para proteger la madera del sol, la lluvia, la humedad y el ataque de hongos. Además, permite que la madera transpire, evitando que se agriete.\n\n### Sistema recomendado:\n1. **Preparación**: Asegúrate de que la superficie esté limpia y libre de polvo. Si hay barniz viejo, puedes usar un removedor y lijar con lija Abracol grano 80-100, seguido de una lija fina (220-320) para un acabado suave.\n2. **Aplicación**: Aplica el Barnex Extra Protección directamente con brocha. No requiere dilución y es listo para usar.\n3. **Acabado**: Deja secar según las indicaciones del fabricante (generalmente, unas horas entre manos).\n\n### Herramientas necesarias:\n- Brocha Goya Profesional\n- Lija Abracol (grano 80-100 y 220-320)\n- Removedor Pintuco (si es necesario)\n\n¿Te gustaría que te ayude con la cotización del Barnex Extra Protección? Para eso, necesitaría saber cuántos metros cuadrados tiene la mesa.",
+    "intent": "asesoria_tecnica",
     "tool_calls": [
       {
-        "name": "consultar_inventario",
+        "name": "consultar_conocimiento_tecnico",
         "args": {
-          "producto": "lijas al agua"
+          "pregunta": "sistema para proteger mesa de madera con acabado natural transparente",
+          "producto": "Barnex Extra Protección"
         },
-        "result": "{\"encontrados\": 5, \"productos\": [{\"codigo\": \"F6514502\", \"descripcion\": \"LIJA 80 AGUA ABRACOL\", \"descripcion_exacta\": \"LIJA 80 AGUA ABRACOL\", \"etiqueta_auditable\": \"[F6514502] - LIJA 80 AGUA ABRACOL\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"lija_agua_abracol\", \"producto_padre_busqueda\": \"lija de agua abracol\", \"pregunta_desambiguacion\": \"Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?\", \"stock_total\": 2421.0}, {\"codigo\": \"F6514501\", \"descripcion\": \"LIJA 60 AGUA ABRACOL\", \"descripcion_exacta\": \"LIJA 60 AGUA ABRACOL\", \"etiqueta_auditable\": \"[F6514501] - LIJA 60 AGUA ABRACOL\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"lija_agua_abracol\", \"producto_padre_busqueda\": \"lija de agua abracol\", \"pregunta_desambiguacion\": \"Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?\", \"stock_total\": 1534.0}, {\"codigo\": \"F190023\", \"descripcion\": \"LIJA 2000 AGUA ABRACOL\", \"descripcion_exacta\": \"LIJA 2000 AGUA ABRACOL\", \"etiqueta_auditable\": \"[F190023] - LIJA 2000 AGUA ABRACOL\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"lija_agua_abracol\", \"producto_padre_busqueda\": \"lija de agua abracol\", \"pregunta_desambiguacion\": \"Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?\", \"stock_total\": 320.0}, {\"codigo\": \"F6514506\", \"descripcion\": \"LIJA 180 AGUA ABRACOL\", \"descripcion_exacta\": \"LIJA 180 AGUA ABRACOL\", \"etiqueta_auditable\": \"[F6514506] - LIJA 180 AGUA ABRACOL\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"lija_agua_abracol\", \"producto_padre_busqueda\": \"lija de agua abracol\", \"pregunta_desambiguacion\": \"Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?\", \"stock_total\": 5503.0}, {\"codigo\": \"F6514508\", \"descripcion\": \"LIJA 320 AGUA ABRACOL\", \"descripcion_exacta\": \"LIJA 320 AGUA ABRACOL\", \"etiqueta_auditable\": \"[F6514508] - LIJA 320 AGUA ABRACOL\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"lija_agua_abracol\", \"producto_padre_busqueda\": \"lija de agua abracol\", \"pregunta_desambiguacion\": \"Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?\", \"stock_total\": 4014.0}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {\"cantidad_inferida\": null, \"presentacion_canonica_inferida\": null, \"producto_base\": \"lijas al agua\", \"color\": null, \"acabado\": null}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": false, \"pregunta_desambiguacion\": null, \"mensaje\": null}"
+        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: BARNEX EXTRA PROTECCIÓN.pdf]\\n[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\\n[SECCIÓN: DESCRIPCIÓN]\\n\\nBarniz a base de aceite, que protege la madera del sol, la lluvia, la humedad\\ny el ataque de hongos. Contiene protectores solares y pigmentos especiales\\nque lo hacen ideal para resistir la intemperie sin decolorarse, además\\npermite la transpiración de la madera, evitando que se agriete. Viene listo\\npara aplicar a brocha y no requiere dilución.\\n\\n---\\n\\n[Fuente: BARNEX EXTRA PROTECCION.pdf]\\n[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\\n[SECCIÓN: DESCRIPCIÓN]\\n\\nBarniz a base de aceite, que protege la madera del sol, la lluvia, la humedad\\ny el ataque de hongos. Contiene protectores solares y pigmentos especiales\\nque lo hacen ideal para resistir la intemperie sin decolorarse, además\\npermite la transpiración de la madera, evitando que se agriete. Viene listo\\npara aplicar a brocha y no requiere dilución.\\n\\n---\\n\\n[Fuente: BARNEX EXTRA PROTECCIÓN.pdf]\\n[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\\n[SECCIÓN: USOS]\\n\\nPara la protección y decoración de puertas, ventanas, balcones, aleros,\\nmuebles de jardín y otros objetos de madera en ambientes exteriores que\\nno estén expuestos a la abrasión. No apto para uso en pisos.\\n\\n---\\n\\n[Fuente: BARNEX EXTRA PROTECCIÓN.pdf]\\n[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\\n[SECCIÓN: BARNIZ]\\n\\nPINTUCO®\", \"archivos_fuente\": [\"BARNEX EXTRA PROTECCIÓN.pdf\", \"BARNEX EXTRA PROTECCION.pdf\"], \"mejor_similitud\": 0.7298, \"mensaje\": \"⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. DEBES SINTETIZARLOS como un ingeniero de aplicaciones: 1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado).    Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. 2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. 3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. 4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. 5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. 6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' 7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'\", \"productos_inventario_relacionados\": [{\"codigo\": \"5890924\", \"descripcion\": \"MH BARNEX EXTRA BR INCOLORO 6602 3.79L\", \"etiqueta_auditable\": \"[5890924] - MH BARNEX EXTRA BR INCOLORO 6602 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890925\", \"descripcion\": \"MH BARNEX EXTRA SB INCOLORO 6603 3.79L\", \"etiqueta_auditable\": \"[5890925] - MH BARNEX EXTRA SB INCOLORO 6603 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890920\", \"descripcion\": \"MH BARNEX BR INCOLORO 557 3.79L\", \"etiqueta_auditable\": \"[5890920] - MH BARNEX BR INCOLORO 557 3.79L\", \"marca\": \"59\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890524\", \"descripcion\": \"MH BARNEX BR INCOLORO 557 0.95L\", \"etiqueta_auditable\": \"[5890524] - MH BARNEX BR INCOLORO 557 0.95L\", \"marca\": \"59\", \"presentacion\": \"cuarto\", \"disponible\": true, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. ⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema completo con cantidades calculadas para TODOS los productos y cierra con: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'\", \"conocimiento_comercial_ferreinox\": [{\"id\": 25, \"tipo\": \"contraindicacion\", \"contexto\": \"madera, exterior, pérgolas, intemperie\", \"recomendar\": \"Barnex Extra Protección o Wood Stain\", \"evitar\": \"Sellador para madera\", \"nota\": \"NUNCA recomiendes sellador antes del Barnex o Wood Stain. Estos productos son de poro abierto y necesitan penetrar directamente en la madera cruda. Si aplicas sellador, el producto se descascara con el sol.\"}, {\"id\": 34, \"tipo\": \"preferencia\", \"contexto\": \"madera exterior, madera interior, barniz, sellador, color sólido\", \"recomendar\": \"Barnex Extra Protección, Wood Stain, Esmalte Doméstico, Pintulux MP\", \"evitar\": \"sellador para madera, Pintulac\", \"nota\": \"1. Para madera exterior a la intemperie, está prohibido recomendar sellador. Barnex o Wood Stain van directo sobre la madera cruda. 2. Barnex y Wood Stain son productos diferentes, no se mezclan. 3. Pintulac no es adecuado para marcos interiores; se debe usar Esmalte Doméstico o Pintulux MP. 4. Siempre preguntar el color del marco antes de cotizar. 5. Incluir herramientas: Removedor Pintuco, Lija Abracol gruesa (80-100), Lija Abracol fina (220), Brocha Goya Profesional.\"}, {\"id\": 24, \"tipo\": \"preferencia\", \"contexto\": \"madera, preparación, abrasivos, Abracol\", \"recomendar\": \"Removedor Pintuco + Lija Abracol grano 80 o 100 + Lija Abracol grano 220 o 320\", \"evitar\": null, \"nota\": \"Es un error técnico intentar quitar barniz viejo solo con lija 220 (se empasta). El sistema correcto es aplicar Removedor Pintuco, raspar con espátula, asentar con lija gruesa Abracol (80-100) y dar el acabado final con lija fina Abracol (220-320). SIEMPRE especifica la marca Abracol para lijas.\"}, {\"id\": 76, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, exterior, resistencia UV, anticorrosivos, epóxicos, acabados\", \"recomendar\": \"Corrotec Premium, Pintulux 3 en 1, Interseal 670HS, Interthane 990, Intergard 740\", \"evitar\": \"epóxicos como acabado final\", \"nota\": \"En estructuras metálicas exteriores, el sistema es similar al de interior, pero se debe considerar la resistencia a la radiación UV. Los epóxicos son adecuados solo como anticorrosivos, no deben usarse como acabado final, ya que la radiación UV puede deteriorarlos rápidamente. Se recomienda un sistema básico con anticorrosivo alquídico y un acabado resistente a la intemperie, un sistema intermedio con imprimante epóxico y acabados alquídicos o acrílicos, y un sistema de alto desempeño con Interseal 670HS y poliuretano para mayor durabilidad.\"}, {\"id\": 75, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, interior, bajo techo, sin humedad, preparación, compatibilidad, sistemas\", \"recomendar\": \"N/A\", \"evitar\": \"N/A\", \"nota\": \"Las reglas clave incluyen no aplicar epóxicos o poliuretanos sobre anticorrosivos alquídicos, y la compatibilidad de sistemas debe ser considerada: anticorrosivo alquídico solo con acabados alquídicos, y anticorrosivo epóxico puede recibir acabados epóxicos, poliuretanos, acrílicos o alquídicos.\"}, {\"id\": 74, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, interior, bajo techo, sin humedad, sistemas, anticorrosivo, alquídico, epóxico, desempeño, presupuesto\", \"recomendar\": \"Corrotec Premium, anticorrosivo 513, Pintulux 3 en 1, Primer Epóxico 10046, Primer Epóxico 10050, Interseal 670HS, Pintucoat, Intergard 740, Epoxipoliamida, Pintucoat Plus, Interthane 990\", \"evitar\": \"N/A\", \"nota\": \"En estructuras metálicas interiores sin humedad, el sistema se selecciona según el nivel de desempeño requerido y el presupuesto del cliente. Se recomienda un sistema básico con anticorrosivo alquídico y Pintulux 3 en 1 para estructuras convencionales, un sistema intermedio con imprimante epóxico para mayor durabilidad, y un sistema alto desempeño con Interseal 670HS para condiciones exigentes.\"}, {\"id\": 70, \"tipo\": \"preferencia\", \"contexto\": \"piso interior, tráfico alto, montacargas, epóxico, industrial, alto desempeño\", \"recomendar\": \"sistema epóxico industrial\", \"evitar\": \"epóxicos de tráfico liviano o medio\", \"nota\": \"Para un piso interior con tráfico alto y uso de montacargas, se recomienda un sistema epóxico industrial de alto desempeño, diseñado para tráfico pesado. Este sistema debe incluir un imprimante epóxico industrial y un recubrimiento epóxico de alto espesor. Es importante eliminar completamente los recubrimientos existentes y preparar adecuadamente la superficie para garantizar la adherencia y durabilidad del recubrimiento.\"}, {\"id\": 68, \"tipo\": \"preferencia\", \"contexto\": \"tráfico pesado, preparación de superficies, pisos industriales, estibadoras, carretas, resistencia mecánica\", \"recomendar\": \"Intergard 2002\", \"evitar\": \"Pintucoat\", \"nota\": \"Para tráfico pesado, se debe usar un sistema de imprimante epóxico como Interseal 670HS y un acabado Intergard 2002 mezclado con arena de cuarzo. El cuarzo es esencial para la resistencia mecánica y antideslizante que soportan las llantas. Además, la preparación de superficies ya pintadas debe incluir un lavado y desengrase profundo con detergente industrial antes de escarificar o lijar.\"}], \"instruccion_conocimiento_comercial\": \"⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. REGLAS OBLIGATORIAS: 1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. 2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. 3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. 4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' SEPARADO de la información de la ficha técnica. 5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente.\"}"
       }
     ],
-    "context_updates": {
-      "last_product_request": {
-        "core_terms": [
-          "lijas",
-          "al",
-          "agua",
-          "lijas al agua"
-        ],
-        "search_terms": [
-          "lijas",
-          "lija",
-          "papel lija",
-          "lija agua",
-          "lija al agua",
-          "al",
-          "agua",
-          "lijas al agua"
-        ],
-        "requested_quantity": null,
-        "requested_unit": null,
-        "quantity_expression": null,
-        "product_codes": [],
-        "brand_filters": [],
-        "direction_filters": [],
-        "size_filters": [],
-        "store_filters": [],
-        "original_query": "lijas al agua",
-        "color_filters": [],
-        "finish_filters": [],
-        "nlu_processed": true,
-        "nlu_extraction": {
-          "cantidad_inferida": null,
-          "presentacion_canonica_inferida": null,
-          "producto_base": "lijas al agua",
-          "color": null,
-          "acabado": null
-        },
-        "canonical_product": "lijas al agua"
-      },
-      "last_product_query": "lijas al agua",
-      "last_product_context": [
-        {
-          "codigo": "F6514502",
-          "descripcion": "LIJA 80 AGUA ABRACOL",
-          "descripcion_exacta": "LIJA 80 AGUA ABRACOL",
-          "etiqueta_auditable": "[F6514502] - LIJA 80 AGUA ABRACOL",
-          "marca": null,
-          "presentacion": null,
-          "familia_consulta": "lija_agua_abracol",
-          "producto_padre_busqueda": "lija de agua abracol",
-          "pregunta_desambiguacion": "Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?",
-          "stock_total": 2421.0
-        },
-        {
-          "codigo": "F6514501",
-          "descripcion": "LIJA 60 AGUA ABRACOL",
-          "descripcion_exacta": "LIJA 60 AGUA ABRACOL",
-          "etiqueta_auditable": "[F6514501] - LIJA 60 AGUA ABRACOL",
-          "marca": null,
-          "presentacion": null,
-          "familia_consulta": "lija_agua_abracol",
-          "producto_padre_busqueda": "lija de agua abracol",
-          "pregunta_desambiguacion": "Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?",
-          "stock_total": 1534.0
-        },
-        {
-          "codigo": "F190023",
-          "descripcion": "LIJA 2000 AGUA ABRACOL",
-          "descripcion_exacta": "LIJA 2000 AGUA ABRACOL",
-          "etiqueta_auditable": "[F190023] - LIJA 2000 AGUA ABRACOL",
-          "marca": null,
-          "presentacion": null,
-          "familia_consulta": "lija_agua_abracol",
-          "producto_padre_busqueda": "lija de agua abracol",
-          "pregunta_desambiguacion": "Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?",
-          "stock_total": 320.0
-        },
-        {
-          "codigo": "F6514506",
-          "descripcion": "LIJA 180 AGUA ABRACOL",
-          "descripcion_exacta": "LIJA 180 AGUA ABRACOL",
-          "etiqueta_auditable": "[F6514506] - LIJA 180 AGUA ABRACOL",
-          "marca": null,
-          "presentacion": null,
-          "familia_consulta": "lija_agua_abracol",
-          "producto_padre_busqueda": "lija de agua abracol",
-          "pregunta_desambiguacion": "Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?",
-          "stock_total": 5503.0
-        },
-        {
-          "codigo": "F6514508",
-          "descripcion": "LIJA 320 AGUA ABRACOL",
-          "descripcion_exacta": "LIJA 320 AGUA ABRACOL",
-          "etiqueta_auditable": "[F6514508] - LIJA 320 AGUA ABRACOL",
-          "marca": null,
-          "presentacion": null,
-          "familia_consulta": "lija_agua_abracol",
-          "producto_padre_busqueda": "lija de agua abracol",
-          "pregunta_desambiguacion": "Tengo Lija de Agua Abracol. ¿Qué número de grano buscas (ej. 100, 150, 1000)?",
-          "stock_total": 4014.0
-        }
-      ]
-    },
+    "context_updates": {},
     "should_create_task": false,
     "confidence": {
       "score": 1.0,
       "level": "alta",
       "signals": [
-        "inventory_used"
+        "rag_used"
       ]
     },
     "is_farewell": false

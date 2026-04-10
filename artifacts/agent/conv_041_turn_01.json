@@ -1,0 +1,18 @@
+{
+  "user": "Tengo humedad en un muro interior",
+  "result": {
+    "response_text": "Qué fastidio, pero tranquilo que eso tiene solución. Para tratar la humedad en un muro interior, necesitamos un sistema completo. \n\nPrimero, debemos raspar hasta llegar al revoque sano. Luego, aplicamos un producto que actúe como barrera contra la humedad, seguido de un estuco acrílico y finalmente una pintura acrílica.\n\nVoy a consultar los productos específicos para este sistema. ¿Cuántos m² tiene el muro y qué color te gustaría?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  }
+}

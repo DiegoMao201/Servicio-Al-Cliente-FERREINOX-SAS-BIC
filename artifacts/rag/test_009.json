@@ -1,57 +1,58 @@
 {
-  "query": "muro exterior que le da el sol todo el día",
+  "query": "fachada deteriorada por lluvia y sol, se pela",
   "response": {
-    "query": "muro exterior que le da el sol todo el día",
+    "query": "fachada deteriorada por lluvia y sol, se pela",
     "resultados": [
-      {
-        "archivo": "KORAZA IMPERMEABLE.pdf",
-        "familia": "KORAZA IMPERMEABLE",
-        "similitud": 0.6452,
-        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: Protección]\n\nSol\n&"
-      },
       {
         "archivo": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
         "familia": "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
-        "similitud": 0.6175,
+        "similitud": 0.608,
         "texto": "[PRODUCTO: KORAZA SOL Y LLUVIA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
+      },
+      {
+        "archivo": "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE.pdf",
+        "familia": "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE",
+        "similitud": 0.6048,
+        "texto": "[PRODUCTO: FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nSol\n&"
+      },
+      {
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.5954,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas, patios y terrazas revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar y tejas. Para el Sistema de Junta Perdida en fachadas\nfibrocemento."
+      },
+      {
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.5788,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nKoraza® PRO Elastomérica, es una Pintura Exterior de Alta Resistencia, base agua, fabricada a partir de polímeros\n100% acrílicos de acabado mate y alta elongación, lo cual permite que el acabado se desempeñe en forma elástica\nconservando su forma sin romperse, permitiendo ocultar fisuras hasta de 1 milímetro. Forma una barrera plástica\nque la hace impermeable a la lluvia y resistente a los rayos del sol. Koraza® PRO"
+      },
+      {
+        "archivo": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA.pdf",
+        "familia": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA",
+        "similitud": 0.569,
+        "texto": "[PRODUCTO: ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA] [MARCA: Pintuco]\n[SECCIÓN: Resiste condiciones climáticas tropicales]\n\nadversas (humedad, altas temperaturas,\nbrisa\nmarina,\nsalitre,\nprecipitaciones\nfrecuentes, etc.)\n•"
+      },
+      {
+        "archivo": "KORAZA 5.pdf",
+        "familia": "KORAZA 5",
+        "similitud": 0.5617,
+        "texto": "[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas y patios; revocados y\nestucados, en bloque a la vista, ladrillo sin esmaltar, tejas y láminas de fibro-cemento.\n\n*Para la elección adecuada del color te recomendamos utilizar los colores marcados en el abanico\ncon el simbolo del “sol” ☼ los cuales garantizan la retención del color por 5 años siguiendo las\nrecomendaciones de aplicación."
       },
       {
         "archivo": "KORAZA IMPERMEABLE.pdf",
         "familia": "KORAZA IMPERMEABLE",
-        "similitud": 0.593,
-        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: GENERAL]\n\nKORAZA® PROTECCIÓN SOL Y"
-      },
-      {
-        "archivo": "Doors And Frame (1).pdf",
-        "familia": "Doors And Frame",
-        "similitud": 0.4702,
-        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Interior and]\n\nexterior"
-      },
-      {
-        "archivo": "Doors And Frame (1).pdf",
-        "familia": "Doors And Frame",
-        "similitud": 0.427,
-        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Full glass entrance door]\n\nconstruction"
-      },
-      {
-        "archivo": "Doors And Frame (1).pdf",
-        "familia": "Doors And Frame",
-        "similitud": 0.4269,
-        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Mullion]\n\nRSM"
-      },
-      {
-        "archivo": "Doors And Frame (1).pdf",
-        "familia": "Doors And Frame",
-        "similitud": 0.4239,
-        "texto": "[PRODUCTO: Doors And Frame]\n[SECCIÓN: Description]\n\n6'8\" Removable Mullion"
+        "similitud": 0.5585,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: Forma una película flexible e impermeable que genera]\n\nmayor resistencia a la lluvia previniendo la aparición\nde microfisuras y evitando la filtración del agua y\nposterior\nampollamiento\nde la\npintura."
       }
     ],
     "productos_candidatos": [
-      "KORAZA IMPERMEABLE",
       "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE",
-      "Doors And Frame",
+      "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE",
+      "KORAZA PRO 750 ELASTOMERICA",
       "koraza",
-      "koraza sol y lluvia"
+      "koraza sol y lluvia",
+      "koraza elastomerica"
     ]
   }
 }

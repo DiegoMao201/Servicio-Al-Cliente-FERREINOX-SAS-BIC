@@ -1,98 +1,15 @@
 {
-  "user": "¿Tienen viniltex blanco en galón?",
+  "user": "Necesito pintar unas puertas",
   "result": {
-    "response_text": "No tengo disponible el Viniltex blanco en galón. Sin embargo, tengo el siguiente producto:\n\n✅ [5891101] - PQ VINILTEX ADV MAT BLANCO 1501 18.93L (cuñete). \n\n¿Te gustaría este cuñete o necesitas algo más?",
-    "intent": "consulta_productos",
-    "tool_calls": [
-      {
-        "name": "consultar_inventario",
-        "args": {
-          "producto": "viniltex blanco"
-        },
-        "result": "{\"encontrados\": 1, \"productos\": [{\"codigo\": \"5891101\", \"descripcion\": \"PQ VINILTEX ADV MAT BLANCO 1501 18.93L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT BLANCO 1501 18.93L\", \"etiqueta_auditable\": \"[5891101] - PQ VINILTEX ADV MAT BLANCO 1501 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"VINILTEX ADVANCED\", \"tipo_marca\": \"VINILO TIPO 1\", \"familia\": \"BLANCO\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0101001281_VINILTEX\", \"descripcion_larga\": \"VINILTEX BLANCO 1501 CANECA 5 GL\", \"tipo\": \"7777\"}, \"stock_total\": 815.0}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {\"cantidad_inferida\": null, \"presentacion_canonica_inferida\": null, \"producto_base\": \"viniltex\", \"color\": \"blanco\", \"acabado\": null}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": false, \"pregunta_desambiguacion\": null, \"mensaje\": null}"
-      }
-    ],
-    "context_updates": {
-      "last_product_request": {
-        "core_terms": [
-          "viniltex",
-          "blanco"
-        ],
-        "search_terms": [
-          "viniltex",
-          "viniltex adv",
-          "viniltex advanced",
-          "vinilico",
-          "vinilo",
-          "vtx",
-          "vinilo premium",
-          "vinilo tipo 1",
-          "1501",
-          "viniltex blanco",
-          "viniltex blanco 1501",
-          "1525",
-          "viniltex amarillo",
-          "viniltex amarillo vivo 1525"
-        ],
-        "requested_quantity": null,
-        "requested_unit": null,
-        "quantity_expression": null,
-        "product_codes": [],
-        "brand_filters": [
-          "viniltex",
-          "pintuco"
-        ],
-        "direction_filters": [],
-        "size_filters": [],
-        "store_filters": [],
-        "original_query": "viniltex blanco",
-        "color_filters": [
-          "blanco"
-        ],
-        "finish_filters": [],
-        "nlu_processed": true,
-        "nlu_extraction": {
-          "cantidad_inferida": null,
-          "presentacion_canonica_inferida": null,
-          "producto_base": "viniltex",
-          "color": "blanco",
-          "acabado": null
-        },
-        "canonical_product": "viniltex"
-      },
-      "last_product_query": "viniltex blanco",
-      "last_product_context": [
-        {
-          "codigo": "5891101",
-          "descripcion": "PQ VINILTEX ADV MAT BLANCO 1501 18.93L",
-          "descripcion_exacta": "PQ VINILTEX ADV MAT BLANCO 1501 18.93L",
-          "etiqueta_auditable": "[5891101] - PQ VINILTEX ADV MAT BLANCO 1501 18.93L",
-          "marca": "58",
-          "presentacion": "cuñete",
-          "familia_consulta": null,
-          "producto_padre_busqueda": null,
-          "pregunta_desambiguacion": null,
-          "clasificacion": {
-            "linea": "VINILTEX ADVANCED",
-            "tipo_marca": "VINILO TIPO 1",
-            "familia": "BLANCO",
-            "aplicacion": "DECORATIVO",
-            "categoria": "PN1D0101001281_VINILTEX",
-            "descripcion_larga": "VINILTEX BLANCO 1501 CANECA 5 GL",
-            "tipo": "7777"
-          },
-          "stock_total": 815.0
-        }
-      ]
-    },
+    "response_text": "Claro, ¿me puedes contar un poco más sobre las puertas? ¿Son de madera o metal? ¿Y qué tipo de acabado te gustaría: transparente para ver la veta o color sólido?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
     "should_create_task": false,
     "confidence": {
-      "score": 0.8,
+      "score": 1.0,
       "level": "alta",
-      "signals": [
-        "low:no tengo",
-        "inventory_used"
-      ]
+      "signals": []
     },
     "is_farewell": false
   }

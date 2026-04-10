@@ -1,66 +1,64 @@
 {
-  "query": "esa reja ya está muy fea, cómo la recupero",
+  "query": "recubrimiento epóxico para piso de planta química",
   "response": {
-    "query": "esa reja ya está muy fea, cómo la recupero",
+    "query": "recubrimiento epóxico para piso de planta química",
     "resultados": [
       {
-        "archivo": "DOMESTICO.pdf",
-        "familia": "DOMESTICO",
-        "similitud": 0.5592,
-        "texto": "[PRODUCTO: DOMESTICO] [MARCA: Pintuco]\n[SECCIÓN: Superficies]\n\ncon\npintura\ndeteriorada:"
+        "archivo": "PINTUCOAT.pdf",
+        "familia": "PINTUCOAT",
+        "similitud": 0.6955,
+        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nIdeal para proteger y decorar superficies de metal, pisos en\nconcreto, fibro-cemento y madera en ambientes interiores o\nexteriores expuestos a alta contaminación industrial o que\nrequieran de alta resistencia química. Únicamente en ambientes\ninteriores este producto puede ser utilizado sin pintura de acabado;\nen ambientes exteriores requiere de acabado para evitar la\ndecoloración y entizamiento con el sol.\nUsado en pisos industriales, inter"
       },
       {
-        "archivo": "DOMESTICO.pdf",
-        "familia": "DOMESTICO",
-        "similitud": 0.5545,
-        "texto": "[PRODUCTO: DOMESTICO] [MARCA: Pintuco]\n[SECCIÓN: Elimine]\n\ncompletamente\nla\npintura en mal estado con una rasqueta, lije la\nsuperficie\ncon\npapel\nabrasive,\nlimpie\ny\nluego\naplique Esmalte Doméstico®."
+        "archivo": "CANCHAS Y PISOS.pdf",
+        "familia": "CANCHAS Y PISOS",
+        "similitud": 0.6826,
+        "texto": "[PRODUCTO: CANCHAS Y PISOS] [MARCA: Pintuco]\n[SECCIÓN: CANCHAS Y PISOS]\n\nequipo, se recomienda utilizar un plástico de 50 x 50 cm sellado perimetralmente con cinta\nadhesiva sobre el sustrato.\n\nA las 24 horas se debe observar la humedad condensada bajo el plástico, si esta equivale al 4-\n5% del área total, las condiciones son apropiadas para la aplicación, de lo contrario se debe\ndejar secar el sustrato hasta alcanzar estas condiciones.\n\nEl sustrato debe tener una pendiente adecuada para evitar e"
       },
       {
-        "archivo": "PINTOXIDO.pdf",
-        "familia": "PINTOXIDO",
-        "similitud": 0.5414,
-        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Versión 5 / Abril 2022]\n\ntodos los residuos y con un trapo húmedo en Thinner Pintuco® Ref. 21006 ó Ajustador Ref. 21141."
+        "archivo": "PINTURA EPOXICA PARA CONCRETO.pdf",
+        "familia": "PINTURA EPOXICA PARA CONCRETO",
+        "similitud": 0.6801,
+        "texto": "[PRODUCTO: PINTURA EPOXICA PARA CONCRETO] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nRecubrimiento epóxico de 2 componentes, base solvente, para proteger y decorar paredes y pisos en ambientes interiores,\nque van a ser sometidos a asepsia rutinaria."
       },
       {
-        "archivo": "PINTULUX 3 EN 1 MATE.pdf",
-        "familia": "PINTULUX 3 EN 1 MATE",
-        "similitud": 0.532,
-        "texto": "[PRODUCTO: PINTULUX 3 EN 1 MATE] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendado para proteger y decorar superficies y/o artículos de metal y madera en\nambientes interiores y exteriores como estructuras metálicas, puertas, portones,\nventanas, rejas, marcos, etc. Puede ser aplicado sobre superficies metálicas oxidadas, ya\nque por su diseño Pintulux 3 en 1 funciona como inhibidor de óxido que brinda una\nexcelente protección y da un acabado mate, simplificando el proceso de aplicación."
+        "archivo": "PINTURA EPOXICA PARA CONCRETO.pdf",
+        "familia": "PINTURA EPOXICA PARA CONCRETO",
+        "similitud": 0.6772,
+        "texto": "[PRODUCTO: PINTURA EPOXICA PARA CONCRETO] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nEspecial para la protección y decoración de paredes y pisos en interiores de hospitales, laboratorios, restaurantes, plantas\nde bebidas y/o alimentos, etc. que requieran condiciones de alta asepsia.\n\nTambién para pisos expuestos a tráfico frecuente y productos químicos y para recubrimiento interior de tanques de\nalmacenamiento de agua potable."
       },
       {
-        "archivo": "PINTULUX TRES EN UNO.pdf",
-        "familia": "PINTULUX TRES EN UNO",
-        "similitud": 0.5244,
-        "texto": "[PRODUCTO: PINTULUX TRES EN UNO] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para proteger y decorar artículos de]\n\nmetal y madera, apto tanto para interiores como\nexteriores,\nincluyendo\nestructuras,\npuertas,\nventanas\ny\nmarcos."
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.666,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
       },
       {
-        "archivo": "CORROTEC PREMIUM.pdf",
-        "familia": "CORROTEC PREMIUM",
-        "similitud": 0.4902,
-        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Cubrimiento]\n\n>90\n%"
+        "archivo": "CANCHAS Y PISOS.pdf",
+        "familia": "CANCHAS Y PISOS",
+        "similitud": 0.6659,
+        "texto": "[PRODUCTO: CANCHAS Y PISOS] [MARCA: Pintuco]\n[SECCIÓN: CANCHAS Y PISOS]\n\nstador Pintuco® Ref. 121209 siguiendo las indicaciones descritas en la ficha técnica del\nproducto.\n\nDejar secar mínimo 4 horas y máximo 12 horas antes de la aplicación de Pintura Para Canchas y\nPisos. Después de este tiempo deberá lijarse con lija #150 para promover adherencia de la\ncapa siguiente.\n\nEn caso de que la superficie en concreto se encuentre con pintura en buen estado, no es\nnecesario aplicar el imprimante epóxic"
       },
       {
-        "archivo": "CORROTEC PREMIUM.pdf",
-        "familia": "CORROTEC PREMIUM",
-        "similitud": 0.4899,
-        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: APLICACIÓN]\n\nCORROTEC®"
+        "archivo": "FDS - PINTURA EPOXI POLIAMIDA BLANCO 13243 _ 10012925-10344427 _COL (Versión 5) (1).pdf",
+        "familia": "FDS - PINTURA EPOXI POLIAMIDA BLANCO 13243   10012925-10344427  COL",
+        "similitud": 0.5299,
+        "texto": "[PRODUCTO: FDS - PINTURA EPOXI POLIAMIDA BLANCO 13243 _ 10012925-10344427 _COL] [MARCA: Pintuco]\n[SECCIÓN: Se recomienda:]\n\nAbsorber el vertido mediante arena o absorbente inerte y trasladarlo a un lugar seguro. No absorber en serrín u otros absorbentes\ncombustibles. Para cualquier consideración relativa a la eliminación consultar la sección 13 de la FDS.\n\n6.4"
       },
       {
-        "archivo": "CORROTEC.pdf",
-        "familia": "CORROTEC",
-        "similitud": 0.4885,
-        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Versión 5 / Abril 2022]\n\ntodos los residuos y con un trapo húmedo en Thinner Pintuco® Ref. 21006 ó Ajustador Ref. 21141."
+        "archivo": "FDS - CATALIZADOR PINTURAS EPOXI INCOLORO 13227.pdf",
+        "familia": "FDS - CATALIZADOR PINTURAS EPOXI INCOLORO 13227",
+        "similitud": 0.5214,
+        "texto": "[PRODUCTO: FDS - CATALIZADOR PINTURAS EPOXI INCOLORO 13227] [MARCA: Pintuco]\n[SECCIÓN: Se recomienda:]\n\nAbsorber el vertido mediante arena o absorbente inerte y trasladarlo a un lugar seguro. No absorber en serrín u otros absorbentes\ncombustibles. Para cualquier consideración relativa a la eliminación consultar la sección 13 de la FDS.\n\n6.4"
       }
     ],
     "productos_candidatos": [
-      "DOMESTICO",
-      "PINTOXIDO",
-      "PINTULUX 3 EN 1 MATE",
-      "pintulux",
-      "domestico",
-      "pintoxido",
-      "corrotec",
-      "anticorrosivo"
+      "PINTUCOAT",
+      "CANCHAS Y PISOS",
+      "PINTURA EPOXICA PARA CONCRETO",
+      "pintucoat",
+      "imprimante",
+      "pintura canchas"
     ]
   }
 }

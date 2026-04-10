@@ -1,0 +1,67 @@
+{
+  "query": "la casa se está cayendo a pedazos por el aguacero",
+  "response": {
+    "query": "la casa se está cayendo a pedazos por el aguacero",
+    "resultados": [
+      {
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.5027,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Sistema de gestión]\n\nambiental"
+      },
+      {
+        "archivo": "FDS- ACRILICA MANTENIMIENTO 13796 AZUL.pdf",
+        "familia": "FDS- ACRILICA MANTENIMIENTO 13796 AZUL",
+        "similitud": 0.4981,
+        "texto": "[PRODUCTO: FDS- ACRILICA MANTENIMIENTO 13796 AZUL] [MARCA: Pintuco]\n[SECCIÓN: Productos de]\n\ndescomposición peligrosos"
+      },
+      {
+        "archivo": "FDS- ACRILICA MANTENIMIENTO VERDE 13795.pdf",
+        "familia": "FDS- ACRILICA MANTENIMIENTO VERDE 13795",
+        "similitud": 0.4921,
+        "texto": "[PRODUCTO: FDS- ACRILICA MANTENIMIENTO VERDE 13795]\n[SECCIÓN: Productos de]\n\ndescomposición térmica\npeligrosos"
+      },
+      {
+        "archivo": "FDS- ACRILICA MANTENIMIENTO VERDE 13795.pdf",
+        "familia": "FDS- ACRILICA MANTENIMIENTO VERDE 13795",
+        "similitud": 0.491,
+        "texto": "[PRODUCTO: FDS- ACRILICA MANTENIMIENTO VERDE 13795]\n[SECCIÓN: Palabra de advertencia]\n\n: Peligro"
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.4866,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: KORAZA]\n\n® PROTECCIÓN\nSOL & LLUVIA PINTURA"
+      },
+      {
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.4809,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Sistema de gestión]\n\nde calidad"
+      },
+      {
+        "archivo": "FDS - INTERGARD 740 RAL7000 RM PARTE A.pdf",
+        "familia": "FDS - INTERGARD 740 RAL7000 RM PARTE A",
+        "similitud": 0.4662,
+        "texto": "[PRODUCTO: FDS - INTERGARD 740 RAL7000 RM PARTE A] [MARCA: Intergard]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      },
+      {
+        "archivo": "FDS - INTERGARD 740 RAL7000 RM PARTE A.pdf",
+        "familia": "FDS - INTERGARD 740 RAL7000 RM PARTE A",
+        "similitud": 0.4577,
+        "texto": "[PRODUCTO: FDS - INTERGARD 740 RAL7000 RM PARTE A] [MARCA: Pintuco]\n[SECCIÓN: Suelo húmedo]\n\nSí"
+      }
+    ],
+    "productos_candidatos": [
+      "CORROTEC PREMIUM",
+      "KORAZA IMPERMEABLE",
+      "corrotec",
+      "koraza",
+      "anticorrosivo",
+      "intergard",
+      "wash primer",
+      "viniltex",
+      "koraza sol y lluvia"
+    ]
+  }
+}

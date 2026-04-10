@@ -1,0 +1,197 @@
+{
+  "user": "¿Cuánto cuesta el galón de Pintuco Fill?",
+  "result": {
+    "response_text": "El Pintuco Fill es un impermeabilizante que se aplica fácilmente como una pintura. Su rendimiento es de aproximadamente **12 a 15 m² por galón**, y se recomienda aplicar con rodillo lanudo o brocha sobre una superficie limpia y seca. \n\nEl tiempo de repintado es de **2 a 3 horas**, lo que permite una rápida finalización del trabajo. Además, es flexible y puede adaptarse a los movimientos de dilatación y contracción de la superficie sin despegarse o romperse.\n\nPara un área de **30 m²** (aplicando 2 manos), necesitarías entre **4 y 5 galones** de Pintuco Fill.\n\nAhora, ¿cuántos m² tienes en total y qué color te gustaría utilizar? Esto me ayudará a armar la cotización completa para ti. 😊",
+    "intent": "asesoria_tecnica",
+    "tool_calls": [
+      {
+        "name": "consultar_inventario",
+        "args": {
+          "producto": "Pintuco Fill galon"
+        },
+        "result": "{\"encontrados\": 7, \"productos\": [{\"codigo\": \"5892473\", \"descripcion\": \"PQ PINTUCO FILL 7 BASE ACCENT 3.79L\", \"descripcion_exacta\": \"PQ PINTUCO FILL 7 BASE ACCENT 3.79L\", \"etiqueta_auditable\": \"[5892473] - PQ PINTUCO FILL 7 BASE ACCENT 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"pintuco_fill_accent\", \"producto_padre_busqueda\": \"pintuco fill accent\", \"pregunta_desambiguacion\": \"Tengo Pq Pintuco Fill 12 Base Accent 20K y cuñete con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 68813, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"10380917\", \"descripcion\": \"PINTUCO FILL 5 GRIS 2753 4.1 GALONES\", \"descripcion_exacta\": \"PINTUCO FILL 5 GRIS 2753 4.1 GALONES\", \"etiqueta_auditable\": \"[10380917] - PINTUCO FILL 5 GRIS 2753 4.1 GALONES\", \"marca\": \"0\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"disponible\": false, \"precio_iva_incluido\": null, \"precio_nota\": \"Precio pendiente de confirmación\"}, {\"codigo\": \"10380916\", \"descripcion\": \"PINTUCO FILL 5 BLANCO 2791 4.1 GALONES\", \"descripcion_exacta\": \"PINTUCO FILL 5 BLANCO 2791 4.1 GALONES\", \"etiqueta_auditable\": \"[10380916] - PINTUCO FILL 5 BLANCO 2791 4.1 GALONES\", \"marca\": \"0\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"disponible\": false, \"precio_iva_incluido\": null, \"precio_nota\": \"Precio pendiente de confirmación\"}, {\"codigo\": \"10384869\", \"descripcion\": \"KIT PINTUCO FILL 7 BLANCO GALON 2791 GRA\", \"descripcion_exacta\": \"KIT PINTUCO FILL 7 BLANCO GALON 2791 GRA\", \"etiqueta_auditable\": \"[10384869] - KIT PINTUCO FILL 7 BLANCO GALON 2791 GRA\", \"marca\": \"0\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"disponible\": false, \"precio_iva_incluido\": null, \"precio_nota\": \"Precio pendiente de confirmación\"}, {\"codigo\": \"10384870\", \"descripcion\": \"KIT PINTUCO FILL 7 GRIS GALON 2753 GRATI\", \"descripcion_exacta\": \"KIT PINTUCO FILL 7 GRIS GALON 2753 GRATI\", \"etiqueta_auditable\": \"[10384870] - KIT PINTUCO FILL 7 GRIS GALON 2753 GRATI\", \"marca\": \"0\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"disponible\": false, \"precio_iva_incluido\": null, \"precio_nota\": \"Precio pendiente de confirmación\"}, {\"codigo\": \"F51020056\", \"descripcion\": \"F KIT PINTUCO FILL 7 BLANCO GALON 2791 G\", \"descripcion_exacta\": \"F KIT PINTUCO FILL 7 BLANCO GALON 2791 G\", \"etiqueta_auditable\": \"[F51020056] - F KIT PINTUCO FILL 7 BLANCO GALON 2791 G\", \"marca\": \"0\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"NaN\", \"tipo_marca\": \"NaN\", \"familia\": \"NaN\", \"aplicacion\": \"NaN\", \"categoria\": \"KITS\", \"descripcion_larga\": \"NaN\", \"tipo\": \"NaN\"}, \"disponible\": false, \"precio_iva_incluido\": 33882, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"lista_precio\": \"franquicia\"}, {\"codigo\": \"F51020062\", \"descripcion\": \"F KIT PINTUCO FILL 7 GRIS GALON 2753 GRA\", \"descripcion_exacta\": \"F KIT PINTUCO FILL 7 GRIS GALON 2753 GRA\", \"etiqueta_auditable\": \"[F51020062] - F KIT PINTUCO FILL 7 GRIS GALON 2753 GRA\", \"marca\": \"0\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"NaN\", \"tipo_marca\": \"NaN\", \"familia\": \"NaN\", \"aplicacion\": \"NaN\", \"categoria\": \"KITS\", \"descripcion_larga\": \"NaN\", \"tipo\": \"NaN\"}, \"disponible\": false, \"precio_iva_incluido\": 33882, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"lista_precio\": \"franquicia\"}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": true, \"pregunta_desambiguacion\": \"Tengo Pq Pintuco Fill 12 Base Accent 20K y cuñete con rotación. ¿Cuál necesitas?\", \"mensaje\": null, \"conocimiento_experto_producto\": [{\"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Pintuco Fill\", \"evitar\": \"Aquablock Ultra, Koraza\", \"nota\": \"El rendimiento de Pintuco Fill es de 12 a 15 m² por galón, no 3-5 m².\"}, {\"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Koraza\", \"evitar\": \"Aquablock Ultra, Pintuco Fill\", \"nota\": \"El rendimiento de Koraza es de 20 a 25 m² por galón, no 10-12 m².\"}, {\"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Aquablock Ultra\", \"evitar\": \"Koraza, Pintuco Fill\", \"nota\": \"El Aquablock Ultra tiene un rendimiento real de 18 a 20 m² por galón, aplicado en 2 manos. Koraza rinde de 20 a 25 m² por galón. Pintuco Fill rinde entre 12 a 15 m² por galón.\"}, {\"tipo\": \"contraindicacion\", \"contexto\": \"humedad fachada, Aquablock, Pintuco Fill\", \"recomendar\": \"Pintuco Fill\", \"evitar\": \"Aquablock Ultra\", \"nota\": \"No recomendar Aquablock para fachadas a menos que la humedad sea por capilaridad o presión negativa. Si la humedad es por filtraciones de lluvia directa, el correcto es Pintuco Fill.\"}], \"instruccion_conocimiento_experto\": \"💡 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE para este producto. Lee 'conocimiento_experto_producto' ANTES de presentar resultados al cliente. Si hay un 'evitar', NO lo recomiendes para este contexto. Si hay reglas comerciales (sobre pedido, obligatorio cuarzo, preguntar m², etc.), APLÍCALAS. Presenta las notas relevantes como '💡 Experiencia Ferreinox: [nota]'.\"}"
+      },
+      {
+        "name": "consultar_conocimiento_tecnico",
+        "args": {
+          "pregunta": "¿Cuál es el rendimiento y aplicación del Pintuco Fill?",
+          "producto": "Pintuco Fill"
+        },
+        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: PINTUCO FILL 12.pdf]\\n[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\\n[SECCIÓN: Impermeabilizante para cubiertas y terrazas]\\n\\n% Sólidos por\\npeso (ASTM\\nD2369) | 58.33 +/-2 | %\\n\\npH a 25ºC | 8.5 - 9 .5 | pH\\n\\nElongación | >150 | %\\n\\nColor: Gris, blanco, rojo teja y verde amazonas\\n\\nRepinte: 2 - 3 h\\n\\nPintuco® Fill 12 tiene una durabilidad estimada de\\nla película impermeabilizante de hasta 12 años.\\n\\n---\\n\\n[Fuente: PINTULACA.pdf]\\n[PRODUCTO: PINTULACA] [MARCA: Pintuco]\\n[SECCIÓN: RENDIMIENTO]\\n\\n35-47 m2/gal rendimiento teórico para un espesor de 3 mills\\n\\n---\\n\\n[Fuente: PINTUCO FILL 7.pdf]\\n[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\\n[SECCIÓN: En superficies rugosas]\\n\\nNOTA: El rendimiento puede variar dependiendo\\ndel método y herramienta de aplicación, así como\\ndel estado de rugosidad de la superficie y del\\ncolor a cubrir.\\n\\n---\\n\\n[Fuente: PINTUCO FILL 12.pdf]\\n[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\\n\\n✓Listo para usar y de fácil aplicación como\\nuna pintura.\\n✓Flexible, se acomoda a los movimientos\\nde dilatación y contracción de la superficie\\nsin que se despegue o rompa.\\n✓Por su contenido de fibras puentea\\ngrietas y fisuras de hasta 1mm.\\n✓No requiere de aplicación de pinturas\\nreflectivas como protección.\\n✓Impermeable al agua en estado líquido,\\npermeable al vapor de agua (deja\\nrespirar).O\", \"archivos_fuente\": [\"PINTUCO FILL 12.pdf\", \"PINTULACA.pdf\", \"PINTUCO FILL 7.pdf\"], \"mejor_similitud\": 0.6921, \"mensaje\": \"⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. DEBES SINTETIZARLOS como un ingeniero de aplicaciones: 1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado).    Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. 2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. 3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. 4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. 5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. 6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' 7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'\", \"nota_rendimiento_obligatoria\": \"NOTA OBLIGATORIA PINTUCO FILL 7: Tu respuesta DEBE incluir TODAS estas palabras/símbolos: 'm²' (usa el símbolo exacto con superíndice ², nunca 'm2' ni 'metros cuadrados'), 'galones' (plural), 'rodillo', 'brocha', 'superficie', 'aplica'. FRASE MODELO que debes adaptar: 'Rendimiento aprox. 3-5 m² por galón en superficie de eternit. Se aplica con rodillo lanudo o brocha sobre superficie limpia y seca. Para 30 m² (2 manos) necesitarías entre 6 y 10 galones.'\", \"productos_inventario_relacionados\": [{\"codigo\": \"5892286\", \"descripcion\": \"PQ PINTUCO FILL 12 GRIS 27505 20K\", \"etiqueta_auditable\": \"[5892286] - PQ PINTUCO FILL 12 GRIS 27505 20K\", \"marca\": \"58\", \"presentacion\": null, \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5892421\", \"descripcion\": \"PQ PINTUCO FILL 12 BASE ACCENT 20K\", \"etiqueta_auditable\": \"[5892421] - PQ PINTUCO FILL 12 BASE ACCENT 20K\", \"marca\": \"58\", \"presentacion\": null, \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890966\", \"descripcion\": \"MEG PINTULACA OCRE 7574 AC 3.78L\", \"etiqueta_auditable\": \"[5890966] - MEG PINTULACA OCRE 7574 AC 3.78L\", \"marca\": \"57\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890955\", \"descripcion\": \"MEG PINTULACA NEGRO 7518 AC 3.78L\", \"etiqueta_auditable\": \"[5890955] - MEG PINTULACA NEGRO 7518 AC 3.78L\", \"marca\": \"57\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. ⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema completo con cantidades calculadas para TODOS los productos y cierra con: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'\", \"conocimiento_comercial_ferreinox\": [{\"id\": 61, \"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Pintuco Fill\", \"evitar\": \"Aquablock Ultra, Koraza\", \"nota\": \"El rendimiento de Pintuco Fill es de 12 a 15 m² por galón, no 3-5 m².\"}, {\"id\": 60, \"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Koraza\", \"evitar\": \"Aquablock Ultra, Pintuco Fill\", \"nota\": \"El rendimiento de Koraza es de 20 a 25 m² por galón, no 10-12 m².\"}, {\"id\": 59, \"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Aquablock Ultra\", \"evitar\": \"Koraza, Pintuco Fill\", \"nota\": \"El Aquablock Ultra tiene un rendimiento real de 18 a 20 m² por galón, aplicado en 2 manos. Koraza rinde de 20 a 25 m² por galón. Pintuco Fill rinde entre 12 a 15 m² por galón.\"}, {\"id\": 58, \"tipo\": \"contraindicacion\", \"contexto\": \"humedad fachada, Aquablock, Pintuco Fill\", \"recomendar\": \"Pintuco Fill\", \"evitar\": \"Aquablock Ultra\", \"nota\": \"No recomendar Aquablock para fachadas a menos que la humedad sea por capilaridad o presión negativa. Si la humedad es por filtraciones de lluvia directa, el correcto es Pintuco Fill.\"}, {\"id\": 34, \"tipo\": \"preferencia\", \"contexto\": \"madera exterior, madera interior, barniz, sellador, color sólido\", \"recomendar\": \"Barnex Extra Protección, Wood Stain, Esmalte Doméstico, Pintulux MP\", \"evitar\": \"sellador para madera, Pintulac\", \"nota\": \"1. Para madera exterior a la intemperie, está prohibido recomendar sellador. Barnex o Wood Stain van directo sobre la madera cruda. 2. Barnex y Wood Stain son productos diferentes, no se mezclan. 3. Pintulac no es adecuado para marcos interiores; se debe usar Esmalte Doméstico o Pintulux MP. 4. Siempre preguntar el color del marco antes de cotizar. 5. Incluir herramientas: Removedor Pintuco, Lija Abracol gruesa (80-100), Lija Abracol fina (220), Brocha Goya Profesional.\"}, {\"id\": 7, \"tipo\": \"uso_especifico\", \"contexto\": \"revoque dañado, revoque quemado, meteorizado, sustrato malo, revofast\", \"recomendar\": \"Revofast de Pintuco\", \"evitar\": null, \"nota\": \"Cuando el revoque original está meteorizado o 'quemado' (deteriorado por humedad prolongada), hay que reemplazarlo antes de cualquier tratamiento. Opciones: 1) Revofast de Pintuco — ventaja: seca rápido (48 horas para aplicar siguiente paso). 2) Revoque acondicionado con algún ligante o impermeabilizante para revoques. NUNCA aplicar impermeabilizante o pintura sobre un revoque quemado sin reemplazarlo primero.\"}, {\"id\": 6, \"tipo\": \"uso_especifico\", \"contexto\": \"humedad interna, base muro, salitre, ampollas, pared húmeda, revoque quemado, meteorizado\", \"recomendar\": \"Aquablock Ultra (ANTES del estuco), Revofast de Pintuco (si revoque dañado), Estuco Acrílico (DESPUÉS del Aquablock), Viniltex Advanced\", \"evitar\": null, \"nota\": \"PROCESO CORRECTO HUMEDAD INTERNA: 1) Raspar muy bien hasta el sustrato original (revoque). Si el revoque está meteorizado o 'quemado', reemplazarlo con revoque acondicionado con ligante/impermeabilizante o con Revofast de Pintuco (seca rápido, 48h para siguiente paso). 2) Aplicar 1ª mano de Aquablock Ultra CON BROCHA para cargar buen producto sobre la superficie. Dejar secar bien (puede ser de un día para otro según condiciones ambiente). 3) Aplicar 2ª mano de Aquablock Ultra. Esperar 24 horas. 4) Aplicar Estuco Acrílico para nivelar (el estuco va DESPUÉS del Aquablock, NUNCA antes). 5) Acabado con Viniltex Advanced. ORDEN CRÍTICO: Aquablock → Estuco → Pintura. Nunca Estuco → Aquablock.\"}, {\"id\": 1, \"tipo\": \"contraindicacion\", \"contexto\": \"tanque agua potable, epoxico, inmersion, contacto agua, nsf, lining\", \"recomendar\": \"Epoxipoliamida\", \"evitar\": \"Pintucoat\", \"nota\": \"Para tanques de agua potable NO usar Pintucoat. El Pintucoat no tiene componente amida certificado para contacto con agua potable. La Epoxipoliamida si tiene componente amida y es el producto correcto para cualquier superficie en contacto directo con agua potable o para consumo humano.\"}], \"instruccion_conocimiento_comercial\": \"⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. REGLAS OBLIGATORIAS: 1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. 2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. 3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. 4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' SEPARADO de la información de la ficha técnica. 5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente.\"}"
+      }
+    ],
+    "context_updates": {
+      "last_product_request": {
+        "core_terms": [
+          "pintuco",
+          "fill",
+          "galon",
+          "galones",
+          "gal",
+          "3.79l",
+          "3.79",
+          "1/1"
+        ],
+        "search_terms": [
+          "pintuco",
+          "viniltex",
+          "p11",
+          "p-11",
+          "p 11",
+          "viniltex adv",
+          "viniltex advanced",
+          "vinilico",
+          "vinilo",
+          "vtx",
+          "vinilo premium",
+          "vinilo tipo 1",
+          "1501",
+          "viniltex blanco"
+        ],
+        "requested_quantity": null,
+        "requested_unit": "galon",
+        "quantity_expression": null,
+        "product_codes": [],
+        "brand_filters": [
+          "pintuco"
+        ],
+        "direction_filters": [],
+        "size_filters": [],
+        "store_filters": [],
+        "original_query": "pintuco fill galon",
+        "nlu_processed": true
+      },
+      "last_product_query": "pintuco fill galon",
+      "last_product_context": [
+        {
+          "codigo": "5892473",
+          "descripcion": "PQ PINTUCO FILL 7 BASE ACCENT 3.79L",
+          "descripcion_exacta": "PQ PINTUCO FILL 7 BASE ACCENT 3.79L",
+          "etiqueta_auditable": "[5892473] - PQ PINTUCO FILL 7 BASE ACCENT 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": "pintuco_fill_accent",
+          "producto_padre_busqueda": "pintuco fill accent",
+          "pregunta_desambiguacion": "Tengo Pq Pintuco Fill 12 Base Accent 20K y cuñete con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 68813,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "10380917",
+          "descripcion": "PINTUCO FILL 5 GRIS 2753 4.1 GALONES",
+          "descripcion_exacta": "PINTUCO FILL 5 GRIS 2753 4.1 GALONES",
+          "etiqueta_auditable": "[10380917] - PINTUCO FILL 5 GRIS 2753 4.1 GALONES",
+          "marca": "0",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "disponible": false,
+          "precio_iva_incluido": null,
+          "precio_nota": "Precio pendiente de confirmación"
+        },
+        {
+          "codigo": "10380916",
+          "descripcion": "PINTUCO FILL 5 BLANCO 2791 4.1 GALONES",
+          "descripcion_exacta": "PINTUCO FILL 5 BLANCO 2791 4.1 GALONES",
+          "etiqueta_auditable": "[10380916] - PINTUCO FILL 5 BLANCO 2791 4.1 GALONES",
+          "marca": "0",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "disponible": false,
+          "precio_iva_incluido": null,
+          "precio_nota": "Precio pendiente de confirmación"
+        },
+        {
+          "codigo": "10384869",
+          "descripcion": "KIT PINTUCO FILL 7 BLANCO GALON 2791 GRA",
+          "descripcion_exacta": "KIT PINTUCO FILL 7 BLANCO GALON 2791 GRA",
+          "etiqueta_auditable": "[10384869] - KIT PINTUCO FILL 7 BLANCO GALON 2791 GRA",
+          "marca": "0",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "disponible": false,
+          "precio_iva_incluido": null,
+          "precio_nota": "Precio pendiente de confirmación"
+        },
+        {
+          "codigo": "10384870",
+          "descripcion": "KIT PINTUCO FILL 7 GRIS GALON 2753 GRATI",
+          "descripcion_exacta": "KIT PINTUCO FILL 7 GRIS GALON 2753 GRATI",
+          "etiqueta_auditable": "[10384870] - KIT PINTUCO FILL 7 GRIS GALON 2753 GRATI",
+          "marca": "0",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "disponible": false,
+          "precio_iva_incluido": null,
+          "precio_nota": "Precio pendiente de confirmación"
+        },
+        {
+          "codigo": "F51020056",
+          "descripcion": "F KIT PINTUCO FILL 7 BLANCO GALON 2791 G",
+          "descripcion_exacta": "F KIT PINTUCO FILL 7 BLANCO GALON 2791 G",
+          "etiqueta_auditable": "[F51020056] - F KIT PINTUCO FILL 7 BLANCO GALON 2791 G",
+          "marca": "0",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "NaN",
+            "tipo_marca": "NaN",
+            "familia": "NaN",
+            "aplicacion": "NaN",
+            "categoria": "KITS",
+            "descripcion_larga": "NaN",
+            "tipo": "NaN"
+          },
+          "disponible": false,
+          "precio_iva_incluido": 33882,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "lista_precio": "franquicia"
+        },
+        {
+          "codigo": "F51020062",
+          "descripcion": "F KIT PINTUCO FILL 7 GRIS GALON 2753 GRA",
+          "descripcion_exacta": "F KIT PINTUCO FILL 7 GRIS GALON 2753 GRA",
+          "etiqueta_auditable": "[F51020062] - F KIT PINTUCO FILL 7 GRIS GALON 2753 GRA",
+          "marca": "0",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "NaN",
+            "tipo_marca": "NaN",
+            "familia": "NaN",
+            "aplicacion": "NaN",
+            "categoria": "KITS",
+            "descripcion_larga": "NaN",
+            "tipo": "NaN"
+          },
+          "disponible": false,
+          "precio_iva_incluido": 33882,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "lista_precio": "franquicia"
+        }
+      ]
+    },
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": [
+        "rag_used",
+        "inventory_used"
+      ]
+    },
+    "is_farewell": false
+  }
+}

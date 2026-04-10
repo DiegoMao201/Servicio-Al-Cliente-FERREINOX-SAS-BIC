@@ -1,0 +1,238 @@
+{
+  "user": "Dame el precio de Koraza blanco en cuñete",
+  "result": {
+    "response_text": "Para aplicar la pintura Koraza en fachadas, aquí tienes un sistema completo que debes seguir:\n\n1. **Preparación de la superficie**: \n   - Asegúrate de que la superficie esté seca, limpia y libre de polvo, grasa y pintura deteriorada. \n   - Si hay cal suelta, retírala con rasqueta, lija o cepillo.\n   - Las fisuras y juntas de dilatación deben ser selladas con Pintuco® Fix Professional.\n   - En concreto, repara los poros con Estuco Acrílico Exterior.\n\n2. **Imprimante/Sellador**: \n   - Aplica una mano de Sellador Pintuco® Antialcalino (opcional, pero recomendado si la superficie es nueva o tiene problemas de alcalinidad).\n\n3. **Producto**: \n   - Aplica **Koraza** en dos a tres manos, asegurando un espesor mínimo de 3 mils (aproximadamente 2 manos a la dilución recomendada).\n\n4. **Acabado**: \n   - Para un acabado liso, asegúrate de aplicar correctamente las manos de pintura.\n\n💡 **Experiencia Ferreinox**: Si la base de la fachada está en mal estado o presenta problemas de humedad, es crucial que se revise y, si es necesario, se tumbe todo hasta el revoque antes de aplicar la pintura. Esto asegura la durabilidad y el desempeño de la Koraza.\n\nAhora, ¿cuántos m² tiene la fachada y qué color te gustaría? Esto me ayudará a calcular la cantidad necesaria.",
+    "intent": "asesoria_tecnica",
+    "tool_calls": [
+      {
+        "name": "consultar_inventario",
+        "args": {
+          "producto": "Koraza blanco cuñete"
+        },
+        "result": "{\"encontrados\": 10, \"productos\": [{\"codigo\": \"5891122\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 18.93L\", \"etiqueta_auditable\": \"[5891122] - PQ KORAZA MAT BLANCO 2650 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5893858\", \"descripcion\": \"PQ KORAZA PINT IMPER BLANCO 4032 18.93L\", \"descripcion_exacta\": \"PQ KORAZA PINT IMPER BLANCO 4032 18.93L\", \"etiqueta_auditable\": \"[5893858] - PQ KORAZA PINT IMPER BLANCO 4032 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 532689, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5891346\", \"descripcion\": \"PQ KORAZA MAT BASE ACCENT 127477 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT BASE ACCENT 127477 18.93L\", \"etiqueta_auditable\": \"[5891346] - PQ KORAZA MAT BASE ACCENT 127477 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_mat_accent\", \"producto_padre_busqueda\": \"koraza mat accent\", \"pregunta_desambiguacion\": \"Tengo Pq Koraza Mat Base Accent 27477 9.46L y cuarto con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5892202\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 18.93L PE\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 18.93L PE\", \"etiqueta_auditable\": \"[5892202] - PQ KORAZA MAT BLANCO 2650 18.93L PE\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"BLANCO\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"SIN ASIGNAR\", \"descripcion_larga\": \"KORAZA BLANCO 2650 CANECA PRECIO ESPECIAL 5 GL\", \"tipo\": \"NaN\"}, \"disponible\": true, \"precio_iva_incluido\": 436050, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5901920\", \"descripcion\": \"PQ KORAZA MAT BASE PASTEL 127474 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT BASE PASTEL 127474 18.93L\", \"etiqueta_auditable\": \"[5901920] - PQ KORAZA MAT BASE PASTEL 127474 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_base_pastel\", \"producto_padre_busqueda\": \"koraza base pastel\", \"pregunta_desambiguacion\": \"Tengo Koraza Base Pastel. ¿La buscas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5901921\", \"descripcion\": \"PQ KORAZA MAT DEEP BASE 127476 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT DEEP BASE 127476 18.93L\", \"etiqueta_auditable\": \"[5901921] - PQ KORAZA MAT DEEP BASE 127476 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_base_deep\", \"producto_padre_busqueda\": \"koraza base deep\", \"pregunta_desambiguacion\": \"Tengo Koraza Base Deep. ¿La buscas en cuarto, galón o cuñete?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5891144\", \"descripcion\": \"PQ KORAZA MAT BAS TINT 127475 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT BAS TINT 127475 18.93L\", \"etiqueta_auditable\": \"[5891144] - PQ KORAZA MAT BAS TINT 127475 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_mat_bas_tint\", \"producto_padre_busqueda\": \"koraza mat bas tint\", \"pregunta_desambiguacion\": \"Tengo cuñete y galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5892117\", \"descripcion\": \"PQ KORAZA PROTECCION 3EN1 MAT BLA 18.93L\", \"descripcion_exacta\": \"PQ KORAZA PROTECCION 3EN1 MAT BLA 18.93L\", \"etiqueta_auditable\": \"[5892117] - PQ KORAZA PROTECCION 3EN1 MAT BLA 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA PROTECCION 3EN1\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"BLANCO\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0101005752\", \"descripcion_larga\": \"KORAZA PROTECCION 3EN1 BLANCO CANECA 5 GL\", \"tipo\": \"NaN\"}, \"disponible\": true, \"precio_iva_incluido\": 504118, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5891127\", \"descripcion\": \"PQ KORAZA MAT ROJO 2660 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT ROJO 2660 18.93L\", \"etiqueta_auditable\": \"[5891127] - PQ KORAZA MAT ROJO 2660 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_mat_rojo\", \"producto_padre_busqueda\": \"koraza mat rojo\", \"pregunta_desambiguacion\": \"Tengo Rojo cuñete y Rojo galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 483950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5893862\", \"descripcion\": \"PQ KORAZA PINT IMPER PASTEL 38216 18.93L\", \"descripcion_exacta\": \"PQ KORAZA PINT IMPER PASTEL 38216 18.93L\", \"etiqueta_auditable\": \"[5893862] - PQ KORAZA PINT IMPER PASTEL 38216 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_pint_imper_pastel\", \"producto_padre_busqueda\": \"koraza pint imper pastel\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 532689, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": false, \"pregunta_desambiguacion\": null, \"mensaje\": null, \"conocimiento_experto_producto\": [{\"tipo\": \"preferencia\", \"contexto\": \"fachadas, pintura, estuco, Koraza, Viniltex, preparación\", \"recomendar\": \"Koraza, PQ KORAZA PINT IMPER, Viniltex Advanced, Vinilico, Vinil Plus, Intervinil, Vinilux, Vinil Latex, Pinturama, Estuco Acrílico, Pintuco Flex\", \"evitar\": null, \"nota\": \"1. NUNCA olvides preguntar los metros cuadrados (m²) en el primer mensaje. 2. Jerarquía de productos: Premium Koraza, Tipo 1 Viniltex Advanced, Tipo 2 Intervinil, Tipo 3 Pinturama. 3. Incluir Estuco Acrílico y Pintuco Flex si hay grietas. 4. Preparación con Lija Abracol y Brocha Goya Profesional.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"fachada, humedad, estuco, base soplada, preparacion, revoque\", \"recomendar\": \"Koraza\", \"evitar\": null, \"nota\": \"Si el cliente va a pintar una fachada con problemas de humedad y actualmente tiene estuco o textura, es OBLIGATORIO indicarle que revise el estado de esa base. Si la base esta mala o soplada, se debe tumbar ABSOLUTAMENTE TODO hasta el revoque y comenzar un sistema nuevo desde cero. Esa es la UNICA garantia de curar la humedad y asegurar el desempeno de la Koraza. NO se puede pintar sobre una base danada.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Pintuco Fill\", \"evitar\": \"Aquablock Ultra, Koraza\", \"nota\": \"El rendimiento de Pintuco Fill es de 12 a 15 m² por galón, no 3-5 m².\"}, {\"tipo\": \"preferencia\", \"contexto\": \"rendimiento, Aquablock Ultra, Koraza, Pintuco Fill\", \"recomendar\": \"Koraza\", \"evitar\": \"Aquablock Ultra, Pintuco Fill\", \"nota\": \"El rendimiento de Koraza es de 20 a 25 m² por galón, no 10-12 m².\"}], \"instruccion_conocimiento_experto\": \"💡 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE para este producto. Lee 'conocimiento_experto_producto' ANTES de presentar resultados al cliente. Si hay un 'evitar', NO lo recomiendes para este contexto. Si hay reglas comerciales (sobre pedido, obligatorio cuarzo, preguntar m², etc.), APLÍCALAS. Presenta las notas relevantes como '💡 Experiencia Ferreinox: [nota]'.\"}"
+      },
+      {
+        "name": "consultar_conocimiento_tecnico",
+        "args": {
+          "pregunta": "¿Qué sistema de aplicación se recomienda para la pintura Koraza en fachadas?",
+          "producto": "Koraza"
+        },
+        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: KORAZA IMPERMEABLE.pdf]\\n[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\\n[SECCIÓN: Preparación de la superficie a pintar:]\\n\\nAntes de aplicar verifique que la superficie esté seca,\\nlimpia, libre de\\npolvo,\\ngrasa,\\nhongos y\\npintura\\ndeteriorada. En sustratos con cal retire la cal suelta\\ncon rasqueta, lija o cepillo. Fisuras sin movimiento\\nsuperiores a 0.2 mm, juntas de dilatación y fisuras\\ncon movimiento deben ser selladas con Pintuco® Fix\\nProfessional. En concreto repare los poros con\\nEstuco Acrílico Exterior Doble Protección Pintuco®\\nRef. 27060. Si requiere un acabado liso aplique dos a\\ntres\\nmanos\\nde\\n\\n---\\n\\n[Fuente: KORAZA DOBLE VIDA.pdf]\\n[PRODUCTO: KORAZA DOBLE VIDA] [MARCA: Pintuco]\\n[SECCIÓN: INDICACIONES IMPORTANTES / PRECAUCIONES]\\n\\n✓ La película de pintura debe tener un espesor mínimo de 3 mils (2 manos a la dilución\\nrecomendada).\\n✓ El lavado de los muros se debe hacer hasta después de 28 días de aplicada la pintura, se\\nrecomienda lavar con jabón líquido o de tocador y un paño de color blanco.\\n✓ Nunca exceda el porcentaje de dilución especificado en el envase o la ficha técnica.\\n✓ Se recomienda usar corta gotera para evitar manchas de mugre sobre la fachada.\\n✓ Como mantenimiento preventivo se recomiendan lavados con agua a presión y jabón\\nneutro cada 1 o 2 años, según las condiciones ambientales del proyecto. Igualmente se\\nsugiere consultar los alcances de estos mantenimientos con servicio técnico Pintuco.\\n✓ Koraza es una pintura de uso exterior, diseñada bajos los estándares y parámetros de la\\nNorma NTC 5828; para la implementación de recubrimientos en interiores se sugiere el uso\\nde pinturas diseñados bajos los estándares de la Norma NTC 1335 (Viniltex®, Acrílica Alta\\nAsepsia,\\n\\n---\\n\\n[Fuente: KORAZA 5.pdf]\\n[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\\n[SECCIÓN: 1. Preparación de la Superficie a pintar]\\n\\nAntes de aplicar, verifique que la superficie esté\\nseca, limpia, libre de polvo, grasa y pintura\\ndeteriorada. En sustratos con cal, retire la cal\\nsuelta con rasqueta, lija o cepillo y aplique dos\\nmanos de Sellador Pintuco ® Antialcalino\\nSellomax® Ref. 10270 ó 10272. Para grietas,\\nfisuras y juntas (con movimiento) de más de 1,5\\nmm deben ser selladas con Pintuco® Fix\\nProfesional y luego aplique Koraza®. En\\nconcreto repare los poros y grietas con Revofast\\no Revomastic Pintuco®. En obra nueva aplique\\nuna mano de Sellomax® Ref. 10270 ó 10272\\npara evitar manchas blanquesinas debido a la\\nalcalinidad de la superficie. Si requiere un\\nacabado\\nliso\\naplique\\n\\n---\\n\\n[Fuente: KORAZA IMPERMEABLE.pdf]\\n[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\\n[SECCIÓN: En obra nueva sobre]\\n\\nrevoque\\n8 - 10 m²/gal a 2 manos\\n*El rendimiento puede variar dependiendo del método y\\nherramientas de aplicación, así como el\\nestado de\\nrugosidad de la superficie y del color a cubrir.\", \"archivos_fuente\": [\"KORAZA IMPERMEABLE.pdf\", \"KORAZA DOBLE VIDA.pdf\", \"KORAZA 5.pdf\", \"KORAZA PROTECCION 3 EN 1.pdf\"], \"mejor_similitud\": 0.7372, \"mensaje\": \"⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. DEBES SINTETIZARLOS como un ingeniero de aplicaciones: 1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado).    Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. 2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. 3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. 4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. 5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. 6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' 7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'\", \"productos_inventario_relacionados\": [{\"codigo\": \"10368017\", \"descripcion\": \"KORAZA ELASTOMERICA 2651 NOGAL 5 GL\", \"etiqueta_auditable\": \"[10368017] - KORAZA ELASTOMERICA 2651 NOGAL 5 GL\", \"marca\": \"24\", \"presentacion\": \"galon\", \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"10385614\", \"descripcion\": \"KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL\", \"etiqueta_auditable\": \"[10385614] - KORAZA ELASTOMERICA 2798 BALSO CANEC 5GL\", \"marca\": \"24\", \"presentacion\": \"cuñete\", \"disponible\": false, \"complementarios\": []}, {\"codigo\": \"5891122\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 18.93L\", \"etiqueta_auditable\": \"[5891122] - PQ KORAZA MAT BLANCO 2650 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5901919\", \"descripcion\": \"PQ KORAZA MAT DEEP BASE 127476 3.79L\", \"etiqueta_auditable\": \"[5901919] - PQ KORAZA MAT DEEP BASE 127476 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. ⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema completo con cantidades calculadas para TODOS los productos y cierra con: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'\", \"conocimiento_comercial_ferreinox\": [{\"id\": 72, \"tipo\": \"preferencia\", \"contexto\": \"sistemas pisos exteriores, tráfico liviano, tráfico medio, tráfico alto, pintura acrílica, Interseal 670HS, Interthane 990\", \"recomendar\": \"pintura acrílica de mantenimiento, Interseal 670HS, Interthane 990\", \"evitar\": \"sistemas de menor desempeño\", \"nota\": \"Los sistemas para pisos exteriores se seleccionan según el nivel de tráfico y deben resistir sol (UV), lluvia y desgaste. Para tráfico liviano, se recomienda pintura acrílica de mantenimiento. Para tráfico medio, se usa Interseal 670HS como base y pintura acrílica como acabado. Para tráfico alto, se recomienda Interseal 670HS como imprimante y Interthane 990 como acabado, que es un sistema industrial de alto desempeño.\"}, {\"id\": 63, \"tipo\": \"preferencia\", \"contexto\": \"fachada, humedad, estuco, base soplada, preparacion, revoque\", \"recomendar\": \"Koraza\", \"evitar\": null, \"nota\": \"Si el cliente va a pintar una fachada con problemas de humedad y actualmente tiene estuco o textura, es OBLIGATORIO indicarle que revise el estado de esa base. Si la base esta mala o soplada, se debe tumbar ABSOLUTAMENTE TODO hasta el revoque y comenzar un sistema nuevo desde cero. Esa es la UNICA garantia de curar la humedad y asegurar el desempeno de la Koraza. NO se puede pintar sobre una base danada.\"}, {\"id\": 71, \"tipo\": \"preferencia\", \"contexto\": \"piso interior, tráfico medio, comercial, epóxico\", \"recomendar\": \"recubrimiento epóxico de media/alta resistencia\", \"evitar\": \"productos de tráfico liviano\", \"nota\": \"Para un piso interior con tráfico medio, se recomienda un recubrimiento epóxico de mayor resistencia que el decorativo, apto para uso comercial y tránsito frecuente. La preparación debe incluir limpieza profunda y lijado o escarificado para asegurar un buen perfil de anclaje.\"}, {\"id\": 70, \"tipo\": \"preferencia\", \"contexto\": \"piso interior, tráfico alto, montacargas, epóxico, industrial, alto desempeño\", \"recomendar\": \"sistema epóxico industrial\", \"evitar\": \"epóxicos de tráfico liviano o medio\", \"nota\": \"Para un piso interior con tráfico alto y uso de montacargas, se recomienda un sistema epóxico industrial de alto desempeño, diseñado para tráfico pesado. Este sistema debe incluir un imprimante epóxico industrial y un recubrimiento epóxico de alto espesor. Es importante eliminar completamente los recubrimientos existentes y preparar adecuadamente la superficie para garantizar la adherencia y durabilidad del recubrimiento.\"}, {\"id\": 69, \"tipo\": \"preferencia\", \"contexto\": \"preparación de superficies, pisos industriales, lavado, desengrase\", \"recomendar\": \"lavado y desengrase profundo con detergente industrial\", \"evitar\": \"solo lijar o escarificar\", \"nota\": \"La preparación de superficies ya pintadas debe incluir un lavado y desengrase profundo con detergente industrial para eliminar grasas ocultas que dañan la adherencia. Luego, se debe escarificar o lijar para eliminar el brillo de la pintura vieja y retirar lo que esté suelto.\"}, {\"id\": 68, \"tipo\": \"preferencia\", \"contexto\": \"tráfico pesado, preparación de superficies, pisos industriales, estibadoras, carretas, resistencia mecánica\", \"recomendar\": \"Intergard 2002\", \"evitar\": \"Pintucoat\", \"nota\": \"Para tráfico pesado, se debe usar un sistema de imprimante epóxico como Interseal 670HS y un acabado Intergard 2002 mezclado con arena de cuarzo. El cuarzo es esencial para la resistencia mecánica y antideslizante que soportan las llantas. Además, la preparación de superficies ya pintadas debe incluir un lavado y desengrase profundo con detergente industrial antes de escarificar o lijar.\"}, {\"id\": 51, \"tipo\": \"preferencia\", \"contexto\": \"solvente tráfico, thinner 21204, botellas, venta fraccionada\", \"recomendar\": \"Thinner 21204\", \"evitar\": \"Thinner 21050\", \"nota\": \"El único solvente autorizado para cotizar con Pintura de Tráfico (Acrílica) es el Thinner 21204. Su referencia exacta en el sistema es F0116621204. TIENES PROHIBIDO cotizar el Thinner 21050 (UFA151) para pintura de tráfico. Ese guárdalo exclusivamente para la línea de poliuretanos. El Thinner 21204 se comercializa y calcula por botellas. Si vendes 1 Galón de Pintura de Tráfico, DEBES cotizar obligatoriamente 5 botellas del Thinner 21204. Si vendes 1 Cuñete (5 Galones) de Pintura de Tráfico, DEBES cotizar obligatoriamente 25 botellas del Thinner 21204.\"}, {\"id\": 28, \"tipo\": \"preferencia\", \"contexto\": \"venta de esmaltes, color sólido\", \"recomendar\": null, \"evitar\": null, \"nota\": \"Es un error de ventas no preguntar el color. Siempre que el sistema lleve un acabado de color sólido (como Pintulux MP o Doméstico), TIENES ESTRICTAMENTE PROHIBIDO cotizar o avanzar sin preguntarle al cliente: '¿En qué color deseas pintar el marco?'. Necesitas ese dato para buscar la referencia.\"}], \"instruccion_conocimiento_comercial\": \"⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. REGLAS OBLIGATORIAS: 1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. 2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. 3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. 4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' SEPARADO de la información de la ficha técnica. 5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente.\"}"
+      }
+    ],
+    "context_updates": {
+      "last_product_request": {
+        "core_terms": [
+          "koraza",
+          "blanco",
+          "cunete",
+          "cunetes",
+          "cuenete",
+          "cuenetes",
+          "caneca",
+          "canecas"
+        ],
+        "search_terms": [
+          "koraza",
+          "impermeabilizante koraza",
+          "koraza elastomerica",
+          "koraza elastomerico",
+          "pintura fachada",
+          "pintura exterior fachada",
+          "pintura canchas",
+          "pintura para canchas",
+          "pintura de cancha",
+          "canchas",
+          "blanco",
+          "cunete",
+          "cunetes",
+          "cuenete"
+        ],
+        "requested_quantity": null,
+        "requested_unit": "cuñete",
+        "quantity_expression": null,
+        "product_codes": [],
+        "brand_filters": [
+          "koraza",
+          "pintuco"
+        ],
+        "direction_filters": [],
+        "size_filters": [],
+        "store_filters": [],
+        "original_query": "koraza blanco cunete",
+        "nlu_processed": true
+      },
+      "last_product_query": "koraza blanco cunete",
+      "last_product_context": [
+        {
+          "codigo": "5891122",
+          "descripcion": "PQ KORAZA MAT BLANCO 2650 18.93L",
+          "descripcion_exacta": "PQ KORAZA MAT BLANCO 2650 18.93L",
+          "etiqueta_auditable": "[5891122] - PQ KORAZA MAT BLANCO 2650 18.93L",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": "koraza_blanco",
+          "producto_padre_busqueda": "koraza blanco",
+          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
+          "disponible": true,
+          "precio_iva_incluido": 483950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5893858",
+          "descripcion": "PQ KORAZA PINT IMPER BLANCO 4032 18.93L",
+          "descripcion_exacta": "PQ KORAZA PINT IMPER BLANCO 4032 18.93L",
+          "etiqueta_auditable": "[5893858] - PQ KORAZA PINT IMPER BLANCO 4032 18.93L",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": "koraza_blanco",
+          "producto_padre_busqueda": "koraza blanco",
+          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
+          "disponible": true,
+          "precio_iva_incluido": 532689,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5891346",
+          "descripcion": "PQ KORAZA MAT BASE ACCENT 127477 18.93L",
+          "descripcion_exacta": "PQ KORAZA MAT BASE ACCENT 127477 18.93L",
+          "etiqueta_auditable": "[5891346] - PQ KORAZA MAT BASE ACCENT 127477 18.93L",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": "koraza_mat_accent",
+          "producto_padre_busqueda": "koraza mat accent",
+          "pregunta_desambiguacion": "Tengo Pq Koraza Mat Base Accent 27477 9.46L y cuarto con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 483950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5892202",
+          "descripcion": "PQ KORAZA MAT BLANCO 2650 18.93L PE",
+          "descripcion_exacta": "PQ KORAZA MAT BLANCO 2650 18.93L PE",
+          "etiqueta_auditable": "[5892202] - PQ KORAZA MAT BLANCO 2650 18.93L PE",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "KORAZA",
+            "tipo_marca": "VINILOS EXTERIORES",
+            "familia": "BLANCO",
+            "aplicacion": "DECORATIVO",
+            "categoria": "SIN ASIGNAR",
+            "descripcion_larga": "KORAZA BLANCO 2650 CANECA PRECIO ESPECIAL 5 GL",
+            "tipo": "NaN"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 436050,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5901920",
+          "descripcion": "PQ KORAZA MAT BASE PASTEL 127474 18.93L",
+          "descripcion_exacta": "PQ KORAZA MAT BASE PASTEL 127474 18.93L",
+          "etiqueta_auditable": "[5901920] - PQ KORAZA MAT BASE PASTEL 127474 18.93L",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": "koraza_base_pastel",
+          "producto_padre_busqueda": "koraza base pastel",
+          "pregunta_desambiguacion": "Tengo Koraza Base Pastel. ¿La buscas en cuarto, galón o cuñete?",
+          "disponible": true,
+          "precio_iva_incluido": 483950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5901921",
+          "descripcion": "PQ KORAZA MAT DEEP BASE 127476 18.93L",
+          "descripcion_exacta": "PQ KORAZA MAT DEEP BASE 127476 18.93L",
+          "etiqueta_auditable": "[5901921] - PQ KORAZA MAT DEEP BASE 127476 18.93L",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": "koraza_base_deep",
+          "producto_padre_busqueda": "koraza base deep",
+          "pregunta_desambiguacion": "Tengo Koraza Base Deep. ¿La buscas en cuarto, galón o cuñete?",
+          "disponible": true,
+          "precio_iva_incluido": 483950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5891144",
+          "descripcion": "PQ KORAZA MAT BAS TINT 127475 18.93L",
+          "descripcion_exacta": "PQ KORAZA MAT BAS TINT 127475 18.93L",
+          "etiqueta_auditable": "[5891144] - PQ KORAZA MAT BAS TINT 127475 18.93L",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": "koraza_mat_bas_tint",
+          "producto_padre_busqueda": "koraza mat bas tint",
+          "pregunta_desambiguacion": "Tengo cuñete y galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 483950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5892117",
+          "descripcion": "PQ KORAZA PROTECCION 3EN1 MAT BLA 18.93L",
+          "descripcion_exacta": "PQ KORAZA PROTECCION 3EN1 MAT BLA 18.93L",
+          "etiqueta_auditable": "[5892117] - PQ KORAZA PROTECCION 3EN1 MAT BLA 18.93L",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "KORAZA PROTECCION 3EN1",
+            "tipo_marca": "VINILOS EXTERIORES",
+            "familia": "BLANCO",
+            "aplicacion": "DECORATIVO",
+            "categoria": "PN1D0101005752",
+            "descripcion_larga": "KORAZA PROTECCION 3EN1 BLANCO CANECA 5 GL",
+            "tipo": "NaN"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 504118,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5891127",
+          "descripcion": "PQ KORAZA MAT ROJO 2660 18.93L",
+          "descripcion_exacta": "PQ KORAZA MAT ROJO 2660 18.93L",
+          "etiqueta_auditable": "[5891127] - PQ KORAZA MAT ROJO 2660 18.93L",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": "koraza_mat_rojo",
+          "producto_padre_busqueda": "koraza mat rojo",
+          "pregunta_desambiguacion": "Tengo Rojo cuñete y Rojo galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 483950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5893862",
+          "descripcion": "PQ KORAZA PINT IMPER PASTEL 38216 18.93L",
+          "descripcion_exacta": "PQ KORAZA PINT IMPER PASTEL 38216 18.93L",
+          "etiqueta_auditable": "[5893862] - PQ KORAZA PINT IMPER PASTEL 38216 18.93L",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": "koraza_pint_imper_pastel",
+          "producto_padre_busqueda": "koraza pint imper pastel",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 532689,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        }
+      ]
+    },
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": [
+        "rag_used",
+        "inventory_used"
+      ]
+    },
+    "is_farewell": false
+  }
+}

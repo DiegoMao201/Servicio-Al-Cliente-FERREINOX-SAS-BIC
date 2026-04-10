@@ -1,0 +1,69 @@
+{
+  "query": "pintura de poliuretano para estructura metálica exterior",
+  "response": {
+    "query": "pintura de poliuretano para estructura metálica exterior",
+    "resultados": [
+      {
+        "archivo": "PINTULUX 3 EN 1 MATE.pdf",
+        "familia": "PINTULUX 3 EN 1 MATE",
+        "similitud": 0.6895,
+        "texto": "[PRODUCTO: PINTULUX 3 EN 1 MATE] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendado para proteger y decorar superficies y/o artículos de metal y madera en\nambientes interiores y exteriores como estructuras metálicas, puertas, portones,\nventanas, rejas, marcos, etc. Puede ser aplicado sobre superficies metálicas oxidadas, ya\nque por su diseño Pintulux 3 en 1 funciona como inhibidor de óxido que brinda una\nexcelente protección y da un acabado mate, simplificando el proceso de aplicación."
+      },
+      {
+        "archivo": "PINTURA ACRILICA PARA MANTENIMIENTO.pdf",
+        "familia": "PINTURA ACRILICA PARA MANTENIMIENTO",
+        "similitud": 0.687,
+        "texto": "[PRODUCTO: PINTURA ACRILICA PARA MANTENIMIENTO] [MARCA: Pintuco]\n[SECCIÓN: Ideal para proteger y decorar superficies de concreto como pisos]\n\nindustriales e institucionales, y en metales para estanterías,\npasamanos, transformadores, torres de transmisión y otras\nsuperficies metálicas ferrosas y no ferrosas en ambientes industriales\nde mediana agresividad que no estén expuestas a contacto con\nsolventes orgánicos. Es aplicada como acabado en superestructuras\nde embarcaciones fluviales y marinas."
+      },
+      {
+        "archivo": "pintulux-maxima-proteccion-brillante-1.pdf",
+        "familia": "pintulux-maxima-proteccion-brillante-1",
+        "similitud": 0.6819,
+        "texto": "[PRODUCTO: pintulux-maxima-proteccion-brillante-1] [MARCA: Pintuco]\n[SECCIÓN: Recomendada para la protección y decoración de]\n\nestructuras de metal y madera como puertas, ventanas,\nrejas y muebles en general. Paredes y mampostería. En\nmaquinarias,\nequipos,\ntanques,\nescaleras\ne\nidentificación de tuberías. Para uso en ambientes\nexteriores e interiores."
+      },
+      {
+        "archivo": "PINTULUX MAXIMA PROTECCION.pdf",
+        "familia": "PINTULUX MAXIMA PROTECCION",
+        "similitud": 0.6801,
+        "texto": "[PRODUCTO: PINTULUX MAXIMA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para proteger y decorar superficies y/o artículos de metal y madera]\n\nen ambientes interiores y exteriores como estructuras metálicas, puertas, portones,\nventanas, rejas, zócalos, muebles y marcos, etc."
+      },
+      {
+        "archivo": "EPOXI ESTRUCTURAS.pdf",
+        "familia": "EPOXI ESTRUCTURAS",
+        "similitud": 0.6796,
+        "texto": "[PRODUCTO: EPOXI ESTRUCTURAS] [MARCA: Pintuco]\n[SECCIÓN: PINTURA EPOXI ESTRUCTURAS Ideal para proteger y decorar estruc]\n\nIdeal para proteger y decorar estructuras metálicas, exterior de tanques y t\ntanques y tuberías, y equipos en zonas de alta contaminación"
+      },
+      {
+        "archivo": "POLIURETANO ALTOS SOLIDOS ALUMINIO 11397 (1).pdf",
+        "familia": "POLIURETANO ALTOS SOLIDOS ALUMINIO 11397",
+        "similitud": 0.6782,
+        "texto": "[PRODUCTO: POLIURETANO ALTOS SOLIDOS ALUMINIO 11397] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la decoración y protección de superficies metálicas, de fibra de vidrio o de madera en cubiertas,\nsuperestructuras, camarotes y cascos de barcos.\nPara exterior de tanques, maquinaria, equipos y estructuras.\nPara botes de madera expuestos a la intemperie, en ambientes industriales de alta contaminación."
+      },
+      {
+        "archivo": "ANTICORROSIVO ROJO 10050 - 545.pdf",
+        "familia": "ANTICORROSIVO ROJO 10050 - 545",
+        "similitud": 0.6759,
+        "texto": "[PRODUCTO: ANTICORROSIVO ROJO 10050 - 545] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintura anticorrosiva de dos componentes, una anticorrosiva\nepóxica con óxido de hierro y un endurecedor poliamínico, que al\nmezclarse en proporciones apropiadas (ver especificaciones)\nproduce al aplicarla, una capa sólida, dura, resistente a aguas\ndulces potables o saladas, ácidos débiles, sales álcalis, disolventes\nalifáticos y temperaturas de 120° en seco y 70°C en inmersión. USOS\nComo base anticorrosiva, con "
+      },
+      {
+        "archivo": "POLIURETANO ALTOS SOLIDOS.pdf",
+        "familia": "POLIURETANO ALTOS SOLIDOS",
+        "similitud": 0.6704,
+        "texto": "[PRODUCTO: POLIURETANO ALTOS SOLIDOS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la decoración y protección de superficies metálicas, de fibra de vidrio o\nde madera en cubiertas, superestructuras, camarotes y cascos de barcos.\nPara exterior de tanques, maquinaria, equipos y estructuras.\nPara botes de madera expuestos a la intemperie, en ambientes industriales\nde alta contaminación."
+      }
+    ],
+    "productos_candidatos": [
+      "PINTULUX 3 EN 1 MATE",
+      "PINTURA ACRILICA PARA MANTENIMIENTO",
+      "pintulux-maxima-proteccion-brillante-1",
+      "PINTULUX MAXIMA PROTECCION",
+      "pintulux",
+      "corrotec",
+      "anticorrosivo",
+      "wash primer",
+      "intergard",
+      "interthane",
+      "poliuretano"
+    ]
+  }
+}

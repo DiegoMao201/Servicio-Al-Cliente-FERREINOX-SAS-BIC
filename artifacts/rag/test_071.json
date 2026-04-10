@@ -1,0 +1,66 @@
+{
+  "query": "esa reja ya está muy fea, cómo la recupero",
+  "response": {
+    "query": "esa reja ya está muy fea, cómo la recupero",
+    "resultados": [
+      {
+        "archivo": "DOMESTICO.pdf",
+        "familia": "DOMESTICO",
+        "similitud": 0.5592,
+        "texto": "[PRODUCTO: DOMESTICO] [MARCA: Pintuco]\n[SECCIÓN: Superficies]\n\ncon\npintura\ndeteriorada:"
+      },
+      {
+        "archivo": "DOMESTICO.pdf",
+        "familia": "DOMESTICO",
+        "similitud": 0.5545,
+        "texto": "[PRODUCTO: DOMESTICO] [MARCA: Pintuco]\n[SECCIÓN: Elimine]\n\ncompletamente\nla\npintura en mal estado con una rasqueta, lije la\nsuperficie\ncon\npapel\nabrasive,\nlimpie\ny\nluego\naplique Esmalte Doméstico®."
+      },
+      {
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.5414,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Versión 5 / Abril 2022]\n\ntodos los residuos y con un trapo húmedo en Thinner Pintuco® Ref. 21006 ó Ajustador Ref. 21141."
+      },
+      {
+        "archivo": "PINTULUX 3 EN 1 MATE.pdf",
+        "familia": "PINTULUX 3 EN 1 MATE",
+        "similitud": 0.532,
+        "texto": "[PRODUCTO: PINTULUX 3 EN 1 MATE] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendado para proteger y decorar superficies y/o artículos de metal y madera en\nambientes interiores y exteriores como estructuras metálicas, puertas, portones,\nventanas, rejas, marcos, etc. Puede ser aplicado sobre superficies metálicas oxidadas, ya\nque por su diseño Pintulux 3 en 1 funciona como inhibidor de óxido que brinda una\nexcelente protección y da un acabado mate, simplificando el proceso de aplicación."
+      },
+      {
+        "archivo": "PINTULUX TRES EN UNO.pdf",
+        "familia": "PINTULUX TRES EN UNO",
+        "similitud": 0.5245,
+        "texto": "[PRODUCTO: PINTULUX TRES EN UNO] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para proteger y decorar artículos de]\n\nmetal y madera, apto tanto para interiores como\nexteriores,\nincluyendo\nestructuras,\npuertas,\nventanas\ny\nmarcos."
+      },
+      {
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.4902,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Cubrimiento]\n\n>90\n%"
+      },
+      {
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.4899,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: APLICACIÓN]\n\nCORROTEC®"
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.4885,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Versión 5 / Abril 2022]\n\ntodos los residuos y con un trapo húmedo en Thinner Pintuco® Ref. 21006 ó Ajustador Ref. 21141."
+      }
+    ],
+    "productos_candidatos": [
+      "DOMESTICO",
+      "PINTOXIDO",
+      "PINTULUX 3 EN 1 MATE",
+      "pintulux",
+      "domestico",
+      "pintoxido",
+      "corrotec",
+      "anticorrosivo"
+    ]
+  }
+}

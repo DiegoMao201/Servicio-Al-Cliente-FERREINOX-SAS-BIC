@@ -1,51 +1,65 @@
 {
-  "query": "piso de bodega industrial con tráfico de montacargas",
+  "query": "terraza transitable con fisuras que se llueve abajo",
   "response": {
-    "query": "piso de bodega industrial con tráfico de montacargas",
+    "query": "terraza transitable con fisuras que se llueve abajo",
     "resultados": [
       {
-        "archivo": "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA(TERINSA).pdf",
-        "familia": "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
-        "similitud": 0.6529,
-        "texto": "[PRODUCTO: PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nSe usan para la demarcación y señalización de carreteras, calles, autopistas, parqueaderos, cachas deportivas, pisos de almacenes, bodegas e\nindustrias en general, aplicadas sobre superficies de pavimento, concreto, ladrillo y acero."
+        "archivo": "PINTUCO FILL 12.pdf",
+        "familia": "PINTUCO FILL 12",
+        "similitud": 0.6813,
+        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nRecubrimiento acrílico impermeable y flexible, para\nevitar\nel\npaso\nde\nhumedad\ny\nfiltraciones\nen\ncubiertas y terrazas. Mejorado con fibras que le\npermiten puentear fisuras existentes hasta de 1 mm\ny distribuir los esfuerzos de tensión evitando que se\nproduzca rompimiento de la película. Diseñado para\ndar\nuna\nóptima\ndurabilidad\nde\nsu\npelícula\nimpermeabilizante de hasta 12 años siempre y\ncuando\nse\nsigan\nlas\nrecomendaciones\nde\nprep"
       },
       {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.6472,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+        "archivo": "PINTUCO FILL 7.pdf",
+        "familia": "PINTUCO FILL 7",
+        "similitud": 0.6781,
+        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintuco® Fill 7 Antihongos es un recubrimiento\nacrílico impermeable y flexible, para evitar el paso\nde humedad y filtraciones en cubiertas y terrazas."
       },
       {
-        "archivo": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
-        "familia": "FDS- PINTURA CANCHAS BASE ACCENT",
-        "similitud": 0.6256,
-        "texto": "[PRODUCTO: FDS- PINTURA CANCHAS BASE ACCENT] [MARCA: Pintuco]\n[SECCIÓN: Legislación relacionada con la gestión de residuos:]\n\n10221353 FABRICADO CONSTRUCCION PINTURA PARA CANCHAS"
+        "archivo": "PINTUCO FILL 12.pdf",
+        "familia": "PINTUCO FILL 12",
+        "similitud": 0.6766,
+        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: Para]\n\nimpermeabilización\nflexible\nde\nplacas,\ncubiertas y canaletas. En terrazas y estructuras en\nconcreto, mortero, tejas de barro, fibrocemento,\nzinc"
       },
       {
-        "archivo": "FDS-PINTULUX TEU CAOBA.pdf",
-        "familia": "FDS-PINTULUX TEU CAOBA",
-        "similitud": 0.5742,
-        "texto": "[PRODUCTO: FDS-PINTULUX TEU CAOBA] [MARCA: Pintuco]\n[SECCIÓN: Transporte a granel con]\n\narreglo al anexo II de MARPOL\n73/78 y al Código IBC:"
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.6543,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: APLICACIÓN]\n\n• Recomendamos aplicar 1 mano de imprimante Sellomax ref.10270 o 10272\nespecialmente cuando se aplica sobre ladrillo vitrificado, para disminuir\nhumedades, mejorar adherencia y desempeño.\n• Si hay grietas de más de 1mm de ancho o empates entre losas, es necesario\nreforzar el sistema colocando una malla o tela de fibra de vidrio traslapando 10 cm\na cada lado de la grieta.(La fibra debe quedar embebida en el impermeabilizante\nROOF MA"
       },
       {
-        "archivo": "FDS - PINTUTRAFICO ACRIL NEGRO 13756.pdf",
-        "familia": "FDS - PINTUTRAFICO ACRIL NEGRO 13756",
-        "similitud": 0.5695,
-        "texto": "[PRODUCTO: FDS - PINTUTRAFICO ACRIL NEGRO 13756] [MARCA: Pintuco]\n[SECCIÓN: Transporte a granel con]\n\narreglo al anexo II de MARPOL\n73/78 y al Código IBC:"
+        "archivo": "IMPERCOAT 7A.pdf",
+        "familia": "IMPERCOAT 7A",
+        "similitud": 0.6449,
+        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE]\n\nSUPERFICIE | • La superficie que se va a impermeabilizar, debe ser sólida, completamente\nlimpia, seca y libre de partículas sueltas.\n• Las pinturas deterioradas, se eliminan con rasqueta y agua a presión.\n• Es Recomendable lavar con Hidrolavadora (presión de 1000 a 3000\nlibras/pulgada²)\n• Los resanes de grietas, huecos se deben hacer con el “ Mortero de Reparación”,\nRef. 27525/27526, o con la “Base Adhesiva para Impermeabilizar"
       },
       {
-        "archivo": "FDS- PINTUCOAT ALUMINIO 13261.pdf",
-        "familia": "FDS- PINTUCOAT ALUMINIO 13261",
-        "similitud": 0.4627,
-        "texto": "[PRODUCTO: FDS- PINTUCOAT ALUMINIO 13261] [MARCA: Pintuco]\n[SECCIÓN: Transporte a granel con]\n\narreglo al anexo II de MARPOL\n73/78 y al Código IBC:"
+        "archivo": "KORAZA PROTECCION 3 EN 1.pdf",
+        "familia": "KORAZA PROTECCION 3 EN 1",
+        "similitud": 0.5733,
+        "texto": "[PRODUCTO: KORAZA PROTECCION 3 EN 1] [MARCA: Pintuco]\n[SECCIÓN: Protección 3 en 1 como refuerzo en medias]\n\ncañas, sifones y juntas de dilatación. En terrazas\nnuevas o viejas con un área superior a 100m2,\ndebe aplicarse tela de refuerzo en toda el área.\nNo se recomienda Koraza® Protección 3 en 1\npara cubiertas o superficies con tráfico peatonal\npermanente. Se recomienda aplicar el sustrato\ncon una temperatura ambiente entre 5°C y 35°C\nKoraza® Protección 3 en 1 tiene una durabilidad\nde hasta 5 añ"
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.544,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: Recomendada]\n\npara\nambientes\nexteriores,\npara\ndecorar\ny proteger fachadas y patios revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar,\ntejas y láminas de fibrocemento. Disponible en una\namplia gama de colores gracias a la Tecnología\nSuperior de Color Pintuco® Colortech®."
+      },
+      {
+        "archivo": "KORAZA IMPERMEABLE.pdf",
+        "familia": "KORAZA IMPERMEABLE",
+        "similitud": 0.5432,
+        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: DESCRIPCIÓN]\n\nKoraza®"
       }
     ],
     "productos_candidatos": [
-      "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
-      "PINTURA PARA CANCHAS",
-      "pintura canchas",
-      "pintucoat",
-      "pintura trafico"
+      "PINTUCO FILL 12",
+      "PINTUCO FILL 7",
+      "IMPERCOAT 7A",
+      "pintuco fill",
+      "imprimante",
+      "impercoat",
+      "koraza"
     ]
   }
 }

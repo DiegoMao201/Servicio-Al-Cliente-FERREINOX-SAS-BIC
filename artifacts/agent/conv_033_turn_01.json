@@ -1,0 +1,261 @@
+{
+  "user": "¿Tienen thinner en galón?",
+  "result": {
+    "response_text": "Sí, tenemos varias opciones de thinner en galón. Aquí te dejo algunas:\n\n1. **Thinner Corriente Galón**  \n   - **Precio:** $27,647  \n   - ✅ Disponible\n\n2. **MPY Thinner 21050 UFA151 (3.7L)**  \n   - **Precio:** $89,610  \n   - ✅ Disponible\n\n3. **Thinner Universal P502 MEG AC (3.78L)**  \n   - **Precio:** $62,662  \n   - ✅ Disponible\n\n4. **Meg Diluyente 21125 AC (3.78L)**  \n   - **Precio:** $60,040  \n   - ✅ Disponible\n\nSi necesitas alguno de estos, solo dímelo y te ayudo con la compra. 😊",
+    "intent": "consulta_productos",
+    "tool_calls": [
+      {
+        "name": "consultar_inventario",
+        "args": {
+          "producto": "thinner galon"
+        },
+        "result": "{\"encontrados\": 10, \"productos\": [{\"codigo\": \"56252095\", \"descripcion\": \"THINNER CORRIENTE GALON\", \"descripcion_exacta\": \"THINNER CORRIENTE GALON\", \"etiqueta_auditable\": \"[56252095] - THINNER CORRIENTE GALON\", \"marca\": null, \"presentacion\": \"galon\", \"familia_consulta\": \"thinner_corriente\", \"producto_padre_busqueda\": \"thinner corriente\", \"pregunta_desambiguacion\": \"Tengo Thinner Corriente Bt y galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 27647, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"lista_precio\": \"franquicia\"}, {\"codigo\": \"5890328\", \"descripcion\": \"MPY THINNER 21050 UFA151/3.7L/AA7\", \"descripcion_exacta\": \"MPY THINNER 21050 UFA151/3.7L/AA7\", \"etiqueta_auditable\": \"[5890328] - MPY THINNER 21050 UFA151/3.7L/AA7\", \"marca\": \"54\", \"presentacion\": \"galon\", \"familia_consulta\": \"mpy_thinner_ufa151_aa7\", \"producto_padre_busqueda\": \"mpy thinner ufa151 aa7\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 89610, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5864389\", \"descripcion\": \"THINNER UNIVERSAL P502 MEG AC 3.78L\", \"descripcion_exacta\": \"THINNER UNIVERSAL P502 MEG AC 3.78L\", \"etiqueta_auditable\": \"[5864389] - THINNER UNIVERSAL P502 MEG AC 3.78L\", \"marca\": \"57\", \"presentacion\": \"galon\", \"familia_consulta\": \"thinner_universal_p502_meg\", \"producto_padre_busqueda\": \"thinner universal p502 meg\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 62662, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5892870\", \"descripcion\": \"MEG DILUYENTE 21125 AC 3.78L\", \"descripcion_exacta\": \"MEG DILUYENTE 21125 AC 3.78L\", \"etiqueta_auditable\": \"[5892870] - MEG DILUYENTE 21125 AC 3.78L\", \"marca\": \"57\", \"presentacion\": \"galon\", \"familia_consulta\": \"meg_diluyente\", \"producto_padre_busqueda\": \"meg diluyente\", \"pregunta_desambiguacion\": \"Tengo Meg Diluyente 21125 Ac 208.18L y galón con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 60040, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890736\", \"descripcion\": \"PQ KORAZA MAT ACCENT BASE 127477 3.79L\", \"descripcion_exacta\": \"PQ KORAZA MAT ACCENT BASE 127477 3.79L\", \"etiqueta_auditable\": \"[5890736] - PQ KORAZA MAT ACCENT BASE 127477 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"BASE ACCENT\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0101005147_KORAZA\", \"descripcion_larga\": \"KORAZA BASE ACCENT CREMA 127477 GALON\", \"tipo\": \"A1\"}, \"disponible\": true, \"precio_iva_incluido\": 117563, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890677\", \"descripcion\": \"PQ VINILTEX ADV MAT B PASTE 117174 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT B PASTE 117174 3.79L\", \"etiqueta_auditable\": \"[5890677] - PQ VINILTEX ADV MAT B PASTE 117174 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"VINILTEX ADVANCED\", \"tipo_marca\": \"VINILO TIPO 1\", \"familia\": \"BASE PASTEL\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0101001281_VINILTEX\", \"descripcion_larga\": \"VINILTEX BASE PASTEL BLANCO 117174 GALON\", \"tipo\": \"A1\"}, \"disponible\": true, \"precio_iva_incluido\": 83950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5901919\", \"descripcion\": \"PQ KORAZA MAT DEEP BASE 127476 3.79L\", \"descripcion_exacta\": \"PQ KORAZA MAT DEEP BASE 127476 3.79L\", \"etiqueta_auditable\": \"[5901919] - PQ KORAZA MAT DEEP BASE 127476 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"KORAZA\", \"tipo_marca\": \"VINILOS EXTERIORES\", \"familia\": \"BASE DEEP\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0101005147_KORAZA\", \"descripcion_larga\": \"KORAZA BASE DEEP BLANCO 127476 GALON\", \"tipo\": \"A1\"}, \"disponible\": true, \"precio_iva_incluido\": 117563, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890895\", \"descripcion\": \"PQ DOMESTICO BR BLANCO P-11 3.79L\", \"descripcion_exacta\": \"PQ DOMESTICO BR BLANCO P-11 3.79L\", \"etiqueta_auditable\": \"[5890895] - PQ DOMESTICO BR BLANCO P-11 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"DOMESTICO\", \"tipo_marca\": \"ESMALTES\", \"familia\": \"BLANCO\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0102007074_DOMESTICO\", \"descripcion_larga\": \"ESMALTE DOMESTICO BLANCO P-11 GALON\", \"tipo\": \"A1\"}, \"disponible\": true, \"precio_iva_incluido\": 81429, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890636\", \"descripcion\": \"PQ VINILTEX ADV MAT BLANCO 1501 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX ADV MAT BLANCO 1501 3.79L\", \"etiqueta_auditable\": \"[5890636] - PQ VINILTEX ADV MAT BLANCO 1501 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"VINILTEX ADVANCED\", \"tipo_marca\": \"VINILO TIPO 1\", \"familia\": \"BLANCO\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0101001281_VINILTEX\", \"descripcion_larga\": \"VINILTEX BLANCO 1501 GALON\", \"tipo\": \"A1\"}, \"disponible\": true, \"precio_iva_incluido\": 83950, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5890339\", \"descripcion\": \"PQ VINILTEX BYC SA BLANCO 2001 3.79L\", \"descripcion_exacta\": \"PQ VINILTEX BYC SA BLANCO 2001 3.79L\", \"etiqueta_auditable\": \"[5890339] - PQ VINILTEX BYC SA BLANCO 2001 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"VINILTEX BANOS Y COCINAS\", \"tipo_marca\": \"VINILO TIPO 1\", \"familia\": \"BLANCO\", \"aplicacion\": \"DECORATIVO\", \"categoria\": \"PN1D0101001008_ACRILTEX BANOS Y COCINAS\", \"descripcion_larga\": \"VINILTEX BANOS Y COCINAS BLANCO 2001 GALON\", \"tipo\": \"A1\"}, \"disponible\": true, \"precio_iva_incluido\": 104958, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": false, \"pregunta_desambiguacion\": null, \"mensaje\": null, \"conocimiento_experto_producto\": [{\"tipo\": \"preferencia\", \"contexto\": \"solvente tráfico, thinner 21204, botellas, venta fraccionada\", \"recomendar\": \"Thinner 21204\", \"evitar\": \"Thinner 21050\", \"nota\": \"El único solvente autorizado para cotizar con Pintura de Tráfico (Acrílica) es el Thinner 21204. Su referencia exacta en el sistema es F0116621204. TIENES PROHIBIDO cotizar el Thinner 21050 (UFA151) para pintura de tráfico. Ese guárdalo exclusivamente para la línea de poliuretanos. El Thinner 21204 se comercializa y calcula por botellas. Si vendes 1 Galón de Pintura de Tráfico, DEBES cotizar obligatoriamente 5 botellas del Thinner 21204. Si vendes 1 Cuñete (5 Galones) de Pintura de Tráfico, DEBES cotizar obligatoriamente 25 botellas del Thinner 21204.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"venta cruzada, solventes, sistemas\", \"recomendar\": \"UFA151, GTA220, Thinner Epóxico Pintuco\", \"evitar\": null, \"nota\": \"Aplica la lógica de venta cruzada de solventes a todos los sistemas: Interthane con UFA151, Pintucoat con Thinner Epóxico.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"solventes, compatibilidad, sistemas industriales, tráfico\", \"recomendar\": \"Tolueno / Thinner Tráfico\", \"evitar\": \"cualquier otro solvente\", \"nota\": \"Todo sistema de tráfico requiere Tolueno / Thinner Tráfico. No cruzar solventes entre sistemas.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"humedad, sistema completo, rendimientos, colores\", \"recomendar\": \"Aquablock Ultra, Viniltex Advanced\", \"evitar\": null, \"nota\": \"Rendimientos reales: Aquablock Ultra rinde 18-20 m2 por galon (aplicando dos manos bien cargadas con brocha). Viniltex Advanced rinde de 20 a 25 m2 por galon (a dos manos). Sistema completo: Raspar pintura suelta, aplicar Aquablock Ultra, aplicar Estuco Acrilico para nivelar, y acabado con Viniltex Advanced.\"}], \"instruccion_conocimiento_experto\": \"💡 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE para este producto. Lee 'conocimiento_experto_producto' ANTES de presentar resultados al cliente. Si hay un 'evitar', NO lo recomiendes para este contexto. Si hay reglas comerciales (sobre pedido, obligatorio cuarzo, preguntar m², etc.), APLÍCALAS. Presenta las notas relevantes como '💡 Experiencia Ferreinox: [nota]'.\"}"
+      }
+    ],
+    "context_updates": {
+      "last_product_request": {
+        "core_terms": [
+          "thinner",
+          "galon",
+          "galones",
+          "gal",
+          "3.79l",
+          "3.79",
+          "1/1",
+          "1gl"
+        ],
+        "search_terms": [
+          "thinner",
+          "tinner",
+          "diluyente",
+          "disolvente",
+          "solvente",
+          "galon",
+          "galones",
+          "gal",
+          "3.79l",
+          "3.79",
+          "1/1",
+          "1gl"
+        ],
+        "requested_quantity": null,
+        "requested_unit": "galon",
+        "quantity_expression": null,
+        "product_codes": [],
+        "brand_filters": [],
+        "direction_filters": [],
+        "size_filters": [],
+        "store_filters": [],
+        "original_query": "thinner galon",
+        "nlu_processed": true
+      },
+      "last_product_query": "thinner galon",
+      "last_product_context": [
+        {
+          "codigo": "56252095",
+          "descripcion": "THINNER CORRIENTE GALON",
+          "descripcion_exacta": "THINNER CORRIENTE GALON",
+          "etiqueta_auditable": "[56252095] - THINNER CORRIENTE GALON",
+          "marca": null,
+          "presentacion": "galon",
+          "familia_consulta": "thinner_corriente",
+          "producto_padre_busqueda": "thinner corriente",
+          "pregunta_desambiguacion": "Tengo Thinner Corriente Bt y galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 27647,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "lista_precio": "franquicia"
+        },
+        {
+          "codigo": "5890328",
+          "descripcion": "MPY THINNER 21050 UFA151/3.7L/AA7",
+          "descripcion_exacta": "MPY THINNER 21050 UFA151/3.7L/AA7",
+          "etiqueta_auditable": "[5890328] - MPY THINNER 21050 UFA151/3.7L/AA7",
+          "marca": "54",
+          "presentacion": "galon",
+          "familia_consulta": "mpy_thinner_ufa151_aa7",
+          "producto_padre_busqueda": "mpy thinner ufa151 aa7",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 89610,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5864389",
+          "descripcion": "THINNER UNIVERSAL P502 MEG AC 3.78L",
+          "descripcion_exacta": "THINNER UNIVERSAL P502 MEG AC 3.78L",
+          "etiqueta_auditable": "[5864389] - THINNER UNIVERSAL P502 MEG AC 3.78L",
+          "marca": "57",
+          "presentacion": "galon",
+          "familia_consulta": "thinner_universal_p502_meg",
+          "producto_padre_busqueda": "thinner universal p502 meg",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 62662,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5892870",
+          "descripcion": "MEG DILUYENTE 21125 AC 3.78L",
+          "descripcion_exacta": "MEG DILUYENTE 21125 AC 3.78L",
+          "etiqueta_auditable": "[5892870] - MEG DILUYENTE 21125 AC 3.78L",
+          "marca": "57",
+          "presentacion": "galon",
+          "familia_consulta": "meg_diluyente",
+          "producto_padre_busqueda": "meg diluyente",
+          "pregunta_desambiguacion": "Tengo Meg Diluyente 21125 Ac 208.18L y galón con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 60040,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890736",
+          "descripcion": "PQ KORAZA MAT ACCENT BASE 127477 3.79L",
+          "descripcion_exacta": "PQ KORAZA MAT ACCENT BASE 127477 3.79L",
+          "etiqueta_auditable": "[5890736] - PQ KORAZA MAT ACCENT BASE 127477 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "KORAZA",
+            "tipo_marca": "VINILOS EXTERIORES",
+            "familia": "BASE ACCENT",
+            "aplicacion": "DECORATIVO",
+            "categoria": "PN1D0101005147_KORAZA",
+            "descripcion_larga": "KORAZA BASE ACCENT CREMA 127477 GALON",
+            "tipo": "A1"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 117563,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890677",
+          "descripcion": "PQ VINILTEX ADV MAT B PASTE 117174 3.79L",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT B PASTE 117174 3.79L",
+          "etiqueta_auditable": "[5890677] - PQ VINILTEX ADV MAT B PASTE 117174 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "VINILTEX ADVANCED",
+            "tipo_marca": "VINILO TIPO 1",
+            "familia": "BASE PASTEL",
+            "aplicacion": "DECORATIVO",
+            "categoria": "PN1D0101001281_VINILTEX",
+            "descripcion_larga": "VINILTEX BASE PASTEL BLANCO 117174 GALON",
+            "tipo": "A1"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 83950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5901919",
+          "descripcion": "PQ KORAZA MAT DEEP BASE 127476 3.79L",
+          "descripcion_exacta": "PQ KORAZA MAT DEEP BASE 127476 3.79L",
+          "etiqueta_auditable": "[5901919] - PQ KORAZA MAT DEEP BASE 127476 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "KORAZA",
+            "tipo_marca": "VINILOS EXTERIORES",
+            "familia": "BASE DEEP",
+            "aplicacion": "DECORATIVO",
+            "categoria": "PN1D0101005147_KORAZA",
+            "descripcion_larga": "KORAZA BASE DEEP BLANCO 127476 GALON",
+            "tipo": "A1"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 117563,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890895",
+          "descripcion": "PQ DOMESTICO BR BLANCO P-11 3.79L",
+          "descripcion_exacta": "PQ DOMESTICO BR BLANCO P-11 3.79L",
+          "etiqueta_auditable": "[5890895] - PQ DOMESTICO BR BLANCO P-11 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "DOMESTICO",
+            "tipo_marca": "ESMALTES",
+            "familia": "BLANCO",
+            "aplicacion": "DECORATIVO",
+            "categoria": "PN1D0102007074_DOMESTICO",
+            "descripcion_larga": "ESMALTE DOMESTICO BLANCO P-11 GALON",
+            "tipo": "A1"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 81429,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890636",
+          "descripcion": "PQ VINILTEX ADV MAT BLANCO 1501 3.79L",
+          "descripcion_exacta": "PQ VINILTEX ADV MAT BLANCO 1501 3.79L",
+          "etiqueta_auditable": "[5890636] - PQ VINILTEX ADV MAT BLANCO 1501 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "VINILTEX ADVANCED",
+            "tipo_marca": "VINILO TIPO 1",
+            "familia": "BLANCO",
+            "aplicacion": "DECORATIVO",
+            "categoria": "PN1D0101001281_VINILTEX",
+            "descripcion_larga": "VINILTEX BLANCO 1501 GALON",
+            "tipo": "A1"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 83950,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5890339",
+          "descripcion": "PQ VINILTEX BYC SA BLANCO 2001 3.79L",
+          "descripcion_exacta": "PQ VINILTEX BYC SA BLANCO 2001 3.79L",
+          "etiqueta_auditable": "[5890339] - PQ VINILTEX BYC SA BLANCO 2001 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "VINILTEX BANOS Y COCINAS",
+            "tipo_marca": "VINILO TIPO 1",
+            "familia": "BLANCO",
+            "aplicacion": "DECORATIVO",
+            "categoria": "PN1D0101001008_ACRILTEX BANOS Y COCINAS",
+            "descripcion_larga": "VINILTEX BANOS Y COCINAS BLANCO 2001 GALON",
+            "tipo": "A1"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 104958,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        }
+      ]
+    },
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": [
+        "inventory_used"
+      ]
+    },
+    "is_farewell": false
+  }
+}

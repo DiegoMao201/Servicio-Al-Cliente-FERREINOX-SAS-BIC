@@ -1,67 +1,63 @@
 {
-  "query": "barniz para mueble interior que se vea la veta",
+  "query": "garaje residencial piso de concreto",
   "response": {
-    "query": "barniz para mueble interior que se vea la veta",
+    "query": "garaje residencial piso de concreto",
     "resultados": [
       {
-        "archivo": "BARNIZ BARNEX 557.pdf",
-        "familia": "BARNIZ BARNEX 557",
-        "similitud": 0.6922,
-        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz tipo uretano base solvente transparente de fácil aplicación, que\npenetra la madera y permite su transpiración, proporcionando alta\nprotección en exteriores, incluso en ambientes marinos y tropicales."
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6623,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15 m2/gal a 2 manos."
       },
       {
-        "archivo": "PINTULACA.pdf",
-        "familia": "PINTULACA",
-        "similitud": 0.6763,
-        "texto": "[PRODUCTO: PINTULACA] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nLacas nitro de secado al aire que se caracterizan por su excelente acabado y brillo, resistentes a la\nintemperie, mayor rendimiento con menos manos de aplicación y fácil de aplicar en todo tipo de\nambientes."
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6384,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
       },
       {
-        "archivo": "BARNIZ BARNEX 557.pdf",
-        "familia": "BARNIZ BARNEX 557",
-        "similitud": 0.6702,
-        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6211,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: INDICACIONES IMPORTANTES/PRECAUCIONES]\n\n Chequear condiciones de la loza de concreto que no vayan a afectar la adherencia del producto,\ntales como curadores, capas de lechada o endurecedores.\n Si la superficie es en concreto nuevo o nunca ha sido pintado, es obligatorio aplicar como\nimprimante pintura epóxica Base Solvente de Pintuco.\n La garantía del producto depende de la frecuencia, tipo de uso de la cancha y el número de\nmanos qu"
       },
       {
-        "archivo": "BARNIZ BARNEX 557.pdf",
-        "familia": "BARNIZ BARNEX 557",
-        "similitud": 0.669,
-        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Versión 1 / 2015]\n\nBARNEX®"
+        "archivo": "PINTUCOAT.pdf",
+        "familia": "PINTUCOAT",
+        "similitud": 0.6084,
+        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: Versión 7 / Junio 2021]\n\nabrasivo mínimo a grado comercial con remoción completa de la escama de laminación (SSPC-SP6,\nestándar Sueco SA-2), y para mayor durabilidad deben ser preparados cerca de metal blanco (SSPC-SP10).\nAntes de aplicar el Pintucoat®, proteja el metal con una Pintura Anticorrosiva Pintuco® apropiada. En\nmaderas selle bien con una mano de Pintucoat® diluido al 20% por volumen con Ajustador Pintuco® Ref.\n21209. En concreto y fibro"
       },
       {
-        "archivo": "PINTULACA 7527.pdf",
-        "familia": "PINTULACA 7527",
-        "similitud": 0.667,
-        "texto": "[PRODUCTO: PINTULACA 7527] [MARCA: Pintuco]\n[SECCIÓN: Cuarto de galón]\n\nDESCRIPCIÓN: Lacas nitrocelulósicas que se caracterizan por su gran brillo, excelente acabado, resistentes a la\nintemperie, de alto contenido de sólidos para mayor rendimiento con menos manos de aplicación, y en\ncolores entremezclables para obtener otros colores policromados de secamiento al aire y fácil de aplicar\nen todo tipo de ambientes.\n\nUSOS: Para el acabado final en el repintado de vehículos, electrodomésticos y recub"
+        "archivo": "PINTURA EPOXICA PARA CONCRETO.pdf",
+        "familia": "PINTURA EPOXICA PARA CONCRETO",
+        "similitud": 0.6082,
+        "texto": "[PRODUCTO: PINTURA EPOXICA PARA CONCRETO] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar verifique que la superficie esté seca, libre de polvo, mugre, grasa y/o pintura deteriorada. Para\nrepintes sobre pinturas epóxicas en buenas condiciones, se debe lijar en seco para eliminarles el brillo y promover\nperfil de anclaje. Tener especial cuidado al aplicar sobre pinturas no epóxicas ya que pueden removerse o\nablandarse. Las pinturas deterioradas se deben eliminar por med"
       },
       {
-        "archivo": "BARNIZ SD1.pdf",
-        "familia": "BARNIZ SD1",
-        "similitud": 0.6432,
-        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes interiores que no estén expuestas a la luz directa del sol, a la\nhumedad o a la abrasión, como techos, puertas, zócalos, columnas, vigas,\nmesas decorativas y muebles de madera en general."
+        "archivo": "PINTUCOAT.pdf",
+        "familia": "PINTUCOAT",
+        "similitud": 0.6014,
+        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: Zonas de tráfico medio:]\n\no Se recomienda hacer una imprimación con Pintucoat® Ref. 516 o 517 y dar acabado\ncon Esmalte Poliuretano Ref. 11304 o 11324 con catalizador Ref. 11351 en relación de\nmezcla 1:1\no Se puede utilizar barniz poliuretano para pisos, como acabado final.\n* Para mayor información consultar con servicio técnico.\n\nNOTA: Únicamente en ambientes interiores este producto puede ser utilizado sin pintura de acabado; en\nambientes exteri"
       },
       {
-        "archivo": "TINTE PARA MADERA.pdf",
-        "familia": "TINTE PARA MADERA",
-        "similitud": 0.6189,
-        "texto": "[PRODUCTO: TINTE PARA MADERA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara colorear y resaltar la veta del sustrato en muebles y artículos en madera sólida,\nchapillas, tableros aglomerados (partícula-fibra) y/o tableros contrachapados con el fin\nde darle uniformidad al color e imitar otros tipos de maderas. VENTAJAS Y BENEFICIOS\n Fácil aplicación\n Excelente humectación\n No levantan la fibra de la madera (NGR)."
+        "archivo": "CANCHAS Y PISOS.pdf",
+        "familia": "CANCHAS Y PISOS",
+        "similitud": 0.4775,
+        "texto": "[PRODUCTO: CANCHAS Y PISOS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15m2/gal. a 2 manos"
       },
       {
-        "archivo": "BARNIZ SD1.pdf",
-        "familia": "BARNIZ SD1",
-        "similitud": 0.6023,
-        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nBarniz sintético transparente base solvente de alto rendimiento, fácil\naplicación y buena flexibilidad, que proporciona máxima protección a las\nsuperficies de madera sin desprenderse ni agrietarse. Disponible en\nacabados mate (Ref. 559) y brillante (Ref. SD-1) entremezclables entre sí\npara obtener diferentes grados de brillo.\nEl Barniz brillante SD-1 puede tinturarse a través del Sistema Colores\nPintuco® para obtener variedad de ton"
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.4745,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: Espesor seco recomendado]\n\n175\n225"
       }
     ],
     "productos_candidatos": [
-      "BARNIZ BARNEX 557",
-      "PINTULACA",
-      "pintulac",
-      "barnex",
-      "barniz",
-      "barniz marino",
-      "madetec",
-      "viniltex",
-      "intervinil"
+      "PINTURA PARA CANCHAS",
+      "PINTUCOAT",
+      "pintucoat",
+      "imprimante",
+      "pintura canchas"
     ]
   }
 }

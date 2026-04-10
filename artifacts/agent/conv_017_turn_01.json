@@ -1,128 +1,25 @@
 {
-  "user": "¿Qué colores de Koraza tienen disponibles en cuñete?",
+  "user": "Tengo una mesa de metal del jardín que está oxidada, quiero pintarla",
   "result": {
-    "response_text": "Actualmente, tenemos disponible el siguiente color de Koraza en cuñete:\n\n✅ [5891122] - PQ KORAZA MAT BLANCO 2650 18.93L: Disponible\n\nSi necesitas más información o deseas realizar un pedido, ¡avísame!",
-    "intent": "consulta_productos",
+    "response_text": "Para tu mesa de metal oxidada, aquí tienes el sistema completo que te recomiendo:\n\n1. **Preparación**: Lija la superficie con un disco flap o una grata para eliminar el óxido. Asegúrate de que el metal esté limpio y libre de polvo.\n   \n2. **Imprimante**: Aplica **Pintóxido** (convertidor de óxido). Este producto debe actuar durante aproximadamente 4 horas para transformar el óxido. Es importante que lo apliques en un ambiente con temperatura controlada, preferiblemente en las primeras horas de la mañana o al atardecer.\n\n3. **Acabado**: Después de que el Pintóxido haya hecho su trabajo, aplica un anticorrosivo como **Corrotec** (2 manos) y finaliza con **Pintulux 3en1** para darle color y protección UV.\n\nAhora, ¿cuántos metros cuadrados tiene la mesa y qué color te gustaría?",
+    "intent": "asesoria_tecnica",
     "tool_calls": [
       {
-        "name": "consultar_inventario",
+        "name": "consultar_conocimiento_tecnico",
         "args": {
-          "producto": "koraza"
+          "pregunta": "sistema para pintar mesa de metal oxidada",
+          "producto": "Pintóxido"
         },
-        "result": "{\"encontrados\": 5, \"productos\": [{\"codigo\": \"5891696\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 0.95L\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 0.95L\", \"etiqueta_auditable\": \"[5891696] - PQ KORAZA MAT BLANCO 2650 0.95L\", \"marca\": \"58\", \"presentacion\": \"cuarto\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"stock_total\": 123.0}, {\"codigo\": \"5890707\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 3.79L\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 3.79L\", \"etiqueta_auditable\": \"[5890707] - PQ KORAZA MAT BLANCO 2650 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"stock_total\": 105.0}, {\"codigo\": \"5891023\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 9.46L\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 9.46L\", \"etiqueta_auditable\": \"[5891023] - PQ KORAZA MAT BLANCO 2650 9.46L\", \"marca\": \"58\", \"presentacion\": null, \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"stock_total\": 47.0}, {\"codigo\": \"5891122\", \"descripcion\": \"PQ KORAZA MAT BLANCO 2650 18.93L\", \"descripcion_exacta\": \"PQ KORAZA MAT BLANCO 2650 18.93L\", \"etiqueta_auditable\": \"[5891122] - PQ KORAZA MAT BLANCO 2650 18.93L\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"stock_total\": 83.0}, {\"codigo\": \"5893857\", \"descripcion\": \"PQ KORAZA PINT IMPER BLANCO 4032 3.79L\", \"descripcion_exacta\": \"PQ KORAZA PINT IMPER BLANCO 4032 3.79L\", \"etiqueta_auditable\": \"[5893857] - PQ KORAZA PINT IMPER BLANCO 4032 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"familia_consulta\": \"koraza_blanco\", \"producto_padre_busqueda\": \"koraza blanco\", \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"stock_total\": 17.0}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {\"cantidad_inferida\": null, \"presentacion_canonica_inferida\": null, \"producto_base\": \"koraza\", \"color\": null, \"acabado\": null}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": true, \"pregunta_desambiguacion\": \"Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?\", \"mensaje\": null}"
+        "result": "{\"encontrado\": true, \"respuesta_rag\": \"[Fuente: PINTOXIDO.pdf]\\n[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\\n[SECCIÓN: Preparación del producto y Aplicación]\\n\\nAplique al metal el producto con una brocha de cerda natural o sumerja el objeto metálico en Pintóxido\\nhasta humedecerlo bien, dejando actuar el producto durante 4 horas para que la transformación del óxido\\nsea completa (a 25°C), y luego retire el objeto para exponerlo al aire. Se debe procurar que el producto\\npenetre muy bien en las zonas oxidadas para que ataque el óxido incrustado profundamente, lo cual se\\nobserva con la aparición de un polvillo blanco (sales) en las zonas que estaban oxidadas. Luego elimine con\\ncepillo fibra o de alambre, o con una estopa limpia las sales blancas y el exceso de Pintóxido, y proceda\\ncon la aplicación de inmediato de una anticorrosiva Pintuco® apropiada para el metal y al ambiente donde\\nestará expuesto. Se recomienda evitar la aplicación de Pintóxido en lugares con excesiva ventilación\\nporque pierde su efectividad y su uso en metales que van a ser protegidos con pinturas para altas\\ntemperaturas (evite el uso de Pintóxido y otros acondicionadores). El metal debe estar a una temperatura\\ninferior a 30°C evitando que el producto pierda su eficiencia. Para objetos metálicos en exteriores, se\\nrecomienda aplicar el Pintóxido en las primeras horas de la mañana o por la tarde cuando la temperatura\\nhaya disminuido. Tenga en cuenta que el tiempo de actuación del producto mencionado puede variar de\\nacuerdo con la temperatura ambiental y el espesor de película aplicado.\\n\\n---\\n\\n[Fuente: CORROTEC.pdf]\\n[PRODUCTO: CORROTEC] [MARCA: Pintuco]\\n[SECCIÓN: Preparación del producto y Aplicación]\\n\\nAplique al metal el producto con una brocha de cerda natural o sumerja el objeto metálico en Pintóxido\\nhasta humedecerlo bien, dejando actuar el producto durante 4 horas para que la transformación del óxido\\nsea completa (a 25°C), y luego retire el objeto para exponerlo al aire. Se debe procurar que el producto\\npenetre muy bien en las zonas oxidadas para que ataque el óxido incrustado profundamente, lo cual se\\nobserva con la aparición de un polvillo blanco (sales) en las zonas que estaban oxidadas. Luego elimine con\\ncepillo fibra o de alambre, o con una estopa limpia las sales blancas y el exceso de Pintóxido, y proceda\\ncon la aplicación de inmediato de una anticorrosiva Pintuco® apropiada para el metal y al ambiente donde\\nestará expuesto. Se recomienda evitar la aplicación de Pintóxido en lugares con excesiva ventilación\\nporque pierde su efectividad y su uso en metales que van a ser protegidos con pinturas para altas\\ntemperaturas (evite el uso de Pintóxido y otros acondicionadores). El metal debe estar a una temperatura\\ninferior a 30°C evitando que el producto pierda su eficiencia. Para objetos metálicos en exteriores, se\\nrecomienda aplicar el Pintóxido en las primeras horas de la mañana o por la tarde cuando la temperatura\\nhaya disminuido. Tenga en cuenta que el tiempo de actuación del producto mencionado puede variar de\\nacuerdo con la temperatura ambiental y el espesor de película aplicado.\\n\\n---\\n\\n[Fuente: PINTOXIDO.pdf]\\n[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\\n\\nde hierro que es difícil de suprimir manualmente con papeles de\\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\\nmecánicamente con cepillos eléctricos giratorios, para limpieza\\nde tipo mecánico.\\n\\n---\\n\\n[Fuente: ANTICORROSIVO INDUSTRIAL 210003.pdf]\\n[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\\n[SECCIÓN: Versión 2 / Septiembre 2020]\\n\\nse trata con Pintóxido Ref. 514; las pinturas deterioradas se quitan con Removedor Pintuco Ref. 1020. Los\\nsustratos metálicos no ferrosos como el aluminio, hojalata, zinc y metales lisos o pulidos se les aplica\\nWash-Primer Pintuco base agua Ref. 10281795 (1/4 de galón), 10281794 (galón) para obtener óptima\\nadherencia de la anticorrosiva.\", \"archivos_fuente\": [\"PINTOXIDO.pdf\", \"CORROTEC.pdf\", \"ANTICORROSIVO INDUSTRIAL 210003.pdf\", \"PINTULACA 7527.pdf\"], \"mejor_similitud\": 0.7028, \"mensaje\": \"⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. DEBES SINTETIZARLOS como un ingeniero de aplicaciones: 1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado).    Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. 2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. 3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. 4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. 5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. 6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' 7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'\", \"productos_inventario_relacionados\": [{\"codigo\": \"5890999\", \"descripcion\": \"PQ PINTULUX DESOXID PINTOXIDO 514 3.79L\", \"etiqueta_auditable\": \"[5890999] - PQ PINTULUX DESOXID PINTOXIDO 514 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890866\", \"descripcion\": \"PQ CORROTEC PREMIUM MAT GRIS 507 3.79L\", \"etiqueta_auditable\": \"[5890866] - PQ CORROTEC PREMIUM MAT GRIS 507 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5890863\", \"descripcion\": \"PQ CORROTEC PREMIUM MAT NEGRO 200 3.79L\", \"etiqueta_auditable\": \"[5890863] - PQ CORROTEC PREMIUM MAT NEGRO 200 3.79L\", \"marca\": \"58\", \"presentacion\": \"galon\", \"disponible\": true, \"complementarios\": []}, {\"codigo\": \"5891082\", \"descripcion\": \"ALKYD PRIMER 210003 UDA154/20L/AA7\", \"etiqueta_auditable\": \"[5891082] - ALKYD PRIMER 210003 UDA154/20L/AA7\", \"marca\": \"54\", \"presentacion\": null, \"disponible\": false, \"complementarios\": []}], \"instruccion_productos\": \"CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar disponibilidad real y referencia ERP antes de recomendar al cliente. Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. ⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema completo con cantidades calculadas para TODOS los productos y cierra con: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'\", \"conocimiento_comercial_ferreinox\": [{\"id\": 63, \"tipo\": \"preferencia\", \"contexto\": \"fachada, humedad, estuco, base soplada, preparacion, revoque\", \"recomendar\": \"Koraza\", \"evitar\": null, \"nota\": \"Si el cliente va a pintar una fachada con problemas de humedad y actualmente tiene estuco o textura, es OBLIGATORIO indicarle que revise el estado de esa base. Si la base esta mala o soplada, se debe tumbar ABSOLUTAMENTE TODO hasta el revoque y comenzar un sistema nuevo desde cero. Esa es la UNICA garantia de curar la humedad y asegurar el desempeno de la Koraza. NO se puede pintar sobre una base danada.\"}, {\"id\": 46, \"tipo\": \"preferencia\", \"contexto\": \"metales, óxido, rejas, puertas, estructuras metálicas\", \"recomendar\": \"Pintóxido, Corrotec, Pintulux 3 en 1, Brocha Goya Profesional\", \"evitar\": null, \"nota\": \"Sistema de alta protección para estructuras metálicas expuestas a la intemperie con óxido severo. Incluir preparación mecánica y abrasivos de Abracol.\"}, {\"id\": 28, \"tipo\": \"preferencia\", \"contexto\": \"venta de esmaltes, color sólido\", \"recomendar\": null, \"evitar\": null, \"nota\": \"Es un error de ventas no preguntar el color. Siempre que el sistema lleve un acabado de color sólido (como Pintulux MP o Doméstico), TIENES ESTRICTAMENTE PROHIBIDO cotizar o avanzar sin preguntarle al cliente: '¿En qué color deseas pintar el marco?'. Necesitas ese dato para buscar la referencia.\"}, {\"id\": 4, \"tipo\": \"uso_especifico\", \"contexto\": \"metal, oxidado, rejas, portones, tobogan, intemperie, exterior, corrosion\", \"recomendar\": \"Pintóxido + Corrotec + Pintulux 3en1\", \"evitar\": null, \"nota\": \"Para metal oxidado a la intemperie SIEMPRE recomendar el sistema completo de 3 capas: 1) Preparación con disco flap o grata + Pintóxido (convertidor de óxido si hay óxido profundo). 2) Corrotec o Corrotec Premium como anticorrosivo (2 manos). 3) Pintulux 3en1 como acabado final (protección UV y estética). NUNCA recomendar solo el anticorrosivo sin el acabado. Sin Pintulux, el Corrotec se degrada en meses.\"}, {\"id\": 77, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, exterior, compatibilidad, acabados, UV\", \"recomendar\": \"acabados alquídicos, acrílicos, Intergard 740\", \"evitar\": \"dejar epóxicos expuestos al sol como acabado\", \"nota\": \"Es fundamental no dejar epóxicos expuestos al sol como acabado, a menos que se trate de Intergard 740. Siempre se debe usar un acabado resistente a UV en exterior. El sistema se compone de un anticorrosivo y un acabado, y a mayor exigencia, se debe usar poliuretano. Los anticorrosivos epóxicos requieren un acabado para exterior, mientras que los acabados alquídicos o acrílicos pueden aplicarse sobre epóxicos.\"}, {\"id\": 76, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, exterior, resistencia UV, anticorrosivos, epóxicos, acabados\", \"recomendar\": \"Corrotec Premium, Pintulux 3 en 1, Interseal 670HS, Interthane 990, Intergard 740\", \"evitar\": \"epóxicos como acabado final\", \"nota\": \"En estructuras metálicas exteriores, el sistema es similar al de interior, pero se debe considerar la resistencia a la radiación UV. Los epóxicos son adecuados solo como anticorrosivos, no deben usarse como acabado final, ya que la radiación UV puede deteriorarlos rápidamente. Se recomienda un sistema básico con anticorrosivo alquídico y un acabado resistente a la intemperie, un sistema intermedio con imprimante epóxico y acabados alquídicos o acrílicos, y un sistema de alto desempeño con Interseal 670HS y poliuretano para mayor durabilidad.\"}, {\"id\": 75, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, interior, bajo techo, sin humedad, preparación, compatibilidad, sistemas\", \"recomendar\": \"N/A\", \"evitar\": \"N/A\", \"nota\": \"Las reglas clave incluyen no aplicar epóxicos o poliuretanos sobre anticorrosivos alquídicos, y la compatibilidad de sistemas debe ser considerada: anticorrosivo alquídico solo con acabados alquídicos, y anticorrosivo epóxico puede recibir acabados epóxicos, poliuretanos, acrílicos o alquídicos.\"}, {\"id\": 74, \"tipo\": \"preferencia\", \"contexto\": \"estructuras metálicas, interior, bajo techo, sin humedad, sistemas, anticorrosivo, alquídico, epóxico, desempeño, presupuesto\", \"recomendar\": \"Corrotec Premium, anticorrosivo 513, Pintulux 3 en 1, Primer Epóxico 10046, Primer Epóxico 10050, Interseal 670HS, Pintucoat, Intergard 740, Epoxipoliamida, Pintucoat Plus, Interthane 990\", \"evitar\": \"N/A\", \"nota\": \"En estructuras metálicas interiores sin humedad, el sistema se selecciona según el nivel de desempeño requerido y el presupuesto del cliente. Se recomienda un sistema básico con anticorrosivo alquídico y Pintulux 3 en 1 para estructuras convencionales, un sistema intermedio con imprimante epóxico para mayor durabilidad, y un sistema alto desempeño con Interseal 670HS para condiciones exigentes.\"}], \"instruccion_conocimiento_comercial\": \"⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. REGLAS OBLIGATORIAS: 1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. 2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. 3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. 4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' SEPARADO de la información de la ficha técnica. 5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente.\"}"
       }
     ],
-    "context_updates": {
-      "last_product_request": {
-        "core_terms": [
-          "koraza"
-        ],
-        "search_terms": [
-          "koraza",
-          "impermeabilizante koraza",
-          "koraza elastomerica",
-          "koraza elastomerico",
-          "pintura fachada",
-          "pintura exterior fachada",
-          "pintura canchas",
-          "pintura para canchas",
-          "pintura de cancha",
-          "canchas"
-        ],
-        "requested_quantity": null,
-        "requested_unit": null,
-        "quantity_expression": null,
-        "product_codes": [],
-        "brand_filters": [
-          "koraza",
-          "pintuco"
-        ],
-        "direction_filters": [],
-        "size_filters": [],
-        "store_filters": [],
-        "original_query": "koraza",
-        "color_filters": [],
-        "finish_filters": [],
-        "nlu_processed": true,
-        "nlu_extraction": {
-          "cantidad_inferida": null,
-          "presentacion_canonica_inferida": null,
-          "producto_base": "koraza",
-          "color": null,
-          "acabado": null
-        },
-        "canonical_product": "koraza"
-      },
-      "last_product_query": "koraza",
-      "last_product_context": [
-        {
-          "codigo": "5891696",
-          "descripcion": "PQ KORAZA MAT BLANCO 2650 0.95L",
-          "descripcion_exacta": "PQ KORAZA MAT BLANCO 2650 0.95L",
-          "etiqueta_auditable": "[5891696] - PQ KORAZA MAT BLANCO 2650 0.95L",
-          "marca": "58",
-          "presentacion": "cuarto",
-          "familia_consulta": "koraza_blanco",
-          "producto_padre_busqueda": "koraza blanco",
-          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
-          "stock_total": 123.0
-        },
-        {
-          "codigo": "5890707",
-          "descripcion": "PQ KORAZA MAT BLANCO 2650 3.79L",
-          "descripcion_exacta": "PQ KORAZA MAT BLANCO 2650 3.79L",
-          "etiqueta_auditable": "[5890707] - PQ KORAZA MAT BLANCO 2650 3.79L",
-          "marca": "58",
-          "presentacion": "galon",
-          "familia_consulta": "koraza_blanco",
-          "producto_padre_busqueda": "koraza blanco",
-          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
-          "stock_total": 105.0
-        },
-        {
-          "codigo": "5891023",
-          "descripcion": "PQ KORAZA MAT BLANCO 2650 9.46L",
-          "descripcion_exacta": "PQ KORAZA MAT BLANCO 2650 9.46L",
-          "etiqueta_auditable": "[5891023] - PQ KORAZA MAT BLANCO 2650 9.46L",
-          "marca": "58",
-          "presentacion": null,
-          "familia_consulta": "koraza_blanco",
-          "producto_padre_busqueda": "koraza blanco",
-          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
-          "stock_total": 47.0
-        },
-        {
-          "codigo": "5891122",
-          "descripcion": "PQ KORAZA MAT BLANCO 2650 18.93L",
-          "descripcion_exacta": "PQ KORAZA MAT BLANCO 2650 18.93L",
-          "etiqueta_auditable": "[5891122] - PQ KORAZA MAT BLANCO 2650 18.93L",
-          "marca": "58",
-          "presentacion": "cuñete",
-          "familia_consulta": "koraza_blanco",
-          "producto_padre_busqueda": "koraza blanco",
-          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
-          "stock_total": 83.0
-        },
-        {
-          "codigo": "5893857",
-          "descripcion": "PQ KORAZA PINT IMPER BLANCO 4032 3.79L",
-          "descripcion_exacta": "PQ KORAZA PINT IMPER BLANCO 4032 3.79L",
-          "etiqueta_auditable": "[5893857] - PQ KORAZA PINT IMPER BLANCO 4032 3.79L",
-          "marca": "58",
-          "presentacion": "galon",
-          "familia_consulta": "koraza_blanco",
-          "producto_padre_busqueda": "koraza blanco",
-          "pregunta_desambiguacion": "Tengo Koraza Blanco. ¿Lo buscas en cuarto, galón o cuñete?",
-          "stock_total": 17.0
-        }
-      ]
-    },
+    "context_updates": {},
     "should_create_task": false,
     "confidence": {
       "score": 1.0,
       "level": "alta",
       "signals": [
-        "inventory_used"
+        "rag_used"
       ]
     },
     "is_farewell": false

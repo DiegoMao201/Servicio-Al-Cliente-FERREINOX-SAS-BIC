@@ -1,67 +1,66 @@
 {
-  "query": "pintura económica para cielo raso bodega",
+  "query": "tanque metálico industrial expuesto a químicos",
   "response": {
-    "query": "pintura económica para cielo raso bodega",
+    "query": "tanque metálico industrial expuesto a químicos",
     "resultados": [
       {
-        "archivo": "Viniltex-advanced.pdf",
-        "familia": "Viniltex-advanced",
-        "similitud": 0.6803,
-        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: En repinte]\n\nsobre color diferente\n30 a 40 m2 /gal\na 2 manos."
+        "archivo": "PRODUCTOS MANTENIMIENTO.pdf",
+        "familia": "PRODUCTOS MANTENIMIENTO",
+        "similitud": 0.6352,
+        "texto": "[PRODUCTO: PRODUCTOS MANTENIMIENTO] [MARCA: Pintuco]\n[SECCIÓN: La protección anticorrosiva a tanques de acero de almacenamiento de]\n\nproducto tales como: petróleo crudo, agua potable y una selecta gama\nde productos derivados del petróleo."
       },
       {
-        "archivo": "Viniltex-advanced.pdf",
-        "familia": "Viniltex-advanced",
-        "similitud": 0.6716,
-        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: En repinte 40 a 50 m2 /gal]\n\nsobre color igual o similar a 2 manos."
+        "archivo": "ANTICORROSIVO AMARILLO  505.pdf",
+        "familia": "ANTICORROSIVO AMARILLO  505",
+        "similitud": 0.635,
+        "texto": "[PRODUCTO: ANTICORROSIVO AMARILLO  505] [MARCA: Pintuco]\n[SECCIÓN: ANTICORROSIVA FENÓLICA MATE AMARILLA 505 Ideal para pro]\n\nIdeal para proteger estructuras metálicas en general, exterior de tanques y\ntanques y tuberías expuestas a ambientes de corrosividad"
       },
       {
-        "archivo": "Viniltex-advanced.pdf",
-        "familia": "Viniltex-advanced",
-        "similitud": 0.6702,
-        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: En repinte 30 a 40 m2 /gal]\n\nsobre color diferente a 2 manos."
+        "archivo": "ANTICORROSIVO AROFLEX ATOXICO ROJO 10082.pdf",
+        "familia": "ANTICORROSIVO AROFLEX ATOXICO ROJO 10082",
+        "similitud": 0.6324,
+        "texto": "[PRODUCTO: ANTICORROSIVO AROFLEX ATOXICO ROJO 10082] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nComo base anticorrosiva (con el acabado final recomendado) para la protección de plantas químicas,\ninterior y exterior de tanques de aguas dulces y saladas, instalaciones marinas o portuarias y objetos\nmetálicos sometidos a humedad constante."
       },
       {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.6381,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+        "archivo": "EPÓXI ALTOS SOLIDOS 13200 201 202.pdf",
+        "familia": "EPÓXI ALTOS SOLIDOS 13200 201 202",
+        "similitud": 0.6115,
+        "texto": "[PRODUCTO: EPÓXI ALTOS SOLIDOS 13200 201 202] [MARCA: Pintuco]\n[SECCIÓN: Para proteger contra la corrosión los interiores de los tanques]\n\nde acero para almacenamiento que contienen una variedad de\nproductos incluyendo petróleo crudo, mezclas de gasolina sin plomo, agua potable y una gama\nseleccionada de solventes aromáticos y alifáticos. Protección a la corrosión de diversas superficies\nmetálicas, de madera, concreto o asbesto-cemento protegiéndolos de humos, polvo y salpique. Para\náreas coster"
       },
       {
-        "archivo": "PINTURA CIELOS.pdf",
-        "familia": "PINTURA CIELOS",
-        "similitud": 0.633,
-        "texto": "[PRODUCTO: PINTURA CIELOS] [MARCA: Pintuco]\n[SECCIÓN: Brocha o rodillo]\n\n1 galón\n25%\n1.0"
+        "archivo": "TERCOAT BRILLANTE.pdf",
+        "familia": "TERCOAT BRILLANTE",
+        "similitud": 0.6083,
+        "texto": "[PRODUCTO: TERCOAT BRILLANTE] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPor su alta resistencia a la abrasión, corrosión y acción de agentes químicos se recomienda para recubrir superficies metálicas como estructuras,\ntanques, tuberías, maquinaria etc., que se encuentren expuestas a una alta contaminación industrial o en ambientes marinos costaneros."
       },
       {
-        "archivo": "PINTURA SUPER CUBRIENTE.pdf",
-        "familia": "PINTURA SUPER CUBRIENTE",
-        "similitud": 0.6281,
-        "texto": "[PRODUCTO: PINTURA SUPER CUBRIENTE] [MARCA: Pintuco]\n[SECCIÓN: Brocha o Rodillo]\n\n1 galón\n 25%"
+        "archivo": "FDS-PINTULUX TEU BERMELLON T-26.pdf",
+        "familia": "FDS-PINTULUX TEU BERMELLON T-26",
+        "similitud": 0.6077,
+        "texto": "[PRODUCTO: FDS-PINTULUX TEU BERMELLON T-26] [MARCA: Pintuco]\n[SECCIÓN: Estabilidad química:]\n\nEstable químicamente bajo las condiciones indicadas de almacenamiento, manipulación y uso.\n10.3"
       },
       {
-        "archivo": "PINTURAMA.pdf",
-        "familia": "PINTURAMA",
-        "similitud": 0.625,
-        "texto": "[PRODUCTO: PINTURAMA] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para pintar superficies interiores no expuestas al polvo y a]\n\nfricciones, tales como techos y cielorrasos. Disponible en una amplia gama\nde colores."
+        "archivo": "FDS-PINTULUX TEU CAOBA.pdf",
+        "familia": "FDS-PINTULUX TEU CAOBA",
+        "similitud": 0.6021,
+        "texto": "[PRODUCTO: FDS-PINTULUX TEU CAOBA] [MARCA: Pintuco]\n[SECCIÓN: Reactividad:]\n\nNo se esperan reacciones peligrosas si se cumplen las instrucciones técnicas de almacenamiento de productos químicos. Ver\nsección 7.\n\n10.2"
       },
       {
-        "archivo": "PINTURA PARA CANCHAS.pdf",
-        "familia": "PINTURA PARA CANCHAS",
-        "similitud": 0.5986,
-        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Concreto]\n\n13 - 15 m2/gal a 2 manos."
+        "archivo": "FDS-PINTULUX TEU BERMELLON T-26.pdf",
+        "familia": "FDS-PINTULUX TEU BERMELLON T-26",
+        "similitud": 0.6017,
+        "texto": "[PRODUCTO: FDS-PINTULUX TEU BERMELLON T-26] [MARCA: Pintuco]\n[SECCIÓN: Precauciones especiales para el usuario]\n\nPropiedades físico-químicas:"
       }
     ],
     "productos_candidatos": [
-      "Viniltex-advanced",
-      "PINTURA PARA CANCHAS",
-      "viniltex",
-      "pintucoat",
-      "pintura canchas",
-      "pinturama",
-      "pintura cielos",
-      "vinil max",
-      "domestico"
+      "PRODUCTOS MANTENIMIENTO",
+      "ANTICORROSIVO AMARILLO  505",
+      "ANTICORROSIVO AROFLEX ATOXICO ROJO 10082",
+      "EPÓXI ALTOS SOLIDOS 13200 201 202",
+      "corrotec",
+      "pintulux",
+      "anticorrosivo",
+      "wash primer"
     ]
   }
 }

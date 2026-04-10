@@ -1,63 +1,59 @@
 {
-  "query": "necesito quitar barniz viejo de una puerta de madera",
+  "query": "rampa de parqueadero con tráfico vehicular",
   "response": {
-    "query": "necesito quitar barniz viejo de una puerta de madera",
+    "query": "rampa de parqueadero con tráfico vehicular",
     "resultados": [
       {
-        "archivo": "BARNEX EXTRA PROTECCIÓN.pdf",
-        "familia": "BARNEX EXTRA PROTECCIÓN",
-        "similitud": 0.64,
-        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCIÓN] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar el barniz, verifique el estado de la madera.\nEn maderas nuevas para obtener tersura y promover adherencia, lije muy bien la superficie en el\nsentido de la veta de la madera con papel abrasivo N°180 y elimine el polvillo suelto. Para alargar la\ndurabilidad de la madera, aplique una mano de Base Inmunizante Pintuco® Ref. 6601 como\npreparador de superficie.\nEn repintes, si la pintura está "
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.6641,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.2 / Noviembre 2019 PINTURA PARA\nPintura acrílica modificada para demarcación horizontal,\ncon excelente visibilidad diurna y nocturna, resistente a la\nabrasión severa y a gran variedad de contaminantes,\ndurables y rápido secamiento para apertura al tráfico y\nentre manos."
       },
       {
-        "archivo": "BARNIZ BARNEX 557.pdf",
-        "familia": "BARNIZ BARNEX 557",
-        "similitud": 0.6399,
-        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar el barniz, verifique el estado de la madera.\nEn maderas nuevas para obtener tersura y promover adherencia, lije muy bien la superficie en el\nsentido de las vetas de la madera con papel abrasivo N°180 y elimine el polvillo suelto. Para alargar la\ndurabilidad de la madera, aplique una mano de Base Inmunizante Pintuco® Ref. 6601 como\npreparador de superficie.\nEn repintes, si la pintura está dete"
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.6546,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
       },
       {
-        "archivo": "BARNIZ BARNEX 557.pdf",
-        "familia": "BARNIZ BARNEX 557",
-        "similitud": 0.6389,
-        "texto": "[PRODUCTO: BARNIZ BARNEX 557] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la protección y decoración de superficies de madera en]\n\nambientes exteriores expuestas al roce moderado, como pasamanos,\nbalcones, puertas, portones, mesas y cercas. No apto para uso en pisos."
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.6432,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nDemarcación y señalización de parqueaderos, pisos de\nalmacenes, en interior y exterior, bodegas e industrias en\ngeneral, aplicadas sobre superficies de pavimento y concreto\nprincipalmente. Tanto para aplicación de metros cuadrados\ncomo lineales."
       },
       {
-        "archivo": "BARNIZ SD1.pdf",
-        "familia": "BARNIZ SD1",
-        "similitud": 0.6346,
-        "texto": "[PRODUCTO: BARNIZ SD1] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar el barniz, verifique el estado de la madera.\nEn maderas nuevas, para obtener tersura y promover adherencia, lije muy bien la superficie en el\nsentido de las vetas de la madera con papel abrasivo N° 180 y elimine el polvillo suelto.\nEn repintes, si la pintura está deteriorada, aplique Removedor Pintuco® Ref. 1020, deje actuar por 10\nminutos y retire con una espátula las capas de pintura removidas. Lu"
+        "archivo": "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA(TERINSA).pdf",
+        "familia": "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
+        "similitud": 0.6297,
+        "texto": "[PRODUCTO: PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA] [MARCA: Pintuco]\n[SECCIÓN: CENTRO INDUSTRIAL RIONEGRO:]\n\nAutopista Medellín – Bogotá"
       },
       {
-        "archivo": "REMOVEDOR PINTUCO 1020 (Copia en conflicto de usuario-PC 2019-09-07).pdf",
-        "familia": "REMOVEDOR PINTUCO 1020",
-        "similitud": 0.6194,
-        "texto": "[PRODUCTO: REMOVEDOR PINTUCO 1020] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\nLa pintura, barniz o laca que se va a eliminar debe estar limpia, seca y fría.\n1/3"
+        "archivo": "FDS - BARNEX EXTRAPROTECCION SEMIBRILLANTE CARAMELO 6606.pdf",
+        "familia": "FDS - BARNEX EXTRAPROTECCION SEMIBRILLANTE CARAMELO 6606",
+        "similitud": 0.4756,
+        "texto": "[PRODUCTO: FDS - BARNEX EXTRAPROTECCION SEMIBRILLANTE CARAMELO 6606] [MARCA: Pintuco]\n[SECCIÓN: PINTURA]\n\n14.3\nClase(s) relativas al transporte: 3"
       },
       {
-        "archivo": "BARNEX EXTRA PROTECCION.pdf",
-        "familia": "BARNEX EXTRA PROTECCION",
-        "similitud": 0.5653,
-        "texto": "[PRODUCTO: BARNEX EXTRA PROTECCION] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar el barniz, verifique el estado de la madera.\nEn maderas nuevas para obtener tersura y promover adherencia, lije muy bien la superficie en el\nsentido de la veta de la madera con papel abrasivo N°180 y elimine el polvillo suelto. Para alargar la\ndurabilidad de la madera, aplique una mano de Base Inmunizante Pintuco® Ref. 6601 como\npreparador de superficie.\nEn repintes, si la pintura está "
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.4472,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Secondary]\n\nentrance/Exit"
       },
       {
-        "archivo": "MADETEC 5 EN 1.pdf",
-        "familia": "MADETEC 5 EN 1",
-        "similitud": 0.5564,
-        "texto": "[PRODUCTO: MADETEC 5 EN 1] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nAntes de aplicar el barniz, verifique el estado de la madera.\nEn maderas nuevas, para obtener tersura y promover adherencia, lije muy bien la superficie en el\nsentido de las vetas de la madera con papel abrasivo N° 180 y elimine el polvillo suelto, luego pula con\nN° 360.\nEn repintes, si la pintura está deteriorada, aplique Removedor Pintuco® Ref. 1020, deje actuar por 10\nminutos y retire con una espátula las cap"
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.4323,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Secondary]\n\nentrance"
       }
     ],
     "productos_candidatos": [
-      "BARNEX EXTRA PROTECCIÓN",
-      "BARNIZ BARNEX 557",
-      "BARNIZ SD1",
-      "imprimante",
-      "barnex",
-      "barniz",
-      "pintulac",
-      "barniz marino",
-      "wood stain",
-      "madetec",
-      "pintulux"
+      "PINTURA PARA PARQUEADERO",
+      "PINTURA PARA CANCHAS",
+      "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
+      "pintura canchas",
+      "pintucoat",
+      "pintura trafico",
+      "pintutraf"
     ]
   }
 }

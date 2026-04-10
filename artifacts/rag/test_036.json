@@ -1,66 +1,67 @@
 {
-  "query": "juego infantil de metal al aire libre",
+  "query": "cocina y baño con mucha humedad y grasa",
   "response": {
-    "query": "juego infantil de metal al aire libre",
+    "query": "cocina y baño con mucha humedad y grasa",
     "resultados": [
       {
-        "archivo": "FDS - PINTULUX MP ALUMINIO.pdf",
-        "familia": "FDS - PINTULUX MP ALUMINIO",
-        "similitud": 0.4779,
-        "texto": "[PRODUCTO: FDS - PINTULUX MP ALUMINIO] [MARCA: Pintuco]\n[SECCIÓN: Puede reaccionar]\n\nviolentamente\n10.6"
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6631,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n✓Evita filtraciones y ampollas.\n✓Antihongos y antialgas.\n✓Uso interior y exterior.\n✓Bloquea humedades severas."
       },
       {
-        "archivo": "FDS - PINTULUX MP ALUMINIO.pdf",
-        "familia": "FDS - PINTULUX MP ALUMINIO",
-        "similitud": 0.465,
-        "texto": "[PRODUCTO: FDS - PINTULUX MP ALUMINIO] [MARCA: Pintulux]\n[SECCIÓN: Puede reaccionar]\n\nviolentamente\n10.6"
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6558,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: Se usa como tratamiento correctivo y preventivo de]\n\nhumedades por nivel freático o presión negativa en\nmuros de contención, sótanos, bodegas, cuartos útiles o\nviviendas. Funciona como una pintura impermeable de\nalta blancura, para sellar y proteger contra la humedad\nparedes y muros interiores o exteriores que pueden estar\nexpuestos a contacto directo con la tierra en al menos\nuna de sus caras, o donde se presente aparición de\nhumedades en muros causados por"
       },
       {
-        "archivo": "FDS- PINTULUX MP BASE DEEP VERANO ETERNO.pdf",
-        "familia": "FDS- PINTULUX MP BASE DEEP VERANO ETERNO",
-        "similitud": 0.4564,
-        "texto": "[PRODUCTO: FDS- PINTULUX MP BASE DEEP VERANO ETERNO] [MARCA: Pintuco]\n[SECCIÓN: Log POW]\n\n3,3"
+        "archivo": "AQUABLOCK ULTRA.pdf",
+        "familia": "AQUABLOCK ULTRA",
+        "similitud": 0.6423,
+        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: 2. Aplique con brocha o rodillo y sin diluir una mano de]\n\nAQUABLOCK® ULTRA hasta obtener una película uniforme\nsobre toda la superficie, sin presencia de microburbujas o\nespacios sin producto. Nivele y resane la superficie con Estuco"
       },
       {
-        "archivo": "FDC ANTICORROSIVO VERDE OLIVA 513.pdf",
-        "familia": "FDC ANTICORROSIVO VERDE OLIVA 513",
-        "similitud": 0.448,
-        "texto": "[PRODUCTO: FDC ANTICORROSIVO VERDE OLIVA 513] [MARCA: Pintuco]\n[SECCIÓN: Choque y fricción Contacto con el aire Calentamiento Luz Solar Humedad]\n\nNo aplicable No aplicable Riesgo de inflamación Evitar incidencia directa No aplicable\n10.5 Materiales incompatibles:"
+        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
+        "familia": "ESTUCO ANTI HUMEDAD",
+        "similitud": 0.5496,
+        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: PRODUCTOS COMPLEMENTARIOS]\n\n• Sellamur 3 en 1: Impermeabilizante de humedad freatica o ascendente"
       },
       {
-        "archivo": "CORROTEC.pdf",
-        "familia": "CORROTEC",
-        "similitud": 0.4456,
-        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nAplique al metal el producto con una brocha de cerda natural o sumerja el objeto metálico en Pintóxido\nhasta humedecerlo bien, dejando actuar el producto durante 4 horas para que la transformación del óxido\nsea completa (a 25°C), y luego retire el objeto para exponerlo al aire. Se debe procurar que el producto\npenetre muy bien en las zonas oxidadas para que ataque el óxido incrustado profundamente, lo cual se"
+        "archivo": "ALTA TEMPERATURA GRIS 902.pdf",
+        "familia": "ALTA TEMPERATURA GRIS 902",
+        "similitud": 0.5367,
+        "texto": "[PRODUCTO: ALTA TEMPERATURA GRIS 902] [MARCA: Pintuco]\n[SECCIÓN: TIEMPOS DE SECAMIENTO]\n\nCon humedad relativa del 60%"
       },
       {
-        "archivo": "C- THERM HB 990 OUTDOOR.pdf",
-        "familia": "C- THERM HB 990 OUTDOOR",
-        "similitud": 0.4436,
-        "texto": "[PRODUCTO: C- THERM HB 990 OUTDOOR] [MARCA: Pintuco]\n[SECCIÓN: Rodillo]\n\n250"
+        "archivo": "FDS - DOMESTICO GRIS HUMO P-85.pdf",
+        "familia": "FDS - DOMESTICO GRIS HUMO P-85",
+        "similitud": 0.4622,
+        "texto": "[PRODUCTO: FDS - DOMESTICO GRIS HUMO P-85] [MARCA: Pintuco]\n[SECCIÓN: Limpiar a diario y desinfectar periódicamente de acuerdo a las instrucciones del]\n\nfabricante. Se recomienda su uso en caso de riesgo de salpicaduras.\nE.- Protección corporal"
       },
       {
-        "archivo": "FDS - PRIMER ANTICORROSIVO VERDE OLIVA 513.pdf",
-        "familia": "FDS - PRIMER ANTICORROSIVO VERDE OLIVA 513",
-        "similitud": 0.4333,
-        "texto": "[PRODUCTO: FDS - PRIMER ANTICORROSIVO VERDE OLIVA 513] [MARCA: Pintuco]\n[SECCIÓN: Choque y fricción Contacto con el aire Calentamiento Luz Solar Humedad]\n\nNo aplicable No aplicable Riesgo de inflamación Evitar incidencia directa No aplicable\n10.5 Materiales incompatibles:"
+        "archivo": "FDS - DOMESTICO GRIS HUMO P-85.pdf",
+        "familia": "FDS - DOMESTICO GRIS HUMO P-85",
+        "similitud": 0.4619,
+        "texto": "[PRODUCTO: FDS - DOMESTICO GRIS HUMO P-85] [MARCA: Pintuco]\n[SECCIÓN: Evitar álcalis o bases fuertes]\n\n10.6"
       },
       {
-        "archivo": "FDC ANTICORROSIVO VERDE OLIVA 513.pdf",
-        "familia": "FDC ANTICORROSIVO VERDE OLIVA 513",
-        "similitud": 0.4324,
-        "texto": "[PRODUCTO: FDC ANTICORROSIVO VERDE OLIVA 513]\n[SECCIÓN: Choque y fricción Contacto con el aire Calentamiento Luz Solar Humedad]\n\nNo aplicable No aplicable Riesgo de inflamación Evitar incidencia directa No aplicable\n10.5 Materiales incompatibles:"
+        "archivo": "FDS - DOMESTICO GRIS HUMO P-85.pdf",
+        "familia": "FDS - DOMESTICO GRIS HUMO P-85",
+        "similitud": 0.4576,
+        "texto": "[PRODUCTO: FDS - DOMESTICO GRIS HUMO P-85] [MARCA: Pintuco]\n[SECCIÓN: Peligros específicos del producto químico:]\n\nComo consecuencia de la combustión o descomposición térmica se generan subproductos de reacción que pueden resultar\naltamente tóxicos y, consecuentemente, pueden presentar un riesgo elevado para la salud."
       }
     ],
     "productos_candidatos": [
-      "FDC ANTICORROSIVO VERDE OLIVA 513",
-      "CORROTEC",
-      "C- THERM HB 990 OUTDOOR",
-      "corrotec",
-      "pintoxido",
-      "pintulux",
-      "anticorrosivo",
-      "wash primer"
+      "AQUABLOCK ULTRA",
+      "ESTUCO ANTI HUMEDAD",
+      "estuco anti humedad",
+      "aquablock",
+      "aquablock ultra",
+      "sellamur",
+      "sika",
+      "viniltex",
+      "viniltex banos y cocinas"
     ]
   }
 }

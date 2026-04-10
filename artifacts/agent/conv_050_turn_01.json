@@ -1,0 +1,18 @@
+{
+  "user": "Cada que llueve la fachada de la casa se moja toda y se pela la pintura",
+  "result": {
+    "response_text": "Qué fastidio, pero tranquilo que eso tiene solución. Para tratar la fachada y evitar que la pintura se pele, necesitamos un sistema completo que incluya la preparación adecuada y un buen acabado.\n\nPrimero, vamos a raspar la pintura suelta y limpiar la superficie. Luego, aplicaremos un sellador para barrera de humedad, y finalmente, un acabado acrílico que resista la intemperie.\n\n¿Me puedes decir cuántos m² tiene la fachada y qué color te gustaría usar?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  }
+}

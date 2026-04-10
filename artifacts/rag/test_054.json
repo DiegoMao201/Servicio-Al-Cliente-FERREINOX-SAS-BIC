@@ -1,0 +1,70 @@
+{
+  "query": "imprimante epóxico para metal industrial",
+  "response": {
+    "query": "imprimante epóxico para metal industrial",
+    "resultados": [
+      {
+        "archivo": "corrotec-primer-epoxico-10070-13350.pdf",
+        "familia": "corrotec-primer-epoxico-10070-13350",
+        "similitud": 0.6768,
+        "texto": "[PRODUCTO: corrotec-primer-epoxico-10070-13350] [MARCA: Pintuco]\n[SECCIÓN: Autoimprimante epóxico de rápido secado a base de fosfato de]\n\nzinc, ideal para todo tipo de estructuras metálicas"
+      },
+      {
+        "archivo": "CORROTEC EPOXI ZINC 2K 10073.pdf",
+        "familia": "CORROTEC EPOXI ZINC 2K 10073",
+        "similitud": 0.6727,
+        "texto": "[PRODUCTO: CORROTEC EPOXI ZINC 2K 10073] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la imprimación de superficies metálicas en entornos]\n\nagresivos que exigen alta protección anticorrosiva."
+      },
+      {
+        "archivo": "PRIMER EPOXICO 10046.pdf",
+        "familia": "PRIMER EPOXICO 10046",
+        "similitud": 0.6376,
+        "texto": "[PRODUCTO: PRIMER EPOXICO 10046] [MARCA: Pintuco]\n[SECCIÓN: Anticorrosivo epóxico con pigmento fosfato de zinc como inhibidor de corrosión y]\n\nun endurecedor poliamídico, que produce al secar una capa sólida resistente a\nácidos débiles, álcalis, solventes alifática o aromática. Resiste temperaturas hasta\n120°C (248°F) en seco. Es ideal para proteger metales ferrosos y no ferrosos.\nCompatible sobre galvanizados, aluminio y acero inoxidable."
+      },
+      {
+        "archivo": "EPOXI ESTRUCTURAS.pdf",
+        "familia": "EPOXI ESTRUCTURAS",
+        "similitud": 0.6013,
+        "texto": "[PRODUCTO: EPOXI ESTRUCTURAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nIdeal para proteger y decorar e superficies de metal, concreto, asbesto-cemento y madera en ambientes\ninteriores y exteriores expuestos a conminación industrial de agresividad media o que requieran un lavado\nfrecuente, alta dureza y resistencia mecánica. El producto puede ser utilizado como auto imprimante\ncuando la preparación de superficie es mínimo grado comercial de acuerdo al estándar SSPC-SP6 y cuando\nla estructura va a estar "
+      },
+      {
+        "archivo": "EPÓXI ALTOS SOLIDOS 13200 201 202.pdf",
+        "familia": "EPÓXI ALTOS SOLIDOS 13200 201 202",
+        "similitud": 0.6012,
+        "texto": "[PRODUCTO: EPÓXI ALTOS SOLIDOS 13200 201 202] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.0 / 2017\n Ideal proteger superficies metálicas, de madera, concr\n CERTIFICADO PARA INMERSIÓN EN CRUDO A 80 °C DE ACUERDO AL ESTANDAR ISO 2812-1 Prueba r\nRecubrimientos auto-imprimantes de altos sólidos, de\nexcelente resistencia a la humedad, química y solventes. El\nproducto permite tener altos espesores por mano aplicada,\ngenerándose economías en el proceso productivo."
+      },
+      {
+        "archivo": "PINTUCOAT PLUS.pdf",
+        "familia": "PINTUCOAT PLUS",
+        "similitud": 0.5977,
+        "texto": "[PRODUCTO: PINTUCOAT PLUS] [MARCA: Pintuco]\n[SECCIÓN: Versión 5 / Abril 2022]\n\nPINTUCOAT® PLUS\nAutoimprimante epóxico para áreas de alto grado de asepsia,\npresencia de alta humedad o contaminación industrial"
+      },
+      {
+        "archivo": "MASTIC EPOXICO.pdf",
+        "familia": "MASTIC EPOXICO",
+        "similitud": 0.5961,
+        "texto": "[PRODUCTO: MASTIC EPOXICO] [MARCA: Pintuco]\n[SECCIÓN: MASTIC EPOXICO DE ALTOS SOLIDOS MASTIC EPOXICO DE]\n\nProducto auto imprimante epóxico de altos sólidos,\ndiseñado para ser aplicado sobre superficies preparadas\nmanual-mecánicamente\no\ncon\nchorro\nabrasivo."
+      },
+      {
+        "archivo": "EPOXICA ALTOS SOLIDOS 13200-202.pdf",
+        "familia": "EPOXICA ALTOS SOLIDOS 13200-202",
+        "similitud": 0.5937,
+        "texto": "[PRODUCTO: EPOXICA ALTOS SOLIDOS 13200-202] [MARCA: Pintuco]\n[SECCIÓN: Versión 5 / Septiembre 2022]\n\nLa superficie debe mantener una temperatura mínima de 3°C superior a la temperatura de rocío durante\nla preparación y aplicación del producto.\nPara usarlo como auto imprimante la superficie debe ser preparada con chorro abrasivo, mínimo a grado\ncomercial SSPC-SP6 (NACE 3) con remoción completa de la escama de laminación, para uso general.\nPara ambientes altamente agresivos debe ser preparada a SS"
+      }
+    ],
+    "productos_candidatos": [
+      "corrotec-primer-epoxico-10070-13350",
+      "CORROTEC EPOXI ZINC 2K 10073",
+      "PRIMER EPOXICO 10046",
+      "EPOXI ESTRUCTURAS",
+      "corrotec",
+      "imprimante",
+      "pintulux",
+      "anticorrosivo",
+      "wash primer",
+      "fondo",
+      "sellador",
+      "primer"
+    ]
+  }
+}

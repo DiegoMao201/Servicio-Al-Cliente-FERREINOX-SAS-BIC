@@ -1,65 +1,65 @@
 {
-  "query": "el hierro se lo está comiendo el óxido",
+  "query": "señalización vial en pavimento de parqueadero",
   "response": {
-    "query": "el hierro se lo está comiendo el óxido",
+    "query": "señalización vial en pavimento de parqueadero",
     "resultados": [
       {
-        "archivo": "PINTOXIDO.pdf",
-        "familia": "PINTOXIDO",
-        "similitud": 0.612,
-        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.7192,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nDemarcación y señalización de parqueaderos, pisos de\nalmacenes, en interior y exterior, bodegas e industrias en\ngeneral, aplicadas sobre superficies de pavimento y concreto\nprincipalmente. Tanto para aplicación de metros cuadrados\ncomo lineales."
       },
       {
-        "archivo": "PINTOXIDO.pdf",
-        "familia": "PINTOXIDO",
-        "similitud": 0.5859,
-        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.7051,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.2 / Noviembre 2019 PINTURA PARA\nPintura acrílica modificada para demarcación horizontal,\ncon excelente visibilidad diurna y nocturna, resistente a la\nabrasión severa y a gran variedad de contaminantes,\ndurables y rápido secamiento para apertura al tráfico y\nentre manos."
       },
       {
-        "archivo": "FDS - PINTOXIDO 514.pdf",
-        "familia": "FDS - PINTOXIDO 514",
-        "similitud": 0.5741,
-        "texto": "[PRODUCTO: FDS - PINTOXIDO 514]\n[SECCIÓN: Los productos de descomposición pueden incluir los siguientes materiales:]\n\nóxidos de fósforo\nóxido/óxidos metálico/metálicos"
+        "archivo": "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA(TERINSA).pdf",
+        "familia": "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
+        "similitud": 0.689,
+        "texto": "[PRODUCTO: PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nSe usan para la demarcación y señalización de carreteras, calles, autopistas, parqueaderos, cachas deportivas, pisos de almacenes, bodegas e\nindustrias en general, aplicadas sobre superficies de pavimento, concreto, ladrillo y acero."
       },
       {
-        "archivo": "FDS - CORROTEC PREMIUM 507.pdf",
-        "familia": "FDS - CORROTEC PREMIUM 507",
-        "similitud": 0.5537,
-        "texto": "[PRODUCTO: FDS - CORROTEC PREMIUM 507]\n[SECCIÓN: Reactivo o incompatible con los siguientes materiales:]\n\nmateriales oxidantes\n:\n:"
+        "archivo": "PINTURA ACRILICA PARA DEMARCACIÓN ICO.pdf",
+        "familia": "PINTURA ACRILICA PARA DEMARCACIÓN ICO",
+        "similitud": 0.673,
+        "texto": "[PRODUCTO: PINTURA ACRILICA PARA DEMARCACIÓN ICO] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la señalización y demarcación de pistas de aterrizaje, autopistas, carreteras, calles, parqueaderos, canchas deportivas, pisos de fábricas y\nbodegas."
       },
       {
-        "archivo": "FDS - CORROTEC PREMIUM 507.pdf",
-        "familia": "FDS - CORROTEC PREMIUM 507",
-        "similitud": 0.5493,
-        "texto": "[PRODUCTO: FDS - CORROTEC PREMIUM 507]\n[SECCIÓN: Rata]\n\n6400 mg/kg\n-\nbis(2-etilhexanoato) de\ncobalto"
+        "archivo": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
+        "familia": "FDS- PINTURA CANCHAS BASE ACCENT",
+        "similitud": 0.5507,
+        "texto": "[PRODUCTO: FDS- PINTURA CANCHAS BASE ACCENT] [MARCA: Pintuco]\n[SECCIÓN: Pictograma]\n\nEPP"
       },
       {
-        "archivo": "FDS - CORROTEC PREMIUM 507.pdf",
-        "familia": "FDS - CORROTEC PREMIUM 507",
-        "similitud": 0.5463,
-        "texto": "[PRODUCTO: FDS - CORROTEC PREMIUM 507]\n[SECCIÓN: Rata]\n\n1.22 g/kg\n-\ntetraóxido de bario y diboro"
+        "archivo": "FDS- ACRILICA MANTENIMIENTO GRIS 13884.pdf",
+        "familia": "FDS- ACRILICA MANTENIMIENTO GRIS 13884",
+        "similitud": 0.4418,
+        "texto": "[PRODUCTO: FDS- ACRILICA MANTENIMIENTO GRIS 13884]\n[SECCIÓN: Pictogramas de peligro]\n\n:"
       },
       {
-        "archivo": "FDS- ACRILICA MANTENIMIENTO ROJO 13881.pdf",
-        "familia": "FDS- ACRILICA MANTENIMIENTO ROJO 13881",
-        "similitud": 0.5242,
-        "texto": "[PRODUCTO: FDS- ACRILICA MANTENIMIENTO ROJO 13881]\n[SECCIÓN: Reactivo o incompatible con los siguientes materiales:]\n\nmateriales oxidantes\n:\n:"
+        "archivo": "FDS- ACRILICA MANTENIMIENTO VERDE 13795.pdf",
+        "familia": "FDS- ACRILICA MANTENIMIENTO VERDE 13795",
+        "similitud": 0.4388,
+        "texto": "[PRODUCTO: FDS- ACRILICA MANTENIMIENTO VERDE 13795]\n[SECCIÓN: Pictogramas de peligro]\n\n:"
       },
       {
-        "archivo": "LACA MULTIUSOS AEROCOLOR GENERICA.pdf",
-        "familia": "LACA MULTIUSOS AEROCOLOR GENERICA",
-        "similitud": 0.5193,
-        "texto": "[PRODUCTO: LACA MULTIUSOS AEROCOLOR GENERICA] [MARCA: Pintuco]\n[SECCIÓN: Materiales a Evitar:]\n\nAgentes Oxidantes fuertes, bases o ácidos, ataca muchos metales en\npresencia de agua"
+        "archivo": "FDS- ACRILICA MANTENIMIENTO 13796 AZUL.pdf",
+        "familia": "FDS- ACRILICA MANTENIMIENTO 13796 AZUL",
+        "similitud": 0.4364,
+        "texto": "[PRODUCTO: FDS- ACRILICA MANTENIMIENTO 13796 AZUL] [MARCA: Pintuco]\n[SECCIÓN: Pictogramas de peligro]\n\n:"
       }
     ],
     "productos_candidatos": [
-      "PINTOXIDO",
-      "LACA MULTIUSOS AEROCOLOR GENERICA",
-      "aerocolor",
-      "pintoxido",
-      "corrotec",
-      "anticorrosivo",
-      "pintulux"
+      "PINTURA PARA PARQUEADERO",
+      "PINTURA PARA TRAFICO ACRÍLICA TERTRAFICO 29205 BLANCA",
+      "PINTURA ACRILICA PARA DEMARCACIÓN ICO",
+      "pintura canchas",
+      "pintucoat",
+      "pintura trafico",
+      "pintutraf"
     ]
   }
 }

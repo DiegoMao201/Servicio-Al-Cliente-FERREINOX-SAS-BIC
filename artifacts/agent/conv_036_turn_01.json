@@ -1,0 +1,201 @@
+{
+  "user": "Necesito masilla para resanar una pared",
+  "result": {
+    "response_text": "Tengo varias opciones de masilla para resanar. Aquí te dejo algunas:\n\n1. **MEG MASILLA POLIESTER P1500 AC 0.75KG**\n   - **Precio:** $21,321\n   - ✅ Disponible\n\n2. **MEG MASILLA POLIESTER P1500 AC 3.5KG**\n   - **Precio:** $77,161\n   - ✅ Disponible\n\n3. **MEG MASILLA POLIESTER P2500 AC 1.1KG**\n   - **Precio:** $29,713\n   - ✅ Disponible\n\n4. **MEG MASILLA POL BLANCA 19167 AC 1.1KG**\n   - **Precio:** $47,717\n   - ✅ Disponible\n\n5. **MEG MASILLA PS BLANCA 19167 AC 6.5KG**\n   - **Precio:** $156,262\n   - ✅ Disponible\n\n6. **MEG MASILLA PS BLANCA 19167 AC 0.8KG**\n   - **Precio:** $25,956\n   - ✅ Disponible\n\n7. **MASILLA P1500 DOY PACK 450 GR**\n   - **Precio:** $13,319\n   - ✅ Disponible\n\n8. **WANDA MASILLA POLIESTER AMER AC 0.75KG**\n   - **Precio:** $20,000\n   - ✅ Disponible\n\n9. **MEG MASILLA GRIS CLARO 19139 AC 0.94L**\n   - **Precio:** $34,171\n   - ✅ Disponible\n\n10. **PQ ESTUCOMAST BLANCO 18070 18.93L 27K**\n    - **Precio:** $57,563\n    - ✅ Disponible\n\n¿Cuál de estas opciones te gustaría comprar?",
+    "intent": "consulta_productos",
+    "tool_calls": [
+      {
+        "name": "consultar_inventario",
+        "args": {
+          "producto": "masilla para resanar"
+        },
+        "result": "{\"encontrados\": 10, \"productos\": [{\"codigo\": \"5899562\", \"descripcion\": \"MEG MASILLA POLIESTER P1500 AC 0.75KG\", \"descripcion_exacta\": \"MEG MASILLA POLIESTER P1500 AC 0.75KG\", \"etiqueta_auditable\": \"[5899562] - MEG MASILLA POLIESTER P1500 AC 0.75KG\", \"marca\": \"57\", \"presentacion\": null, \"familia_consulta\": \"meg_masilla_poliester_p1500\", \"producto_padre_busqueda\": \"meg masilla poliester p1500\", \"pregunta_desambiguacion\": \"Tengo Meg Masilla Poliester P1500 Ac 0.75Kg y Meg Masilla Poliester P1500 Ac 3.5Kg con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 21321, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5899563\", \"descripcion\": \"MEG MASILLA POLIESTER P1500 AC 3.5KG\", \"descripcion_exacta\": \"MEG MASILLA POLIESTER P1500 AC 3.5KG\", \"etiqueta_auditable\": \"[5899563] - MEG MASILLA POLIESTER P1500 AC 3.5KG\", \"marca\": \"57\", \"presentacion\": null, \"familia_consulta\": \"meg_masilla_poliester_p1500\", \"producto_padre_busqueda\": \"meg masilla poliester p1500\", \"pregunta_desambiguacion\": \"Tengo Meg Masilla Poliester P1500 Ac 0.75Kg y Meg Masilla Poliester P1500 Ac 3.5Kg con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 77161, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5864066\", \"descripcion\": \"MEG MASILLA POLIESTER P2500 AC 1.1KG\", \"descripcion_exacta\": \"MEG MASILLA POLIESTER P2500 AC 1.1KG\", \"etiqueta_auditable\": \"[5864066] - MEG MASILLA POLIESTER P2500 AC 1.1KG\", \"marca\": \"57\", \"presentacion\": null, \"familia_consulta\": \"meg_masilla_poliester_p2500\", \"producto_padre_busqueda\": \"meg masilla poliester p2500\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 29713, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5891005\", \"descripcion\": \"MEG MASILLA POL BLANCA 19167 AC 1.1KG\", \"descripcion_exacta\": \"MEG MASILLA POL BLANCA 19167 AC 1.1KG\", \"etiqueta_auditable\": \"[5891005] - MEG MASILLA POL BLANCA 19167 AC 1.1KG\", \"marca\": \"57\", \"presentacion\": null, \"familia_consulta\": \"meg_masilla_pol_blanca\", \"producto_padre_busqueda\": \"meg masilla pol blanca\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 47717, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5863668\", \"descripcion\": \"MEG MASILLA PS BLANCA 19167 AC 6.5KG\", \"descripcion_exacta\": \"MEG MASILLA PS BLANCA 19167 AC 6.5KG\", \"etiqueta_auditable\": \"[5863668] - MEG MASILLA PS BLANCA 19167 AC 6.5KG\", \"marca\": \"57\", \"presentacion\": null, \"familia_consulta\": \"meg_masilla_blanca\", \"producto_padre_busqueda\": \"meg masilla blanca\", \"pregunta_desambiguacion\": \"Tengo Meg Masilla Ps Blanca 19167 Ac 0.8Kg y Meg Masilla Ps Blanca 19167 Ac 6.5Kg con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 156262, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5863638\", \"descripcion\": \"MEG MASILLA PS BLANCA 19167 AC 0.8KG\", \"descripcion_exacta\": \"MEG MASILLA PS BLANCA 19167 AC 0.8KG\", \"etiqueta_auditable\": \"[5863638] - MEG MASILLA PS BLANCA 19167 AC 0.8KG\", \"marca\": \"57\", \"presentacion\": null, \"familia_consulta\": \"meg_masilla_blanca\", \"producto_padre_busqueda\": \"meg masilla blanca\", \"pregunta_desambiguacion\": \"Tengo Meg Masilla Ps Blanca 19167 Ac 0.8Kg y Meg Masilla Ps Blanca 19167 Ac 6.5Kg con rotación. ¿Cuál necesitas?\", \"disponible\": true, \"precio_iva_incluido\": 25956, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"F51060606\", \"descripcion\": \"MASILLA P1500 DOY PACK 450 GR\", \"descripcion_exacta\": \"MASILLA P1500 DOY PACK 450 GR\", \"etiqueta_auditable\": \"[F51060606] - MASILLA P1500 DOY PACK 450 GR\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"masilla_p15_doy_pack\", \"producto_padre_busqueda\": \"masilla p15 doy pack\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 13319, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"lista_precio\": \"franquicia\"}, {\"codigo\": \"F51060793\", \"descripcion\": \"WANDA MASILLA POLIESTER AMER AC 0,75KG\", \"descripcion_exacta\": \"WANDA MASILLA POLIESTER AMER AC 0,75KG\", \"etiqueta_auditable\": \"[F51060793] - WANDA MASILLA POLIESTER AMER AC 0,75KG\", \"marca\": null, \"presentacion\": null, \"familia_consulta\": \"wanda_masilla_poliester_amer\", \"producto_padre_busqueda\": \"wanda masilla poliester amer\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 20000, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\", \"lista_precio\": \"franquicia\"}, {\"codigo\": \"5890543\", \"descripcion\": \"MEG MASILLA GRIS CLARO 19139 AC 0.94L\", \"descripcion_exacta\": \"MEG MASILLA GRIS CLARO 19139 AC 0.94L\", \"etiqueta_auditable\": \"[5890543] - MEG MASILLA GRIS CLARO 19139 AC 0.94L\", \"marca\": \"57\", \"presentacion\": \"galon\", \"familia_consulta\": \"meg_masilla_claro_gris\", \"producto_padre_busqueda\": \"meg masilla claro gris\", \"pregunta_desambiguacion\": null, \"disponible\": true, \"precio_iva_incluido\": 34171, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}, {\"codigo\": \"5892124\", \"descripcion\": \"PQ ESTUCOMAST BLANCO 18070 18.93L 27K\", \"descripcion_exacta\": \"PQ ESTUCOMAST BLANCO 18070 18.93L 27K\", \"etiqueta_auditable\": \"[5892124] - PQ ESTUCOMAST BLANCO 18070 18.93L 27K\", \"marca\": \"58\", \"presentacion\": \"cuñete\", \"familia_consulta\": null, \"producto_padre_busqueda\": null, \"pregunta_desambiguacion\": null, \"clasificacion\": {\"linea\": \"ESTUCOMASTIC\", \"tipo_marca\": \"ESTUCOS\", \"familia\": \"INTERIORES\", \"aplicacion\": \"CONSTRUCCION\", \"categoria\": \"PN7B0132075753\", \"descripcion_larga\": \"ESTUCOMASTIC BLANCO 18070 CANECA 27 KG\", \"tipo\": \"NaN\"}, \"disponible\": true, \"precio_iva_incluido\": 57563, \"nota_precio\": \"ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.\"}], \"seguimiento_producto_previo\": false, \"nlu_extraccion\": {}, \"estrategia_ranking\": \"catalogo_curado_postgresql\", \"requiere_aclaracion\": false, \"pregunta_desambiguacion\": null, \"mensaje\": null, \"conocimiento_experto_producto\": [{\"tipo\": \"preferencia\", \"contexto\": \"piso interior, tráfico medio, comercial, epóxico\", \"recomendar\": \"recubrimiento epóxico de media/alta resistencia\", \"evitar\": \"productos de tráfico liviano\", \"nota\": \"Para un piso interior con tráfico medio, se recomienda un recubrimiento epóxico de mayor resistencia que el decorativo, apto para uso comercial y tránsito frecuente. La preparación debe incluir limpieza profunda y lijado o escarificado para asegurar un buen perfil de anclaje.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"piso interior, tráfico alto, montacargas, epóxico, industrial, alto desempeño\", \"recomendar\": \"sistema epóxico industrial\", \"evitar\": \"epóxicos de tráfico liviano o medio\", \"nota\": \"Para un piso interior con tráfico alto y uso de montacargas, se recomienda un sistema epóxico industrial de alto desempeño, diseñado para tráfico pesado. Este sistema debe incluir un imprimante epóxico industrial y un recubrimiento epóxico de alto espesor. Es importante eliminar completamente los recubrimientos existentes y preparar adecuadamente la superficie para garantizar la adherencia y durabilidad del recubrimiento.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"preparación de superficies, pisos industriales, lavado, desengrase\", \"recomendar\": \"lavado y desengrase profundo con detergente industrial\", \"evitar\": \"solo lijar o escarificar\", \"nota\": \"La preparación de superficies ya pintadas debe incluir un lavado y desengrase profundo con detergente industrial para eliminar grasas ocultas que dañan la adherencia. Luego, se debe escarificar o lijar para eliminar el brillo de la pintura vieja y retirar lo que esté suelto.\"}, {\"tipo\": \"preferencia\", \"contexto\": \"tráfico pesado, preparación de superficies, pisos industriales, estibadoras, carretas, resistencia mecánica\", \"recomendar\": \"Intergard 2002\", \"evitar\": \"Pintucoat\", \"nota\": \"Para tráfico pesado, se debe usar un sistema de imprimante epóxico como Interseal 670HS y un acabado Intergard 2002 mezclado con arena de cuarzo. El cuarzo es esencial para la resistencia mecánica y antideslizante que soportan las llantas. Además, la preparación de superficies ya pintadas debe incluir un lavado y desengrase profundo con detergente industrial antes de escarificar o lijar.\"}], \"instruccion_conocimiento_experto\": \"💡 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE para este producto. Lee 'conocimiento_experto_producto' ANTES de presentar resultados al cliente. Si hay un 'evitar', NO lo recomiendes para este contexto. Si hay reglas comerciales (sobre pedido, obligatorio cuarzo, preguntar m², etc.), APLÍCALAS. Presenta las notas relevantes como '💡 Experiencia Ferreinox: [nota]'.\"}"
+      }
+    ],
+    "context_updates": {
+      "last_product_request": {
+        "core_terms": [
+          "masilla",
+          "resanar"
+        ],
+        "search_terms": [
+          "masilla",
+          "resanar"
+        ],
+        "requested_quantity": null,
+        "requested_unit": null,
+        "quantity_expression": null,
+        "product_codes": [],
+        "brand_filters": [],
+        "direction_filters": [],
+        "size_filters": [],
+        "store_filters": [],
+        "original_query": "masilla para resanar",
+        "nlu_processed": true
+      },
+      "last_product_query": "masilla para resanar",
+      "last_product_context": [
+        {
+          "codigo": "5899562",
+          "descripcion": "MEG MASILLA POLIESTER P1500 AC 0.75KG",
+          "descripcion_exacta": "MEG MASILLA POLIESTER P1500 AC 0.75KG",
+          "etiqueta_auditable": "[5899562] - MEG MASILLA POLIESTER P1500 AC 0.75KG",
+          "marca": "57",
+          "presentacion": null,
+          "familia_consulta": "meg_masilla_poliester_p1500",
+          "producto_padre_busqueda": "meg masilla poliester p1500",
+          "pregunta_desambiguacion": "Tengo Meg Masilla Poliester P1500 Ac 0.75Kg y Meg Masilla Poliester P1500 Ac 3.5Kg con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 21321,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5899563",
+          "descripcion": "MEG MASILLA POLIESTER P1500 AC 3.5KG",
+          "descripcion_exacta": "MEG MASILLA POLIESTER P1500 AC 3.5KG",
+          "etiqueta_auditable": "[5899563] - MEG MASILLA POLIESTER P1500 AC 3.5KG",
+          "marca": "57",
+          "presentacion": null,
+          "familia_consulta": "meg_masilla_poliester_p1500",
+          "producto_padre_busqueda": "meg masilla poliester p1500",
+          "pregunta_desambiguacion": "Tengo Meg Masilla Poliester P1500 Ac 0.75Kg y Meg Masilla Poliester P1500 Ac 3.5Kg con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 77161,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5864066",
+          "descripcion": "MEG MASILLA POLIESTER P2500 AC 1.1KG",
+          "descripcion_exacta": "MEG MASILLA POLIESTER P2500 AC 1.1KG",
+          "etiqueta_auditable": "[5864066] - MEG MASILLA POLIESTER P2500 AC 1.1KG",
+          "marca": "57",
+          "presentacion": null,
+          "familia_consulta": "meg_masilla_poliester_p2500",
+          "producto_padre_busqueda": "meg masilla poliester p2500",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 29713,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5891005",
+          "descripcion": "MEG MASILLA POL BLANCA 19167 AC 1.1KG",
+          "descripcion_exacta": "MEG MASILLA POL BLANCA 19167 AC 1.1KG",
+          "etiqueta_auditable": "[5891005] - MEG MASILLA POL BLANCA 19167 AC 1.1KG",
+          "marca": "57",
+          "presentacion": null,
+          "familia_consulta": "meg_masilla_pol_blanca",
+          "producto_padre_busqueda": "meg masilla pol blanca",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 47717,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5863668",
+          "descripcion": "MEG MASILLA PS BLANCA 19167 AC 6.5KG",
+          "descripcion_exacta": "MEG MASILLA PS BLANCA 19167 AC 6.5KG",
+          "etiqueta_auditable": "[5863668] - MEG MASILLA PS BLANCA 19167 AC 6.5KG",
+          "marca": "57",
+          "presentacion": null,
+          "familia_consulta": "meg_masilla_blanca",
+          "producto_padre_busqueda": "meg masilla blanca",
+          "pregunta_desambiguacion": "Tengo Meg Masilla Ps Blanca 19167 Ac 0.8Kg y Meg Masilla Ps Blanca 19167 Ac 6.5Kg con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 156262,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5863638",
+          "descripcion": "MEG MASILLA PS BLANCA 19167 AC 0.8KG",
+          "descripcion_exacta": "MEG MASILLA PS BLANCA 19167 AC 0.8KG",
+          "etiqueta_auditable": "[5863638] - MEG MASILLA PS BLANCA 19167 AC 0.8KG",
+          "marca": "57",
+          "presentacion": null,
+          "familia_consulta": "meg_masilla_blanca",
+          "producto_padre_busqueda": "meg masilla blanca",
+          "pregunta_desambiguacion": "Tengo Meg Masilla Ps Blanca 19167 Ac 0.8Kg y Meg Masilla Ps Blanca 19167 Ac 6.5Kg con rotación. ¿Cuál necesitas?",
+          "disponible": true,
+          "precio_iva_incluido": 25956,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "F51060606",
+          "descripcion": "MASILLA P1500 DOY PACK 450 GR",
+          "descripcion_exacta": "MASILLA P1500 DOY PACK 450 GR",
+          "etiqueta_auditable": "[F51060606] - MASILLA P1500 DOY PACK 450 GR",
+          "marca": null,
+          "presentacion": null,
+          "familia_consulta": "masilla_p15_doy_pack",
+          "producto_padre_busqueda": "masilla p15 doy pack",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 13319,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "lista_precio": "franquicia"
+        },
+        {
+          "codigo": "F51060793",
+          "descripcion": "WANDA MASILLA POLIESTER AMER AC 0,75KG",
+          "descripcion_exacta": "WANDA MASILLA POLIESTER AMER AC 0,75KG",
+          "etiqueta_auditable": "[F51060793] - WANDA MASILLA POLIESTER AMER AC 0,75KG",
+          "marca": null,
+          "presentacion": null,
+          "familia_consulta": "wanda_masilla_poliester_amer",
+          "producto_padre_busqueda": "wanda masilla poliester amer",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 20000,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar.",
+          "lista_precio": "franquicia"
+        },
+        {
+          "codigo": "5890543",
+          "descripcion": "MEG MASILLA GRIS CLARO 19139 AC 0.94L",
+          "descripcion_exacta": "MEG MASILLA GRIS CLARO 19139 AC 0.94L",
+          "etiqueta_auditable": "[5890543] - MEG MASILLA GRIS CLARO 19139 AC 0.94L",
+          "marca": "57",
+          "presentacion": "galon",
+          "familia_consulta": "meg_masilla_claro_gris",
+          "producto_padre_busqueda": "meg masilla claro gris",
+          "pregunta_desambiguacion": null,
+          "disponible": true,
+          "precio_iva_incluido": 34171,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        },
+        {
+          "codigo": "5892124",
+          "descripcion": "PQ ESTUCOMAST BLANCO 18070 18.93L 27K",
+          "descripcion_exacta": "PQ ESTUCOMAST BLANCO 18070 18.93L 27K",
+          "etiqueta_auditable": "[5892124] - PQ ESTUCOMAST BLANCO 18070 18.93L 27K",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "familia_consulta": null,
+          "producto_padre_busqueda": null,
+          "pregunta_desambiguacion": null,
+          "clasificacion": {
+            "linea": "ESTUCOMASTIC",
+            "tipo_marca": "ESTUCOS",
+            "familia": "INTERIORES",
+            "aplicacion": "CONSTRUCCION",
+            "categoria": "PN7B0132075753",
+            "descripcion_larga": "ESTUCOMASTIC BLANCO 18070 CANECA 27 KG",
+            "tipo": "NaN"
+          },
+          "disponible": true,
+          "precio_iva_incluido": 57563,
+          "nota_precio": "ESTE PRECIO YA INCLUYE IVA 19%. NO sumes ningún impuesto adicional. NO escribas Subtotal ni IVA. Solo muestra Total a Pagar."
+        }
+      ]
+    },
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": [
+        "inventory_used"
+      ]
+    },
+    "is_farewell": false
+  }
+}

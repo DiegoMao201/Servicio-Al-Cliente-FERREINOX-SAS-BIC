@@ -1,0 +1,60 @@
+{
+  "query": "preparación de superficie para corrotec",
+  "response": {
+    "query": "preparación de superficie para corrotec",
+    "resultados": [
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.7315,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n✓ Preparador de superficies ferrosas y galvanizadas\n✓ Transformador de sales y óxidos impermeables\n✓ Ideal para uso en áreas de difícil acceso para preparación\nmanual-mecánica.\n✓ Producto en un solo componente, fácil de aplicar"
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.7315,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.7127,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
+      },
+      {
+        "archivo": "corrotec-primer-epoxico-10070-13350.pdf",
+        "familia": "corrotec-primer-epoxico-10070-13350",
+        "similitud": 0.7098,
+        "texto": "[PRODUCTO: corrotec-primer-epoxico-10070-13350] [MARCA: Pintuco]\n[SECCIÓN: Versión 5 / Enero 2022]\n\nde rocío durante las fases de preparación y aplicación. Se puede usar sobre superficies preparadas de\nmanera manual mecánica (SSPC- SP3) en ambientes de baja agresividad. La superficie debe ser preparada\ncon chorro abrasivo, mínimo a grado comercial SSPC- SP6 (estándar sueco SA- 2 con remoción completa\nde la escama de laminación) para uso general y para ambientes altamente agresivos debe ser prepa"
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.6691,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nLa superficie debe estar libre de humedad, polvo, mugre, grasa y cera. Elimine siempre del metal todo el\nóxido de hierro que sea posible por medios manuales o mecánicos. Limpie con cepillo de cerda o fibra,\n\nPROPIEDAD | RANGO | UNIDADES\nAcabado | Sales de óxido\nPeso neto por galón | 4.28 | kg/gal\nSólidos por volumen | 11,6\nEspesor seco recomendado | Depende de la cantidad de óxido de la superficie"
+      },
+      {
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.6604,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Base anticorrosiva alquídica]\n\nAplique 2 manos (capas) de Corrotec® Premium\ndando 2 horas de secado entre manos. En el\nmomento\nde\nla\naplicación,\nla\ntemperatura\nambiental debe ser mayor a 5°C y la temperatura\nde la superficie no debe ser mayor a 40°C. Después\nde aplicado, espere mínimo 6 horas para aplicar el\nacabado\nfinal.\n(Secamiento\na\n25°C\ny\n60% de\nhumedad relativa). Lave los equipos de aplicación\ncon Ajustador Pintuco® Ref. 21132. Para a"
+      },
+      {
+        "archivo": "CORROTEC EPOXI ZINC 2K 10073.pdf",
+        "familia": "CORROTEC EPOXI ZINC 2K 10073",
+        "similitud": 0.6475,
+        "texto": "[PRODUCTO: CORROTEC EPOXI ZINC 2K 10073] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nEl metal debe estar completamente libre de humedad, grasas y otros contaminantes. El óxido, pinturas\ndeterioradas y escama de laminación se deben eliminar. Se debe evitar la limpieza de la superficie con\ndisolventes que al evaporarse dejan residuos grasosos porque se puede dañar la adherencia del producto.\nEl metal se debe tratar con chorro abrasivo hasta obtener la limpieza de Grado Metal Blanco S"
+      }
+    ],
+    "productos_candidatos": [
+      "CORROTEC",
+      "corrotec-primer-epoxico-10070-13350",
+      "corrotec",
+      "anticorrosivo",
+      "pintoxido",
+      "imprimante",
+      "wash primer",
+      "lija"
+    ]
+  }
+}

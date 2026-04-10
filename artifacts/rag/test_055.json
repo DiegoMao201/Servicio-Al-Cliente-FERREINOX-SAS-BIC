@@ -1,0 +1,63 @@
+{
+  "query": "acabado poliuretano alto brillo para tanque",
+  "response": {
+    "query": "acabado poliuretano alto brillo para tanque",
+    "resultados": [
+      {
+        "archivo": "INTERTHANE 990.pdf",
+        "familia": "INTERTHANE 990",
+        "similitud": 0.6535,
+        "texto": "[PRODUCTO: INTERTHANE 990] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nAcabado de poliuretano acrílico acrílico alifático de dos componentes que proporciona una excelente durabilidad y\nun repintado a largo plazo."
+      },
+      {
+        "archivo": "POLIURETANO SERIE 600 BRILLANTE.pdf",
+        "familia": "POLIURETANO SERIE 600 BRILLANTE",
+        "similitud": 0.6399,
+        "texto": "[PRODUCTO: POLIURETANO SERIE 600 BRILLANTE] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPoliuretanos de dos (2) componentes, de secado al aire con\nacabado brillante, alto poder cubriente, buena durabilidad y\nresistencia química."
+      },
+      {
+        "archivo": "POLIURETANO ALTOS SOLIDOS.pdf",
+        "familia": "POLIURETANO ALTOS SOLIDOS",
+        "similitud": 0.6373,
+        "texto": "[PRODUCTO: POLIURETANO ALTOS SOLIDOS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara la decoración y protección de superficies metálicas, de fibra de vidrio o\nde madera en cubiertas, superestructuras, camarotes y cascos de barcos.\nPara exterior de tanques, maquinaria, equipos y estructuras.\nPara botes de madera expuestos a la intemperie, en ambientes industriales\nde alta contaminación."
+      },
+      {
+        "archivo": "POLIURETANO SERIE 600 BRILLANTE.pdf",
+        "familia": "POLIURETANO SERIE 600 BRILLANTE",
+        "similitud": 0.6324,
+        "texto": "[PRODUCTO: POLIURETANO SERIE 600 BRILLANTE] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Alto poder cubriente\n Mayor rendimiento\n Excelente brillo\n Buena durabilidad y resistencias"
+      },
+      {
+        "archivo": "INTERTHANE 990.pdf",
+        "familia": "INTERTHANE 990",
+        "similitud": 0.6263,
+        "texto": "[PRODUCTO: INTERTHANE 990] [MARCA: Pintuco]\n[SECCIÓN: Poliuretano Alifatico]\n\nInterthane 990 está disponible en una gama de acabados metálicos - para mayor información por favor consultar el\ndocumento separado de Procedimientos de Trabajo Metálico de Interthane 990.\n\nEl nivel de brillo y el acabado de la superficie dependen del método de aplicación. Cuando sea posible, evitar el uso\nde una mezcla de métodos de aplicación.\n\nLos mejores resultados en cuanto a brillo y aspecto se obtienen siempre m"
+      },
+      {
+        "archivo": "INTERLINE 925.pdf",
+        "familia": "INTERLINE 925",
+        "similitud": 0.6259,
+        "texto": "[PRODUCTO: INTERLINE 925] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nEpoxy de dos componentes de alta resistencia sin disolventes para revestimiento interior de\ntanques."
+      },
+      {
+        "archivo": "POLIURETANO SERIE 600 BRILLANTE.pdf",
+        "familia": "POLIURETANO SERIE 600 BRILLANTE",
+        "similitud": 0.618,
+        "texto": "[PRODUCTO: POLIURETANO SERIE 600 BRILLANTE] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nProductos para el repintado total o parcial de vehículos."
+      },
+      {
+        "archivo": "POLIURETANO ALTOS SOLIDOS.pdf",
+        "familia": "POLIURETANO ALTOS SOLIDOS",
+        "similitud": 0.608,
+        "texto": "[PRODUCTO: POLIURETANO ALTOS SOLIDOS] [MARCA: Pintuco]\n[SECCIÓN: ESMALTES POLIURETANOS]\n\nALTOS SÓLIDOS A.S: 3/4\n\nMARCA Y MODELO | TIPO DE FUIDO | No. DE CAPSULA DE AIRE\nDevilbiss MBC-150 o JGA | E | 704 o 765 o 78\nBinks No.18 o 62 | 66 | 66PB o 66PE\n\nMARCA Y MODELO | BOMBA\nDevilbiss JGB-507 | QFA-514\nGraco 205-591 | President 30:1 Buldog 30:1\nBinks 500 | Mercury 5C\n\nTEMPERATURA | AL TACTO | AL MANEJO | PARA SER RECUBIERTO | TOTAL\n2°C (35°F) | 6 a 8 horas | 12 a 16 horas | 24 a 36 horas | 9 a 10 "
+      }
+    ],
+    "productos_candidatos": [
+      "INTERTHANE 990",
+      "POLIURETANO SERIE 600 BRILLANTE",
+      "POLIURETANO ALTOS SOLIDOS",
+      "interthane",
+      "poliuretano"
+    ]
+  }
+}

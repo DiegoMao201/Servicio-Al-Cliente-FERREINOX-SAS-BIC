@@ -1,7 +1,7 @@
 {
-  "user": "¿Con qué le quito el óxido a una estructura metálica? Tengo amoladora",
+  "user": "Quiero pintar la sala de mi casa, algo de buena calidad que sea lavable",
   "result": {
-    "response_text": "Para quitar el óxido de una estructura metálica con amoladora, te recomiendo usar un disco flap o una grata. Estos son ideales para remover óxido y pintura vieja de manera efectiva. \n\nDespués de limpiar, necesitarás aplicar un anticorrosivo como Corrotec, y luego un acabado como Pintulux 3en1 para proteger la superficie. ¿Te gustaría que busque estos productos en inventario?",
+    "response_text": "Perfecto, para pintar la sala de tu casa y que sea lavable, te recomiendo usar un vinilo acrílico de buena calidad. Este tipo de pintura es ideal para interiores, ya que ofrece un acabado duradero y fácil de limpiar.\n\nAntes de recomendarte un sistema específico, necesito saber un par de cosas: ¿qué condición tiene la pared? ¿Es nueva, ya pintada o tiene alguna imperfección? Además, ¿cuántos metros cuadrados tiene la sala que deseas pintar?",
     "intent": "consulta_general",
     "tool_calls": [],
     "context_updates": {},

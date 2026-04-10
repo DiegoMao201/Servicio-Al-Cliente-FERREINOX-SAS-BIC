@@ -1,68 +1,65 @@
 {
-  "query": "se puede diluir el viniltex con agua y cuánto",
+  "query": "cómo remuevo la pintura vieja de una reja de hierro",
   "response": {
-    "query": "se puede diluir el viniltex con agua y cuánto",
+    "query": "cómo remuevo la pintura vieja de una reja de hierro",
     "resultados": [
       {
-        "archivo": "VINILTEX ULTRALAVABLE.pdf",
-        "familia": "VINILTEX ULTRALAVABLE",
-        "similitud": 0.6995,
-        "texto": "[PRODUCTO: VINILTEX ULTRALAVABLE] [MARCA: Pintuco]\n[SECCIÓN: Diluir con]\n\nAgua*"
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.6321,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Deje actuar de 15 a 20 minutos y limpie con una]\n\nestopa humedecida con Ajustador Pintuco® Ref.\n21132.\nEn\nsuperficies\ncon\npintura\ndeteriorada\nelimínela\ncon"
       },
       {
-        "archivo": "VINILTEX ADVANCE.pdf",
-        "familia": "VINILTEX ADVANCE",
-        "similitud": 0.6958,
-        "texto": "[PRODUCTO: VINILTEX ADVANCE] [MARCA: Pintuco]\n[SECCIÓN: Diluir con]\n\nAgua*"
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.6246,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
       },
       {
-        "archivo": "Viniltex-advanced.pdf",
-        "familia": "Viniltex-advanced",
-        "similitud": 0.692,
-        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: Diluya con agua según el equipo de aplicación a]\n\nusar de acuerdo con la siguiente tabla:"
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.6146,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
       },
       {
-        "archivo": "FICHA TECNICA VINILTEX ULTRALAVABLE 2024.pdf",
-        "familia": "FICHA TECNICA VINILTEX ULTRALAVABLE 2024",
-        "similitud": 0.6752,
-        "texto": "[PRODUCTO: FICHA TECNICA VINILTEX ULTRALAVABLE 2024] [MARCA: Pintuco]\n[SECCIÓN: Diluir con]\n\nAgua*"
+        "archivo": "PINTOXIDO.pdf",
+        "familia": "PINTOXIDO",
+        "similitud": 0.6107,
+        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
       },
       {
-        "archivo": "VINILTEX PRO 450.pdf",
-        "familia": "VINILTEX PRO 450",
-        "similitud": 0.6714,
-        "texto": "[PRODUCTO: VINILTEX PRO 450] [MARCA: Pintuco]\n[SECCIÓN: PARA DILUIR]\n\n% AGUA"
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.6095,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: INSTRUCCIONES DE USO]\n\n1. Preparación de la superficie a pintar: Antes de\naplicar verifique que la superficie esté seca, libre de\ngrasa,\npolvo,\nóxido\ny\npintura\ndeteriorada.\nEn\nsuperficies oxidadas, elimine el óxido con rasqueta,\ncepillo\nde\nalambre,\npapel\nde\nlija\no\nmáquina\npulidora. Para eliminar el óxido residual aplique\nuna mano (capa) de Pintóxido de Pintuco® Ref.514."
       },
       {
-        "archivo": "Viniltex-advanced.pdf",
-        "familia": "Viniltex-advanced",
-        "similitud": 0.6649,
-        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: Solvente para dilución]\n\ny limpieza"
+        "archivo": "ANTICORROSIVO INDUSTRIAL BLANCO.PDF",
+        "familia": "ANTICORROSIVO INDUSTRIAL BLANCO",
+        "similitud": 0.6092,
+        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL BLANCO] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\n El metal debe estar seco y libre de polvo, mugre, grasa y pintura deteriorada.\n El óxido se elimina con rasqueta, cepillo de alambre, papel de lija o esmeriladores.\n El óxido residual difícil de suprimir se trata con Pintóxido ref. 514; las pinturas deterioradas se quitan\ncon Removedor Pintuco ref. 1020. Al aluminio, hojalata, zinc y metales lisos o pulidos se les aplica\nWash-Primer Pintuco ref"
       },
       {
-        "archivo": "FDS - VINILTEX ADVANCED BASE TINT  117175.pdf",
-        "familia": "FDS - VINILTEX ADVANCED BASE TINT  117175",
-        "similitud": 0.6406,
-        "texto": "[PRODUCTO: FDS - VINILTEX ADVANCED BASE TINT  117175] [MARCA: Viniltex]\n[SECCIÓN: Solubilidad en agua a 20 ºC:]\n\nNo relevante *"
+        "archivo": "ANTICORROSIVO INDUSTRIAL 210003.pdf",
+        "familia": "ANTICORROSIVO INDUSTRIAL 210003",
+        "similitud": 0.6077,
+        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: Versión 2 / Septiembre 2020]\n\nse trata con Pintóxido Ref. 514; las pinturas deterioradas se quitan con Removedor Pintuco Ref. 1020. Los\nsustratos metálicos no ferrosos como el aluminio, hojalata, zinc y metales lisos o pulidos se les aplica\nWash-Primer Pintuco base agua Ref. 10281795 (1/4 de galón), 10281794 (galón) para obtener óptima\nadherencia de la anticorrosiva."
       },
       {
-        "archivo": "HOJA DE SEGURIDAD VINILTEX ADVANCED BLANCO 1501.pdf",
-        "familia": "HOJA DE SEGURIDAD VINILTEX ADVANCED BLANCO 1501",
-        "similitud": 0.6346,
-        "texto": "[PRODUCTO: HOJA DE SEGURIDAD VINILTEX ADVANCED BLANCO 1501] [MARCA: Viniltex]\n[SECCIÓN: Solubilidad en agua a 20 ºC:]\n\nNo relevante *"
+        "archivo": "DOMESTICO.pdf",
+        "familia": "DOMESTICO",
+        "similitud": 0.5349,
+        "texto": "[PRODUCTO: DOMESTICO] [MARCA: Pintuco]\n[SECCIÓN: Elimine]\n\ncompletamente\nla\npintura en mal estado con una rasqueta, lije la\nsuperficie\ncon\npapel\nabrasive,\nlimpie\ny\nluego\naplique Esmalte Doméstico®."
       }
     ],
     "productos_candidatos": [
-      "VINILTEX ULTRALAVABLE",
-      "VINILTEX ADVANCE",
-      "Viniltex-advanced",
-      "FICHA TECNICA VINILTEX ULTRALAVABLE 2024",
-      "viniltex",
-      "viniltex ultralavable",
-      "viniltex adv",
-      "acriltex viniltex",
-      "pintulo",
-      "domestico"
+      "CORROTEC PREMIUM",
+      "PINTOXIDO",
+      "CORROTEC",
+      "corrotec",
+      "pintoxido",
+      "anticorrosivo",
+      "pintulux"
     ]
   }
 }

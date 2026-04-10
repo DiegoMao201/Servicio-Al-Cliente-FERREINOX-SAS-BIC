@@ -1,7 +1,7 @@
 {
-  "user": "Necesito pintar el piso de un garaje de la casa",
+  "user": "Quiero lacar los muebles de la cocina, son de madera, quedaron sin acabado",
   "result": {
-    "response_text": "¿El piso es de concreto o de otro material? ¿Buscas un acabado específico, como un color o una textura?",
+    "response_text": "Entiendo, quieres lacar tus muebles de cocina de madera. Para poder ayudarte mejor, necesito saber si los muebles son de madera interior o exterior y si deseas un acabado transparente que muestre la veta o un color sólido. ¿Me puedes confirmar eso?",
     "intent": "consulta_general",
     "tool_calls": [],
     "context_updates": {},

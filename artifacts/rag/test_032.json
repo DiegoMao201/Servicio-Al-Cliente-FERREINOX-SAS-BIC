@@ -1,63 +1,65 @@
 {
-  "query": "disco para pulir y quitar óxido en amoladora",
+  "query": "pintar sala de la casa, calidad premium lavable",
   "response": {
-    "query": "disco para pulir y quitar óxido en amoladora",
+    "query": "pintar sala de la casa, calidad premium lavable",
     "resultados": [
       {
-        "archivo": "PINTOXIDO.pdf",
-        "familia": "PINTOXIDO",
-        "similitud": 0.7129,
-        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6872,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nEs una pintura premium base agua que ofrece máxima lavabilidad y durabilidad. Es la marca #1\nrecomendada por pintores en Colombia. Protege y a la vez decora con color, siendo amigable con\nel medio ambiente por su bajo contenido VOC. Tiene un antibacterial activo que elimina el 99,9%\nde las bacterias. Cuenta con nuestro desarollo tecnológico del color, ColorTech®."
       },
       {
-        "archivo": "CORROTEC.pdf",
-        "familia": "CORROTEC",
-        "similitud": 0.6874,
-        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Ideal como preparador de superficies para transformar el óxido]\n\nde hierro que es difícil de suprimir manualmente con papeles de\nlija, cepillos de alambre, rasquetas o martillos metálicos, o\nmecánicamente con cepillos eléctricos giratorios, para limpieza\nde tipo mecánico."
+        "archivo": "VINILTEX ADVANCE.pdf",
+        "familia": "VINILTEX ADVANCE",
+        "similitud": 0.6767,
+        "texto": "[PRODUCTO: VINILTEX ADVANCE] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nViniltex® Advanced mate es una pintura premium para\ninteriores, que genera una capa de alto cubrimiento y\ndurabilidad, permitiendo una máxima lavabilidad y\nresistencia al frote sin desgastar la superficie por\ndesprendimiento."
       },
       {
-        "archivo": "PINTOXIDO.pdf",
-        "familia": "PINTOXIDO",
-        "similitud": 0.6413,
-        "texto": "[PRODUCTO: PINTOXIDO] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
+        "archivo": "Viniltex-advanced.pdf",
+        "familia": "Viniltex-advanced",
+        "similitud": 0.6536,
+        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Máxima duración y lavabilidad.\n Excelente resistencia a la abrasión.\n Única con tecnología superior del\ncolor ColorTech®.\n Bajo VOC\n Libre de APEO."
       },
       {
-        "archivo": "CORROTEC.pdf",
-        "familia": "CORROTEC",
-        "similitud": 0.6071,
-        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparador químico de superficies ferrosas que actúa]\n\ntransformando en sales, los óxidos de hierro duros e\nimpermeables que son difíciles de eliminar con limpieza tipo\nmanual- mecánica."
+        "archivo": "INTERVINIL.pdf",
+        "familia": "INTERVINIL",
+        "similitud": 0.6461,
+        "texto": "[PRODUCTO: INTERVINIL] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nIntervinil® es una pintura para interiores, lavable, de\nalto rendimiento\ny cubrimiento\nen\nmenos\nmanos.\nCuenta con excelente adherencia. Ideal como acabado\nfinal\no\npara\ndar\nprimeras\nmanos\nen\nambientes\ninteriores."
       },
       {
-        "archivo": "ANTICORROSIVO INDUSTRIAL 210003.pdf",
-        "familia": "ANTICORROSIVO INDUSTRIAL 210003",
-        "similitud": 0.605,
-        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: Preparación de la Superficie]\n\nToda superficie metálica debe estar seca y libre de polvo, mugre, grasa y pintura deteriorada. El óxido se\nelimina con rasqueta, cepillo de alambre, papel de lija o esmeriladores. El óxido residual difícil de suprimir\n\nPROPIEDAD | RANGO | UNIDADES\nAcabado | Mate\nViscosidad, ASTM D562/NTC 559 | 80 | 90 | KU\nPeso neto por galón | 5.06 | kg\nSólidos por volumen ASTM D2697/NTC1786 | 40 | 42 | %\nEspes"
+        "archivo": "INTERVINI ANTI BACTERIAL.pdf",
+        "familia": "INTERVINI ANTI BACTERIAL",
+        "similitud": 0.627,
+        "texto": "[PRODUCTO: INTERVINI ANTI BACTERIAL] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintura en emulsión base agua (látex), fabricada a base de\ncopolímeros acrílicos de acabado mate y terso. Alto\nrendimiento y cubrimiento, ideal para ambientes interiores\ny exteriores. Máxima lavabilidad, fácil de aplicar.\nIntervinil® Anti bacterial contiene un ingrediente activo\nque elimina y evita la proliferación de bacterias, hongos y\ngérmenes en más de un 99% y su efecto anti bacterial no\nse pierde al limpiar las p"
       },
       {
-        "archivo": "ANTICORROSIVO INDUSTRIAL 210003.pdf",
-        "familia": "ANTICORROSIVO INDUSTRIAL 210003",
-        "similitud": 0.6013,
-        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: MERCURY 5C]\n\nBROCHA: Se usa brocha de cerda natural.\nRODILLO: Se utiliza rodillo resistente a disolventes."
+        "archivo": "INTERVINIL.pdf",
+        "familia": "INTERVINIL",
+        "similitud": 0.6191,
+        "texto": "[PRODUCTO: INTERVINIL] [MARCA: Pintuco]\n[SECCIÓN: Lavabilidad]\n\n> =50\n%"
       },
       {
-        "archivo": "PASTA PULIDORA 120025.pdf",
-        "familia": "PASTA PULIDORA 120025",
-        "similitud": 0.5845,
-        "texto": "[PRODUCTO: PASTA PULIDORA 120025]\n[SECCIÓN: Producto formulado especialmente para que pueda desmanchar y brillar]\n\ncon un efecto abrasivo muy mínimo que no afecte el recubrimiento de\nla superficie, muy fácil de aplicar y retirar.\nRecomendado para desmanchar, pulir y brillar superficies con pintura\noriginal y/o repintada, diferentes tipos de sustratos metálicos y plásticos\ny para eliminar defectos de aplicación mejorando el brillo del acabado,\nsu poder abrasivo es medio/bajo.\nPara otros usos se r"
+        "archivo": "SUPER CUBRIENTE.pdf",
+        "familia": "SUPER CUBRIENTE",
+        "similitud": 0.59,
+        "texto": "[PRODUCTO: SUPER CUBRIENTE] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Alto rendimiento.\n Alto cubrimiento.\n Alta viscosidad.\n Pintura Lavable.\n Bajo Salpique.\n Más de mil colores."
       },
       {
-        "archivo": "PASTA PULIDORA CREMA 4040.pdf",
-        "familia": "PASTA PULIDORA CREMA 4040",
-        "similitud": 0.5807,
-        "texto": "[PRODUCTO: PASTA PULIDORA CREMA 4040] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendado para desmanchar, pulir y brillar\nsuperficies con pintura original y/o repintada,\ndiferentes tipos de sustratos metálicos y plásticos y\npara eliminar defectos de aplicación como grumos\npequeños, mugres y rayas poco profundas mejorando\nel brillo del acabado."
+        "archivo": "PINTURA SUPER CUBRIENTE.pdf",
+        "familia": "PINTURA SUPER CUBRIENTE",
+        "similitud": 0.588,
+        "texto": "[PRODUCTO: PINTURA SUPER CUBRIENTE] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Más rendimiento y cubrimiento\n Alta viscosidad\n Vinilo lavable"
       }
     ],
     "productos_candidatos": [
-      "PINTOXIDO",
-      "CORROTEC",
-      "corrotec",
-      "pintoxido",
-      "anticorrosivo"
+      "Viniltex-advanced",
+      "VINILTEX ADVANCE",
+      "INTERVINIL",
+      "viniltex",
+      "intervinil",
+      "viniltex advanced",
+      "viniltex adv"
     ]
   }
 }

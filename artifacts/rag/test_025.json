@@ -1,65 +1,66 @@
 {
-  "query": "cuarto del bebé pintura lavable",
+  "query": "estructura metálica de nave industrial nueva",
   "response": {
-    "query": "cuarto del bebé pintura lavable",
+    "query": "estructura metálica de nave industrial nueva",
     "resultados": [
       {
-        "archivo": "INTERVINIL.pdf",
-        "familia": "INTERVINIL",
-        "similitud": 0.6004,
-        "texto": "[PRODUCTO: INTERVINIL] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nIntervinil® es una pintura para interiores, lavable, de\nalto rendimiento\ny cubrimiento\nen\nmenos\nmanos.\nCuenta con excelente adherencia. Ideal como acabado\nfinal\no\npara\ndar\nprimeras\nmanos\nen\nambientes\ninteriores."
+        "archivo": "ANTICORROSIVA FENOLICA MATE AMARILLA.pdf",
+        "familia": "ANTICORROSIVA FENOLICA MATE AMARILLA",
+        "similitud": 0.6079,
+        "texto": "[PRODUCTO: ANTICORROSIVA FENOLICA MATE AMARILLA] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.0 / 2017 Ideal para proteger estructuras metálicas en general, exterio"
       },
       {
-        "archivo": "INTERVINI ANTI BACTERIAL.pdf",
-        "familia": "INTERVINI ANTI BACTERIAL",
-        "similitud": 0.5943,
-        "texto": "[PRODUCTO: INTERVINI ANTI BACTERIAL] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintura en emulsión base agua (látex), fabricada a base de\ncopolímeros acrílicos de acabado mate y terso. Alto\nrendimiento y cubrimiento, ideal para ambientes interiores\ny exteriores. Máxima lavabilidad, fácil de aplicar.\nIntervinil® Anti bacterial contiene un ingrediente activo\nque elimina y evita la proliferación de bacterias, hongos y\ngérmenes en más de un 99% y su efecto anti bacterial no\nse pierde al limpiar las p"
+        "archivo": "ANTICORROSIVO INDUSTRIAL 210003.pdf",
+        "familia": "ANTICORROSIVO INDUSTRIAL 210003",
+        "similitud": 0.5918,
+        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger puertas, ventanas, rejas, pasamanos y otros\nobjetos metálicos en ambientes interiores o exteriores de climas\nfríos o templados, libres de contaminación industrial y sin\ncontacto permanente con líquidos."
       },
       {
-        "archivo": "INTERVINI ANTI BACTERIAL.pdf",
-        "familia": "INTERVINI ANTI BACTERIAL",
-        "similitud": 0.5871,
-        "texto": "[PRODUCTO: INTERVINI ANTI BACTERIAL] [MARCA: Pintuco]\n[SECCIÓN: Preparación del Producto y Aplicación]\n\nMezclar bien la pintura Intervinil® Anti bacterial con una espátula limpia para obtener su\ncompleta uniformidad. Los equipos de aplicación se lavan con agua."
+        "archivo": "ANTICORROSIVO INDUSTRIAL 210003.pdf",
+        "familia": "ANTICORROSIVO INDUSTRIAL 210003",
+        "similitud": 0.5874,
+        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: ANTICORROSIVA INDUSTRIAL ALQUÍDICA Ideal para proteger puer]\n\nIdeal para proteger puertas, ventanas, rejas, pasamanos y otros objetos met\nobjetos metálicos en ambientes interiores o exteriores"
       },
       {
-        "archivo": "VINILTEX BAÑOS Y COCINAS.pdf",
-        "familia": "VINILTEX BAÑOS Y COCINAS",
-        "similitud": 0.5755,
-        "texto": "[PRODUCTO: VINILTEX BAÑOS Y COCINAS] [MARCA: Pintuco]\n[SECCIÓN: En repinte 25 a 30 m2 /gal]\n\nsobre color diferente a 2 manos."
+        "archivo": "FDS - PINTULUX MP ALUMINIO.pdf",
+        "familia": "FDS - PINTULUX MP ALUMINIO",
+        "similitud": 0.5821,
+        "texto": "[PRODUCTO: FDS - PINTULUX MP ALUMINIO] [MARCA: Pintuco]\n[SECCIÓN: Designación oficial de]\n\ntransporte de las Naciones"
       },
       {
-        "archivo": "VINILTEX BIO CUIDADO.pdf",
-        "familia": "VINILTEX BIO CUIDADO",
-        "similitud": 0.5714,
-        "texto": "[PRODUCTO: VINILTEX BIO CUIDADO] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintura premium tipo 1 de interior y exterior amigable con el medio ambiente, que elimina el 99.9%\nde virus y bacterias, es una pintura con la tecnología comprobada y certificada que proporciona\nuna protección eficaz y duradera sobre los virus* (SARS CoV-2 y H1N1, después de 15 minutos de\ncontacto con la superficie) y bacterias* (Como Escherichia coli y Staphylococcus aureus) en las\nsuperficies como paredes y muros, hacien"
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.5598,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Arrives at jobsite welded]\n\ninto frame"
       },
       {
-        "archivo": "Viniltex-advanced.pdf",
-        "familia": "Viniltex-advanced",
-        "similitud": 0.5697,
-        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nEs una pintura premium base agua que ofrece máxima lavabilidad y durabilidad. Es la marca #1\nrecomendada por pintores en Colombia. Protege y a la vez decora con color, siendo amigable con\nel medio ambiente por su bajo contenido VOC. Tiene un antibacterial activo que elimina el 99,9%\nde las bacterias. Cuenta con nuestro desarollo tecnológico del color, ColorTech®."
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.542,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Welded]\n\n105"
       },
       {
-        "archivo": "ESTUCOR MOLDURAS.pdf",
-        "familia": "ESTUCOR MOLDURAS",
-        "similitud": 0.4885,
-        "texto": "[PRODUCTO: ESTUCOR MOLDURAS] [MARCA: Pintuco]\n[SECCIÓN: Pintura]\n\nSuperlavable,"
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.5397,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Factory welded in prior to]\n\nshipment"
       },
       {
-        "archivo": "PINTURAMA.pdf",
-        "familia": "PINTURAMA",
-        "similitud": 0.4881,
-        "texto": "[PRODUCTO: PINTURAMA] [MARCA: Pintuco]\n[SECCIÓN: Secamiento al tacto]\n\n1 - 2"
+        "archivo": "steelcraft techdat 2016.pdf",
+        "familia": "steelcraft techdat 2016",
+        "similitud": 0.5369,
+        "texto": "[PRODUCTO: steelcraft techdat 2016]\n[SECCIÓN: Welded]\n\n115"
       }
     ],
     "productos_candidatos": [
-      "INTERVINIL",
-      "INTERVINI ANTI BACTERIAL",
-      "VINILTEX BAÑOS Y COCINAS",
-      "viniltex",
-      "intervinil",
-      "viniltex banos y cocinas",
-      "viniltex adv"
+      "ANTICORROSIVA FENOLICA MATE AMARILLA",
+      "ANTICORROSIVO INDUSTRIAL 210003",
+      "steelcraft techdat 2016",
+      "corrotec",
+      "pintulux",
+      "anticorrosivo",
+      "wash primer",
+      "intergard"
     ]
   }
 }

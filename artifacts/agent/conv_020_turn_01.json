@@ -1,15 +1,17 @@
 {
-  "user": "Hola buenos días",
+  "user": "Necesito pintar un sendero peatonal de concreto en un parque",
   "result": {
-    "response_text": "¡Hola! ¿En qué puedo ayudarte hoy?",
+    "response_text": "¡Qué buena idea! Para pintar un sendero peatonal de concreto, lo ideal es usar una pintura acrílica específica para canchas o senderos. Esto asegurará que tenga buena adherencia y resistencia al tráfico peatonal.\n\nPrimero, necesito saber un par de cosas: \n1. ¿Cuál es el tamaño del sendero en metros cuadrados?\n2. ¿Tienes en mente algún color específico?\n\nCon esta información, puedo recomendarte el sistema adecuado y darte una cotización.",
     "intent": "consulta_general",
     "tool_calls": [],
     "context_updates": {},
     "should_create_task": false,
     "confidence": {
-      "score": 1.0,
+      "score": 0.9,
       "level": "alta",
-      "signals": []
+      "signals": [
+        "technical_without_tools"
+      ]
     },
     "is_farewell": false
   }

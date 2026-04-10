@@ -1,0 +1,62 @@
+{
+  "query": "las carretas pesadas me están dañando el piso",
+  "response": {
+    "query": "las carretas pesadas me están dañando el piso",
+    "resultados": [
+      {
+        "archivo": "C-Floor PU385 BARNIZ MATE.pdf",
+        "familia": "C-Floor PU385 BARNIZ MATE",
+        "similitud": 0.5753,
+        "texto": "[PRODUCTO: C-Floor PU385 BARNIZ MATE] [MARCA: Pintuco]\n[SECCIÓN: Movimiento de cargas ligeras:]\n\n48 horas"
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.5615,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.5551,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: Secamiento al manejo]\n\n1 – 2\nh RENDIMIENTO APROXIMADO"
+      },
+      {
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.5533,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.0 / 2018 Recubrimiento Acrílico Antidesliza"
+      },
+      {
+        "archivo": "PINTUCOAT.pdf",
+        "familia": "PINTUCOAT",
+        "similitud": 0.5502,
+        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: Zonas de tráfico medio:]\n\no Se recomienda hacer una imprimación con Pintucoat® Ref. 516 o 517 y dar acabado\ncon Esmalte Poliuretano Ref. 11304 o 11324 con catalizador Ref. 11351 en relación de\nmezcla 1:1\no Se puede utilizar barniz poliuretano para pisos, como acabado final.\n* Para mayor información consultar con servicio técnico.\n\nNOTA: Únicamente en ambientes interiores este producto puede ser utilizado sin pintura de acabado; en\nambientes exteri"
+      },
+      {
+        "archivo": "PINTUCOAT.pdf",
+        "familia": "PINTUCOAT",
+        "similitud": 0.5464,
+        "texto": "[PRODUCTO: PINTUCOAT] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nIdeal para proteger y decorar superficies de metal, pisos en\nconcreto, fibro-cemento y madera en ambientes interiores o\nexteriores expuestos a alta contaminación industrial o que\nrequieran de alta resistencia química. Únicamente en ambientes\ninteriores este producto puede ser utilizado sin pintura de acabado;\nen ambientes exteriores requiere de acabado para evitar la\ndecoloración y entizamiento con el sol.\nUsado en pisos industriales, inter"
+      },
+      {
+        "archivo": "CANCHAS Y PISOS.pdf",
+        "familia": "CANCHAS Y PISOS",
+        "similitud": 0.4181,
+        "texto": "[PRODUCTO: CANCHAS Y PISOS] [MARCA: Pintuco]\n[SECCIÓN: TIPO DE SUPERFICIE RENDIMIENTO PRÁCTICO]\n\nConcreto 13 - 15m2/gal. a 2 manos\nAsfalto o madera 8 - 10 m2/gal. a 3 manos"
+      },
+      {
+        "archivo": "FDS- PINTUCOAT ALUMINIO 13261.pdf",
+        "familia": "FDS- PINTUCOAT ALUMINIO 13261",
+        "similitud": 0.4139,
+        "texto": "[PRODUCTO: FDS- PINTUCOAT ALUMINIO 13261] [MARCA: Pintuco]\n[SECCIÓN: Suelo seco]\n\nSí"
+      }
+    ],
+    "productos_candidatos": [
+      "C-Floor PU385 BARNIZ MATE",
+      "PINTURA PARA CANCHAS",
+      "pintura canchas",
+      "pintucoat"
+    ]
+  }
+}

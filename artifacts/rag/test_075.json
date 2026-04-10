@@ -1,0 +1,65 @@
+{
+  "query": "necesito algo pa que no se oxide más el portón",
+  "response": {
+    "query": "necesito algo pa que no se oxide más el portón",
+    "resultados": [
+      {
+        "archivo": "ANTICORROSIVO INDUSTRIAL 210003.pdf",
+        "familia": "ANTICORROSIVO INDUSTRIAL 210003",
+        "similitud": 0.6443,
+        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: ANTICORROSIVA INDUSTRIAL ALQUÍDICA Ideal para proteger puer]\n\nIdeal para proteger puertas, ventanas, rejas, pasamanos y otros objetos met\nobjetos metálicos en ambientes interiores o exteriores"
+      },
+      {
+        "archivo": "ANTICORROSIVO INDUSTRIAL 210003.pdf",
+        "familia": "ANTICORROSIVO INDUSTRIAL 210003",
+        "similitud": 0.6441,
+        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger puertas, ventanas, rejas, pasamanos y otros\nobjetos metálicos en ambientes interiores o exteriores de climas\nfríos o templados, libres de contaminación industrial y sin\ncontacto permanente con líquidos."
+      },
+      {
+        "archivo": "PINTULUX 3 EN 1 MATE.pdf",
+        "familia": "PINTULUX 3 EN 1 MATE",
+        "similitud": 0.6358,
+        "texto": "[PRODUCTO: PINTULUX 3 EN 1 MATE] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendado para proteger y decorar superficies y/o artículos de metal y madera en\nambientes interiores y exteriores como estructuras metálicas, puertas, portones,\nventanas, rejas, marcos, etc. Puede ser aplicado sobre superficies metálicas oxidadas, ya\nque por su diseño Pintulux 3 en 1 funciona como inhibidor de óxido que brinda una\nexcelente protección y da un acabado mate, simplificando el proceso de aplicación."
+      },
+      {
+        "archivo": "PRODUCTOS MANTENIMIENTO.pdf",
+        "familia": "PRODUCTOS MANTENIMIENTO",
+        "similitud": 0.6313,
+        "texto": "[PRODUCTO: PRODUCTOS MANTENIMIENTO] [MARCA: Pintuco]\n[SECCIÓN: Protección]\n\nde\nsustratos\nmetálicos,\npuerta,\nrejas,\nventanas,\npasamanos,\nambientes de libre contaminación ambiental.\n•\nAnticorrosivo alquílico: 50,05% S/V\n•\nCompatible con: Pintulux, Domestico, ECP 100."
+      },
+      {
+        "archivo": "PINTULUX 3 EN 1 BRILLANTE.pdf",
+        "familia": "PINTULUX 3 EN 1 BRILLANTE",
+        "similitud": 0.6275,
+        "texto": "[PRODUCTO: PINTULUX 3 EN 1 BRILLANTE] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para proteger y decorar superficies y/o artículos de metal y madera]\n\nen ambientes interiores y exteriores como estructuras metálicas, puertas, portones,\nventanas, rejas, marcos, etc. Puede ser aplicado sobre superficies metálicas oxidadas,\nya que por su diseño Pintulux 3 en 1 funciona como inhibidor de óxido que brinda una\nexcelente protección y da un acabado brillante, simplificando el proceso de aplicación."
+      },
+      {
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.6133,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Base anticorrosiva alquídica]\n\nAplique 2 manos (capas) de Corrotec® Premium\ndando 2 horas de secado entre manos. En el\nmomento\nde\nla\naplicación,\nla\ntemperatura\nambiental debe ser mayor a 5°C y la temperatura\nde la superficie no debe ser mayor a 40°C. Después\nde aplicado, espere mínimo 6 horas para aplicar el\nacabado\nfinal.\n(Secamiento\na\n25°C\ny\n60% de\nhumedad relativa). Lave los equipos de aplicación\ncon Ajustador Pintuco® Ref. 21132. Para a"
+      },
+      {
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.6016,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Versión 5 / Abril 2022]\n\nCORROTEC DESOXIDANTE PINTÓXIDO®"
+      },
+      {
+        "archivo": "CORROTEC EPOXI ZINC 2K 10073.pdf",
+        "familia": "CORROTEC EPOXI ZINC 2K 10073",
+        "similitud": 0.5948,
+        "texto": "[PRODUCTO: CORROTEC EPOXI ZINC 2K 10073] [MARCA: Pintuco]\n[SECCIÓN: Ideal para la imprimación de superficies metálicas en entornos]\n\nagresivos que exigen alta protección anticorrosiva."
+      }
+    ],
+    "productos_candidatos": [
+      "ANTICORROSIVO INDUSTRIAL 210003",
+      "PINTULUX 3 EN 1 MATE",
+      "PRODUCTOS MANTENIMIENTO",
+      "pintulux",
+      "domestico",
+      "corrotec",
+      "anticorrosivo"
+    ]
+  }
+}

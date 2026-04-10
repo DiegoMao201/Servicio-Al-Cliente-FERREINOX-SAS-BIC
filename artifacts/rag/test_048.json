@@ -1,64 +1,66 @@
 {
-  "query": "le está saliendo como un polvo blanco a la pared",
+  "query": "juego infantil de metal al aire libre",
   "response": {
-    "query": "le está saliendo como un polvo blanco a la pared",
+    "query": "juego infantil de metal al aire libre",
     "resultados": [
       {
-        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
-        "familia": "ESTUCO ANTI HUMEDAD",
-        "similitud": 0.659,
-        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Se puede usar en obra nueva en muros interiores o exteriores que]\n\nse prevea van a tener problemas de humedad ascendente o\ncomo reparación de muros donde se presenten eﬂorescencia (\nmanchas blancas), ampollamiento y descascaramiento de\npintura, también es ideal en las zonas de ventana, balcones, patio\ny en general muros que posean problemas de humedad."
+        "archivo": "FDS - PINTULUX MP ALUMINIO.pdf",
+        "familia": "FDS - PINTULUX MP ALUMINIO",
+        "similitud": 0.4778,
+        "texto": "[PRODUCTO: FDS - PINTULUX MP ALUMINIO] [MARCA: Pintuco]\n[SECCIÓN: Puede reaccionar]\n\nviolentamente\n10.6"
       },
       {
-        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
-        "familia": "ESTUCO ANTI HUMEDAD",
-        "similitud": 0.6469,
-        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Antihumedad Estuco Acrílico es una masilla]\n\nacrílica de altísima resistencia al agua, diseñada\npara aplicar en fachadas y zonas húmedas, en la\nbase de los muros interiores o exteriores, donde\nse presenten problemas de humedad freática o\nascendente, para evitar o reparar los daños\ncausados por este tipo de humedades,\nimpidiendo\nel\npaso\nde\nhumedad\ny\ndisminuyendo de forma efectiva la posibilidad\nde aparición de ampollas en la pintura"
+        "archivo": "FDS - PINTULUX MP ALUMINIO.pdf",
+        "familia": "FDS - PINTULUX MP ALUMINIO",
+        "similitud": 0.4649,
+        "texto": "[PRODUCTO: FDS - PINTULUX MP ALUMINIO] [MARCA: Pintulux]\n[SECCIÓN: Puede reaccionar]\n\nviolentamente\n10.6"
       },
       {
-        "archivo": "FDS-  AQUABLOCK ULTRA 27070 BLANCO.pdf",
-        "familia": "FDS-  AQUABLOCK ULTRA 27070 BLANCO",
-        "similitud": 0.6423,
-        "texto": "[PRODUCTO: FDS-  AQUABLOCK ULTRA 27070 BLANCO]\n[SECCIÓN: Derrame pequeño]\n\n:"
+        "archivo": "FDS- PINTULUX MP BASE DEEP VERANO ETERNO.pdf",
+        "familia": "FDS- PINTULUX MP BASE DEEP VERANO ETERNO",
+        "similitud": 0.4564,
+        "texto": "[PRODUCTO: FDS- PINTULUX MP BASE DEEP VERANO ETERNO] [MARCA: Pintuco]\n[SECCIÓN: Log POW]\n\n3,3"
       },
       {
-        "archivo": "AQUABLOCK ULTRA.pdf",
-        "familia": "AQUABLOCK ULTRA",
-        "similitud": 0.6352,
-        "texto": "[PRODUCTO: AQUABLOCK ULTRA]\n[SECCIÓN: 2. Aplique con brocha o rodillo y sin diluir una mano de]\n\nAQUABLOCK® ULTRA hasta obtener una película uniforme\nsobre toda la superficie, sin presencia de microburbujas o\nespacios sin producto. Nivele y resane la superficie con Estuco"
+        "archivo": "FDC ANTICORROSIVO VERDE OLIVA 513.pdf",
+        "familia": "FDC ANTICORROSIVO VERDE OLIVA 513",
+        "similitud": 0.448,
+        "texto": "[PRODUCTO: FDC ANTICORROSIVO VERDE OLIVA 513] [MARCA: Pintuco]\n[SECCIÓN: Choque y fricción Contacto con el aire Calentamiento Luz Solar Humedad]\n\nNo aplicable No aplicable Riesgo de inflamación Evitar incidencia directa No aplicable\n10.5 Materiales incompatibles:"
       },
       {
-        "archivo": "FDS-  AQUABLOCK ULTRA 27070 BLANCO.pdf",
-        "familia": "FDS-  AQUABLOCK ULTRA 27070 BLANCO",
-        "similitud": 0.6319,
-        "texto": "[PRODUCTO: FDS-  AQUABLOCK ULTRA 27070 BLANCO]\n[SECCIÓN: Uso del producto]\n\n: Recubrimiento base agua para uso interior y exterior."
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.4456,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nAplique al metal el producto con una brocha de cerda natural o sumerja el objeto metálico en Pintóxido\nhasta humedecerlo bien, dejando actuar el producto durante 4 horas para que la transformación del óxido\nsea completa (a 25°C), y luego retire el objeto para exponerlo al aire. Se debe procurar que el producto\npenetre muy bien en las zonas oxidadas para que ataque el óxido incrustado profundamente, lo cual se"
       },
       {
-        "archivo": "ESTUCO ANTI HUMEDAD.pdf",
-        "familia": "ESTUCO ANTI HUMEDAD",
-        "similitud": 0.6026,
-        "texto": "[PRODUCTO: ESTUCO ANTI HUMEDAD] [MARCA: Pintuco]\n[SECCIÓN: Para usos en fachadas en ambientes muy fríos o cálidos con alta]\n\nhumedad relativa, zonas húmedas en baños y lavados de ropa."
+        "archivo": "C- THERM HB 990 OUTDOOR.pdf",
+        "familia": "C- THERM HB 990 OUTDOOR",
+        "similitud": 0.4436,
+        "texto": "[PRODUCTO: C- THERM HB 990 OUTDOOR] [MARCA: Pintuco]\n[SECCIÓN: Rodillo]\n\n250"
       },
       {
-        "archivo": "FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883.pdf",
-        "familia": "FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883",
-        "similitud": 0.479,
-        "texto": "[PRODUCTO: FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883]\n[SECCIÓN: Por inhalación]\n\n:\n:"
+        "archivo": "FDS - PRIMER ANTICORROSIVO VERDE OLIVA 513.pdf",
+        "familia": "FDS - PRIMER ANTICORROSIVO VERDE OLIVA 513",
+        "similitud": 0.4333,
+        "texto": "[PRODUCTO: FDS - PRIMER ANTICORROSIVO VERDE OLIVA 513] [MARCA: Pintuco]\n[SECCIÓN: Choque y fricción Contacto con el aire Calentamiento Luz Solar Humedad]\n\nNo aplicable No aplicable Riesgo de inflamación Evitar incidencia directa No aplicable\n10.5 Materiales incompatibles:"
       },
       {
-        "archivo": "FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883.pdf",
-        "familia": "FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883",
-        "similitud": 0.4648,
-        "texto": "[PRODUCTO: FDS - PINTURA ACRILICA BRILLANTE BLANCO 13883]\n[SECCIÓN: Derrame pequeño]\n\n:"
+        "archivo": "FDC ANTICORROSIVO VERDE OLIVA 513.pdf",
+        "familia": "FDC ANTICORROSIVO VERDE OLIVA 513",
+        "similitud": 0.4324,
+        "texto": "[PRODUCTO: FDC ANTICORROSIVO VERDE OLIVA 513]\n[SECCIÓN: Choque y fricción Contacto con el aire Calentamiento Luz Solar Humedad]\n\nNo aplicable No aplicable Riesgo de inflamación Evitar incidencia directa No aplicable\n10.5 Materiales incompatibles:"
       }
     ],
     "productos_candidatos": [
-      "ESTUCO ANTI HUMEDAD",
-      "AQUABLOCK ULTRA",
-      "estuco anti humedad",
-      "aquablock",
-      "aquablock ultra",
-      "sellamur"
+      "FDC ANTICORROSIVO VERDE OLIVA 513",
+      "CORROTEC",
+      "C- THERM HB 990 OUTDOOR",
+      "corrotec",
+      "pintoxido",
+      "pintulux",
+      "anticorrosivo",
+      "wash primer"
     ]
   }
 }

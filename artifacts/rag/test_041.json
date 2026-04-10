@@ -1,56 +1,67 @@
 {
-  "query": "tiempo de secado entre manos de pintucoat epóxico",
+  "query": "con qué lijo una pared pintada antes de repintar",
   "response": {
-    "query": "tiempo de secado entre manos de pintucoat epóxico",
+    "query": "con qué lijo una pared pintada antes de repintar",
     "resultados": [
       {
-        "archivo": "corrotec-primer-epoxico-10070-13350.pdf",
-        "familia": "corrotec-primer-epoxico-10070-13350",
-        "similitud": 0.7073,
-        "texto": "[PRODUCTO: corrotec-primer-epoxico-10070-13350] [MARCA: Pintuco]\n[SECCIÓN: Secamiento segundas]\n\nmanos(horas)"
+        "archivo": "VINILTEX ULTRALAVABLE.pdf",
+        "familia": "VINILTEX ULTRALAVABLE",
+        "similitud": 0.6696,
+        "texto": "[PRODUCTO: VINILTEX ULTRALAVABLE] [MARCA: Pintuco]\n[SECCIÓN: INSTRUCCIONES DE USO]\n\n1. Preparación de la superficie a pintar: Antes de\naplicar\nViniltex®"
       },
       {
-        "archivo": "IMPERCOAT 7A.pdf",
-        "familia": "IMPERCOAT 7A",
-        "similitud": 0.7043,
-        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: Tiempo de secamiento Segundas manos]\n\n2 horas"
+        "archivo": "VINILTEX PRO 650 (2).pdf",
+        "familia": "VINILTEX PRO 650",
+        "similitud": 0.6641,
+        "texto": "[PRODUCTO: VINILTEX PRO 650] [MARCA: Pintuco]\n[SECCIÓN: Deje]\n\ntranscurrir\n1\nhora\nde\nsecado\naproximadamente para aplicar la segunda mano\n(secamiento a 25°C y 60% de humedad relativa).\nLave con agua los equipos de aplicación. Para evitar\nel deterioro prematuro de la superficie pintada, se\nrecomienda no limpiarla con agua y jabón antes de\ntranscurridos 28 días después de la aplicación.\n✓Se recomienda un espesor mínimo de 2 manos\npara\nque\nla\npintura\ncumpla\ncon\nexcelente\ndesempeño en lavabilidad, re"
       },
       {
-        "archivo": "PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO.pdf",
-        "familia": "PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO",
-        "similitud": 0.6987,
-        "texto": "[PRODUCTO: PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO] [MARCA: Pintuco]\n[SECCIÓN: M A N T E N I M I E N T O Y M A R I N A S VENTAJAS]\n\nRápido secado:\n•Al tacto de 30 a 45 minutos.\n•Segundas manos 2 horas y secado total 5\nhoras.\nRelación de mezcla 1:1, presentación en ¼ de\ngalón, galón y cuñete de 5 galones.\nSobre el primer epóxico de rápido secado se\npueden aplicar acabados:\n•Alquidicos (después de 6 horas)\n•Acrílicas de rápido secado\n•Epoxicos (Pintucoat®)\n•Esmaltes Poliuretanos PRIMER EPÓXI"
+        "archivo": "FICHA TECNICA VINILTEX ULTRALAVABLE 2024 - copia.pdf",
+        "familia": "FICHA TECNICA VINILTEX ULTRALAVABLE 2024 - copia",
+        "similitud": 0.6583,
+        "texto": "[PRODUCTO: FICHA TECNICA VINILTEX ULTRALAVABLE 2024 - copia] [MARCA: Pintuco]\n[SECCIÓN: INSTRUCCIONES DE USO]\n\n1. Preparación de la superficie a pintar: Antes de\naplicar\nViniltex®"
       },
       {
-        "archivo": "CORROTEC EPOXI ZINC 2K 10073.pdf",
-        "familia": "CORROTEC EPOXI ZINC 2K 10073",
-        "similitud": 0.6889,
-        "texto": "[PRODUCTO: CORROTEC EPOXI ZINC 2K 10073] [MARCA: Pintuco]\n[SECCIÓN: Secamiento segundas]\n\nmanos(horas)"
+        "archivo": "ESTUCOR LISTO.pdf",
+        "familia": "ESTUCOR LISTO",
+        "similitud": 0.6261,
+        "texto": "[PRODUCTO: ESTUCOR LISTO] [MARCA: Pintuco]\n[SECCIÓN: Verifique que no existan residuos de polvo o estuco]\n\nantes de realizar el proceso de pintura. No se\nrequiere imprimación antes de pintar"
       },
       {
-        "archivo": "IMPERCOAT 7A.pdf",
-        "familia": "IMPERCOAT 7A",
-        "similitud": 0.6882,
-        "texto": "[PRODUCTO: IMPERCOAT 7A] [MARCA: Pintuco]\n[SECCIÓN: Secamiento al tacto]\n\nSecamiento al manejo ( 25°C y 60% H.R. ) | 1 - 2 horas\n4 - 6 horas\nTiempo de secamiento Segundas manos | 2 horas\nTiempo de secamiento a 25°C Aplicar vinilos o esmaltes | 24 horas"
+        "archivo": "ESTUCOR MOLDURAS.pdf",
+        "familia": "ESTUCOR MOLDURAS",
+        "similitud": 0.6197,
+        "texto": "[PRODUCTO: ESTUCOR MOLDURAS] [MARCA: Pintuco]\n[SECCIÓN: Verifique que no existan residuos de polvo]\n\no estuco antes de realizar el proceso de\npintura\n"
       },
       {
-        "archivo": "PRIMER EPOXI RAPIDO SECADO 50RS.pdf",
-        "familia": "PRIMER EPOXI RAPIDO SECADO 50RS",
-        "similitud": 0.6873,
-        "texto": "[PRODUCTO: PRIMER EPOXI RAPIDO SECADO 50RS] [MARCA: Pintuco]\n[SECCIÓN: Este producto sólo debe ser diluido con los diluyentes International]\n\ne\nrevuelve muy bien con una espátula hasta obtener una mezcla uniforme. El\ntiempo de secado al tacto es de 20 minutos, entre manos (capas) es de 2 a 3\nhoras y el tiempo de secado total es de 72 horas a una temperatura de 25 °C.\nPara el lavado de equipos utilice el International Ref. 21204 o GTA007.\n\nPara obtener un rendimiento óptimo, se recomienda que la "
+        "archivo": "IMPADOC LISTO.pdf",
+        "familia": "IMPADOC LISTO",
+        "similitud": 0.6196,
+        "texto": "[PRODUCTO: IMPADOC LISTO] [MARCA: Pintuco]\n[SECCIÓN: Estucolisto]\n\n1. Retire el polvo y las partículas sueltas de las superficies a aplicar. Use mascarilla para polvos durante su preparación.\n3. Para llenar, aplique el Estucolisto más denso con una llana metálica, extendiéndolo en capas verticales y horizontales\nde forma alternada, dejando secar lo suficiente para aplicar la segunda capa. Para pulir la consistencia puede ser más\nfluida.\nEntre capa y capa afine o asiente el producto con la llana,"
+      },
+      {
+        "archivo": "DRYWALL TIPO 2.pdf",
+        "familia": "DRYWALL TIPO 2",
+        "similitud": 0.5805,
+        "texto": "[PRODUCTO: DRYWALL TIPO 2] [MARCA: Pintuco]\n[SECCIÓN: Antes de aplicar verifique que la superficie esté]\n\nseca, libre de polvo, mugre, grasa y pintura\ndeteriorada. Elimine los acabados deteriorados con\nespátula o lija. Utilice Ultra Mastic Joint Compound\npara el tratamiento de juntas, nivelación y\npreparación de las placas de yeso antes de pintar.\nTambién para resanar grietas, agujeros y otros\ndefectos que puedan afectar el acabado final de la\nsuperficie. Lije suavemente las superficies con\npint"
+      },
+      {
+        "archivo": "PINTULACA 7527.pdf",
+        "familia": "PINTULACA 7527",
+        "similitud": 0.5581,
+        "texto": "[PRODUCTO: PINTULACA 7527] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\nel metal quedó descubierto.\n• Cuando la Base esté bien seca se lija en húmedo con papel No. 360 - 400, se limpian los residuos y\nse seca bien.\n• Para repintes sobre pinturas en buen estado, se limpian con Ajustador PINTUCO REF. 121.110 para\nque no ataque la pintura antigua y eliminar ceras y grasas. Se lija en húmedo con papel No. 360 - 400\npara eliminar el brillo, se aplica la Base Pintulaca ref. 7213 donde el met"
       }
     ],
     "productos_candidatos": [
-      "corrotec-primer-epoxico-10070-13350",
-      "IMPERCOAT 7A",
-      "PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO",
-      "CORROTEC EPOXI ZINC 2K 10073",
-      "pintucoat",
-      "corrotec",
-      "impercoat",
-      "epoxica industrial",
-      "anticorrosiva epoxica",
-      "viniltex"
+      "VINILTEX ULTRALAVABLE",
+      "VINILTEX PRO 650",
+      "FICHA TECNICA VINILTEX ULTRALAVABLE 2024 - copia",
+      "ESTUCOR LISTO",
+      "viniltex",
+      "viniltex ultralavable",
+      "lija",
+      "estuco",
+      "imprimante"
     ]
   }
 }

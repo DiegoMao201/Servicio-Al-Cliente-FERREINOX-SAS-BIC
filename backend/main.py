@@ -17685,6 +17685,9 @@ def generate_agent_reply_v2(
         "piso", "fachada", "techo", "muro", "pared", "reja", "estructura",
         "cielo raso", "bodega", "planta", "nave", "tanque", "cubierta",
         "terraza", "baño", "cocina", "garaje", "parqueadero", "cancha",
+        # Objetos / muebles / vías
+        "madera", "mesa", "puerta", "mueble", "closet", "sala", "silla",
+        "pérgola", "pergola", "sendero", "cicloruta", "asfalto", "comedor",
         # Síntomas
         "humedad", "filtra", "gotea", "moho", "hongo", "salitre", "ampolla",
         "pela", "descascar", "oxid", "corrosión", "corrosion", "deteriora",
@@ -17692,7 +17695,7 @@ def generate_agent_reply_v2(
         # Jerga colombiana
         "carreta", "zorra", "estibador", "montacarga", "aguacero",
         # Actividades técnicas
-        "pintar", "impermeabilizar", "proteger", "recubrir", "barnizar",
+        "pintar", "impermeabilizar", "proteger", "recubrir", "barnizar", "lacar",
         "señalización", "señalizacion", "demarcación", "demarcacion",
         # Sustancias / ambientes
         "químic", "quimic", "humo", "grasa", "aceite", "ácido", "acido",
@@ -17957,7 +17960,9 @@ def generate_agent_reply_v2(
         ),
         # ── GUARDIA BARNEX vs INTERIOR ──
         (
-            ["mesa interior", "mueble interior", "puerta interior", "closet", "mueble cocina"],
+            ["mesa interior", "mueble interior", "puerta interior", "closet", "mueble cocina",
+             "comedor", "madera interior", "habitación", "habitacion", "alcoba",
+             "mesa de madera", "barnizar", "lacar"],
             ["barnex"],
             "Barniz Marino o Barniz SD1 (madera interior) o Esmalte Doméstico/Pintulux (color sólido)",
             "madera interior",
@@ -17985,8 +17990,8 @@ def generate_agent_reply_v2(
                     "role": "system",
                     "content": (
                         f"⛔ ERROR DE PRODUCTO-SUPERFICIE: El cliente tiene una {label}. "
-                        f"Tu respuesta recomienda {', '.join(forbidden_match)} que son productos "
-                        f"INDUSTRIALES, NO aptos para esta superficie. "
+                        f"Tu respuesta recomienda {', '.join(forbidden_match)} que NO son aptos "
+                        f"para esa superficie/contexto. "
                         f"El producto CORRECTO es: {correct}. "
                         f"Reescribe tu respuesta usando el producto correcto. "
                         f"Llama `consultar_conocimiento_tecnico` y `consultar_inventario` "

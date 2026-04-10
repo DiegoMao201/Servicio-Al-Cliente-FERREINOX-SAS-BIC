@@ -1,56 +1,67 @@
 {
-  "query": "proporción de mezcla del pintucoat con catalizador",
+  "query": "necesito pintar un tobogán metálico de un parque",
   "response": {
-    "query": "proporción de mezcla del pintucoat con catalizador",
+    "query": "necesito pintar un tobogán metálico de un parque",
     "resultados": [
       {
-        "archivo": "PINTUCOAT PLUS.pdf",
-        "familia": "PINTUCOAT PLUS",
-        "similitud": 0.7437,
-        "texto": "[PRODUCTO: PINTUCOAT PLUS] [MARCA: Pintuco]\n[SECCIÓN: Mezcla por volumen]\n\n1:1 por volumen (Pintura / Catalizador)"
+        "archivo": "ANTICORROSIVO ROJO 10050 - 545.pdf",
+        "familia": "ANTICORROSIVO ROJO 10050 - 545",
+        "similitud": 0.5962,
+        "texto": "[PRODUCTO: ANTICORROSIVO ROJO 10050 - 545] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintura anticorrosiva de dos componentes, una anticorrosiva\nepóxica con óxido de hierro y un endurecedor poliamínico, que al\nmezclarse en proporciones apropiadas (ver especificaciones)\nproduce al aplicarla, una capa sólida, dura, resistente a aguas\ndulces potables o saladas, ácidos débiles, sales álcalis, disolventes\nalifáticos y temperaturas de 120° en seco y 70°C en inmersión. USOS\nComo base anticorrosiva, con "
       },
       {
-        "archivo": "EPOXI POLIAMIDA.pdf",
-        "familia": "EPOXI POLIAMIDA",
-        "similitud": 0.7163,
-        "texto": "[PRODUCTO: EPOXI POLIAMIDA] [MARCA: Pintuco]\n[SECCIÓN: Mezcla por volumen]\n\n3:1 x volumen (Pintura /Catalizador)"
+        "archivo": "ANTICORROSIVO AROFLEX ATOXICO ROJO 10082.pdf",
+        "familia": "ANTICORROSIVO AROFLEX ATOXICO ROJO 10082",
+        "similitud": 0.5958,
+        "texto": "[PRODUCTO: ANTICORROSIVO AROFLEX ATOXICO ROJO 10082] [MARCA: Pintuco]\n[SECCIÓN: PREPARACIÓN DE SUPERFICIE]\n\n• El metal debe estar completamente libre de humedad, grasas y otros contaminantes.\n• El óxido, pinturas deterioradas y partículas sueltas se deben eliminar.\n• Para máxima eficiencia de la anticorrosiva se debe tratar el metal con chorro abrasivo Grado Metal\nBlanco SA3 (SSPC-SP5) con un perfil de rugosidad de 25 a 37 micrones. El perfil de rugosidad se\npuede medir con cintas especiales.\n• "
       },
       {
-        "archivo": "PINTUCOAT BASE AGUA.pdf",
-        "familia": "PINTUCOAT BASE AGUA",
-        "similitud": 0.7155,
-        "texto": "[PRODUCTO: PINTUCOAT BASE AGUA] [MARCA: Pintuco]\n[SECCIÓN: Mezcla por volumen]\n\n9:1 por volumen (Pintura/Catalizador)"
+        "archivo": "PINTURA ACRILICA PARA MANTENIMIENTO.pdf",
+        "familia": "PINTURA ACRILICA PARA MANTENIMIENTO",
+        "similitud": 0.5948,
+        "texto": "[PRODUCTO: PINTURA ACRILICA PARA MANTENIMIENTO] [MARCA: Pintuco]\n[SECCIÓN: Ideal para proteger y decorar superficies de concreto como pisos]\n\nindustriales e institucionales, y en metales para estanterías,\npasamanos, transformadores, torres de transmisión y otras\nsuperficies metálicas ferrosas y no ferrosas en ambientes industriales\nde mediana agresividad que no estén expuestas a contacto con\nsolventes orgánicos. Es aplicada como acabado en superestructuras\nde embarcaciones fluviales y marinas."
       },
       {
-        "archivo": "corrotec-primer-epoxico-10070-13350.pdf",
-        "familia": "corrotec-primer-epoxico-10070-13350",
-        "similitud": 0.7042,
-        "texto": "[PRODUCTO: corrotec-primer-epoxico-10070-13350] [MARCA: Pintuco]\n[SECCIÓN: Mezcla por volumen]\n\n1:1 Primer/Catalizador"
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.5724,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: Meses]\n\nVersión 1.2 / Noviembre 2019 INSTRUCCIONES DE USOPreparación de la Superficie\nLa superficie debe estar libre de humedad, polvo, mugre, grasa y cera. La limpieza se hace con agua a\npresión dejando secar muy bien la superficie, con escobas manuales o mecánicas, cepillos o aire a presión.\nRemover pintura anterior en caso de que tenga mala adherencia.\nPara pintar tope llantas o este tipo de elementos es necesario confirmar que n"
       },
       {
-        "archivo": "PINTUCOAT PLUS.pdf",
-        "familia": "PINTUCOAT PLUS",
-        "similitud": 0.702,
-        "texto": "[PRODUCTO: PINTUCOAT PLUS] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nRevuelva bien con espátula limpia cada componente hasta obtener su completa uniformidad. Mezcle 1\nparte por volumen del componente A, con 1 parte por volumen del componente B. Y revuelva bien con\nuna espátula limpia hasta obtener una mezcla uniforme, un agitador mecánico es recomendado para\nhomogenizar. Deje en reposo durante 15 minutos antes de iniciar la aplicación. Prepare únicamente la\ncantidad de m"
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.5687,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nAplique al metal el producto con una brocha de cerda natural o sumerja el objeto metálico en Pintóxido\nhasta humedecerlo bien, dejando actuar el producto durante 4 horas para que la transformación del óxido\nsea completa (a 25°C), y luego retire el objeto para exponerlo al aire. Se debe procurar que el producto\npenetre muy bien en las zonas oxidadas para que ataque el óxido incrustado profundamente, lo cual se"
       },
       {
-        "archivo": "EPOXIPOLIAMIDA.pdf",
-        "familia": "EPOXIPOLIAMIDA",
-        "similitud": 0.6977,
-        "texto": "[PRODUCTO: EPOXIPOLIAMIDA] [MARCA: Pintuco]\n[SECCIÓN: Mezcla por volumen]\n\n3:1 x volumen (Pintura /Catalizador)"
+        "archivo": "PINTURA PARA CANCHAS.pdf",
+        "familia": "PINTURA PARA CANCHAS",
+        "similitud": 0.5643,
+        "texto": "[PRODUCTO: PINTURA PARA CANCHAS] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nPara proteger y decorar canchas, escenarios deportivos, senderos peatonales y ciclo rutas, en diferentes\nsustratos como concreto, madera, asfalto en interior y exterior."
+      },
+      {
+        "archivo": "PINTURA PARA PARQUEADERO.pdf",
+        "familia": "PINTURA PARA PARQUEADERO",
+        "similitud": 0.5572,
+        "texto": "[PRODUCTO: PINTURA PARA PARQUEADERO] [MARCA: Pintuco]\n[SECCIÓN: Amarillo]\n\n10398132"
+      },
+      {
+        "archivo": "PINTURAMA.pdf",
+        "familia": "PINTURAMA",
+        "similitud": 0.5422,
+        "texto": "[PRODUCTO: PINTURAMA] [MARCA: Pintuco]\n[SECCIÓN: Recomendado para pintar superficies interiores no expuestas al polvo y a]\n\nfricciones, tales como techos y cielorrasos. Disponible en una amplia gama\nde colores."
       }
     ],
     "productos_candidatos": [
-      "PINTUCOAT PLUS",
-      "EPOXI POLIAMIDA",
-      "PINTUCOAT BASE AGUA",
-      "corrotec-primer-epoxico-10070-13350",
+      "ANTICORROSIVO ROJO 10050 - 545",
+      "ANTICORROSIVO AROFLEX ATOXICO ROJO 10082",
+      "PINTURA ACRILICA PARA MANTENIMIENTO",
+      "PINTURA PARA PARQUEADERO",
       "pintucoat",
       "corrotec",
-      "epoxica industrial",
-      "anticorrosiva epoxica",
-      "catalizador",
-      "interseal"
+      "pintulux",
+      "anticorrosivo",
+      "wash primer"
     ]
   }
 }

@@ -1,64 +1,65 @@
 {
-  "query": "cubierta de fibrocemento eternit que se llueve",
+  "query": "edificio de 5 pisos fachada con chalk y decoloración",
   "response": {
-    "query": "cubierta de fibrocemento eternit que se llueve",
+    "query": "edificio de 5 pisos fachada con chalk y decoloración",
     "resultados": [
       {
-        "archivo": "PINTUCO FILL 7.pdf",
-        "familia": "PINTUCO FILL 7",
-        "similitud": 0.6766,
-        "texto": "[PRODUCTO: PINTUCO FILL 7] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nImpermeabilización flexible de placas, cubiertas,\ncanaletas. En terrazas y estructuras en mortero,\nconcreto, ladrillo, tejas de arcilla cocida, zinc o\naluminio."
-      },
-      {
-        "archivo": "PINTUCO FILL 12.pdf",
-        "familia": "PINTUCO FILL 12",
-        "similitud": 0.6754,
-        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: Para]\n\nimpermeabilización\nflexible\nde\nplacas,\ncubiertas y canaletas. En terrazas y estructuras en\nconcreto, mortero, tejas de barro, fibrocemento,\nzinc"
-      },
-      {
-        "archivo": "PINTUCO FILL 12.pdf",
-        "familia": "PINTUCO FILL 12",
-        "similitud": 0.6727,
-        "texto": "[PRODUCTO: PINTUCO FILL 12] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nRecubrimiento acrílico impermeable y flexible, para\nevitar\nel\npaso\nde\nhumedad\ny\nfiltraciones\nen\ncubiertas y terrazas. Mejorado con fibras que le\npermiten puentear fisuras existentes hasta de 1 mm\ny distribuir los esfuerzos de tensión evitando que se\nproduzca rompimiento de la película. Diseñado para\ndar\nuna\nóptima\ndurabilidad\nde\nsu\npelícula\nimpermeabilizante de hasta 12 años siempre y\ncuando\nse\nsigan\nlas\nrecomendaciones\nde\nprep"
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.5851,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas, patios y terrazas revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar y tejas. Para el Sistema de Junta Perdida en fachadas\nfibrocemento."
       },
       {
         "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
         "familia": "KORAZA PRO 750 ELASTOMERICA",
-        "similitud": 0.5723,
-        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas, patios y terrazas revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar y tejas. Para el Sistema de Junta Perdida en fachadas\nfibrocemento."
+        "similitud": 0.5566,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n\nCumple con la Norma Técnica Colombiana 5828, Pinturas Para Uso Exterior De Alta Resistencia.\n\nAlta elongación y tenacidad, que permite ocultar fisuras hasta de un milímetro en fachadas .\n\nAcabado mate, de alto cubrimiento y adherencia.\n\nExcelente repelencia al agua.\n\nResistente a la humedad, rayos UV y ataque de hongos.\n\nAlta retención y estabilidad de color en exterior.\n\nEvita la aparición de eflo"
       },
       {
-        "archivo": "KORAZA IMPERMEABLE.pdf",
-        "familia": "KORAZA IMPERMEABLE",
-        "similitud": 0.5629,
-        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: Recomendada]\n\npara\nambientes\nexteriores,\npara\ndecorar\ny proteger fachadas y patios revocados,\nestucados, en bloque a la vista, ladrillo sin esmaltar,\ntejas y láminas de fibrocemento. Disponible en una\namplia gama de colores gracias a la Tecnología\nSuperior de Color Pintuco® Colortech®."
+        "archivo": "KORAZA 5.pdf",
+        "familia": "KORAZA 5",
+        "similitud": 0.5515,
+        "texto": "[PRODUCTO: KORAZA 5] [MARCA: Pintuco]\n[SECCIÓN: USOS]\n\nRecomendada para ambientes exteriores, para decorar y proteger fachadas y patios; revocados y\nestucados, en bloque a la vista, ladrillo sin esmaltar, tejas y láminas de fibro-cemento.\n\n*Para la elección adecuada del color te recomendamos utilizar los colores marcados en el abanico\ncon el simbolo del “sol” ☼ los cuales garantizan la retención del color por 5 años siguiendo las\nrecomendaciones de aplicación."
       },
       {
-        "archivo": "KORAZA IMPERMEABLE.pdf",
-        "familia": "KORAZA IMPERMEABLE",
-        "similitud": 0.559,
-        "texto": "[PRODUCTO: KORAZA IMPERMEABLE] [MARCA: Koraza]\n[SECCIÓN: En obra nueva sobre]\n\nrevoque\n8 - 10 m²/gal a 2 manos\n*El rendimiento puede variar dependiendo del método y\nherramientas de aplicación, así como el\nestado de\nrugosidad de la superficie y del color a cubrir."
+        "archivo": "KORAZA PRO 750 ELASTOMERICA.pdf",
+        "familia": "KORAZA PRO 750 ELASTOMERICA",
+        "similitud": 0.5454,
+        "texto": "[PRODUCTO: KORAZA PRO 750 ELASTOMERICA] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nKoraza® PRO Elastomérica, es una Pintura Exterior de Alta Resistencia, base agua, fabricada a partir de polímeros\n100% acrílicos de acabado mate y alta elongación, lo cual permite que el acabado se desempeñe en forma elástica\nconservando su forma sin romperse, permitiendo ocultar fisuras hasta de 1 milímetro. Forma una barrera plástica\nque la hace impermeable a la lluvia y resistente a los rayos del sol. Koraza® PRO"
       },
       {
-        "archivo": "EMULSION ASFALTICA.pdf",
-        "familia": "EMULSION ASFALTICA",
-        "similitud": 0.5387,
-        "texto": "[PRODUCTO: EMULSION ASFALTICA] [MARCA: Pintuco]\n[SECCIÓN: GENERAL]\n\nVersión 1.0 / 2018 Con Fibras para Impermeabilizar Te\nEmulsión asfáltica en base acuosa con fibras de refuerzo seleccionadas para impermeabilización en frío\nde terrazas y cubiertas en mortero, concreto o madera, evitando el paso de humedad y filtraciones.\nElástica y reforzada con fibras que le permiten absorber leves movimientos del sustrato asegurando la\nimpermeabilidad."
+        "archivo": "CONSTRUCLEANER RESTAURADOR FACHADAS.pdf",
+        "familia": "CONSTRUCLEANER RESTAURADOR FACHADAS",
+        "similitud": 0.5405,
+        "texto": "[PRODUCTO: CONSTRUCLEANER RESTAURADOR FACHADAS] [MARCA: Pintuco]\n[SECCIÓN: Rinse limpiador para fachadas]\n\nde ladrillo sin sellantes, ni lacas."
       },
       {
-        "archivo": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA.pdf",
-        "familia": "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA",
-        "similitud": 0.526,
-        "texto": "[PRODUCTO: ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA] [MARCA: Pintuco]\n[SECCIÓN: CUMPLIMIENTO DE NORMA Y APORTE SOSTENIBLE]\n\nResistencia prolongada al sol y la lluvia, mantiene durabilidad\nincluso en climas exteriores"
+        "archivo": "KORAZA DOBLE VIDA.pdf",
+        "familia": "KORAZA DOBLE VIDA",
+        "similitud": 0.5402,
+        "texto": "[PRODUCTO: KORAZA DOBLE VIDA] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n✓ Pintura para edificaciones de difícil repinte por su alta resistencia al ensuciamiento.\n✓ Cumple Norma Técnica NTC-5828.\n✓ Protege el concreto de la carbonatación.\n✓ Resistente a la humedad, rayos UV y ataque de hongos y bacterias.\n✓ Alta retención y estabilidad de color en exterior.\n✓ Acabado mate, de alto cubrimiento y adherencia.\n✓ No contiene plomo ni cromo.\n✓ Evita la aparición de eflorescencias y manchas bla"
+      },
+      {
+        "archivo": "KORAZA DOBLE VIDA.pdf",
+        "familia": "KORAZA DOBLE VIDA",
+        "similitud": 0.5293,
+        "texto": "[PRODUCTO: KORAZA DOBLE VIDA] [MARCA: Pintuco]\n[SECCIÓN: Recomendada para decorar y proteger superficies de difícil repinte en ambientes]\n\nexteriores. Para decorar y proteger fachadas en concreto, mortero, fibrocemento y\nladrillo, en ambientes urbanos, industriales y con altísimo desempeño en ambientes\ncosteros por su resistencia a la humedad y a los microorganismos (posee un poderoso\nfungicida de alto espectro). Su fórmula avanzada que protege el concreto de la\ncarbonatación, hace a Koraza® Dob"
+      },
+      {
+        "archivo": "CONSTRUCLEANER MANTENIMIENTO FACHADAS.pdf",
+        "familia": "CONSTRUCLEANER MANTENIMIENTO FACHADAS",
+        "similitud": 0.5253,
+        "texto": "[PRODUCTO: CONSTRUCLEANER MANTENIMIENTO FACHADAS] [MARCA: Pintuco]\n[SECCIÓN: ESPECIFICACIONES TÉCNICAS]\n\nPROPIEDAD (MÉTODO)"
       }
     ],
     "productos_candidatos": [
-      "PINTUCO FILL 7",
-      "PINTUCO FILL 12",
       "KORAZA PRO 750 ELASTOMERICA",
+      "KORAZA 5",
       "koraza",
-      "pintuco fill",
-      "impercoat"
+      "koraza sol y lluvia",
+      "koraza elastomerica",
+      "pintura canchas",
+      "pintucoat"
     ]
   }
 }

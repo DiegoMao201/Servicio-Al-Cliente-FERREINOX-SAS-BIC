@@ -1,65 +1,66 @@
 {
-  "query": "pintar sala de la casa, calidad premium lavable",
+  "query": "tubo galvanizado nuevo cómo pintarlo",
   "response": {
-    "query": "pintar sala de la casa, calidad premium lavable",
+    "query": "tubo galvanizado nuevo cómo pintarlo",
     "resultados": [
       {
-        "archivo": "Viniltex-advanced.pdf",
-        "familia": "Viniltex-advanced",
-        "similitud": 0.6872,
-        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nEs una pintura premium base agua que ofrece máxima lavabilidad y durabilidad. Es la marca #1\nrecomendada por pintores en Colombia. Protege y a la vez decora con color, siendo amigable con\nel medio ambiente por su bajo contenido VOC. Tiene un antibacterial activo que elimina el 99,9%\nde las bacterias. Cuenta con nuestro desarollo tecnológico del color, ColorTech®."
+        "archivo": "WASH PRIMER BASE AGUA.pdf",
+        "familia": "WASH PRIMER BASE AGUA",
+        "similitud": 0.613,
+        "texto": "[PRODUCTO: WASH PRIMER BASE AGUA] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nSe revuelve el Wash Primer base agua, con una espátula limpia hasta que la mezcla sea total y uniforme.\nSe aplica sin diluir, a pistola o brocha una sola mano delgada, que cubra uniformemente toda la superficie\nmetálica. Se deja secar el tiempo recomendado y se aplica luego un recubrimiento de acabado estético ya\nsea de tipo alquídico, acrílico, epóxico, poliuretano o poliaspártica. Si se requier"
       },
       {
-        "archivo": "VINILTEX ADVANCE.pdf",
-        "familia": "VINILTEX ADVANCE",
-        "similitud": 0.6767,
-        "texto": "[PRODUCTO: VINILTEX ADVANCE] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nViniltex® Advanced mate es una pintura premium para\ninteriores, que genera una capa de alto cubrimiento y\ndurabilidad, permitiendo una máxima lavabilidad y\nresistencia al frote sin desgastar la superficie por\ndesprendimiento."
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.6023,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: INSTRUCCIONES DE USO]\n\n1. Preparación de la superficie a pintar: Antes de\naplicar verifique que la superficie esté seca, libre de\ngrasa,\npolvo,\nóxido\ny\npintura\ndeteriorada.\nEn\nsuperficies oxidadas, elimine el óxido con rasqueta,\ncepillo\nde\nalambre,\npapel\nde\nlija\no\nmáquina\npulidora. Para eliminar el óxido residual aplique\nuna mano (capa) de Pintóxido de Pintuco® Ref.514."
       },
       {
-        "archivo": "Viniltex-advanced.pdf",
-        "familia": "Viniltex-advanced",
-        "similitud": 0.6536,
-        "texto": "[PRODUCTO: Viniltex-advanced] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Máxima duración y lavabilidad.\n Excelente resistencia a la abrasión.\n Única con tecnología superior del\ncolor ColorTech®.\n Bajo VOC\n Libre de APEO."
+        "archivo": "CORROTEC PREMIUM.pdf",
+        "familia": "CORROTEC PREMIUM",
+        "similitud": 0.5982,
+        "texto": "[PRODUCTO: CORROTEC PREMIUM] [MARCA: Pintuco]\n[SECCIÓN: Pintura anticorrosiva base solvente y de acabado]\n\nmate."
       },
       {
-        "archivo": "INTERVINIL.pdf",
-        "familia": "INTERVINIL",
-        "similitud": 0.646,
-        "texto": "[PRODUCTO: INTERVINIL] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nIntervinil® es una pintura para interiores, lavable, de\nalto rendimiento\ny cubrimiento\nen\nmenos\nmanos.\nCuenta con excelente adherencia. Ideal como acabado\nfinal\no\npara\ndar\nprimeras\nmanos\nen\nambientes\ninteriores."
+        "archivo": "DOMESTICO.pdf",
+        "familia": "DOMESTICO",
+        "similitud": 0.5939,
+        "texto": "[PRODUCTO: DOMESTICO] [MARCA: Pintuco]\n[SECCIÓN: Superficies]\n\nnuevas: aplicar previamente Corrotec® Premium.\nSuperficies con pintura en buen estado: lije la\nsuperficie con papel abrasivo, limpie y aplique"
       },
       {
-        "archivo": "INTERVINI ANTI BACTERIAL.pdf",
-        "familia": "INTERVINI ANTI BACTERIAL",
-        "similitud": 0.6269,
-        "texto": "[PRODUCTO: INTERVINI ANTI BACTERIAL] [MARCA: Pintuco]\n[SECCIÓN: DESCRIPCIÓN]\n\nPintura en emulsión base agua (látex), fabricada a base de\ncopolímeros acrílicos de acabado mate y terso. Alto\nrendimiento y cubrimiento, ideal para ambientes interiores\ny exteriores. Máxima lavabilidad, fácil de aplicar.\nIntervinil® Anti bacterial contiene un ingrediente activo\nque elimina y evita la proliferación de bacterias, hongos y\ngérmenes en más de un 99% y su efecto anti bacterial no\nse pierde al limpiar las p"
+        "archivo": "ANTICORROSIVO INDUSTRIAL 210003.pdf",
+        "familia": "ANTICORROSIVO INDUSTRIAL 210003",
+        "similitud": 0.5931,
+        "texto": "[PRODUCTO: ANTICORROSIVO INDUSTRIAL 210003] [MARCA: Pintuco]\n[SECCIÓN: Versión 2 / Septiembre 2020]\n\nse trata con Pintóxido Ref. 514; las pinturas deterioradas se quitan con Removedor Pintuco Ref. 1020. Los\nsustratos metálicos no ferrosos como el aluminio, hojalata, zinc y metales lisos o pulidos se les aplica\nWash-Primer Pintuco base agua Ref. 10281795 (1/4 de galón), 10281794 (galón) para obtener óptima\nadherencia de la anticorrosiva."
       },
       {
-        "archivo": "INTERVINIL.pdf",
-        "familia": "INTERVINIL",
-        "similitud": 0.6191,
-        "texto": "[PRODUCTO: INTERVINIL] [MARCA: Pintuco]\n[SECCIÓN: Lavabilidad]\n\n> =50\n%"
+        "archivo": "ANTICORROSIVO AMARILLO  505.pdf",
+        "familia": "ANTICORROSIVO AMARILLO  505",
+        "similitud": 0.5915,
+        "texto": "[PRODUCTO: ANTICORROSIVO AMARILLO  505] [MARCA: Pintuco]\n[SECCIÓN: ANTICORROSIVA FENÓLICA MATE AMARILLA 505 Ideal para pro]\n\nIdeal para proteger estructuras metálicas en general, exterior de tanques y\ntanques y tuberías expuestas a ambientes de corrosividad"
       },
       {
-        "archivo": "SUPER CUBRIENTE.pdf",
-        "familia": "SUPER CUBRIENTE",
-        "similitud": 0.59,
-        "texto": "[PRODUCTO: SUPER CUBRIENTE] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Alto rendimiento.\n Alto cubrimiento.\n Alta viscosidad.\n Pintura Lavable.\n Bajo Salpique.\n Más de mil colores."
+        "archivo": "CORROTEC.pdf",
+        "familia": "CORROTEC",
+        "similitud": 0.5896,
+        "texto": "[PRODUCTO: CORROTEC] [MARCA: Pintuco]\n[SECCIÓN: Agua]\n\nNOTA: Para el rendimiento práctico se deben tener en cuenta las pérdidas de pintura durante mezcla y\naplicación."
       },
       {
-        "archivo": "PINTURA SUPER CUBRIENTE.pdf",
-        "familia": "PINTURA SUPER CUBRIENTE",
-        "similitud": 0.588,
-        "texto": "[PRODUCTO: PINTURA SUPER CUBRIENTE] [MARCA: Pintuco]\n[SECCIÓN: VENTAJAS Y BENEFICIOS]\n\n Más rendimiento y cubrimiento\n Alta viscosidad\n Vinilo lavable"
+        "archivo": "WASH PRIMER.pdf",
+        "familia": "WASH PRIMER",
+        "similitud": 0.5889,
+        "texto": "[PRODUCTO: WASH PRIMER] [MARCA: Pintuco]\n[SECCIÓN: Preparación del producto y Aplicación]\n\nPor separado cada componente debe agitarse con una espátula limpia hasta obtener su completa\nuniformidad. Mezcle 1 parte por volumen del Componente A con 1 parte por volumen del componente B,\ny revuelva la mezcla con una espátula limpia hasta que sea uniforme. De la exactitud y uniformidad de la\nmezcla dependen las propiedades del producto aplicado. Se debe preparar únicamente la cantidad de\nmezcla que se "
       }
     ],
     "productos_candidatos": [
-      "Viniltex-advanced",
-      "VINILTEX ADVANCE",
-      "INTERVINIL",
-      "viniltex",
-      "intervinil",
-      "viniltex advanced",
-      "viniltex adv"
+      "WASH PRIMER BASE AGUA",
+      "CORROTEC PREMIUM",
+      "DOMESTICO",
+      "corrotec",
+      "domestico",
+      "wash primer",
+      "pintoxido",
+      "anticorrosivo"
     ]
   }
 }
