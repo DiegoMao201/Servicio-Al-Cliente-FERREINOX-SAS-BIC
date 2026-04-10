@@ -21,7 +21,7 @@ import logging
 import dropbox
 import pandas as pd
 import requests
-from fastapi import FastAPI, Header, HTTPException, Query, Request, UploadFile, File
+from fastapi import Body, FastAPI, Header, HTTPException, Query, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
 from openai import OpenAI
 from openpyxl import Workbook
