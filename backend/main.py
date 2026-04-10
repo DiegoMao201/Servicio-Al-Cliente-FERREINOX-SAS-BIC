@@ -14550,6 +14550,13 @@ Si tu respuesta va a contener recomendaciones de producto, USA <thinking>:
 0c. ⚡ ¿El cliente está hablando de un TEMA NUEVO/DIFERENTE al anterior? (otro producto, otra superficie, otro proyecto, cambió de tema)
    → Sí → RESETEAR. No arrastrar productos ni contexto del tema anterior. Tratar como solicitud NUEVA.
    → Si dice "gracias" y luego algo nuevo → tema nuevo completamente.
+0d. ⚡ MULTI-INTENCIÓN: ¿El mensaje contiene MÚLTIPLES solicitudes diferentes?
+   Descompon CADA intención y haz un PLAN DE EJECUCIÓN antes de llamar herramientas:
+   Ejemplo: "revíseme compras + cartera de X + pedido de Y + asesoría para piso Z"
+   → Plan: (1) consultar_compras, (2) consultar_cartera, (3) consultar_inventario_lote para Y, (4) consultar_conocimiento_tecnico para Z + consultar_inventario_lote para materiales Z.
+   REGLA MULTI-INTENT: Llama TODAS las herramientas necesarias (en paralelo si son independientes) y responde con TODAS las secciones.
+   PROHIBIDO olvidar intenciones. PROHIBIDO responder solo a una parte del mensaje.
+   Si una intención es B2B (lista de productos con cantidades) y otra es asesoría técnica → la asesoría SÍ necesita RAG, el B2B NO.
 1. ¿El cliente NOMBRÓ productos específicos? (ej: "con Corrotec y poliuretano", "dame Pintucoat gris")
    → Sí → ¿Son QUÍMICAMENTE COMPATIBLES? (Revisar familias: Alquídica+Alquídica=✅, Epóxica+PU=✅, Alquídica+PU=❌, Alquídica sobre Epóxica=❌)
      → Si COMPATIBLES → usar esos productos, respetar elección del cliente.
@@ -18171,20 +18178,64 @@ def generate_agent_reply_v2(
         if _has_pedido_kw and _b2b_matches >= 1:
             _b2b_matches = max(_b2b_matches, 2)  # Force threshold
         if _b2b_matches >= 2:
-            _is_b2b_fast_track = True
-            logger.info("🚀 B2B FAST-TRACK activado: empleado interno con lista de %d productos", _b2b_matches)
-            messages.insert(-1, {
-                "role": "system",
-                "content": (
-                    "⚡ MODO B2B FAST-TRACK ACTIVADO — El usuario es empleado interno de Ferreinox "
-                    "y envió una lista directa de productos con cantidades. "
-                    "PROHIBIDO diagnosticar superficies. PROHIBIDO llamar consultar_conocimiento_tecnico. "
-                    "Llama `consultar_inventario_lote` DIRECTAMENTE con TODOS los productos de la lista. "
-                    "Arma la cotización: línea por línea (producto + cant + precio unitario + subtotal línea). "
-                    "Al final: Subtotal + IVA 19% + **Total a Pagar**. "
-                    "Si mencionan descuento, aplícalo ANTES de IVA al portafolio indicado."
-                ),
-            })
+            # ── MULTI-INTENT DETECTION: check if the message ALSO contains
+            # advisory, BI, CRM or other non-B2B intents that should NOT be
+            # suppressed by the Fast-Track blanket prohibition. ──
+            _MULTI_INTENT_SIGNALS = [
+                # BI / operational
+                "compras acumuladas", "compras de", "compras este", "cuánto llevamos", "cuanto llevamos",
+                "ventas del", "ventas de", "ventas este",
+                # CRM
+                "cartera", "saldo", "deuda",
+                # Advisory / technical
+                "asesoría", "asesoria", "qué sistema", "que sistema", "qué le aplico",
+                "que le aplico", "sistema completo", "cómo pinto", "como pinto",
+                "tráfico", "trafico", "montacarga", "bodega", "industrial",
+                "metros cuadrados", "m²", "m2",
+                # Technical questions
+                "rendimiento", "rinde", "cuánto rinde", "cuanto rinde",
+                "preparación", "preparacion", "dilución", "dilucion",
+            ]
+            _raw_lower = _raw_msg.lower()
+            _has_multi_intent = any(s in _raw_lower for s in _MULTI_INTENT_SIGNALS)
+
+            if _has_multi_intent:
+                # HYBRID MODE: B2B for the product list + normal flow for other intents
+                _is_b2b_fast_track = False  # Do NOT set global B2B flag
+                logger.info(
+                    "🔀 MULTI-INTENT detectado: empleado con %d productos B2B + señales adicionales. "
+                    "Usando modo HÍBRIDO (no Fast-Track puro).", _b2b_matches
+                )
+                messages.insert(-1, {
+                    "role": "system",
+                    "content": (
+                        "⚡ MODO MULTI-INTENCIÓN — El usuario es empleado interno y su mensaje contiene "
+                        "MÚLTIPLES solicitudes mezcladas:\n"
+                        "1. PRODUCTOS CON CANTIDADES → usa `consultar_inventario_lote` para los productos listados.\n"
+                        "2. CONSULTAS OPERATIVAS (compras, cartera, ventas) → usa las herramientas BI/CRM correspondientes.\n"
+                        "3. ASESORÍA TÉCNICA (superficies, sistemas, diagnóstico) → usa `consultar_conocimiento_tecnico` + inventario.\n\n"
+                        "OBLIGATORIO: Responde a TODAS las intenciones en UNA sola respuesta organizada por secciones.\n"
+                        "Para la parte B2B (lista de productos): directo a inventario, sin diagnóstico.\n"
+                        "Para la parte de asesoría: SÍ haz diagnóstico y RAG como corresponde.\n"
+                        "Para la parte BI/CRM: llama consultar_compras, consultar_cartera, etc.\n"
+                        "Ordena: primero resuelve las consultas rápidas (BI/CRM), luego B2B, luego asesoría técnica."
+                    ),
+                })
+            else:
+                _is_b2b_fast_track = True
+                logger.info("🚀 B2B FAST-TRACK activado: empleado interno con lista de %d productos", _b2b_matches)
+                messages.insert(-1, {
+                    "role": "system",
+                    "content": (
+                        "⚡ MODO B2B FAST-TRACK ACTIVADO — El usuario es empleado interno de Ferreinox "
+                        "y envió una lista directa de productos con cantidades. "
+                        "PROHIBIDO diagnosticar superficies. PROHIBIDO llamar consultar_conocimiento_tecnico. "
+                        "Llama `consultar_inventario_lote` DIRECTAMENTE con TODOS los productos de la lista. "
+                        "Arma la cotización: línea por línea (producto + cant + precio unitario + subtotal línea). "
+                        "Al final: Subtotal + IVA 19% + **Total a Pagar**. "
+                        "Si mencionan descuento, aplícalo ANTES de IVA al portafolio indicado."
+                    ),
+                })
 
     # --- Detect transactional correction on active quote ---
     if not _is_b2b_fast_track:
@@ -18296,7 +18347,7 @@ def generate_agent_reply_v2(
     assistant_message = response.choices[0].message
     tool_calls_made = []
 
-    max_iterations = 5
+    max_iterations = 8
     iteration = 0
     while assistant_message.tool_calls and max_iterations > 0:
         iteration += 1
