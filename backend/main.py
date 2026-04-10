@@ -14066,11 +14066,23 @@ IMPORTANTE: Estos son guías de referencia. Para CADA caso real, llama `consulta
 | Estuco Acrílico Ext | 4-6 m²/gal | Según irregularidad |
 | Pintura Canchas | 8-10 m²/gal (2 manos) | SOLO canchas deportivas/senderos/ciclorutas |
 | Pintucoat | 8-10 m²/gal (2 manos) | Epóxica industrial |
-| Interseal 670HS | 12-16 m²/gal | |
+| Interseal 670HS | 12-16 m²/gal | Ej: 165m² ÷ 12 = 13.75 → 14 gal |
 | Intergard 2002 | 12-16 m²/gal | |
-| Interthane | 12-16 m²/gal | |
+| Interthane | 12-16 m²/gal | Ej: 165m² ÷ 12 = 13.75 → 14 gal |
 | Cuarzo | 0.5 kg/m² (bultos 25kg) | |
-⚠️ Si el RAG devuelve un rendimiento diferente, PREVALECE esta tabla. Cálculo: galones = m² / rendimiento. Redondear ARRIBA.
+⚠️ Si el RAG devuelve un rendimiento diferente, VALIDA cuál es más conservador y usa el MÁS BAJO.
+⚠️ Si el conocimiento experto (ENSEÑAR) tiene un rendimiento diferente → EL EXPERTO PREVALECE sobre esta tabla y sobre el RAG.
+Cálculo: galones = m² / rendimiento_MÍNIMO. Redondear ARRIBA.
+Ejemplo concreto: 165 m² de Interseal = 165 ÷ 12 = 13.75 → 14 galones (NO 2 galones, NO 3 galones).
+
+⛔ REGLA ANTI-ALUCINACIÓN (NIVEL ROJO — INQUEBRANTABLE):
+1. NUNCA inventes datos técnicos (rendimiento, espesor, secado, proporción) que no estén en el RAG o en esta tabla.
+2. TÚ NO CONOCES el portafolio de Ferreinox por tu entrenamiento. Lo conoces SOLO por el RAG y por el conocimiento experto.
+3. Si no tienes un dato → di "según la ficha técnica" y usa consultar_conocimiento_tecnico. NUNCA inventes.
+4. Los precios SOLO vienen de consultar_inventario. NUNCA inventes un precio.
+5. Las cantidades SOLO se calculan con la fórmula: m² ÷ rendimiento_mínimo, redondeado ARRIBA 
+6. Si algo te falta → PREGUNTA o busca en el RAG. PROHIBIDO llenar vacíos con información inventada.
+7. CADA dato que des al cliente DEBE ser trazable: viene del RAG, del inventario, del conocimiento experto, o de esta tabla.
 
 JERARQUÍA DE PRODUCTOS:
 - Fachadas: Premium=Koraza → Tipo 1=Viniltex Advanced → Tipo 2=Intervinil → Tipo 3=Pinturama
@@ -14428,13 +14440,20 @@ Si tu respuesta va a contener recomendaciones de producto, USA <thinking>:
 3. ¿Armé el SISTEMA COMPLETO (Prep→Imprimante→Acabado + HERRAMIENTAS: rodillo, brocha, lija, bandeja, ajustador)? → Si NO → ARMAR.
 4. ¿El cliente ya dio m² o cantidades? (revisa TODA la conversación, incluido este mensaje)
    → Si NO → Presento sistema técnico CON herramientas + pregunto m² y color + "¿Deseas que revise disponibilidad y precios?". FIN.
-   → Si SÍ → Calculo cantidades + presento sistema + "¿Deseas que revise disponibilidad y precios del sistema completo?" FIN.
+   → Si SÍ → VERIFICO MI MATEMÁTICA:
+     * galones = m² ÷ rendimiento MÍNIMO (NUNCA el máximo). Redondear ARRIBA.
+     * Ejemplo: 165m² ÷ 12 m²/gal = 13.75 → 14 galones. Si yo puse "2 galones" → ERROR. CORREGIR.
+     * >5 gal → cuñetes+galones. 1 cuñete = 5 galones.
+     * Calculo cantidades + presento sistema + "¿Deseas que revise disponibilidad y precios del sistema completo?" FIN.
 5. ¿El cliente CONFIRMÓ que quiere precios? ("sí", "dale", "revisa", "cotízame")
    → Si SÍ → Busco precios con consultar_inventario_lote. Bicomponentes: KIT. Subtotal + IVA 19% = Total.
    → Si NO (respondió otra cosa) → Respondo a la nueva intención sin dar precios.
 6. Precios: son ANTES DE IVA. Calcular Subtotal + IVA 19% = Total a Pagar.
 7. ¿Estoy repitiendo una pregunta que el cliente YA respondió? → Si SÍ → DETENERME y usar la info que ya tengo.
 8. ¿Estoy arrastrando productos de un pedido/tema ANTERIOR? → Si SÍ → DETENERME. Solo responder al tema ACTUAL.
+9. ⛔ ¿Estoy INVENTANDO algún dato? (rendimiento, precio, espesor, tiempo secado, proporción)
+   → Si el dato NO viene del RAG, del conocimiento experto, ni de la tabla de rendimientos → ELIMINAR DE MI RESPUESTA.
+   → PROHIBIDO llenar vacíos con datos inventados. Si no tengo el dato → digo que lo verifico o pregunto.
 </thinking>
 """
 
@@ -17288,12 +17307,18 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "DEBES SINTETIZARLOS como un ingeniero de aplicaciones: "
             "1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado). "
             "   Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. "
-            "2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. No repitas párrafos del PDF. "
-            "3) Si 'conocimiento_comercial_ferreinox' está presente → INTEGRA como '💡 Experiencia Ferreinox: [nota]'. Si contradice al RAG, EL EXPERTO PREVALECE. "
+            "2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. "
+            "   ⛔ PROHIBIDO INVENTAR DATOS TÉCNICOS. Si el RAG dice rendimiento 12-16 m²/gal, usa ESE número. "
+            "   Si el RAG NO tiene el dato, di 'según ficha técnica' y usa SOLO la tabla RENDIMIENTOS VERIFICADOS del prompt. "
+            "   NUNCA inventes un número de rendimiento, espesor, tiempo de secado o proporción que no esté en el RAG ni en el prompt. "
+            "3) Si 'conocimiento_comercial_ferreinox' está presente → PREVALECE SOBRE TODO. "
+            "   El conocimiento del asesor Ferreinox ha sido enseñado directamente por los expertos Pablo y Diego. "
+            "   Si contradice al RAG, EL EXPERTO PREVALECE. Integra como '💡 Experiencia Ferreinox: [nota]'. "
             "4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. "
             "5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. "
             "6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' "
-            "7) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'"
+            "7) CÁLCULOS: m² ÷ rendimiento_mínimo = galones (redondear ARRIBA). Ejemplo: 165 m² ÷ 12 m²/gal = 13.75 → 14 galones. NUNCA uses el rendimiento máximo. "
+            "8) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'"
         ),
     }
 
@@ -17428,16 +17453,18 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             for n in expert_notes
         ]
         result_payload["instruccion_conocimiento_comercial"] = (
-            "⚡ CONOCIMIENTO COMERCIAL REAL DE FERREINOX DISPONIBLE — "
-            "El asesor técnico de Ferreinox ha registrado experiencia real sobre una consulta similar a esta. "
-            "REGLAS OBLIGATORIAS: "
-            "1) Lee 'conocimiento_comercial_ferreinox' ANTES de formular tu recomendación. "
-            "2) Si hay un 'recomendar', ese producto DEBE aparecer como recomendación principal. "
-            "3) Si hay un 'evitar', NO recomiendes ese producto para este contexto aunque el RAG lo sugiera. "
-            "4) Presenta el conocimiento Ferreinox como: '💡 Experiencia Ferreinox: [nota del asesor]' "
-            "SEPARADO de la información de la ficha técnica. "
-            "5) Las fichas técnicas mantienen su valor para especificaciones (tiempos, proporciones, rendimientos). "
-            "El conocimiento comercial define CUÁL producto es correcto para el caso específico del cliente."
+            "🔴 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE (PREVALECE SOBRE RAG Y SOBRE TU ENTRENAMIENTO) — "
+            "Los asesores Pablo y Diego han enseñado directamente al sistema conocimiento real de campo. "
+            "Este conocimiento viene de +20 años de experiencia vendiendo recubrimientos en Colombia. "
+            "REGLAS INVIOLABLES: "
+            "1) Lee 'conocimiento_comercial_ferreinox' PRIMERO, ANTES de formular tu recomendación. "
+            "2) Si hay un 'recomendar', ese producto DEBE ser tu recomendación PRINCIPAL. No lo pongas de secundario. "
+            "3) Si hay un 'evitar', PROHIBIDO recomendar ese producto para este contexto. Ni siquiera lo menciones como opción. "
+            "4) Si el RAG dice una cosa pero el conocimiento experto dice otra → EL EXPERTO GANA. SIEMPRE. "
+            "5) Si tu entrenamiento de API dice una cosa pero el experto dice otra → EL EXPERTO GANA. SIEMPRE. "
+            "6) TÚ NO CONOCES el portafolio de Ferreinox por entrenamiento. Lo conoces POR EL RAG y POR EL EXPERTO. "
+            "   PROHIBIDO inventar datos de productos que no estén en el RAG ni en el conocimiento experto. "
+            "7) Presenta como: '💡 Experiencia Ferreinox: [nota del asesor]' en tu respuesta."
         )
 
     return json.dumps(result_payload, ensure_ascii=False, default=str)
@@ -18312,24 +18339,72 @@ def generate_agent_reply_v2(
     # respuesta contiene precios/cotización → forzar reescritura técnica.
     # ══════════════════════════════════════════════════════════════════════
     _TECHNICAL_QUESTION_SIGNALS = [
-        "tiempo de secado", "cuanto seca", "cuánto seca", "cuanto demora",
-        "cuánto demora", "como se aplica", "cómo se aplica", "como aplico",
-        "cómo aplico", "cuantas manos", "cuántas manos", "manos de pintura",
-        "rendimiento", "cuanto rinde", "cuánto rinde", "dilución", "dilucion",
-        "diluir", "como se prepara", "cómo se prepara", "preparar la superficie",
-        "proporción de mezcla", "proporcion de mezcla", "mezcla con catalizador",
-        "vida útil", "vida util", "garantía", "garantia", "cuantos años",
-        "cuántos años", "cuanto dura", "cuánto dura", "tiempo de repintado",
-        "entre manos", "secado al tacto", "secado final", "curado",
-    ]
-    _COTIZACION_SIGNALS = ["$", "precio", "cotización", "cotizacion", "iva", "incluye iva", "total para"]
+    # --- TIEMPOS DE SECADO Y CURADO ---
+    "tiempo de secado", "cuanto seca", "cuánto seca", "cuanto demora", "cuánto demora",
+    "tiempo de repintado", "entre manos", "secado al tacto", "secado final", "curado",
+    "secado duro", "curado total", "cuando puedo pisar", "cuándo puedo pisar",
+    "cuando puedo lavar", "cuándo puedo lavar", "tiempo de espera", "se puede mojar",
+    "aguanta lluvia", "tiempo abierto", "cuanto tarda en secar", "cuánto tarda en secar",
+    "cuando seca", "cuándo seca", "secar", "secado",
+
+    # --- APLICACIÓN Y HERRAMIENTAS ---
+    "como se aplica", "cómo se aplica", "como aplico", "cómo aplico",
+    "temperatura de aplicación", "temperatura de aplicacion", "a qué temperatura", "a que temperatura",
+    "con que se pinta", "con qué se pinta", "brocha", "rodillo", "pistola", "airless",
+    "equipo de aplicacion", "equipo de aplicación", "boquilla", "presion", "presión",
+    "se puede usar en", "sirve para", "se le puede echar", "puedo pintar sobre",
+    "método de aplicación", "metodo de aplicacion", "como pintar", "cómo pintar",
+
+    # --- CANTIDADES, MANOS, ESPESORES Y RENDIMIENTO ---
+    "cuantas manos", "cuántas manos", "manos de pintura", "espesor", "espesores",
+    "rendimiento", "cuanto rinde", "cuánto rinde", "cual es el rendimiento", "cuál es el rendimiento",
+    "que rendimiento", "qué rendimiento", "cuantos metros cuadrados", "cuántos metros cuadrados",
+    "cobertura", "m2 por galon", "m2 por galón", "m2/gal", "area que cubre", "área que cubre",
+    "rinde por cuñete", "consumo", "cuanta pintura necesito", "cuánta pintura necesito",
+    "capas", "micras", "mils", "espesor pelicula seca", "espesor pelicula humeda", "eps", "eph",
+
+    # --- DILUCIÓN Y SOLVENTES ---
+    "dilución", "dilucion", "diluir", "con que se diluye", "con qué se diluye", 
+    "ajustador", "tiner", "thinner", "disolvente", "agua o aceite", "agua o solvente", 
+    "porcentaje de dilucion", "porcentaje de dilución", "rebajar", "se puede rebajar", 
+    "esta muy espesa", "varsol", "aguarrás", "solvente",
+
+    # --- PREPARACIÓN DE SUPERFICIE ---
+    "como se prepara", "cómo se prepara", "preparar la superficie",
+    "limpieza", "lijado", "hay que lijar", "que lija", "qué lija", "grata", "sandblasting", 
+    "imprimacion", "imprimación", "base", "fondo", "sellador", "sobre oxido", "sobre óxido", 
+    "sobre metal pelado", "neutralizar", "perfil de anclaje", "limpiar con", "desengrasar", 
+    "preparacion", "preparación", "acondicionar",
+
+    # --- MEZCLA Y CATALIZACIÓN (EPÓXICOS / POLIURETANOS) ---
+    "proporción de mezcla", "proporcion de mezcla", "mezcla con catalizador",
+    "vida útil", "vida util", "catalizador", "relacion de mezcla", "relación de mezcla",
+    "pot life", "partes por volumen", "kit", "componente a y b", "se mezcla todo",
+    "cuanto tiempo tengo para pintar", "reacción", "reaccion", "endurecedor", 
+    "mezclar", "como se prepara la mezcla", "activador",
+
+    # --- DURABILIDAD, GARANTÍA Y RESISTENCIA ---
+    "garantía", "garantia", "cuantos años", "cuántos años", "cuanto dura", "cuánto dura",
+    "resistencia quimica", "resistencia química", "resiste sol", "resiste acido", "resiste ácido",
+    "para exteriores", "para intemperie", "intemperismo", "amarillamiento", "proteccion uv",
+    "protección uv", "desgaste", "trafico pesado", "tráfico pesado", "trafico peatonal",
+    "resiste agua", "lavabilidad", "frote", "rayones", "se pela",
+
+    # --- ACABADO Y CUBRIMIENTO ---
+    "poder cubriente", "cubrimiento", "opacidad", "brillo", "mate", "satinado", "semimate",
+    "textura", "antideslizante", "color de fondo", "acabado", "terminado"
+]
+    _COTIZACION_SIGNALS = ["$", "precio", "cotización", "cotizacion", "iva", "incluye iva", "total para", "subtotal"]
     _tech_q_lower = (user_message or "").lower()
     _tech_resp_lower = (assistant_message.content or "").lower()
     _is_tech_question = any(s in _tech_q_lower for s in _TECHNICAL_QUESTION_SIGNALS)
     _has_cotizacion = sum(1 for s in _COTIZACION_SIGNALS if s in _tech_resp_lower) >= 2
+    # Buy signals: palabras que indican intención de COMPRA, no consulta técnica.
+    # OJO: "galones" y "galón" NO son buy signals — aparecen en preguntas técnicas de rendimiento.
     _no_buy_signal = not any(s in _tech_q_lower for s in [
-        "quiero", "necesito comprar", "cotízame", "cotizame", "precio",
-        "cuanto cuesta", "cuánto cuesta", "galones", "galón", "galon",
+        "quiero comprar", "necesito comprar", "cotízame", "cotizame",
+        "cuanto cuesta", "cuánto cuesta", "hazme pedido", "pedir",
+        "dame precio", "precio de",
     ])
     if _is_tech_question and _has_cotizacion and _no_buy_signal and not is_simple_greeting(user_message):
         logger.warning(
@@ -18710,6 +18785,77 @@ def generate_agent_reply_v2(
                 assistant_message = compat_response.choices[0].message
                 compat_retries -= 1
             logger.info("GUARDIA COMPATIBILIDAD QUÍMICA retry completed: %dms", int((time.time() - t_compat) * 1000))
+
+    # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA MATEMÁTICA: si el usuario dio m² y la respuesta tiene galones,
+    # verificar programáticamente que la cantidad NO sea absurdamente baja.
+    # Ejemplo: 165 m² con rendimiento 12-16 → mínimo ~10 galones.
+    # Si la respuesta dice "2 galones" para 165 m² → FORZAR CORRECCIÓN.
+    # ══════════════════════════════════════════════════════════════════════
+    if not is_simple_greeting(user_message or "") and not is_ensenar_msg:
+        import re as _re_math
+        _all_conv_text = " ".join(
+            (m.get("contenido") or "").lower() for m in recent_messages
+            if m.get("direction") == "inbound"
+        ) + " " + (user_message or "").lower()
+        _m2_match = _re_math.findall(r'(\d+)\s*(?:m[²2]|metros?\s*cuadrados?|mt[s2]?)', _all_conv_text)
+        _resp_text_math = (assistant_message.content or "")
+        _resp_lower_math = _resp_text_math.lower()
+        # Check if response has gallon quantities
+        _gal_matches = _re_math.findall(r'(\d+)\s*(?:galones?|gal\b|gl\b)', _resp_lower_math)
+        if _m2_match and _gal_matches:
+            _max_m2 = max(int(m) for m in _m2_match)
+            _max_gal = max(int(g) for g in _gal_matches)
+            # Minimum reasonable: m² / 25 (highest rendimiento) with at least 1 gallon
+            # If the response gives less than m²/25, it's definitely wrong
+            _min_reasonable_gal = max(1, _max_m2 // 25)
+            if _max_m2 >= 20 and _max_gal < _min_reasonable_gal:
+                logger.warning(
+                    "⛔ GUARDIA MATEMÁTICA: %d m² pero respuesta dice %d galones. Mínimo razonable: %d. Forzando corrección.",
+                    _max_m2, _max_gal, _min_reasonable_gal,
+                )
+                messages.append(assistant_message)
+                messages.append({
+                    "role": "system",
+                    "content": (
+                        f"⛔ ERROR MATEMÁTICO GRAVE: El cliente tiene {_max_m2} m² pero tu respuesta indica "
+                        f"solo {_max_gal} galones. Esto es IMPOSIBLE y PELIGROSO para el cliente.\n"
+                        f"CÁLCULO CORRECTO usando rendimiento MÍNIMO:\n"
+                        f"- Interseal/Interthane/Intergard: {_max_m2} ÷ 12 = {_max_m2/12:.1f} → {int(_max_m2/12) + (1 if _max_m2 % 12 > 0 else 0)} galones\n"
+                        f"- Koraza/Viniltex: {_max_m2} ÷ 20 = {_max_m2/20:.1f} → {int(_max_m2/20) + (1 if _max_m2 % 20 > 0 else 0)} galones\n"
+                        f"- Pintucoat/Canchas: {_max_m2} ÷ 8 = {_max_m2/8:.1f} → {int(_max_m2/8) + (1 if _max_m2 % 8 > 0 else 0)} galones\n"
+                        f"- Pintuco Fill: {_max_m2} ÷ 12 = {_max_m2/12:.1f} → {int(_max_m2/12) + (1 if _max_m2 % 12 > 0 else 0)} galones\n\n"
+                        f"REESCRIBE tu respuesta con las cantidades CORRECTAS. "
+                        f"Si hay >5 galones, convierte a cuñetes+galones (1 cuñete = 5 galones). "
+                        f"Recalcula precios con las cantidades correctas."
+                    ),
+                })
+                t_math = time.time()
+                math_response = client.chat.completions.create(
+                    model=get_openai_model(),
+                    messages=messages,
+                    tools=AGENT_TOOLS,
+                    tool_choice="auto",
+                    temperature=0.3,
+                )
+                assistant_message = math_response.choices[0].message
+                math_retries = 3
+                while assistant_message.tool_calls and math_retries > 0:
+                    messages.append(assistant_message)
+                    for tc in assistant_message.tool_calls:
+                        fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+                        tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
+                        messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+                    math_response = client.chat.completions.create(
+                        model=get_openai_model(),
+                        messages=messages,
+                        tools=AGENT_TOOLS,
+                        tool_choice="auto",
+                        temperature=0.3,
+                    )
+                    assistant_message = math_response.choices[0].message
+                    math_retries -= 1
+                logger.info("GUARDIA MATEMÁTICA retry completed: %dms", int((time.time() - t_math) * 1000))
 
     # ══════════════════════════════════════════════════════════════════════
     # GUARDIA ENSEÑAR: si se guardó conocimiento experto pero la respuesta
