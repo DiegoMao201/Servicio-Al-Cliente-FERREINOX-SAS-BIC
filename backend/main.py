@@ -46,11 +46,19 @@ if _COLOR_FORMULAS_FILE.exists():
 
 # ── International / AkzoNobel product reference (from INTERNATIONAL CODIGOS) ──
 _INTERNATIONAL_PRODUCTS: list[dict] = []
+_INTERNATIONAL_PRODUCTS_BY_CODE: dict[str, dict] = {}  # code → entry for price enrichment
 _INTERNATIONAL_PRODUCTS_FILE = Path(__file__).resolve().parent.parent / "data" / "international_products.json"
 if _INTERNATIONAL_PRODUCTS_FILE.exists():
     try:
         _INTERNATIONAL_PRODUCTS = json.loads(_INTERNATIONAL_PRODUCTS_FILE.read_text(encoding="utf-8"))
         logger.info("Loaded %d international product refs from %s", len(_INTERNATIONAL_PRODUCTS), _INTERNATIONAL_PRODUCTS_FILE)
+        # Build code→entry index for all product codes (base galón, cat galón, base cuñete, cat cuñete)
+        for _ip_entry in _INTERNATIONAL_PRODUCTS:
+            for _code_key in ("codigo_base_galon", "codigo_cat_galon", "codigo_cunete",
+                              "codigo_cat_cunete", "codigo_galon"):
+                _code_val = (_ip_entry.get(_code_key) or "").strip()
+                if _code_val:
+                    _INTERNATIONAL_PRODUCTS_BY_CODE[_code_val] = _ip_entry
     except Exception as e:
         logger.warning("Failed to load international products: %s", e)
 
@@ -1590,16 +1598,17 @@ BICOMPONENT_CATALOG: dict[str, dict] = {
         "acabado": "brillante",
         "uso_piso": True,
     },
-    # ─ Intergard 2002 (International / AkzoNobel) ── PISOS ALTA RESISTENCIA + CUARZO ──
+    # ─ Intergard 2002 (International / AkzoNobel) ── SOBRE PEDIDO — ESCALAR A ASESOR ──
     "intergard 2002": {
         "tipo_sistema": "epoxica_dos_componentes",
         "componente_a_descripcion": "Intergard 2002 COMP A (alto volumen de sólidos)",
         "componente_b_descripcion": "Intergard 2002 COMP B catalizador — consultar ficha técnica International",
+        "sobre_pedido": True,
         "nota": (
-            "Epóxico de alto volumen de sólidos para pisos de tráfico PESADO (montacargas, estibadores). "
-            "Para máxima resistencia, se aplica con CUARZO esparcido por broadcasting (ref 5891610). "
-            "El cuarzo aumenta la resistencia mecánica y antideslizante. "
-            "Sistema: Interseal gris RAL 7038 (imprimante) → Intergard 2002 + cuarzo ref 5891610 → sello opcional."
+            "⚠️ PRODUCTO SOBRE PEDIDO — NO cotizar precio, NO buscar inventario. "
+            "Intergard 2002 es un sistema especializado para pisos de tráfico PESADO (montacargas, estibadores) "
+            "que requiere asesoría técnica personalizada. ESCALAR al Asesor Técnico Comercial. "
+            "Sistema referencial: Interseal gris RAL 7038 (imprimante) → Intergard 2002 + cuarzo ref 5891610 → sello opcional."
         ),
         "resistencia": "alta (con cuarzo)",
         "acabado": "mate/satinado",
@@ -14250,7 +14259,7 @@ REGLAS MAESTRAS DE COMPORTAMIENTO:
 - Lija sustitución: 60/80→100/120, 220/320→180/400. NUNCA fina por gruesa.
 
 📦 PRODUCTOS ESPECIALIZADOS / ALTO DESEMPEÑO:
-- Intergard 2002 + Cuarzo: Sistema de piso industrial pesado. Cuarzo ref 5891610 es OBLIGATORIO. Cálculo cuarzo: (m²×0.5kg)/25kg = bultos arriba. Si el precio no aparece en inventario → NUNCA digas "sobre pedido" ni "precio pendiente" ni pares la venta. Presenta el sistema completo con cantidades y escala al Asesor Técnico Comercial.
+- ⚠️ Intergard 2002: PRODUCTO SOBRE PEDIDO. NO cotices precio. NO busques en inventario. Cuando el cliente necesite Intergard 2002 (piso industrial tráfico pesado), explica que es un producto especializado que requiere asesoría técnica personalizada. Pregunta: "Este es un sistema de alto desempeño que requiere asesoría técnica especializada. ¿Deseas que te contacte con nuestro Asesor Técnico Comercial para estructurar tu proyecto?" Si acepta → escalar a tiendapintucopereira@ferreinox.co.
 - Sealer F100: 3 gal Comp A (5893615) + 2 gal Comp B (5893616). Precio POR KIT.
 - Interseal 670HS: refs Galón 5893596, Cuñete 5863715. Siempre con catalizador EGA247.
 - Estuco Acrílico Exterior: ref PQ ESTUCO PROF EXT BLAN 27060. Única ref válida exterior.
@@ -14276,6 +14285,11 @@ Si el PostgREST, inventario o RAG NO devuelve precio exacto de un producto:
   • Intergard 740 Light: Kit galón $232,050 (base $157,818 + cat $74,232) | Kit cuñete $1,090,550
   ⚠️ Estos precios YA INCLUYEN IVA. NO sumes IVA de nuevo al cotizar International.
   ⚠️ Para colores RAL específicos, usa consultar_referencia_international(producto, ral=XXXX) para el precio exacto.
+  🎨 COLORES RAL INTERNATIONAL — REGLA DEFAULT:
+  - Si el cliente NO especifica un color RAL → usa RAL 7038 (gris claro, base Light) por defecto.
+  - SIEMPRE agrega al final: "Para más colores RAL disponibles, visita www.ferreinox.co"
+  - Nunca inventes un RAL que no exista en la tabla. Si el RAL pedido no está → ofrece RAL 7038 como alternativa + link.
+  ⚠️ Intergard 2002: SOBRE PEDIDO. NO cotizar. Escalar a Asesor Técnico Comercial.
 
 🎨 COLORES PINTUCO: Usa `consultar_base_color` para determinar qué BASE necesita un color (Pastel/Tint/Deep/Accent).
   Ejemplo: "Gris Basalto" código 1502 = Base Deep → buscar "Viniltex Base Deep galón" en inventario.
@@ -15385,8 +15399,55 @@ def _handle_tool_consultar_inventario(args, conversation_context):
             if price_info.get("pvp_franquicia") and not price_info.get("pvp_sap"):
                 item["lista_precio"] = "franquicia"
         elif not precio:
-            item["precio_unitario"] = None
-            item["precio_nota"] = "Precio pendiente de confirmación"
+            # --- Fallback: International price enrichment from JSON ---
+            _intl_entry = _INTERNATIONAL_PRODUCTS_BY_CODE.get(str(ref_code).strip())
+            if _intl_entry:
+                # Determine which role this code plays in the entry
+                _is_base_gal = str(ref_code) == (_intl_entry.get("codigo_base_galon") or "").strip()
+                _is_cat_gal = str(ref_code) == (_intl_entry.get("codigo_cat_galon") or "").strip()
+                _is_base_cun = str(ref_code) == (_intl_entry.get("codigo_cunete") or "").strip()
+                _is_cat_cun = str(ref_code) == (_intl_entry.get("codigo_cat_cunete") or "").strip()
+                _is_acr_gal = str(ref_code) == (_intl_entry.get("codigo_galon") or "").strip()
+                if _is_base_gal and _intl_entry.get("precio_galon"):
+                    item["precio_unitario"] = int(_intl_entry["precio_galon"])
+                    item["nota_precio"] = "Precio International IVA INCLUIDO. NO sumes IVA de nuevo."
+                    item["precio_iva_incluido"] = True
+                elif _is_cat_gal and _intl_entry.get("precio_cat_galon"):
+                    item["precio_unitario"] = int(_intl_entry["precio_cat_galon"])
+                    item["nota_precio"] = "Precio International IVA INCLUIDO. NO sumes IVA de nuevo."
+                    item["precio_iva_incluido"] = True
+                elif _is_base_cun and _intl_entry.get("precio_cunete"):
+                    item["precio_unitario"] = int(_intl_entry["precio_cunete"])
+                    item["nota_precio"] = "Precio International IVA INCLUIDO. NO sumes IVA de nuevo."
+                    item["precio_iva_incluido"] = True
+                elif _is_cat_cun and _intl_entry.get("precio_cat_cunete"):
+                    item["precio_unitario"] = int(_intl_entry["precio_cat_cunete"])
+                    item["nota_precio"] = "Precio International IVA INCLUIDO. NO sumes IVA de nuevo."
+                    item["precio_iva_incluido"] = True
+                elif _is_acr_gal and _intl_entry.get("precio_galon"):
+                    item["precio_unitario"] = int(_intl_entry["precio_galon"])
+                    item["nota_precio"] = "Precio International IVA INCLUIDO. NO sumes IVA de nuevo."
+                    item["precio_iva_incluido"] = True
+                # Enrich with International product info
+                item["producto_international"] = _intl_entry.get("producto", "")
+                item["ral"] = _intl_entry.get("ral", "")
+                item["base"] = _intl_entry.get("base", "")
+                if _intl_entry.get("kit_galon"):
+                    item["precio_kit_galon_iva_inc"] = int(_intl_entry["kit_galon"])
+                if _intl_entry.get("kit_cunete"):
+                    item["precio_kit_cunete_iva_inc"] = int(_intl_entry["kit_cunete"])
+                # Inject catalyst as companion if not already present
+                if (_is_base_gal or _is_base_cun) and _intl_entry.get("codigo_cat_galon"):
+                    item.setdefault("productos_complementarios", [])
+                    item["productos_complementarios"].append({
+                        "referencia": _intl_entry.get("codigo_cat_galon", ""),
+                        "descripcion": f"Catalizador {_intl_entry.get('producto', '')}",
+                        "tipo": "catalizador",
+                        "precio_iva_inc": int(_intl_entry.get("precio_cat_galon", 0) or 0),
+                    })
+            else:
+                item["precio_unitario"] = None
+                item["precio_nota"] = "Precio pendiente de confirmación"
         # --- Companion/complementary products ---
         ref_for_companion = item.get("codigo") or ""
         companions = fetch_product_companions(ref_for_companion)
@@ -18088,6 +18149,28 @@ def _handle_tool_consultar_referencia_international(fn_args: dict) -> str:
     producto = fn_args.get("producto", "")
     base = fn_args.get("base", "")
     ral = fn_args.get("ral", "")
+
+    # ── Intergard 2002 is SOBRE PEDIDO — block lookup, force escalation ──
+    if "2002" in producto:
+        return json.dumps({
+            "encontrado": False,
+            "sobre_pedido": True,
+            "producto": "Intergard 2002",
+            "mensaje": (
+                "⚠️ Intergard 2002 es un PRODUCTO SOBRE PEDIDO. NO cotices precio. "
+                "Este sistema de alto desempeño para pisos de tráfico pesado requiere "
+                "asesoría técnica personalizada. Pregunta al cliente: "
+                "'¿Deseas que te contacte con nuestro Asesor Técnico Comercial para "
+                "estructurar tu proyecto?' Si acepta → escalar a tiendapintucopereira@ferreinox.co."
+            ),
+        }, ensure_ascii=False)
+
+    # ── Default RAL 7038 if no RAL specified ──
+    _used_default_ral = False
+    if not ral:
+        ral = "7038"
+        _used_default_ral = True
+
     results = lookup_international_product(producto, base, ral)
     if not results:
         return json.dumps({
@@ -18131,11 +18214,15 @@ def _handle_tool_consultar_referencia_international(fn_args: dict) -> str:
         "encontrado": True,
         "productos": items,
         "total_resultados": len(items),
+        "ral_usado": ral,
+        "ral_default_aplicado": _used_default_ral,
         "instruccion": (
             "⚠️ IMPORTANTE: Los precios de esta tabla YA INCLUYEN IVA. "
             "NO sumes IVA de nuevo. El precio KIT galón = base + catalizador ya con IVA. "
             "Para cotizar: precio_kit × cantidad = subtotal. El total YA es con IVA incluido. "
             "Usa los CÓDIGOS de referencia para buscar disponibilidad con consultar_inventario."
+            + (" Se usó RAL 7038 (gris claro) por defecto porque el cliente no especificó color. "
+               "SIEMPRE agrega: 'Para más colores RAL disponibles, visita www.ferreinox.co'" if _used_default_ral else "")
         ),
     }, ensure_ascii=False)
 
