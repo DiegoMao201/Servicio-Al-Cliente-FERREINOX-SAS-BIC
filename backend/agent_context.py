@@ -1006,7 +1006,16 @@ def build_turn_context(
 
     elif intent == "confirmacion":
         lines.append("El cliente aceptó la cotización.")
-        lines.append("Acción: Recopila datos faltantes (nombre, cédula si es pedido). Llama confirmar_pedido_y_generar_pdf.")
+        draft_tipo = (commercial_draft or {}).get("tipo_documento")
+        if draft_tipo == "cotizacion":
+            lines.append("Acción: Si el cliente no está validado, para cotización pide nombre + cédula/NIT y usa registrar_cliente_nuevo en modo cotizacion.")
+            lines.append("NO bloquees la cotización por falta de dirección o ciudad.")
+        elif draft_tipo == "pedido":
+            lines.append("Acción: Para pedido reúne nombre + cédula/NIT + dirección + ciudad antes de cerrar.")
+            lines.append("Si no existe en base, usa registrar_cliente_nuevo en modo pedido y luego confirmar_pedido_y_generar_pdf.")
+        else:
+            lines.append("Acción: Recopila datos faltantes según el tipo de cierre: cotización = nombre + cédula/NIT; pedido = nombre + cédula/NIT + dirección + ciudad.")
+        lines.append("Luego llama confirmar_pedido_y_generar_pdf.")
         lines.append("NO repitas la cotización. Solo recoge lo que falta y cierra.")
 
     elif intent == "correccion":

@@ -8651,6 +8651,20 @@ def find_cliente_contexto_by_phone(phone_number: str):
             {"phone_pattern": f"%{normalized_digits}"},
         ).mappings().one_or_none()
 
+        if row is None:
+            row = connection.execute(
+                text(
+                    """
+                    SELECT codigo AS cod_cliente, nombre_legal AS nombre_cliente, telefono AS telefono1, celular AS telefono2, email
+                    FROM public.cliente
+                    WHERE regexp_replace(COALESCE(telefono, ''), '[^0-9]', '', 'g') LIKE :phone_pattern
+                       OR regexp_replace(COALESCE(celular, ''), '[^0-9]', '', 'g') LIKE :phone_pattern
+                    LIMIT 1
+                    """
+                ),
+                {"phone_pattern": f"%{normalized_digits}"},
+            ).mappings().one_or_none()
+
     if not row or not row["cod_cliente"]:
         return None
 
@@ -15576,6 +15590,12 @@ def _handle_tool_verificar_identidad(args, context, conversation_context):
 # ---------------------------------------------------------------------------
 def _handle_tool_registrar_cliente_nuevo(args, context, conversation_context):
     """Register a new client in agent_clientes and link to WhatsApp contact."""
+    modo_registro = (args.get("modo_registro") or args.get("tipo_documento") or "").strip().lower()
+    if modo_registro not in {"cotizacion", "pedido"}:
+        modo_registro = (conversation_context.get("commercial_draft") or {}).get("tipo_documento") or "pedido"
+    if modo_registro not in {"cotizacion", "pedido"}:
+        modo_registro = "pedido"
+
     nombre = (args.get("nombre_completo") or "").strip()
     cedula_nit = (args.get("cedula_nit") or "").strip()
     telefono = (args.get("telefono") or context.get("telefono_e164") or "").strip()
@@ -15587,33 +15607,44 @@ def _handle_tool_registrar_cliente_nuevo(args, context, conversation_context):
         return json.dumps({"registrado": False, "mensaje": "Falta el nombre completo del cliente."}, ensure_ascii=False)
     if not cedula_nit:
         return json.dumps({"registrado": False, "mensaje": "Falta la cédula o NIT del cliente."}, ensure_ascii=False)
-    if not direccion:
+    if modo_registro == "pedido" and not direccion:
         return json.dumps({"registrado": False, "mensaje": "Falta la dirección de entrega."}, ensure_ascii=False)
-    if not ciudad:
+    if modo_registro == "pedido" and not ciudad:
         return json.dumps({"registrado": False, "mensaje": "Falta la ciudad de entrega."}, ensure_ascii=False)
 
-    # Normalize cedula/NIT
     cedula_clean = cedula_nit.replace(".", "").replace("-", "").replace(" ", "")
+    telefono_normalizado = normalize_phone_e164(telefono) or telefono
+    document_type = "NIT" if len(cedula_clean) > 10 else "CC"
 
-    # Check if already registered
-    existing = fetch_client_by_nif_or_codigo(cedula_clean)
-    if existing:
-        return json.dumps({
-            "registrado": False,
-            "mensaje": f"Ya existe un cliente registrado con ese documento: {existing.get('nombre', '')} (código {existing.get('codigo', '')}).",
-            "cliente_existente": {
-                "nombre": existing.get("nombre"),
-                "codigo": existing.get("codigo"),
-                "ciudad": existing.get("ciudad"),
-            },
-        }, ensure_ascii=False)
+    def _split_customer_name(full_name: str):
+        parts = [part for part in full_name.split() if part]
+        return {
+            "nombre_1": parts[0] if len(parts) > 0 else "",
+            "otros_nombres": " ".join(parts[1:-2]) if len(parts) > 3 else (parts[1] if len(parts) > 1 else ""),
+            "apellido_1": parts[-2] if len(parts) >= 3 else "",
+            "apellido_2": parts[-1] if len(parts) >= 4 else "",
+        }
 
-    # Determine city for delivery logic
+    def _next_digital_customer_code(connection):
+        max_agent = connection.execute(text(
+            "SELECT COALESCE(MAX(codigo), 900000) FROM public.agent_clientes WHERE codigo >= 900000"
+        )).scalar() or 900000
+        max_public = connection.execute(text(
+            "SELECT COALESCE(MAX(CASE WHEN codigo ~ '^[0-9]+$' THEN codigo::bigint END), 900000) FROM public.cliente"
+        )).scalar() or 900000
+        return int(max(max_agent, max_public)) + 1
+
+    existing_context = None
+    try:
+        existing_context = find_cliente_contexto_by_document(cedula_clean)
+    except Exception:
+        existing_context = None
+
     ciudad_lower = ciudad.lower().strip()
-    CIUDADES_EJE_CAFETERO = ["pereira", "manizales", "armenia", "dosquebradas", "santa rosa", "chinchiná", "chinchina"]
-    ciudad_despacho = ciudad if any(c in ciudad_lower for c in CIUDADES_EJE_CAFETERO) else "Pereira"
+    ciudades_eje_cafetero = ["pereira", "manizales", "armenia", "dosquebradas", "santa rosa", "chinchiná", "chinchina"]
+    ciudad_despacho = ciudad if any(c in ciudad_lower for c in ciudades_eje_cafetero) else "Pereira"
     nota_logistica = ""
-    if ciudad_despacho == "Pereira" and not any(c in ciudad_lower for c in CIUDADES_EJE_CAFETERO):
+    if modo_registro == "pedido" and ciudad_despacho == "Pereira" and not any(c in ciudad_lower for c in ciudades_eje_cafetero):
         nota_logistica = (
             f"⚠️ La ciudad '{ciudad}' está fuera de las zonas principales del Eje Cafetero. "
             "El despacho se centraliza desde Pereira. El equipo de logística se comunicará "
@@ -15622,71 +15653,147 @@ def _handle_tool_registrar_cliente_nuevo(args, context, conversation_context):
 
     try:
         engine = get_db_engine()
-        with engine.connect() as conn:
-            # Generate next codigo
-            max_code = conn.execute(text(
-                "SELECT COALESCE(MAX(codigo), 900000) FROM public.agent_clientes WHERE codigo >= 900000"
-            )).scalar()
-            new_codigo = (max_code or 900000) + 1
+        with engine.begin() as conn:
+            existing_codigo = None
+            if existing_context:
+                existing_codigo = existing_context.get("cliente_codigo") or existing_context.get("verified_cliente_codigo")
+            codigo_cliente = int(existing_codigo) if str(existing_codigo or "").isdigit() else _next_digital_customer_code(conn)
 
-            # Parse name parts
-            name_parts = nombre.split()
-            nombre_1 = name_parts[0] if len(name_parts) > 0 else ""
-            otros_nombres = name_parts[1] if len(name_parts) > 1 else ""
-            apellido_1 = name_parts[2] if len(name_parts) > 2 else ""
-            apellido_2 = name_parts[3] if len(name_parts) > 3 else ""
-
-            conn.execute(text("""
-                INSERT INTO public.agent_clientes
-                    (codigo, nombre, nif, direccion, telefono, ciudad, email,
-                     nombre_1, otros_nombres, apellido_1, apellido_2,
-                     categoria, segmento, clasificacion)
-                VALUES
-                    (:codigo, :nombre, :nif, :direccion, :telefono, :ciudad, :email,
-                     :nombre_1, :otros_nombres, :apellido_1, :apellido_2,
-                     'NUEVO', 'WHATSAPP', 'CLIENTE_DIGITAL')
-            """), {
-                "codigo": new_codigo,
-                "nombre": nombre.upper(),
-                "nif": cedula_clean,
-                "direccion": direccion,
-                "telefono": telefono,
-                "ciudad": ciudad.upper(),
+            conn.execute(text(
+                """
+                INSERT INTO public.cliente (
+                    codigo, tipo_documento, numero_documento, nombre_legal, nombre_comercial,
+                    email, telefono, celular, direccion, ciudad, segmento, updated_at
+                ) VALUES (
+                    :codigo, :tipo_documento, :numero_documento, :nombre_legal, :nombre_comercial,
+                    :email, :telefono, :celular, :direccion, :ciudad, :segmento, now()
+                )
+                ON CONFLICT (tipo_documento, numero_documento)
+                DO UPDATE SET
+                    codigo = COALESCE(public.cliente.codigo, EXCLUDED.codigo),
+                    nombre_legal = EXCLUDED.nombre_legal,
+                    nombre_comercial = COALESCE(NULLIF(EXCLUDED.nombre_comercial, ''), public.cliente.nombre_comercial),
+                    email = COALESCE(NULLIF(EXCLUDED.email, ''), public.cliente.email),
+                    telefono = COALESCE(NULLIF(EXCLUDED.telefono, ''), public.cliente.telefono),
+                    celular = COALESCE(NULLIF(EXCLUDED.celular, ''), public.cliente.celular),
+                    direccion = COALESCE(NULLIF(EXCLUDED.direccion, ''), public.cliente.direccion),
+                    ciudad = COALESCE(NULLIF(EXCLUDED.ciudad, ''), public.cliente.ciudad),
+                    segmento = COALESCE(NULLIF(EXCLUDED.segmento, ''), public.cliente.segmento),
+                    updated_at = now()
+                """
+            ), {
+                "codigo": str(codigo_cliente),
+                "tipo_documento": document_type,
+                "numero_documento": cedula_clean,
+                "nombre_legal": nombre.upper(),
+                "nombre_comercial": nombre.upper(),
                 "email": email,
-                "nombre_1": nombre_1.upper(),
-                "otros_nombres": otros_nombres.upper(),
-                "apellido_1": apellido_1.upper(),
-                "apellido_2": apellido_2.upper(),
+                "telefono": telefono_normalizado,
+                "celular": telefono_normalizado,
+                "direccion": direccion,
+                "ciudad": ciudad.upper(),
+                "segmento": "WHATSAPP",
             })
-            conn.commit()
 
-            # Link to WhatsApp contact
-            try:
-                contact_id = context.get("contact_id")
-                if contact_id:
-                    conn.execute(text("""
+            name_parts = _split_customer_name(nombre)
+            name_payload = {key: value.upper() for key, value in name_parts.items()}
+            existing_agent = conn.execute(text(
+                """
+                SELECT id
+                FROM public.agent_clientes
+                WHERE REPLACE(REPLACE(COALESCE(nif, ''), '.', ''), '-', '') = :nif
+                   OR codigo = :codigo
+                LIMIT 1
+                """
+            ), {"nif": cedula_clean, "codigo": codigo_cliente}).mappings().first()
+
+            if existing_agent:
+                conn.execute(text(
+                    """
+                    UPDATE public.agent_clientes
+                    SET codigo = :codigo,
+                        nombre = :nombre,
+                        nif = :nif,
+                        direccion = COALESCE(NULLIF(:direccion, ''), direccion),
+                        telefono = COALESCE(NULLIF(:telefono, ''), telefono),
+                        ciudad = COALESCE(NULLIF(:ciudad, ''), ciudad),
+                        email = COALESCE(NULLIF(:email, ''), email),
+                        nombre_1 = :nombre_1,
+                        otros_nombres = :otros_nombres,
+                        apellido_1 = :apellido_1,
+                        apellido_2 = :apellido_2,
+                        categoria = COALESCE(categoria, 'NUEVO'),
+                        segmento = 'WHATSAPP',
+                        clasificacion = 'CLIENTE_DIGITAL'
+                    WHERE id = :id
+                    """
+                ), {
+                    "id": existing_agent["id"],
+                    "codigo": codigo_cliente,
+                    "nombre": nombre.upper(),
+                    "nif": cedula_clean,
+                    "direccion": direccion,
+                    "telefono": telefono_normalizado,
+                    "ciudad": ciudad.upper(),
+                    "email": email,
+                    **name_payload,
+                })
+            else:
+                conn.execute(text(
+                    """
+                    INSERT INTO public.agent_clientes
+                        (codigo, nombre, nif, direccion, telefono, ciudad, email,
+                         nombre_1, otros_nombres, apellido_1, apellido_2,
+                         categoria, segmento, clasificacion)
+                    VALUES
+                        (:codigo, :nombre, :nif, :direccion, :telefono, :ciudad, :email,
+                         :nombre_1, :otros_nombres, :apellido_1, :apellido_2,
+                         'NUEVO', 'WHATSAPP', 'CLIENTE_DIGITAL')
+                    """
+                ), {
+                    "codigo": codigo_cliente,
+                    "nombre": nombre.upper(),
+                    "nif": cedula_clean,
+                    "direccion": direccion,
+                    "telefono": telefono_normalizado,
+                    "ciudad": ciudad.upper(),
+                    "email": email,
+                    **name_payload,
+                })
+
+            contact_id = context.get("contact_id")
+            if contact_id:
+                try:
+                    conn.execute(text(
+                        """
                         UPDATE public.whatsapp_contacto
                         SET nombre_visible = :nombre,
-                            metadata = metadata || :meta,
+                            metadata = COALESCE(metadata, '{}'::jsonb) || CAST(:meta AS jsonb),
                             updated_at = NOW()
                         WHERE id = :cid
-                    """), {
+                        """
+                    ), {
                         "nombre": nombre,
-                        "meta": json.dumps({"cliente_codigo": new_codigo, "cedula": cedula_clean}),
+                        "meta": json.dumps({"cliente_codigo": codigo_cliente, "cedula": cedula_clean}),
                         "cid": contact_id,
                     })
-                    conn.commit()
+                except Exception:
+                    pass
+
+            try:
+                cliente_id = update_contact_cliente(contact_id, str(codigo_cliente)) if contact_id else None
+                if cliente_id:
+                    context["cliente_id"] = cliente_id
             except Exception:
                 pass
 
-            # Mark as verified in conversation context
             update_conversation_context(
                 context["conversation_id"],
                 {
                     "verified": True,
                     "verified_document": cedula_clean,
                     "verified_by": "registration",
-                    "verified_cliente_codigo": new_codigo,
+                    "verified_cliente_codigo": codigo_cliente,
                     "client_registered_now": True,
                 },
             )
@@ -15694,20 +15801,27 @@ def _handle_tool_registrar_cliente_nuevo(args, context, conversation_context):
                 "verified": True,
                 "verified_document": cedula_clean,
                 "verified_by": "registration",
-                "verified_cliente_codigo": new_codigo,
+                "verified_cliente_codigo": codigo_cliente,
             })
 
             result = {
                 "registrado": True,
-                "codigo_cliente": new_codigo,
+                "codigo_cliente": codigo_cliente,
                 "nombre": nombre.upper(),
                 "cedula_nit": cedula_clean,
-                "telefono": telefono,
+                "telefono": telefono_normalizado,
                 "direccion": direccion,
                 "ciudad": ciudad.upper(),
                 "ciudad_despacho": ciudad_despacho.upper(),
-                "mensaje": f"Cliente {nombre} registrado exitosamente con código {new_codigo}.",
+                "modo_registro": modo_registro,
+                "mensaje": (
+                    f"Cliente {nombre} validado exitosamente con código {codigo_cliente}."
+                    if existing_context else
+                    f"Cliente {nombre} registrado exitosamente con código {codigo_cliente}."
+                ),
             }
+            if modo_registro == "cotizacion":
+                result["datos_pendientes_para_pedido"] = ["direccion_entrega", "ciudad"]
             if nota_logistica:
                 result["nota_logistica"] = nota_logistica
             return json.dumps(result, ensure_ascii=False)

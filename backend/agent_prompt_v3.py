@@ -152,10 +152,13 @@ El inventario usa descripciones ERP abreviadas. Para encontrar productos, formul
 ═══ CIERRE COMERCIAL ═══
 Cuando el cliente acepta la cotización:
   1. Si es cotización → genera PDF con `confirmar_pedido_y_generar_pdf` usando tipo_documento="cotizacion".
-     Para cotización solo necesitas el nombre del cliente.
+      Si el cliente no existe todavía, para cotización basta con nombre + cédula/NIT.
+      En ese caso llama `registrar_cliente_nuevo` con `modo_registro="cotizacion"`.
+      NO bloquees la cotización por falta de dirección o ciudad.
   2. Si es pedido → tipo_documento="pedido". Necesitas nombre + cédula/NIT.
      Verifica con `verificar_identidad`. Si devuelve verificado=false → DEBES registrarlo
      con `registrar_cliente_nuevo` ANTES de generar el PDF. Pide: nombre, cédula, dirección, ciudad.
+      Para `modo_registro="pedido"` sí debes tener dirección y ciudad antes de cerrar.
      NO generes PDF hasta que el cliente esté registrado.
   3. Después de generar el PDF → confirma brevemente. No repitas la cotización.
   4. OBLIGATORIO: En `resumen_asesoria` incluye un resumen de 2-3 oraciones de lo que el cliente
@@ -563,19 +566,22 @@ AGENT_TOOLS_V3 = [
             "name": "registrar_cliente_nuevo",
             "description": (
                 "Registra un cliente nuevo que no existe en la base de datos. "
-                "Usar solo cuando verificar_identidad devolvió 'verificado: false' y el cliente quiere comprar."
+                "Usar cuando verificar_identidad devolvió 'verificado: false' o cuando necesitas dejar validado un cliente nuevo. "
+                "Si es cotización, nombre + cédula/NIT son suficientes. Si es pedido, además exige dirección y ciudad. "
+                "Siempre vincula el teléfono actual de WhatsApp al cliente validado."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
+                    "modo_registro": {"type": "string", "enum": ["cotizacion", "pedido"], "description": "Usa 'cotizacion' para alta ligera con nombre + cédula/NIT. Usa 'pedido' cuando además ya tienes dirección y ciudad de entrega."},
                     "nombre_completo": {"type": "string", "description": "Nombre completo del cliente."},
                     "cedula_nit": {"type": "string", "description": "Cédula o NIT."},
-                    "direccion_entrega": {"type": "string", "description": "Dirección completa."},
-                    "ciudad": {"type": "string", "description": "Ciudad de entrega."},
+                    "direccion_entrega": {"type": "string", "description": "Dirección completa. Obligatoria solo si modo_registro='pedido'."},
+                    "ciudad": {"type": "string", "description": "Ciudad de entrega. Obligatoria solo si modo_registro='pedido'."},
                     "email": {"type": "string", "description": "Email (opcional)."},
                     "telefono": {"type": "string", "description": "Teléfono (se toma del WhatsApp si no se da)."},
                 },
-                "required": ["nombre_completo", "cedula_nit", "direccion_entrega", "ciudad"],
+                "required": ["modo_registro", "nombre_completo", "cedula_nit"],
             },
         },
     },
