@@ -211,6 +211,32 @@ def generate_agent_reply_v3(
         assistant_message = response.choices[0].message
         max_iterations -= 1
 
+    # ── Si se agotaron iteraciones sin texto final, forzar respuesta ────
+    if not assistant_message.content and tool_calls_made:
+        logger.warning("V3: iterations exhausted without text — forcing tool_choice=none")
+        if assistant_message.tool_calls:
+            messages.append(assistant_message)
+            for tc in assistant_message.tool_calls:
+                messages.append({"role": "tool", "tool_call_id": tc.id, "content": '{"mensaje": "Límite de iteraciones alcanzado. Resume toda la información obtenida."}'})
+        messages.append({
+            "role": "system",
+            "content": (
+                "IMPORTANTE: Ya tienes TODA la información de las herramientas. "
+                "Genera tu respuesta FINAL consolidando TODOS los datos obtenidos. "
+                "NO llames más herramientas."
+            ),
+        })
+        t_force = time.time()
+        resp_force = client.chat.completions.create(
+            model=m.get_openai_model(),
+            messages=messages,
+            tools=AGENT_TOOLS_V3,
+            tool_choice="none",
+            temperature=0.3,
+        )
+        assistant_message = resp_force.choices[0].message
+        logger.info("V3 forced text response: %dms", int((time.time() - t_force) * 1000))
+
     total_ms = int((time.time() - t_start) * 1000)
     tool_names = [tc["name"] for tc in tool_calls_made]
     logger.info("V3 agent TOTAL: %dms | tools=%s | iters=%d", total_ms, tool_names, iteration)
@@ -225,7 +251,8 @@ def generate_agent_reply_v3(
     # ── GUARDIA QUÍMICA: incompatibilidad alquídico/epóxico/PU ───────────
     if not is_ensenar_msg and not is_greeting:
         assistant_message = _guardia_quimica(
-            assistant_message, messages, tool_calls_made, context, conversation_context, m
+            assistant_message, messages, tool_calls_made, context, conversation_context, m,
+            user_message=user_message,
         )
 
     # ── GUARDIA BICOMPONENTE: catalizador obligatorio ────────────────────
@@ -313,12 +340,13 @@ def _detect_ensenar(user_message: str) -> bool:
     return any(kw in msg for kw in ["enseñar", "ensenar", "anota esto", "guarda esto", "aprende esto"])
 
 
-def _guardia_quimica(assistant_message, messages, tool_calls_made, context, conversation_context, m):
+def _guardia_quimica(assistant_message, messages, tool_calls_made, context, conversation_context, m, user_message=""):
     """Detecta combinaciones químicas incompatibles y fuerza corrección."""
-    response_text = (assistant_message.content or "").lower()
+    # Escanear TANTO la respuesta COMO el mensaje del usuario
+    combined_text = ((assistant_message.content or "") + " " + (user_message or "")).lower()
     families_in_response = {}
     for fam, signals in _CHEM_FAMILIES.items():
-        found = [s for s in signals if s in response_text]
+        found = [s for s in signals if s in combined_text]
         if found:
             families_in_response[fam] = found
 
