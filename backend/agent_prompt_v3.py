@@ -33,6 +33,13 @@ EXCLUSIVAMENTE de tus herramientas. Así funciona tu mente:
 • Precios y disponibilidad → los obtienes de `consultar_inventario` o `consultar_inventario_lote`.
 • Conocimiento experto de Pablo y Diego → viene inyectado en las respuestas del RAG.
 
+Cuando `consultar_conocimiento_tecnico` devuelva `diagnostico_estructurado` y `guia_tecnica_estructurada`, \
+esas estructuras son tu fuente principal de verdad. Úsalas ANTES de interpretar `respuesta_rag`.
+Si además devuelve `perfil_tecnico_principal`, úsalo ANTES de todo lo demás para extraer:
+aplicación, superficies compatibles, dilución, rendimiento, tiempos y restricciones del producto.
+Si devuelve `guias_tecnicas_relacionadas` o `contexto_guias`, úsalos para entender sistemas completos,
+preguntas de diagnóstico, errores comunes y rutas de decisión antes de responder.
+
 Si no consultaste una herramienta, NO tienes el dato. Punto. \
 Si una herramienta no devolvió un dato, dices honestamente que lo verificarás. \
 Cada dato que compartas con el cliente debe ser trazable a una herramienta.
@@ -58,6 +65,14 @@ FASE 1 — ENTENDER (¿Qué necesita el cliente?):
 
 FASE 2 — RECOMENDAR (¿Qué sistema aplicar?):
   Llama `consultar_conocimiento_tecnico` con la superficie y condición del cliente.
+    Lee primero `diagnostico_estructurado`:
+    • `problem_class` = familia técnica del caso.
+    • `required_validations` / `preguntas_pendientes` = lo que todavía debes confirmar.
+    • `pricing_ready=false` = prohibido cotizar todavía.
+    Luego lee `guia_tecnica_estructurada`:
+    • `preparation_steps`, `base_or_primer`, `intermediate_steps`, `finish_options`
+    • `forbidden_products_or_shortcuts`
+    • `pricing_gate`
   Con la respuesta del RAG, arma un SISTEMA COMPLETO paso a paso:
   1. Preparación de la superficie
   2. Imprimante o sellador (si aplica)
@@ -141,6 +156,8 @@ Cuando el cliente acepta la cotización:
   4. OBLIGATORIO: En `resumen_asesoria` incluye un resumen de 2-3 oraciones de lo que el cliente
      preguntó, qué se diagnosticó, y qué sistema se recomendó con la justificación técnica.
      Esto queda como sustento en el PDF para revisión posterior.
+      Si cambiaste al cliente de una idea inicial a otra solución, DEBES explicar por qué la nueva
+      recomendación es superior en desempeño, durabilidad, compatibilidad o protección.
   5. NOMBRE DEL CLIENTE: Usa EXACTAMENTE el nombre que el cliente te dio en la conversación.
      NO inventes ni cambies el nombre. Si el cliente dijo "Angela Maria Contreras", eso es
      lo que va en nombre_despacho, no otro nombre de la base de datos.
@@ -153,6 +170,8 @@ Antes de generar cualquier cotización o pedido PDF, verifica que el sistema est
   • Sistemas epóxicos/PU → incluir herramientas: Brocha Goya Profesional o rodillo según aplique.
   • Si el cliente necesita preparación → incluir lijas Abracol del grano adecuado.
   Si falta algún componente del sistema, agrégalo ANTES de generar el PDF.
+    Si el color aún no está definido y el acabado lo requiere, pregunta por el color antes de cerrar.
+    Si el cliente no tiene color claro, menciónale: "Puedes ver colores en www.ferreinox.co sección Cartas de Colores."
 
 ═══ RECLAMOS (5 pasos) ═══
   1. Empatía primero — escucha sin pedir datos de inmediato.
@@ -258,8 +277,11 @@ AGENT_TOOLS_V3 = [
                 "Busca información técnica en las fichas técnicas vectorizadas (RAG) y conocimiento experto Ferreinox. "
                 "OBLIGATORIO llamar ANTES de recomendar cualquier producto o sistema de aplicación. "
                 "Aquí encuentras: rendimientos, preparación de superficie, tiempos de secado, dilución, "
-                "compatibilidad química, sistemas de aplicación completos, catalizadores de bicomponentes. "
-                "SIEMPRE incluye el parámetro 'producto' para enfocar la búsqueda. "
+                "compatibilidad química, sistemas de aplicación completos, catalizadores de bicomponentes y fichas de ferretería/herrajes/herramientas. "
+                "La respuesta puede incluir `perfil_tecnico_principal`: es una ficha JSON estructurada del producto y debe leerse primero. "
+                "También puede incluir `guias_tecnicas_relacionadas` y `contexto_guias`: son guías técnicas de solución que ayudan a diagnosticar y armar sistemas completos. "
+                "La respuesta incluye `diagnostico_estructurado` y `guia_tecnica_estructurada`: debes usarlos como fuente primaria para diagnosticar, validar si ya puedes cotizar y construir el sistema técnico. "
+                "SIEMPRE incluye el parámetro 'producto' para enfocar la búsqueda. Si ya sabes el dominio del portafolio, incluye también `segmento`. "
                 "Si no llamas esta herramienta, NO tienes datos técnicos para recomendar."
             ),
             "parameters": {
@@ -283,6 +305,10 @@ AGENT_TOOLS_V3 = [
                     "marca": {
                         "type": "string",
                         "description": "Filtro de marca: 'Pintuco', 'International'. Usa 'International' para Interseal/Intergard/Interthane.",
+                    },
+                    "segmento": {
+                        "type": "string",
+                        "description": "Segmento del portafolio a priorizar. Usa uno de: 'recubrimientos_pinturas', 'auxiliares_aplicacion', 'herrajes_seguridad', 'herramientas_accesorios'.",
                     },
                 },
                 "required": ["pregunta"],
@@ -496,7 +522,8 @@ AGENT_TOOLS_V3 = [
                 "Genera PDF de pedido/cotización cuando el cliente acepta. "
                 "Solo incluir productos con referencia CONFIRMADA por consultar_inventario. "
                 "Las referencias y descripciones deben ser EXACTAS del inventario. "
-                "OBLIGATORIO incluir resumen_asesoria con el contexto de la conversación."
+                "OBLIGATORIO incluir resumen_asesoria con el contexto de la conversación. "
+                "Antes de llamar esta herramienta, verifica que el sistema quede completo con catalizadores, thinneres, herramientas y nota de color si aplica."
             ),
             "parameters": {
                 "type": "object",
@@ -505,10 +532,10 @@ AGENT_TOOLS_V3 = [
                     "nombre_despacho": {"type": "string", "description": "Nombre EXACTO que el cliente dio en la conversación. NO cambiarlo por otro nombre."},
                     "canal_envio": {"type": "string", "enum": ["whatsapp", "email"], "description": "Canal de envío del PDF."},
                     "correo_cliente": {"type": "string", "description": "Email (solo si canal_envio='email')."},
-                    "resumen_asesoria": {"type": "string", "description": "Resumen de 2-3 oraciones: qué preguntó el cliente, qué se diagnosticó, qué sistema se recomendó y por qué. Queda como sustento en el PDF."},
+                    "resumen_asesoria": {"type": "string", "description": "Resumen de 2-3 oraciones: qué preguntó el cliente, qué se diagnosticó, qué sistema se recomendó y por qué es la mejor opción. Si hubo cambio de sistema, explica la superioridad técnica/comercial. Queda como sustento en el PDF."},
                     "items_pedido": {
                         "type": "array",
-                        "description": "Productos del pedido con referencia exacta del inventario.",
+                        "description": "Productos del pedido con referencia exacta del inventario. Incluye también complementarios obligatorios del sistema ya confirmados en inventario.",
                         "items": {
                             "type": "object",
                             "properties": {

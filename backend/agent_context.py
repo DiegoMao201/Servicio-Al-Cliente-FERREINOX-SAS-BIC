@@ -264,6 +264,50 @@ def _build_problem_protocol_lines(problem_class: Optional[str]) -> list[str]:
     return lines
 
 
+def _build_structured_diagnostic_summary(problem_class: Optional[str], diagnostic: dict, user_message: str) -> list[str]:
+    if not problem_class:
+        return []
+
+    lowered = (user_message or "").lower()
+    protocol = _PROBLEM_PROTOCOLS.get(problem_class, {})
+    confidence = "baja"
+    confidence_signals = 0
+
+    signal_map = {
+        "humedad_interior_capilaridad": ["humedad", "salitre", "jardinera", "capilaridad", "sube del piso", "base del muro"],
+        "humedad_interior_general": ["humedad", "salitre", "interior", "pared", "muro"],
+        "fachada_exterior": ["fachada", "exterior", "intemperie", "lluvia"],
+        "metal_oxidado": ["metal", "reja", "óxido", "oxido"],
+        "piso_industrial": ["piso", "concreto", "montacargas", "tráfico", "trafico"],
+    }
+    for token in signal_map.get(problem_class, []):
+        if token in lowered:
+            confidence_signals += 1
+
+    if confidence_signals >= 4:
+        confidence = "alta"
+    elif confidence_signals >= 2:
+        confidence = "media"
+
+    validations = protocol.get("required_questions") or []
+    lines = []
+    lines.append("")
+    lines.append("═══ DIAGNÓSTICO ESTRUCTURADO ═══")
+    lines.append(f"problem_class={problem_class}")
+    lines.append(f"confidence={confidence}")
+    lines.append(f"surface={diagnostic.get('surface') or 'sin definir'}")
+    lines.append(f"condition={diagnostic.get('condition') or 'sin definir'}")
+    lines.append(f"interior_exterior={diagnostic.get('interior_exterior') or 'sin definir'}")
+    lines.append(f"area_m2={diagnostic.get('area_m2') if diagnostic.get('area_m2') is not None else 'pendiente'}")
+    lines.append(f"pricing_ready={'sí' if diagnostic.get('area_m2') else 'no'}")
+    if validations:
+        lines.append("Validaciones pendientes:")
+        for validation in validations:
+            lines.append(f"  • {validation}")
+    lines.append("════════════════════════════════")
+    return lines
+
+
 def _get_surface_alerts(surface: Optional[str], condition: Optional[str]) -> list[str]:
     """Retorna alertas críticas que aplican a la combinación superficie+condición.
     Intenta cargar desde DB (extensible); fallback a hardcoded si DB no disponible."""
@@ -803,6 +847,10 @@ def build_turn_context(
         lines.append("")
         for alert in surface_alerts:
             lines.append(alert)
+
+    structured_diagnostic_lines = _build_structured_diagnostic_summary(problem_class, diagnostic, user_message)
+    if structured_diagnostic_lines:
+        lines.extend(structured_diagnostic_lines)
 
     problem_protocol_lines = _build_problem_protocol_lines(problem_class)
     if problem_protocol_lines:

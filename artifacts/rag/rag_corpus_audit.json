@@ -1,0 +1,1056 @@
+{
+  "curated_documents": 341,
+  "duplicate_groups": 4,
+  "duplicates_removed": 4,
+  "skipped_documents": 304,
+  "documents_by_kind": {
+    "ficha_tecnica": 341
+  },
+  "documents_by_brand": {
+    "interchar": 1,
+    "intergard": 5,
+    "international": 1,
+    "interseal": 3,
+    "interthane": 2,
+    "interzone": 1,
+    "mega": 2,
+    "pintuco": 227,
+    "sin_marca": 99
+  },
+  "duplicate_groups_detail": [
+    {
+      "dedup_key": "hash::474b432bfd9b75e45bbc0484eadd4e74099fd8a3c55a00c1afc5beb89c65f462::tec. thinner distri quimicos",
+      "survivor": "FICHA TEC. THINNER DISTRI QUIMICOS.pdf",
+      "canonical_family": "PINTUCO FICHA TEC. THINNER DISTRI QUIMICOS",
+      "duplicates": [
+        "FICHA TEC. THINNER DISTRI QUIMICOS.pdf"
+      ]
+    },
+    {
+      "dedup_key": "hash::51c8b6a46ddc293b422edb418d685929145dbb342ca2942e4b33ee267cf72434::tec. varsol distri quimicos",
+      "survivor": "FICHA TEC. VARSOL DISTRI QUIMICOS.pdf",
+      "canonical_family": "PINTUCO FICHA TEC. VARSOL DISTRI QUIMICOS",
+      "duplicates": [
+        "FICHA TEC. VARSOL DISTRI QUIMICOS.pdf"
+      ]
+    },
+    {
+      "dedup_key": "hash::c5d6b753fb32de4fd2ed3d0adf89a15468c3dba11ca59106294a515e51fe397e::thinner estrada indusol",
+      "survivor": "FICHA TECNICA THINNER ESTRADA INDUSOL.pdf",
+      "canonical_family": "PINTUCO THINNER ESTRADA INDUSOL",
+      "duplicates": [
+        "FICHA TECNICA THINNER ESTRADA INDUSOL.pdf"
+      ]
+    },
+    {
+      "dedup_key": "hash::f3a6feb2dc137a9335419202d66ef14a298301b4c4f6101b36562ae2ad6d1bb0::2002",
+      "survivor": "INTERGARD 2002.pdf",
+      "canonical_family": "PINTUCO INTERGARD 2002",
+      "duplicates": [
+        "INTERGARD 2002.pdf"
+      ]
+    }
+  ],
+  "skipped_documents_detail": [
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/ajustadores thinner y varsol/certificado ajustador ref 21126.pdf",
+      "name": "CERTIFICADO AJUSTADOR REF 21126.pdf",
+      "reason": "secondary:certificado"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/ajustadores thinner y varsol/certificado de calidad thinner.pdf",
+      "name": "CERTIFICADO DE CALIDAD THINNER.pdf",
+      "reason": "secondary:certificado"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/ajustadores thinner y varsol/hoja seguridad thinner distri quimicos.pdf",
+      "name": "HOJA SEGURIDAD THINNER DISTRI QUIMICOS.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/ajustadores thinner y varsol/hoja seguridad varsol distri quimicos.pdf",
+      "name": "HOJA SEGURIDAD VARSOL DISTRI QUIMICOS.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/allegion/engage technology pre-launch webinar ppt-sp.pdf",
+      "name": "ENGAGE Technology Pre-Launch Webinar PPT-sp.pdf",
+      "reason": "secondary:presentacion"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/allegion/inafer/lista de precios inafer 51_ene13.pdf",
+      "name": "Lista de Precios INAFER 51_Ene13.pdf",
+      "reason": "secondary:precio"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/allegion/inafer/lista de precios inafer a-002.pdf",
+      "name": "Lista de precios Inafer A-002.pdf",
+      "reason": "secondary:precio"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/allegion/catálogo general allegion - final.pdf",
+      "name": "Catálogo general Allegion - Final.pdf",
+      "reason": "secondary:catalogo"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/allegion/sales presentation aptiq mobile - sp.pdf",
+      "name": "Sales Presentation APTIQ MOBILE - sp.pdf",
+      "reason": "secondary:presentacion"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/allegion/presentación comercial eac marzo 2017.pdf",
+      "name": "Presentación Comercial EAC MARZO 2017.pdf",
+      "reason": "secondary:presentacion"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/allegion/schlage/lista de precios schlage 97_ene13.pdf",
+      "name": "Lista de Precios Schlage 97_Ene13.pdf",
+      "reason": "secondary:precio"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/allegion/schlage/lista de precios schlage a-002.pdf",
+      "name": "Lista de Precios Schlage A-002.pdf",
+      "reason": "secondary:precio"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/allegion/schlage/lista de precios salidas de emergencia.pdf",
+      "name": "Lista de precios Salidas de Emergencia.pdf",
+      "reason": "secondary:precio"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/allegion/hand punch hp3000 manual 2016.pdf",
+      "name": "hand punch hp3000 manual 2016.pdf",
+      "reason": "secondary:manual"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/allegion/steelcraft techdat 2016.pdf",
+      "name": "steelcraft techdat 2016.pdf",
+      "reason": "secondary:manual"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/carborunbum/fds- sellador hibrido.pdf",
+      "name": "FDS- SELLADOR HIBRIDO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/certificacion revomastic revoque plastico blanco 17091.pdf",
+      "name": "Certificacion REVOMASTIC REVOQUE PLASTICO BLANCO 17091.pdf",
+      "reason": "secondary:certificado"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/fds - interseal 670 hs ral 5002 parte a caneca 4.25 gl.pdf",
+      "name": "FDS - INTERSEAL 670 HS RAL 5002 PARTE A CANECA 4.25 GL.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/fds- acrilica mantenimiento 13796 azul.pdf",
+      "name": "FDS- ACRILICA MANTENIMIENTO 13796 AZUL.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/carta garantia graniacryl.pdf",
+      "name": "CARTA GARANTIA GRANIACRYL.pdf",
+      "reason": "skip_path_token"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/certificado análisis c-therm boletin oc 144826 (2).pdf",
+      "name": "CERTIFICADO ANÁLISIS C-THERM Boletin OC 144826 (2).pdf",
+      "reason": "secondary:certificado"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds -  domestico blanco p-11.pdf",
+      "name": "FDS -  DOMESTICO BLANCO P-11.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds -  domestico verde esmeralda p-53.pdf",
+      "name": "FDS -  DOMESTICO VERDE ESMERALDA P-53.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds -  estuco profesional blanco 17060.pdf",
+      "name": "FDS -  ESTUCO PROFESIONAL BLANCO 17060.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds -  koraza blanco 2650.pdf",
+      "name": "FDS -  KORAZA BLANCO 2650.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds -  madetec aqua eco.pdf",
+      "name": "FDS -  MADETEC AQUA ECO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds -  masilla poliester p2500.pdf",
+      "name": "FDS -  MASILLA POLIESTER P2500.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds -  viniltex pro 650 base accent crema 117177.pdf",
+      "name": "FDS -  VINILTEX PRO 650 BASE ACCENT CREMA 117177.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - 10338144   pintuco fill 7  blanco 2791 _ 10384441, 10384439 _col (versión 6) (1).pdf",
+      "name": "FDS - 10338144   PINTUCO FILL 7  BLANCO 2791 _ 10384441, 10384439 _COL (Versión 6) (1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - acrilica mantenimiento semi mate negro 13791.pdf",
+      "name": "FDS - ACRILICA MANTENIMIENTO SEMI MATE NEGRO 13791.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - acualux blanco.pdf",
+      "name": "FDS - ACUALUX BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - aerosol laca nitro negro.pdf",
+      "name": "FDS - AEROSOL LACA NITRO NEGRO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - ajustador aromatico 21204.pdf",
+      "name": "FDS - AJUSTADOR AROMATICO 21204.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - ajustador para pintutrafico 21121.pdf",
+      "name": "FDS - AJUSTADOR PARA PINTUTRAFICO 21121.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/garantia certificados/carta de garantia koraza pro 550.pdf",
+      "name": "CARTA DE GARANTIA KORAZA PRO 550.pdf",
+      "reason": "skip_path_token"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/garantia certificados/carta garantia koraza doble vida.pdf",
+      "name": "CARTA GARANTIA KORAZA DOBLE VIDA.pdf",
+      "reason": "skip_path_token"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/garantia certificados/carta sri pinturas.pdf",
+      "name": "CARTA SRI PINTURAS.pdf",
+      "reason": "skip_path_token"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/garantia certificados/certificacion acriltex.pdf",
+      "name": "CERTIFICACION ACRILTEX.pdf",
+      "reason": "secondary:certificado"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/garantia certificados/certificacion montenegro.pdf",
+      "name": "CERTIFICACION MONTENEGRO.pdf",
+      "reason": "secondary:certificado"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/garantia certificados/certificado barniz cristal clear 9400 sin cloro -plomo.pdf",
+      "name": "CERTIFICADO BARNIZ CRISTAL CLEAR 9400 SIN CLORO -PLOMO.pdf",
+      "reason": "secondary:certificado"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/garantia certificados/certificado de calidad ico pro.pdf",
+      "name": "CERTIFICADO DE CALIDAD ICO PRO.pdf",
+      "reason": "secondary:certificado"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/garantia certificados/certificado de calidad texacryl p4-128859.pdf",
+      "name": "CERTIFICADO DE CALIDAD TEXACRYL P4-128859.pdf",
+      "reason": "secondary:certificado"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/garantia certificados/certificado icontec 9001 2008 pintuco.pdf",
+      "name": "CERTIFICADO ICONTEC 9001 2008 PINTUCO.pdf",
+      "reason": "secondary:certificado"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/garantia certificados/presentacion tecnologias de alto desempeño.pdf",
+      "name": "PRESENTACION TECNOLOGIAS DE ALTO DESEMPEÑO.pdf",
+      "reason": "secondary:certificado"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - alta temperatura aluminio 904.pdf",
+      "name": "FDS - ALTA TEMPERATURA ALUMINIO 904.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - anticorrosivo rojo 310 _ 10012445-10014324-10171711 _col (versión 4) (2).pdf",
+      "name": "FDS - ANTICORROSIVO ROJO 310 _ 10012445-10014324-10171711 _COL (Versión 4) (2).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - barnex extraproteccion semibrillante caramelo 6606.pdf",
+      "name": "FDS - BARNEX EXTRAPROTECCION SEMIBRILLANTE CARAMELO 6606.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - base accent pintulux.pdf",
+      "name": "FDS - BASE ACCENT PINTULUX.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - base anticorrosiva epoxi rojo oxido 10050.pdf",
+      "name": "FDS - BASE ANTICORROSIVA EPOXI ROJO OXIDO 10050.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - catalizador para poliuretano incoloro 11351.pdf",
+      "name": "FDS - CATALIZADOR PARA POLIURETANO INCOLORO 11351.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - catalizador para primer rap. sec. ambar.pdf",
+      "name": "FDS - CATALIZADOR PARA PRIMER RAP. SEC. AMBAR.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - catalizador pinturas epoxi incoloro 13227.pdf",
+      "name": "FDS - CATALIZADOR PINTURAS EPOXI INCOLORO 13227.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - catalizador plastico en frio.pdf",
+      "name": "FDS - CATALIZADOR PLASTICO EN FRIO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - domestico azul español p-40.pdf",
+      "name": "FDS - DOMESTICO AZUL ESPAÑOL P-40.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - domestico base pastel.pdf",
+      "name": "FDS - DOMESTICO BASE PASTEL.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - domestico gris humo p-85.pdf",
+      "name": "FDS - DOMESTICO GRIS HUMO P-85.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - escudo.pdf",
+      "name": "FDS - ESCUDO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esgrafiado base neutro 30497.pdf",
+      "name": "FDS - ESGRAFIADO BASE NEUTRO 30497.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte domestico crema p-7.pdf",
+      "name": "FDS - ESMALTE DOMESTICO CREMA P-7.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte pintulux teu amarillo 18.pdf",
+      "name": "FDS - ESMALTE PINTULUX TEU AMARILLO 18.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte pintulux teu azul espanol 40.pdf",
+      "name": "FDS - ESMALTE PINTULUX TEU AZUL ESPANOL 40.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte pintulux teu base tint _ 10396039,10396040 _col (versión 1).pdf",
+      "name": "FDS - ESMALTE PINTULUX TEU BASE TINT _ 10396039,10396040 _COL (Versión 1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte pintulux teu caoba 76.pdf",
+      "name": "FDS - ESMALTE PINTULUX TEU CAOBA 76.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte pintulux teu gris plata 84.pdf",
+      "name": "FDS - ESMALTE PINTULUX TEU GRIS PLATA 84.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte pintulux teu naranja 20.pdf",
+      "name": "FDS - ESMALTE PINTULUX TEU NARANJA 20.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte sintetico pintulux azul mediano 38 _ 10014356-10012463 _col (versión 4) (1).pdf",
+      "name": "FDS - ESMALTE SINTETICO PINTULUX AZUL MEDIANO 38 _ 10014356-10012463 _COL (Versión 4) (1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte sintetico pintulux verde turquesa 44 _ 10014364-10012470-10171677 _col (versión 5) (1).pdf",
+      "name": "FDS - ESMALTE SINTETICO PINTULUX VERDE TURQUESA 44 _ 10014364-10012470-10171677 _COL (Versión 5) (1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte sintetico pintulux verde turquesa 44.pdf",
+      "name": "FDS - ESMALTE SINTETICO PINTULUX VERDE TURQUESA 44.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - estuco acrilico para exterior blanco 27060.pdf",
+      "name": "FDS - ESTUCO ACRILICO PARA EXTERIOR BLANCO 27060.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - estucomastic blanco 18070.pdf",
+      "name": "FDS - ESTUCOMASTIC BLANCO 18070.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - imprimax blanco 3501.pdf",
+      "name": "FDS - IMPRIMAX BLANCO 3501.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - intergard 740 ral7000 rm parte a.pdf",
+      "name": "FDS - INTERGARD 740 RAL7000 RM PARTE A.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - interseal 670 hs parte a blanco.pdf",
+      "name": "FDS - INTERSEAL 670 HS PARTE A BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - interseal 670 hs parte b ega247.pdf",
+      "name": "FDS - INTERSEAL 670 HS PARTE B EGA247.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - interthane 990 parte a base lighr prep ral 7015.pdf",
+      "name": "FDS - INTERTHANE 990 PARTE A BASE LIGHR PREP RAL 7015.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - intervinil pro 200 blanco 2596.pdf",
+      "name": "FDS - INTERVINIL PRO 200 BLANCO 2596.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - koraza base accent 27477.pdf",
+      "name": "FDS - KORAZA BASE ACCENT 27477.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - koraza base deep gris basalto.pdf",
+      "name": "FDS - KORAZA BASE DEEP GRIS BASALTO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - koraza blanco 2650.pdf",
+      "name": "FDS - KORAZA BLANCO 2650.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - koraza ladrillo 2674.pdf",
+      "name": "FDS - KORAZA LADRILLO 2674.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - madetec sellador lijable altos solidos incoloro 7238.pdf",
+      "name": "FDS - MADETEC SELLADOR LIJABLE ALTOS SOLIDOS INCOLORO 7238.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - masilla poliester ultrafina blanco 19167 _ 10015127-10012797-10014790 _col (versión 7) (1).pdf",
+      "name": "FDS - MASILLA POLIESTER ULTRAFINA BLANCO 19167 _ 10015127-10012797-10014790 _COL (Versión 7) (1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - permex base agua negro.pdf",
+      "name": "FDS - PERMEX BASE AGUA NEGRO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintoxido incoloro 514.pdf",
+      "name": "FDS - PINTOXIDO INCOLORO 514.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintuco fill 7 blanco.pdf",
+      "name": "FDS - PINTUCO FILL 7 BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintuco fill 7 gris 2753 _ 10384446-10384445-10384444-10384443 _col (versión 4) (1).pdf",
+      "name": "FDS - PINTUCO FILL 7 GRIS 2753 _ 10384446-10384445-10384444-10384443 _COL (Versión 4) (1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintuco fill 7 gris 2753.pdf",
+      "name": "FDS - PINTUCO FILL 7 GRIS 2753.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintuco flex profesional.pdf",
+      "name": "FDS - PINTUCO FLEX PROFESIONAL.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintuco sellador acrilico 3118.pdf",
+      "name": "FDS - PINTUCO SELLADOR ACRILICO 3118.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintucoat amarillo13262.pdf",
+      "name": "FDS - PINTUCOAT AMARILLO13262.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintucoat gris 517 _ 10012915-10338093 _col (versión 7) (1).pdf",
+      "name": "FDS - PINTUCOAT GRIS 517 _ 10012915-10338093 _COL (Versión 7) (1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintucoat gris 517.pdf",
+      "name": "FDS - PINTUCOAT GRIS 517.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintucoat negro 13239.pdf",
+      "name": "FDS - PINTUCOAT NEGRO 13239.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintulaca blanco 7519 _ 10014720-10012716 _col (versión 3).pdf",
+      "name": "FDS - PINTULACA BLANCO 7519 _ 10014720-10012716 _COL (Versión 3).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintulaca negro 7518.pdf",
+      "name": "FDS - PINTULACA NEGRO 7518.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintulux anticorrosivo eco base agua gris.pdf",
+      "name": "FDS - PINTULUX ANTICORROSIVO ECO BASE AGUA GRIS.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintulux mp aluminio.pdf",
+      "name": "FDS - PINTULUX MP ALUMINIO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintulux mp gris claro primax _ 10399899 _col (versión 2).pdf",
+      "name": "FDS - PINTULUX MP GRIS CLARO PRIMAX _ 10399899 _COL (Versión 2).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintulux mp verde maquina 47.pdf",
+      "name": "FDS - PINTULUX MP VERDE MAQUINA 47.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintulux teu amarillo 18.pdf",
+      "name": "FDS - PINTULUX TEU AMARILLO 18.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintulux teu negro t-95.pdf",
+      "name": "FDS - PINTULUX TEU NEGRO T-95.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintulux teu verde esmeralda 53.pdf",
+      "name": "FDS - PINTULUX TEU VERDE ESMERALDA 53.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintulux teu verde esmeralda.pdf",
+      "name": "FDS - PINTULUX TEU VERDE ESMERALDA.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintura epoxi poliamida blanco 13243 _ 10012925-10344427 _col (versión 5) (1).pdf",
+      "name": "FDS - PINTURA EPOXI POLIAMIDA BLANCO 13243 _ 10012925-10344427 _COL (Versión 5) (1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintutrafico acril b.solv mod amarillo 1g.pdf",
+      "name": "FDS - PINTUTRAFICO ACRIL B.SOLV MOD AMARILLO 1G.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintutrafico acril negro 13756.pdf",
+      "name": "FDS - PINTUTRAFICO ACRIL NEGRO 13756.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintutrafico acrilico base agua amarillo 13727.pdf",
+      "name": "FDS - PINTUTRAFICO ACRILICO BASE AGUA AMARILLO 13727.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintutrafico acrilico base agua blanco 13726.pdf",
+      "name": "FDS - PINTUTRAFICO ACRILICO BASE AGUA BLANCO 13726.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintutrafico acrilico blanco 13754-653.pdf",
+      "name": "FDS - PINTUTRAFICO ACRILICO BLANCO 13754-653.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintutrafico base agua blanco.pdf",
+      "name": "FDS - PINTUTRAFICO BASE AGUA BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintutrafico plastico frio llana comp. a blanco 13760.pdf",
+      "name": "FDS - PINTUTRAFICO PLASTICO FRIO LLANA COMP. A BLANCO 13760.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintutráfico amarillo 13755.pdf",
+      "name": "FDS - PINTUTRÁFICO AMARILLO 13755.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - plastico en frio blanco.pdf",
+      "name": "FDS - PLASTICO EN FRIO BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - poliuretano blanco 11320 _ 10012851 _col (version 7) (1).pdf",
+      "name": "FDS - POLIURETANO BLANCO 11320 _ 10012851 _COL (Version 7) (1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - primer anticorrosivo verde oliva 513.pdf",
+      "name": "FDS - PRIMER ANTICORROSIVO VERDE OLIVA 513.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - primer epoxico de rapido secado gris.pdf",
+      "name": "FDS - PRIMER EPOXICO DE RAPIDO SECADO GRIS.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - primer gris 50rs.pdf",
+      "name": "FDS - PRIMER GRIS 50RS.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - revoque plastico profesional blanco 17091.pdf",
+      "name": "FDS - REVOQUE PLASTICO PROFESIONAL BLANCO 17091.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - sellomax anti alcalino.pdf",
+      "name": "FDS - SELLOMAX ANTI ALCALINO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - silcoplast graniplast blanco.pdf",
+      "name": "FDS - SILCOPLAST GRANIPLAST BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - siliconite 7w.pdf",
+      "name": "FDS - SILICONITE 7W.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - supergrip antideslizante trafico blanco _ 10115021-13779 _col (versión 2).pdf",
+      "name": "FDS - SUPERGRIP ANTIDESLIZANTE TRAFICO BLANCO _ 10115021-13779 _COL (Versión 2).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - thinner para poliuretanos 21050.pdf",
+      "name": "FDS - THINNER PARA POLIURETANOS 21050.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - tinte caramelo aerocolor  _  _col (versión 2).pdf",
+      "name": "FDS - TINTE CARAMELO AEROCOLOR  _  _COL (Versión 2).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - vinil plus base deep 95202.pdf",
+      "name": "FDS - VINIL PLUS BASE DEEP 95202.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - vinilico 2 en 1 blanco 2027155 _ 10010869-10340098-10340099-10013709-10015222-10016277-10115234-10339324-10012252-10339325 _col (versión 3) (1).pdf",
+      "name": "FDS - VINILICO 2 EN 1 BLANCO 2027155 _ 10010869-10340098-10340099-10013709-10015222-10016277-10115234-10339324-10012252-10339325 _COL (Versión 3) (1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - vinilico 2 en 1 blanco 2027155.pdf",
+      "name": "FDS - VINILICO 2 EN 1 BLANCO 2027155.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - vinilico.pdf",
+      "name": "FDS - VINILICO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - vinilo tipo 3 blanco.pdf",
+      "name": "FDS - VINILO TIPO 3 BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - viniltex advanced base deep blanco 117176 _ 10012158,10016063,10013402,10015188 _col (versión 3).pdf",
+      "name": "FDS - VINILTEX ADVANCED BASE DEEP BLANCO 117176 _ 10012158,10016063,10013402,10015188 _COL (Versión 3).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - vinilux blanco.pdf",
+      "name": "FDS - VINILUX BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - wash primer componente a verde oliva 509a.pdf",
+      "name": "FDS - WASH PRIMER COMPONENTE A VERDE OLIVA 509A.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - wash primer componente b incoloro 509b.pdf",
+      "name": "FDS - WASH PRIMER COMPONENTE B INCOLORO 509B.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds laca blanco brillante aerocolor aerosoles (1).pdf",
+      "name": "FDS LACA BLANCO BRILLANTE AEROCOLOR AEROSOLES (1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds laca negro mate aerocolor aerosoles (1).pdf",
+      "name": "FDS LACA NEGRO MATE AEROCOLOR AEROSOLES (1).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- acualux base accent rojo - amarillo - negro.pdf",
+      "name": "FDS- ACUALUX BASE ACCENT ROJO - AMARILLO - NEGRO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- alta temperatura negra 901.pdf",
+      "name": "FDS- ALTA TEMPERATURA NEGRA 901.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- asepsia ultra acril uretano.pdf",
+      "name": "FDS- ASEPSIA ULTRA ACRIL URETANO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- catalizador epoxiamida 13229.pdf",
+      "name": "FDS- CATALIZADOR EPOXIAMIDA 13229.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- catalizador pintucoat plus.pdf",
+      "name": "FDS- CATALIZADOR PINTUCOAT PLUS.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- catalizador universal e-40.pdf",
+      "name": "FDS- CATALIZADOR UNIVERSAL E-40.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- corrotec  rojo 310.pdf",
+      "name": "FDS- CORROTEC  ROJO 310.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- koraza base accent amarillo tostado - rojo colonial - verde salvaje.pdf",
+      "name": "FDS- KORAZA BASE ACCENT AMARILLO TOSTADO - ROJO COLONIAL - VERDE SALVAJE.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- madetec barnex caramelo.pdf",
+      "name": "FDS- MADETEC BARNEX CARAMELO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- pintuco fill 7 base accent.pdf",
+      "name": "FDS- PINTUCO FILL 7 BASE ACCENT.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- pintucoat aluminio 13261.pdf",
+      "name": "FDS- PINTUCOAT ALUMINIO 13261.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- pintucoat gris 517.pdf",
+      "name": "FDS- PINTUCOAT GRIS 517.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- pintucoat verde maquina 13240.pdf",
+      "name": "FDS- PINTUCOAT VERDE MAQUINA 13240.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- pintucoat verde oscuro 13264.pdf",
+      "name": "FDS- PINTUCOAT VERDE OSCURO 13264.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- pintulaca transparente brillante 7400.pdf",
+      "name": "FDS- PINTULACA TRANSPARENTE BRILLANTE 7400.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- pintulux azul mediano 38.pdf",
+      "name": "FDS- PINTULUX AZUL MEDIANO 38.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- pintulux mp base deep verano eterno.pdf",
+      "name": "FDS- PINTULUX MP BASE DEEP VERANO ETERNO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- pintura canchas base accent.pdf",
+      "name": "FDS- PINTURA CANCHAS BASE ACCENT.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- pintutrafico blanco base agua 13726.pdf",
+      "name": "FDS- PINTUTRAFICO BLANCO BASE AGUA 13726.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- primer 50rs catalizador.pdf",
+      "name": "FDS- PRIMER 50RS CATALIZADOR.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- silicona neutra.pdf",
+      "name": "FDS- SILICONA NEUTRA.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- thinner poliuretano p502.pdf",
+      "name": "FDS- THINNER POLIURETANO P502.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- viniltex deep plata mate ladrillo antiguo.pdf",
+      "name": "FDS- VINILTEX DEEP PLATA MATE LADRILLO ANTIGUO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds- viniltex negro 1559.pdf",
+      "name": "FDS- VINILTEX NEGRO 1559.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds-catalizador pintucoat plus rapido secado.pdf",
+      "name": "FDS-CATALIZADOR PINTUCOAT PLUS RAPIDO SECADO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds-catalizador primer epox 50rs parte b.pdf",
+      "name": "FDS-CATALIZADOR PRIMER EPOX 50RS PARTE B.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds-desmoldante glasst prime.pdf",
+      "name": "FDS-DESMOLDANTE GLASST PRIME.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds-esgrafiado blanco 30401.pdf",
+      "name": "FDS-ESGRAFIADO BLANCO 30401.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds-pintucoat plus blanco.pdf",
+      "name": "FDS-PINTUCOAT PLUS BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds-pintulux teu bermellon t-26.pdf",
+      "name": "FDS-PINTULUX TEU BERMELLON T-26.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds-pintulux teu caoba.pdf",
+      "name": "FDS-PINTULUX TEU CAOBA.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds-primer epox gris parte a.pdf",
+      "name": "FDS-PRIMER EPOX GRIS PARTE A.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds-wash primer verde oliva a.pdf",
+      "name": "FDS-WASH PRIMER VERDE OLIVA A.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds-wash primer verde oliva b.pdf",
+      "name": "FDS-WASH PRIMER VERDE OLIVA B.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/pintucoat hoja de seguridad.pdf",
+      "name": "PINTUCOAT HOJA DE SEGURIDAD.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/fds - revoque plastico profesional blanco revomastic.pdf",
+      "name": "FDS - REVOQUE PLASTICO PROFESIONAL BLANCO REVOMASTIC.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds -  acrolatex 50 texacryl 3508.pdf",
+      "name": "FDS -  ACROLATEX 50 TEXACRYL 3508.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds -  altas temperaturas rojo aerocolor 300 ml.pdf",
+      "name": "FDS -  ALTAS TEMPERATURAS ROJO AEROCOLOR 300 ML.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - aerocolor  negro brillante.pdf",
+      "name": "FDS - AEROCOLOR  NEGRO BRILLANTE.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - aerocolor blanco brillante.pdf",
+      "name": "FDS - AEROCOLOR BLANCO BRILLANTE.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - aerocolor fluorescente aurora pink.pdf",
+      "name": "FDS - AEROCOLOR FLUORESCENTE AURORA PINK.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - alta temperatura 905 aluminio.pdf",
+      "name": "FDS - ALTA TEMPERATURA 905 ALUMINIO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - corrotec premium 507.pdf",
+      "name": "FDS - CORROTEC PREMIUM 507.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - corrotec rojo 310.pdf",
+      "name": "FDS - CORROTEC ROJO 310.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds-  aquablock ultra 27070 blanco.pdf",
+      "name": "FDS-  AQUABLOCK ULTRA 27070 BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - domestico rojo fiesta p-30.pdf",
+      "name": "FDS - DOMESTICO ROJO FIESTA P-30.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - endurecedor universal e-40.pdf",
+      "name": "FDS - ENDURECEDOR UNIVERSAL E-40.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte pintulux teu azul espanol 40 _ 10335136-10335137 _col (versión 7).pdf",
+      "name": "FDS - ESMALTE PINTULUX TEU AZUL ESPANOL 40 _ 10335136-10335137 _COL (Versión 7).pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - esmalte pintulux teu base accent.pdf",
+      "name": "FDS - ESMALTE PINTULUX TEU BASE ACCENT.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - estucomastic blanco 18070 caneca 27 kg.pdf",
+      "name": "FDS - ESTUCOMASTIC BLANCO 18070 CANECA 27 KG.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - intergard 740 light parte a.pdf",
+      "name": "FDS - INTERGARD 740 LIGHT PARTE A.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - interseal 670 light parte a.pdf",
+      "name": "FDS - INTERSEAL 670 LIGHT PARTE A.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - interthane 990 cat b.pdf",
+      "name": "FDS - INTERTHANE 990 CAT B.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - intervinil blanco 2501.pdf",
+      "name": "FDS - INTERVINIL BLANCO 2501.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds  laca negro brillante aerocolor.pdf",
+      "name": "FDS  LACA NEGRO BRILLANTE AEROCOLOR.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - acrilica mantenimiento mate ultradeep.pdf",
+      "name": "FDS - ACRILICA MANTENIMIENTO MATE ULTRADEEP.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - mega primer 1k 5010.pdf",
+      "name": "FDS - MEGA PRIMER 1K 5010.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - mega primer 1k mg60.pdf",
+      "name": "FDS - MEGA PRIMER 1K MG60.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pasta pulidora blanco 120025.pdf",
+      "name": "FDS - PASTA PULIDORA BLANCO 120025.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintoxido 514.pdf",
+      "name": "FDS - PINTOXIDO 514.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintucoat amarillo 13262.pdf",
+      "name": "FDS - PINTUCOAT AMARILLO 13262.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintucoat blanco 517.pdf",
+      "name": "FDS - PINTUCOAT BLANCO 517.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintucoat naranja 13264.pdf",
+      "name": "FDS - PINTUCOAT NARANJA 13264.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintucoat plus altos solidos blanco.pdf",
+      "name": "FDS - PINTUCOAT PLUS ALTOS SOLIDOS BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    },
+    {
+      "path_lower": "/data/fichas técnicas y hojas de seguridad/pintuco/hojas de seguridad-garantias/fds - pintucoat plus blanco.pdf",
+      "name": "FDS - PINTUCOAT PLUS BLANCO.pdf",
+      "reason": "secondary:hoja_seguridad"
+    }
+  ]
+}

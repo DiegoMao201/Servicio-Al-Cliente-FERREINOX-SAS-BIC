@@ -432,6 +432,27 @@ CREATE INDEX IF NOT EXISTS idx_agent_doc_chunk_embedding
     USING hnsw (embedding vector_cosine_ops)
     WITH (m = 16, ef_construction = 64);
 
+CREATE TABLE IF NOT EXISTS public.agent_technical_profile (
+    id bigserial PRIMARY KEY,
+    canonical_family text NOT NULL,
+    source_doc_filename text NOT NULL,
+    source_doc_path_lower text NOT NULL,
+    marca text,
+    tipo_documento varchar(30) NOT NULL DEFAULT 'ficha_tecnica',
+    profile_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+    completeness_score numeric(6,4) NOT NULL DEFAULT 0,
+    extraction_method varchar(30) NOT NULL DEFAULT 'hybrid',
+    extraction_status varchar(30) NOT NULL DEFAULT 'ready',
+    content_hash text,
+    text_fingerprint text,
+    generated_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now(),
+    CONSTRAINT uq_agent_technical_profile_family UNIQUE (canonical_family)
+);
+CREATE INDEX IF NOT EXISTS idx_agent_technical_profile_path ON public.agent_technical_profile(source_doc_path_lower);
+CREATE INDEX IF NOT EXISTS idx_agent_technical_profile_marca ON public.agent_technical_profile(marca);
+CREATE INDEX IF NOT EXISTS idx_agent_technical_profile_status ON public.agent_technical_profile(extraction_status);
+
 CREATE INDEX IF NOT EXISTS idx_whatsapp_contacto_cliente ON public.whatsapp_contacto(cliente_id);
 CREATE INDEX IF NOT EXISTS idx_agent_conversation_contacto ON public.agent_conversation(contacto_id);
 CREATE INDEX IF NOT EXISTS idx_agent_conversation_estado ON public.agent_conversation(estado);

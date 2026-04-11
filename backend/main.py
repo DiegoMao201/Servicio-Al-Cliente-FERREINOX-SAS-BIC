@@ -1539,6 +1539,236 @@ PRODUCT_TECHNICAL_HARD_RULES = {
     },
 }
 
+
+def _infer_problem_class_from_rag_query(question: str, product: str = "") -> Optional[str]:
+    normalized = normalize_text_value(f"{question} {product}")
+    if not normalized:
+        return None
+
+    if any(token in normalized for token in ["humedad", "salitre", "capilaridad", "presion negativa", "presión negativa", "filtracion", "filtración", "moho", "pared mojada", "muro mojado"]):
+        if any(token in normalized for token in ["interior", "muro", "pared", "base del muro", "viene del piso", "jardinera", "sube del piso"]):
+            if any(token in normalized for token in ["base del muro", "viene del piso", "jardinera", "capilaridad", "presion negativa", "presión negativa"]):
+                return "humedad_interior_capilaridad"
+            return "humedad_interior_general"
+        if any(token in normalized for token in ["fachada", "exterior", "lluvia", "sol y lluvia"]):
+            return "fachada_exterior"
+
+    if any(token in normalized for token in ["fachada", "muro exterior", "exterior", "intemperie", "lluvia sol"]):
+        return "fachada_exterior"
+
+    if any(token in normalized for token in ["oxido", "óxido", "reja", "metal", "corrosion", "corrosión", "corrotec", "pintoxido"]):
+        return "metal_oxidado"
+
+    if any(token in normalized for token in ["piso", "concreto", "montacargas", "trafico", "tráfico", "estibador", "intergard 2002", "pintucoat", "intergard 740"]):
+        return "piso_industrial"
+
+    if any(token in normalized for token in ["madera", "barnex", "wood stain", "barniz"]):
+        return "madera"
+
+    return None
+
+
+def _estimate_problem_class_confidence(problem_class: Optional[str], question: str, product: str, best_similarity: float) -> str:
+    if not problem_class:
+        return "baja"
+
+    normalized = normalize_text_value(f"{question} {product}")
+    signal_count = 0
+    signal_map = {
+        "humedad_interior_capilaridad": ["humedad", "salitre", "interior", "muro", "viene del piso", "jardinera", "capilaridad"],
+        "humedad_interior_general": ["humedad", "salitre", "interior", "muro", "pared"],
+        "fachada_exterior": ["fachada", "exterior", "intemperie", "lluvia"],
+        "metal_oxidado": ["metal", "reja", "oxido", "óxido", "corrotec"],
+        "piso_industrial": ["piso", "concreto", "trafico", "tráfico", "montacargas"],
+        "madera": ["madera", "barnex", "barniz", "wood stain"],
+    }
+    for token in signal_map.get(problem_class, []):
+        if token in normalized:
+            signal_count += 1
+
+    if best_similarity >= 0.82 or signal_count >= 5:
+        return "alta"
+    if best_similarity >= 0.68 or signal_count >= 3:
+        return "media"
+    return "baja"
+
+
+def _build_structured_diagnosis(question: str, product: str, best_similarity: float) -> dict:
+    problem_class = _infer_problem_class_from_rag_query(question, product)
+    confidence = _estimate_problem_class_confidence(problem_class, question, product, best_similarity)
+    normalized = normalize_text_value(f"{question} {product}")
+
+    probable_cause = None
+    if problem_class == "humedad_interior_capilaridad":
+        probable_cause = "capilaridad/presión negativa"
+    elif problem_class == "humedad_interior_general":
+        probable_cause = "humedad interior por definir"
+    elif problem_class == "fachada_exterior":
+        probable_cause = "intemperismo/filtración exterior"
+    elif problem_class == "metal_oxidado":
+        probable_cause = "corrosión por exposición"
+    elif problem_class == "piso_industrial":
+        probable_cause = "desgaste mecánico / requerimiento por tráfico"
+
+    required_validations_map = {
+        "humedad_interior_capilaridad": [
+            "Confirmar origen de humedad desde base del muro/piso/jardinera.",
+            "Validar estado del revoque o base soplada.",
+            "Solicitar m² reales antes de cotizar.",
+        ],
+        "humedad_interior_general": [
+            "Confirmar causa: base del muro, arriba, lateral o temporada.",
+            "Validar estado de la base/revoque.",
+            "Solicitar m² reales antes de cotizar.",
+        ],
+        "fachada_exterior": [
+            "Confirmar si es exterior real y nivel de deterioro.",
+            "Solicitar m² reales antes de cotizar.",
+        ],
+        "metal_oxidado": [
+            "Confirmar grado de oxidación.",
+            "Confirmar si es interior o exterior.",
+            "Solicitar m² o dimensiones antes de cotizar.",
+        ],
+        "piso_industrial": [
+            "Confirmar si es concreto nuevo o viejo/ya pintado.",
+            "Confirmar curado de 28 días si es nuevo.",
+            "Confirmar tipo de tráfico y si es interior/exterior.",
+            "Solicitar m² reales antes de cotizar.",
+        ],
+        "madera": [
+            "Confirmar si es interior o exterior.",
+            "Confirmar si quiere acabado transparente o color sólido.",
+            "Solicitar área o dimensiones antes de cotizar.",
+        ],
+    }
+
+    observed_signals = []
+    for token in ["humedad", "salitre", "capilaridad", "jardinera", "muro", "interior", "fachada", "exterior", "oxido", "óxido", "reja", "piso", "montacargas", "madera", "barniz"]:
+        if token in normalized:
+            observed_signals.append(token)
+
+    return {
+        "problem_class": problem_class,
+        "confidence": confidence,
+        "probable_cause": probable_cause,
+        "pricing_ready": False if problem_class in {"humedad_interior_capilaridad", "humedad_interior_general", "fachada_exterior", "metal_oxidado", "piso_industrial", "madera"} else True,
+        "required_validations": required_validations_map.get(problem_class, []),
+        "observed_signals": observed_signals,
+    }
+
+
+def _build_structured_technical_guide(question: str, product: str, diagnosis: dict, expert_notes: list[dict], best_similarity: float) -> dict:
+    problem_class = diagnosis.get("problem_class")
+    normalized = normalize_text_value(f"{question} {product}")
+
+    guide = {
+        "problem_class": problem_class,
+        "source_confidence": diagnosis.get("confidence") or _estimate_problem_class_confidence(problem_class, question, product, best_similarity),
+        "preparation_steps": [],
+        "base_or_primer": [],
+        "intermediate_steps": [],
+        "finish_options": [],
+        "diluents_or_adjusters": [],
+        "tools": [],
+        "required_questions": diagnosis.get("required_validations") or [],
+        "forbidden_products_or_shortcuts": [],
+        "commercial_alternatives": [],
+        "pricing_gate": "m2_required" if problem_class in {"humedad_interior_capilaridad", "humedad_interior_general", "fachada_exterior", "metal_oxidado", "piso_industrial", "madera"} else "none",
+        "hard_rules_applied": [],
+    }
+
+    if problem_class == "humedad_interior_capilaridad":
+        guide["preparation_steps"] = [
+            "Remover por completo pintura soplada/descascarada y salitre hasta base sana.",
+            "Si el revoque está quemado o meteorizado, reemplazarlo antes del sistema nuevo.",
+        ]
+        guide["base_or_primer"] = ["Aquablock Ultra - 2 manos con brocha para cargar producto."]
+        guide["intermediate_steps"] = ["Estuco Acrílico después del Aquablock para nivelar. NUNCA antes."]
+        guide["finish_options"] = [
+            {"producto": "Viniltex Advanced", "rol": "acabado final", "nivel": "premium"},
+            {"producto": "Intervinil", "rol": "acabado final", "nivel": "intermedio"},
+            {"producto": "Pinturama", "rol": "acabado final", "nivel": "económico"},
+        ]
+        guide["tools"] = ["Brocha Goya Profesional", "Rodillo", "Lija / raspado para preparación"]
+        guide["forbidden_products_or_shortcuts"] = [
+            "Koraza como imprimante o acabado interior.",
+            "Pintuco Fill como solución principal para capilaridad interior desde la base del muro.",
+            "Cotizar por galones sugeridos por el cliente sin metraje.",
+        ]
+        guide["hard_rules_applied"] = [
+            PRODUCT_TECHNICAL_HARD_RULES["koraza"]["no_es_para"],
+            PRODUCT_TECHNICAL_HARD_RULES["aquablock"]["es_para"],
+        ]
+    elif problem_class == "humedad_interior_general":
+        guide["preparation_steps"] = [
+            "Diagnosticar causa de humedad antes de pintar.",
+            "Remover base dañada y salitre donde aplique.",
+        ]
+        guide["base_or_primer"] = ["Aquablock / Aquablock Ultra según presión negativa y severidad."]
+        guide["intermediate_steps"] = ["Estuco Acrílico si se requiere nivelación después del bloqueador de humedad."]
+        guide["finish_options"] = [
+            {"producto": "Viniltex Advanced", "rol": "acabado final", "nivel": "premium"},
+            {"producto": "Intervinil", "rol": "acabado final", "nivel": "intermedio"},
+            {"producto": "Pinturama", "rol": "acabado final", "nivel": "económico"},
+        ]
+        guide["tools"] = ["Brocha", "Rodillo", "Lija / raspado para preparación"]
+        guide["forbidden_products_or_shortcuts"] = ["Koraza como sellador de humedad interior."]
+        guide["hard_rules_applied"] = [PRODUCT_TECHNICAL_HARD_RULES["koraza"]["no_es_para"]]
+    elif problem_class == "fachada_exterior":
+        guide["preparation_steps"] = ["Remover pintura suelta o base soplada antes de repintar."]
+        guide["finish_options"] = [
+            {"producto": "Koraza", "rol": "acabado exterior", "nivel": "premium"},
+            {"producto": "Intervinil", "rol": "acabado exterior", "nivel": "intermedio"},
+            {"producto": "Pinturama", "rol": "acabado exterior", "nivel": "económico"},
+        ]
+        guide["tools"] = ["Lija Abracol", "Brocha Goya Profesional", "Rodillo"]
+    elif problem_class == "metal_oxidado":
+        guide["preparation_steps"] = ["Preparación mecánica con lija, disco flap o grata según el grado de óxido."]
+        guide["base_or_primer"] = ["Pintóxido si hay óxido profundo.", "Corrotec o Corrotec Premium como anticorrosivo."]
+        guide["finish_options"] = [{"producto": "Pintulux 3 en 1", "rol": "acabado final", "nivel": "estándar"}]
+        guide["tools"] = ["Disco flap", "Grata", "Brocha Goya Profesional", "Lija Abracol"]
+    elif problem_class == "piso_industrial":
+        guide["preparation_steps"] = ["Confirmar estado del piso y preparación mecánica adecuada."]
+        guide["base_or_primer"] = ["Interseal gris RAL 7038 para concreto cuando aplique."]
+        guide["finish_options"] = [
+            {"producto": "Pintucoat", "rol": "acabado para tráfico medio", "nivel": "medio"},
+            {"producto": "Intergard 740", "rol": "acabado brillante tráfico medio", "nivel": "medio"},
+            {"producto": "Intergard 2002 + cuarzo", "rol": "sistema tráfico pesado", "nivel": "alto desempeño"},
+        ]
+        guide["forbidden_products_or_shortcuts"] = ["No cotizar sin m² ni sin protocolo diagnóstico del piso."]
+    elif problem_class == "madera":
+        guide["preparation_steps"] = ["Diagnosticar si es interior/exterior y si quiere transparente o color sólido."]
+        guide["finish_options"] = [
+            {"producto": "Barnex", "rol": "acabado exterior transparente", "nivel": "premium"},
+            {"producto": "Wood Stain", "rol": "acabado exterior transparente", "nivel": "intermedio"},
+            {"producto": "Esmalte Doméstico", "rol": "acabado color sólido", "nivel": "económico"},
+            {"producto": "Pintulux Máxima Protección", "rol": "acabado color sólido", "nivel": "premium"},
+        ]
+        guide["tools"] = ["Brocha Goya Profesional", "Lijas Abracol 80-100 y 220-320", "Removedor Pintuco"]
+
+    if "interthane" in normalized:
+        guide["diluents_or_adjusters"].append("UFA151 como ajustador/diluyente del sistema de poliuretano cuando aplique.")
+        guide["hard_rules_applied"].append(PRODUCT_TECHNICAL_HARD_RULES["interthane"]["bicomponente"])
+    if "pintucoat" in normalized:
+        guide["diluents_or_adjusters"].append("Thinner Epóxico Pintuco cuando el sistema lo requiera.")
+        guide["hard_rules_applied"].append(PRODUCT_TECHNICAL_HARD_RULES["pintucoat"]["bicomponente"])
+
+    if expert_notes:
+        guide["expert_overrides"] = [
+            {
+                "tipo": note.get("tipo"),
+                "recomendar": note.get("producto_recomendado"),
+                "evitar": note.get("producto_desestimado"),
+                "nota": note.get("nota_comercial"),
+            }
+            for note in expert_notes[:5]
+        ]
+    else:
+        guide["expert_overrides"] = []
+
+    return guide
+
 # ── Catálogo verificado de productos bicomponentes ────────────────────────
 # Fuente de verdad interna: los catalizadores y proporciones aquí registrados
 # PREVALECEN sobre cualquier respuesta del RAG o memoria del LLM.
@@ -7289,7 +7519,76 @@ def _generate_query_embedding(query_text: str) -> list[float] | None:
         return None
 
 
-def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None = None) -> list[dict]:
+PORTFOLIO_SEGMENT_ALIASES = {
+    "recubrimientos": "recubrimientos_pinturas",
+    "pinturas": "recubrimientos_pinturas",
+    "recubrimientos_pinturas": "recubrimientos_pinturas",
+    "auxiliares": "auxiliares_aplicacion",
+    "auxiliares_aplicacion": "auxiliares_aplicacion",
+    "diluyentes": "auxiliares_aplicacion",
+    "thinners": "auxiliares_aplicacion",
+    "ferreteria": "herrajes_seguridad",
+    "herrajes": "herrajes_seguridad",
+    "seguridad": "herrajes_seguridad",
+    "herrajes_seguridad": "herrajes_seguridad",
+    "herramientas": "herramientas_accesorios",
+    "accesorios": "herramientas_accesorios",
+    "herramientas_accesorios": "herramientas_accesorios",
+}
+PORTFOLIO_SEGMENT_QUERY_HINTS = {
+    "auxiliares_aplicacion": [
+        "ajustador", "thinner", "xilol", "varsol", "solvente", "diluyente", "catalizador",
+        "endurecedor", "limpieza", "desengrase", "removedor",
+    ],
+    "herrajes_seguridad": [
+        "cerradura", "cerraduras", "candado", "candados", "bisagra", "bisagras", "cerrojo",
+        "picaporte", "manija", "pomo", "cierrapuerta", "barra antipanico", "barra antipánico",
+        "llave", "cilindro", "yale",
+    ],
+    "herramientas_accesorios": [
+        "brocha", "brochas", "rodillo", "rodillos", "lija", "lijas", "disco flap", "grata",
+        "espatula", "espátula", "llana", "pistola", "felpa", "abrasiv",
+    ],
+    "recubrimientos_pinturas": [
+        "pintura", "esmalte", "vinilo", "barniz", "laca", "sellador", "estuco", "impermeabil",
+        "anticorros", "epox", "epóx", "poliuret", "corrotec", "aquablock", "koraza", "viniltex",
+        "interseal", "intergard", "interthane", "interchar", "interzone", "pintulux", "primer",
+        "imprimante", "fondo", "fachada", "humedad", "madera", "piso",
+    ],
+}
+
+
+def _normalize_portfolio_segment(value: str | None) -> str | None:
+    normalized = normalize_text_value(value or "")
+    if not normalized:
+        return None
+    return PORTFOLIO_SEGMENT_ALIASES.get(normalized)
+
+
+def _infer_portfolio_segments_for_query(pregunta: str, producto: str = "", explicit_segment: str | None = None) -> list[str]:
+    normalized_explicit = _normalize_portfolio_segment(explicit_segment)
+    if normalized_explicit:
+        return [normalized_explicit]
+
+    combined = normalize_text_value(f"{producto} {pregunta}")
+    if not combined:
+        return []
+
+    detected = []
+    for segment, tokens in PORTFOLIO_SEGMENT_QUERY_HINTS.items():
+        if any(token in combined for token in tokens):
+            detected.append(segment)
+
+    if len(detected) > 1 and "recubrimientos_pinturas" in detected and "auxiliares_aplicacion" in detected and producto:
+        product_hint = normalize_text_value(producto)
+        if any(token in product_hint for token in PORTFOLIO_SEGMENT_QUERY_HINTS["auxiliares_aplicacion"]):
+            return ["auxiliares_aplicacion"]
+        return [segment for segment in detected if segment != "auxiliares_aplicacion"]
+    return detected
+
+
+def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None = None,
+                            segment_filters: list[str] | None = None) -> list[dict]:
     """Semantic search over vectorized technical sheet chunks using pgvector cosine distance."""
     embedding = _generate_query_embedding(query)
     if not embedding:
@@ -7297,11 +7596,19 @@ def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None
 
     embedding_literal = "[" + ",".join(str(v) for v in embedding) + "]"
 
-    marca_clause = ""
-    params: list = [embedding_literal, embedding_literal, top_k]
+    where_clauses = [
+        "tipo_documento IN ('ficha_tecnica', 'ficha_tecnica_experto')",
+        "COALESCE(metadata ->> 'document_scope', 'primary') = 'primary'",
+        "COALESCE(metadata ->> 'quality_tier', 'primary') <> 'rejected'",
+    ]
+    params: list = [embedding_literal]
     if marca_filter:
-        marca_clause = "AND LOWER(marca) = LOWER(%s)"
-        params = [embedding_literal, embedding_literal, marca_filter, top_k]
+        where_clauses.append("LOWER(marca) = LOWER(%s)")
+        params.append(marca_filter)
+    if segment_filters:
+        where_clauses.append("COALESCE(metadata ->> 'portfolio_segment', 'portafolio_general') = ANY(%s)")
+        params.append(segment_filters)
+    params.extend([embedding_literal, top_k])
 
     try:
         engine = get_db_engine()
@@ -7310,11 +7617,12 @@ def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None
             cur = raw_conn.cursor()
             cur.execute(
                 f"""
-                SELECT doc_filename, doc_path_lower, chunk_index, chunk_text,
+                  SELECT doc_filename, doc_path_lower, chunk_index, chunk_text,
+                      metadata,
                        marca, familia_producto, tipo_documento,
                        1 - (embedding <=> %s::vector) AS similarity
-                FROM public.agent_technical_doc_chunk
-                WHERE 1=1 {marca_clause}
+                                FROM public.agent_technical_doc_chunk
+                                    WHERE {' AND '.join(where_clauses)}
                 ORDER BY embedding <=> %s::vector
                 LIMIT %s
                 """,
@@ -7322,6 +7630,107 @@ def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None
             )
             columns = [desc[0] for desc in cur.description]
             rows = [dict(zip(columns, row)) for row in cur.fetchall()]
+            return rows
+        finally:
+            raw_conn.close()
+    except Exception:
+        return []
+
+
+def search_supporting_technical_guides(query: str, top_k: int = 3, marca_filter: str | None = None,
+                                      segment_filters: list[str] | None = None) -> list[dict]:
+    embedding = _generate_query_embedding(query)
+    if not embedding:
+        return []
+
+    embedding_literal = "[" + ",".join(str(v) for v in embedding) + "]"
+    where_clauses = [
+        "tipo_documento = 'guia_solucion'",
+        "COALESCE(metadata ->> 'document_scope', 'guide') = 'guide'",
+    ]
+    params: list = [embedding_literal]
+    if marca_filter:
+        where_clauses.append("LOWER(marca) = LOWER(%s)")
+        params.append(marca_filter)
+    if segment_filters:
+        where_clauses.append("COALESCE(metadata ->> 'portfolio_segment', 'portafolio_general') = ANY(%s)")
+        params.append(segment_filters)
+    params.extend([embedding_literal, top_k])
+
+    try:
+        engine = get_db_engine()
+        raw_conn = engine.raw_connection()
+        try:
+            cur = raw_conn.cursor()
+            cur.execute(
+                f"""
+                  SELECT doc_filename, doc_path_lower, chunk_index, chunk_text,
+                      metadata,
+                       marca, familia_producto, tipo_documento,
+                       1 - (embedding <=> %s::vector) AS similarity
+                                FROM public.agent_technical_doc_chunk
+                                    WHERE {' AND '.join(where_clauses)}
+                ORDER BY embedding <=> %s::vector
+                LIMIT %s
+                """,
+                params,
+            )
+            columns = [desc[0] for desc in cur.description]
+            return [dict(zip(columns, row)) for row in cur.fetchall()]
+        finally:
+            raw_conn.close()
+    except Exception:
+        return []
+
+
+def fetch_technical_profiles(canonical_families: list[str], source_files: list[str] | None = None,
+                             limit: int = 3, segment_filters: list[str] | None = None) -> list[dict]:
+    families = [family for family in canonical_families if family]
+    files = [name for name in (source_files or []) if name]
+    if not families and not files:
+        return []
+
+    try:
+        engine = get_db_engine()
+        raw_conn = engine.raw_connection()
+        try:
+            cur = raw_conn.cursor()
+            clauses = []
+            params: list = []
+            if families:
+                clauses.append("canonical_family = ANY(%s)")
+                params.append(families)
+            if files:
+                clauses.append("source_doc_filename = ANY(%s)")
+                params.append(files)
+            segment_clause = ""
+            if segment_filters:
+                segment_clause = "AND COALESCE(profile_json -> 'product_identity' ->> 'portfolio_segment', 'portafolio_general') = ANY(%s)"
+                params.append(segment_filters)
+            cur.execute(
+                f"""
+                SELECT canonical_family, source_doc_filename, source_doc_path_lower,
+                       marca, tipo_documento, completeness_score, extraction_status, profile_json
+                FROM public.agent_technical_profile
+                WHERE extraction_status = 'ready'
+                  AND ({' OR '.join(clauses)})
+                  {segment_clause}
+                ORDER BY completeness_score DESC, canonical_family
+                LIMIT %s
+                """,
+                [*params, limit],
+            )
+            columns = [desc[0] for desc in cur.description]
+            rows = []
+            for row in cur.fetchall():
+                item = dict(zip(columns, row))
+                profile_json = item.get("profile_json")
+                if isinstance(profile_json, str):
+                    try:
+                        item["profile_json"] = json.loads(profile_json)
+                    except Exception:
+                        item["profile_json"] = None
+                rows.append(item)
             return rows
         finally:
             raw_conn.close()
@@ -7341,6 +7750,7 @@ def build_rag_context(chunks: list[dict], max_chunks: int = 4) -> str:
         return ""
     parts = []
     seen_files = set()
+    seen_signatures = set()
     for chunk in chunks[:max_chunks + 4]:  # read more to compensate for FDS skips
         if len(parts) >= max_chunks:
             break
@@ -7355,9 +7765,17 @@ def build_rag_context(chunks: list[dict], max_chunks: int = 4) -> str:
         text_content = (chunk.get("chunk_text") or "").strip()
         if not text_content:
             continue
+        metadata = chunk.get("metadata") or {}
+        canonical_family = metadata.get("canonical_family") or chunk.get("familia_producto") or filename
+        section_match = re.search(r"\[SECCIÓN:\s*([^\]]+)\]", text_content)
+        section_name = (section_match.group(1).strip().lower() if section_match else "general")
+        signature = f"{canonical_family}|{section_name}"
+        if signature in seen_signatures:
+            continue
         header = f"[Fuente: {filename}]"
         parts.append(f"{header}\n{text_content}")
         seen_files.add(filename)
+        seen_signatures.add(signature)
     if not parts:
         return ""
     return "\n\n---\n\n".join(parts)
@@ -12129,6 +12547,334 @@ def is_purchase_followup_message(text_value: Optional[str], conversation_context
 
 PDF_STORAGE: dict[str, dict] = {}
 
+COMMERCIAL_COLOR_KEYWORDS: tuple[str, ...] = (
+    "blanco", "gris", "negro", "rojo", "verde", "azul", "amarillo", "beige",
+    "crema", "marfil", "cafe", "café", "ocre", "plata", "aluminio",
+)
+
+
+def _extract_confirmed_item_summary(item: dict) -> dict:
+    matched_product = item.get("matched_product") or {}
+    raw_description = (
+        matched_product.get("descripcion")
+        or matched_product.get("nombre_articulo")
+        or item.get("descripcion_comercial")
+        or item.get("original_text")
+        or "Producto"
+    )
+    reference = (
+        matched_product.get("referencia")
+        or matched_product.get("codigo_articulo")
+        or item.get("referencia")
+        or ""
+    )
+    product_request = item.get("product_request") or {}
+    requested_unit = (
+        product_request.get("requested_unit")
+        or item.get("unidad_medida")
+        or infer_product_presentation_from_row(matched_product)
+        or "unidad"
+    )
+    requested_quantity = product_request.get("requested_quantity")
+    if requested_quantity is None:
+        requested_quantity = item.get("cantidad")
+    return {
+        "raw_description": str(raw_description),
+        "normalized_text": normalize_text_value(raw_description),
+        "reference": str(reference).strip(),
+        "requested_unit": requested_unit,
+        "requested_quantity": parse_numeric_value(requested_quantity),
+    }
+
+
+def _build_confirmed_item_from_row(
+    row: dict,
+    requested_quantity,
+    requested_unit: Optional[str] = None,
+    *,
+    source: str = "manual",
+    relationship_type: Optional[str] = None,
+    auto_note: Optional[str] = None,
+):
+    matched_product = dict(row or {})
+    reference = (
+        matched_product.get("referencia")
+        or matched_product.get("codigo_articulo")
+        or matched_product.get("codigo")
+        or ""
+    )
+    description = get_exact_product_description(matched_product)
+    unit_value = requested_unit or infer_product_presentation_from_row(matched_product) or "unidad"
+    return {
+        "status": "matched",
+        "source": source,
+        "autogenerated": source != "manual",
+        "relationship_type": relationship_type,
+        "auto_note": auto_note or "",
+        "original_text": description,
+        "descripcion_comercial": description,
+        "referencia": reference,
+        "cantidad": requested_quantity,
+        "unidad_medida": unit_value,
+        "matched_product": matched_product,
+        "product_request": {
+            "requested_quantity": requested_quantity,
+            "requested_unit": unit_value,
+        },
+    }
+
+
+def _resolve_inventory_row_for_commercial_term(
+    term: str,
+    store_filters: list[str],
+    conversation_context: Optional[dict],
+    preferred_reference: Optional[str] = None,
+) -> Optional[dict]:
+    if not term:
+        return None
+    request = {"store_filters": list(store_filters or [])}
+    if preferred_reference:
+        preferred_rows = lookup_product_context(preferred_reference, {"product_codes": [preferred_reference], **request})
+        preferred_match = next(
+            (
+                row for row in preferred_rows
+                if normalize_reference_value(
+                    row.get("referencia") or row.get("codigo_articulo") or row.get("producto_codigo")
+                ) == normalize_reference_value(preferred_reference)
+            ),
+            None,
+        )
+        if preferred_match:
+            return preferred_match
+    rows = lookup_product_context(term, request)
+    if not rows:
+        return None
+    if preferred_reference:
+        preferred_match = next(
+            (
+                row for row in rows
+                if normalize_reference_value(
+                    row.get("referencia") or row.get("codigo_articulo") or row.get("producto_codigo")
+                ) == normalize_reference_value(preferred_reference)
+            ),
+            None,
+        )
+        if preferred_match:
+            return preferred_match
+    return rows[0]
+
+
+def _has_color_signal(text: str) -> bool:
+    normalized = normalize_text_value(text)
+    if any(keyword in normalized for keyword in COMMERCIAL_COLOR_KEYWORDS):
+        return True
+    return bool(re.search(r"\bral\s*\d{3,4}\b", normalized))
+
+
+def _build_quote_reasoning_text(confirmed_items: list[dict], resumen_asesoria: str) -> str:
+    joined_text = " ".join(_extract_confirmed_item_summary(item)["normalized_text"] for item in confirmed_items)
+    resumen_limpio = " ".join((resumen_asesoria or "").split())
+    reasons: list[str] = []
+    if "interthane" in joined_text and any(token in joined_text for token in ["interseal", "intergard", "epoxi", "epox", "pintucoat"]):
+        reasons.append(
+            "Se recomendó un sistema de alto desempeño porque la base epóxica aporta anclaje y barrera anticorrosiva, "
+            "mientras el acabado poliuretano protege frente a radiación UV, conserva color y mejora la durabilidad del proyecto."
+        )
+    elif "interthane" in joined_text:
+        reasons.append(
+            "Se recomendó Interthane como acabado final porque entrega mejor estabilidad de color, resistencia a intemperie y presentación visual que un acabado convencional."
+        )
+    elif "pintucoat" in joined_text:
+        reasons.append(
+            "Se recomendó Pintucoat porque es un recubrimiento epóxico de mejor barrera química y mecánica que un sistema alquídico de mantenimiento."
+        )
+    elif any(token in joined_text for token in ["interseal", "primer epoxico", "epoxi", "epox"]):
+        reasons.append(
+            "Se priorizó un sistema epóxico porque ofrece mejor adherencia, sellado y resistencia que una pintura decorativa cuando la exigencia técnica es mayor."
+        )
+    elif any(token in joined_text for token in ["trafico", "trafico acrilico", "pintutrafico"]):
+        reasons.append(
+            "Se recomendó este sistema de demarcación porque necesita viscosidad y secado controlados para que el trazo quede uniforme y durable."
+        )
+    if resumen_limpio:
+        if not any(cue in normalize_text_value(resumen_limpio) for cue in ["porque", "ya que", "debido", "por eso"]):
+            reasons.insert(0, resumen_limpio)
+        else:
+            return resumen_limpio
+    return " ".join(dict.fromkeys(reason.strip() for reason in reasons if reason.strip()))
+
+
+def _build_quote_completion_metadata(
+    confirmed_items: list[dict],
+    store_filters: list[str],
+    conversation_context: Optional[dict],
+    resumen_asesoria: str,
+) -> dict:
+    enriched_items = list(confirmed_items)
+    existing_refs = {
+        normalize_reference_value(_extract_confirmed_item_summary(item)["reference"])
+        for item in confirmed_items
+        if _extract_confirmed_item_summary(item)["reference"]
+    }
+    joined_text = " ".join(_extract_confirmed_item_summary(item)["normalized_text"] for item in confirmed_items)
+    included_components: list[str] = []
+    pending_components: list[str] = []
+    auto_added_labels: list[str] = []
+
+    def add_auto_item(term: str, *, preferred_reference: Optional[str] = None, quantity=None, unit: Optional[str] = None, relationship_type: str, note: str):
+        row = _resolve_inventory_row_for_commercial_term(term, store_filters, conversation_context, preferred_reference)
+        if not row:
+            pending_components.append(note)
+            return
+        reference = normalize_reference_value(row.get("referencia") or row.get("codigo_articulo") or row.get("producto_codigo"))
+        if reference in existing_refs:
+            included_components.append(note)
+            return
+        item = _build_confirmed_item_from_row(
+            row,
+            quantity,
+            unit,
+            source="auto_complemento",
+            relationship_type=relationship_type,
+            auto_note=note,
+        )
+        enriched_items.append(item)
+        existing_refs.add(reference)
+        included_components.append(note)
+        auto_added_labels.append(f"{item.get('descripcion_comercial')} ({item.get('referencia')})")
+
+    for item in confirmed_items:
+        summary = _extract_confirmed_item_summary(item)
+        normalized_text = summary["normalized_text"]
+        requested_quantity = summary["requested_quantity"] or 1
+        requested_unit = normalize_text_value(summary["requested_unit"])
+        bicomp_info = get_bicomponent_info(normalized_text)
+        if bicomp_info and bicomp_info.get("componente_b_codigo"):
+            component_b_code = str(bicomp_info.get("componente_b_codigo") or "").strip()
+            if component_b_code and normalize_reference_value(component_b_code) not in existing_refs:
+                add_auto_item(
+                    component_b_code,
+                    preferred_reference=component_b_code,
+                    quantity=requested_quantity,
+                    unit="unidad",
+                    relationship_type="catalizador_obligatorio",
+                    note=f"Catalizador obligatorio del sistema {bicomp_info.get('producto_base', '').title()}.",
+                )
+
+        if "interthane" in normalized_text:
+            add_auto_item(
+                "UFA151",
+                preferred_reference="21050",
+                quantity=None,
+                unit="unidad",
+                relationship_type="diluyente_obligatorio",
+                note="Thinner UFA151 requerido para ajuste y aplicación del sistema de poliuretano.",
+            )
+
+        if any(token in normalized_text for token in ["pintucoat", "epoxi", "epox", "interseal", "intergard", "primer epoxico"]):
+            add_auto_item(
+                "thinner epoxico pintuco",
+                quantity=None,
+                unit="unidad",
+                relationship_type="diluyente_recomendado",
+                note="Thinner epóxico recomendado para mezcla, ajuste o limpieza del sistema epóxico.",
+            )
+
+        if any(token in normalized_text for token in ["trafico", "pintutrafico"]):
+            thinner_qty = requested_quantity * 5
+            if requested_unit in {"cunete", "cuñete", "caneca", "cubeta"}:
+                thinner_qty = requested_quantity * 25
+            add_auto_item(
+                "21204",
+                preferred_reference="21204",
+                quantity=thinner_qty,
+                unit="botella",
+                relationship_type="diluyente_obligatorio",
+                note="Thinner 21204 obligatorio para Pintura de Tráfico con cálculo por botellas.",
+            )
+
+    tool_terms = []
+    if any(token in joined_text for token in ["interthane", "pintucoat", "interseal", "intergard", "epoxi", "epox"]):
+        tool_terms.extend(["brocha goya profesional", "rodillo epoxico goya", "lija abracol"])
+    elif any(token in joined_text for token in ["trafico", "pintutrafico"]):
+        tool_terms.extend(["rodillo goya", "cinta de enmascarar abracol"])
+
+    tool_suggestions: list[str] = []
+    seen_tools: set[str] = set()
+    for term in tool_terms:
+        row = _resolve_inventory_row_for_commercial_term(term, store_filters, conversation_context)
+        if not row:
+            continue
+        description = get_exact_product_description(row)
+        reference = row.get("referencia") or row.get("codigo_articulo") or row.get("producto_codigo") or ""
+        label = f"{description} ({reference})" if reference else description
+        normalized_label = normalize_text_value(label)
+        if normalized_label in seen_tools:
+            continue
+        seen_tools.add(normalized_label)
+        tool_suggestions.append(label)
+
+    color_note = ""
+    if "interthane" in joined_text and not _has_color_signal(f"{joined_text} {resumen_asesoria}"):
+        color_note = (
+            "Queda pendiente confirmar color o código final del acabado. "
+            "Si el cliente aún no lo define, puede revisar Cartas de Colores en www.ferreinox.co antes del cierre definitivo."
+        )
+
+    reasoning_text = _build_quote_reasoning_text(enriched_items, resumen_asesoria)
+    if included_components:
+        included_sentence = "Se incluyeron o verificaron como parte crítica del sistema: " + "; ".join(dict.fromkeys(included_components))
+        reasoning_text = f"{reasoning_text} {included_sentence}".strip()
+    if color_note:
+        reasoning_text = f"{reasoning_text} {color_note}".strip()
+
+    return {
+        "items": enriched_items,
+        "justificacion_comercial_pdf": reasoning_text,
+        "sistema_completo_pdf": list(dict.fromkeys(included_components)),
+        "componentes_pendientes_pdf": list(dict.fromkeys(pending_components)),
+        "herramientas_sugeridas_pdf": tool_suggestions,
+        "nota_color_pdf": color_note,
+        "items_auto_agregados_pdf": auto_added_labels,
+        "resumen_asesoria_enriquecido": reasoning_text,
+    }
+
+
+def _resolve_pdf_line_pricing(reference: str) -> dict:
+    empty = {"unit_price": 0.0, "price_includes_iva": False, "price_source": None}
+    if not reference:
+        return empty
+    price_info = fetch_product_price(str(reference))
+    if price_info:
+        if price_info.get("precio_mejor"):
+            return {
+                "unit_price": float(price_info["precio_mejor"]),
+                "price_includes_iva": False,
+                "price_source": "agent_precios",
+            }
+        if price_info.get("pvp_sap"):
+            return {
+                "unit_price": float(price_info["pvp_sap"]),
+                "price_includes_iva": False,
+                "price_source": "agent_precios",
+            }
+        if price_info.get("pvp_franquicia"):
+            return {
+                "unit_price": float(price_info["pvp_franquicia"]),
+                "price_includes_iva": False,
+                "price_source": "agent_precios",
+            }
+    intl_entry = _INTERNATIONAL_PRODUCTS_BY_CODE.get(str(reference).strip())
+    if intl_entry:
+        for key in ["precio_galon", "precio_cat_galon", "precio_cunete", "precio_cat_cunete"]:
+            if intl_entry.get(key):
+                return {
+                    "unit_price": float(intl_entry[key]),
+                    "price_includes_iva": True,
+                    "price_source": "international",
+                }
+    return empty
+
 
 def generate_commercial_pdf(
     conversation_id: int,
@@ -12188,6 +12934,11 @@ def generate_commercial_pdf(
     contact_email = detail.get("contact_email") or commercial_customer_context.get("email") or ""
     dispatch_name = detail.get("nombre_despacho") or cliente_label
     observations = detail.get("facturador_notes") or detail.get("observaciones") or ""
+    justificacion_comercial = (detail.get("justificacion_comercial_pdf") or "").strip()
+    sistema_completo = detail.get("sistema_completo_pdf") or []
+    componentes_pendientes = detail.get("componentes_pendientes_pdf") or []
+    herramientas_sugeridas = detail.get("herramientas_sugeridas_pdf") or []
+    nota_color = (detail.get("nota_color_pdf") or "").strip()
 
     elements = []
 
@@ -12292,6 +13043,46 @@ def generate_commercial_pdf(
         elements.append(Paragraph(escape(resumen_asesoria), resumen_style))
         elements.append(Spacer(1, (3 if compact_mode else 5) * mm))
 
+    if justificacion_comercial:
+        elements.append(Paragraph("Por Qué Este Sistema", heading_style))
+        elements.append(HRFlowable(width="100%", thickness=0.5, color=brand_border, spaceBefore=1, spaceAfter=3))
+        justificacion_table = Table(
+            [[Paragraph(escape(justificacion_comercial), normal_style)]],
+            colWidths=[doc.width],
+        )
+        justificacion_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#ECFDF5")),
+            ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#10B981")),
+            ("TOPPADDING", (0, 0), (-1, -1), 8 if compact_mode else 10),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8 if compact_mode else 10),
+            ("LEFTPADDING", (0, 0), (-1, -1), 10),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+        ]))
+        elements.append(justificacion_table)
+        elements.append(Spacer(1, (3 if compact_mode else 5) * mm))
+
+    if sistema_completo or componentes_pendientes or herramientas_sugeridas or nota_color:
+        elements.append(Paragraph("Sistema Completo y Cierre", heading_style))
+        elements.append(HRFlowable(width="100%", thickness=0.5, color=brand_border, spaceBefore=1, spaceAfter=3))
+        checklist_lines: list[str] = []
+        checklist_lines.extend(f"• {escape(str(line))}" for line in sistema_completo if line)
+        checklist_lines.extend(f"• Pendiente por definir: {escape(str(line))}" for line in componentes_pendientes if line)
+        checklist_lines.extend(f"• Herramienta sugerida: {escape(str(line))}" for line in herramientas_sugeridas if line)
+        if nota_color:
+            checklist_lines.append(f"• {escape(nota_color)}")
+        checklist_html = "<br/>".join(checklist_lines)
+        checklist_table = Table([[Paragraph(checklist_html, normal_style)]], colWidths=[doc.width])
+        checklist_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#EFF6FF")),
+            ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#60A5FA")),
+            ("TOPPADDING", (0, 0), (-1, -1), 8 if compact_mode else 10),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8 if compact_mode else 10),
+            ("LEFTPADDING", (0, 0), (-1, -1), 10),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+        ]))
+        elements.append(checklist_table)
+        elements.append(Spacer(1, (3 if compact_mode else 5) * mm))
+
     elements.append(Paragraph(f"Detalle del {request_label}", heading_style))
     elements.append(HRFlowable(width="100%", thickness=1, color=brand_accent, spaceBefore=2, spaceAfter=4))
 
@@ -12306,6 +13097,7 @@ def generate_commercial_pdf(
     table_data = [table_header]
 
     grand_subtotal = 0
+    subtotal_iva_incluido = 0
     for idx, item in enumerate(matched_items, start=1):
         matched_product = item.get("matched_product") or {}
         raw_desc = matched_product.get("descripcion") or matched_product.get("nombre_articulo") or item.get("original_text") or "Producto"
@@ -12324,21 +13116,26 @@ def generate_commercial_pdf(
             qty_label = "Por confirmar"
 
         # --- Price lookup ---
-        price_info = fetch_product_price(str(ref_code))
-        unit_price = 0
-        if price_info and price_info.get("pvp_sap"):
-            unit_price = float(price_info["pvp_sap"])
+        price_snapshot = _resolve_pdf_line_pricing(str(ref_code))
+        unit_price = float(price_snapshot.get("unit_price") or 0)
         qty_numeric = float(qty_val) if qty_val else 0
         line_subtotal = unit_price * qty_numeric
-        grand_subtotal += line_subtotal
+        if price_snapshot.get("price_includes_iva"):
+            subtotal_iva_incluido += line_subtotal
+        else:
+            grand_subtotal += line_subtotal
 
         price_label = f"${unit_price:,.0f}".replace(",", ".") if unit_price > 0 else "Pendiente"
         subtotal_label = f"${line_subtotal:,.0f}".replace(",", ".") if line_subtotal > 0 else "—"
+        role_label = item.get("auto_note") or ""
+        product_label = escape(commercial_name)
+        if role_label:
+            product_label = f"{product_label}<br/><font size='7' color='#6B7280'>{escape(str(role_label))}</font>"
 
         row_bg = white if idx % 2 == 1 else brand_light_bg
         table_data.append([
             Paragraph(str(idx), ParagraphStyle("Cell", parent=normal_style, alignment=TA_CENTER)),
-            Paragraph(commercial_name, normal_style),
+            Paragraph(product_label, normal_style),
             Paragraph(str(ref_code), ParagraphStyle("Cell", parent=normal_style, alignment=TA_CENTER)),
             Paragraph(qty_label, ParagraphStyle("Cell", parent=normal_style, alignment=TA_CENTER)),
             Paragraph(price_label, ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT)),
@@ -12347,8 +13144,8 @@ def generate_commercial_pdf(
 
     # --- Totals row ---
     iva_amount = round(grand_subtotal * 0.19)
-    grand_total = round(grand_subtotal + iva_amount)
-    if grand_subtotal > 0:
+    grand_total = round(grand_subtotal + iva_amount + subtotal_iva_incluido)
+    if grand_subtotal > 0 or subtotal_iva_incluido > 0:
         fmt_sub = f"${grand_subtotal:,.0f}".replace(",", ".")
         fmt_iva = f"${iva_amount:,.0f}".replace(",", ".")
         fmt_total = f"${grand_total:,.0f}".replace(",", ".")
@@ -12362,6 +13159,13 @@ def generate_commercial_pdf(
             Paragraph("<b>IVA (19%)</b>", ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT)),
             Paragraph(f"<b>{fmt_iva}</b>", ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT)),
         ])
+        if subtotal_iva_incluido > 0:
+            fmt_iva_incluido = f"${subtotal_iva_incluido:,.0f}".replace(",", ".")
+            table_data.append([
+                Paragraph("", normal_style), Paragraph("", normal_style), Paragraph("", normal_style), Paragraph("", normal_style),
+                Paragraph("<b>Items con IVA incluido</b>", ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT)),
+                Paragraph(f"<b>{fmt_iva_incluido}</b>", ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT)),
+            ])
         table_data.append([
             Paragraph("", normal_style), Paragraph("", normal_style), Paragraph("", normal_style), Paragraph("", normal_style),
             Paragraph("<b>TOTAL</b>", ParagraphStyle("Cell", parent=normal_style, alignment=TA_RIGHT, textColor=brand_dark)),
@@ -12421,6 +13225,9 @@ def generate_commercial_pdf(
     if observations:
         elements.append(Spacer(1, (2 if compact_mode else 3) * mm))
         elements.append(Paragraph(f"<b>Observaciones operativas:</b> {escape(str(observations))}", normal_style))
+    if subtotal_iva_incluido > 0:
+        elements.append(Spacer(1, (2 if compact_mode else 3) * mm))
+        elements.append(Paragraph("<b>Nota de precios:</b> Algunos productos especializados o de línea International ya vienen con IVA incluido y se consolidaron así en el total.", normal_style))
     elements.append(Spacer(1, (3 if compact_mode else 8) * mm))
 
     elements.append(HRFlowable(width="100%", thickness=0.5, color=brand_border, spaceBefore=4, spaceAfter=4))
@@ -16298,15 +17105,11 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         matched_product.setdefault("codigo_articulo", reference_value)
         matched_product.setdefault("descripcion", it.get("descripcion_comercial", ""))
         confirmed_items.append(
-            {
-                "status": "matched",
-                "original_text": it.get("descripcion_comercial", ""),
-                "matched_product": matched_product,
-                "product_request": {
-                    "requested_quantity": it.get("cantidad"),
-                    "requested_unit": it.get("unidad_medida") or infer_product_presentation_from_row(matched_product) or "unidad",
-                },
-            }
+            _build_confirmed_item_from_row(
+                matched_product,
+                it.get("cantidad"),
+                it.get("unidad_medida") or infer_product_presentation_from_row(matched_product) or "unidad",
+            )
         )
 
     if rejected_items:
@@ -16321,7 +17124,13 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             ensure_ascii=False,
         )
 
-    commercial_draft["items"] = confirmed_items
+    enrichment = _build_quote_completion_metadata(
+        confirmed_items,
+        store_filters,
+        conversation_context,
+        resumen_asesoria,
+    )
+    commercial_draft["items"] = enrichment.get("items") or confirmed_items
     commercial_draft["store_filters"] = store_filters
 
     # ── Conocimiento experto: alertas comerciales sobre los productos del pedido ──
@@ -16348,7 +17157,13 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     commercial_draft["items_confirmed"] = True
     commercial_draft["claim_case"] = None
     commercial_draft["tipo_documento"] = tipo_documento
-    commercial_draft["resumen_asesoria"] = resumen_asesoria or ""
+    commercial_draft["resumen_asesoria"] = enrichment.get("resumen_asesoria_enriquecido") or resumen_asesoria or ""
+    commercial_draft["justificacion_comercial_pdf"] = enrichment.get("justificacion_comercial_pdf") or ""
+    commercial_draft["sistema_completo_pdf"] = enrichment.get("sistema_completo_pdf") or []
+    commercial_draft["componentes_pendientes_pdf"] = enrichment.get("componentes_pendientes_pdf") or []
+    commercial_draft["herramientas_sugeridas_pdf"] = enrichment.get("herramientas_sugeridas_pdf") or []
+    commercial_draft["nota_color_pdf"] = enrichment.get("nota_color_pdf") or ""
+    commercial_draft["items_auto_agregados_pdf"] = enrichment.get("items_auto_agregados_pdf") or []
     commercial_draft["customer_identity_input"] = customer_identity_input or None
     commercial_draft["customer_context"] = customer_context or None
     commercial_draft["customer_resolution_status"] = customer_resolution_status
@@ -16774,6 +17589,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     pregunta = (args.get("pregunta") or "").strip()
     producto = (args.get("producto") or "").strip()
     marca_filter = (args.get("marca") or "").strip() or None
+    explicit_segment = (args.get("segmento") or "").strip() or None
     if not pregunta:
         return json.dumps(
             {"encontrado": False, "mensaje": "Se requiere una pregunta técnica."},
@@ -16807,8 +17623,15 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     _q_lower = (pregunta + " " + producto).lower()
     if not marca_filter and any(kw in _q_lower for kw in _INDUSTRIAL_MPY_KEYWORDS):
         marca_filter = "international"
+    segment_filters = _infer_portfolio_segments_for_query(pregunta, producto, explicit_segment)
 
-    chunks = search_technical_chunks(search_query, top_k=6, marca_filter=marca_filter)
+    chunks = search_technical_chunks(search_query, top_k=6, marca_filter=marca_filter, segment_filters=segment_filters or None)
+    guide_chunks = search_supporting_technical_guides(search_query, top_k=3, marca_filter=marca_filter, segment_filters=segment_filters or None)
+    segment_fallback_used = False
+    if not chunks and not guide_chunks and segment_filters:
+        chunks = search_technical_chunks(search_query, top_k=6, marca_filter=marca_filter)
+        guide_chunks = search_supporting_technical_guides(search_query, top_k=3, marca_filter=marca_filter)
+        segment_fallback_used = True
 
     # ── Portfolio-aware second search pass ──────────────────────────
     # If the initial RAG search returned weak/wrong results AND no specific
@@ -16837,20 +17660,33 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         if portfolio_products:
             extra_chunks: list[dict] = []
             for pp in portfolio_products[:3]:  # Top 3 most relevant
-                pp_chunks = search_technical_chunks(f"{pp}: {pregunta}", top_k=3, marca_filter=marca_filter)
+                pp_chunks = search_technical_chunks(
+                    f"{pp}: {pregunta}",
+                    top_k=3,
+                    marca_filter=marca_filter,
+                    segment_filters=segment_filters or None,
+                )
                 extra_chunks.extend(pp_chunks)
             # Merge: keep best chunks from both searches, deduplicate by text
             seen_texts: set[str] = set()
+            seen_families: set[str] = set()
             merged: list[dict] = []
             all_chunks = sorted(chunks + extra_chunks, key=lambda c: c.get("similarity", 0), reverse=True)
             for ch in all_chunks:
                 txt_key = (ch.get("chunk_text") or "")[:80]
-                if txt_key not in seen_texts:
-                    seen_texts.add(txt_key)
-                    merged.append(ch)
+                metadata = ch.get("metadata") or {}
+                family_key = (metadata.get("canonical_family") or ch.get("familia_producto") or "").strip().lower()
+                if txt_key in seen_texts:
+                    continue
+                if family_key and family_key in seen_families and ch.get("similarity", 0) < 0.78:
+                    continue
+                seen_texts.add(txt_key)
+                if family_key:
+                    seen_families.add(family_key)
+                merged.append(ch)
             chunks = merged[:8]
 
-    if not chunks:
+    if not chunks and not guide_chunks:
         return json.dumps(
             {"encontrado": False, "respuesta_rag": None,
              "mensaje": "No encontré información técnica vectorizada para esa consulta. "
@@ -16859,8 +17695,22 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         )
 
     rag_context = build_rag_context(chunks, max_chunks=4)
+    guide_context = build_rag_context(guide_chunks, max_chunks=2)
     source_files = list(dict.fromkeys(c.get("doc_filename", "") for c in chunks if c.get("similarity", 0) >= 0.25))
-    best_similarity = max(c.get("similarity", 0) for c in chunks)
+    best_similarity = max((c.get("similarity", 0) for c in chunks), default=max((c.get("similarity", 0) for c in guide_chunks), default=0))
+    canonical_families = list(dict.fromkeys(
+        (c.get("metadata") or {}).get("canonical_family") or c.get("familia_producto")
+        for c in chunks
+        if c.get("similarity", 0) >= 0.25
+    ))
+    technical_profiles = fetch_technical_profiles(canonical_families, source_files, limit=3, segment_filters=segment_filters or None)
+    guide_canonical_families = list(dict.fromkeys(
+        (c.get("metadata") or {}).get("canonical_family") or c.get("familia_producto")
+        for c in guide_chunks
+        if c.get("similarity", 0) >= 0.2
+    ))
+    guide_source_files = list(dict.fromkeys(c.get("doc_filename", "") for c in guide_chunks if c.get("similarity", 0) >= 0.2))
+    guide_profiles = fetch_technical_profiles(guide_canonical_families, guide_source_files, limit=3, segment_filters=segment_filters or None)
 
     # Extract candidate products from RAG and resolve against real inventory
     candidate_product_names = extract_candidate_products_from_rag_context(
@@ -16871,15 +17721,35 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     if candidate_product_names:
         inventory_candidates = lookup_inventory_candidates_from_terms(candidate_product_names, conversation_context)
 
+    expert_notes = fetch_expert_knowledge(f"{producto} {pregunta}", limit=8)
+    structured_diagnosis = _build_structured_diagnosis(pregunta, producto, best_similarity)
+    structured_guide = _build_structured_technical_guide(
+        pregunta,
+        producto,
+        structured_diagnosis,
+        expert_notes,
+        best_similarity,
+    )
+
     result_payload = {
         "encontrado": True,
         "respuesta_rag": rag_context,
+        "contexto_guias": guide_context,
         "archivos_fuente": source_files,
+        "segmentos_portafolio_detectados": segment_filters,
+        "segmento_fallback_sin_filtro": segment_fallback_used,
         "mejor_similitud": round(best_similarity, 4),
+        "diagnostico_estructurado": structured_diagnosis,
+        "guia_tecnica_estructurada": structured_guide,
+        "preguntas_pendientes": structured_diagnosis.get("required_validations") or [],
         "mensaje": (
             "⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): "
+            "Lee PRIMERO 'perfil_tecnico_principal'. Esa ficha JSON es la base más rica del producto: cómo se aplica, dónde se aplica, dilución, rendimiento, restricciones y alertas. "
+            "Luego lee 'guias_tecnicas_relacionadas' y 'contexto_guias' para capturar sistemas completos, preguntas de diagnóstico y rutas de decisión. "
+            "Luego lee 'diagnostico_estructurado' y 'guia_tecnica_estructurada'. Esos campos son la fuente prioritaria para: clase de problema, validaciones pendientes, sistema recomendado, productos prohibidos y compuerta de cotización. "
             "Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. "
             "DEBES SINTETIZARLOS como un ingeniero de aplicaciones: "
+            "0) Si 'pricing_ready' es false o 'pricing_gate' es 'm2_required', primero diagnostica y pide los datos faltantes. NO cotices todavía. "
             "1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado). "
             "   Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. "
             "2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. "
@@ -16896,6 +17766,20 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "8) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'"
         ),
     }
+
+    if technical_profiles:
+        result_payload["perfil_tecnico_principal"] = technical_profiles[0].get("profile_json")
+        result_payload["perfiles_tecnicos_relacionados"] = [
+            item.get("profile_json")
+            for item in technical_profiles
+            if item.get("profile_json")
+        ]
+    if guide_profiles:
+        result_payload["guias_tecnicas_relacionadas"] = [
+            item.get("profile_json")
+            for item in guide_profiles
+            if item.get("profile_json")
+        ]
 
     # ── Inject mandatory galones note for Pintuco Fill rendimiento queries ──
     _q_combined = (producto + " " + pregunta).lower()
@@ -17014,7 +17898,6 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         )
 
     # ── Inject expert commercial knowledge (does not modify RAG, is additive) ──
-    expert_notes = fetch_expert_knowledge(f"{producto} {pregunta}", limit=8)
     if expert_notes:
         result_payload["conocimiento_comercial_ferreinox"] = [
             {
@@ -17901,17 +18784,41 @@ def admin_rag_diagnostico(admin_key: str = Header(None, alias="x-admin-key")):
     try:
         engine = get_db_engine()
         with engine.connect() as conn:
-            total = conn.execute(text("SELECT COUNT(*) FROM public.agent_technical_doc_chunk")).scalar() or 0
+            total = conn.execute(text(
+                "SELECT COUNT(*) FROM public.agent_technical_doc_chunk WHERE tipo_documento IN ('ficha_tecnica', 'ficha_tecnica_experto')"
+            )).scalar() or 0
+            total_profiles = conn.execute(text(
+                "SELECT COUNT(*) FROM public.agent_technical_profile WHERE extraction_status = 'ready'"
+            )).scalar() or 0
+            avg_profile_score = conn.execute(text(
+                "SELECT AVG(completeness_score) FROM public.agent_technical_profile WHERE extraction_status = 'ready'"
+            )).scalar()
             docs = conn.execute(text(
-                "SELECT doc_filename, marca, familia_producto, tipo_documento, COUNT(*) as chunks "
+                "SELECT doc_filename, marca, familia_producto, tipo_documento, "
+                "       COALESCE(metadata ->> 'canonical_family', familia_producto) AS canonical_family, "
+                "       COALESCE(metadata ->> 'document_scope', 'primary') AS document_scope, "
+                "       COUNT(*) as chunks "
                 "FROM public.agent_technical_doc_chunk "
-                "GROUP BY doc_filename, marca, familia_producto, tipo_documento "
-                "ORDER BY doc_filename"
+                "WHERE tipo_documento IN ('ficha_tecnica', 'ficha_tecnica_experto') "
+                "GROUP BY doc_filename, marca, familia_producto, tipo_documento, "
+                "         COALESCE(metadata ->> 'canonical_family', familia_producto), "
+                "         COALESCE(metadata ->> 'document_scope', 'primary') "
+                "ORDER BY COALESCE(metadata ->> 'canonical_family', familia_producto), doc_filename"
             )).fetchall()
         return {
             "total_chunks": total,
+            "total_perfiles": total_profiles,
+            "promedio_completitud_perfiles": round(float(avg_profile_score or 0), 4),
             "documentos": [
-                {"archivo": r[0], "marca": r[1], "familia": r[2], "tipo": r[3], "chunks": r[4]}
+                {
+                    "archivo": r[0],
+                    "marca": r[1],
+                    "familia": r[2],
+                    "tipo": r[3],
+                    "familia_canonica": r[4],
+                    "scope": r[5],
+                    "chunks": r[6],
+                }
                 for r in docs
             ],
         }
