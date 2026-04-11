@@ -1044,6 +1044,241 @@ def test_mensaje_largo_incoherente():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# EL LABERINTO COGNITIVO — Chaos Multi-Turn Stress Test
+# ══════════════════════════════════════════════════════════════════════════════
+
+def test_laberinto_cognitivo():
+    """
+    LABERINTO COGNITIVO: 4 turnos de caos cognitivo absoluto.
+    T1: Carrito B2B (Koraza 10gal + brochas + candados) como empleado interno
+    T2: Interrupción técnica (salitre/eflorescencia) → RAG diagnóstico, NO mezclar con T1
+    T3: Salto a BI/CRM (cartera "ferretería la universal") → CRM, NO cotizar
+    T4: Merge total — retomar T1 sin candados, Koraza 5gal no 10, agregar productos T2 para 40m², IVA desglosado
+    """
+    tr = TestResult("Laberinto Cognitivo: 4 turnos de caos", "laberinto")
+
+    CONV_ID = 99990
+    ctx = {}
+    messages = []
+    internal_emp = {
+        "role": "administrador",
+        "cedula": "1088266407",
+        "name": "Diego Mauricio Garcia Rengifo",
+        "cargo": "Lider comercial y de compras",
+        "sede": "Parque Olaya",
+        "store_code": "189",
+    }
+
+    # ── TURNO 1: Carrito B2B puro ──
+    try:
+        payload1 = build_payload(
+            "Necesito armar un pedido para un cliente: 2 Koraza de 10 galones blanco, "
+            "6 brochas de 4 pulgadas y una docena de candados de 40mm. "
+            "Dame inventario y precios de los tres.",
+            conversation_context=ctx,
+            recent_messages=messages,
+            conv_id=CONV_ID,
+            internal_employee=internal_emp,
+        )
+        result1, elapsed1 = _agent_request(payload1)
+        tools1 = extract_tool_names(result1)
+        resp1 = response_text(result1)
+        resp1_low = resp1.lower()
+        tr.elapsed_ms += elapsed1
+
+        print(f"\n  T1 Tools: {tools1} | {elapsed1}ms")
+        print(f"  T1 Resp: {resp1[:300]}...")
+
+        # ASSERT: Inventario llamado, NO RAG
+        has_inv = any(t in tools1 for t in ["consultar_inventario", "consultar_inventario_lote"])
+        tr.check(has_inv, "T1: Llamó inventario para el pedido B2B")
+        has_rag = "consultar_conocimiento_tecnico" in tools1
+        tr.check(not has_rag, "T1: NO llamó RAG (es pedido directo, no requiere diagnóstico)", critical=False)
+        tr.check_response_contains(resp1, ["$", "precio", "koraza"], "T1: Respuesta tiene precios de Koraza")
+
+        # Accumulate
+        messages.append({"direction": "inbound", "contenido": payload1["user_message"], "message_type": "text"})
+        messages.append({"direction": "outbound", "contenido": resp1, "message_type": "text"})
+        ctx.update(result1.get("context_updates") or {})
+
+    except Exception as e:
+        tr.check(False, f"T1 EXCEPCIÓN: {e}")
+        tr.response_preview = str(e)[:300]
+        return tr
+
+    # ── TURNO 2: Interrupción técnica (salitre) ──
+    try:
+        time.sleep(3)  # Rate limit buffer
+        payload2 = build_payload(
+            "Oye antes de seguir, un cliente me preguntó sobre un muro exterior que tiene "
+            "salitre y eflorescencia. ¿Qué sistema le recomiendo para eso?",
+            conversation_context=ctx,
+            recent_messages=messages,
+            conv_id=CONV_ID,
+            internal_employee=internal_emp,
+        )
+        result2, elapsed2 = _agent_request(payload2)
+        tools2 = extract_tool_names(result2)
+        resp2 = response_text(result2)
+        resp2_low = resp2.lower()
+        tr.elapsed_ms += elapsed2
+
+        print(f"\n  T2 Tools: {tools2} | {elapsed2}ms")
+        print(f"  T2 Resp: {resp2[:300]}...")
+
+        # ASSERT: RAG debe ser llamada para diagnóstico técnico
+        has_rag2 = "consultar_conocimiento_tecnico" in tools2
+        tr.check(has_rag2, "T2: Llamó RAG para diagnóstico de salitre/eflorescencia")
+
+        # Debe tener diagnóstico técnico
+        tr.check_response_contains(
+            resp2,
+            ["salitre", "eflorescencia", "humedad", "impermeab", "sellador", "koraza",
+             "preparación", "superficie", "lavar", "limpiar", "anticorros"],
+            "T2: Respuesta tiene diagnóstico técnico sobre salitre",
+        )
+
+        # NO debe mezclar con el carrito de T1 (brochas, candados)
+        mixed_t1 = any(kw in resp2_low for kw in ["brocha", "candado", "pedido anterior"])
+        tr.check(not mixed_t1, "T2: NO mezcla con el carrito B2B de T1 (separación de contextos)")
+
+        messages.append({"direction": "inbound", "contenido": payload2["user_message"], "message_type": "text"})
+        messages.append({"direction": "outbound", "contenido": resp2, "message_type": "text"})
+        ctx.update(result2.get("context_updates") or {})
+
+    except Exception as e:
+        tr.check(False, f"T2 EXCEPCIÓN: {e}")
+        tr.response_preview = str(e)[:300]
+        return tr
+
+    # ── TURNO 3: Salto a BI/CRM (cartera) ──
+    try:
+        time.sleep(3)
+        payload3 = build_payload(
+            "Ah y otra cosa, revísame la cartera de Ferretería La Universal, "
+            "¿cuánto nos deben y hace cuánto no pagan?",
+            conversation_context=ctx,
+            recent_messages=messages,
+            conv_id=CONV_ID,
+            internal_employee=internal_emp,
+        )
+        result3, elapsed3 = _agent_request(payload3)
+        tools3 = extract_tool_names(result3)
+        resp3 = response_text(result3)
+        resp3_low = resp3.lower()
+        tr.elapsed_ms += elapsed3
+
+        print(f"\n  T3 Tools: {tools3} | {elapsed3}ms")
+        print(f"  T3 Resp: {resp3[:300]}...")
+
+        # ASSERT: Debe llamar herramienta CRM/BI
+        has_crm = any(t in tools3 for t in [
+            "consultar_cartera_cliente", "consultar_compras_cliente",
+            "buscar_cliente_por_nombre", "consultar_cupo_credito",
+        ])
+        tr.check(has_crm, "T3: Llamó herramienta CRM/BI para cartera")
+
+        # NO debe cotizar nada — es solo consulta de cartera
+        has_quote = "$" in resp3 and any(kw in resp3_low for kw in ["subtotal", "total", "cotizac"])
+        tr.check(not has_quote, "T3: NO genera cotización (es consulta de cartera pura)")
+
+        # Debe mencionar datos de cartera
+        tr.check_response_contains(
+            resp3,
+            ["universal", "cartera", "saldo", "deuda", "vencid", "factura", "pago",
+             "crédito", "credito", "días", "dias", "no encontr"],
+            "T3: Respuesta tiene datos de cartera o indicación de búsqueda",
+        )
+
+        messages.append({"direction": "inbound", "contenido": payload3["user_message"], "message_type": "text"})
+        messages.append({"direction": "outbound", "contenido": resp3, "message_type": "text"})
+        ctx.update(result3.get("context_updates") or {})
+
+    except Exception as e:
+        tr.check(False, f"T3 EXCEPCIÓN: {e}")
+        tr.response_preview = str(e)[:300]
+        return tr
+
+    # ── TURNO 4: MERGE TOTAL — El turno del caos ──
+    try:
+        time.sleep(4)
+        payload4 = build_payload(
+            "Bueno volviendo al pedido del inicio: quita los candados, cambia la Koraza "
+            "de 10 galones a 5 galones (mantenme las 2 unidades), y agrega lo que necesite "
+            "el cliente del muro con salitre para cubrir 40 metros cuadrados. "
+            "Hazme la cotización completa con IVA desglosado.",
+            conversation_context=ctx,
+            recent_messages=messages,
+            conv_id=CONV_ID,
+            internal_employee=internal_emp,
+        )
+        result4, elapsed4 = _agent_request(payload4)
+        tools4 = extract_tool_names(result4)
+        resp4 = response_text(result4)
+        resp4_low = resp4.lower()
+        tr.elapsed_ms += elapsed4
+
+        print(f"\n  T4 Tools: {tools4} | {elapsed4}ms")
+        print(f"  T4 Resp: {resp4[:500]}...")
+
+        # ASSERT: Debe tener inventario (para precios) y posiblemente RAG (para productos salitre)
+        has_inv4 = any(t in tools4 for t in ["consultar_inventario", "consultar_inventario_lote"])
+        tr.check(has_inv4, "T4: Llamó inventario para cotización unificada")
+
+        # Debe tener Koraza (producto principal)
+        tr.check_response_contains(resp4, ["koraza", "5 gal"], "T4: Menciona Koraza 5 galones")
+
+        # Debe tener brochas (mantenido de T1)
+        tr.check_response_contains(
+            resp4,
+            ["brocha", "brochas"],
+            "T4: Mantiene brochas del pedido original",
+            critical=False,
+        )
+
+        # NO debe tener candados (eliminados)
+        has_candados = "candado" in resp4_low
+        tr.check(not has_candados, "T4: Candados eliminados del pedido", critical=False)
+
+        # Debe tener productos para salitre/eflorescencia (del T2)
+        tr.check_response_contains(
+            resp4,
+            ["salitre", "sellador", "impermeab", "koraza", "40 m", "40m",
+             "metros", "muro", "efloresc", "preparación", "superficie"],
+            "T4: Incluye productos para el muro con salitre (merge T2→T4)",
+            critical=False,
+        )
+
+        # Debe tener IVA desglosado
+        tr.check_response_contains(
+            resp4,
+            ["iva", "19%", "impuesto"],
+            "T4: IVA desglosado en la cotización",
+        )
+
+        # Debe tener precio total
+        tr.check_response_contains(
+            resp4,
+            ["total", "$"],
+            "T4: Cotización tiene precio total",
+        )
+
+        # NO debe mezclar datos de cartera (T3)
+        has_cartera_leak = any(kw in resp4_low for kw in ["universal", "cartera", "saldo", "deuda"])
+        tr.check(not has_cartera_leak, "T4: NO filtra datos de cartera de T3 en la cotización", critical=False)
+
+        tr.response_preview = resp4[:400]
+        tr.tools_called = tools1 + tools2 + tools3 + tools4
+
+    except Exception as e:
+        tr.check(False, f"T4 EXCEPCIÓN: {e}")
+        tr.response_preview = str(e)[:300]
+        return tr
+
+    return tr
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # TEST RUNNER
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -1066,6 +1301,7 @@ ALL_TESTS = [
     test_inventario_lote_multiple,
     test_bicomponente_catalizador,
     test_mensaje_largo_incoherente,
+    test_laberinto_cognitivo,
 ]
 
 
