@@ -14446,6 +14446,41 @@ DOCUMENTOS: Si piden ficha técnica → `buscar_documento_tecnico` inmediatament
 
 PRODUCTOS COMPLEMENTARIOS: Si `consultar_inventario` devuelve `productos_complementarios`, informa proactivamente. Para bicomponentes el catalizador es OBLIGATORIO en el pedido.
 
+══════════════════════════════════════════════════════════════════════════════
+🎨 COLORES Y LINK FERREINOX.CO
+══════════════════════════════════════════════════════════════════════════════
+- Cuando menciones que un producto está disponible en una "amplia gama de colores" o el cliente pregunte por colores, SIEMPRE incluye: "Para ver toda nuestra gama de colores puedes visitar www.ferreinox.co sección Cartas de Colores."
+- Para productos International (Interseal, Intergard, Interthane): si el cliente NO especifica RAL, usa RAL 7038 (gris estándar) por defecto. SIEMPRE menciona: "Este es el RAL 7038 estándar. Para más colores RAL puedes visitar www.ferreinox.co"
+- Intergard 2002: es un producto SOBRE PEDIDO. NO cotizes. Responde: "El Intergard 2002 es un producto sobre pedido que requiere asesoría especializada. ¿Te gustaría que te conecte con uno de nuestros asesores técnicos para revisar tu proyecto?" Si acepta, escala a asesor.
+
+══════════════════════════════════════════════════════════════════════════════
+🛒 EMBUDO DE CIERRE COMERCIAL — FLUJO COMPLETO DE VENTA
+══════════════════════════════════════════════════════════════════════════════
+PASO 1 — COTIZACIÓN: Presenta sistema + precios. Pregunta "¿Deseas proceder con el pedido?"
+PASO 2 — CONFIRMACIÓN: Si dice "sí", "dale", "si por favor" → NO repitas la cotización. Pasa directo a recopilar datos.
+PASO 3 — DATOS DEL CLIENTE:
+  a) Pregunta nombre completo y cédula/NIT.
+  b) Llama `verificar_identidad` con la cédula/NIT.
+  c) Si VERIFICADO → usa los datos (nombre, dirección, ciudad, email) del sistema. NO repidas datos que ya tienes.
+  d) Si NO VERIFICADO → NO bloquees la venta. Pregunta: nombre, cédula, dirección de entrega y ciudad. Luego llama `registrar_cliente_nuevo` para crear el registro. Esto es un agente de ventas 24/7 — un cliente nuevo que quiere comprar DEBE poder hacerlo.
+  e) El TELÉFONO ya lo tienes del WhatsApp — NO lo preguntes.
+PASO 4 — DIRECCIÓN DE ENTREGA:
+  - Si no la tienes del registro, pregunta: "¿A qué dirección te enviamos el pedido?"
+  - Ciudad: si es Pereira, Manizales, Armenia (zona urbana Eje Cafetero) → despacho directo.
+  - Si es OTRA ciudad → despacho centralizado desde Pereira. Menciona: "Las entregas fuera del Eje Cafetero (Pereira, Manizales, Armenia zona urbana) están sujetas a verificación de logística. Nuestro equipo se comunicará contigo lo antes posible para coordinar."
+PASO 5 — CONFIRMAR Y GENERAR: Llama `confirmar_pedido_y_generar_pdf`. El sistema envía:
+  a) PDF al cliente por WhatsApp (o email si lo prefiere).
+  b) Correo de notificación a la tienda/ciudad de despacho automáticamente.
+PASO 6 — POST-CIERRE: Después de enviar el PDF, NO repitas el listado de productos. Solo confirma: "¡Listo! Tu pedido ha sido generado y enviado. ¿Hay algo más en lo que pueda ayudarte?"
+
+⛔ REGLA ANTI-REPETICIÓN EN CIERRE: Después de que el cliente confirme ("sí", "dale", "por favor"), NUNCA vuelvas a listar los productos con precios. Solo recopila datos faltantes y cierra.
+⛔ REGLA ANTI-BUCLE: Si `verificar_identidad` no encuentra al cliente, NO sigas pidiendo otros documentos en bucle. Ofrece registrarlo como nuevo.
+
+══════════════════════════════════════════════════════════════════════════════
+👋 SALUDO PERSONALIZADO POR NOMBRE
+══════════════════════════════════════════════════════════════════════════════
+Si el contacto WhatsApp ya tiene nombre_visible registrado (viene en el contexto), salúdalo por su nombre en el primer mensaje: "¡Hola [Nombre]! ¿Qué tienes en mente hoy?" Esto hace que el cliente se sienta reconocido y valorado.
+
 ENSEÑAR / PROBAR / DOCUMENTO (ASESORES EXPERTOS):
 Los asesores autorizados son:
 * PABLO CÉSAR MAFLA BAÑOL (cédula 1053774777)
@@ -14505,6 +14540,7 @@ TRIGGER RULES:
 ▶ consultar_conocimiento_tecnico: OBLIGATORIO antes de recomendar. Siempre con parámetro 'producto'. Para International: marca='international'.
 ▶ consultar_inventario_lote: lista de 2+ productos. UNA llamada.
 ▶ confirmar_pedido_y_generar_pdf: SOLO tras aprobación de cotización con precios.
+▶ registrar_cliente_nuevo: SOLO cuando verificar_identidad devuelve 'verificado: false' y el cliente quiere comprar. Recopila nombre, cédula, dirección, ciudad.
 ▶ radicar_reclamo: SOLO tras diagnóstico técnico.
 ▶ registrar_conocimiento_experto: SOLO para Pablo (1053774777) o Diego (1088266407).
 ▶ buscar_documento_tecnico: ficha técnica o FDS solicitada.
@@ -14944,6 +14980,50 @@ AGENT_TOOLS = [
                     }
                 },
                 "required": ["nombre_despacho", "canal_envio", "items_pedido"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "registrar_cliente_nuevo",
+            "description": (
+                "Registra un cliente nuevo que NO existe en la base de datos. "
+                "Usa esta herramienta SOLO cuando verificar_identidad devuelva 'verificado: false' "
+                "y el cliente quiera proceder con una compra o cotización. "
+                "Recopila: nombre completo, cédula/NIT, dirección de entrega, ciudad. "
+                "El teléfono se toma automáticamente del WhatsApp. "
+                "Después de registrar, el cliente queda verificado y puede proceder con el pedido."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "nombre_completo": {
+                        "type": "string",
+                        "description": "Nombre completo del cliente. Ej: 'Angela Maria Contreras Betancurt'.",
+                    },
+                    "cedula_nit": {
+                        "type": "string",
+                        "description": "Cédula de ciudadanía o NIT del cliente. Ej: '41961744', '900123456-1'.",
+                    },
+                    "direccion_entrega": {
+                        "type": "string",
+                        "description": "Dirección completa de entrega. Ej: 'Cra 15 #23-45, Barrio Centro'.",
+                    },
+                    "ciudad": {
+                        "type": "string",
+                        "description": "Ciudad de entrega. Ej: 'Pereira', 'Manizales', 'Bogotá'.",
+                    },
+                    "email": {
+                        "type": "string",
+                        "description": "Correo electrónico del cliente (opcional). Para enviar cotización/factura.",
+                    },
+                    "telefono": {
+                        "type": "string",
+                        "description": "Teléfono del cliente. Se toma del WhatsApp si no se proporciona.",
+                    },
+                },
+                "required": ["nombre_completo", "cedula_nit", "direccion_entrega", "ciudad"],
             },
         },
     },
@@ -15758,6 +15838,156 @@ def _handle_tool_verificar_identidad(args, context, conversation_context):
                 "mensaje": f"No se encontró un cliente con ese {tipo}: {criterio}. "
                 "Puede estar incorrecto o no estar registrado.",
             },
+            ensure_ascii=False,
+        )
+
+
+# ---------------------------------------------------------------------------
+# TOOL: registrar_cliente_nuevo — Registra un cliente nuevo en agent_clientes
+# y lo vincula al contacto WhatsApp actual.
+# ---------------------------------------------------------------------------
+def _handle_tool_registrar_cliente_nuevo(args, context, conversation_context):
+    """Register a new client in agent_clientes and link to WhatsApp contact."""
+    nombre = (args.get("nombre_completo") or "").strip()
+    cedula_nit = (args.get("cedula_nit") or "").strip()
+    telefono = (args.get("telefono") or context.get("telefono_e164") or "").strip()
+    direccion = (args.get("direccion_entrega") or "").strip()
+    ciudad = (args.get("ciudad") or "").strip()
+    email = (args.get("email") or "").strip()
+
+    if not nombre:
+        return json.dumps({"registrado": False, "mensaje": "Falta el nombre completo del cliente."}, ensure_ascii=False)
+    if not cedula_nit:
+        return json.dumps({"registrado": False, "mensaje": "Falta la cédula o NIT del cliente."}, ensure_ascii=False)
+    if not direccion:
+        return json.dumps({"registrado": False, "mensaje": "Falta la dirección de entrega."}, ensure_ascii=False)
+    if not ciudad:
+        return json.dumps({"registrado": False, "mensaje": "Falta la ciudad de entrega."}, ensure_ascii=False)
+
+    # Normalize cedula/NIT
+    cedula_clean = cedula_nit.replace(".", "").replace("-", "").replace(" ", "")
+
+    # Check if already registered
+    existing = fetch_client_by_nif_or_codigo(cedula_clean)
+    if existing:
+        return json.dumps({
+            "registrado": False,
+            "mensaje": f"Ya existe un cliente registrado con ese documento: {existing.get('nombre', '')} (código {existing.get('codigo', '')}).",
+            "cliente_existente": {
+                "nombre": existing.get("nombre"),
+                "codigo": existing.get("codigo"),
+                "ciudad": existing.get("ciudad"),
+            },
+        }, ensure_ascii=False)
+
+    # Determine city for delivery logic
+    ciudad_lower = ciudad.lower().strip()
+    CIUDADES_EJE_CAFETERO = ["pereira", "manizales", "armenia", "dosquebradas", "santa rosa", "chinchiná", "chinchina"]
+    ciudad_despacho = ciudad if any(c in ciudad_lower for c in CIUDADES_EJE_CAFETERO) else "Pereira"
+    nota_logistica = ""
+    if ciudad_despacho == "Pereira" and not any(c in ciudad_lower for c in CIUDADES_EJE_CAFETERO):
+        nota_logistica = (
+            f"⚠️ La ciudad '{ciudad}' está fuera de las zonas principales del Eje Cafetero. "
+            "El despacho se centraliza desde Pereira. El equipo de logística se comunicará "
+            "con el cliente lo antes posible para coordinar la entrega."
+        )
+
+    try:
+        engine = get_db_engine()
+        with engine.connect() as conn:
+            # Generate next codigo
+            max_code = conn.execute(text(
+                "SELECT COALESCE(MAX(codigo), 900000) FROM public.agent_clientes WHERE codigo >= 900000"
+            )).scalar()
+            new_codigo = (max_code or 900000) + 1
+
+            # Parse name parts
+            name_parts = nombre.split()
+            nombre_1 = name_parts[0] if len(name_parts) > 0 else ""
+            otros_nombres = name_parts[1] if len(name_parts) > 1 else ""
+            apellido_1 = name_parts[2] if len(name_parts) > 2 else ""
+            apellido_2 = name_parts[3] if len(name_parts) > 3 else ""
+
+            conn.execute(text("""
+                INSERT INTO public.agent_clientes
+                    (codigo, nombre, nif, direccion, telefono, ciudad, email,
+                     nombre_1, otros_nombres, apellido_1, apellido_2,
+                     categoria, segmento, clasificacion)
+                VALUES
+                    (:codigo, :nombre, :nif, :direccion, :telefono, :ciudad, :email,
+                     :nombre_1, :otros_nombres, :apellido_1, :apellido_2,
+                     'NUEVO', 'WHATSAPP', 'CLIENTE_DIGITAL')
+            """), {
+                "codigo": new_codigo,
+                "nombre": nombre.upper(),
+                "nif": cedula_clean,
+                "direccion": direccion,
+                "telefono": telefono,
+                "ciudad": ciudad.upper(),
+                "email": email,
+                "nombre_1": nombre_1.upper(),
+                "otros_nombres": otros_nombres.upper(),
+                "apellido_1": apellido_1.upper(),
+                "apellido_2": apellido_2.upper(),
+            })
+            conn.commit()
+
+            # Link to WhatsApp contact
+            try:
+                contact_id = context.get("contact_id")
+                if contact_id:
+                    conn.execute(text("""
+                        UPDATE public.whatsapp_contacto
+                        SET nombre_visible = :nombre,
+                            metadata = metadata || :meta,
+                            updated_at = NOW()
+                        WHERE id = :cid
+                    """), {
+                        "nombre": nombre,
+                        "meta": json.dumps({"cliente_codigo": new_codigo, "cedula": cedula_clean}),
+                        "cid": contact_id,
+                    })
+                    conn.commit()
+            except Exception:
+                pass
+
+            # Mark as verified in conversation context
+            update_conversation_context(
+                context["conversation_id"],
+                {
+                    "verified": True,
+                    "verified_document": cedula_clean,
+                    "verified_by": "registration",
+                    "verified_cliente_codigo": new_codigo,
+                    "client_registered_now": True,
+                },
+            )
+            conversation_context.update({
+                "verified": True,
+                "verified_document": cedula_clean,
+                "verified_by": "registration",
+                "verified_cliente_codigo": new_codigo,
+            })
+
+            result = {
+                "registrado": True,
+                "codigo_cliente": new_codigo,
+                "nombre": nombre.upper(),
+                "cedula_nit": cedula_clean,
+                "telefono": telefono,
+                "direccion": direccion,
+                "ciudad": ciudad.upper(),
+                "ciudad_despacho": ciudad_despacho.upper(),
+                "mensaje": f"Cliente {nombre} registrado exitosamente con código {new_codigo}.",
+            }
+            if nota_logistica:
+                result["nota_logistica"] = nota_logistica
+            return json.dumps(result, ensure_ascii=False)
+
+    except Exception as exc:
+        logger.error("Error registrando cliente nuevo: %s", exc)
+        return json.dumps(
+            {"registrado": False, "mensaje": f"Error técnico al registrar: {exc}"},
             ensure_ascii=False,
         )
 
@@ -17263,6 +17493,62 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             + " — INFORMA AL CLIENTE si alguna alerta afecta su pedido."
         )
 
+    # ── NOTIFICACIÓN A TIENDA/CIUDAD: enviar correo a la sede de despacho ──
+    _store_email_sent = False
+    try:
+        # Determine delivery city from customer context or conversation
+        _delivery_city = (
+            (customer_context or {}).get("ciudad", "")
+            or (commercial_draft.get("customer_context") or {}).get("ciudad", "")
+            or ""
+        ).upper().strip()
+        # Map city to store code
+        _CITY_TO_STORE = {
+            "PEREIRA": "189", "MANIZALES": "157", "ARMENIA": "156",
+            "DOSQUEBRADAS": "158", "CERRITOS": "463",
+        }
+        _dest_store = _CITY_TO_STORE.get(_delivery_city, "189")  # Default: Pereira
+        _dest_email = DEFAULT_TRANSFER_DESTINATION_EMAILS.get(_dest_store, "tiendapintucopereira@ferreinox.co")
+
+        # Build items summary for the store email
+        _items_summary_lines = []
+        for _item in (commercial_draft.get("items") or []):
+            _desc = _item.get("descripcion_comercial") or _item.get("text") or "Producto"
+            _qty = _item.get("quantity") or _item.get("cantidad") or 1
+            _ref = _item.get("referencia") or _item.get("reference") or ""
+            _items_summary_lines.append(f"• {_qty}x {_desc} (ref: {_ref})")
+        _items_html = "<br>".join(_items_summary_lines) or "Ver PDF adjunto"
+
+        _logistica_note = ""
+        if _delivery_city and _delivery_city not in _CITY_TO_STORE:
+            _logistica_note = (
+                f"<p><strong>⚠️ CIUDAD FUERA DEL EJE CAFETERO:</strong> {_delivery_city}. "
+                f"Despacho centralizado desde Pereira. Verificar logística y contactar al cliente.</p>"
+            )
+
+        _store_subject = f"📦 Nuevo Pedido WhatsApp CRM-{context['conversation_id']} — {nombre_despacho}"
+        _store_html = (
+            f"<h3>Nuevo Pedido desde WhatsApp</h3>"
+            f"<p><strong>Cliente:</strong> {nombre_despacho}</p>"
+            f"<p><strong>Teléfono:</strong> {context.get('telefono_e164', 'N/A')}</p>"
+            f"<p><strong>Ciudad entrega:</strong> {_delivery_city or 'No especificada'}</p>"
+            f"{_logistica_note}"
+            f"<p><strong>Productos:</strong></p><p>{_items_html}</p>"
+            f"<p><strong>PDF:</strong> <a href='{pdf_url}'>{pdf_filename}</a></p>"
+            f"<p>Pedido generado automáticamente por FERRO (Agente IA).</p>"
+        )
+        send_sendgrid_email(
+            _dest_email,
+            _store_subject,
+            _store_html,
+            f"Nuevo pedido WhatsApp: {nombre_despacho} | {_items_html}",
+            cc=DEFAULT_TRANSFER_CC_EMAILS,
+        )
+        _store_email_sent = True
+        logger.info("Store notification email sent to %s for order %s", _dest_email, order_id)
+    except Exception as _store_exc:
+        logger.warning("Failed to send store notification email: %s", _store_exc)
+
     if canal_envio == "email" and correo_cliente:
         try:
             subject = f"Pedido Ferreinox CRM-{context['conversation_id']}"
@@ -18085,6 +18371,8 @@ def _execute_agent_tool(tool_call, context, conversation_context):
             result = _handle_tool_radicar_reclamo(fn_args, context, conversation_context)
         elif fn_name == "confirmar_pedido_y_generar_pdf":
             result = _handle_tool_confirmar_pedido(fn_args, context, conversation_context)
+        elif fn_name == "registrar_cliente_nuevo":
+            result = _handle_tool_registrar_cliente_nuevo(fn_args, context, conversation_context)
         elif fn_name == "guardar_aprendizaje_producto":
             result = _handle_tool_guardar_aprendizaje_producto(fn_args, conversation_context)
         elif fn_name == "guardar_producto_complementario":
@@ -18822,10 +19110,15 @@ def generate_agent_reply_v2(
     # Detect vague advisory request (no specific conditions given)
     _vague_advisory_signals = [
         "necesito pintar", "quiero pintar", "cómo pinto", "como pinto",
+        "cómo se pinta", "como se pinta", "cómo pintar", "como pintar",
+        "necesito saber como pintar", "necesito saber cómo pintar",
         "qué pintura", "que pintura", "qué necesito para pintar", "que necesito para pintar",
         "sistema para pintar", "pintar un piso", "pintar un muro", "pintar una fachada",
         "pintar una bodega", "pintar un techo", "proteger un piso", "recubrir",
         "pintar una pared", "impermeabilizar", "pintar metal",
+        "pintar una reja", "pintar una estructura", "pintar un tanque",
+        "curar una humedad", "curar humedad", "curar la humedad",
+        "me puedes asesorar", "necesito asesoría", "necesito asesoria",
     ]
     _has_vague_advisory = any(s in _user_lower_diag for s in _vague_advisory_signals)
     # Check how many of the 3 MINIMUM diagnostic data points the user provided:
