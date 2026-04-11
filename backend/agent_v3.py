@@ -95,6 +95,10 @@ def generate_agent_reply_v3(
         empleado_activo = "Ninguno"
         es_experto_autorizado = "No"
 
+    teaching_result = _handle_explicit_teaching_message(user_message, conversation_context, m)
+    if teaching_result is not None:
+        return teaching_result
+
     # ── Construir contexto de turno dinámico ─────────────────────────────
     contexto_turno = build_turn_context(
         conversation_context=conversation_context,
@@ -384,6 +388,89 @@ _BICOMP_CHECKS = [
 def _detect_ensenar(user_message: str) -> bool:
     msg = (user_message or "").lower()
     return any(kw in msg for kw in ["enseñar", "ensenar", "anota esto", "guarda esto", "aprende esto"])
+
+
+def _extract_teaching_payload(user_message: str) -> Optional[dict]:
+    raw_text = (user_message or "").strip()
+    if not raw_text:
+        return None
+
+    normalized = raw_text.lower()
+    markers = ["enseñar:", "ensenar:", "anota esto:", "guarda esto:", "aprende esto:", "regla:"]
+    content = raw_text
+    for marker in markers:
+        index = normalized.find(marker)
+        if index != -1:
+            content = raw_text[index + len(marker):].strip()
+            break
+
+    if len(content) < 20:
+        return None
+
+    lowered = content.lower()
+    tipo = "proceso"
+    if "alerta superficie" in lowered or "asbesto" in lowered:
+        tipo = "alerta_superficie"
+    elif "nunca recomendar" in lowered or "nunca aplicar" in lowered or "nunca usar" in lowered or "nunca recomendar," in lowered:
+        tipo = "evitar"
+    elif "siempre" in lowered:
+        tipo = "proceso"
+
+    contexto_match = re.search(r"para\s+(.+?)(?:\s+nunca|\s+siempre|\.|:)", lowered, flags=re.IGNORECASE)
+    contexto_tags = (contexto_match.group(1).strip() if contexto_match else content[:140].strip())
+
+    producto_recomendado = None
+    rec_match = re.search(r"recomendar\s+(.+?)(?:\s+seguido de|\.|,|$)", content, flags=re.IGNORECASE)
+    if rec_match:
+        producto_recomendado = rec_match.group(1).strip()
+    elif "sellomax" in lowered and "koraza" in lowered:
+        producto_recomendado = "Sellomax + Koraza"
+
+    producto_desestimado = None
+    avoid_match = re.search(r"NUNCA\s+(?:recomendar|aplicar|usar|listar ni incluir)\s+(.+?)(?:\.|$)", content, flags=re.IGNORECASE)
+    if avoid_match:
+        producto_desestimado = avoid_match.group(1).strip()
+
+    return {
+        "contexto_tags": contexto_tags,
+        "nota_comercial": content,
+        "tipo": tipo,
+        "producto_recomendado": producto_recomendado,
+        "producto_desestimado": producto_desestimado,
+    }
+
+
+def _handle_explicit_teaching_message(user_message: str, conversation_context: dict, m):
+    if not _detect_ensenar(user_message):
+        return None
+
+    payload = _extract_teaching_payload(user_message)
+    if not payload:
+        return {
+            "response_text": "Para guardar la enseñanza necesito una regla más completa después de ENSEÑAR:.",
+            "intent": "registrar_conocimiento_experto",
+            "tool_calls": [],
+            "context_updates": {},
+            "should_create_task": False,
+            "confidence": {"level": "alta"},
+            "is_farewell": False,
+        }
+
+    result_raw = m._handle_tool_registrar_conocimiento_experto(payload, conversation_context)
+    try:
+        result = json.loads(result_raw)
+    except Exception:
+        result = {"guardado": False, "mensaje": result_raw}
+
+    return {
+        "response_text": result.get("mensaje") or "No fue posible procesar la enseñanza.",
+        "intent": "registrar_conocimiento_experto",
+        "tool_calls": [{"name": "registrar_conocimiento_experto", "args": payload, "result": result_raw}],
+        "context_updates": {},
+        "should_create_task": False,
+        "confidence": {"level": "alta" if result.get("guardado") else "media"},
+        "is_farewell": False,
+    }
 
 
 def _guardia_quimica(assistant_message, messages, tool_calls_made, context, conversation_context, m, user_message=""):
