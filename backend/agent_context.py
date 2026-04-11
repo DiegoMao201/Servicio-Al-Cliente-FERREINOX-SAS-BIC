@@ -173,6 +173,8 @@ def _fetch_expert_directives_for_turn(
         query_parts.append(diagnostic["condition"])
     if diagnostic.get("interior_exterior"):
         query_parts.append(diagnostic["interior_exterior"])
+    if diagnostic.get("humidity_source"):
+        query_parts.append(diagnostic["humidity_source"])
     if diagnostic.get("traffic"):
         query_parts.append(f"tráfico {diagnostic['traffic']}")
     # Add relevant terms from user message (not the whole thing to avoid noise)
@@ -459,7 +461,7 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
 def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
     """
     Extrae datos diagnósticos de la conversación combinada.
-    Retorna dict con claves: surface, condition, interior_exterior, area_m2, traffic
+    Retorna dict con claves: surface, condition, interior_exterior, area_m2, traffic, humidity_source
     Valores None si no detectado.
     """
     # Combine last ~5 inbound messages + current
@@ -476,6 +478,7 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         "interior_exterior": None,
         "area_m2": None,
         "traffic": None,
+        "humidity_source": None,
     }
 
     # Surface
@@ -529,6 +532,13 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         data["traffic"] = "liviano"
     elif any(w in combined for w in ["vehicular", "parqueadero", "garaje"]):
         data["traffic"] = "vehicular"
+
+    if any(w in combined for w in ["viene del piso", "sube del piso", "base del muro", "capilaridad", "jardinera", "jardiner", "presion negativa", "presión negativa", "permanente"]):
+        data["humidity_source"] = "capilaridad/presión negativa"
+    elif any(w in combined for w in ["de arriba", "techo", "cubierta", "canal", "lluvia", "filtracion exterior", "filtración exterior"]):
+        data["humidity_source"] = "filtración superior/exterior"
+    elif any(w in combined for w in ["temporada", "cuando llueve", "invierno", "solo en lluvia"]):
+        data["humidity_source"] = "humedad por temporada"
 
     # Muro interior con humedad/salitre se trata como "interior húmedo" para activar alertas duras.
     if (
@@ -734,10 +744,27 @@ def build_turn_context(
             lines.append(f"Ubicación: {diagnostic['interior_exterior']}")
         if diagnostic["condition"]:
             lines.append(f"Condición: {diagnostic['condition']}")
+        if diagnostic.get("humidity_source"):
+            lines.append(f"Causa probable: {diagnostic['humidity_source']}")
         if diagnostic["area_m2"]:
             lines.append(f"Área: {diagnostic['area_m2']} m²")
         if diagnostic["traffic"]:
             lines.append(f"Tráfico: {diagnostic['traffic']}")
+
+        _interior_humidity_conditions = {"humedad", "salitre", "filtración", "goteras", "moho/hongos", "pintura descascarando", "pintura soplada"}
+        if diagnostic.get("surface") == "interior húmedo" and diagnostic.get("condition") in _interior_humidity_conditions:
+            lines.append("")
+            lines.append("🚨 SISTEMA OBLIGATORIO FERREINOX PARA HUMEDAD INTERIOR: ESTE CASO NO SE RESUELVE CON KORAZA.")
+            lines.append("Secuencia técnica obligatoria:")
+            lines.append("  1. Remover totalmente la pintura soplada/descascarada y el salitre hasta llegar a base sana.")
+            lines.append("  2. Si el revoque está quemado o meteorizado, reemplazarlo antes del sistema nuevo (ej. Revofast o revoque acondicionado).")
+            lines.append("  3. Aplicar Aquablock Ultra en 2 manos, preferiblemente con brocha para cargar bien el producto.")
+            lines.append("  4. Después del Aquablock, aplicar Estuco Acrílico para nivelar. NUNCA antes.")
+            lines.append("  5. El acabado final debe ser un VINILO para interior. Prioriza Viniltex Advanced; si el cliente pide algo más económico, ofrece otra opción vinílica compatible, pero SIN cambiar la base Aquablock + Estuco.")
+            lines.append("Prohibiciones absolutas para este caso:")
+            lines.append("  • Koraza NO va como imprimante ni como acabado en muro interior con humedad/salitre.")
+            lines.append("  • Pintuco Fill NO es la solución si el problema es interior/capilaridad desde la base del muro.")
+            lines.append("Acción: Presenta esta solución técnica completa y luego pide m² para cotizar cantidades exactas.")
 
         if missing:
             lines.append(f"Datos faltantes: {', '.join(missing)}")
