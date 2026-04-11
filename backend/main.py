@@ -18776,7 +18776,6 @@ def generate_agent_reply_v2(
         s in _user_lower_diag for s in ["pedido", "dame", "necesito ", "galones", "unidades", "docena"]
     )
     if (_has_vague_advisory and not _has_sufficient_details and _has_system_reco
-            and not _agent_asked_questions
             and not _is_b2b_request and not is_simple_greeting(user_message)):
         logger.warning(
             "GUARDIA DIAGNÓSTICA: agente recomendó sistema completo sin diagnóstico previo. "
