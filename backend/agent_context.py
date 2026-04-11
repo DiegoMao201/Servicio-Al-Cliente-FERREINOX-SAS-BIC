@@ -422,6 +422,15 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
     has_specific = any(p in msg_lower for p in _SPECIFIC_PRODUCTS)
     has_quantity = bool(_DIRECT_ORDER_PATTERNS.search(msg))
     has_price_request = any(s in msg_lower for s in _PRICE_SIGNALS)
+    has_condition = any(s in msg_lower for s in _CONDITION_SIGNALS)
+    has_surface = any(s in msg_lower for s in _SURFACE_SIGNALS)
+
+    # Si el cliente nombra un producto PERO describe una condición problemática
+    # (humedad, salitre, óxido, descascarada, etc.), la intención es ASESORÍA.
+    # El cliente necesita un sistema completo, no solo el producto que pidió.
+    if has_specific and has_condition:
+        return "asesoria"
+
     if has_specific and has_quantity:
         return "pedido_directo"
     if has_specific and has_price_request:
@@ -429,7 +438,6 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
 
     # 10. Advisory (describes surface/need without naming specific product)
     has_advisory = any(s in msg_lower for s in _ADVISORY_SIGNALS)
-    has_surface = any(s in msg_lower for s in _SURFACE_SIGNALS)
     if (has_advisory or has_surface) and not has_specific:
         return "asesoria"
 

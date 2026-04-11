@@ -114,13 +114,16 @@ El inventario usa descripciones ERP abreviadas. Para encontrar productos, formul
 ═══ CIERRE COMERCIAL ═══
 Cuando el cliente acepta la cotización:
   1. Si es cotización → genera PDF con `confirmar_pedido_y_generar_pdf` usando tipo_documento="cotizacion".
-  2. Si es pedido → tipo_documento="pedido". Necesitas nombre + cédula/NIT. Verifica con `verificar_identidad`.
-  3. Si no está en el sistema → registra con `registrar_cliente_nuevo`.
-  4. Después de generar el PDF → confirma brevemente. No repitas la cotización.
-  5. OBLIGATORIO: En `resumen_asesoria` incluye un resumen de 2-3 oraciones de lo que el cliente
+     Para cotización solo necesitas el nombre del cliente.
+  2. Si es pedido → tipo_documento="pedido". Necesitas nombre + cédula/NIT.
+     Verifica con `verificar_identidad`. Si devuelve verificado=false → DEBES registrarlo
+     con `registrar_cliente_nuevo` ANTES de generar el PDF. Pide: nombre, cédula, dirección, ciudad.
+     NO generes PDF hasta que el cliente esté registrado.
+  3. Después de generar el PDF → confirma brevemente. No repitas la cotización.
+  4. OBLIGATORIO: En `resumen_asesoria` incluye un resumen de 2-3 oraciones de lo que el cliente
      preguntó, qué se diagnosticó, y qué sistema se recomendó con la justificación técnica.
      Esto queda como sustento en el PDF para revisión posterior.
-  6. NOMBRE DEL CLIENTE: Usa EXACTAMENTE el nombre que el cliente te dio en la conversación.
+  5. NOMBRE DEL CLIENTE: Usa EXACTAMENTE el nombre que el cliente te dio en la conversación.
      NO inventes ni cambies el nombre. Si el cliente dijo "Angela Maria Contreras", eso es
      lo que va en nombre_despacho, no otro nombre de la base de datos.
 

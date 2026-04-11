@@ -3524,11 +3524,12 @@ def build_internal_login_reply(content: str, context: dict, conversation_context
     _content_norm = normalize_text_value(content)
     _CANCEL_PHRASES = [
         "no soy colaborador", "no soy empleado", "no soy trabajador",
+        "no soy usuario interno", "no soy interno", "no soy de la empresa",
         "soy cliente", "no trabajo ahi", "no trabajo aqui", "no trabajo alla",
         "cancelar", "no quiero login", "salir", "dejame como cliente",
     ]
     _auth_cancelled = bool((conversation_context or {}).get("_auth_cancelled"))
-    if awaiting_cedula and any(phrase in _content_norm for phrase in _CANCEL_PHRASES):
+    if any(phrase in _content_norm for phrase in _CANCEL_PHRASES):
         return {
             "response_text": "¡Entendido! Te atiendo como cliente. ¿En qué te puedo ayudar hoy?",
             "intent": "internal_auth_cancelled",
@@ -3701,9 +3702,30 @@ def resolve_internal_customer_context(identity_candidate: Optional[dict], phone_
     return None
 
 
+def _is_clear_customer_product_message(normalized: str) -> bool:
+    """Detecta si el mensaje es claramente una consulta de cliente externo sobre productos.
+    Esto previene que frases como 'que tiene la pintura vieja' activen el flujo interno."""
+    _CUSTOMER_PRODUCT_SIGNALS = [
+        "galon", "galones", "cunete", "cuñete", "cuarto", "litro",
+        "koraza", "viniltex", "pintulux", "pintucoat", "interthane", "intergard",
+        "interseal", "barnex", "esmalte", "anticorrosivo", "corrotec", "pintoxido",
+        "pintóxido", "aquablock", "impermeabilizante", "lija", "brocha", "rodillo",
+        "pintar", "pintura", "barniz", "sellador", "estuco",
+        "humedad", "salitre", "oxido", "óxido", "fachada", "pared", "muro",
+        "piso", "techo", "madera", "metal", "hierro", "rejas",
+        "me cotizas", "me cotiza", "cotizacion", "cotización", "precio", "precios",
+        "cuanto vale", "cuánto vale", "cuanto cuesta", "cuánto cuesta",
+        "necesito", "quiero comprar", "metros cuadrados", "m2", "m²",
+    ]
+    return sum(1 for signal in _CUSTOMER_PRODUCT_SIGNALS if signal in normalized) >= 2
+
+
 def detect_internal_query_intent(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     if not normalized:
+        return None
+    # ── Escape temprano: si el mensaje es claramente una consulta de cliente → no es intent interno ──
+    if _is_clear_customer_product_message(normalized):
         return None
     if any(fragment in normalized for fragment in ["reclamos pendientes", "pendientes de reclamos", "crm pendientes de reclamos", "reclamos crm", "garantias pendientes", "garantías pendientes", "casos pendientes de reclamo"]):
         return "consulta_reclamos_pendientes"
@@ -3715,7 +3737,14 @@ def detect_internal_query_intent(text_value: Optional[str]):
         return "consulta_traslados"
     if any(fragment in normalized for fragment in ["genera traslado", "genere traslado", "crear traslado", "crea traslado", "solicita traslado", "traslada", "trasladar"]):
         return "crear_traslado"
-    if any(fragment in normalized for fragment in ["que hay en", "qué hay en", "que tiene", "qué tiene", "no tenga", "no tiene", "comparar tiendas", "comparar inventario", "cumplir pedidos", "cumplir pedido", "traslados sugeridos", "sugerencia de traslado"]):
+    # "que tiene" y "que hay en" solo son internas si NO es contexto de producto/superficie
+    # (ej. "que tiene la pintura vieja" es cliente, "que tiene Manizales" es interno)
+    _store_context_traslado_signals = ["comparar tiendas", "comparar inventario", "cumplir pedidos", "cumplir pedido", "traslados sugeridos", "sugerencia de traslado"]
+    _store_name_signals = ["pereira", "manizales", "armenia", "dosquebradas", "cerritos", "laureles", "tienda", "sede", "bodega principal"]
+    _has_store_context = any(s in normalized for s in _store_name_signals)
+    if any(fragment in normalized for fragment in _store_context_traslado_signals):
+        return "consulta_traslados"
+    if _has_store_context and any(fragment in normalized for fragment in ["que hay en", "qué hay en", "que tiene", "qué tiene", "no tenga", "no tiene"]):
         return "consulta_traslados"
     if any(fragment in normalized for fragment in ["cartera", "saldo", "vencid"]):
         return "consulta_cartera"
@@ -4127,6 +4156,13 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
 
     employee_by_phone = find_employee_record_by_phone(context.get("telefono_e164"))
     _auth_was_cancelled = bool((conversation_context or {}).get("_auth_cancelled"))
+
+    # ── Escape temprano: si el mensaje es claramente de cliente externo (productos, m², precios),
+    #    NO bloquear con flujo de empleado aunque el teléfono esté en la base de empleados.
+    _norm_for_customer_check = normalize_text_value(content)
+    if _is_clear_customer_product_message(_norm_for_customer_check):
+        return None
+
     if employee_by_phone and not internal_auth.get("token") and not _auth_was_cancelled:
         return {
             "response_text": "Antes de seguir necesito validar tu acceso interno. Envíame tu cédula para activar la sesión de colaborador.",
