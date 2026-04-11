@@ -110,6 +110,160 @@ _SURFACE_CRITICAL_ALERTS: list[dict] = [
 ]
 
 
+# ─── Protocolos técnicos por clase de problema ─────────────────────────────
+# Esta capa evita depender de casos aislados o del wording exacto del cliente.
+# Primero se infiere la CLASE DEL PROBLEMA, luego se inyecta un protocolo operativo.
+_PROBLEM_PROTOCOLS: dict[str, dict] = {
+    "humedad_interior_capilaridad": {
+        "summary": "Muro interior con humedad/salitre por capilaridad o presión negativa.",
+        "required_questions": [
+            "Confirmar si la humedad viene de la base del muro, del piso o de una jardinera/exterior.",
+            "Confirmar si el revoque/base está quemado, meteorizado o soplado.",
+            "Pedir m² reales antes de cualquier cotización.",
+        ],
+        "required_system": [
+            "Remover pintura suelta, salitre y base dañada hasta sustrato sano.",
+            "Si el revoque está malo, reemplazarlo antes del sistema nuevo.",
+            "Aplicar Aquablock Ultra en 2 manos.",
+            "Aplicar Estuco Acrílico después del Aquablock.",
+            "Cerrar con vinilo interior compatible; si el cliente pide economía, solo cambia el vinilo final.",
+        ],
+        "forbidden_shortcuts": [
+            "No usar Koraza como imprimante ni como acabado interior.",
+            "No cotizar por galones propuestos por el cliente sin metraje.",
+            "No saltar Aquablock + Estuco.",
+        ],
+        "pricing_gate": "m2_required",
+    },
+    "humedad_interior_general": {
+        "summary": "Muro interior con humedad o salitre que requiere diagnóstico de causa antes de pintar.",
+        "required_questions": [
+            "Preguntar de dónde viene la humedad: piso, arriba, lateral o por temporada.",
+            "Preguntar si la base está soplada, descascarada o meteorizada.",
+            "Pedir m² reales antes de cotizar.",
+        ],
+        "required_system": [
+            "Diagnosticar la causa.",
+            "Definir si corresponde Aquablock/Sellamur como base técnica.",
+            "Nivelar con estuco acrílico cuando aplique.",
+            "Cerrar con vinilo interior compatible.",
+        ],
+        "forbidden_shortcuts": [
+            "No usar Koraza como sellador de humedad interior.",
+            "No cotizar de una sin m².",
+        ],
+        "pricing_gate": "m2_required",
+    },
+    "fachada_exterior": {
+        "summary": "Fachada o muro exterior expuesto a intemperie.",
+        "required_questions": [
+            "Preguntar si la base está pelada/soplada o si es obra nueva.",
+            "Pedir m² antes de cotizar.",
+        ],
+        "required_system": [
+            "Preparación completa de la base.",
+            "Estuco/grietas si aplica.",
+            "Acabado exterior tipo Koraza o vinilo exterior según desempeño.",
+        ],
+        "forbidden_shortcuts": [
+            "No pintar sobre base soplada.",
+        ],
+        "pricing_gate": "m2_required",
+    },
+    "metal_oxidado": {
+        "summary": "Metal con oxidación que requiere preparación mecánica y sistema anticorrosivo completo.",
+        "required_questions": [
+            "Preguntar el grado de oxidación.",
+            "Preguntar si es interior o exterior.",
+            "Pedir m² o dimensiones antes de cotizar sistema completo.",
+        ],
+        "required_system": [
+            "Preparación mecánica.",
+            "Convertidor/anticorrosivo según estado.",
+            "Acabado compatible con la exposición.",
+        ],
+        "forbidden_shortcuts": [
+            "No dejar solo anticorrosivo si el sistema exige acabado.",
+        ],
+        "pricing_gate": "m2_required",
+    },
+    "piso_industrial": {
+        "summary": "Piso industrial o de concreto que requiere protocolo diagnóstico completo.",
+        "required_questions": [
+            "Estado del piso: nuevo, viejo o ya pintado.",
+            "Curado de 28 días si es concreto nuevo.",
+            "Tipo de tráfico y si es interior/exterior.",
+            "m² reales antes de cotizar.",
+        ],
+        "required_system": [
+            "Definir imprimante correcto.",
+            "Definir acabado según tráfico.",
+            "Agregar cuarzo/catalizadores si corresponde.",
+        ],
+        "forbidden_shortcuts": [
+            "No cotizar sin m².",
+            "No usar imprimantes incorrectos por analogía.",
+        ],
+        "pricing_gate": "m2_required",
+    },
+}
+
+
+def _infer_problem_class(diagnostic: dict, user_message: str) -> Optional[str]:
+    """Clasifica el problema técnico en una familia reusable para activar protocolos."""
+    surface = diagnostic.get("surface")
+    condition = diagnostic.get("condition")
+    location = diagnostic.get("interior_exterior")
+    humidity_source = diagnostic.get("humidity_source")
+    lowered = (user_message or "").lower()
+
+    if surface == "interior húmedo":
+        if humidity_source == "capilaridad/presión negativa" or any(token in lowered for token in ["jardinera", "viene del piso", "sube del piso", "capilaridad"]):
+            return "humedad_interior_capilaridad"
+        return "humedad_interior_general"
+
+    if surface in ("fachada", "exterior") or location == "exterior":
+        return "fachada_exterior"
+
+    if surface in ("metal", "reja", "metal/inmersión") and condition == "óxido":
+        return "metal_oxidado"
+
+    if surface in ("piso", "piso industrial", "piso vehicular", "piso deportivo"):
+        return "piso_industrial"
+
+    return None
+
+
+def _build_problem_protocol_lines(problem_class: Optional[str]) -> list[str]:
+    if not problem_class:
+        return []
+    protocol = _PROBLEM_PROTOCOLS.get(problem_class)
+    if not protocol:
+        return []
+
+    lines = []
+    lines.append("")
+    lines.append("═══ PROTOCOLO DEL CASO ═══")
+    lines.append(f"Clase de problema: {problem_class}")
+    lines.append(f"Resumen: {protocol['summary']}")
+    if protocol.get("required_questions"):
+        lines.append("Preguntas obligatorias:")
+        for question in protocol["required_questions"]:
+            lines.append(f"  • {question}")
+    if protocol.get("required_system"):
+        lines.append("Estructura mínima de solución:")
+        for step in protocol["required_system"]:
+            lines.append(f"  • {step}")
+    if protocol.get("forbidden_shortcuts"):
+        lines.append("Atajos prohibidos:")
+        for shortcut in protocol["forbidden_shortcuts"]:
+            lines.append(f"  • {shortcut}")
+    if protocol.get("pricing_gate") == "m2_required":
+        lines.append("No cotizar hasta tener m² reales del área.")
+    lines.append("══════════════════════════")
+    return lines
+
+
 def _get_surface_alerts(surface: Optional[str], condition: Optional[str]) -> list[str]:
     """Retorna alertas críticas que aplican a la combinación superficie+condición.
     Intenta cargar desde DB (extensible); fallback a hardcoded si DB no disponible."""
@@ -175,6 +329,9 @@ def _fetch_expert_directives_for_turn(
         query_parts.append(diagnostic["interior_exterior"])
     if diagnostic.get("humidity_source"):
         query_parts.append(diagnostic["humidity_source"])
+    problem_class = _infer_problem_class(diagnostic, user_message)
+    if problem_class:
+        query_parts.append(problem_class)
     if diagnostic.get("traffic"):
         query_parts.append(f"tráfico {diagnostic['traffic']}")
     # Add relevant terms from user message (not the whole thing to avoid noise)
@@ -597,6 +754,7 @@ def build_turn_context(
     """
     intent = classify_intent(user_message, conversation_context, recent_messages, internal_auth)
     diagnostic = extract_diagnostic_data(user_message, recent_messages)
+    problem_class = _infer_problem_class(diagnostic, user_message)
     is_internal = bool(internal_auth)
     verified = bool(conversation_context.get("verified"))
     commercial_draft = conversation_context.get("commercial_draft")
@@ -645,6 +803,10 @@ def build_turn_context(
         lines.append("")
         for alert in surface_alerts:
             lines.append(alert)
+
+    problem_protocol_lines = _build_problem_protocol_lines(problem_class)
+    if problem_protocol_lines:
+        lines.extend(problem_protocol_lines)
 
     # ─── Directrices de Gerencia (conocimiento experto elevado) ──────────
     expert_directives = _fetch_expert_directives_for_turn(
