@@ -20839,9 +20839,17 @@ async def admin_agent_test(request: Request, admin_key: str = Header(None, alias
     user_message = payload.get("user_message") or ""
     context = payload.get("context") or {}
 
+    # Allow forcing prompt version from payload (for A/B testing)
+    prompt_version = (payload.get("prompt_version") or "").strip().lower()
+
     try:
-        # Ejecutar la lógica del agente (sin enviar WhatsApp)
-        _agent_fn = _get_agent_reply_fn()
+        if prompt_version == "v3":
+            from backend.agent_v3 import generate_agent_reply_v3
+            _agent_fn = generate_agent_reply_v3
+        elif prompt_version == "v2":
+            _agent_fn = generate_agent_reply_v2
+        else:
+            _agent_fn = _get_agent_reply_fn()
         result = _agent_fn(profile_name, conversation_context, recent_messages, user_message, context)
         return {"ok": True, "result": result}
     except Exception as exc:

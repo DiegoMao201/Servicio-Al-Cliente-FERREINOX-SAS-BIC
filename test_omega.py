@@ -39,6 +39,7 @@ ADMIN_KEY = os.environ.get("ADMIN_API_KEY", "ferreinox_admin_2024")
 AGENT_URL = f"{BACKEND_URL.rstrip('/')}/admin/agent-test"
 AGENT_TIMEOUT = 180  # higher for multi-tool scenarios
 MAX_RETRIES = 2
+PROMPT_VERSION = os.environ.get("PROMPT_VERSION", "")  # "v3" to force V3, "" for server default
 
 # ── Colors for terminal ──
 class C:
@@ -117,7 +118,7 @@ def build_payload(user_message, conversation_context=None, recent_messages=None,
                 "store_code": internal_employee.get("store_code", "189"),
             },
         }
-    return {
+    payload = {
         "profile_name": profile_name,
         "conversation_context": ctx,
         "recent_messages": recent_messages or [],
@@ -130,6 +131,9 @@ def build_payload(user_message, conversation_context=None, recent_messages=None,
             "nombre_visible": profile_name,
         },
     }
+    if PROMPT_VERSION:
+        payload["prompt_version"] = PROMPT_VERSION
+    return payload
 
 
 def extract_tool_names(result):
@@ -1328,6 +1332,7 @@ def run_all_tests(filter_category=None, filter_name=None):
     print("\n" + "=" * 90)
     print(f"{C.BOLD}🧨 TEST OMEGA — Stress Test Completo del Agente FERRO{C.END}")
     print(f"  Backend: {BACKEND_URL}")
+    print(f"  Prompt Version: {PROMPT_VERSION or 'server default'}")
     print(f"  Tests: {len(tests)} | Timeout: {AGENT_TIMEOUT}s | Retries: {MAX_RETRIES}")
     print(f"  Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 90)
