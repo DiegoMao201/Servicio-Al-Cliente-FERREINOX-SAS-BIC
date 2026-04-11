@@ -2663,7 +2663,18 @@ def extract_internal_cedula_candidate(content: Optional[str]):
         return None
 
     normalized = normalize_text_value(raw_content)
-    if any(fragment in normalized for fragment in ["login ", "pedido", "cotizacion", "cotización", "traslado", "galon", "galón", "cunete", "cuñete"]):
+    # If message has conversational/order/quote keywords, restrict to labeled cédula only
+    _RESTRICT_KEYWORDS = [
+        "login ", "pedido", "cotizacion", "cotización", "traslado",
+        "galon", "galón", "cunete", "cuñete",
+        # Customer identity context (name + cédula for quotes)
+        "nombre", "señor", "señora", "angela", "maria", "contreras",
+    ]
+    # Also restrict if message has both alpha words AND digits (likely name + cédula)
+    _has_alpha_words = bool(re.search(r"[a-záéíóúñü]{3,}", normalized))
+    _has_digits = bool(re.search(r"\d{6,}", raw_content))
+    _is_mixed_content = _has_alpha_words and _has_digits and len(raw_content) > 20
+    if _is_mixed_content or any(fragment in normalized for fragment in _RESTRICT_KEYWORDS):
         labeled_match = re.search(r"(?:cedula|cédula|documento|doc)\s*(?:es|:)?\s*([0-9][0-9.\s-]{5,})", raw_content, re.IGNORECASE)
         if labeled_match:
             labeled_digits = parse_employee_document(labeled_match.group(1))
@@ -3509,6 +3520,17 @@ def build_internal_login_reply(content: str, context: dict, conversation_context
     # If user previously cancelled auth, don't re-enter login flow
     if _auth_cancelled and not awaiting_cedula and not employee_by_cedula:
         return None
+    # ── Anti-falso-login: si el teléfono NO es de empleado y NO estamos en flujo auth,
+    #    solo proceder si el mensaje es EXCLUSIVAMENTE una cédula (no mezcla con nombre/frase). ──
+    if not employee_by_phone and not awaiting_cedula and employee_by_cedula:
+        _stripped_msg = (content or "").strip()
+        _is_pure_number = bool(re.fullmatch(r"[0-9.\s-]+", _stripped_msg))
+        _is_labeled_cedula_only = bool(re.fullmatch(
+            r"(?:mi\s+)?(?:cedula|cédula|documento)\s*(?:es|:)?\s*[0-9.\s-]+\s*",
+            _stripped_msg, re.IGNORECASE,
+        ))
+        if not _is_pure_number and not _is_labeled_cedula_only:
+            return None  # Message has other content (name, quote request, etc.) — not a login attempt
 
     if not cedula:
         return {
@@ -14070,7 +14092,10 @@ FASE 1 — DIAGNÓSTICO (¿Qué necesita el cliente?):
     → Si es INTERIOR + quiere algo resistente/transparente → Poliuretano Alto Tráfico 1550+1551.
     → Si solo quiere acabado decorativo liviano → Barniz Marino o Barniz SD1.
     → Si es EXTERIOR → PROHIBIDO poliuretano. Usar Barnex o Wood Stain.
-  • FACHADA/MURO EXTERIOR: ¿Tiene humedad/filtraciones? ¿Pintura anterior descascarando?
+  • FACHADA/MURO EXTERIOR: ⛔ FACHADA = SIEMPRE EXTERIOR. NUNCA preguntar '¿es interior o exterior?' cuando el cliente dice 'fachada'. Es una pregunta absurda.
+    Preguntas correctas para fachada: (1) ¿La pintura actual está soplada, descascarando o con moho? (2) ¿Hay humedad visible o filtraciones? (3) ¿Es lisa o con textura/granito?
+    Si la fachada tiene humedad/filtraciones → Aquablock Ultra (NO Pintuco Fill — Fill es para techos/cubiertas).
+    Si está en buen estado → Koraza directo.
   • MURO INTERIOR: ¿Nuevo o repintura? ¿Hay humedad o moho?
   • MADERA (muebles/puertas/deck): ¿Interior/exterior? ¿Acabado natural (transparente) o color sólido? ¿Nuevo o restauración?
   • METAL: ¿Interior/exterior? ¿Ya tiene óxido? ¿Tipo de estructura (reja, tanque, tubería)?
@@ -14080,6 +14105,8 @@ FASE 1 — DIAGNÓSTICO (¿Qué necesita el cliente?):
   ANTES de preguntar, LEE lo que el cliente YA DIJO y extrae:
   - "apartamento", "casa", "oficina", "local" → ya sabes que es INTERIOR
   - "bodega", "fábrica", "planta" → ya sabes que es INDUSTRIAL
+  - "fachada" → ya sabes que es EXTERIOR (una fachada SIEMPRE es exterior, NUNCA preguntar)
+  - "terraza", "azotea" → ya sabes que es EXTERIOR descubierto
   - "madera" como material → ya sabes el material, NO preguntes tipo de superficie
   - "mucho tráfico" + "apartamento/casa" → es PEATONAL alto, NO montacargas
   - "garaje", "parqueadero" → ya sabes que es VEHICULAR
@@ -14263,7 +14290,7 @@ SISTEMAS POR SUPERFICIE (referencia rápida — SIEMPRE consulta RAG para detall
 | Madera exterior (veta) | Ninguna (poro abierto) | Barnex Extra Protección o Wood Stain (SIN sellador antes) |
 | Madera interior | Lija fina | Barniz Marino/SD1 (transparente) o Pintulux/Doméstico (color sólido). ⛔ NO Pintulac |
 | Humedad interna | Raspar hasta revoque | Aquablock Ultra (brocha, 2 manos) → Estuco Acrílico → Viniltex |
-| Fachada con moho/humedad | Raspar + hipoclorito (1:8) | Pintuco Fill (lluvia directa) o Aquablock (capilaridad) → Estuco Exterior → Koraza |
+| Fachada con moho/humedad | Raspar + hipoclorito (1:8) | Aquablock Ultra (barrera humedad, 2 manos brocha) → Estuco Exterior → Koraza. ⛔ Pintuco Fill NO es para fachadas — es impermeabilizante de techos/cubiertas |
 | Fachada sin humedad | Lijar/raspar | Estuco Exterior si grietas → Koraza |
 | Techo goteras concreto | Limpiar | Malla si grietas → Pintuco Fill |
 | Techo fibrocemento/eternit | Limpiar | Pintuco Fill → Koraza (AMBOS obligatorios) |
@@ -14332,8 +14359,9 @@ REGLAS MAESTRAS DE COMPORTAMIENTO:
 📋 DIAGNÓSTICO OBLIGATORIO:
 - PISOS: 4 preguntas obligatorias: (1) nuevo vs viejo/pintado, (2) si nuevo: ¿28 días curado?, (3) tráfico: montacargas vs peatonal, (4) interior o exterior. NUNCA cotizar sin las 4. EXCEPCIÓN: Si el cliente ya NOMBRÓ un producto específico y pidió cotización → es PEDIDO DIRECTO, salta diagnóstico.
 - MADERA: Prohibido nombrar productos en primer turno. Preguntar: ¿exterior o interior? ¿transparente (veta) o color sólido?
-- FACHADAS: 3 preguntas: (1) ¿m²?, (2) ¿pintura soplada/moho/manchas?, (3) ¿humedad visible/filtraciones?
-  Si moho/soplada/humedad → VETO: NO acabado directo, obligatorio sistema completo de tratamiento.
+- FACHADAS: ⛔ FACHADA = SIEMPRE EXTERIOR (NUNCA preguntar interior/exterior). 3 preguntas: (1) ¿pintura soplada/descascarando/moho?, (2) ¿humedad visible/filtraciones?, (3) ¿cuántos m²?
+  Si moho/soplada/humedad → VETO: NO acabado directo, obligatorio sistema completo (Aquablock + Estuco Ext + Koraza).
+  ⛔ Pintuco Fill NO es para fachadas. Es impermeabilizante de techos.
 - METAL: Preguntar si óxido profundo o superficial, si está a intemperie. SIEMPRE sistema: Corrotec + Pintulux (NUNCA solo anticorrosivo).
 - GENERAL: SIEMPRE preguntar m² antes de cotizar cualquier superficie medible.
 
@@ -14412,8 +14440,8 @@ Si el PostgREST, inventario o RAG NO devuelve precio exacto de un producto:
 REGLAS TÉCNICAS POR PRODUCTO:
 - KORAZA: SOLO fachadas exteriores, muros exteriores, terrazas. NO sellador de humedad interna. Para humedad interna → Aquablock.
 - PINTUCOAT: Epóxico BICOMPONENTE pisos industriales. NO piscinas, NO tanques, NO inmersión. OBLIGATORIO catalizador 13227: galón A (3.44L) + cat 0.37L; cuñete A (15.14L) + cat 1.89L.
-- AQUABLOCK: Barrera humedad, USO PRINCIPAL muros interiores con filtración/capilaridad. Para fachadas con lluvia directa → Pintuco Fill.
-- PINTUCO FILL: Impermeabilizante techos/cubiertas/terrazas. NO piscinas.
+- AQUABLOCK: Barrera humedad, USO PRINCIPAL muros interiores y FACHADAS con filtración/capilaridad/humedad. Es el producto correcto para tratar humedad en fachadas ANTES de pintar con Koraza.
+- PINTUCO FILL: Impermeabilizante SOLO para techos/cubiertas/terrazas/losas horizontales donde llueve DIRECTO. NO fachadas (para fachadas usar Aquablock si hay humedad). NO piscinas. NO es imprimante ni primer — es IMPERMEABILIZANTE.
 - INTERTHANE: Poliuretano INDUSTRIAL del portafolio (International). BICOMPONENTE: A + catalizador PHA046. Galón: A 3.7L + PHA046 0.5L.
 - PINTURA CANCHAS: Acrílica EXCLUSIVA para canchas deportivas, escenarios deportivos, senderos peatonales y ciclo rutas. PROHIBIDO recomendar para garajes, parqueaderos, bodegas o andenes vehiculares → usar Pintucoat.
 - PINTUTRAF: Demarcación vial. Koraza/Viniltex/Pintulux NO sirven para tráfico.
@@ -14587,11 +14615,13 @@ PRODUCTOS COMPLEMENTARIOS: Si `consultar_inventario` devuelve `productos_complem
 ══════════════════════════════════════════════════════════════════════════════
 🛒 EMBUDO DE CIERRE COMERCIAL — FLUJO COMPLETO DE VENTA
 ══════════════════════════════════════════════════════════════════════════════
-PASO 1 — COTIZACIÓN: Presenta sistema + precios. Pregunta "¿Deseas proceder con el pedido?"
+PASO 1 — COTIZACIÓN: Presenta sistema + precios.
+  ⚠️ Si el cliente PIDIÓ COTIZACIÓN explícitamente ("cotización", "cotízame", "necesito cotización") → genera el PDF con `confirmar_pedido_y_generar_pdf`. NO preguntes "¿deseas proceder con el pedido?" — ya te dijo lo que quiere.
+  Solo si NO pidió cotización explícita → Pregunta "¿Deseas que te genere la cotización en PDF o proceder con el pedido?"
 PASO 2 — CONFIRMACIÓN: Si dice "sí", "dale", "si por favor" → NO repitas la cotización. Pasa directo a recopilar datos.
 PASO 3 — DATOS DEL CLIENTE:
-  a) Pregunta nombre completo y cédula/NIT.
-  b) Llama `verificar_identidad` con la cédula/NIT.
+  a) Si es COTIZACIÓN: solo necesitas el nombre del cliente. Usa el nombre visible del WhatsApp si ya lo tienes. La cédula/NIT NO es obligatoria para cotización — es OPCIONAL. NUNCA bloquees una cotización por falta de cédula.
+  b) Si es PEDIDO: Pregunta nombre completo y cédula/NIT. Llama `verificar_identidad` con la cédula/NIT.
   c) Si VERIFICADO → usa los datos (nombre, dirección, ciudad, email) del sistema. NO repidas datos que ya tienes.
   d) Si NO VERIFICADO → NO bloquees la venta. Pregunta: nombre, cédula, dirección de entrega y ciudad. Luego llama `registrar_cliente_nuevo` para crear el registro. Esto es un agente de ventas 24/7 — un cliente nuevo que quiere comprar DEBE poder hacerlo.
   e) El TELÉFONO ya lo tienes del WhatsApp — NO lo preguntes.
@@ -19376,7 +19406,7 @@ def generate_agent_reply_v2(
                 "1. Reconoce brevemente la solicitud del cliente.\n"
                 "2. Haz 1-2 preguntas CLAVE para completar el diagnóstico:\n"
                 "   - Si falta condición: '¿Es tráfico pesado (montacargas, vehículos) o liviano (peatonal)?'\n"
-                "   - Si falta interior/exterior: '¿Es en interior o exterior?'\n"
+                "   - Si falta interior/exterior: '¿Es en interior o exterior?' ⛔ EXCEPCIÓN: Si dijo FACHADA, ya sabes que es exterior — NO preguntes. Pregunta en cambio si tiene humedad o si la pintura está soplada.\n"
                 "   - Si falta área: '¿Cuántos metros cuadrados necesitas cubrir?'\n"
                 "3. NO nombres productos específicos. NO armes un sistema. NO des precios.\n"
                 "4. Sé conversacional y breve (3-4 líneas máximo).\n"
