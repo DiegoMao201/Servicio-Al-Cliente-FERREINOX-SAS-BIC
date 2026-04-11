@@ -113,10 +113,25 @@ El inventario usa descripciones ERP abreviadas. Para encontrar productos, formul
 
 ═══ CIERRE COMERCIAL ═══
 Cuando el cliente acepta la cotización:
-  1. Si es cotización → genera PDF con `confirmar_pedido_y_generar_pdf`. Solo necesitas nombre.
-  2. Si es pedido → necesitas nombre + cédula/NIT. Verifica con `verificar_identidad`.
+  1. Si es cotización → genera PDF con `confirmar_pedido_y_generar_pdf` usando tipo_documento="cotizacion".
+  2. Si es pedido → tipo_documento="pedido". Necesitas nombre + cédula/NIT. Verifica con `verificar_identidad`.
   3. Si no está en el sistema → registra con `registrar_cliente_nuevo`.
   4. Después de generar el PDF → confirma brevemente. No repitas la cotización.
+  5. OBLIGATORIO: En `resumen_asesoria` incluye un resumen de 2-3 oraciones de lo que el cliente
+     preguntó, qué se diagnosticó, y qué sistema se recomendó con la justificación técnica.
+     Esto queda como sustento en el PDF para revisión posterior.
+  6. NOMBRE DEL CLIENTE: Usa EXACTAMENTE el nombre que el cliente te dio en la conversación.
+     NO inventes ni cambies el nombre. Si el cliente dijo "Angela Maria Contreras", eso es
+     lo que va en nombre_despacho, no otro nombre de la base de datos.
+
+═══ VENTA CRUZADA OBLIGATORIA ═══
+Antes de generar cualquier cotización o pedido PDF, verifica que el sistema esté COMPLETO:
+  • Interthane 990 → SIEMPRE incluir Thinner UFA151 (diluyente obligatorio del poliuretano).
+  • Pintucoat → SIEMPRE incluir Thinner Epóxico Pintuco.
+  • Pintura de Tráfico → SIEMPRE incluir Thinner 21204 (5 botellas por galón).
+  • Sistemas epóxicos/PU → incluir herramientas: Brocha Goya Profesional o rodillo según aplique.
+  • Si el cliente necesita preparación → incluir lijas Abracol del grano adecuado.
+  Si falta algún componente del sistema, agrégalo ANTES de generar el PDF.
 
 ═══ RECLAMOS (5 pasos) ═══
   1. Empatía primero — escucha sin pedir datos de inmediato.
@@ -459,14 +474,17 @@ AGENT_TOOLS_V3 = [
             "description": (
                 "Genera PDF de pedido/cotización cuando el cliente acepta. "
                 "Solo incluir productos con referencia CONFIRMADA por consultar_inventario. "
-                "Las referencias y descripciones deben ser EXACTAS del inventario."
+                "Las referencias y descripciones deben ser EXACTAS del inventario. "
+                "OBLIGATORIO incluir resumen_asesoria con el contexto de la conversación."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "nombre_despacho": {"type": "string", "description": "Nombre de persona o empresa para el despacho."},
+                    "tipo_documento": {"type": "string", "enum": ["cotizacion", "pedido"], "description": "Tipo de documento: 'cotizacion' si el cliente pidió cotización, 'pedido' si confirmó el pedido."},
+                    "nombre_despacho": {"type": "string", "description": "Nombre EXACTO que el cliente dio en la conversación. NO cambiarlo por otro nombre."},
                     "canal_envio": {"type": "string", "enum": ["whatsapp", "email"], "description": "Canal de envío del PDF."},
                     "correo_cliente": {"type": "string", "description": "Email (solo si canal_envio='email')."},
+                    "resumen_asesoria": {"type": "string", "description": "Resumen de 2-3 oraciones: qué preguntó el cliente, qué se diagnosticó, qué sistema se recomendó y por qué. Queda como sustento en el PDF."},
                     "items_pedido": {
                         "type": "array",
                         "description": "Productos del pedido con referencia exacta del inventario.",
@@ -482,7 +500,7 @@ AGENT_TOOLS_V3 = [
                         },
                     },
                 },
-                "required": ["nombre_despacho", "canal_envio", "items_pedido"],
+                "required": ["tipo_documento", "nombre_despacho", "canal_envio", "items_pedido"],
             },
         },
     },

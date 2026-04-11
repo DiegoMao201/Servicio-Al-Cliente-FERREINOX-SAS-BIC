@@ -12243,6 +12243,19 @@ def generate_commercial_pdf(
     elements.append(info_table)
     elements.append(Spacer(1, (3 if compact_mode else 6) * mm))
 
+    # ── Resumen de la Asesoría (sustento de la recomendación) ──
+    resumen_asesoria = detail.get("resumen_asesoria", "").strip()
+    if resumen_asesoria:
+        elements.append(Paragraph("Resumen de la Asesoría", heading_style))
+        elements.append(HRFlowable(width="100%", thickness=0.5, color=brand_border, spaceBefore=1, spaceAfter=3))
+        resumen_style = ParagraphStyle(
+            "Resumen", parent=normal_style, fontSize=8.2 if compact_mode else 9.5,
+            textColor=colors.HexColor("#374151"), leading=11 if compact_mode else 13,
+            spaceBefore=2, spaceAfter=2,
+        )
+        elements.append(Paragraph(escape(resumen_asesoria), resumen_style))
+        elements.append(Spacer(1, (3 if compact_mode else 5) * mm))
+
     elements.append(Paragraph(f"Detalle del {request_label}", heading_style))
     elements.append(HRFlowable(width="100%", thickness=1, color=brand_accent, spaceBefore=2, spaceAfter=4))
 
@@ -16121,6 +16134,9 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     canal_envio = args.get("canal_envio", "whatsapp")
     correo_cliente = args.get("correo_cliente", "")
     items_pedido = args.get("items_pedido") or []
+    tipo_documento = args.get("tipo_documento", "pedido")  # "cotizacion" o "pedido"
+    resumen_asesoria = args.get("resumen_asesoria", "")
+    nombre_despacho_original = nombre_despacho  # Preservar el nombre que el LLM envió del cliente
     internal_auth = dict(conversation_context.get("internal_auth") or {})
     internal_user = resolve_internal_session(internal_auth.get("token")) if internal_auth.get("token") else None
 
@@ -16157,19 +16173,44 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     if customer_identity_input and not customer_context:
         resolved_customer_context, _ = resolve_commercial_customer_context(customer_identity_input)
         if resolved_customer_context:
-            customer_context = resolved_customer_context
-            customer_resolution_status = "resolved"
+            # --- Protección contra nombre cruzado ---
+            # Verificar que el nombre resuelto de la DB sea realmente el mismo cliente.
+            # Si el LLM envió un nombre y la DB devuelve otro muy diferente, NO cruzar.
+            resolved_name = (resolved_customer_context.get("nombre_cliente") or "").upper().strip()
+            provided_name = normalize_text_value(nombre_despacho_original).upper().strip()
+            if provided_name and resolved_name:
+                _provided_tokens = set(provided_name.split())
+                _resolved_tokens = set(resolved_name.split())
+                _common_tokens = _provided_tokens & _resolved_tokens
+                # Si comparten menos del 60% de tokens, probablemente son personas diferentes
+                _match_ratio = len(_common_tokens) / max(len(_provided_tokens), 1)
+                if _match_ratio < 0.6:
+                    # Nombres no coinciden — usar el nombre que dio el cliente, no el de la DB
+                    customer_context = {"nombre_cliente": nombre_despacho_original}
+                    customer_resolution_status = "name_provided_by_client"
+                else:
+                    customer_context = resolved_customer_context
+                    customer_resolution_status = "resolved"
+            else:
+                customer_context = resolved_customer_context
+                customer_resolution_status = "resolved"
         else:
-            return json.dumps(
-                {
-                    "exito": False,
-                    "mensaje": f"Antes de confirmar necesito validar el cliente '{customer_identity_input}'. Envíame el NIT, código o nombre completo correcto para no cruzar el pedido.",
-                },
-                ensure_ascii=False,
-            )
+            # No se encontró en DB — para cotización, usar el nombre proporcionado directamente
+            if tipo_documento == "cotizacion":
+                customer_context = {"nombre_cliente": nombre_despacho_original}
+                customer_resolution_status = "name_provided_by_client"
+            else:
+                return json.dumps(
+                    {
+                        "exito": False,
+                        "mensaje": f"Antes de confirmar necesito validar el cliente '{customer_identity_input}'. Envíame el NIT, código o nombre completo correcto para no cruzar el pedido.",
+                    },
+                    ensure_ascii=False,
+                )
 
-    if customer_context and customer_context.get("nombre_cliente"):
-        nombre_despacho = customer_context.get("nombre_cliente")
+    # Respetar el nombre que el cliente proporcionó en la conversación
+    if nombre_despacho_original:
+        nombre_despacho = nombre_despacho_original
 
     confirmed_items = []
     rejected_items = []
@@ -16270,6 +16311,8 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     commercial_draft["contact_email"] = correo_cliente or commercial_draft.get("contact_email")
     commercial_draft["items_confirmed"] = True
     commercial_draft["claim_case"] = None
+    commercial_draft["tipo_documento"] = tipo_documento
+    commercial_draft["resumen_asesoria"] = resumen_asesoria or ""
     commercial_draft["customer_identity_input"] = customer_identity_input or None
     commercial_draft["customer_context"] = customer_context or None
     commercial_draft["customer_resolution_status"] = customer_resolution_status
@@ -16309,7 +16352,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
 
     try:
         order_id = upsert_commercial_draft(
-            "pedido",
+            tipo_documento,
             context["conversation_id"],
             context.get("contact_id"),
             context.get("cliente_id"),
@@ -16327,7 +16370,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     try:
         pdf_id, pdf_filename = store_commercial_pdf(
             context["conversation_id"],
-            "pedido",
+            tipo_documento,
             context.get("nombre_visible"),
             cliente_contexto,
             commercial_draft,
