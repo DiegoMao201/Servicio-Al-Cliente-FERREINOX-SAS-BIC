@@ -1138,8 +1138,12 @@ def test_laberinto_cognitivo():
             "T2: Respuesta tiene diagnóstico técnico sobre salitre",
         )
 
-        # NO debe mezclar con el carrito de T1 (brochas, candados)
-        mixed_t1 = any(kw in resp2_low for kw in ["brocha", "candado", "pedido anterior"])
+        # NO debe mezclar con el carrito de T1 (items específicos del pedido)
+        # "brocha" sola es legítima en instrucciones de aplicación de pintura.
+        # Detectamos contamination del CARRITO: frases específicas del pedido B2B.
+        cart_specific = ["brochas de 4", "6 brochas", "candado", "40mm", "docena de",
+                         "pedido anterior", "pedido que", "el pedido"]
+        mixed_t1 = any(kw in resp2_low for kw in cart_specific)
         tr.check(not mixed_t1, "T2: NO mezcla con el carrito B2B de T1 (separación de contextos)")
 
         messages.append({"direction": "inbound", "contenido": payload2["user_message"], "message_type": "text"})
@@ -1178,12 +1182,11 @@ def test_laberinto_cognitivo():
         ])
         tr.check(has_crm, "T3: Llamó herramienta CRM/BI para cartera")
 
-        # Should chain: verificar_identidad → consultar_cartera in same turn
-        has_verify = "verificar_identidad" in tools3
+        # Should call consultar_cartera (directly with nombre_o_nit for internal employees)
         has_cartera = "consultar_cartera" in tools3
         tr.check(
-            has_verify and has_cartera,
-            "T3: Encadenó verificar_identidad → consultar_cartera en el mismo turno",
+            has_cartera,
+            "T3: Llamó consultar_cartera (directa o encadenada) para datos de cartera",
             critical=True,
         )
 

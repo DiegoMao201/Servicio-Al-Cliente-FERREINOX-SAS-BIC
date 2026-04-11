@@ -14424,10 +14424,9 @@ VERIFICACIÓN DE IDENTIDAD Y CLIENTES:
 - NUNCA reveles datos financieros sin verificación previa (excepto a empleados internos autenticados).
 - REGLA NIF (10 DÍGITOS): Si el cliente envía un número de 10 dígitos (cédula o NIT), búscalo con `verificar_identidad`. La herramienta busca en la columna NIF de la tabla agent_clientes. Si lo encuentra, toda la información del cliente (nombre, dirección, ciudad, email, segmento, razón social, categoría) se devuelve y se usa para alimentar el PDF de cotización/pedido automáticamente. NO pidas datos que ya tienes del NIF.
 - 🔑 REGLA EMPLEADO INTERNO + CARTERA/CRM: Si el usuario es un empleado autenticado (internal_auth presente) y pide cartera, compras o datos de un TERCERO (otro cliente por nombre o NIT):
-  1. Llama `verificar_identidad` con el nombre/NIT del cliente consultado.
-  2. EN EL MISMO TURNO, si la verificación fue exitosa, llama INMEDIATAMENTE `consultar_cartera` y/o `consultar_compras`.
-  3. NO pares la conversación solo con la verificación. El empleado espera ver los datos, no que le digas "identidad verificada".
-  4. Si `verificar_identidad` falla (no encontrado), informa que no se encontró y sugiere NIT exacto. NO llames cartera sin verificar.
+  1. Llama `consultar_cartera` directamente con el parámetro `nombre_o_nit` (nombre o NIT del tercero). NO necesitas verificar_identidad primero.
+  2. Si la herramienta no encuentra al cliente, sugiere el NIT exacto para búsqueda más precisa.
+  3. NO pares la conversación sin intentar la consulta. El empleado espera ver los datos.
 
 DOCUMENTOS: Si piden ficha técnica → `buscar_documento_tecnico` inmediatamente. Si devuelve múltiples, muestra opciones.
 
@@ -14570,6 +14569,9 @@ Si tu respuesta va a contener recomendaciones de producto, USA <thinking>:
    NO menciones productos del ESTADO_CARRITO_B2B (brochas, candados, etc.) en tu respuesta técnica.
    NO menciones datos de cartera/BI en cotizaciones.
    SOLO mezcla estados cuando el usuario EXPLÍCITAMENTE lo pida (ej: "agrega lo del muro al pedido").
+   ⚠️ REGLA ESPECIAL HERRAMIENTAS: Si el ESTADO_CARRITO_B2B incluye herramientas (brochas, rodillos, lijas), y estás
+   respondiendo un diagnóstico técnico que requiere herramientas de aplicación, usa términos genéricos como
+   "herramienta de aplicación" o "rodillo" en el diagnóstico. NO repitas los nombres de herramientas del carrito.
 0f. 🔒 REGLA ANTI-AMNESIA DE CARRITO:
    Los ítems del ESTADO_CARRITO_B2B son INMUTABLES. Al consolidar una cotización:
    - MANTÉN todos los ítems anteriores a menos que el usuario use palabras como "quita", "elimina", "cancela", "sin" o "ya no".
@@ -14653,12 +14655,18 @@ AGENT_TOOLS = [
         "type": "function",
         "function": {
             "name": "consultar_cartera",
-            "description": "Consulta el estado de cartera (saldos pendientes, documentos vencidos) del cliente verificado. "
-            "Solo funciona si el cliente ya está verificado. IMPORTANTE: Si acabas de llamar verificar_identidad exitosamente, "
-            "llama esta herramienta EN EL MISMO TURNO para dar datos completos al usuario.",
+            "description": "Consulta el estado de cartera (saldos pendientes, documentos vencidos). "
+            "Si el cliente ya está verificado, no necesitas parámetros. "
+            "Si eres empleado interno y necesitas consultar cartera de un TERCERO (otro cliente), "
+            "pasa el nombre o NIT en 'nombre_o_nit' y la herramienta busca directamente sin verificar_identidad previo.",
             "parameters": {
                 "type": "object",
-                "properties": {},
+                "properties": {
+                    "nombre_o_nit": {
+                        "type": "string",
+                        "description": "Nombre o NIT del cliente a consultar (solo para empleados internos). Si el cliente ya está verificado, no es necesario.",
+                    }
+                },
             },
         },
     },
@@ -15682,8 +15690,37 @@ def _handle_tool_verificar_identidad(args, context, conversation_context):
         )
 
 
-def _handle_tool_consultar_cartera(conversation_context):
+def _handle_tool_consultar_cartera(args, conversation_context):
     cliente_codigo = conversation_context.get("verified_cliente_codigo")
+
+    # If not verified, try nombre_o_nit for internal employees
+    nombre_o_nit = (args or {}).get("nombre_o_nit", "").strip() if args else ""
+    if not cliente_codigo and nombre_o_nit:
+        is_internal = bool((conversation_context or {}).get("internal_auth"))
+        if is_internal:
+            is_numeric = bool(re.fullmatch(r"[\d\-\.]+", nombre_o_nit.replace(" ", "")))
+            if is_numeric:
+                client_data = fetch_client_by_nif_or_codigo(nombre_o_nit)
+                if client_data:
+                    cliente_codigo = client_data.get("codigo") or client_data.get("cliente_codigo")
+            if not cliente_codigo:
+                try:
+                    name_result = find_cliente_contexto_by_name(nombre_o_nit)
+                    if name_result:
+                        cliente_codigo = name_result.get("cliente_codigo")
+                except Exception:
+                    pass
+            if not cliente_codigo:
+                return json.dumps(
+                    {"error": f"No se encontró cliente '{nombre_o_nit}'. Intenta con el NIT exacto."},
+                    ensure_ascii=False,
+                )
+        else:
+            return json.dumps(
+                {"error": "Cliente no verificado. Pide la cédula o NIT primero."},
+                ensure_ascii=False,
+            )
+
     if not cliente_codigo:
         return json.dumps(
             {"error": "Cliente no verificado. Pide la cédula o NIT primero."},
@@ -17961,7 +17998,7 @@ def _execute_agent_tool(tool_call, context, conversation_context):
         elif fn_name == "verificar_identidad":
             result = _handle_tool_verificar_identidad(fn_args, context, conversation_context)
         elif fn_name == "consultar_cartera":
-            result = _handle_tool_consultar_cartera(conversation_context)
+            result = _handle_tool_consultar_cartera(fn_args, conversation_context)
         elif fn_name == "consultar_compras":
             result = _handle_tool_consultar_compras(fn_args, conversation_context)
         elif fn_name == "consultar_ventas_internas":
