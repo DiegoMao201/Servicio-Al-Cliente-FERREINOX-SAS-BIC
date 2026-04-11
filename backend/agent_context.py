@@ -67,13 +67,15 @@ _SURFACE_CRITICAL_ALERTS: list[dict] = [
         ),
     },
     {
-        "surfaces": ["interior húmedo"],
-        "conditions": ["humedad", "filtración", "goteras", "moho/hongos"],
+        "surfaces": ["interior húmedo", "muro", "interior"],
+        "conditions": ["humedad", "salitre", "filtración", "goteras", "moho/hongos", "pintura descascarando", "pintura soplada"],
         "alert": (
             "🚨 ALERTA CRÍTICA DE SUPERFICIE: Problema de humedad detectado. ANTES de recomendar "
             "pintura, DEBES diagnosticar la CAUSA de la humedad (capilaridad, filtración, "
             "condensación). Si la fuente no se elimina, cualquier recubrimiento fallará. "
-            "Pregunta: '¿La humedad viene de adentro del muro, de arriba, o aparece por temporada?'"
+            "Pregunta: '¿La humedad viene de adentro del muro, de arriba, o aparece por temporada?' "
+            "Si además hay salitre o pintura soplada/descascarada, debes indicar que la base dañada "
+            "se remueve por completo antes del sistema nuevo."
         ),
     },
     {
@@ -504,7 +506,7 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
 
     # Condition
     cond_signals = {
-        "humedad": "humedad", "filtra": "filtración", "gotea": "goteras",
+        "humedad": "humedad", "salitre": "salitre", "filtra": "filtración", "gotea": "goteras",
         "moho": "moho/hongos", "óxido": "óxido", "oxido": "óxido",
         "descascar": "pintura descascarando", "sopla": "pintura soplada",
         "grieta": "grietas", "nuevo": "superficie nueva",
@@ -527,6 +529,14 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         data["traffic"] = "liviano"
     elif any(w in combined for w in ["vehicular", "parqueadero", "garaje"]):
         data["traffic"] = "vehicular"
+
+    # Muro interior con humedad/salitre se trata como "interior húmedo" para activar alertas duras.
+    if (
+        data["surface"] == "muro"
+        and data["interior_exterior"] == "interior"
+        and data["condition"] in {"humedad", "salitre", "filtración", "goteras", "moho/hongos", "pintura descascarando", "pintura soplada"}
+    ):
+        data["surface"] = "interior húmedo"
 
     return data
 
@@ -673,6 +683,24 @@ def build_turn_context(
             lines.append("  3. Ofrecer la alternativa correcta según la directriz.")
             lines.append("  4. Hacer las preguntas de diagnóstico necesarias (m², estado, preparación).")
             lines.append("NO COTICES. NO BUSQUES PRECIOS. PRIMERO EDUCA, LUEGO VENDES.")
+
+    # ─── BLOQUEO DE DIAGNÓSTICO Y METRAJE: patologías de superficie no se cotizan de una ───
+    _problematic_conditions = {
+        "humedad", "salitre", "filtración", "goteras", "moho/hongos",
+        "pintura descascarando", "pintura soplada", "óxido", "grietas",
+    }
+    if diagnostic.get("condition") in _problematic_conditions and not diagnostic.get("area_m2"):
+        intent = "asesoria"
+        lines.append("")
+        lines.append("🚨 BLOQUEO DE DIAGNÓSTICO Y METRAJE: Hay una patología real de superficie y todavía NO tienes m².")
+        lines.append("TIENES ESTRICTAMENTE PROHIBIDO cotizar, calcular cantidades o llamar inventario en este turno.")
+        lines.append("Reglas obligatorias para este caso:")
+        lines.append("  1. Diagnostica primero la causa y la preparación necesaria.")
+        lines.append("  2. Presenta el sistema ideal completo como SOLUCIÓN, no como lista de precios.")
+        lines.append("  3. Pide los m² reales del área.")
+        lines.append("  4. Solo después pregunta: '¿Quieres que te cotice el sistema ideal con cantidades exactas?'")
+        lines.append("  5. La cantidad que el cliente cree necesitar (ej. '5 galones') NO reemplaza el metraje real.")
+        lines.append("  6. NO inventes imprimantes: un acabado pedido por el cliente NO se convierte en imprimante por deducción.")
 
     # ─── Phase-specific instructions ────────────────────────────────────
     lines.append("")
