@@ -34,6 +34,15 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelna
 
 app = FastAPI(title="CRM Ferreinox Backend", version="2026.3")
 
+# ── Agent V3 routing ─────────────────────────────────────────────────────────
+def _get_agent_reply_fn():
+    """Retorna generate_agent_reply_v2 o v3 según AGENT_PROMPT_VERSION."""
+    version = os.getenv("AGENT_PROMPT_VERSION", "v2").strip().lower()
+    if version == "v3":
+        from backend.agent_v3 import generate_agent_reply_v3
+        return generate_agent_reply_v3
+    return generate_agent_reply_v2
+
 # ── Color formulas data (from LIBRO DE FORMULAS) ──
 _COLOR_FORMULAS: list[dict] = []
 _COLOR_FORMULAS_FILE = Path(__file__).resolve().parent.parent / "data" / "color_formulas.json"
@@ -20832,7 +20841,8 @@ async def admin_agent_test(request: Request, admin_key: str = Header(None, alias
 
     try:
         # Ejecutar la lógica del agente (sin enviar WhatsApp)
-        result = generate_agent_reply_v2(profile_name, conversation_context, recent_messages, user_message, context)
+        _agent_fn = _get_agent_reply_fn()
+        result = _agent_fn(profile_name, conversation_context, recent_messages, user_message, context)
         return {"ok": True, "result": result}
     except Exception as exc:
         return {"error": str(exc)}
@@ -21341,7 +21351,8 @@ async def _flush_debounce_buffer(phone_number: str):
 
         ai_result = handle_internal_whatsapp_message(unified_content, context, conversation_context)
         if ai_result is None:
-            ai_result = generate_agent_reply_v2(
+            _agent_fn = _get_agent_reply_fn()
+            ai_result = _agent_fn(
                 context.get("nombre_visible"),
                 conversation_context,
                 recent_messages,
@@ -21657,7 +21668,8 @@ async def receive_whatsapp_webhook(request: Request):
                     try:
                         ai_result = handle_internal_whatsapp_message(content, context, conversation_context)
                         if ai_result is None:
-                            ai_result = generate_agent_reply_v2(
+                            _agent_fn = _get_agent_reply_fn()
+                            ai_result = _agent_fn(
                                 context.get("nombre_visible"),
                                 conversation_context,
                                 recent_messages,
