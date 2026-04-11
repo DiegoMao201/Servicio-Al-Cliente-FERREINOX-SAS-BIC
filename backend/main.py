@@ -18741,14 +18741,26 @@ def generate_agent_reply_v2(
         "pintar una pared", "impermeabilizar", "pintar metal",
     ]
     _has_vague_advisory = any(s in _user_lower_diag for s in _vague_advisory_signals)
-    # Check if user already gave condition details
-    _has_condition_details = any(s in _user_lower_diag for s in [
+    # Check how many of the 3 MINIMUM diagnostic data points the user provided:
+    #   Group A: Uso/condición (tráfico pesado, liviano, montacargas, industrial, etc.)
+    #   Group B: Interior/exterior
+    #   Group C: Área en m²
+    _diag_group_a = any(s in _user_lower_diag for s in [
         "tráfico pesado", "trafico pesado", "tráfico liviano", "trafico liviano",
-        "interior", "exterior", "industrial", "residencial", "húmedo", "humedo",
-        "montacargas", "cemento", "concreto", "epóxic", "epoxic", "aceite", "grasa",
+        "montacargas", "industrial", "residencial", "peatonal", "vehicular",
+        "húmedo", "humedo", "aceite", "grasa", "químico", "quimico",
         "salitre", "eflorescencia", "oxidado", "corrosión", "corrosion",
-        "metros cuadrados", "m2", "m²",
+        "cemento", "concreto", "epóxic", "epoxic",
     ])
+    _diag_group_b = any(s in _user_lower_diag for s in [
+        "interior", "exterior", "intemperie", "bajo techo", "cubierto",
+    ])
+    _diag_group_c = any(s in _user_lower_diag for s in [
+        "metros cuadrados", "m2", "m²", "metro cuadrado",
+    ])
+    _diag_groups_present = sum([_diag_group_a, _diag_group_b, _diag_group_c])
+    # Need at least 2 of 3 groups to consider diagnosis complete
+    _has_sufficient_details = _diag_groups_present >= 2
     # Check if agent gave a full product system WITHOUT asking questions
     _has_system_reco = sum(1 for kw in [
         "imprimante", "acabado", "preparación", "sistema completo", "interseal",
@@ -18763,11 +18775,13 @@ def generate_agent_reply_v2(
     _is_b2b_request = bool(conversation_context.get("internal_auth")) and any(
         s in _user_lower_diag for s in ["pedido", "dame", "necesito ", "galones", "unidades", "docena"]
     )
-    if (_has_vague_advisory and not _has_condition_details and _has_system_reco
+    if (_has_vague_advisory and not _has_sufficient_details and _has_system_reco
+            and not _agent_asked_questions
             and not _is_b2b_request and not is_simple_greeting(user_message)):
         logger.warning(
             "GUARDIA DIAGNÓSTICA: agente recomendó sistema completo sin diagnóstico previo. "
-            "Usuario dio petición vaga sin condición/uso/área. Forzando reescritura a preguntas."
+            "Usuario solo dio %d/3 datos diagnósticos (A=%s B=%s C=%s). Forzando reescritura.",
+            _diag_groups_present, _diag_group_a, _diag_group_b, _diag_group_c,
         )
         messages.append(assistant_message)
         messages.append({
