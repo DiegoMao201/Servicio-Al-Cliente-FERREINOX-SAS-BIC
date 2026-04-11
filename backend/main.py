@@ -3478,7 +3478,25 @@ def build_internal_login_reply(content: str, context: dict, conversation_context
     cedula = extract_internal_cedula_candidate(content)
     employee_by_cedula = find_employee_record_by_cedula(cedula) if cedula else None
 
+    # ── Escape hatch: user says they're not an employee → clear auth state ──
+    _content_norm = normalize_text_value(content)
+    _CANCEL_PHRASES = [
+        "no soy colaborador", "no soy empleado", "no soy trabajador",
+        "soy cliente", "no trabajo ahi", "no trabajo aqui", "no trabajo alla",
+        "cancelar", "no quiero login", "salir", "dejame como cliente",
+    ]
+    _auth_cancelled = bool((conversation_context or {}).get("_auth_cancelled"))
+    if awaiting_cedula and any(phrase in _content_norm for phrase in _CANCEL_PHRASES):
+        return {
+            "response_text": "¡Entendido! Te atiendo como cliente. ¿En qué te puedo ayudar hoy?",
+            "intent": "internal_auth_cancelled",
+            "context_updates": {"awaiting_internal_auth_cedula": None, "_auth_cancelled": True},
+        }
+
     if not employee_by_phone and not awaiting_cedula and not employee_by_cedula:
+        return None
+    # If user previously cancelled auth, don't re-enter login flow
+    if _auth_cancelled and not awaiting_cedula and not employee_by_cedula:
         return None
 
     if not cedula:
@@ -3500,7 +3518,11 @@ def build_internal_login_reply(content: str, context: dict, conversation_context
     registered_phone = employee_record.get("phone_e164")
     if registered_phone and incoming_phone and registered_phone != incoming_phone:
         return {
-            "response_text": "La cédula existe, pero el número de WhatsApp no coincide con el registrado en datos_empleados. Debes escribir desde tu número autorizado.",
+            "response_text": (
+                "La cédula existe, pero el número de WhatsApp no coincide con el registrado. "
+                "Si eres colaborador, escribe desde tu número autorizado. "
+                "Si eres cliente, escribe *'soy cliente'* y con gusto te atiendo."
+            ),
             "intent": "internal_auth_phone_mismatch",
             "context_updates": {"awaiting_internal_auth_cedula": True},
         }
@@ -4051,7 +4073,8 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
         return build_internal_logout_reply(conversation_context)
 
     employee_by_phone = find_employee_record_by_phone(context.get("telefono_e164"))
-    if employee_by_phone and not internal_auth.get("token"):
+    _auth_was_cancelled = bool((conversation_context or {}).get("_auth_cancelled"))
+    if employee_by_phone and not internal_auth.get("token") and not _auth_was_cancelled:
         return {
             "response_text": "Antes de seguir necesito validar tu acceso interno. Envíame tu cédula para activar la sesión de colaborador.",
             "intent": "internal_auth_request_cedula",
@@ -9662,18 +9685,18 @@ def build_commercial_item_result(raw_line: str, inherited_store_filters: list[st
 
     if requested_store_label:
         if stock_value <= 0:
-            item_result["message"] = f"{commercial_name}: no disponible en {requested_store_label} en este momento."
+            item_result["message"] = f"❌ {commercial_name}: no disponible en {requested_store_label} en este momento."
         else:
-            item_result["message"] = f"{commercial_name}: ✅ disponible en {requested_store_label}"
+            item_result["message"] = f"✅ {commercial_name}: disponible en {requested_store_label}"
             if requested_quantity:
                 availability = ", te alcanza" if stock_value >= requested_quantity else ", pero no alcanza para toda la cantidad"
                 item_result["message"] += availability
             item_result["message"] += "."
     else:
         if stock_value <= 0:
-            item_result["message"] = f"{commercial_name}: agotado en este momento."
+            item_result["message"] = f"❌ {commercial_name}: agotado en este momento."
         else:
-            item_result["message"] = f"{commercial_name}: ✅ disponible"
+            item_result["message"] = f"✅ {commercial_name}: disponible"
             if requested_quantity:
                 availability = ", sí alcanza" if stock_value >= requested_quantity else ", pero no para toda la cantidad"
                 item_result["message"] += availability
@@ -14294,6 +14317,14 @@ Si el PostgREST, inventario o RAG NO devuelve precio exacto de un producto:
 🎨 COLORES PINTUCO: Usa `consultar_base_color` para determinar qué BASE necesita un color (Pastel/Tint/Deep/Accent).
   Ejemplo: "Gris Basalto" código 1502 = Base Deep → buscar "Viniltex Base Deep galón" en inventario.
   Si el cliente pide un color y no lo encuentras → derivar a www.ferreinox.co sección Cartas de Colores.
+  
+  REGLA BASES POR LÍNEA DE PRODUCTO:
+  - Los colores de Doméstico y Pintulux se preparan en las MISMAS bases que Viniltex.
+  - ⚠️ EXCEPCIÓN DOMÉSTICO: Doméstico NO viene en Base Accent.
+    Si un color requiere Base Accent y el cliente lo pide en Doméstico:
+    → "Ese color no viene en Doméstico porque requiere Base Accent. Te lo puedo ofrecer en Pintulux 3en1 o Pintulux Máxima Protección, que sí manejan esa base. ¿Te armo la cotización?"
+  - Colores "originales" (blancos como 2650, 1501, P-11, T-11) → se buscan directo en inventario sin consultar base.
+  - Si `consultar_base_color` no encuentra el código → buscar directo en inventario (puede ser un color original/estándar).
 
 REGLAS TÉCNICAS POR PRODUCTO:
 - KORAZA: SOLO fachadas exteriores, muros exteriores, terrazas. NO sellador de humedad interna. Para humedad interna → Aquablock.
@@ -18450,6 +18481,10 @@ def _handle_tool_consultar_base_color(fn_args: dict) -> str:
             "Usa la BASE indicada para buscar en inventario. "
             "Ej: si base='Base Deep' y producto='Viniltex' → buscar 'Viniltex Base Deep galón'. "
             "La tintometría se realiza en tienda con la fórmula del color. "
+            "⚠️ REGLA DOMÉSTICO: Doméstico NO viene en Base Accent. Si el color requiere Base Accent "
+            "y el cliente pide Doméstico → decir: 'Ese color no viene en Doméstico porque requiere "
+            "Base Accent. Te lo puedo ofrecer en Pintulux 3en1 o Pintulux Máxima Protección.' "
+            "Los colores de Doméstico y Pintulux usan las mismas bases que Viniltex (excepto Accent en Doméstico). "
             "Menciona al cliente: 'Puedes ver toda nuestra gama de colores en www.ferreinox.co sección Cartas de Colores'."
         ),
     }, ensure_ascii=False)
