@@ -640,6 +640,32 @@ def build_turn_context(
         lines.append("Las directrices de Gerencia PREVALECEN sobre el RAG si hay contradicción.")
         lines.append("═══════════════════════════════════════════════")
 
+    # ─── BLOQUEO DE TRANSACCIÓN: Si hay directrices críticas activas,
+    # degradar intent transaccional a asesoría para forzar diagnóstico ──────
+    if expert_directives and intent in ("pedido_directo", "cotizacion"):
+        # Revisar si alguna directriz contiene señales de bloqueo
+        _directives_text = " ".join(
+            (d.get("nota_comercial") or "") + " " + (d.get("producto_desestimado") or "")
+            for d in expert_directives
+        ).lower()
+        _blocking_signals = [
+            "nunca", "prohibido", "no usar", "no recomendar",
+            "incompatible", "contraindicacion", "no aplicar",
+            "no se puede", "no apto", "evitar",
+        ]
+        _has_critical_block = any(sig in _directives_text for sig in _blocking_signals)
+        if _has_critical_block:
+            intent = "asesoria"  # Degradar intención transaccional
+            lines.append("")
+            lines.append("🚨 BLOQUEO DE TRANSACCIÓN: Hay directrices técnicas CRÍTICAS activas para este caso.")
+            lines.append("TIENES ESTRICTAMENTE PROHIBIDO llamar a herramientas de inventario o dar precios en este turno.")
+            lines.append("Tu ÚNICA tarea es:")
+            lines.append("  1. Advertir al cliente sobre la regla técnica que impide su solicitud.")
+            lines.append("  2. Explicar POR QUÉ su solicitud es técnicamente inviable.")
+            lines.append("  3. Ofrecer la alternativa correcta según la directriz.")
+            lines.append("  4. Hacer las preguntas de diagnóstico necesarias (m², estado, preparación).")
+            lines.append("NO COTICES. NO BUSQUES PRECIOS. PRIMERO EDUCA, LUEGO VENDES.")
+
     # ─── Phase-specific instructions ────────────────────────────────────
     lines.append("")
     lines.append("═══ INSTRUCCIÓN PARA ESTE TURNO ═══")

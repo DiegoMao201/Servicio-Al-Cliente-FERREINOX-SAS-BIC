@@ -305,9 +305,15 @@ def generate_agent_reply_v3(
 
 _CHEM_FAMILIES = {
     "alkyd": ["corrotec", "pintóxido", "pintoxido", "pintulux", "esmalte doméstico",
-               "esmalte domestico", "pintulux 3en1", "anticorrosivo pintuco"],
+               "esmalte domestico", "pintulux 3en1", "anticorrosivo pintuco",
+               # Términos genéricos que el cliente usa para describir base alquídica
+               "alquídico", "alquidico", "alquídica", "alquidica",
+               "base alquídica", "base alquidica", "anticorrosivo alquídico",
+               "anticorrosivo alquidico", "pintura alquídica", "pintura alquidica"],
     "polyurethane": ["interthane", "interfine"],
-    "epoxy": ["interseal", "intergard", "pintucoat", "primer 50rs", "primer 50 rs"],
+    "epoxy": ["interseal", "intergard", "pintucoat", "primer 50rs", "primer 50 rs",
+              # Términos genéricos que el cliente usa para pedir epóxicos
+              "epóxico", "epoxico", "epóxica", "epoxica"],
 }
 
 _CHEM_INCOMPATIBLE_PAIRS = [
@@ -317,10 +323,11 @@ _CHEM_INCOMPATIBLE_PAIRS = [
      "Sistema CORRECTO para metal industrial: Imprimante Epóxico (Interseal/Intergard) + Acabado Poliuretano (Interthane). "
      "Sistema CORRECTO para metal arquitectónico/económico: Anticorrosivo (Corrotec) + Esmalte alquídico (Pintulux 3en1)."),
     ("alkyd", "epoxy",
-     "Los alquídicos (Corrotec, Pintulux) son INCOMPATIBLES como acabado sobre epóxicos (Interseal, Intergard). "
-     "El esmalte alquídico NO tiene la dureza química para proteger un sistema epóxico. "
-     "Sistema CORRECTO industrial: Epóxico (Interseal/Intergard) + Poliuretano (Interthane). "
-     "Sistema CORRECTO económico: Anticorrosivo (Corrotec) + Esmalte alquídico (Pintulux 3en1)."),
+     "Los epóxicos (Interseal, Intergard, Pintucoat) son INCOMPATIBLES sobre bases alquídicas (Corrotec, Pintóxido). "
+     "El solvente epóxico REMUEVE y ARRUGA la capa alquídica. Tampoco los alquídicos protegen sistemas epóxicos correctamente. "
+     "Si el cliente tiene pintura alquídica vieja y quiere epóxico: DEBE REMOVER COMPLETAMENTE la pintura alquídica primero. "
+     "Sistema CORRECTO industrial: Remover alquídico → Imprimante Epóxico (Interseal 670HS) + Acabado (Intergard/Interthane). "
+     "Sistema CORRECTO económico SIN remover: Anticorrosivo alquídico (Corrotec) + Esmalte alquídico (Pintulux 3en1)."),
 ]
 
 _BICOMP_CHECKS = [
@@ -341,12 +348,37 @@ def _detect_ensenar(user_message: str) -> bool:
 
 
 def _guardia_quimica(assistant_message, messages, tool_calls_made, context, conversation_context, m, user_message=""):
-    """Detecta combinaciones químicas incompatibles y fuerza corrección."""
-    # Escanear TANTO la respuesta COMO el mensaje del usuario
-    combined_text = ((assistant_message.content or "") + " " + (user_message or "")).lower()
+    """Detecta combinaciones químicas incompatibles y fuerza corrección.
+    
+    Estrategia de detección dual:
+    - Nombres de producto (Corrotec, Intergard) → busca en respuesta + user_message
+    - Términos genéricos (alquídico, epóxico) → busca SOLO en user_message
+      para detectar cuando el cliente describe su situación (ej. "tengo alquídico, quiero epóxico")
+    """
+    response_text = (assistant_message.content or "").lower()
+    user_text = (user_message or "").lower()
+    combined_text = response_text + " " + user_text
+
+    # Términos genéricos que solo deben matchear en el mensaje del usuario
+    _GENERIC_TERMS = {
+        "alkyd": ["alquídico", "alquidico", "alquídica", "alquidica",
+                   "base alquídica", "base alquidica", "anticorrosivo alquídico",
+                   "anticorrosivo alquidico", "pintura alquídica", "pintura alquidica"],
+        "epoxy": ["epóxico", "epoxico", "epóxica", "epoxica"],
+    }
+
     families_in_response = {}
     for fam, signals in _CHEM_FAMILIES.items():
-        found = [s for s in signals if s in combined_text]
+        found = []
+        for s in signals:
+            if s in _GENERIC_TERMS.get(fam, []):
+                # Término genérico → solo buscar en user_message
+                if s in user_text:
+                    found.append(s)
+            else:
+                # Nombre de producto → buscar en combined (respuesta + usuario)
+                if s in combined_text:
+                    found.append(s)
         if found:
             families_in_response[fam] = found
 
