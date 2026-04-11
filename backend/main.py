@@ -6617,6 +6617,146 @@ def ingest_expert_document_to_rag(
     }
 
 
+# ─── Alertas de superficie extensibles via DB (Rec 3) ────────────────────────
+
+_surface_alerts_cache: Optional[list] = None
+_surface_alerts_cache_ts: float = 0
+_SURFACE_ALERTS_CACHE_TTL = 300  # 5 min
+
+
+def ensure_surface_alerts_table():
+    """Create agent_surface_alerts table for extensible surface warning rules."""
+    engine = get_db_engine()
+    with engine.begin() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS public.agent_surface_alerts (
+                id bigserial PRIMARY KEY,
+                surfaces text[] NOT NULL,
+                conditions text[],
+                alert_text text NOT NULL,
+                severity text NOT NULL DEFAULT 'critica',
+                activo boolean NOT NULL DEFAULT true,
+                created_by text,
+                created_at timestamptz NOT NULL DEFAULT now()
+            )
+        """))
+        # Seed from hardcoded defaults if table is empty
+        count = conn.execute(text("SELECT count(*) FROM public.agent_surface_alerts")).scalar()
+        if count == 0:
+            _seed_surface_alerts_defaults(conn)
+
+
+def _seed_surface_alerts_defaults(conn):
+    """Seed agent_surface_alerts with the 6 original hardcoded rules."""
+    defaults = [
+        (
+            ["concreto", "piso", "piso industrial", "piso vehicular"],
+            ["superficie nueva", "sin pintar"],
+            "🚨 ALERTA CRÍTICA DE SUPERFICIE: El concreto nuevo exige MÍNIMO 28 DÍAS de curado "
+            "antes de aplicar cualquier recubrimiento. ANTES de recomendar productos, DEBES "
+            "informar esto al cliente y preguntar: '¿Hace cuánto fue vaciado el concreto?' "
+            "Si tiene menos de 28 días → NO recomiendes aplicar. La humedad residual del "
+            "concreto causará FALLA por ampollamiento, descascaramiento y pérdida de adherencia.",
+            "critica",
+        ),
+        (
+            ["metal", "metal/inmersión", "reja"],
+            ["óxido"],
+            "🚨 ALERTA CRÍTICA DE SUPERFICIE: Metal con óxido requiere preparación mecánica "
+            "OBLIGATORIA antes de cualquier recubrimiento. DEBES preguntar el GRADO de oxidación "
+            "(leve/moderado/severo) y recomendar lija, disco flap o grata según corresponda. "
+            "Sin preparación correcta, CUALQUIER anticorrosivo fallará por falta de adherencia.",
+            "critica",
+        ),
+        (
+            ["interior húmedo"],
+            ["humedad", "filtración", "goteras", "moho/hongos"],
+            "🚨 ALERTA CRÍTICA DE SUPERFICIE: Problema de humedad detectado. ANTES de recomendar "
+            "pintura, DEBES diagnosticar la CAUSA de la humedad (capilaridad, filtración, "
+            "condensación). Si la fuente no se elimina, cualquier recubrimiento fallará. "
+            "Pregunta: '¿La humedad viene de adentro del muro, de arriba, o aparece por temporada?'",
+            "critica",
+        ),
+        (
+            ["fachada", "exterior"],
+            ["pintura descascarando", "pintura soplada"],
+            "🚨 ALERTA CRÍTICA DE SUPERFICIE: Fachada con pintura en mal estado. ANTES de "
+            "recomendar repintura, DEBES indicar que se necesita REMOVER la pintura suelta "
+            "completamente (raspar, lijar, hidrolavado). Aplicar sobre pintura soplada causa "
+            "falla inmediata. Pregunta al cliente cómo piensa preparar la superficie.",
+            "critica",
+        ),
+        (
+            ["madera", "madera exterior", "madera/metal"],
+            ["superficie nueva", "sin pintar"],
+            "⚠️ ALERTA DE SUPERFICIE: Madera nueva requiere verificar contenido de humedad "
+            "(máximo 18%) antes de aplicar recubrimiento. PREGUNTA al cliente si la madera es "
+            "nueva/seca o si estuvo expuesta a lluvia. Madera húmeda → dejar secar primero.",
+            "advertencia",
+        ),
+        (
+            ["piso deportivo"],
+            None,
+            "⚠️ ALERTA DE SUPERFICIE: Pisos deportivos (canchas) requieren productos "
+            "específicos con resistencia a abrasión y tráfico. NUNCA recomendar Pintucoat, "
+            "Interseal ni recubrimientos industriales. El producto correcto es Pintura para "
+            "Canchas de Pintuco. Si es concreto nuevo → aplica regla de 28 días de curado.",
+            "advertencia",
+        ),
+    ]
+    for surfaces, conditions, alert_text, severity in defaults:
+        conn.execute(text("""
+            INSERT INTO public.agent_surface_alerts (surfaces, conditions, alert_text, severity, created_by)
+            VALUES (:surfaces, :conditions, :alert_text, :severity, :created_by)
+        """), {
+            "surfaces": surfaces,
+            "conditions": conditions,
+            "alert_text": alert_text,
+            "severity": severity,
+            "created_by": "SYSTEM_SEED",
+        })
+    logger.info("Seeded %d default surface alerts", len(defaults))
+
+
+def fetch_surface_alerts_from_db() -> list[dict]:
+    """Load active surface alerts from DB with in-memory cache (5 min TTL)."""
+    global _surface_alerts_cache, _surface_alerts_cache_ts
+    import time as _time
+    now = _time.time()
+    if _surface_alerts_cache is not None and (now - _surface_alerts_cache_ts) < _SURFACE_ALERTS_CACHE_TTL:
+        return _surface_alerts_cache
+    try:
+        engine = get_db_engine()
+        with engine.connect() as conn:
+            rows = conn.execute(text("""
+                SELECT surfaces, conditions, alert_text
+                FROM public.agent_surface_alerts
+                WHERE activo = true
+                ORDER BY id
+            """)).fetchall()
+        alerts = []
+        for row in rows:
+            alerts.append({
+                "surfaces": row[0] or [],
+                "conditions": row[1] or [None],
+                "alert": row[2],
+            })
+        _surface_alerts_cache = alerts
+        _surface_alerts_cache_ts = now
+        return alerts
+    except Exception as exc:
+        logger.debug("fetch_surface_alerts_from_db error: %s", exc)
+        # Return hardcoded fallback if DB fails
+        return []
+
+
+def invalidate_surface_alerts_cache():
+    """Force refresh of surface alerts cache."""
+    global _surface_alerts_cache, _surface_alerts_cache_ts
+    _surface_alerts_cache = None
+    _surface_alerts_cache_ts = 0
+
+
 def ensure_expert_knowledge_table():
     """Create agent_expert_knowledge table for commercial reinforcement notes."""
     engine = get_db_engine()
@@ -6649,9 +6789,102 @@ def ensure_expert_knowledge_table():
                 """
             )
         )
+    # ── Ensure embedding column for semantic search (Solution 3) ──
+    _ensure_expert_knowledge_embedding_column()
+    # ── Ensure extensible surface alerts table (Rec 3) ──
+    try:
+        ensure_surface_alerts_table()
+    except Exception as _sa_exc:
+        logger.debug("ensure_surface_alerts_table error: %s", _sa_exc)
     # Run Phase 19 seeds after table is ensured
     seed_expert_knowledge_phase19()
     seed_expert_knowledge_polyurethane_1550()
+
+
+_expert_embedding_column_ensured = False
+
+
+def _ensure_expert_knowledge_embedding_column():
+    """Add vector embedding column to agent_expert_knowledge if missing.
+    This enables semantic search for expert directives in agent_context.py."""
+    global _expert_embedding_column_ensured
+    if _expert_embedding_column_ensured:
+        return
+    try:
+        engine = get_db_engine()
+        with engine.begin() as conn:
+            # Check if column exists
+            result = conn.execute(text(
+                """SELECT column_name FROM information_schema.columns 
+                   WHERE table_name = 'agent_expert_knowledge' AND column_name = 'embedding'"""
+            )).fetchone()
+            if not result:
+                conn.execute(text(
+                    "ALTER TABLE public.agent_expert_knowledge ADD COLUMN embedding vector(1536)"
+                ))
+                conn.execute(text(
+                    """CREATE INDEX IF NOT EXISTS idx_agent_expert_knowledge_embedding
+                       ON public.agent_expert_knowledge
+                       USING hnsw (embedding vector_cosine_ops)
+                       WITH (m = 16, ef_construction = 64)"""
+                ))
+                logger.info("Added embedding column + HNSW index to agent_expert_knowledge")
+        _expert_embedding_column_ensured = True
+        # Backfill embeddings for existing rows
+        _backfill_expert_knowledge_embeddings()
+    except Exception as exc:
+        logger.debug("_ensure_expert_knowledge_embedding_column error: %s", exc)
+        _expert_embedding_column_ensured = True  # Don't retry on failure
+
+
+def _backfill_expert_knowledge_embeddings():
+    """Generate embeddings for expert knowledge rows that don't have one yet."""
+    try:
+        engine = get_db_engine()
+        with engine.connect() as conn:
+            rows = conn.execute(text(
+                """SELECT id, contexto_tags, nota_comercial, producto_recomendado, producto_desestimado
+                   FROM public.agent_expert_knowledge
+                   WHERE activo = true AND embedding IS NULL"""
+            )).mappings().all()
+        
+        if not rows:
+            return
+        
+        client = get_openai_client()
+        logger.info("Backfilling %d expert knowledge embeddings...", len(rows))
+        
+        for row in rows:
+            # Build embedding text from all searchable fields
+            embed_text = " ".join(filter(None, [
+                row.get("contexto_tags"),
+                row.get("nota_comercial"),
+                row.get("producto_recomendado"),
+                row.get("producto_desestimado"),
+            ]))
+            if not embed_text.strip():
+                continue
+            try:
+                resp = client.embeddings.create(
+                    model="text-embedding-3-small",
+                    input=embed_text.strip()[:500],
+                    dimensions=1536,
+                )
+                embedding = resp.data[0].embedding
+                embedding_literal = "[" + ",".join(str(v) for v in embedding) + "]"
+                
+                with engine.begin() as conn:
+                    conn.execute(
+                        text("UPDATE public.agent_expert_knowledge SET embedding = :emb::vector WHERE id = :id"),
+                        {"emb": embedding_literal, "id": row["id"]},
+                    )
+            except Exception as exc:
+                logger.debug("Backfill embedding error for id=%s: %s", row.get("id"), exc)
+                continue
+        
+        logger.info("Expert knowledge embedding backfill complete")
+    except Exception as exc:
+        logger.debug("_backfill_expert_knowledge_embeddings error: %s", exc)
 
 
 def seed_expert_knowledge_phase19():
@@ -13925,7 +14158,26 @@ def send_whatsapp_document_bytes(to_phone: str, document_bytes: bytes, filename:
 
 
 def _handle_tool_consultar_inventario(args, conversation_context):
-    producto_raw = args.get("producto", "")
+    # ── Nuevo schema V3.1: nombre_base + variante_o_color ──
+    nombre_base = (args.get("nombre_base") or "").strip()
+    variante_o_color = (args.get("variante_o_color") or "").strip()
+    producto_legacy = (args.get("producto") or "").strip()
+
+    # Construir query de búsqueda priorizando el schema nuevo
+    if nombre_base:
+        # Schema nuevo: buscar por nombre_base, luego filtrar por variante
+        producto_busqueda = nombre_base
+        if variante_o_color:
+            producto_busqueda = f"{nombre_base} {variante_o_color}"
+    elif producto_legacy:
+        # Fallback: schema antiguo (backward compat)
+        producto_busqueda = producto_legacy
+    else:
+        return json.dumps(
+            {"encontrados": 0, "mensaje": "Se requiere nombre_base o producto."},
+            ensure_ascii=False,
+        )
+    producto_raw = producto_busqueda
     # ── Phase 20: Traducir jerga coloquial del cliente a términos de catálogo en Python ──
     producto = translate_customer_jargon(producto_raw)
     # Skip NLU (OpenAI) call — the main LLM already parsed the product query via tool call
@@ -13939,6 +14191,43 @@ def _handle_tool_consultar_inventario(args, conversation_context):
     )
     product_request["nlu_processed"] = True
     rows = lookup_product_context(producto, product_request)
+
+    # ── Broader fallback: si la búsqueda combinada (base+variante) no encontró nada,
+    # reintenta solo con nombre_base para dar más resultados ──
+    if not rows and variante_o_color and nombre_base:
+        producto_solo_base = translate_customer_jargon(nombre_base)
+        base_only_request = extract_product_request(producto_solo_base)
+        base_only_request["nlu_processed"] = True
+        base_only_request = apply_deterministic_product_alias_rules(producto_solo_base, base_only_request)
+        base_only_product_req = build_followup_inventory_request(
+            producto_solo_base, base_only_request, conversation_context,
+        )
+        base_only_product_req["nlu_processed"] = True
+        rows = lookup_product_context(producto_solo_base, base_only_product_req)
+
+    # ── Post-variante re-ranking (Rec 2): si se proporcionó variante_o_color,
+    # re-ordena resultados priorizando los que contienen la variante en la descripción ──
+    if variante_o_color and rows and len(rows) > 1:
+        _var_lower = variante_o_color.lower()
+        _var_terms = [t for t in _var_lower.split() if len(t) > 2]
+
+        def _variante_score(row):
+            desc = (
+                (row.get("descripcion_comercial") or "")
+                + " " + (row.get("descripcion") or "")
+                + " " + (row.get("descripcion_ebs") or "")
+            ).lower()
+            score = 0
+            for term in _var_terms:
+                if term in desc:
+                    score += 1
+            # Exact substring match gets bonus
+            if _var_lower in desc:
+                score += 5
+            return score
+
+        rows = sorted(rows, key=_variante_score, reverse=True)
+
     requested_store_codes = product_request.get("store_filters") or []
     requested_store_code = requested_store_codes[0] if len(requested_store_codes) == 1 else None
     if not rows and product_request.get("followup_from_previous_product"):
@@ -14192,9 +14481,24 @@ def _handle_tool_consultar_inventario(args, conversation_context):
 
 def _handle_tool_consultar_inventario_lote(args, conversation_context):
     """Batch inventory lookup — processes multiple products in one call for speed."""
-    productos = args.get("productos") or []
-    if not productos:
+    productos_raw = args.get("productos") or []
+    if not productos_raw:
         return json.dumps({"encontrados": 0, "mensaje": "No se enviaron productos."}, ensure_ascii=False)
+
+    # ── Normalizar: soportar tanto schema nuevo (objetos) como antiguo (strings) ──
+    productos: list[str] = []
+    for item in productos_raw[:15]:
+        if isinstance(item, dict):
+            # Schema nuevo V3.1: {"nombre_base": "Koraza", "variante_o_color": "blanco galón"}
+            nb = (item.get("nombre_base") or "").strip()
+            vc = (item.get("variante_o_color") or "").strip()
+            if nb:
+                productos.append(f"{nb} {vc}".strip() if vc else nb)
+        elif isinstance(item, str):
+            # Schema antiguo: "Koraza blanco galon"
+            productos.append(item.strip())
+    if not productos:
+        return json.dumps({"encontrados": 0, "mensaje": "No se enviaron productos válidos."}, ensure_ascii=False)
 
     all_results = []
     # Pre-warm rotation cache once for the entire batch
@@ -16801,6 +17105,44 @@ def _handle_tool_registrar_conocimiento_experto(args, conversation_context):
             ).fetchone()
         kid = row[0] if row else "?"
         invalidate_expert_knowledge_cache()
+        # ── Generate embedding for semantic search (Solution 3) ──
+        try:
+            embed_text = " ".join(filter(None, [contexto_tags, nota_comercial, producto_recomendado, producto_desestimado]))
+            if embed_text.strip() and kid != "?":
+                _client = get_openai_client()
+                _resp = _client.embeddings.create(
+                    model="text-embedding-3-small",
+                    input=embed_text.strip()[:500],
+                    dimensions=1536,
+                )
+                _emb = _resp.data[0].embedding
+                _emb_literal = "[" + ",".join(str(v) for v in _emb) + "]"
+                with engine.begin() as conn2:
+                    conn2.execute(
+                        text("UPDATE public.agent_expert_knowledge SET embedding = :emb::vector WHERE id = :id"),
+                        {"emb": _emb_literal, "id": kid},
+                    )
+        except Exception as emb_exc:
+            logger.debug("Expert knowledge embedding generation error: %s", emb_exc)
+        # ── If tipo is alerta_superficie, also insert into agent_surface_alerts (Rec 3) ──
+        if tipo == "alerta_superficie" and nota_comercial:
+            try:
+                # Parse surfaces from contexto_tags (comma-separated)
+                surfaces = [s.strip() for s in contexto_tags.split(",") if s.strip()]
+                with engine.begin() as conn_sa:
+                    conn_sa.execute(text("""
+                        INSERT INTO public.agent_surface_alerts (surfaces, conditions, alert_text, severity, created_by)
+                        VALUES (:surfaces, :conditions, :alert_text, :severity, :created_by)
+                    """), {
+                        "surfaces": surfaces,
+                        "conditions": None,
+                        "alert_text": f"🚨 ALERTA DE EXPERTO: {nota_comercial}",
+                        "severity": "critica",
+                        "created_by": _AUTHORIZED_EXPERTS.get(cedula, "EXPERTO"),
+                    })
+                invalidate_surface_alerts_cache()
+            except Exception as sa_exc:
+                logger.debug("Surface alert insertion error: %s", sa_exc)
         rec_txt = f" → recomendar: {producto_recomendado}" if producto_recomendado else ""
         des_txt = f" | evitar: {producto_desestimado}" if producto_desestimado else ""
         return json.dumps(

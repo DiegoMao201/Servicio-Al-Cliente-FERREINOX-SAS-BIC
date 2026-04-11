@@ -9,9 +9,275 @@ que le dice EXACTAMENTE qué hacer en este turno.
 import json
 import re
 import logging
+import time
+import hashlib
 from typing import Optional
 
 logger = logging.getLogger("agent_context")
+
+# ─── Cache de embeddings por turno (evita llamadas redundantes a OpenAI) ──────
+# TTL de 120s: si el mismo semantic_query se repite en menos de 2 min, reutiliza el embedding.
+_EMBEDDING_CACHE: dict[str, tuple[list[float], float]] = {}
+_EMBEDDING_CACHE_TTL = 120  # seconds
+_EMBEDDING_CACHE_MAX = 50   # max entries
+
+def _get_cached_embedding(text: str) -> Optional[list[float]]:
+    """Retorna embedding cacheado si existe y no expiró."""
+    key = hashlib.md5(text.encode()).hexdigest()
+    entry = _EMBEDDING_CACHE.get(key)
+    if entry and (time.time() - entry[1]) < _EMBEDDING_CACHE_TTL:
+        return entry[0]
+    return None
+
+def _set_cached_embedding(text: str, embedding: list[float]):
+    """Guarda embedding en cache con timestamp."""
+    # Evict oldest if cache is full
+    if len(_EMBEDDING_CACHE) >= _EMBEDDING_CACHE_MAX:
+        oldest_key = min(_EMBEDDING_CACHE, key=lambda k: _EMBEDDING_CACHE[k][1])
+        del _EMBEDDING_CACHE[oldest_key]
+    key = hashlib.md5(text.encode()).hexdigest()
+    _EMBEDDING_CACHE[key] = (embedding, time.time())
+
+
+# ─── Alertas críticas de superficie (Python-side, imposibles de ignorar) ─────
+# Estas reglas son DURAS: si Python las detecta, el LLM las recibe como bloqueo.
+# El RAG puede fallar en comunicarlas porque quedan enterradas en chunks de texto.
+# Aquí se inyectan ANTES de la instrucción del turno → prioridad absoluta.
+
+_SURFACE_CRITICAL_ALERTS: list[dict] = [
+    {
+        "surfaces": ["concreto", "piso", "piso industrial", "piso vehicular"],
+        "conditions": ["superficie nueva", "sin pintar", None],
+        "alert": (
+            "🚨 ALERTA CRÍTICA DE SUPERFICIE: El concreto nuevo exige MÍNIMO 28 DÍAS de curado "
+            "antes de aplicar cualquier recubrimiento. ANTES de recomendar productos, DEBES "
+            "informar esto al cliente y preguntar: '¿Hace cuánto fue vaciado el concreto?' "
+            "Si tiene menos de 28 días → NO recomiendes aplicar. La humedad residual del "
+            "concreto causará FALLA por ampollamiento, descascaramiento y pérdida de adherencia."
+        ),
+    },
+    {
+        "surfaces": ["metal", "metal/inmersión", "reja"],
+        "conditions": ["óxido", None],
+        "alert": (
+            "🚨 ALERTA CRÍTICA DE SUPERFICIE: Metal con óxido requiere preparación mecánica "
+            "OBLIGATORIA antes de cualquier recubrimiento. DEBES preguntar el GRADO de oxidación "
+            "(leve/moderado/severo) y recomendar lija, disco flap o grata según corresponda. "
+            "Sin preparación correcta, CUALQUIER anticorrosivo fallará por falta de adherencia."
+        ),
+    },
+    {
+        "surfaces": ["interior húmedo"],
+        "conditions": ["humedad", "filtración", "goteras", "moho/hongos"],
+        "alert": (
+            "🚨 ALERTA CRÍTICA DE SUPERFICIE: Problema de humedad detectado. ANTES de recomendar "
+            "pintura, DEBES diagnosticar la CAUSA de la humedad (capilaridad, filtración, "
+            "condensación). Si la fuente no se elimina, cualquier recubrimiento fallará. "
+            "Pregunta: '¿La humedad viene de adentro del muro, de arriba, o aparece por temporada?'"
+        ),
+    },
+    {
+        "surfaces": ["fachada", "exterior"],
+        "conditions": ["pintura descascarando", "pintura soplada"],
+        "alert": (
+            "🚨 ALERTA CRÍTICA DE SUPERFICIE: Fachada con pintura en mal estado. ANTES de "
+            "recomendar repintura, DEBES indicar que se necesita REMOVER la pintura suelta "
+            "completamente (raspar, lijar, hidrolavado). Aplicar sobre pintura soplada causa "
+            "falla inmediata. Pregunta al cliente cómo piensa preparar la superficie."
+        ),
+    },
+    {
+        "surfaces": ["madera", "madera exterior", "madera/metal"],
+        "conditions": ["superficie nueva", "sin pintar", None],
+        "alert": (
+            "⚠️ ALERTA DE SUPERFICIE: Madera nueva requiere verificar contenido de humedad "
+            "(máximo 18%) antes de aplicar recubrimiento. PREGUNTA al cliente si la madera es "
+            "nueva/seca o si estuvo expuesta a lluvia. Madera húmeda → dejar secar primero."
+        ),
+    },
+    {
+        "surfaces": ["piso deportivo"],
+        "conditions": [None],
+        "alert": (
+            "⚠️ ALERTA DE SUPERFICIE: Pisos deportivos (canchas) requieren productos "
+            "específicos con resistencia a abrasión y tráfico. NUNCA recomendar Pintucoat, "
+            "Interseal ni recubrimientos industriales. El producto correcto es Pintura para "
+            "Canchas de Pintuco. Si es concreto nuevo → aplica regla de 28 días de curado."
+        ),
+    },
+]
+
+
+def _get_surface_alerts(surface: Optional[str], condition: Optional[str]) -> list[str]:
+    """Retorna alertas críticas que aplican a la combinación superficie+condición.
+    Intenta cargar desde DB (extensible); fallback a hardcoded si DB no disponible."""
+    if not surface:
+        return []
+
+    # Try loading from DB first (Rec 3: extensible via DB)
+    db_alerts = _load_surface_alerts_from_db()
+    rules = db_alerts if db_alerts else _SURFACE_CRITICAL_ALERTS
+
+    alerts = []
+    for rule in rules:
+        if surface not in rule["surfaces"]:
+            continue
+        # Check condition match: None in conditions means "siempre aplica para esta superficie"
+        rule_conditions = rule["conditions"]
+        if None in rule_conditions:
+            alerts.append(rule["alert"])
+        elif condition and condition in rule_conditions:
+            alerts.append(rule["alert"])
+    return alerts
+
+
+def _load_surface_alerts_from_db() -> list[dict]:
+    """Load extensible surface alerts from DB via main.fetch_surface_alerts_from_db()."""
+    try:
+        try:
+            from main import fetch_surface_alerts_from_db
+        except ImportError:
+            from backend.main import fetch_surface_alerts_from_db
+        return fetch_surface_alerts_from_db()
+    except Exception:
+        return []
+
+
+# ─── Búsqueda semántica de conocimiento experto para inyección en Turn Context ─
+
+def _fetch_expert_directives_for_turn(
+    user_message: str,
+    diagnostic: dict,
+    intent: str,
+) -> list[dict]:
+    """
+    Busca conocimiento experto relevante para el turno actual usando embeddings.
+    Se ejecuta ANTES del LLM para inyectar directrices como "Directriz de Gerencia".
+    
+    Estrategia híbrida:
+    1. Búsqueda semántica con pgvector (embedding del mensaje + diagnóstico)
+    2. Fallback a substring matching clásico si pgvector falla
+    3. Solo retorna directrices con score alto (no ruido)
+    """
+    # Skip for intents that don't need expert knowledge
+    if intent in ("saludo", "despedida", "identidad", "bi_interno", "documento"):
+        return []
+
+    # Build a semantic query from diagnostic context + user message
+    query_parts = []
+    if diagnostic.get("surface"):
+        query_parts.append(diagnostic["surface"])
+    if diagnostic.get("condition"):
+        query_parts.append(diagnostic["condition"])
+    if diagnostic.get("interior_exterior"):
+        query_parts.append(diagnostic["interior_exterior"])
+    if diagnostic.get("traffic"):
+        query_parts.append(f"tráfico {diagnostic['traffic']}")
+    # Add relevant terms from user message (not the whole thing to avoid noise)
+    msg_lower = (user_message or "").lower()
+    query_parts.append(msg_lower[:200])
+    
+    semantic_query = " ".join(query_parts).strip()
+    if len(semantic_query) < 5:
+        return []
+
+    try:
+        directives = _search_expert_knowledge_semantic(semantic_query, limit=3)
+        if directives:
+            return directives
+        # Fallback: keyword-based search using main.py's function
+        return _search_expert_knowledge_keyword_fallback(semantic_query, limit=3)
+    except Exception as exc:
+        logger.debug("_fetch_expert_directives_for_turn error: %s", exc)
+        return []
+
+
+def _search_expert_knowledge_semantic(query: str, limit: int = 3) -> list[dict]:
+    """
+    Búsqueda semántica de conocimiento experto usando pgvector.
+    Embebe la consulta y busca contra embeddings pre-computados de las notas.
+    Si la tabla no tiene columna embedding, cae al fallback de keywords.
+    """
+    try:
+        # Import lazily to avoid circular dependency
+        try:
+            from main import get_openai_client, get_db_engine
+        except ImportError:
+            from backend.main import get_openai_client, get_db_engine
+
+        # Generate embedding for the query (with cache)
+        query_input = query.strip()[:500]
+        query_embedding = _get_cached_embedding(query_input)
+        if query_embedding is None:
+            client = get_openai_client()
+            resp = client.embeddings.create(
+                model="text-embedding-3-small",
+                input=query_input,
+                dimensions=1536,
+            )
+            query_embedding = resp.data[0].embedding
+            _set_cached_embedding(query_input, query_embedding)
+        embedding_literal = "[" + ",".join(str(v) for v in query_embedding) + "]"
+
+        engine = get_db_engine()
+        raw_conn = engine.raw_connection()
+        try:
+            cur = raw_conn.cursor()
+            # Check if embedding column exists in expert_knowledge
+            cur.execute("""
+                SELECT column_name FROM information_schema.columns 
+                WHERE table_name = 'agent_expert_knowledge' 
+                AND column_name = 'embedding'
+            """)
+            has_embedding = cur.fetchone() is not None
+
+            if not has_embedding:
+                return []  # Fall to keyword fallback
+
+            cur.execute(
+                """
+                SELECT id, contexto_tags, producto_recomendado, producto_desestimado,
+                       nota_comercial, tipo, nombre_experto,
+                       1 - (embedding <=> %s::vector) AS similarity
+                FROM public.agent_expert_knowledge
+                WHERE activo = true
+                  AND embedding IS NOT NULL
+                ORDER BY embedding <=> %s::vector
+                LIMIT %s
+                """,
+                [embedding_literal, embedding_literal, limit * 2],
+            )
+            columns = [desc[0] for desc in cur.description]
+            rows = [dict(zip(columns, row)) for row in cur.fetchall()]
+            
+            # Only return rows with high semantic similarity (>= 0.45)
+            # — lower than RAG threshold because expert notes are short texts
+            strong = [r for r in rows if (r.get("similarity") or 0) >= 0.45]
+            return strong[:limit]
+        finally:
+            raw_conn.close()
+    except Exception as exc:
+        logger.debug("_search_expert_knowledge_semantic error: %s", exc)
+        return []
+
+
+def _search_expert_knowledge_keyword_fallback(query: str, limit: int = 3) -> list[dict]:
+    """
+    Fallback: búsqueda keyword contra cache in-memory de main.py.
+    Solo retorna resultados con score >= 2 (mínimo 2 terms match).
+    """
+    try:
+        try:
+            from main import fetch_expert_knowledge
+        except ImportError:
+            from backend.main import fetch_expert_knowledge
+        
+        results = fetch_expert_knowledge(query, limit=limit + 2)
+        # fetch_expert_knowledge ya hace scoring por terms.
+        # Solo retornamos si hay suficiente overlap (el score viene implícito en el orden)
+        return results[:limit]
+    except Exception:
+        return []
 
 # ─── Patrones de detección de intención ──────────────────────────────────────
 
@@ -344,6 +610,35 @@ def build_turn_context(
     # Topic change
     if topic_changed:
         lines.append("⚡ CAMBIO DE TEMA: El cliente pregunta algo NUEVO. Ignora el pedido/cotización anterior.")
+
+    # ─── Alertas críticas de superficie (prioridad absoluta, antes de instrucciones) ──
+    surface_alerts = _get_surface_alerts(diagnostic.get("surface"), diagnostic.get("condition"))
+    if surface_alerts:
+        lines.append("")
+        for alert in surface_alerts:
+            lines.append(alert)
+
+    # ─── Directrices de Gerencia (conocimiento experto elevado) ──────────
+    expert_directives = _fetch_expert_directives_for_turn(
+        user_message, diagnostic, intent,
+    )
+    if expert_directives:
+        lines.append("")
+        lines.append("═══ DIRECTRIZ DE GERENCIA (PRIORIDAD MÁXIMA) ═══")
+        for directive in expert_directives:
+            experto = directive.get("nombre_experto", "Experto Ferreinox")
+            tipo = directive.get("tipo", "")
+            nota = directive.get("nota_comercial", "")
+            rec = directive.get("producto_recomendado")
+            des = directive.get("producto_desestimado")
+            line = f"• [{tipo.upper()}] {experto}: \"{nota}\""
+            if rec:
+                line += f" → RECOMENDAR: {rec}"
+            if des:
+                line += f" | ⛔ EVITAR: {des}"
+            lines.append(line)
+        lines.append("Las directrices de Gerencia PREVALECEN sobre el RAG si hay contradicción.")
+        lines.append("═══════════════════════════════════════════════")
 
     # ─── Phase-specific instructions ────────────────────────────────────
     lines.append("")

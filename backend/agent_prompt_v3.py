@@ -134,7 +134,14 @@ Cuando el campo "Empleado interno activo" está presente, el usuario es empleado
 
 ═══ SISTEMA DE ENSEÑANZA (EXPERTOS AUTORIZADOS) ═══
 Pablo Mafla (1053774777) y Diego García (1088266407) pueden enseñarte con "ENSEÑAR" + corrección.
-  Cuando detectes señal de enseñanza → llama `registrar_conocimiento_experto`.
+  Señales de enseñanza: "ENSEÑAR", "anota esto", "guarda esto", "aprende esto", "recuerda que", "regla:".
+  Cuando detectes señal de enseñanza → llama `registrar_conocimiento_experto` con TODOS los campos:
+    - contexto_tags: superficie + condición + aplicación (las BÚSQUEDAS FUTURAS usan esto)
+    - producto_recomendado: qué SÍ usar (si lo menciona)
+    - producto_desestimado: qué NO usar (si lo menciona)
+    - nota_comercial: la REGLA completa como instrucción al agente
+    - tipo: recomendar / evitar / proceso / sustitución / alerta_superficie
+  Después de guardar, confirma al experto: "✅ Registrado. Contexto: [tags]. Lo aplicaré en consultas futuras."
   El conocimiento experto PREVALECE sobre el RAG cuando hay contradicción.
 
 ═══ CONVERSACIÓN ═══
@@ -171,23 +178,39 @@ AGENT_TOOLS_V3 = [
             "description": (
                 "Busca disponibilidad y precios de UN producto en el inventario de Ferreinox. "
                 "OBLIGATORIO llamar ANTES de mencionar cualquier precio o disponibilidad al cliente. "
-                "Incluye cantidad y presentación si el cliente las dijo (ej: '8 galones viniltex 1501'). "
-                "Para buscar bien: usa [nombre corto] + [color] + [presentación]. "
-                "Ejemplo: 'Koraza blanco galon', 'Corrotec gris galon', 'Barnex transparente galon'."
+                "SEPARA el nombre base del producto de sus variantes (color, presentación, cantidad). "
+                "Ejemplo: nombre_base='Koraza', variante_o_color='blanco galón'. "
+                "NUNCA envíes strings técnicos largos del RAG como 'Interseal 670 HS RAL 7038 (Kit A+B)'. "
+                "Envía: nombre_base='Interseal 670', variante_o_color='RAL 7038 galón'."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
+                    "nombre_base": {
+                        "type": "string",
+                        "description": (
+                            "SOLO el nombre principal del producto sin colores, kits, sufijos ni presentaciones. "
+                            "Ej: 'Interseal 670', 'Viniltex', 'Koraza', 'Corrotec', 'cerradura yale', "
+                            "'Intergard 740', 'Pintulux 3en1'. Si es código numérico, envíalo aquí: '1501'."
+                        ),
+                    },
+                    "variante_o_color": {
+                        "type": "string",
+                        "description": (
+                            "Color, presentación, cantidad o variante solicitada. "
+                            "Ej: 'blanco galón', 'RAL 7038 cuñete', 'gris 8 galones', 'transparente cuarto'. "
+                            "Si el cliente no especificó color ni presentación, omite este campo."
+                        ),
+                    },
                     "producto": {
                         "type": "string",
                         "description": (
-                            "Nombre, descripción o código del producto. Incluye cantidad y presentación "
-                            "si el cliente las especificó. Ej: '8 galones viniltex blanco 1501', "
-                            "'cerradura yale', '2 cuñetes koraza blanco'."
+                            "DEPRECADO — usa nombre_base + variante_o_color. "
+                            "Solo si no puedes separar: string completo. Ej: '8 galones viniltex blanco 1501'."
                         ),
-                    }
+                    },
                 },
-                "required": ["producto"],
+                "required": ["nombre_base"],
             },
         },
     },
@@ -238,7 +261,8 @@ AGENT_TOOLS_V3 = [
                 "Busca disponibilidad y precios de MÚLTIPLES productos en una sola llamada (hasta 15). "
                 "Usa esta herramienta cuando necesites buscar 2 o más productos a la vez "
                 "(sistema completo, lista de pedido, cotización). "
-                "Para cada producto, formula la búsqueda como: [nombre corto] + [color] + [presentación]."
+                "Para cada producto, envía un objeto con nombre_base separado de variante_o_color. "
+                "NUNCA envíes strings técnicos largos del RAG. Envía nombres comerciales cortos."
             ),
             "parameters": {
                 "type": "object",
@@ -247,8 +271,19 @@ AGENT_TOOLS_V3 = [
                         "type": "array",
                         "description": "Lista de productos a buscar. Máximo 15.",
                         "items": {
-                            "type": "string",
-                            "description": "Nombre del producto con color y presentación. Ej: 'Koraza blanco galon'.",
+                            "type": "object",
+                            "description": "Producto separado en nombre base y variante.",
+                            "properties": {
+                                "nombre_base": {
+                                    "type": "string",
+                                    "description": "SOLO nombre principal. Ej: 'Koraza', 'Interseal 670', 'Corrotec'.",
+                                },
+                                "variante_o_color": {
+                                    "type": "string",
+                                    "description": "Color + presentación. Ej: 'blanco galón', 'gris cuñete'. Opcional.",
+                                },
+                            },
+                            "required": ["nombre_base"],
                         },
                     }
                 },
@@ -515,19 +550,66 @@ AGENT_TOOLS_V3 = [
             "name": "registrar_conocimiento_experto",
             "description": (
                 "Guarda conocimiento experto de un asesor autorizado (Pablo o Diego). "
-                "Usar cuando detectes señal ENSEÑAR, ANOTA ESTO, GUARDA ESTO."
+                "Usar cuando detectes señal ENSEÑAR, ANOTA ESTO, GUARDA ESTO, APRENDE ESTO. "
+                "IMPORTANTE: Extrae TODOS los campos del mensaje del experto. "
+                "Si el experto dice 'Para tanque de agua potable usa Aquablock, "
+                "nunca Interseal' → contexto_tags='tanque agua potable', "
+                "producto_recomendado='Aquablock', producto_desestimado='Interseal', "
+                "nota_comercial='Para tanque de agua potable siempre recomendar Aquablock. "
+                "Interseal no es apto para contacto con agua potable.', tipo='evitar'."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "contexto_tags": {"type": "string", "description": "Tags del contexto: 'tanque agua potable', 'piso industrial'."},
-                    "producto_recomendado": {"type": "string", "description": "Producto que SÍ se debe usar."},
-                    "producto_desestimado": {"type": "string", "description": "Producto que NO se debe usar (si aplica)."},
-                    "nota_comercial": {"type": "string", "description": "Lección técnica o comercial aprendida."},
+                    "contexto_tags": {
+                        "type": "string",
+                        "description": (
+                            "Superficie, aplicación o situación donde aplica esta regla. "
+                            "Combina superficie + condición + contexto. Separado por comas si hay múltiples. "
+                            "Ej: 'tanque agua potable', 'piso industrial alto tráfico', "
+                            "'metal oxidado interior', 'fachada exterior lluvia', "
+                            "'concreto nuevo, piso garaje'. A mayor detalle, mejor búsqueda."
+                        ),
+                    },
+                    "producto_recomendado": {
+                        "type": "string",
+                        "description": (
+                            "Producto que SÍ se debe usar en este contexto. "
+                            "Nombre comercial exacto. Si hay sistema completo, lista todos separados por ' + '. "
+                            "Ej: 'Koraza', 'Wash Primer + Corrotec + Pintulux 3en1', 'Aquablock'. "
+                            "Si el experto no menciona qué usar, omite este campo."
+                        ),
+                    },
+                    "producto_desestimado": {
+                        "type": "string",
+                        "description": (
+                            "Producto que NO se debe usar/recomendar en este contexto. "
+                            "Ej: 'Interseal', 'Viniltex', 'Pintucoat'. "
+                            "Si el experto no dice qué evitar, omite este campo."
+                        ),
+                    },
+                    "nota_comercial": {
+                        "type": "string",
+                        "description": (
+                            "La lección completa del experto como instrucción directa al agente. "
+                            "Redáctala como una REGLA que el agente debe seguir en el futuro. "
+                            "Incluye: QUÉ hacer, POR QUÉ, y CUÁNDO aplica. "
+                            "Ej: 'Para tanques de agua potable, siempre recomendar Aquablock porque "
+                            "tiene certificación NSF para contacto con agua potable. Interseal es "
+                            "solo para inmersión industrial, no apta para consumo humano.'"
+                        ),
+                    },
                     "tipo": {
                         "type": "string",
-                        "enum": ["recomendar", "evitar", "proceso", "sustitución"],
-                        "description": "Tipo de conocimiento.",
+                        "enum": ["recomendar", "evitar", "proceso", "sustitución", "alerta_superficie"],
+                        "description": (
+                            "Tipo de conocimiento: "
+                            "'recomendar' = producto preferido para un contexto. "
+                            "'evitar' = producto prohibido para un contexto. "
+                            "'proceso' = método/paso de aplicación. "
+                            "'sustitución' = reemplazo de producto X por Y. "
+                            "'alerta_superficie' = regla de preparación de superficie crítica."
+                        ),
                     },
                 },
                 "required": ["contexto_tags", "nota_comercial", "tipo"],
