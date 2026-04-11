@@ -14777,6 +14777,10 @@ AGENT_TOOLS = [
                         "type": "string",
                         "description": "Nombre del vendedor específico a consultar (solo disponible para gerente/administrador).",
                     },
+                    "vendedor_codigo": {
+                        "type": "string",
+                        "description": "Código del vendedor en el ERP (ej: '154.011', '136'). Usar cuando el usuario da un código numérico. Solo para gerente/administrador.",
+                    },
                     "canal": {
                         "type": "string",
                         "enum": ["empresa", "mostradores", "comerciales"],
@@ -16396,7 +16400,7 @@ def _parse_periodo_ventas(periodo_str: Optional[str]):
     normalized = normalize_text_value(periodo_str or "")
 
     if "hoy" in normalized:
-        return today, today, "hoy", {"type": "date_range"}
+        return today, today, "hoy", {"type": "day", "anio": today.year, "mes": today.month, "dia": today.day}
     if "esta semana" in normalized or "semana actual" in normalized:
         start = today - timedelta(days=today.weekday())
         return start, today, "esta semana", {"type": "date_range"}
@@ -16445,6 +16449,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     periodo_raw = args.get("periodo") or "este mes"
     tienda_arg = normalize_text_value(args.get("tienda") or "")
     vendedor_arg = normalize_text_value(args.get("vendedor_nombre") or "")
+    vendedor_codigo_arg = (args.get("vendedor_codigo") or "").strip()
     canal_arg = (args.get("canal") or "empresa").lower().strip()
     tipo_venta = (args.get("tipo_venta") or "todos").lower().strip()
     desglose = (args.get("desglose") or "total").lower().strip()
@@ -16454,8 +16459,19 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     # ── Access control ─────────────────────────────────────────────────────────
     if role in {"administrador", "gerente"}:
         tienda_final = tienda_arg
-        vendedor_filter = vendedor_arg or None
-        vendedor_filter_label = vendedor_arg or None
+        # Explicit vendor code parameter takes priority
+        if vendedor_codigo_arg:
+            _clean_code = re.sub(r'[^a-zA-Z0-9]', '', vendedor_codigo_arg)
+            vendedor_filter = {"type": "codigo", "value": _clean_code}
+            vendedor_filter_label = vendedor_codigo_arg
+        # Detect if vendedor_arg looks like a vendor code (digits/dots)
+        elif vendedor_arg and re.match(r'^[\d\.]+$', vendedor_arg):
+            _clean_code = re.sub(r'[^a-zA-Z0-9]', '', vendedor_arg)
+            vendedor_filter = {"type": "codigo", "value": _clean_code}
+            vendedor_filter_label = vendedor_arg
+        else:
+            vendedor_filter = vendedor_arg or None
+            vendedor_filter_label = vendedor_arg or None
     elif role == "operador":
         if tienda_arg and tienda_arg != sede:
             return json.dumps(
@@ -16496,7 +16512,14 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
 
     # Period filter
     pf_type = period_filter.get("type", "date_range")
-    if pf_type == "month":
+    if pf_type == "day":
+        conditions.append("fn_parse_integer(anio) = :pf_anio")
+        conditions.append("fn_parse_integer(mes) = :pf_mes")
+        conditions.append("EXTRACT(DAY FROM fn_parse_date(fecha_venta))::int = :pf_dia")
+        params["pf_anio"] = period_filter["anio"]
+        params["pf_mes"] = period_filter["mes"]
+        params["pf_dia"] = period_filter["dia"]
+    elif pf_type == "month":
         conditions.append("fn_parse_integer(anio) = :pf_anio")
         conditions.append("fn_parse_integer(mes) = :pf_mes")
         params["pf_anio"] = period_filter["anio"]
@@ -16556,7 +16579,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         if isinstance(vendedor_filter, dict):
             if vendedor_filter.get("type") == "codigo":
                 conditions.append("fn_keep_alnum(codigo_vendedor) = :vendedor_codigo")
-                params["vendedor_codigo"] = str(vendedor_filter["value"])
+                params["vendedor_codigo"] = re.sub(r'[^a-zA-Z0-9]', '', str(vendedor_filter["value"]))
             elif vendedor_filter.get("type") == "grupo":
                 # For grupo filter, match the list of vendedores in that mostrador group
                 vf_norm = normalize_text_value(str(vendedor_filter.get("value", "")))
@@ -18789,13 +18812,47 @@ def generate_agent_reply_v2(
     assistant_message = response.choices[0].message
     tool_calls_made = []
 
-    max_iterations = 8
+    max_iterations = 6
     iteration = 0
+    _rag_cache: dict[str, str] = {}  # dedup cache for consultar_conocimiento_tecnico
+    _tool_type_counts: dict[str, int] = {}  # per-tool-type call budget
+    _TOOL_MAX_CALLS = {"consultar_conocimiento_tecnico": 2, "buscar_documento_tecnico": 2}
     while assistant_message.tool_calls and max_iterations > 0:
         iteration += 1
         messages.append(assistant_message)
         for tc in assistant_message.tool_calls:
-            fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+            fn_name_raw = tc.function.name if tc.function else ""
+            # ── Dedup: skip redundant RAG calls with same/similar query ──
+            _skip = False
+            if fn_name_raw == "consultar_conocimiento_tecnico":
+                try:
+                    _tc_args = json.loads(tc.function.arguments or "{}")
+                    _cache_key = normalize_text_value((_tc_args.get("pregunta") or "") + "|" + (_tc_args.get("producto") or ""))
+                    if _cache_key in _rag_cache:
+                        _skip = True
+                        result = _rag_cache[_cache_key]
+                        fn_name, fn_args = fn_name_raw, _tc_args
+                        logger.info("RAG dedup HIT: skipping duplicate call for '%s'", _cache_key[:60])
+                except Exception:
+                    pass
+            # ── Per-tool budget: prevent excessive calls of same type ──
+            if not _skip and fn_name_raw in _TOOL_MAX_CALLS:
+                _tool_type_counts[fn_name_raw] = _tool_type_counts.get(fn_name_raw, 0) + 1
+                if _tool_type_counts[fn_name_raw] > _TOOL_MAX_CALLS[fn_name_raw]:
+                    _skip = True
+                    fn_name, fn_args = fn_name_raw, {}
+                    result = json.dumps({"mensaje": "Límite de llamadas alcanzado para esta herramienta. Usa la información ya obtenida."}, ensure_ascii=False)
+                    logger.info("Tool budget exceeded for %s (max %d)", fn_name_raw, _TOOL_MAX_CALLS[fn_name_raw])
+            if not _skip:
+                fn_name, fn_args, result = _execute_agent_tool(tc, context, conversation_context)
+                # Cache RAG results
+                if fn_name == "consultar_conocimiento_tecnico":
+                    try:
+                        _tc_args = json.loads(tc.function.arguments or "{}")
+                        _cache_key = normalize_text_value((_tc_args.get("pregunta") or "") + "|" + (_tc_args.get("producto") or ""))
+                        _rag_cache[_cache_key] = result
+                    except Exception:
+                        pass
             tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
             messages.append(
                 {

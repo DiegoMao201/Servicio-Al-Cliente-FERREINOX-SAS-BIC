@@ -1,0 +1,54 @@
+{
+  "timestamp": "2026-04-10T20:05:18.085177",
+  "backend_url": "https://apicrm.datovatenexuspro.com",
+  "summary": {
+    "pass": 0,
+    "warn": 0,
+    "fail": 1,
+    "total": 1
+  },
+  "total_time_ms": 279677,
+  "tests": [
+    {
+      "name": "Laberinto Cognitivo: 4 turnos de caos",
+      "category": "laberinto",
+      "status": "FAIL",
+      "elapsed_ms": 279677,
+      "tools_called": [
+        "consultar_inventario",
+        "consultar_inventario",
+        "consultar_inventario",
+        "consultar_conocimiento_tecnico",
+        "consultar_conocimiento_tecnico",
+        "consultar_inventario",
+        "consultar_cartera",
+        "consultar_inventario_lote",
+        "consultar_conocimiento_tecnico"
+      ],
+      "checks": [
+        "  ✅ T1: Llamó inventario para el pedido B2B",
+        "  ✅ T1: NO llamó RAG (es pedido directo, no requiere diagnóstico)",
+        "  ✅ T1: Respuesta tiene precios de Koraza",
+        "  ✅ T2: Llamó RAG para diagnóstico de salitre/eflorescencia",
+        "  ✅ T2: Respuesta tiene diagnóstico técnico sobre salitre",
+        "  ✅ T3: Llamó herramienta CRM/BI para cartera",
+        "  ✅ T3: Llamó consultar_cartera (directa o encadenada) para datos de cartera",
+        "  ✅ T4: Llamó inventario para cotización unificada",
+        "  ✅ T4: Menciona Koraza 5 galones",
+        "  ✅ T4: Mantiene brochas del pedido original",
+        "  ✅ T4: Candados eliminados del pedido",
+        "  ✅ T4: Incluye productos para el muro con salitre (merge T2→T4)",
+        "  ✅ T4: IVA desglosado en la cotización",
+        "  ✅ T4: Cotización tiene precio total",
+        "  ✅ T4: NO filtra datos de cartera de T3 en la cotización"
+      ],
+      "warnings": [],
+      "failures": [
+        "  ❌ FAIL: T2: NO mezcla con el carrito B2B de T1 (separación de contextos)",
+        "  ❌ FAIL: T3: NO genera cotización (es consulta de cartera pura)",
+        "  ❌ FAIL: T3: Respuesta tiene datos de cartera o indicación de búsqueda"
+      ],
+      "response_preview": "Aquí tienes la cotización completa y actualizada, además de la información sobre el sistema para el muro exterior con salitre:\n\n### Cotización Actualizada\n\n📦 **Resumen de tu pedido:**\n\n1. **Koraza Blanco (5 galones)** \n   - **Cantidad:** 2\n   - **Precio unitario:** $117,563 (antes de IVA)\n   - **Subtotal:** $117,563 * 2 = $235,126\n\n2. **Brochas Goya Profesional (4 pulgadas)** \n   - **Cantidad:** 6"
+    }
+  ]
+}
