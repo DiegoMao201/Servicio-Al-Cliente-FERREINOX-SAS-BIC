@@ -14550,6 +14550,17 @@ Si tu respuesta va a contener recomendaciones de producto, USA <thinking>:
 
 <thinking>
 0. ¿Es un empleado interno con lista de productos? → FAST-TRACK B2B (sin diagnóstico, directo a inventario+cotización).
+0a. 🚨 PUERTA DIAGNÓSTICA OBLIGATORIA (INVIOLABLE):
+   Si el cliente pide ayuda para pintar/proteger/recubrir algo, VERIFICA que tienes ESTOS 3 DATOS MÍNIMOS:
+   ✅ (A) TIPO DE SUPERFICIE: ¿Qué va a pintar? (piso, muro, fachada, techo, metal, madera, tanque...)
+   ✅ (B) CONDICIÓN/USO: ¿Tráfico pesado/liviano? ¿Interior/exterior? ¿Húmedo/seco? ¿Industrial/residencial?
+   ✅ (C) ÁREA O CANTIDAD: ¿Cuántos m²? ¿Cuántas unidades?
+   → Si FALTA alguno de (A), (B) o (C) → PARA. NO recomiendes productos. NO llames RAG aún.
+     Haz 1-2 preguntas conversacionales para completar los datos faltantes.
+     Ejemplo: "necesito pintar un piso" → Falta (B) y (C). Pregunta: "¿Es un piso de tráfico pesado como bodega o liviano como oficina? ¿Y cuántos metros cuadrados son?"
+   → Si tienes (A) y (B) pero falta (C) → Puedes recomendar SISTEMA TÉCNICO pero NO calcules cantidades ni precios.
+   → Si tienes los 3 → Procede con RAG + recomendación completa.
+   ⛔ EXCEPCIÓN: Si el cliente NOMBRA productos específicos ("dame 2 galones de Koraza") → es pedido directo, no asesoría. Sáltate esta puerta.
 0b. ¿Acabo de enviar una cotización y el usuario está CORRIGIENDO un ítem? → PROTOCOLO CORRECCIÓN (no RAG, solo actualizar ítem, mantener el resto intacto, recalcular total).
 0c. ⚡ ¿El cliente está hablando de un TEMA NUEVO/DIFERENTE al anterior? (otro producto, otra superficie, otro proyecto, cambió de tema)
    → Sí → RESETEAR. No arrastrar productos ni contexto del tema anterior. Tratar como solicitud NUEVA.
@@ -18715,6 +18726,81 @@ def generate_agent_reply_v2(
         tool_names = [tc["name"] for tc in tool_calls_made]
 
     # ══════════════════════════════════════════════════════════════════════
+    # GUARDIA DIAGNÓSTICA: Si el usuario pide asesoría genérica (sin dar
+    # condición/uso/área) y el agente ya dio sistema completo de productos
+    # SIN hacer preguntas diagnósticas → forzar reescritura a preguntas.
+    # ══════════════════════════════════════════════════════════════════════
+    _resp_lower_diag = (assistant_message.content or "").lower() if assistant_message.content else ""
+    _user_lower_diag = (user_message or "").lower()
+    # Detect vague advisory request (no specific conditions given)
+    _vague_advisory_signals = [
+        "necesito pintar", "quiero pintar", "cómo pinto", "como pinto",
+        "qué pintura", "que pintura", "qué necesito para pintar", "que necesito para pintar",
+        "sistema para pintar", "pintar un piso", "pintar un muro", "pintar una fachada",
+        "pintar una bodega", "pintar un techo", "proteger un piso", "recubrir",
+        "pintar una pared", "impermeabilizar", "pintar metal",
+    ]
+    _has_vague_advisory = any(s in _user_lower_diag for s in _vague_advisory_signals)
+    # Check if user already gave condition details
+    _has_condition_details = any(s in _user_lower_diag for s in [
+        "tráfico pesado", "trafico pesado", "tráfico liviano", "trafico liviano",
+        "interior", "exterior", "industrial", "residencial", "húmedo", "humedo",
+        "montacargas", "cemento", "concreto", "epóxic", "epoxic", "aceite", "grasa",
+        "salitre", "eflorescencia", "oxidado", "corrosión", "corrosion",
+        "metros cuadrados", "m2", "m²",
+    ])
+    # Check if agent gave a full product system WITHOUT asking questions
+    _has_system_reco = sum(1 for kw in [
+        "imprimante", "acabado", "preparación", "sistema completo", "interseal",
+        "intergard", "koraza", "pintucoat", "viniltex", "poliuretano",
+    ] if kw in _resp_lower_diag) >= 2
+    _agent_asked_questions = _resp_lower_diag.rstrip().endswith("?") or _resp_lower_diag.count("?") >= 2
+    _is_first_advisory = not any(
+        "consultar_conocimiento_tecnico" in (msg.get("contenido") or "")
+        for msg in recent_messages[-6:] if msg.get("direction") == "outbound"
+    )
+    # B2B fast-track should bypass this guard
+    _is_b2b_request = bool(conversation_context.get("internal_auth")) and any(
+        s in _user_lower_diag for s in ["pedido", "dame", "necesito ", "galones", "unidades", "docena"]
+    )
+    if (_has_vague_advisory and not _has_condition_details and _has_system_reco
+            and not _is_b2b_request and not is_simple_greeting(user_message)):
+        logger.warning(
+            "GUARDIA DIAGNÓSTICA: agente recomendó sistema completo sin diagnóstico previo. "
+            "Usuario dio petición vaga sin condición/uso/área. Forzando reescritura a preguntas."
+        )
+        messages.append(assistant_message)
+        messages.append({
+            "role": "system",
+            "content": (
+                "⛔ VIOLACIÓN DE PUERTA DIAGNÓSTICA: El cliente pidió ayuda para pintar pero "
+                "NO dio suficiente información (falta condición de uso, tipo de superficie detallada, o área). "
+                "Tú respondiste con un SISTEMA COMPLETO DE PRODUCTOS. Esto es INCORRECTO. "
+                "REESCRIBE tu respuesta siguiendo este formato:\n"
+                "1. Reconoce brevemente la solicitud del cliente.\n"
+                "2. Haz 1-2 preguntas CLAVE para completar el diagnóstico:\n"
+                "   - Si falta condición: '¿Es tráfico pesado (montacargas, vehículos) o liviano (peatonal)?'\n"
+                "   - Si falta interior/exterior: '¿Es en interior o exterior?'\n"
+                "   - Si falta área: '¿Cuántos metros cuadrados necesitas cubrir?'\n"
+                "3. NO nombres productos específicos. NO armes un sistema. NO des precios.\n"
+                "4. Sé conversacional y breve (3-4 líneas máximo).\n"
+                "Ejemplo correcto: 'Para recomendarte el sistema ideal, necesito saber: "
+                "¿el piso es de tráfico pesado (bodega, montacargas) o liviano (oficina, pasillo)? "
+                "¿Es interior o exterior? ¿Y cuántos metros cuadrados son aproximadamente?'"
+            ),
+        })
+        t_diag = time.time()
+        diag_response = client.chat.completions.create(
+            model=get_openai_model(),
+            messages=messages,
+            tools=AGENT_TOOLS,
+            tool_choice="none",
+            temperature=0.3,
+        )
+        assistant_message = diag_response.choices[0].message
+        logger.info("GUARDIA DIAGNÓSTICA retry completed: %dms", int((time.time() - t_diag) * 1000))
+
+    # ══════════════════════════════════════════════════════════════════════
     # GUARDIA FLUJO-COMERCIAL: Si es el PRIMER mensaje de una asesoría
     # (no hay cotización previa en el historial reciente) y el agente
     # ya incluyó precios/cotización SIN que el cliente los pidiera,
@@ -18733,11 +18819,20 @@ def generate_agent_reply_v2(
     _history_has_quote = any("$" in (msg.get("contenido") or "") and "total" in (msg.get("contenido") or "").lower()
                             for msg in recent_messages[-6:] if msg.get("direction") == "outbound")
     # Check if user explicitly asked for "sistema completo" / described surface (= advisory)
+    # Also catch continuation messages that provide condition details (still advisory, not price confirmation)
     _is_advisory_request = any(s in _user_lower_fc for s in [
         "sistema completo", "sistema de pintura", "necesito pintar", "quiero pintar",
         "dame el sistema", "qué sistema", "que sistema", "cómo pinto", "como pinto",
         "qué necesito para", "que necesito para", "qué pintura", "que pintura",
     ])
+    # Detect continuation of advisory flow (user giving condition details, not asking for prices)
+    _is_advisory_continuation = any(s in _user_lower_fc for s in [
+        "tráfico pesado", "trafico pesado", "tráfico liviano", "trafico liviano",
+        "es interior", "es exterior", "es industrial", "es residencial",
+        "es de bodega", "es de oficina", "es húmedo", "es humedo",
+        "tiene salitre", "tiene humedad", "tiene óxido", "tiene oxido",
+    ]) and not _is_confirmation
+    _is_advisory_request = _is_advisory_request or _is_advisory_continuation
     if (_has_prices_fc and not _is_confirmation and not _history_has_quote and _is_advisory_request
             and not is_simple_greeting(user_message)):
         logger.warning(
