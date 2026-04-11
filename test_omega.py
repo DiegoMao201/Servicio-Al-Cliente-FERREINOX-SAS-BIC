@@ -1173,10 +1173,19 @@ def test_laberinto_cognitivo():
 
         # ASSERT: Debe llamar herramienta CRM/BI
         has_crm = any(t in tools3 for t in [
-            "consultar_cartera_cliente", "consultar_compras_cliente",
-            "buscar_cliente_por_nombre", "consultar_cupo_credito",
+            "consultar_cartera", "consultar_compras",
+            "verificar_identidad", "consultar_cupo_credito",
         ])
         tr.check(has_crm, "T3: Llamó herramienta CRM/BI para cartera")
+
+        # Should chain: verificar_identidad → consultar_cartera in same turn
+        has_verify = "verificar_identidad" in tools3
+        has_cartera = "consultar_cartera" in tools3
+        tr.check(
+            has_verify and has_cartera,
+            "T3: Encadenó verificar_identidad → consultar_cartera en el mismo turno",
+            critical=True,
+        )
 
         # NO debe cotizar nada — es solo consulta de cartera
         has_quote = "$" in resp3 and any(kw in resp3_low for kw in ["subtotal", "total", "cotizac"])

@@ -14421,8 +14421,13 @@ MEMORIA LISTAS: Si el cliente responde "1", "la segunda" → busca en historial 
 
 VERIFICACIÓN DE IDENTIDAD Y CLIENTES:
 - Para cartera/saldos: pide cédula/NIT y usa verificar_identidad. Si ya verificado, NO pidas de nuevo.
-- NUNCA reveles datos financieros sin verificación previa.
+- NUNCA reveles datos financieros sin verificación previa (excepto a empleados internos autenticados).
 - REGLA NIF (10 DÍGITOS): Si el cliente envía un número de 10 dígitos (cédula o NIT), búscalo con `verificar_identidad`. La herramienta busca en la columna NIF de la tabla agent_clientes. Si lo encuentra, toda la información del cliente (nombre, dirección, ciudad, email, segmento, razón social, categoría) se devuelve y se usa para alimentar el PDF de cotización/pedido automáticamente. NO pidas datos que ya tienes del NIF.
+- 🔑 REGLA EMPLEADO INTERNO + CARTERA/CRM: Si el usuario es un empleado autenticado (internal_auth presente) y pide cartera, compras o datos de un TERCERO (otro cliente por nombre o NIT):
+  1. Llama `verificar_identidad` con el nombre/NIT del cliente consultado.
+  2. EN EL MISMO TURNO, si la verificación fue exitosa, llama INMEDIATAMENTE `consultar_cartera` y/o `consultar_compras`.
+  3. NO pares la conversación solo con la verificación. El empleado espera ver los datos, no que le digas "identidad verificada".
+  4. Si `verificar_identidad` falla (no encontrado), informa que no se encontró y sugiere NIT exacto. NO llames cartera sin verificar.
 
 DOCUMENTOS: Si piden ficha técnica → `buscar_documento_tecnico` inmediatamente. Si devuelve múltiples, muestra opciones.
 
@@ -14557,6 +14562,19 @@ Si tu respuesta va a contener recomendaciones de producto, USA <thinking>:
    REGLA MULTI-INTENT: Llama TODAS las herramientas necesarias (en paralelo si son independientes) y responde con TODAS las secciones.
    PROHIBIDO olvidar intenciones. PROHIBIDO responder solo a una parte del mensaje.
    Si una intención es B2B (lista de productos con cantidades) y otra es asesoría técnica → la asesoría SÍ necesita RAG, el B2B NO.
+0e. 🧠 SNAPSHOT DE ESTADO ACTIVO — Antes de responder, reconstruye mentalmente:
+   - ESTADO_CARRITO_B2B: ¿Hay un pedido/cotización en curso? ¿Qué productos, cantidades y modificaciones pidió el usuario?
+   - ESTADO_DIAGNOSTICO_ACTUAL: ¿Hay un problema técnico siendo evaluado? ¿Cuál es la superficie/condición?
+   - CONSULTAS_INDEPENDIENTES: ¿Hay consultas de cartera/BI que NO deben mezclarse con el carrito ni con el diagnóstico?
+   ⛔ REGLA ANTI-CRUCE DE ESTADOS: Cuando respondas a un DIAGNÓSTICO TÉCNICO, responde SOLO sobre ese diagnóstico.
+   NO menciones productos del ESTADO_CARRITO_B2B (brochas, candados, etc.) en tu respuesta técnica.
+   NO menciones datos de cartera/BI en cotizaciones.
+   SOLO mezcla estados cuando el usuario EXPLÍCITAMENTE lo pida (ej: "agrega lo del muro al pedido").
+0f. 🔒 REGLA ANTI-AMNESIA DE CARRITO:
+   Los ítems del ESTADO_CARRITO_B2B son INMUTABLES. Al consolidar una cotización:
+   - MANTÉN todos los ítems anteriores a menos que el usuario use palabras como "quita", "elimina", "cancela", "sin" o "ya no".
+   - Si el usuario dice "agrega" o "incluye" → SUMAR al carrito existente, no reemplazar.
+   - Si el usuario modifica un ítem (ej: "cambia 10gal a 5gal") → cambiar SOLO ese ítem, mantener TODO lo demás intacto.
 1. ¿El cliente NOMBRÓ productos específicos? (ej: "con Corrotec y poliuretano", "dame Pintucoat gris")
    → Sí → ¿Son QUÍMICAMENTE COMPATIBLES? (Revisar familias: Alquídica+Alquídica=✅, Epóxica+PU=✅, Alquídica+PU=❌, Alquídica sobre Epóxica=❌)
      → Si COMPATIBLES → usar esos productos, respetar elección del cliente.
@@ -14636,7 +14654,8 @@ AGENT_TOOLS = [
         "function": {
             "name": "consultar_cartera",
             "description": "Consulta el estado de cartera (saldos pendientes, documentos vencidos) del cliente verificado. "
-            "Solo funciona si el cliente ya está verificado.",
+            "Solo funciona si el cliente ya está verificado. IMPORTANTE: Si acabas de llamar verificar_identidad exitosamente, "
+            "llama esta herramienta EN EL MISMO TURNO para dar datos completos al usuario.",
             "parameters": {
                 "type": "object",
                 "properties": {},
