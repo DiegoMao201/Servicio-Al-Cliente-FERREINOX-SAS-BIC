@@ -1149,8 +1149,9 @@ def test_laberinto_cognitivo():
         # NO debe mezclar con el carrito de T1 (items específicos del pedido)
         # "brocha" sola es legítima en instrucciones de aplicación de pintura.
         # Detectamos contamination del CARRITO: frases específicas del pedido B2B.
+        # Nota: "el pedido" es demasiado genérico (puede significar "la solicitud").
         cart_specific = ["brochas de 4", "6 brochas", "candado", "40mm", "docena de",
-                         "pedido anterior", "pedido que", "el pedido"]
+                         "pedido anterior", "pedido que"]
         mixed_t1 = any(kw in resp2_low for kw in cart_specific)
         tr.check(not mixed_t1, "T2: NO mezcla con el carrito B2B de T1 (separación de contextos)")
 
