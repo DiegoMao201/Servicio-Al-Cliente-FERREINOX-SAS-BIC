@@ -24,7 +24,10 @@ _main = None
 def _get_main():
     global _main
     if _main is None:
-        from backend import main as _m
+        try:
+            import main as _m
+        except ImportError:
+            from backend import main as _m
         _main = _m
     return _main
 
@@ -44,8 +47,12 @@ def generate_agent_reply_v3(
     Motor V3 del agente FERRO.
     Misma firma y mismo dict de retorno que generate_agent_reply_v2.
     """
-    from backend.agent_context import build_turn_context, classify_intent
-    from backend.agent_prompt_v3 import AGENT_SYSTEM_PROMPT_V3, AGENT_TOOLS_V3
+    try:
+        from agent_context import build_turn_context, classify_intent
+        from agent_prompt_v3 import AGENT_SYSTEM_PROMPT_V3, AGENT_TOOLS_V3
+    except ImportError:
+        from backend.agent_context import build_turn_context, classify_intent
+        from backend.agent_prompt_v3 import AGENT_SYSTEM_PROMPT_V3, AGENT_TOOLS_V3
 
     m = _get_main()
     client = m.get_openai_client()
@@ -323,7 +330,10 @@ def _guardia_quimica(assistant_message, messages, tool_calls_made, context, conv
                 "⛔ V3 GUARDIA QUÍMICA: %s (%s) + %s (%s)",
                 fam_a, products_a, fam_b, products_b,
             )
-            from backend.agent_prompt_v3 import AGENT_TOOLS_V3
+            try:
+                from agent_prompt_v3 import AGENT_TOOLS_V3
+            except ImportError:
+                from backend.agent_prompt_v3 import AGENT_TOOLS_V3
             messages.append(assistant_message)
             messages.append({
                 "role": "system",
@@ -363,7 +373,10 @@ def _guardia_quimica(assistant_message, messages, tool_calls_made, context, conv
 
 def _guardia_bicomponente(assistant_message, messages, tool_calls_made, context, conversation_context, m):
     """Detecta bicomponentes sin catalizador y fuerza corrección."""
-    from backend.agent_prompt_v3 import AGENT_TOOLS_V3
+    try:
+        from agent_prompt_v3 import AGENT_TOOLS_V3
+    except ImportError:
+        from backend.agent_prompt_v3 import AGENT_TOOLS_V3
     response_text = (assistant_message.content or "").lower()
 
     for prod_signals, cat_signals, prod_name, cat_name in _BICOMP_CHECKS:
@@ -409,7 +422,10 @@ def _guardia_bicomponente(assistant_message, messages, tool_calls_made, context,
 
 def _guardia_iva(assistant_message, messages, m):
     """Si la cotización no tiene desglose de IVA, fuerza corrección."""
-    from backend.agent_prompt_v3 import AGENT_TOOLS_V3
+    try:
+        from agent_prompt_v3 import AGENT_TOOLS_V3
+    except ImportError:
+        from backend.agent_prompt_v3 import AGENT_TOOLS_V3
     text = assistant_message.content or ""
     has_prices = "$" in text and any(
         kw in text.lower() for kw in ["total", "precio", "cotización", "cotizacion", "pedido"]

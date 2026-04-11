@@ -39,7 +39,10 @@ def _get_agent_reply_fn():
     """Retorna generate_agent_reply_v2 o v3 según AGENT_PROMPT_VERSION."""
     version = os.getenv("AGENT_PROMPT_VERSION", "v2").strip().lower()
     if version == "v3":
-        from backend.agent_v3 import generate_agent_reply_v3
+        try:
+            from agent_v3 import generate_agent_reply_v3
+        except ImportError:
+            from backend.agent_v3 import generate_agent_reply_v3
         return generate_agent_reply_v3
     return generate_agent_reply_v2
 
@@ -20844,7 +20847,10 @@ async def admin_agent_test(request: Request, admin_key: str = Header(None, alias
 
     try:
         if prompt_version == "v3":
-            from backend.agent_v3 import generate_agent_reply_v3
+            try:
+                from agent_v3 import generate_agent_reply_v3
+            except ImportError:
+                from backend.agent_v3 import generate_agent_reply_v3
             _agent_fn = generate_agent_reply_v3
         elif prompt_version == "v2":
             _agent_fn = generate_agent_reply_v2
