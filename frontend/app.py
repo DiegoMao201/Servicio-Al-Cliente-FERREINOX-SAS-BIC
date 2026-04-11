@@ -92,7 +92,7 @@ def main():
     tab1, tab2 = st.tabs(["Datos", "Análisis rápido"])
 
     with tab1:
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width="stretch")
 
     with tab2:
         st.subheader("Análisis automático")

@@ -117,10 +117,10 @@ def main():
         )
 
     st.subheader("Resumen actual")
-    st.dataframe(snapshot_df, use_container_width=True)
+    st.dataframe(snapshot_df, width="stretch")
 
     st.subheader("Últimos eventos")
     if recent_logs_df.empty:
         st.info("Aún no hay eventos registrados en sync_run_log.")
     else:
-        st.dataframe(recent_logs_df, use_container_width=True)
+        st.dataframe(recent_logs_df, width="stretch")

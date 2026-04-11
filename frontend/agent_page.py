@@ -133,16 +133,16 @@ def main():
         if conversations.empty:
             st.info("Aún no hay conversaciones registradas.")
         else:
-            st.dataframe(conversations, use_container_width=True)
+            st.dataframe(conversations, width="stretch")
 
     with tab2:
         if messages.empty:
             st.info("Aún no hay mensajes registrados.")
         else:
-            st.dataframe(messages, use_container_width=True)
+            st.dataframe(messages, width="stretch")
 
     with tab3:
         if tasks.empty:
             st.info("Aún no hay tareas registradas.")
         else:
-            st.dataframe(tasks, use_container_width=True)
+            st.dataframe(tasks, width="stretch")

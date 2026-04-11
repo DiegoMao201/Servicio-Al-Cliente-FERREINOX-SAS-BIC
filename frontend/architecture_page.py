@@ -71,7 +71,7 @@ def main():
     metric_3.metric("Vistas PostgREST", sum(1 for spec in CATALOG_SPECS if spec["postgrest_views"]))
 
     st.subheader("Mapa completo")
-    st.dataframe(status_df, use_container_width=True)
+    st.dataframe(status_df, width="stretch")
 
     st.subheader("Detalle por archivo")
     catalog_labels = [f'{spec["source_label"]} | {spec["file_name"]}' for spec in CATALOG_SPECS]
@@ -96,7 +96,7 @@ def main():
         st.write(f"Notas operativas: {selected_spec['notes']}")
 
     st.subheader("Resumen funcional")
-    st.dataframe(pd.DataFrame(get_catalog_rows()), use_container_width=True)
+    st.dataframe(pd.DataFrame(get_catalog_rows()), width="stretch")
 
     st.subheader("Inventario vivo de Dropbox")
     dropbox_sources = get_dropbox_sources()
@@ -134,7 +134,7 @@ def main():
                 )
 
         inventory_df = pd.DataFrame(inventory_rows)
-        st.dataframe(inventory_df, use_container_width=True)
+        st.dataframe(inventory_df, width="stretch")
     else:
         st.info("No hay fuentes Dropbox configuradas para construir el inventario vivo.")
 

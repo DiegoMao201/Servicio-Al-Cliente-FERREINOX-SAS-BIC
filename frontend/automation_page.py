@@ -67,7 +67,7 @@ def main():
             "Matriz de enrutamiento",
             "Esta tabla deja explícita la lógica que luego debe ejecutar el backend para correo, tareas y escalamiento por área.",
         )
-        st.dataframe(snapshot["routing_rules_df"], use_container_width=True)
+        st.dataframe(snapshot["routing_rules_df"], width="stretch")
 
     with right_col:
         render_section_intro(
@@ -77,11 +77,11 @@ def main():
         if snapshot["intents_df"].empty:
             st.info("Aún no hay intenciones suficientes para resumir.")
         else:
-            st.dataframe(snapshot["intents_df"], use_container_width=True)
+            st.dataframe(snapshot["intents_df"], width="stretch")
         if snapshot["areas_df"].empty:
             st.info("Aún no hay tareas suficientes para resumir por área.")
         else:
-            st.dataframe(snapshot["areas_df"], use_container_width=True)
+            st.dataframe(snapshot["areas_df"], width="stretch")
 
     st.markdown("### Salida esperada por caso")
     st.markdown(

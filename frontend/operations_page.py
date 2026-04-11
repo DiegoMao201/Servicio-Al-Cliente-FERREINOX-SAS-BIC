@@ -289,7 +289,7 @@ def _render_orders_queue(snapshot):
     render_highlight(
         f"<strong>Pedidos visibles:</strong> {len(filtered_df)}. Esta bandeja muestra pedidos creados desde chat y permite leer qué ya quedó confirmado, exportado o todavía requiere gestión humana."
     )
-    st.dataframe(filtered_df, use_container_width=True)
+    st.dataframe(filtered_df, width="stretch")
 
 
 def _render_dispatch_transfer_queue(snapshot):
@@ -303,19 +303,19 @@ def _render_dispatch_transfer_queue(snapshot):
         if dispatches_df.empty:
             st.info("No hay despachos pendientes o en tránsito en este momento.")
         else:
-            st.dataframe(dispatches_df, use_container_width=True)
+            st.dataframe(dispatches_df, width="stretch")
     with right_col:
         st.markdown("### Traslados activos")
         if transfers_df.empty:
             st.info("No hay solicitudes de traslado activas.")
         else:
-            st.dataframe(transfers_df, use_container_width=True)
+            st.dataframe(transfers_df, width="stretch")
     with third_col:
         st.markdown("### Compras / Abastecimiento")
         if procurement_df.empty:
             st.info("No hay solicitudes abiertas de abastecimiento a compras.")
         else:
-            st.dataframe(procurement_df, use_container_width=True)
+            st.dataframe(procurement_df, width="stretch")
 
 
 def _render_base_status(snapshot, dropbox_sources, db_target):
@@ -420,7 +420,7 @@ def _render_base_status(snapshot, dropbox_sources, db_target):
         """
     )
 
-    st.dataframe(snapshot["raw_df"], use_container_width=True)
+    st.dataframe(snapshot["raw_df"], width="stretch")
 
 
 def main():
@@ -492,4 +492,4 @@ def main():
         if base_snapshot["latest_runs_df"].empty:
             st.info("Aún no hay registros recientes en sync_run_log para esta base.")
         else:
-            st.dataframe(base_snapshot["latest_runs_df"], use_container_width=True)
+            st.dataframe(base_snapshot["latest_runs_df"], width="stretch")

@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 import streamlit as st
 
@@ -14,6 +16,16 @@ from frontend.ui import render_highlight, render_message, render_metric_card, re
 
 def format_conversation_label(row):
     return f"#{row['id']} · {row['cliente']} · {row['intent']} · {row['estado_operativo']}"
+
+
+def _format_context_value(value):
+    if value is None:
+        return ""
+    if isinstance(value, (dict, list, tuple, set)):
+        return json.dumps(value, ensure_ascii=False)
+    if isinstance(value, bool):
+        return "Si" if value else "No"
+    return str(value)
 
 
 def main():
@@ -158,7 +170,7 @@ def main():
     action_col_1, action_col_2, action_col_3 = st.columns(3)
     with action_col_1:
         close_disabled = bool(closure_recommendation["already_managed"])
-        if st.button("Marcar como gestionada y cerrar", use_container_width=True, disabled=close_disabled):
+        if st.button("Marcar como gestionada y cerrar", width="stretch", disabled=close_disabled):
             result = mark_conversation_as_managed(
                 db_uri,
                 conversation_id,
@@ -169,19 +181,19 @@ def main():
             st.rerun()
     with action_col_2:
         reopen_disabled = conversation.get("estado") != "cerrada"
-        if st.button("Reabrir para seguimiento", use_container_width=True, disabled=reopen_disabled):
+        if st.button("Reabrir para seguimiento", width="stretch", disabled=reopen_disabled):
             reopen_conversation_for_followup(db_uri, conversation_id, note=resolution_note or None)
             st.success("La conversación volvió a seguimiento.")
             st.rerun()
     with action_col_3:
-        if st.button("🔄 Reiniciar conversación", use_container_width=True, type="secondary"):
+        if st.button("🔄 Reiniciar conversación", width="stretch", type="secondary"):
             reset_conversation_context(db_uri, conversation_id)
             st.success("Contexto limpiado. El agente arranca desde cero con este contacto.")
             st.rerun()
 
     context_df = pd.DataFrame(
         [
-            {"Clave": key, "Valor": value}
+            {"Clave": str(key), "Valor": _format_context_value(value)}
             for key, value in (conversation.get("contexto") or {}).items()
         ]
     )
@@ -205,7 +217,7 @@ def main():
             operator_tasks_df["estado"] = operator_tasks_df["estado_operativo"]
             st.dataframe(
                 operator_tasks_df[["tipo_tarea", "prioridad", "estado", "area_destino", "resumen", "updated_at"]],
-                use_container_width=True,
+                width="stretch",
             )
 
     with tab_comercial:
@@ -215,16 +227,16 @@ def main():
             if detail["quotes_df"].empty:
                 st.info("No hay cotizaciones asociadas a esta conversación.")
             else:
-                st.dataframe(detail["quotes_df"], use_container_width=True)
+                st.dataframe(detail["quotes_df"], width="stretch")
         with right_col:
             st.markdown("### Pedidos")
             if detail["orders_df"].empty:
                 st.info("No hay pedidos asociados a esta conversación.")
             else:
-                st.dataframe(detail["orders_df"], use_container_width=True)
+                st.dataframe(detail["orders_df"], width="stretch")
 
     with tab_contexto:
         if context_df.empty:
             st.info("Esta conversación no tiene contexto técnico adicional.")
         else:
-            st.dataframe(context_df, use_container_width=True)
+            st.dataframe(context_df, width="stretch")

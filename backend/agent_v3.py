@@ -48,10 +48,10 @@ def generate_agent_reply_v3(
     Misma firma y mismo dict de retorno que generate_agent_reply_v2.
     """
     try:
-        from agent_context import build_turn_context, classify_intent
+        from agent_context import build_turn_context, classify_intent, extract_diagnostic_data
         from agent_prompt_v3 import AGENT_SYSTEM_PROMPT_V3, AGENT_TOOLS_V3
     except ImportError:
-        from backend.agent_context import build_turn_context, classify_intent
+        from backend.agent_context import build_turn_context, classify_intent, extract_diagnostic_data
         from backend.agent_prompt_v3 import AGENT_SYSTEM_PROMPT_V3, AGENT_TOOLS_V3
 
     m = _get_main()
@@ -127,6 +127,21 @@ def generate_agent_reply_v3(
 
     messages.append({"role": "user", "content": user_message})
 
+    initial_intent = classify_intent(user_message, conversation_context, recent_messages, internal_auth)
+    initial_diagnostic = extract_diagnostic_data(user_message, recent_messages)
+
+    def _needs_forced_technical_retry() -> bool:
+        if tool_calls_made or assistant_message.tool_calls:
+            return False
+        if initial_intent != "asesoria":
+            return False
+        if not (initial_diagnostic.get("surface") and initial_diagnostic.get("interior_exterior") and initial_diagnostic.get("condition")):
+            return False
+        draft_text = (assistant_message.content or "").lower()
+        if any(token in draft_text for token in ["voy a consultar", "voy a revisar", "un momento", "déjame revisar", "dejame revisar"]):
+            return True
+        return False
+
     # ══════════════════════════════════════════════════════════════════════
     # LLM CALL + TOOL LOOP
     # ══════════════════════════════════════════════════════════════════════
@@ -143,6 +158,30 @@ def generate_agent_reply_v3(
 
     assistant_message = response.choices[0].message
     tool_calls_made = []
+
+    if _needs_forced_technical_retry():
+        logger.info("V3 retry: advisory response promised a technical lookup without calling tools")
+        messages.append({
+            "role": "assistant",
+            "content": assistant_message.content or "",
+        })
+        messages.append({
+            "role": "system",
+            "content": (
+                "CORRECCIÓN OBLIGATORIA: ya tienes superficie, ubicación y condición suficientes para asesoría técnica. "
+                "Debes llamar consultar_conocimiento_tecnico AHORA en este mismo turno antes de responder al cliente. "
+                "No prometas revisar más tarde; usa la herramienta y luego entrega la recomendación."
+            ),
+        })
+        response = client.chat.completions.create(
+            model=m.get_openai_model(),
+            messages=messages,
+            tools=AGENT_TOOLS_V3,
+            tool_choice="auto",
+            temperature=0.3,
+        )
+        assistant_message = response.choices[0].message
+        logger.info("V3 retry completed after missed advisory tool call")
 
     max_iterations = 6
     iteration = 0

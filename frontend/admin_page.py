@@ -63,8 +63,8 @@ def main():
             "Señales que sí debe vigilar el administrador",
             "Aquí se resume la salud general del sistema para decidir cuándo intervenir o cuándo dejar operar solo al equipo.",
         )
-        st.dataframe(crm_snapshot["areas_df"], use_container_width=True)
+        st.dataframe(crm_snapshot["areas_df"], width="stretch")
         if readiness["latest_runs_df"].empty:
             st.info("No hay eventos recientes en sync_run_log para mostrar.")
         else:
-            st.dataframe(readiness["latest_runs_df"].head(8), use_container_width=True)
+            st.dataframe(readiness["latest_runs_df"].head(8), width="stretch")

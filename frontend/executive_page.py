@@ -84,7 +84,7 @@ def main():
         open_queue_df = crm_snapshot["conversations_df"][crm_snapshot["conversations_df"]["estado"] != "cerrada"].copy()
         st.dataframe(
             open_queue_df[["cliente", "estado_operativo", "intent", "prioridad", "pendientes_operativos", "mensajes", "last_message_at"]].head(20),
-            use_container_width=True,
+            width="stretch",
         )
 
         if not crm_snapshot["intents_df"].empty:
@@ -102,7 +102,7 @@ def main():
         else:
             st.dataframe(
                 closure_queue_df[["cliente", "intent", "prioridad", "pendientes_operativos", "resumen", "last_message_at"]].head(20),
-                use_container_width=True,
+                width="stretch",
             )
 
         render_section_intro(
@@ -112,16 +112,16 @@ def main():
         if crm_snapshot["areas_df"].empty:
             st.info("Aún no hay tareas suficientes para resumir por área.")
         else:
-            st.dataframe(crm_snapshot["areas_df"], use_container_width=True)
+            st.dataframe(crm_snapshot["areas_df"], width="stretch")
 
     with tab_datos:
         render_section_intro(
             "Estado de la base oficial",
             "Aquí queda explícito si la base raw está completa y si la capa SQL de PostgREST ya fue reaplicada después de Dropbox.",
         )
-        st.dataframe(readiness["raw_df"], use_container_width=True)
+        st.dataframe(readiness["raw_df"], width="stretch")
         st.markdown("### Últimos eventos")
         if readiness["latest_runs_df"].empty:
             st.info("Aún no hay registros en sync_run_log para esta base.")
         else:
-            st.dataframe(readiness["latest_runs_df"], use_container_width=True)
+            st.dataframe(readiness["latest_runs_df"], width="stretch")

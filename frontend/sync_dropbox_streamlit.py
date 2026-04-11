@@ -277,7 +277,7 @@ def main():
     if repaired_rows:
         st.warning(f"Se conservaron todas las líneas y se repararon {len(repaired_rows)} filas irregulares durante la lectura.")
     st.subheader("Vista previa")
-    st.dataframe(dataframe.head(), use_container_width=True)
+    st.dataframe(dataframe.head(), width="stretch")
 
     default_target_table = saved_schema["target_table"] if saved_schema else build_target_table_name(source_label, selected_file_name)
     target_table = st.text_input("Tabla destino en PostgreSQL", value=default_target_table).strip()
@@ -299,7 +299,7 @@ def main():
     default_columns = saved_schema["columns"] if saved_schema else (canonical_spec["columns"] if canonical_spec else None)
     if canonical_spec:
         edited_columns = canonical_spec["columns"]
-        st.dataframe(build_column_mapping_preview(dataframe, canonical_spec["columns"]), use_container_width=True)
+        st.dataframe(build_column_mapping_preview(dataframe, canonical_spec["columns"]), width="stretch")
     else:
         edited_columns = render_column_editor(dataframe, saved_columns=default_columns)
     is_valid, validation_message = validate_columns(edited_columns)
@@ -314,7 +314,7 @@ def main():
 
     dataframe_preview = dataframe.copy()
     dataframe_preview.columns = edited_columns
-    st.dataframe(dataframe_preview.head(), use_container_width=True)
+    st.dataframe(dataframe_preview.head(), width="stretch")
 
     can_sync_selected = not canonical_spec or len(dataframe.columns) == len(canonical_spec["columns"])
     if st.button("Sincronizar archivo", disabled=not can_sync_selected):

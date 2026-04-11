@@ -982,7 +982,8 @@ def build_turn_context(
             lines.append("Todavía NO recomiendes productos ni llames herramientas de inventario.")
         else:
             lines.append("Datos suficientes para recomendar.")
-            lines.append("Acción: Llama consultar_conocimiento_tecnico con la superficie y condición.")
+            lines.append("Acción: Llama consultar_conocimiento_tecnico con la superficie y condición EN ESTE MISMO TURNO.")
+            lines.append("NO respondas 'voy a consultar' o 'un momento' sin haber usado realmente la herramienta.")
             lines.append("Presenta el sistema completo (preparación → imprimante → acabado + diluyente + herramientas).")
             if not diagnostic["area_m2"]:
                 lines.append("Al final pregunta m² y color para calcular cantidades.")
