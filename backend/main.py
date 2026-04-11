@@ -999,6 +999,15 @@ PORTFOLIO_CATEGORY_MAP = {
     "madera": ["barnex", "barniz marino", "barniz", "wood stain", "madetec", "pintulux"],
     "madera exterior": ["barnex", "wood stain", "barniz marino"],
     "madera interior": ["barniz marino", "barniz sd1", "domestico", "pintulux"],
+    "piso madera": ["poliuretano alto trafico", "barniz marino", "barniz sd1"],
+    "piso de madera": ["poliuretano alto trafico", "barniz marino", "barniz sd1"],
+    "piso madera interior": ["poliuretano alto trafico", "barniz marino"],
+    "vitrificar": ["poliuretano alto trafico"],
+    "vitrificar piso": ["poliuretano alto trafico"],
+    "resina transparente piso": ["poliuretano alto trafico"],
+    "laca piso": ["poliuretano alto trafico"],
+    "laca garaje": ["poliuretano alto trafico"],
+    "escalera madera": ["poliuretano alto trafico", "barniz marino"],
     "laca": ["barniz marino", "barniz sd1"],
     "deck": ["barnex", "wood stain", "barniz marino"],
     "pergola": ["barnex", "wood stain"],
@@ -1631,6 +1640,8 @@ _BICOMPONENT_KEYWORDS: frozenset[str] = frozenset(BICOMPONENT_CATALOG.keys()) | 
     "dos componentes", "bicomponente", "comp a", "comp b",
     "pha046", "pha120", "pha130",
     "catalizador 13227",
+    "1550", "1551", "poliuretano alto trafico", "pisos trafic alt",
+    "vitrificar", "vitrificar piso",
 ])
 
 
@@ -6598,6 +6609,7 @@ def ensure_expert_knowledge_table():
         )
     # Run Phase 19 seeds after table is ensured
     seed_expert_knowledge_phase19()
+    seed_expert_knowledge_polyurethane_1550()
 
 
 def seed_expert_knowledge_phase19():
@@ -6671,6 +6683,64 @@ def seed_expert_knowledge_phase19():
         logger.info("Phase 19 expert knowledge seeds applied successfully.")
     except Exception as exc:
         logger.warning("Could not seed Phase 19 expert knowledge: %s", exc)
+
+
+def seed_expert_knowledge_polyurethane_1550():
+    """Seed expert knowledge for Poliuretano Alto Tráfico 1550/1551 system (wood floors)."""
+    try:
+        engine = get_db_engine()
+        seeds = [
+            {
+                "cedula": "1088266407", "nombre": "DIEGO MAURICIO GARCIA RENGIFO",
+                "tags": "piso madera, poliuretano alto trafico, 1550, 1551, vitrificar, barnizar piso, resina transparente, laca piso, escalera madera, interior",
+                "rec": "Poliuretano Alto Tráfico 1550/1551", "des": "Barnex, Pintulac, barniz arquitectónico",
+                "nota": (
+                    "SISTEMA POLIURETANO TRANSPARENTE PARA PISOS (1550/1551): SOLO INTERIOR. "
+                    "Bicomponente relación 1:1. Comp A = ref 1550 (MH PISOS TRAFIC ALT A BR INCO 3.79L), "
+                    "Comp B/Cat = ref 1551 (MH PISOS TRAFICO ALT B CAT BR 3.79L). "
+                    "Para pisos de madera, escaleras, cemento con acabado transparente resistente. "
+                    "JERGA: 'vitrificar', 'barnizar piso cemento', 'resina transparente', 'laca garaje'. "
+                    "PROHIBIDO en exteriores (entiza y amarillea). "
+                    "Aplicación: 1) superficie limpia seca, 2) primera mano A+B, 3) secar 2-3h, "
+                    "4) lijar grano 320/400, 5) limpiar y segunda mano. "
+                    "Ofrecer cuando el cliente quiere algo MÁS resistente/fino que un barniz común."
+                ),
+                "tipo": "uso_especifico",
+            },
+            {
+                "cedula": "1088266407", "nombre": "DIEGO MAURICIO GARCIA RENGIFO",
+                "tags": "piso madera exterior, barniz piso exterior, poliuretano exterior",
+                "rec": "Barnex, Wood Stain", "des": "Poliuretano Alto Tráfico 1550",
+                "nota": (
+                    "PROHIBIDO recomendar Poliuretano Alto Tráfico 1550/1551 en exteriores. "
+                    "El poliuretano transparente entiza y amarillea con exposición UV. "
+                    "Para madera exterior siempre ofrecer Barnex + Wood Stain."
+                ),
+                "tipo": "contraindicacion",
+            },
+        ]
+        with engine.begin() as conn:
+            for s in seeds:
+                existing = conn.execute(
+                    text("SELECT id FROM public.agent_expert_knowledge WHERE nota_comercial = :nota AND cedula_experto = :cedula LIMIT 1"),
+                    {"nota": s["nota"], "cedula": s["cedula"]},
+                ).fetchone()
+                if existing:
+                    continue
+                conn.execute(
+                    text(
+                        """
+                        INSERT INTO public.agent_expert_knowledge
+                            (cedula_experto, nombre_experto, contexto_tags, producto_recomendado,
+                             producto_desestimado, nota_comercial, tipo)
+                        VALUES (:cedula, :nombre, :tags, :rec, :des, :nota, :tipo)
+                        """
+                    ),
+                    s,
+                )
+        logger.info("Polyurethane 1550/1551 expert knowledge seeds applied successfully.")
+    except Exception as exc:
+        logger.warning("Could not seed Polyurethane 1550 expert knowledge: %s", exc)
 
 
 def fetch_expert_knowledge(query: str, limit: int = 8) -> list[dict]:
@@ -13996,11 +14066,24 @@ FASE 1 — DIAGNÓSTICO (¿Qué necesita el cliente?):
 
   PREGUNTAS MÍNIMAS POR SUPERFICIE (antes de recomendar):
   • PISO: ¿Nuevo o ya tiene pintura? ¿Interior/exterior? ¿Tráfico liviano (casa), medio (local) o pesado (bodega/industria)?
+  • PISO DE MADERA: ¿Interior o exterior? ¿Tráfico liviano (dormitorio) o medio/alto (sala, pasillo, local)?
+    → Si es INTERIOR + quiere algo resistente/transparente → Poliuretano Alto Tráfico 1550+1551.
+    → Si solo quiere acabado decorativo liviano → Barniz Marino o Barniz SD1.
+    → Si es EXTERIOR → PROHIBIDO poliuretano. Usar Barnex o Wood Stain.
   • FACHADA/MURO EXTERIOR: ¿Tiene humedad/filtraciones? ¿Pintura anterior descascarando?
   • MURO INTERIOR: ¿Nuevo o repintura? ¿Hay humedad o moho?
-  • MADERA: ¿Interior/exterior? ¿Acabado natural (transparente) o color sólido? ¿Nuevo o restauración?
+  • MADERA (muebles/puertas/deck): ¿Interior/exterior? ¿Acabado natural (transparente) o color sólido? ¿Nuevo o restauración?
   • METAL: ¿Interior/exterior? ¿Ya tiene óxido? ¿Tipo de estructura (reja, tanque, tubería)?
   • TECHO: ¿Material (eternit, zinc, concreto)? ¿Filtra agua?
+  
+  REGLA DE EXTRACCIÓN DE CONTEXTO (OBLIGATORIA):
+  ANTES de preguntar, LEE lo que el cliente YA DIJO y extrae:
+  - "apartamento", "casa", "oficina", "local" → ya sabes que es INTERIOR
+  - "bodega", "fábrica", "planta" → ya sabes que es INDUSTRIAL
+  - "madera" como material → ya sabes el material, NO preguntes tipo de superficie
+  - "mucho tráfico" + "apartamento/casa" → es PEATONAL alto, NO montacargas
+  - "garaje", "parqueadero" → ya sabes que es VEHICULAR
+  - Solo pregunta lo que REALMENTE FALTA. Si ya tienes 2 de 3 datos, avanza.
   Si el cliente ya proporcionó estas respuestas en mensajes anteriores, NO repitas. Avanza a FASE 2.
 
 FASE 2 — RECOMENDACIÓN TÉCNICA (¿Qué sistema aplicar?):
@@ -14331,9 +14414,26 @@ REGLAS TÉCNICAS POR PRODUCTO:
 - PINTUCOAT: Epóxico BICOMPONENTE pisos industriales. NO piscinas, NO tanques, NO inmersión. OBLIGATORIO catalizador 13227: galón A (3.44L) + cat 0.37L; cuñete A (15.14L) + cat 1.89L.
 - AQUABLOCK: Barrera humedad, USO PRINCIPAL muros interiores con filtración/capilaridad. Para fachadas con lluvia directa → Pintuco Fill.
 - PINTUCO FILL: Impermeabilizante techos/cubiertas/terrazas. NO piscinas.
-- INTERTHANE: ÚNICO poliuretano del portafolio. BICOMPONENTE: A + catalizador PHA046. Galón: A 3.7L + PHA046 0.5L.
+- INTERTHANE: Poliuretano INDUSTRIAL del portafolio (International). BICOMPONENTE: A + catalizador PHA046. Galón: A 3.7L + PHA046 0.5L.
 - PINTURA CANCHAS: Acrílica EXCLUSIVA para canchas deportivas, escenarios deportivos, senderos peatonales y ciclo rutas. PROHIBIDO recomendar para garajes, parqueaderos, bodegas o andenes vehiculares → usar Pintucoat.
 - PINTUTRAF: Demarcación vial. Koraza/Viniltex/Pintulux NO sirven para tráfico.
+- POLIURETANO ALTO TRÁFICO INCOLORO 1550/1551 (SISTEMA BICOMPONENTE):
+  • SOLO INTERIOR. PROHIBIDO en exteriores (entiza y amarillea con UV).
+  • Para pisos de madera, escaleras, cemento cuando el cliente quiere acabado transparente resistente.
+  • JERGA DEL CLIENTE: "vitrificar", "barnizar el piso", "resina transparente", "laca para piso", "proteger sin tapar el color" = Poliuretano Alto Tráfico 1550+1551.
+  • PROHIBIDO recomendar Barnex, Pintulac o barniz arquitectónico para PISOS de cemento o tráfico.
+  • BICOMPONENTE OBLIGATORIO:
+    Comp A: MH PISOS TRAFIC ALT A BR INCO 1550 3.79L
+    Comp B (catalizador): MH PISOS TRAFICO ALT B CAT BR 1551 3.79L
+    Regla de cascada: N galones A = N galones B (relación 1:1).
+  • PROTOCOLO DE APLICACIÓN (OBLIGATORIO incluir en la recomendación):
+    1. Superficie limpia, seca, libre de grasas/polvo
+    2. Primera mano: mezcla A+B uniformemente
+    3. Secado: 2-3 horas estrictas
+    4. Lijado intermedio: lija grano 320 o 400 (perfil de anclaje)
+    5. Limpiar polvillo + segunda mano final
+  • Cuándo ofrecerlo: cuando el cliente quiere algo MÁS resistente, fino o de mejor desempeño que un barniz común.
+  • Para exteriores madera → NO ofrecer este sistema. Usar Barnex + Wood Stain.
 
 REGLA BICOMPONENTES (NIVEL ROJO — INVIOLABLE):
 Productos bicomponentes SOLO funcionan con su catalizador. PROHIBIDO cotizar, recomendar o entregar precio sin incluir el catalizador:
@@ -19217,18 +19317,29 @@ def generate_agent_reply_v2(
     #   Group A: Uso/condición (tráfico pesado, liviano, montacargas, industrial, etc.)
     #   Group B: Interior/exterior
     #   Group C: Área en m²
-    _diag_group_a = any(s in _user_lower_diag for s in [
+    # Build combined text from current message + recent inbound messages for context extraction
+    _recent_inbound_text = _user_lower_diag
+    for _rmsg in recent_messages[-6:]:
+        if _rmsg.get("direction") == "inbound":
+            _recent_inbound_text += " " + (_rmsg.get("contenido") or "").lower()
+    _diag_group_a = any(s in _recent_inbound_text for s in [
         "tráfico pesado", "trafico pesado", "tráfico liviano", "trafico liviano",
         "montacargas", "industrial", "residencial", "peatonal", "vehicular",
         "húmedo", "humedo", "aceite", "grasa", "químico", "quimico",
         "salitre", "eflorescencia", "oxidado", "corrosión", "corrosion",
         "cemento", "concreto", "epóxic", "epoxic",
+        "madera", "metal", "zinc", "eternit",  # material = condition
     ])
-    _diag_group_b = any(s in _user_lower_diag for s in [
+    _diag_group_b = any(s in _recent_inbound_text for s in [
         "interior", "exterior", "intemperie", "bajo techo", "cubierto",
+        # Implicit interior: residential spaces
+        "apartamento", "casa", "cocina", "baño", "bano", "habitación", "habitacion",
+        "sala", "oficina", "local", "consultorio",
+        # Implicit exterior:
+        "fachada", "terraza", "azotea",
     ])
-    _diag_group_c = any(s in _user_lower_diag for s in [
-        "metros cuadrados", "m2", "m²", "metro cuadrado",
+    _diag_group_c = any(s in _recent_inbound_text for s in [
+        "metros cuadrados", "m2", "m²", "metro cuadrado", " mt", " mts",
     ])
     _diag_groups_present = sum([_diag_group_a, _diag_group_b, _diag_group_c])
     # Need at least 2 of 3 groups to consider diagnosis complete
