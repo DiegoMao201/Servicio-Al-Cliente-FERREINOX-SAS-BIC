@@ -749,9 +749,11 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
     if has_price_request:
         return "cotizacion"
 
-    # 13. If names a specific product without quantity (info request)
+    # 13. If names a specific product without quantity → product inquiry unless active draft
     if has_specific:
-        return "pedido_directo"
+        if (conversation_context.get("commercial_draft") or {}).get("items"):
+            return "pedido_directo"
+        return "consulta_productos"
 
     return "general"
 

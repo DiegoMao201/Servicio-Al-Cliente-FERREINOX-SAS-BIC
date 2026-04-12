@@ -621,6 +621,7 @@ PRESENTATION_ALIASES = {
     "cuñete": ["cunete", "cunetes", "cuenete", "cuenetes", "cuñete", "cuñetes", "caneca", "canecas", "cubeta", "cubetas", "18.93l", "18.93", "1/5", "5gl"],
     "galon": ["galon", "galones", "gal", "3.79l", "3.79", "1/1", "1gl"],
     "cuarto": ["cuarto", "cuartos", "0.95l", "0.95", "1/4"],
+    "balde": ["medio cuñete", "9.46l", "1/2", "medio cunete", "balde"],
 }
 
 
@@ -3256,7 +3257,12 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
         if rule.get("clear_product_codes"):
             prepared_request["product_codes"] = []
         prepared_request["brand_filters"] = merge_unique_terms(prepared_request.get("brand_filters"), rule.get("brand_filters"))
-        prepared_request["core_terms"] = merge_unique_terms(prepared_request.get("core_terms"), rule.get("core_terms"))
+        if rule.get("lock_canonical_product") and rule.get("core_terms"):
+            # When canonical product is locked, use ONLY the alias-specified terms
+            # to prevent conversational noise from polluting the search
+            prepared_request["core_terms"] = list(rule["core_terms"])
+        else:
+            prepared_request["core_terms"] = merge_unique_terms(prepared_request.get("core_terms"), rule.get("core_terms"))
         prepared_request["color_filters"] = merge_unique_terms(prepared_request.get("color_filters"), rule.get("color_filters"))
         if rule.get("finish_filters"):
             prepared_request["finish_filters"] = merge_unique_terms(prepared_request.get("finish_filters"), rule.get("finish_filters"))
@@ -5774,9 +5780,30 @@ def _format_internal_inventory_store_lines(stock_details: list[dict]):
     return [f"- {detail['store_name']}: {format_quantity(detail['stock'])}" for detail in stock_details if detail.get("stock") is not None]
 
 
+_INVENTORY_NOISE_RE = re.compile(
+    r'\b(hola|buenas?\s*tardes?|buenos?\s*d[ií]as?|buenas?\s*noches?)\b'
+    r'|\b(ferro|ferreamigo|amigo)\b'
+    r'|\b(dame|deme|necesito|quiero|me\s+das?)\s+(el\s+)?'
+    r'|\b(?:el\s+)?inventario\s+de\s+'
+    r'|\b(por\s+favor|porfa)\b'
+    r'|\btenemos\s*\??\s*$',
+    re.IGNORECASE,
+)
+
+
+def _strip_inventory_query_noise(text: str) -> str:
+    """Remove greetings and conversational filler from an inventory query to get clean product text."""
+    if not text:
+        return ""
+    cleaned = _INVENTORY_NOISE_RE.sub(' ', text).strip()
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    return cleaned or text.strip()
+
+
 def build_inventory_lookup_reply(profile_name: Optional[str], user_message: Optional[str], conversation_context: Optional[dict]):
+    clean_query = _strip_inventory_query_noise(user_message or "")
     raw_payload = _handle_tool_consultar_inventario(
-        {"producto": user_message or "", "modo_consulta": "inventario"},
+        {"producto": clean_query, "modo_consulta": "inventario"},
         conversation_context or {},
     )
     payload = json.loads(raw_payload or "{}")

@@ -157,6 +157,16 @@ def _should_route_to_inventory_lookup(initial_intent: str, conversation_context:
     return hasattr(m, "build_inventory_lookup_reply")
 
 
+def _is_explicit_inventory_query(user_message: str) -> bool:
+    """Detect messages that are clearly inventory lookups (e.g. 'inventario de sd1')."""
+    msg_lower = (user_message or "").strip().lower()
+    if re.search(r'\binventario\s+de\b', msg_lower):
+        return True
+    if re.search(r'\bdame\b.*\binventario\b', msg_lower):
+        return True
+    return False
+
+
 def _build_inventory_lookup_short_circuit(
     profile_name: Optional[str],
     conversation_context: dict,
@@ -365,20 +375,31 @@ def generate_agent_reply_v3(
             "is_farewell": False,
         }
 
+    # ── Explicit inventory queries ALWAYS route to inventory, even with active draft ──
+    if _is_explicit_inventory_query(user_message) and hasattr(m, "build_inventory_lookup_reply"):
+        conversation_context.pop("commercial_draft", None)
+        return _build_inventory_lookup_short_circuit(
+            profile_name,
+            conversation_context,
+            user_message,
+            m,
+        )
+
+    # ── Inventory lookup (before commercial to avoid hijacking product queries) ──
+    if _should_route_to_inventory_lookup(initial_intent, conversation_context, m):
+        return _build_inventory_lookup_short_circuit(
+            profile_name,
+            conversation_context,
+            user_message,
+            m,
+        )
+
     if _should_route_to_commercial_flow(initial_intent, conversation_context, user_message, m):
         return _build_commercial_flow_short_circuit(
             profile_name,
             conversation_context,
             user_message,
             initial_intent,
-            m,
-        )
-
-    if _should_route_to_inventory_lookup(initial_intent, conversation_context, m):
-        return _build_inventory_lookup_short_circuit(
-            profile_name,
-            conversation_context,
-            user_message,
             m,
         )
 
