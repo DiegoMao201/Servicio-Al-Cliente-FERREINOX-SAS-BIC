@@ -196,7 +196,7 @@ Cuando el campo "Empleado interno activo" está presente, el usuario es empleado
   • Cartera de terceros → usa `consultar_cartera` con nombre_o_nit directo.
 
 ═══ SISTEMA DE ENSEÑANZA (EXPERTOS AUTORIZADOS) ═══
-Pablo Mafla (1053774777) y Diego García (1088266407) pueden enseñarte con "ENSEÑAR" + corrección.
+Solo Diego García (1088266407) puede enseñarte con "ENSEÑAR" + corrección.
   Señales de enseñanza: "ENSEÑAR", "anota esto", "guarda esto", "aprende esto", "recuerda que", "regla:".
   Cuando detectes señal de enseñanza → llama `registrar_conocimiento_experto` con TODOS los campos:
     - contexto_tags: superficie + condición + aplicación (las BÚSQUEDAS FUTURAS usan esto)
@@ -626,7 +626,7 @@ AGENT_TOOLS_V3 = [
         "function": {
             "name": "registrar_conocimiento_experto",
             "description": (
-                "Guarda conocimiento experto de un asesor autorizado (Pablo o Diego). "
+                "Guarda conocimiento experto de Diego García, único asesor autorizado para enseñar. "
                 "Usar cuando detectes señal ENSEÑAR, ANOTA ESTO, GUARDA ESTO, APRENDE ESTO. "
                 "IMPORTANTE: Extrae TODOS los campos del mensaje del experto. "
                 "Si el experto dice 'Para tanque de agua potable usa Aquablock, "

@@ -19187,15 +19187,15 @@ def _handle_tool_guardar_producto_complementario(args, conversation_context):
 
 
 # ── Expert knowledge: save commercial reinforcement notes ─────────────────────
-# Multi-expert system: each authorized expert has isolated knowledge streams
+# Teaching and expert RAG curation are restricted to Diego only to avoid
+# accidental drift in the commercial/expert knowledge base.
 _AUTHORIZED_EXPERTS: dict[str, str] = {
-    "1053774777": "PABLO CESAR MAFLA BANOL",
     "1088266407": "DIEGO MAURICIO GARCIA RENGIFO",
 }
 
 
 def _handle_tool_registrar_conocimiento_experto(args, conversation_context):
-    """Save a commercial knowledge note from an authorized expert (Pablo Mafla or Diego García)."""
+    """Save a commercial knowledge note from Diego, the only authorized expert teacher."""
     # Guard: only authorized experts can save knowledge
     internal_auth = conversation_context.get("internal_auth") or {}
     emp_ctx = dict((internal_auth.get("employee_context") or {}))
@@ -19205,7 +19205,7 @@ def _handle_tool_registrar_conocimiento_experto(args, conversation_context):
             {
                 "guardado": False,
                 "mensaje": (
-                    "Solo los asesores técnicos autorizados (Pablo Mafla o Diego García) pueden registrar "
+                    "Solo Diego García puede registrar "
                     "conocimiento experto. Verifica que hayas iniciado sesión con tu cédula."
                 ),
             },
@@ -19319,7 +19319,7 @@ def _handle_tool_procesar_documento_experto(args, conversation_context):
     cedula = str(emp_ctx.get("cedula") or "").strip()
     if cedula not in _AUTHORIZED_EXPERTS:
         return json.dumps(
-            {"ingested": False, "mensaje": "Solo los asesores técnicos autorizados pueden subir documentos al RAG."},
+            {"ingested": False, "mensaje": "Solo Diego García puede subir documentos expertos al RAG."},
             ensure_ascii=False,
         )
 
