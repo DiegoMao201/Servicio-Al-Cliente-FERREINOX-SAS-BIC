@@ -2979,6 +2979,9 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*11\b",
             "canonical_product": "pintulux blanco 11",
+            "preferred_lookup_text": "pintulux blanco 11",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
             "brand_filters": ["pintulux", "pintuco"],
             "core_terms": ["pintulux", "blanco 11", "3en1 br blanco 11"],
             "color_filters": ["blanco"],
@@ -2986,6 +2989,9 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*95\b",
             "canonical_product": "pintulux negro 95",
+            "preferred_lookup_text": "pintulux negro 95",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
             "brand_filters": ["pintulux", "pintuco"],
             "core_terms": ["pintulux", "negro 95", "3en1 br negro 95"],
             "color_filters": ["negro"],
@@ -2993,6 +2999,9 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*10\b",
             "canonical_product": "pintulux blanco mate 10",
+            "preferred_lookup_text": "pintulux blanco mate 10",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
             "brand_filters": ["pintulux", "pintuco"],
             "core_terms": ["pintulux", "mat blanco 10", "3en1 mat blanco 10"],
             "color_filters": ["blanco mate"],
@@ -3001,6 +3010,9 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*89\b",
             "canonical_product": "pintulux negro mate 89",
+            "preferred_lookup_text": "pintulux negro mate 89",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
             "brand_filters": ["pintulux", "pintuco"],
             "core_terms": ["pintulux", "mat negro 89", "3en1 mat negro"],
             "color_filters": ["negro mate"],
@@ -3086,18 +3098,27 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
         {
             "pattern": r"\bsd[\s-]*1\b",
             "canonical_product": "barniz sd-1",
+            "preferred_lookup_text": "barniz sd-1",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
             "brand_filters": ["pintuco"],
             "core_terms": ["barniz", "incoloro", "sd-1"],
         },
         {
             "pattern": r"\bsd[\s-]*2\b",
             "canonical_product": "barniz sd-2",
+            "preferred_lookup_text": "barniz sd-2",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
             "brand_filters": ["pintuco"],
             "core_terms": ["barniz", "sd-2"],
         },
         {
             "pattern": r"\bsd[\s-]*3\b",
             "canonical_product": "barniz sd-3",
+            "preferred_lookup_text": "barniz sd-3",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
             "brand_filters": ["pintuco"],
             "core_terms": ["barniz", "sd-3"],
         },
@@ -3228,6 +3249,12 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             continue
         if rule.get("canonical_product") and not prepared_request.get("canonical_product"):
             prepared_request["canonical_product"] = rule["canonical_product"]
+        if rule.get("preferred_lookup_text") and not prepared_request.get("preferred_lookup_text"):
+            prepared_request["preferred_lookup_text"] = rule["preferred_lookup_text"]
+        if rule.get("lock_canonical_product"):
+            prepared_request["canonical_product_locked"] = True
+        if rule.get("clear_product_codes"):
+            prepared_request["product_codes"] = []
         prepared_request["brand_filters"] = merge_unique_terms(prepared_request.get("brand_filters"), rule.get("brand_filters"))
         prepared_request["core_terms"] = merge_unique_terms(prepared_request.get("core_terms"), rule.get("core_terms"))
         prepared_request["color_filters"] = merge_unique_terms(prepared_request.get("color_filters"), rule.get("color_filters"))
@@ -3371,7 +3398,7 @@ def prepare_product_request_for_search(text_value: Optional[str], product_reques
     if canonical_presentation and not prepared_request.get("requested_unit"):
         prepared_request["requested_unit"] = canonical_presentation
 
-    if canonical_product:
+    if canonical_product and not prepared_request.get("canonical_product_locked"):
         prepared_request["canonical_product"] = canonical_product
     if canonical_color:
         prepared_request["color_filters"] = merge_unique_terms(prepared_request.get("color_filters"), [canonical_color], tokenize_search_phrase(canonical_color))
@@ -8954,6 +8981,7 @@ def extract_size_filters(text_value: Optional[str]):
 
     # Normalize fractional sizes: "11/2" → "1 1/2", "21/2" → "2 1/2"
     normalized_text = re.sub(r'\b([1-4])1/2', r'\1 1/2', text_value)
+    lowered_text = normalize_text_value(normalized_text)
 
     normalized_sizes = []
     seen_sizes = set()
@@ -8969,6 +8997,12 @@ def extract_size_filters(text_value: Optional[str]):
         if size_value and size_value not in seen_sizes:
             seen_sizes.add(size_value)
             normalized_sizes.append(size_value)
+    if any(keyword in lowered_text for keyword in ["brocha", "brochas", "pincel", "pinceles", "rodillo", "rodillos", "goya"]):
+        for raw_match in re.findall(r"\bde\s+(\d+(?:\s+\d/\d)?)\b", normalized_text, flags=re.IGNORECASE):
+            size_value = re.sub(r"\s+", " ", raw_match.strip())
+            if size_value and size_value not in seen_sizes:
+                seen_sizes.add(size_value)
+                normalized_sizes.append(size_value)
     return normalized_sizes
 
 
@@ -9088,6 +9122,7 @@ def get_product_variant_signature(product_row: Optional[dict]):
     raw_description = get_exact_product_description(row)
     cleaned_description = re.sub(r"^\s*(?:PQ|IQ|EQ|SQ|MEG)\s+", "", raw_description, flags=re.IGNORECASE)
     cleaned_description = re.sub(r"\s+\d+(?:\.\d+)?L\b", "", cleaned_description, flags=re.IGNORECASE)
+    cleaned_description = re.sub(r"\s+PE\b", "", cleaned_description, flags=re.IGNORECASE)
     cleaned_description = re.sub(r"\s+", " ", cleaned_description).strip()
     return normalize_text_value(cleaned_description)
 
@@ -9101,6 +9136,7 @@ def get_product_variant_label(product_row: Optional[dict]):
     raw_description = get_exact_product_description(row)
     cleaned_description = re.sub(r"^\s*(?:PQ|IQ|EQ|SQ|MEG)\s+", "", raw_description, flags=re.IGNORECASE)
     cleaned_description = re.sub(r"\s+\d+(?:\.\d+)?L\b", "", cleaned_description, flags=re.IGNORECASE)
+    cleaned_description = re.sub(r"\s+PE\b", "", cleaned_description, flags=re.IGNORECASE)
     return re.sub(r"\s+", " ", cleaned_description).strip()
 
 
@@ -11334,7 +11370,10 @@ def describe_commercial_item_need(item: dict):
 
 def build_commercial_item_result(raw_line: str, inherited_store_filters: list[str], mode: str):
     product_request = merge_store_filters(prepare_product_request_for_search(raw_line), inherited_store_filters)
-    product_rows = lookup_product_context(raw_line, product_request)
+    lookup_text = product_request.get("preferred_lookup_text") or product_request.get("canonical_product") or raw_line
+    product_rows = lookup_product_context(lookup_text, product_request)
+    if not product_rows and lookup_text != raw_line:
+        product_rows = lookup_product_context(raw_line, product_request)
     requested_store_codes = product_request.get("store_filters") or []
     requested_store_label = STORE_CODE_LABELS.get(requested_store_codes[0]) if len(requested_store_codes) == 1 else None
 
@@ -13522,6 +13561,13 @@ def _draft_items_to_confirmation_payloads(commercial_draft: dict) -> list[dict]:
     return payload_items
 
 
+def _confirmation_item_signature(item: dict) -> tuple[str, float, str]:
+    reference = normalize_reference_value(item.get("referencia") or "")
+    quantity = parse_numeric_value(item.get("cantidad")) or 0
+    unit = normalize_text_value(item.get("unidad_medida") or "unidad")
+    return (reference, float(quantity), unit)
+
+
 def _build_confirmed_item_from_row(
     row: dict,
     requested_quantity,
@@ -14035,10 +14081,7 @@ def generate_commercial_pdf(
     subtotal_iva_incluido = 0
     for idx, item in enumerate(matched_items, start=1):
         matched_product = item.get("matched_product") or {}
-        raw_desc = matched_product.get("descripcion") or matched_product.get("nombre_articulo") or item.get("original_text") or "Producto"
-        presentation = infer_product_presentation_from_row(matched_product)
-        brand = infer_product_brand_from_row(matched_product)
-        commercial_name = translate_product_to_commercial(raw_desc, presentation, brand)
+        exact_description = get_exact_product_description(matched_product) or item.get("descripcion_comercial") or item.get("original_text") or "Producto"
         ref_code = matched_product.get("referencia") or matched_product.get("codigo_articulo") or "—"
         req = item.get("product_request") or {}
         qty_val = req.get("requested_quantity")
@@ -14063,7 +14106,7 @@ def generate_commercial_pdf(
         price_label = f"${unit_price:,.0f}".replace(",", ".") if unit_price > 0 else "Pendiente"
         subtotal_label = f"${line_subtotal:,.0f}".replace(",", ".") if line_subtotal > 0 else "—"
         role_label = item.get("auto_note") or ""
-        product_label = escape(commercial_name)
+        product_label = escape(exact_description)
         if role_label:
             product_label = f"{product_label}<br/><font size='7' color='#6B7280'>{escape(str(role_label))}</font>"
 
@@ -15491,6 +15534,7 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
         _desc_upper = (candidate.get("descripcion") or candidate.get("nombre_articulo") or "").upper()
         if any(kw in _desc_upper for kw in ("KIT ", "PAGUE ", "PAGU ", "NO INV", "GRATIS", "GTIS", "LLEVE")):
             _kit_promo_penalty = -10
+        _pe_variant_penalty = -1 if re.search(r"\bPE\b", _desc_upper) else 0
 
         specific_matches = 0
         for term in specific_terms:
@@ -15523,6 +15567,7 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
         candidate["color_score"] = 1 if (request.get("color_filters") or []) and candidate_color in (request.get("color_filters") or []) else 0
         candidate["finish_score"] = 1 if (request.get("finish_filters") or []) and candidate_finish in (request.get("finish_filters") or []) else 0
         candidate["kit_promo_penalty"] = _kit_promo_penalty
+        candidate["pe_variant_penalty"] = _pe_variant_penalty
         # ── Smart Score (unified 0-1 scoring) ──
         _smart_query = query_text or normalized_query or ""
         candidate["smart_score"] = smart_score_product(candidate, _smart_query, request, rotation_cache)
@@ -15535,6 +15580,7 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
     ranked_rows.sort(
         key=lambda item: (
             item.get("kit_promo_penalty") or 0,  # Negative for kits → sorts them to the bottom
+            item.get("pe_variant_penalty") or 0,
             item.get("exact_code_score") or 0,
             item.get("specific_score") or 0,       # Product-specific term matches (moved up for accuracy)
             item.get("match_score") or 0,
@@ -18034,12 +18080,21 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         for it in items_pedido
         if not (it.get("referencia") or "").strip()
     ]
-    if (not items_pedido or productos_sin_ref) and draft_fallback_items:
+    arg_signatures = {_confirmation_item_signature(item) for item in items_pedido if item.get("referencia")}
+    draft_signatures = {_confirmation_item_signature(item) for item in draft_fallback_items}
+    if draft_fallback_items and (
+        not items_pedido
+        or productos_sin_ref
+        or len(arg_signatures) != len(draft_signatures)
+        or arg_signatures != draft_signatures
+    ):
         logger.info(
-            "confirmar_pedido_y_generar_pdf using draft fallback conv=%s arg_items=%d draft_items=%d",
+            "confirmar_pedido_y_generar_pdf using authoritative draft conv=%s arg_items=%d draft_items=%d arg_signatures=%s draft_signatures=%s",
             context.get("conversation_id"),
             len(items_pedido or []),
             len(draft_fallback_items),
+            sorted(arg_signatures),
+            sorted(draft_signatures),
         )
         items_pedido = draft_fallback_items
         productos_sin_ref = []
@@ -18420,15 +18475,25 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     if canal_envio == "email" and correo_cliente:
         try:
             subject = f"Pedido Ferreinox CRM-{context['conversation_id']}"
+            optional_pdf_link = f"<p>También puede consultarlo aquí: <a href='{pdf_url}'>{pdf_filename}</a></p>" if pdf_url else ""
             html_content = (
                 f"<p>Estimado/a {nombre_despacho},</p>"
-                f"<p>Adjuntamos el soporte de su pedido.</p>"
-                f"<p>PDF: <a href='{pdf_url}'>{pdf_filename}</a></p>"
+                f"<p>Adjuntamos el PDF de su pedido.</p>"
+                f"<p>Archivo: <strong>{pdf_filename}</strong></p>"
+                f"{optional_pdf_link}"
                 f"<p>Gracias por su preferencia.<br>Ferreinox SAS BIC</p>"
             )
             send_sendgrid_email(
                 correo_cliente, subject, html_content,
-                f"Pedido Ferreinox: {pdf_url or pdf_filename}",
+                f"Pedido Ferreinox adjunto: {pdf_filename}",
+                attachments=[
+                    {
+                        "content": base64.b64encode(PDF_STORAGE[pdf_id]["buffer"]).decode("ascii"),
+                        "filename": pdf_filename,
+                        "type": "application/pdf",
+                        "disposition": "attachment",
+                    }
+                ],
             )
             store_outbound_message(
                 context["conversation_id"], None, "system",
@@ -18462,32 +18527,18 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             )
     else:
         try:
-            if pdf_url:
-                logger.info(
-                    "confirmar_pedido_y_generar_pdf send whatsapp by link conv=%s order_id=%s pdf_url=yes elapsed=%dms",
-                    context.get("conversation_id"),
-                    order_id,
-                    int((time.time() - t_confirm_start) * 1000),
-                )
-                send_whatsapp_document_message(
-                    context["telefono_e164"],
-                    pdf_url,
-                    pdf_filename,
-                    caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
-                )
-            else:
-                logger.warning(
-                    "confirmar_pedido_y_generar_pdf BACKEND_PUBLIC_URL missing; using whatsapp binary upload conv=%s order_id=%s elapsed=%dms",
-                    context.get("conversation_id"),
-                    order_id,
-                    int((time.time() - t_confirm_start) * 1000),
-                )
-                send_whatsapp_document_bytes(
-                    context["telefono_e164"],
-                    PDF_STORAGE[pdf_id]["buffer"],
-                    pdf_filename,
-                    caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
-                )
+            logger.info(
+                "confirmar_pedido_y_generar_pdf send whatsapp binary conv=%s order_id=%s elapsed=%dms",
+                context.get("conversation_id"),
+                order_id,
+                int((time.time() - t_confirm_start) * 1000),
+            )
+            send_whatsapp_document_bytes(
+                context["telefono_e164"],
+                PDF_STORAGE[pdf_id]["buffer"],
+                pdf_filename,
+                caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
+            )
             store_outbound_message(
                 context["conversation_id"], None, "system",
                 f"PDF pedido enviado por WhatsApp: {pdf_filename}",
@@ -18515,9 +18566,15 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         except Exception as exc:
             if pdf_url:
                 try:
-                    send_whatsapp_document_bytes(
+                    logger.warning(
+                        "confirmar_pedido_y_generar_pdf binary whatsapp failed; falling back to link conv=%s order_id=%s error=%s",
+                        context.get("conversation_id"),
+                        order_id,
+                        exc,
+                    )
+                    send_whatsapp_document_message(
                         context["telefono_e164"],
-                        PDF_STORAGE[pdf_id]["buffer"],
+                        pdf_url,
                         pdf_filename,
                         caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
                     )
