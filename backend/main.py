@@ -33,7 +33,7 @@ from sqlalchemy import create_engine, text
 logger = logging.getLogger("ferreinox_agent")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 
-app = FastAPI(title="CRM Ferreinox Backend", version="2026.3")
+app = FastAPI(title="CRM Ferreinox Backend", version="2026.3.1")
 
 # ── Agent V3 (production engine) ──────────────────────────────────────────────
 try:
@@ -20252,7 +20252,7 @@ def search_internal_products(q: str, store: Optional[str] = None, authorization:
 def read_root():
     return {
         "estado": "Sistema CRM Ferreinox Activo",
-        "version": "2026.3",
+        "version": "2026.3.1",
         "postgrest_url": get_postgrest_url(),
         "endpoints": [
             "/health",

@@ -73,6 +73,118 @@ def _sanitize_technical_lookup_args(raw_args: dict, user_message: str, recent_me
     return args
 
 
+def _collect_recent_inbound_text(user_message: str, recent_messages: list[dict], limit: int = 4) -> str:
+    inbound_messages = [
+        (msg.get("contenido") or "").strip()
+        for msg in recent_messages or []
+        if msg.get("direction") == "inbound" and (msg.get("contenido") or "").strip()
+    ]
+    combined = inbound_messages[-limit:]
+    if (user_message or "").strip():
+        combined.append(user_message.strip())
+    return " ".join(combined).strip()
+
+
+def _should_preload_technical_guidance(
+    initial_intent: str,
+    initial_diagnostic: dict,
+    user_message: str,
+    recent_messages: list[dict],
+    conversation_context: dict,
+    technical_case: Optional[dict],
+    m,
+) -> bool:
+    if initial_intent != "asesoria":
+        return False
+    if conversation_context.get("latest_technical_guidance"):
+        return False
+
+    combined_text = _collect_recent_inbound_text(user_message, recent_messages, limit=5)
+    normalized_text = m.normalize_text_value(combined_text)
+    inbound_turns = sum(1 for msg in recent_messages or [] if msg.get("direction") == "inbound" and (msg.get("contenido") or "").strip())
+
+    has_surface_context = bool(initial_diagnostic.get("surface") or (technical_case or {}).get("category"))
+    has_structured_detail = bool(
+        initial_diagnostic.get("condition")
+        or initial_diagnostic.get("interior_exterior")
+        or initial_diagnostic.get("area_m2")
+        or initial_diagnostic.get("traffic")
+        or initial_diagnostic.get("humidity_source")
+    )
+    has_decision_signal = any(
+        token in normalized_text
+        for token in [
+            "que sistema", "que me recomiendas", "me recomiendas", "que va", "que aplico",
+            "cual va", "sirve o no", "ruta correcta", "si aplica", "cotizame", "cotizar",
+            "proteger", "impermeabil", "limpiar", "dejarla protegida", "dejarlo protegido",
+        ]
+    )
+    has_high_risk_signal = any(
+        token in normalized_text
+        for token in [
+            "agua potable", "tanque", "sumerg", "inmersion", "inmersion", "eternit", "fibrocemento",
+            "ladrillo a la vista", "humedad", "salitre", "oxido", "óxido", "fachada", "cubierta",
+            "terraza", "reja", "metal", "madera", "trafico pesado", "trafico liviano",
+        ]
+    )
+
+    return bool(
+        has_surface_context
+        and (
+            (technical_case or {}).get("ready")
+            or has_structured_detail
+            or has_decision_signal
+            or has_high_risk_signal
+            or inbound_turns >= 2
+        )
+    )
+
+
+def _build_preemptive_technical_lookup_args(
+    user_message: str,
+    recent_messages: list[dict],
+    conversation_context: dict,
+    technical_case: Optional[dict],
+    m,
+) -> dict:
+    combined_text = _collect_recent_inbound_text(user_message, recent_messages, limit=5)
+    enriched_case = technical_case or {}
+    if hasattr(m, "extract_technical_advisory_case") and (not enriched_case or enriched_case.get("category") in {None, "general"}):
+        try:
+            enriched_case = m.extract_technical_advisory_case(combined_text, conversation_context)
+        except Exception:
+            enriched_case = technical_case or {}
+
+    search_query = ""
+    if enriched_case and hasattr(m, "build_technical_search_query"):
+        try:
+            search_query = (m.build_technical_search_query(enriched_case, combined_text or user_message) or "").strip()
+        except Exception:
+            search_query = ""
+
+    if not search_query:
+        search_query = combined_text
+
+    search_query = " ".join(search_query.split())[:600]
+    if not search_query:
+        return {}
+
+    return {"pregunta": search_query}
+
+
+def _preload_technical_guidance(args: dict, context: dict, conversation_context: dict, m) -> Optional[str]:
+    if not args.get("pregunta"):
+        return None
+    result = m._handle_tool_consultar_conocimiento_tecnico(args, context, conversation_context)
+    try:
+        parsed_result = json.loads(result)
+    except Exception:
+        parsed_result = {}
+    if isinstance(parsed_result, dict) and parsed_result.get("encontrado"):
+        conversation_context["latest_technical_guidance"] = m._build_latest_technical_guidance_snapshot(parsed_result, args)
+    return result
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # CORE: generate_agent_reply_v3
 # ══════════════════════════════════════════════════════════════════════════════
@@ -191,6 +303,52 @@ def generate_agent_reply_v3(
 
     initial_diagnostic = extract_diagnostic_data(user_message, recent_messages)
     normalized_user_message = m.normalize_text_value(user_message)
+    tool_calls_made = []
+    _rag_cache: dict[str, str] = {}
+    _tool_type_counts: dict[str, int] = {}
+    _TOOL_MAX_CALLS = {"consultar_conocimiento_tecnico": 2, "buscar_documento_tecnico": 2}
+
+    technical_case = None
+    if hasattr(m, "extract_technical_advisory_case"):
+        try:
+            technical_case = m.extract_technical_advisory_case(user_message, conversation_context)
+        except Exception:
+            technical_case = None
+
+    if _should_preload_technical_guidance(
+        initial_intent,
+        initial_diagnostic,
+        user_message,
+        recent_messages,
+        conversation_context,
+        technical_case,
+        m,
+    ):
+        preload_args = _build_preemptive_technical_lookup_args(
+            user_message,
+            recent_messages,
+            conversation_context,
+            technical_case,
+            m,
+        )
+        preload_result = _preload_technical_guidance(preload_args, context, conversation_context, m)
+        if preload_result:
+            logger.info("V3 preloaded technical guidance before first LLM turn")
+            tool_calls_made.append({"name": "consultar_conocimiento_tecnico", "args": preload_args, "result": preload_result})
+            cache_key = m.normalize_text_value(
+                (preload_args.get("pregunta") or "") + "|" + (preload_args.get("producto") or "")
+            )
+            if cache_key:
+                _rag_cache[cache_key] = preload_result
+            messages.append({
+                "role": "system",
+                "content": (
+                    "CONSULTA TÉCNICA YA EJECUTADA EN ESTE TURNO. "
+                    "Usa este resultado como fuente obligatoria antes de responder y antes de decidir si requieres otras herramientas.\n"
+                    f"Args consultar_conocimiento_tecnico: {json.dumps(preload_args, ensure_ascii=False)}\n"
+                    f"Resultado: {preload_result}"
+                ),
+            })
 
     def _needs_forced_technical_retry() -> bool:
         if tool_calls_made or assistant_message.tool_calls:
@@ -234,7 +392,6 @@ def generate_agent_reply_v3(
     logger.info("V3 LLM initial: %dms", int((t_first - t_start) * 1000))
 
     assistant_message = response.choices[0].message
-    tool_calls_made = []
 
     if _needs_forced_technical_retry():
         logger.info("V3 retry: advisory response promised a technical lookup without calling tools")
@@ -262,9 +419,6 @@ def generate_agent_reply_v3(
 
     max_iterations = 6
     iteration = 0
-    _rag_cache: dict[str, str] = {}
-    _tool_type_counts: dict[str, int] = {}
-    _TOOL_MAX_CALLS = {"consultar_conocimiento_tecnico": 2, "buscar_documento_tecnico": 2}
 
     while assistant_message.tool_calls and max_iterations > 0:
         iteration += 1
