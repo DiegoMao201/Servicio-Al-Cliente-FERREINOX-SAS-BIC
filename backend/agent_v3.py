@@ -375,33 +375,31 @@ def generate_agent_reply_v3(
             "is_farewell": False,
         }
 
-    # ── Explicit inventory queries ALWAYS route to inventory, even with active draft ──
-    if _is_explicit_inventory_query(user_message) and hasattr(m, "build_inventory_lookup_reply"):
+    # ── Farewell short-circuit — no LLM needed ──
+    if initial_intent == "despedida" and m.detect_farewell(user_message or ""):
+        greeting_name = (profile_name or nombre_cliente or "").strip()
+        if greeting_name:
+            response_text = f"¡Con gusto, {greeting_name}! Aquí estaré cuando me necesites. ¡Que te vaya bien! 👋"
+        else:
+            response_text = "¡Con gusto! Aquí estaré cuando me necesites. ¡Que te vaya bien! 👋"
+        return {
+            "response_text": response_text,
+            "intent": "despedida",
+            "tool_calls": [],
+            "context_updates": {},
+            "should_create_task": False,
+            "confidence": m.score_agent_confidence(response_text, [], "despedida"),
+            "is_farewell": True,
+        }
+
+    # ── Explicit inventory query with active draft → clear draft so LLM sees clean state ──
+    if _is_explicit_inventory_query(user_message):
         conversation_context.pop("commercial_draft", None)
-        return _build_inventory_lookup_short_circuit(
-            profile_name,
-            conversation_context,
-            user_message,
-            m,
-        )
 
-    # ── Inventory lookup (before commercial to avoid hijacking product queries) ──
-    if _should_route_to_inventory_lookup(initial_intent, conversation_context, m):
-        return _build_inventory_lookup_short_circuit(
-            profile_name,
-            conversation_context,
-            user_message,
-            m,
-        )
-
-    if _should_route_to_commercial_flow(initial_intent, conversation_context, user_message, m):
-        return _build_commercial_flow_short_circuit(
-            profile_name,
-            conversation_context,
-            user_message,
-            initial_intent,
-            m,
-        )
+    # ══════════════════════════════════════════════════════════════════════
+    # LLM AS CONVERSATIONAL BRAIN — no more short-circuits for inventory
+    # or commercial.  The LLM decides which tools to call.  Python executes.
+    # ══════════════════════════════════════════════════════════════════════
 
     # ── Construir contexto de turno dinámico ─────────────────────────────
     contexto_turno = build_turn_context(
@@ -540,7 +538,8 @@ def generate_agent_reply_v3(
         messages=messages,
         tools=AGENT_TOOLS_V3,
         tool_choice="auto",
-        temperature=0.3,
+        parallel_tool_calls=True,
+        temperature=0.2,
     )
     t_first = time.time()
     logger.info("V3 LLM initial: %dms", int((t_first - t_start) * 1000))
@@ -566,7 +565,8 @@ def generate_agent_reply_v3(
             messages=messages,
             tools=AGENT_TOOLS_V3,
             tool_choice="auto",
-            temperature=0.3,
+            parallel_tool_calls=True,
+            temperature=0.2,
         )
         assistant_message = response.choices[0].message
         logger.info("V3 retry completed after missed advisory tool call")
@@ -635,7 +635,8 @@ def generate_agent_reply_v3(
             messages=messages,
             tools=AGENT_TOOLS_V3,
             tool_choice="auto",
-            temperature=0.3,
+            parallel_tool_calls=True,
+            temperature=0.2,
         )
         logger.info("V3 LLM iteration %d: %dms", iteration, int((time.time() - t_loop) * 1000))
         assistant_message = response.choices[0].message
