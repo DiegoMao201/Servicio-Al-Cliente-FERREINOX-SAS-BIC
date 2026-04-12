@@ -7081,7 +7081,8 @@ def build_item_audit_label(item: Optional[dict]):
         or row.get("original_text")
         or "Producto"
     )
-    return f"[{reference_value}] - {re.sub(r'\s+', ' ', str(description).strip())}"
+    normalized_description = re.sub(r"\s+", " ", str(description).strip())
+    return f"[{reference_value}] - {normalized_description}"
 
 
 def has_meaningful_product_anchor(product_request: Optional[dict]):
