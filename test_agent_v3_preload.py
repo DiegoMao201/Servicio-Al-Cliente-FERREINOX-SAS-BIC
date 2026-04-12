@@ -11,6 +11,68 @@ import main
 
 
 class AgentV3PreloadTests(unittest.TestCase):
+    def test_routes_direct_commercial_batch_to_structured_flow(self):
+        conversation_context = {}
+
+        class DummyMain:
+            _AUTHORIZED_EXPERTS = set()
+
+            def get_openai_client(self):
+                return object()
+
+            def is_simple_greeting(self, _message):
+                return False
+
+            def safe_json_dumps(self, value):
+                return json.dumps(value, ensure_ascii=False)
+
+            def score_agent_confidence(self, response_text, _tool_calls, intent):
+                return {"level": "alta", "intent": intent, "response": response_text}
+
+            def detect_farewell(self, _message):
+                return False
+
+            def normalize_text_value(self, value):
+                return (value or "").lower().strip()
+
+            def split_commercial_line_items(self, text):
+                return [line.strip() for line in text.splitlines() if line.strip()]
+
+            def extract_product_request(self, line):
+                lowered = (line or "").lower()
+                return {
+                    "requested_quantity": 1 if any(token in lowered for token in ["galones", "cuartos"]) else None,
+                    "product_codes": ["1501"] if "1501" in lowered else [],
+                    "core_terms": ["producto"] if any(token in lowered for token in ["sd1", "tu11", "teu95"]) else [],
+                    "requested_unit": "galon" if "galones" in lowered else ("cuarto" if "cuartos" in lowered else None),
+                }
+
+            def build_commercial_flow_reply(self, intent, _profile_name, _user_message, _conversation_context):
+                self.called_intent = intent
+                return {
+                    "response_text": "flujo comercial estructurado",
+                    "intent": intent,
+                    "conversation_context_updates": {"commercial_draft": {"intent": intent, "items": []}},
+                    "should_create_task": False,
+                }
+
+        original_main = agent_v3._main
+        agent_v3._main = DummyMain()
+        try:
+            result = agent_v3.generate_agent_reply_v3(
+                None,
+                conversation_context,
+                [],
+                "8 galones 1501\n9 cuartos sd1\n2 galones tu11\n2 galones teu95",
+                {},
+            )
+        finally:
+            agent_v3._main = original_main
+
+        self.assertEqual(result["response_text"], "flujo comercial estructurado")
+        self.assertEqual(result["intent"], "cotizacion")
+        self.assertEqual(result["tool_calls"], [])
+
     def test_preload_triggers_on_second_advisory_turn_with_known_surface(self):
         recent_messages = [
             {"direction": "inbound", "contenido": "Tengo una fachada de ladrillo a la vista y se puso negra por humo y agua."},

@@ -248,6 +248,8 @@ AGENT_TOOLS_V3 = [
             "description": (
                 "Busca disponibilidad y precios de UN producto en el inventario de Ferreinox. "
                 "OBLIGATORIO llamar ANTES de mencionar cualquier precio o disponibilidad al cliente. "
+                "Si la consulta es SOLO de inventario/stock, envía modo_consulta='inventario'. "
+                "Si es una cotización o requiere precios, usa modo_consulta='cotizacion'. "
                 "SEPARA el nombre base del producto de sus variantes (color, presentación, cantidad). "
                 "Ejemplo: nombre_base='Koraza', variante_o_color='blanco galón'. "
                 "NUNCA envíes strings técnicos largos del RAG como 'Interseal 670 HS RAL 7038 (Kit A+B)'. "
@@ -270,6 +272,14 @@ AGENT_TOOLS_V3 = [
                             "Color, presentación, cantidad o variante solicitada. "
                             "Ej: 'blanco galón', 'RAL 7038 cuñete', 'gris 8 galones', 'transparente cuarto'. "
                             "Si el cliente no especificó color ni presentación, omite este campo."
+                        ),
+                    },
+                    "modo_consulta": {
+                        "type": "string",
+                        "enum": ["inventario", "cotizacion"],
+                        "description": (
+                            "Usa 'inventario' cuando el cliente SOLO pregunta existencias o stock. "
+                            "Usa 'cotizacion' cuando además necesita precios o liquidación."
                         ),
                     },
                     "producto": {
@@ -338,12 +348,18 @@ AGENT_TOOLS_V3 = [
                 "Busca disponibilidad y precios de MÚLTIPLES productos en una sola llamada (hasta 15). "
                 "Usa esta herramienta cuando necesites buscar 2 o más productos a la vez "
                 "(sistema completo, lista de pedido, cotización). "
+                "Si la consulta es SOLO de stock, usa modo_consulta='inventario'. "
                 "Para cada producto, envía un objeto con nombre_base separado de variante_o_color. "
                 "NUNCA envíes strings técnicos largos del RAG. Envía nombres comerciales cortos."
             ),
             "parameters": {
                 "type": "object",
                 "properties": {
+                    "modo_consulta": {
+                        "type": "string",
+                        "enum": ["inventario", "cotizacion"],
+                        "description": "Usa 'inventario' para existencias puras y 'cotizacion' para búsquedas con precio.",
+                    },
                     "productos": {
                         "type": "array",
                         "description": "Lista de productos a buscar. Máximo 15.",

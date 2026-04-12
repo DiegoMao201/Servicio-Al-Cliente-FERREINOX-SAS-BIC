@@ -500,6 +500,8 @@ _DIRECT_ORDER_PATTERNS = re.compile(
     re.IGNORECASE,
 )
 
+_SHORT_REFERENCE_PATTERNS = re.compile(r"\b(?:[a-z]{1,4}\d{1,4}|\d{3,6})\b", re.IGNORECASE)
+
 _SPECIFIC_PRODUCTS = [
     "koraza", "viniltex", "pintucoat", "intervinil", "pinturama",
     "interseal", "intergard", "interthane", "corrotec", "pintóxido", "pintoxido",
@@ -507,7 +509,14 @@ _SPECIFIC_PRODUCTS = [
     "aquablock", "sellamur", "wood stain", "pintura canchas", "wash primer",
     "primer 50rs", "pintuco fill", "pintutraf", "doméstico", "domestico",
     "1550", "1551", "poliuretano alto", "intergard 740", "intergard 2002",
-    "sealer f100", "interchar",
+    "sealer f100", "interchar", "sd1", "sd-1", "tu11", "teu11", "teu95",
+    "tu95", "brocha goya", "brocha profesional goya", "goya profesional",
+]
+
+_COMMERCIAL_PRODUCT_SIGNALS = [
+    "viniltex", "pintulux", "koraza", "barniz", "sd1", "sd-1", "tu11", "teu11",
+    "teu95", "tu95", "brocha", "goya", "rodillo", "lija", "cinta", "estuco",
+    "sellador", "pintucoat", "interseal", "intergard", "interthane", "corrotec",
 ]
 
 _ADVISORY_SIGNALS = [
@@ -548,6 +557,27 @@ _PRICE_SIGNALS = [
     "cuánto cuesta", "cuanto cuesta", "cuánto vale", "cuanto vale",
     "cuánto me sale", "cuanto me sale", "dame precios", "valor",
 ]
+
+_INVENTORY_SIGNALS = [
+    "inventario", "stock", "disponible", "disponibilidad", "tenemos", "hay",
+]
+
+
+def _looks_like_direct_commercial_batch(message: str) -> bool:
+    lines = [line.strip() for line in re.split(r"[\r\n]+", message or "") if line.strip()]
+    if len(lines) < 2:
+        return False
+
+    commercial_lines = 0
+    for line in lines[:12]:
+        lowered = line.lower()
+        has_quantity = bool(_DIRECT_ORDER_PATTERNS.search(line) or re.match(r"^\s*\d+(?:[.,]\d+)?\b", line))
+        has_reference = bool(_SHORT_REFERENCE_PATTERNS.search(lowered))
+        has_product_signal = any(token in lowered for token in _COMMERCIAL_PRODUCT_SIGNALS)
+        if has_quantity and (has_reference or has_product_signal):
+            commercial_lines += 1
+
+    return commercial_lines >= 2
 
 _FAREWELL_PATTERNS = re.compile(
     r"^\s*(gracias|muchas gracias|listo|perfecto|ok|está bien|esta bien|"
@@ -690,6 +720,14 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
     has_price_request = any(s in msg_lower for s in _PRICE_SIGNALS)
     has_condition = any(s in msg_lower for s in _CONDITION_SIGNALS)
     has_surface = any(s in msg_lower for s in _SURFACE_SIGNALS)
+    has_inventory_request = any(s in msg_lower for s in _INVENTORY_SIGNALS)
+    has_reference_like = has_specific or bool(_SHORT_REFERENCE_PATTERNS.search(msg_lower))
+
+    if _looks_like_direct_commercial_batch(msg):
+        return "pedido_directo"
+
+    if has_inventory_request and has_reference_like and not has_price_request and not has_condition:
+        return "consulta_productos"
 
     # Si el cliente nombra un producto PERO describe una condición problemática
     # (humedad, salitre, óxido, descascarada, etc.), la intención es ASESORÍA.
@@ -1066,6 +1104,18 @@ def build_turn_context(
         lines.append("El cliente quiere precios de algo ya discutido.")
         lines.append("Acción: Llama consultar_inventario_lote para todos los productos del sistema recomendado.")
         lines.append("Presenta: sistema + cantidades + precios. Subtotal + IVA 19% + Total a Pagar.")
+
+    elif intent == "consulta_productos":
+        if is_internal:
+            lines.append("Consulta operativa de inventario para colaborador interno.")
+            lines.append("Acción: Llama consultar_inventario con modo_consulta='inventario'.")
+            lines.append("Si preguntan una tienda específica, responde con el stock exacto de esa tienda.")
+            lines.append("Si no piden tienda específica, muestra el desglose por tienda con cantidades exactas.")
+            lines.append("NO cotices. NO des IVA. NO mezcles esta consulta con pedido o cotización.")
+        else:
+            lines.append("Consulta puntual de disponibilidad de producto.")
+            lines.append("Acción: Llama consultar_inventario para validar referencia, presentación y disponibilidad.")
+            lines.append("Responde solo disponibilidad o pide aclaración si hay varias coincidencias.")
 
     elif intent == "confirmacion":
         lines.append("El cliente aceptó la cotización.")

@@ -85,6 +85,102 @@ def _collect_recent_inbound_text(user_message: str, recent_messages: list[dict],
     return " ".join(combined).strip()
 
 
+def _should_route_to_commercial_flow(initial_intent: str, conversation_context: dict, user_message: str, m) -> bool:
+    draft = conversation_context.get("commercial_draft") or {}
+    if draft.get("items"):
+        return True
+
+    if initial_intent in {"pedido_directo", "cotizacion", "confirmacion", "correccion"}:
+        return True
+
+    request_lines = m.split_commercial_line_items(user_message)
+    matched_lines = 0
+    for line in request_lines[:12]:
+        request = m.extract_product_request(line)
+        if request.get("requested_quantity") is not None and (
+            request.get("product_codes")
+            or request.get("core_terms")
+            or request.get("requested_unit")
+        ):
+            matched_lines += 1
+    return matched_lines >= 2
+
+
+def _infer_commercial_intent(initial_intent: str, conversation_context: dict, user_message: str, m) -> str:
+    draft_intent = (conversation_context.get("commercial_draft") or {}).get("intent")
+    if draft_intent in {"pedido", "cotizacion"}:
+        return draft_intent
+
+    normalized_message = m.normalize_text_value(user_message)
+    if initial_intent == "confirmacion":
+        return "cotizacion"
+    if any(token in normalized_message for token in ["pedido", "despacho", "separ", "separar"]):
+        return "pedido"
+    return "cotizacion"
+
+
+def _build_commercial_flow_short_circuit(
+    profile_name: Optional[str],
+    conversation_context: dict,
+    user_message: str,
+    initial_intent: str,
+    m,
+):
+    commercial_intent = _infer_commercial_intent(initial_intent, conversation_context, user_message, m)
+    commercial_result = m.build_commercial_flow_reply(
+        commercial_intent,
+        profile_name,
+        user_message,
+        conversation_context,
+    )
+    response_text = (commercial_result or {}).get("response_text") or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
+    context_updates = dict((commercial_result or {}).get("conversation_context_updates") or {})
+    if commercial_result and commercial_result.get("commercial_draft") and "commercial_draft" not in context_updates:
+        context_updates["commercial_draft"] = commercial_result.get("commercial_draft")
+
+    return {
+        "response_text": response_text,
+        "intent": (commercial_result or {}).get("intent") or commercial_intent,
+        "tool_calls": [],
+        "context_updates": context_updates,
+        "should_create_task": bool((commercial_result or {}).get("should_create_task")),
+        "confidence": m.score_agent_confidence(response_text, [], (commercial_result or {}).get("intent") or commercial_intent),
+        "is_farewell": False,
+    }
+
+
+def _should_route_to_inventory_lookup(initial_intent: str, conversation_context: dict, m) -> bool:
+    if initial_intent != "consulta_productos":
+        return False
+    if (conversation_context.get("commercial_draft") or {}).get("items"):
+        return False
+    return hasattr(m, "build_inventory_lookup_reply")
+
+
+def _build_inventory_lookup_short_circuit(
+    profile_name: Optional[str],
+    conversation_context: dict,
+    user_message: str,
+    m,
+):
+    inventory_result = m.build_inventory_lookup_reply(
+        profile_name,
+        user_message,
+        conversation_context,
+    ) or {}
+    response_text = inventory_result.get("response_text") or "No encontré un inventario claro para esa consulta."
+    context_updates = dict(inventory_result.get("conversation_context_updates") or {})
+    return {
+        "response_text": response_text,
+        "intent": inventory_result.get("intent") or "consulta_productos",
+        "tool_calls": [],
+        "context_updates": context_updates,
+        "should_create_task": bool(inventory_result.get("should_create_task")),
+        "confidence": m.score_agent_confidence(response_text, [], inventory_result.get("intent") or "consulta_productos"),
+        "is_farewell": False,
+    }
+
+
 def _should_preload_technical_guidance(
     initial_intent: str,
     initial_diagnostic: dict,
@@ -268,6 +364,23 @@ def generate_agent_reply_v3(
             "confidence": m.score_agent_confidence(response_text, [], "saludo"),
             "is_farewell": False,
         }
+
+    if _should_route_to_commercial_flow(initial_intent, conversation_context, user_message, m):
+        return _build_commercial_flow_short_circuit(
+            profile_name,
+            conversation_context,
+            user_message,
+            initial_intent,
+            m,
+        )
+
+    if _should_route_to_inventory_lookup(initial_intent, conversation_context, m):
+        return _build_inventory_lookup_short_circuit(
+            profile_name,
+            conversation_context,
+            user_message,
+            m,
+        )
 
     # ── Construir contexto de turno dinámico ─────────────────────────────
     contexto_turno = build_turn_context(

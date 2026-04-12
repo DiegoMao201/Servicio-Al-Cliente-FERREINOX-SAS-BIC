@@ -5703,6 +5703,218 @@ def extract_store_stock_from_summary(stock_summary: Optional[str], store_code: O
     return None
 
 
+def parse_store_stock_summary(stock_summary: Optional[str]):
+    details = []
+    for fragment in str(stock_summary or "").split(";"):
+        left_value, _, right_value = fragment.partition(":")
+        store_name = " ".join(left_value.split()).strip()
+        stock_value = parse_numeric_value(right_value)
+        if not store_name or stock_value is None:
+            continue
+        details.append({
+            "store_name": store_name,
+            "stock": stock_value,
+        })
+    return details
+
+
+def fetch_exact_store_stock_for_reference(referencia: str, store_code: Optional[str]):
+    normalized_store_code = normalize_store_code(store_code)
+    if not referencia or not normalized_store_code:
+        return None
+    try:
+        engine = get_db_engine()
+        with engine.connect() as connection:
+            row = connection.execute(
+                text(
+                    """
+                    SELECT COALESCE(SUM(stock_disponible), 0) AS stock_tienda
+                    FROM public.vw_inventario_agente
+                    WHERE referencia = :referencia
+                      AND cod_almacen = :store_code
+                    """
+                ),
+                {"referencia": str(referencia), "store_code": normalized_store_code},
+            ).mappings().first()
+            if row is None:
+                return None
+            return parse_numeric_value(row.get("stock_tienda"))
+    except Exception:
+        logger.exception("No se pudo consultar stock exacto por tienda para %s en %s", referencia, normalized_store_code)
+        return None
+
+
+def _looks_like_inventory_only_query(text_value: Optional[str]):
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+    inventory_tokens = ["inventario", "stock", "disponib", "tenemos", "hay"]
+    pricing_tokens = ["precio", "precios", "cotiz", "valor", "iva", "cuanto vale", "cuanto cuesta"]
+    return any(token in normalized for token in inventory_tokens) and not any(token in normalized for token in pricing_tokens)
+
+
+def _build_inventory_lookup_text(product_request: Optional[dict], fallback_text: Optional[str]):
+    request = dict(product_request or {})
+    if request.get("preferred_lookup_text"):
+        return str(request["preferred_lookup_text"]).strip()
+    if request.get("canonical_product"):
+        return str(request["canonical_product"]).strip()
+    product_codes = request.get("product_codes") or []
+    if product_codes:
+        return str(product_codes[0]).strip()
+    core_terms = request.get("core_terms") or []
+    if core_terms:
+        return " ".join(str(term).strip() for term in core_terms[:4] if str(term).strip()).strip()
+    return str(fallback_text or "").strip()
+
+
+def _format_internal_inventory_store_lines(stock_details: list[dict]):
+    if not stock_details:
+        return []
+    return [f"- {detail['store_name']}: {format_quantity(detail['stock'])}" for detail in stock_details if detail.get("stock") is not None]
+
+
+def build_inventory_lookup_reply(profile_name: Optional[str], user_message: Optional[str], conversation_context: Optional[dict]):
+    raw_payload = _handle_tool_consultar_inventario(
+        {"producto": user_message or "", "modo_consulta": "inventario"},
+        conversation_context or {},
+    )
+    payload = json.loads(raw_payload or "{}")
+    products = list(payload.get("productos") or [])
+    requested_store_label = payload.get("requested_store_label")
+    requested_store_code = payload.get("requested_store_code")
+    internal_auth = (conversation_context or {}).get("internal_auth") or {}
+    is_internal = bool(internal_auth)
+
+    if not products:
+        response_text = payload.get("mensaje") or "No encontré una referencia clara para esa consulta de inventario."
+    elif payload.get("requiere_aclaracion"):
+        option_lines = []
+        for product in products[:4]:
+            label = product.get("etiqueta_auditable") or f"[{product.get('codigo')}] - {product.get('descripcion')}"
+            if requested_store_code and product.get("stock_tienda_solicitada") is not None:
+                option_lines.append(f"- {label} | {requested_store_label}: {format_quantity(product.get('stock_tienda_solicitada'))}")
+            elif is_internal and product.get("stock_por_tienda_detalle"):
+                stock_line = "; ".join(
+                    f"{detail['store_name']}: {format_quantity(detail['stock'])}"
+                    for detail in product.get("stock_por_tienda_detalle")[:4]
+                )
+                option_lines.append(f"- {label} | {stock_line}")
+            else:
+                option_lines.append(f"- {label}")
+        response_text = "Necesito que me confirmes cuál referencia exacta buscas:\n" + "\n".join(option_lines)
+    else:
+        top_product = products[0]
+        audit_label = top_product.get("etiqueta_auditable") or f"[{top_product.get('codigo')}] - {top_product.get('descripcion')}"
+        if requested_store_code and is_internal:
+            requested_stock = parse_numeric_value(top_product.get("stock_tienda_solicitada"))
+            if requested_stock is None and top_product.get("visibilidad_tienda_exacta") is False:
+                response_text = f"No tengo visibilidad exacta de {audit_label} en {requested_store_label} en este momento."
+            elif (requested_stock or 0) > 0:
+                response_text = f"Sí, de {audit_label} en {requested_store_label} hay {format_quantity(requested_stock)} unidades."
+            else:
+                response_text = f"No, de {audit_label} en {requested_store_label} no hay existencias."
+
+            other_store_lines = [
+                line for line in _format_internal_inventory_store_lines(top_product.get("stock_por_tienda_detalle") or [])
+                if requested_store_label.lower() not in normalize_text_value(line)
+            ]
+            if other_store_lines:
+                response_text += "\n\nStock visible en otras tiendas:\n" + "\n".join(other_store_lines)
+        elif is_internal:
+            stock_lines = _format_internal_inventory_store_lines(top_product.get("stock_por_tienda_detalle") or [])
+            if stock_lines:
+                response_text = f"Inventario de {audit_label}:\n" + "\n".join(stock_lines)
+            else:
+                response_text = f"No veo stock disponible para {audit_label} en este momento."
+        else:
+            if top_product.get("disponible"):
+                response_text = f"Sí, {audit_label} está disponible."
+            else:
+                response_text = f"{audit_label} aparece agotado en este momento."
+
+    return {
+        "tono": "informativo",
+        "intent": "consulta_productos",
+        "priority": "media",
+        "summary": "Consulta de inventario",
+        "response_text": response_text,
+        "should_create_task": False,
+        "task_type": "seguimiento_cliente",
+        "task_summary": "Consulta puntual de inventario",
+        "task_detail": payload,
+        "conversation_context_updates": {},
+    }
+
+
+def prune_inventory_lookup_rows(product_rows: list[dict], product_request: Optional[dict]):
+    if not product_rows:
+        return []
+
+    request = product_request or {}
+    pruned_rows = list(product_rows)
+
+    requested_codes = {
+        normalize_reference_value(code)
+        for code in (request.get("product_codes") or [])
+        if normalize_reference_value(code)
+    }
+    if requested_codes:
+        exact_code_rows = [
+            row for row in pruned_rows
+            if normalize_reference_value(
+                row.get("referencia") or row.get("producto_codigo") or row.get("codigo_articulo")
+            ) in requested_codes
+        ]
+        if exact_code_rows:
+            pruned_rows = exact_code_rows
+        else:
+            code_text_rows = []
+            for row in pruned_rows:
+                candidate_text = normalize_reference_value(
+                    " ".join(
+                        str(value)
+                        for value in [
+                            row.get("descripcion") or row.get("nombre_articulo"),
+                            row.get("referencia") or row.get("producto_codigo") or row.get("codigo_articulo"),
+                            row.get("producto_padre_busqueda"),
+                            row.get("familia_consulta"),
+                        ]
+                        if value
+                    )
+                )
+                if any(code in candidate_text for code in requested_codes):
+                    code_text_rows.append(row)
+            if code_text_rows:
+                pruned_rows = code_text_rows
+
+    top_base_exact_score = pruned_rows[0].get("base_exact_score") or 0 if pruned_rows else 0
+    if top_base_exact_score > 0:
+        exact_base_rows = [row for row in pruned_rows if (row.get("base_exact_score") or 0) == top_base_exact_score]
+        if exact_base_rows:
+            pruned_rows = exact_base_rows
+
+    top_specific_score = pruned_rows[0].get("specific_score") or 0 if pruned_rows else 0
+    if top_specific_score >= 2:
+        exact_specific_rows = [row for row in pruned_rows if (row.get("specific_score") or 0) == top_specific_score]
+        if exact_specific_rows:
+            pruned_rows = exact_specific_rows
+
+    top_match_score = pruned_rows[0].get("match_score") or 0 if pruned_rows else 0
+    if top_match_score >= 4 and len(pruned_rows) > 1:
+        close_match_rows = [row for row in pruned_rows if (row.get("match_score") or 0) >= max(4, top_match_score - 1)]
+        if close_match_rows:
+            pruned_rows = close_match_rows
+
+    requested_unit = request.get("requested_unit")
+    if requested_unit:
+        exact_unit_rows = [row for row in pruned_rows if infer_product_presentation_from_row(row) == requested_unit]
+        if exact_unit_rows:
+            pruned_rows = exact_unit_rows
+
+    return pruned_rows
+
+
 def filter_previous_product_context(conversation_context: Optional[dict], product_request: Optional[dict]):
     previous_rows = list((conversation_context or {}).get("last_product_context") or [])
     if not previous_rows:
@@ -11422,6 +11634,19 @@ def split_commercial_line_items(text_value: Optional[str]):
     if not text_value:
         return []
 
+    def expand_grouped_size_line(raw_line: str) -> list[str]:
+        clean_line = str(raw_line or "").strip()
+        if not clean_line or not re.search(r"\b(brocha|brochas|rodillo|rodillos|goya)\b", clean_line, flags=re.IGNORECASE):
+            return []
+        grouped_match = re.match(r"^(?P<prefix>.+?)\s+de\s*:\s*(?P<sizes>.+)$", clean_line, flags=re.IGNORECASE)
+        if not grouped_match:
+            return []
+        size_values = extract_size_filters(grouped_match.group("sizes"))
+        if len(size_values) < 2:
+            return []
+        prefix = grouped_match.group("prefix").strip()
+        return [f'{prefix} de: {size_value}"' for size_value in size_values]
+
     filler_fragments = {
         "necesito",
         "tambien necesito",
@@ -11482,6 +11707,14 @@ def split_commercial_line_items(text_value: Optional[str]):
     prepared_text = re.sub(r"[;|]+", "\n", text_for_items)
     raw_lines = [line.strip(" -*•\t") for line in prepared_text.splitlines()]
     lines = [line for line in raw_lines if line]
+    expanded_lines = []
+    for line in lines:
+        grouped_lines = expand_grouped_size_line(line)
+        if grouped_lines:
+            expanded_lines.extend(grouped_lines)
+        else:
+            expanded_lines.append(line)
+    lines = expanded_lines
     if len(lines) >= 2:
         return lines
 
@@ -11520,6 +11753,112 @@ def merge_store_filters(product_request: dict, inherited_store_filters: list[str
     if inherited_store_filters and not merged_request.get("store_filters"):
         merged_request["store_filters"] = list(inherited_store_filters)
     return merged_request
+
+
+def extract_commercial_discount_note(text_value: Optional[str]):
+    clean_value = " ".join(str(text_value or "").split()).strip()
+    normalized = normalize_text_value(clean_value)
+    if not clean_value or "descuento" not in normalized:
+        return None
+
+    pct_match = re.search(r"\b(\d+(?:[.,]\d+)?)\b", clean_value)
+    brand = None
+    for brand_candidate in ["goya", "pintuco", "pintulux", "viniltex", "abracol"]:
+        if brand_candidate in normalized:
+            brand = brand_candidate
+            break
+
+    return {
+        "raw_text": clean_value,
+        "brand": brand,
+        "discount_pct": parse_numeric_value(pct_match.group(1)) if pct_match else None,
+    }
+
+
+def _merge_discount_notes(existing_notes: list[dict], new_notes: list[dict]) -> list[dict]:
+    merged_notes: list[dict] = []
+    seen: set[tuple[str, Optional[float]]] = set()
+    for note in [*(existing_notes or []), *(new_notes or [])]:
+        if not isinstance(note, dict):
+            continue
+        brand = normalize_text_value(note.get("brand") or "")
+        discount_pct = parse_numeric_value(note.get("discount_pct"))
+        raw_text = " ".join(str(note.get("raw_text") or "").split()).strip()
+        note_key = (brand or normalize_text_value(raw_text), discount_pct)
+        if note_key in seen:
+            continue
+        seen.add(note_key)
+        merged_notes.append({
+            "raw_text": raw_text,
+            "brand": brand or None,
+            "discount_pct": discount_pct,
+        })
+    return merged_notes
+
+
+def _apply_discount_notes_to_items(items: list[dict], discount_notes: list[dict]):
+    if not discount_notes:
+        return items
+
+    adjusted_items = []
+    for item in items:
+        updated_item = dict(item)
+        request = dict(updated_item.get("product_request") or {})
+        matched_product = dict(updated_item.get("matched_product") or {})
+        searchable_text = normalize_text_value(
+            " ".join(
+                filter(
+                    None,
+                    [
+                        updated_item.get("original_text"),
+                        updated_item.get("audit_label"),
+                        matched_product.get("descripcion"),
+                        matched_product.get("nombre_articulo"),
+                        " ".join(request.get("brand_filters") or []),
+                    ],
+                )
+            )
+        )
+
+        for note in discount_notes:
+            brand = normalize_text_value(note.get("brand") or "")
+            discount_pct = parse_numeric_value(note.get("discount_pct"))
+            if discount_pct is None:
+                continue
+            if brand and brand not in searchable_text:
+                continue
+            updated_item["discount_pct"] = discount_pct
+            if matched_product:
+                matched_product["descuento_pct"] = discount_pct
+            break
+
+        if matched_product:
+            updated_item["matched_product"] = matched_product
+        adjusted_items.append(updated_item)
+
+    return adjusted_items
+
+
+def _format_discount_note_acknowledgement(discount_notes: list[dict]) -> str:
+    if not discount_notes:
+        return ""
+
+    formatted_notes = []
+    for note in discount_notes:
+        discount_pct = parse_numeric_value(note.get("discount_pct"))
+        brand = note.get("brand")
+        if discount_pct is None:
+            formatted_notes.append(note.get("raw_text") or "descuento comercial")
+            continue
+        pct_label = format_quantity(discount_pct)
+        if brand:
+            formatted_notes.append(f"descuento del {pct_label}% para {brand.title()}")
+        else:
+            formatted_notes.append(f"descuento del {pct_label}%")
+
+    if len(formatted_notes) == 1:
+        return f"También dejo anotado el {formatted_notes[0]}."
+    return "También dejo anotados " + ", ".join(formatted_notes[:-1]) + f" y {formatted_notes[-1]}."
 
 
 def describe_commercial_item_need(item: dict):
@@ -11764,11 +12103,13 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     normalized_message = normalize_text_value(user_message)
     technical_guidance = _get_active_technical_guidance(context, existing_draft)
     incoming_request_lines = split_commercial_line_items(user_message)
+    incoming_discount_notes = [note for note in (extract_commercial_discount_note(line) for line in incoming_request_lines) if note]
+    incoming_item_lines = [line for line in incoming_request_lines if not extract_commercial_discount_note(line)]
     incoming_store_filters = extract_store_filters(user_message)
     incoming_email = extract_email_address(user_message)
     incoming_delivery_channel = extract_delivery_channel(user_message)
     inherited_store_filters = incoming_store_filters or existing_draft.get("store_filters") or []
-    current_lines = list(incoming_request_lines)
+    current_lines = list(incoming_item_lines)
     has_existing_items = bool(existing_draft.get("items"))
     has_contextual_followup = bool(incoming_store_filters or incoming_email or incoming_delivery_channel)
     is_affirmative_followup = is_affirmative_message(user_message)
@@ -11780,6 +12121,7 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         and re.search(r"\b(cotizacion|cotización|cotiza|cotizar|cotizame|cotízame|pdf|genera|generar|envia|enví|manda)\b", normalized_message)
     )
     incoming_customer_identity = extract_commercial_customer_candidate(user_message) if has_existing_items else ""
+    discount_notes = _merge_discount_notes(existing_draft.get("discount_notes") or [], incoming_discount_notes)
     raw_request_lines = _merge_unique_text_lines(
         existing_draft.get("raw_request_lines") or [],
         [line for line in incoming_request_lines if _is_customer_order_summary_line(line)],
@@ -11813,6 +12155,7 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             delivery_channel=incoming_delivery_channel,
             contact_email=incoming_email,
         )
+        discount_notes = list(incoming_discount_notes)
         technical_guidance = {}
         inherited_store_filters = incoming_store_filters or []
         has_existing_items = False
@@ -11950,6 +12293,8 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         else:
             resolved_items.append(build_commercial_item_result(raw_line, inherited_store_filters, intent))
 
+    resolved_items = _apply_discount_notes_to_items(resolved_items, discount_notes)
+
     resolved_items, blocked_technical_products, missing_required_products = _enforce_technical_guidance_on_resolved_items(
         resolved_items,
         technical_guidance,
@@ -12026,6 +12371,8 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
                 + ", ".join(missing_required_products[:4])
                 + "."
             )
+        if incoming_discount_notes:
+            closing_parts.append(_format_discount_note_acknowledgement(incoming_discount_notes))
         if all_items_resolved and has_required_location and not items_confirmed:
             request_label = "cotización" if intent == "cotizacion" else "pedido"
             closing_parts.append(f"¿Te confirmo el {request_label}? ¿A nombre de quién va el despacho?")
@@ -12052,6 +12399,7 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             "customer_resolution_status": customer_resolution_status,
             "technical_guidance": technical_guidance or None,
             "technical_missing_required_products": missing_required_products,
+            "discount_notes": discount_notes,
             "raw_request_lines": raw_request_lines,
             "items": resolved_items,
         }
@@ -12114,6 +12462,7 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         "customer_resolution_status": customer_resolution_status,
         "technical_guidance": technical_guidance or None,
         "technical_missing_required_products": missing_required_products,
+        "discount_notes": discount_notes,
         "raw_request_lines": raw_request_lines,
         "items": resolved_items,
     }
@@ -16180,11 +16529,6 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             # ── Load rotation cache once for the full search session ──
             rotation_cache = fetch_rotation_cache(connection)
 
-            if learned_references:
-                learned_rows = fetch_reference_product_rows(connection, learned_references, store_filters, 90)
-                if learned_rows:
-                    return filter_rows_by_requested_presentation([dict(row) for row in learned_rows], product_request)
-
             if product_codes:
                 code_rows = fetch_code_product_rows(connection, product_codes, store_filters)
                 if code_rows:
@@ -16207,6 +16551,11 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                         ranked_fuzzy = rank_product_match_rows([dict(row) for row in fuzzy_rows], product_request, normalized_query, rotation_cache, text_value)
                         ranked_fuzzy = filter_rows_by_requested_presentation(ranked_fuzzy, product_request)
                         return ranked_fuzzy[:10]
+
+            if learned_references:
+                learned_rows = fetch_reference_product_rows(connection, learned_references, store_filters, 90)
+                if learned_rows:
+                    return filter_rows_by_requested_presentation([dict(row) for row in learned_rows], product_request)
 
             if not terms:
                 return []
@@ -16488,6 +16837,7 @@ def _handle_tool_consultar_inventario(args, conversation_context):
     nombre_base = (args.get("nombre_base") or "").strip()
     variante_o_color = (args.get("variante_o_color") or "").strip()
     producto_legacy = (args.get("producto") or "").strip()
+    modo_consulta = normalize_text_value(args.get("modo_consulta") or "")
 
     # Construir query de búsqueda priorizando el schema nuevo
     if nombre_base:
@@ -16504,19 +16854,30 @@ def _handle_tool_consultar_inventario(args, conversation_context):
             ensure_ascii=False,
         )
     producto_raw = producto_busqueda
+    inventory_only_mode = modo_consulta == "inventario" or _looks_like_inventory_only_query(producto_raw)
+    internal_inventory_mode = inventory_only_mode and bool((conversation_context or {}).get("internal_auth"))
     # ── Phase 20: Traducir jerga coloquial del cliente a términos de catálogo en Python ──
     producto = translate_customer_jargon(producto_raw)
-    # Skip NLU (OpenAI) call — the main LLM already parsed the product query via tool call
-    base_request = extract_product_request(producto)
+    base_request = extract_product_request(producto_raw)
+    base_request = apply_deterministic_product_alias_rules(producto_raw, base_request)
+    if not (
+        base_request.get("preferred_lookup_text")
+        or base_request.get("canonical_product")
+        or base_request.get("product_codes")
+        or base_request.get("core_terms")
+    ):
+        base_request = prepare_product_request_for_search(producto_raw, base_request)
     base_request["nlu_processed"] = True
-    base_request = apply_deterministic_product_alias_rules(producto, base_request)
     product_request = build_followup_inventory_request(
-        producto,
+        producto_raw,
         base_request,
         conversation_context,
     )
     product_request["nlu_processed"] = True
-    rows = lookup_product_context(producto, product_request)
+    lookup_text = _build_inventory_lookup_text(product_request, producto)
+    rows = lookup_product_context(lookup_text, product_request)
+    if not rows and lookup_text != producto:
+        rows = lookup_product_context(producto, product_request)
 
     # ── Broader fallback: si la búsqueda combinada (base+variante) no encontró nada,
     # reintenta solo con nombre_base para dar más resultados ──
@@ -16553,6 +16914,9 @@ def _handle_tool_consultar_inventario(args, conversation_context):
             return score
 
         rows = sorted(rows, key=_variante_score, reverse=True)
+
+    if inventory_only_mode and rows:
+        rows = prune_inventory_lookup_rows(rows, product_request)
 
     requested_store_codes = product_request.get("store_filters") or []
     requested_store_code = requested_store_codes[0] if len(requested_store_codes) == 1 else None
@@ -16641,27 +17005,33 @@ def _handle_tool_consultar_inventario(args, conversation_context):
         requested_store_stock = row.get("stock_en_tienda_solicitada")
         if requested_store_stock is None and requested_store_code:
             requested_store_stock = extract_store_stock_from_summary(row.get("stock_por_tienda"), requested_store_code)
+        if requested_store_stock is None and requested_store_code:
+            requested_store_stock = fetch_exact_store_stock_for_reference(item.get("codigo") or "", requested_store_code)
         if requested_store_stock is not None:
             item["disponible_tienda_solicitada"] = requested_store_stock > 0
+            item["stock_tienda_solicitada"] = requested_store_stock
         if requested_store_code:
             item["visibilidad_tienda_exacta"] = bool(row.get("visibilidad_tienda_exacta") or requested_store_stock is not None)
             item["tienda_solicitada"] = STORE_CODE_LABELS.get(requested_store_code) or requested_store_code
+        if internal_inventory_mode:
+            item["stock_total_exacto"] = stock or 0
+            item["stock_por_tienda_detalle"] = parse_store_stock_summary(row.get("stock_por_tienda"))
         stock_189 = parse_numeric_value(row.get("stock_189"))
         if stock_189 is not None:
             item["disponible_pereira"] = stock_189 > 0
         precio = row.get("precio_venta")
-        if precio is not None:
+        if not inventory_only_mode and precio is not None:
             item["precio"] = precio
         # --- Price lookup from agent_precios ---
         ref_code = item.get("codigo") or ""
-        price_info = fetch_product_price(str(ref_code))
-        if price_info and price_info.get("precio_mejor"):
+        price_info = fetch_product_price(str(ref_code)) if not inventory_only_mode else None
+        if not inventory_only_mode and price_info and price_info.get("precio_mejor"):
             pvp = float(price_info["precio_mejor"])
             item["precio_unitario"] = round(pvp)
             item["nota_precio"] = "Este precio es ANTES DE IVA. Para el total al cliente: Subtotal (precio × cantidad) + IVA 19% = Total a Pagar."
             if price_info.get("pvp_franquicia") and not price_info.get("pvp_sap"):
                 item["lista_precio"] = "franquicia"
-        elif not precio:
+        elif not inventory_only_mode and not precio:
             # --- Fallback: International price enrichment from JSON ---
             _intl_entry = _INTERNATIONAL_PRODUCTS_BY_CODE.get(str(ref_code).strip())
             if _intl_entry:
@@ -16774,6 +17144,9 @@ def _handle_tool_consultar_inventario(args, conversation_context):
     response_payload = {
         "encontrados": len(results),
         "productos": results,
+        "modo_consulta": "inventario" if inventory_only_mode else "cotizacion",
+        "requested_store_code": requested_store_code,
+        "requested_store_label": STORE_CODE_LABELS.get(requested_store_code) if requested_store_code else None,
         "seguimiento_producto_previo": bool(product_request.get("followup_from_previous_product")),
         "nlu_extraccion": product_request.get("nlu_extraction") or {},
         "estrategia_ranking": "catalogo_curado_postgresql",
