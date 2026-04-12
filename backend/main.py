@@ -10725,10 +10725,7 @@ def extract_delivery_channel(text_value: Optional[str]):
 def summarize_commercial_item(item: dict):
     product_request = item.get("product_request") or {}
     matched_product = item.get("matched_product") or {}
-    raw_description = matched_product.get("descripcion") or matched_product.get("nombre_articulo") or item.get("original_text") or "producto"
-    presentation = infer_product_presentation_from_row(matched_product) if matched_product else None
-    brand = infer_product_brand_from_row(matched_product) if matched_product else None
-    commercial_name = translate_product_to_commercial(raw_description, presentation, brand)
+    exact_label = item.get("audit_label") or build_product_audit_label(matched_product or item)
     requested_quantity = parse_numeric_value(product_request.get("requested_quantity")) or 1
     requested_unit = product_request.get("requested_unit")
     if requested_unit:
@@ -10737,7 +10734,7 @@ def summarize_commercial_item(item: dict):
         quantity_label = f"{format_quantity(requested_quantity)} unidades de "
     else:
         quantity_label = ""
-    return f"{quantity_label}{commercial_name}".strip()
+    return f"{quantity_label}{exact_label}".strip()
 
 
 def summarize_commercial_items(items: list[dict]):
@@ -11378,7 +11375,7 @@ def build_commercial_item_result(raw_line: str, inherited_store_filters: list[st
     if should_ask_product_clarification(product_request, product_rows):
         item_result["status"] = "ambiguous"
         options_text = "\n".join(
-            f"   {chr(97 + idx)}) {alt['commercial_name']}"
+            f"   {chr(97 + idx)}) [{alt['referencia']}] - {alt['commercial_name']}"
             for idx, alt in enumerate(item_result["alternatives"][:4])
         )
         item_result["message"] = f"{describe_commercial_item_need(item_result)} — opciones:\n{options_text}"
@@ -11387,27 +11384,34 @@ def build_commercial_item_result(raw_line: str, inherited_store_filters: list[st
     top_row = dict(product_rows[0])
     item_result["status"] = "matched"
     item_result["matched_product"] = top_row
-    raw_description = top_row.get("descripcion") or top_row.get("nombre_articulo") or "producto"
+    raw_description = get_exact_product_description(top_row)
     top_presentation = infer_product_presentation_from_row(top_row)
-    top_brand = infer_product_brand_from_row(top_row)
-    commercial_name = translate_product_to_commercial(raw_description, top_presentation, top_brand)
+    reference_value = top_row.get("referencia") or top_row.get("codigo_articulo") or ""
+    audit_label = build_product_audit_label(top_row)
     stock_value = parse_numeric_value(top_row.get("stock_total") if top_row.get("stock_total") is not None else top_row.get("stock")) or 0
     requested_quantity = parse_numeric_value(product_request.get("requested_quantity"))
+    requested_unit = product_request.get("requested_unit") or top_presentation or "unidad"
+
+    item_result["descripcion_comercial"] = raw_description
+    item_result["referencia"] = reference_value
+    item_result["cantidad"] = requested_quantity
+    item_result["unidad_medida"] = requested_unit
+    item_result["audit_label"] = audit_label
 
     if requested_store_label:
         if stock_value <= 0:
-            item_result["message"] = f"❌ {commercial_name}: no disponible en {requested_store_label} en este momento."
+            item_result["message"] = f"❌ {audit_label}: no disponible en {requested_store_label} en este momento."
         else:
-            item_result["message"] = f"✅ {commercial_name}: disponible en {requested_store_label}"
+            item_result["message"] = f"✅ {audit_label}: disponible en {requested_store_label}"
             if requested_quantity:
                 availability = ", te alcanza" if stock_value >= requested_quantity else ", pero no alcanza para toda la cantidad"
                 item_result["message"] += availability
             item_result["message"] += "."
     else:
         if stock_value <= 0:
-            item_result["message"] = f"❌ {commercial_name}: agotado en este momento."
+            item_result["message"] = f"❌ {audit_label}: agotado en este momento."
         else:
-            item_result["message"] = f"✅ {commercial_name}: disponible"
+            item_result["message"] = f"✅ {audit_label}: disponible"
             if requested_quantity:
                 availability = ", sí alcanza" if stock_value >= requested_quantity else ", pero no para toda la cantidad"
                 item_result["message"] += availability
@@ -11433,16 +11437,13 @@ def format_draft_conversational(resolved_items: list[dict], store_label: Optiona
 
         if item["status"] == "matched":
             mp = item.get("matched_product") or {}
-            raw_desc = mp.get("descripcion") or mp.get("nombre_articulo") or "producto"
-            pres = infer_product_presentation_from_row(mp) if mp else None
-            brand = infer_product_brand_from_row(mp) if mp else None
-            commercial_name = translate_product_to_commercial(raw_desc, pres, brand)
+            audit_label = item.get("audit_label") or build_product_audit_label(mp or item)
             if qty and unit:
-                matched_labels.append(f"{format_quantity(qty)} {get_presentation_label(unit, qty)} de {commercial_name}")
+                matched_labels.append(f"{format_quantity(qty)} {get_presentation_label(unit, qty)} de {audit_label}")
             elif qty and qty > 1:
-                matched_labels.append(f"{format_quantity(qty)} {commercial_name}")
+                matched_labels.append(f"{format_quantity(qty)} {audit_label}")
             else:
-                matched_labels.append(commercial_name)
+                matched_labels.append(audit_label)
 
         elif item["status"] == "ambiguous":
             needs_input = True
@@ -13497,6 +13498,28 @@ def _extract_confirmed_item_summary(item: dict) -> dict:
         "requested_unit": requested_unit,
         "requested_quantity": parse_numeric_value(requested_quantity),
     }
+
+
+def _draft_items_to_confirmation_payloads(commercial_draft: dict) -> list[dict]:
+    payload_items = []
+    for item in commercial_draft.get("items") or []:
+        if item.get("status") != "matched":
+            continue
+        summary = _extract_confirmed_item_summary(item)
+        if not summary.get("reference"):
+            continue
+        quantity_value = summary.get("requested_quantity")
+        if quantity_value is None or quantity_value <= 0:
+            quantity_value = parse_numeric_value(item.get("cantidad")) or 1
+        payload_items.append(
+            {
+                "referencia": summary.get("reference"),
+                "descripcion_comercial": summary.get("raw_description"),
+                "cantidad": quantity_value,
+                "unidad_medida": summary.get("requested_unit") or item.get("unidad_medida") or "unidad",
+            }
+        )
+    return payload_items
 
 
 def _build_confirmed_item_from_row(
@@ -17993,6 +18016,8 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     tipo_documento = args.get("tipo_documento", "pedido")  # "cotizacion" o "pedido"
     resumen_asesoria = args.get("resumen_asesoria", "")
     nombre_despacho_original = nombre_despacho  # Preservar el nombre que el LLM envió del cliente
+    commercial_draft = dict(conversation_context.get("commercial_draft") or {})
+    draft_fallback_items = _draft_items_to_confirmation_payloads(commercial_draft)
     internal_auth = dict(conversation_context.get("internal_auth") or {})
     internal_user = resolve_internal_session(internal_auth.get("token")) if internal_auth.get("token") else None
     logger.info(
@@ -18004,18 +18029,28 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         bool(internal_user),
     )
 
-    # --- Validación: el LLM DEBE mandar items_pedido con referencias válidas ---
-    if not items_pedido:
-        return json.dumps(
-            {"exito": False, "mensaje": "No enviaste el array de productos (items_pedido). Vuelve a llamar la herramienta incluyendo los productos."},
-            ensure_ascii=False,
-        )
-
     productos_sin_ref = [
         it.get("descripcion_comercial", "Producto desconocido")
         for it in items_pedido
         if not (it.get("referencia") or "").strip()
     ]
+    if (not items_pedido or productos_sin_ref) and draft_fallback_items:
+        logger.info(
+            "confirmar_pedido_y_generar_pdf using draft fallback conv=%s arg_items=%d draft_items=%d",
+            context.get("conversation_id"),
+            len(items_pedido or []),
+            len(draft_fallback_items),
+        )
+        items_pedido = draft_fallback_items
+        productos_sin_ref = []
+
+    # --- Validación: el LLM DEBE mandar items_pedido con referencias válidas ---
+    if not items_pedido:
+        return json.dumps(
+            {"exito": False, "mensaje": "No encontré productos confirmados para cerrar la cotización/pedido. Primero necesito que el borrador tenga referencias exactas resueltas."},
+            ensure_ascii=False,
+        )
+
     if productos_sin_ref:
         nombres = ", ".join(productos_sin_ref)
         return json.dumps(
@@ -18023,8 +18058,6 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             ensure_ascii=False,
         )
 
-    # Construir el commercial_draft a partir de lo que manda el LLM
-    commercial_draft = dict(conversation_context.get("commercial_draft") or {})
     store_filters = infer_confirmed_order_store_filters(commercial_draft, context, conversation_context, internal_user)
     customer_identity_input = (
         commercial_draft.get("customer_identity_input")
