@@ -144,9 +144,9 @@ def generate_agent_reply_v3(
     if initial_intent == "saludo" and m.is_simple_greeting(user_message or ""):
         greeting_name = (profile_name or nombre_cliente or "").strip()
         if greeting_name:
-            response_text = f"Hola, {greeting_name}. ¿En qué te puedo ayudar?"
+            response_text = f"Hola, {greeting_name}. Soy FerreAmigo de Ferreinox. ¿Qué producto o necesidad tienes hoy?"
         else:
-            response_text = "Hola, ¿en qué te puedo ayudar?"
+            response_text = "Hola, soy FerreAmigo de Ferreinox. ¿Qué producto o necesidad tienes hoy?"
         return {
             "response_text": response_text,
             "intent": "saludo",
@@ -416,10 +416,16 @@ def generate_agent_reply_v3(
         "intent": intent,
         "tool_calls": tool_calls_made,
         "context_updates": {
-            "last_product_request": conversation_context.get("last_product_request"),
-            "last_product_query": conversation_context.get("last_product_query"),
-            "last_product_context": conversation_context.get("last_product_context"),
-        } if conversation_context.get("last_product_request") else {},
+            key: value
+            for key, value in {
+                "last_product_request": conversation_context.get("last_product_request"),
+                "last_product_query": conversation_context.get("last_product_query"),
+                "last_product_context": conversation_context.get("last_product_context"),
+                "latest_technical_guidance": conversation_context.get("latest_technical_guidance"),
+                "commercial_draft": conversation_context.get("commercial_draft"),
+            }.items()
+            if value is not None
+        },
         "should_create_task": False,
         "confidence": confidence,
         "is_farewell": is_farewell,

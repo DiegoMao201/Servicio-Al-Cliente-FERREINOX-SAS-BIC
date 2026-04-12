@@ -11165,6 +11165,52 @@ def is_new_order_request(text_value: Optional[str]):
     return bool(re.search(r"\b(otr[oa]s?|nuev[oa]s?)\s+(pedido|cotizaci[oó]n|orden|lista)\b", normalized))
 
 
+def is_fresh_commercial_kickoff_message(text_value: Optional[str], intent: Optional[str] = None):
+    """Detect a generic commercial kickoff that should start with a clean draft."""
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return False
+
+    request = extract_product_request(text_value)
+    generic_terms = {
+        "pedido",
+        "pedidos",
+        "orden",
+        "ordenes",
+        "órdenes",
+        "cotizacion",
+        "cotización",
+        "cotizaciones",
+        "hacer",
+        "armar",
+        "crear",
+        "generar",
+        "tramitar",
+        "necesito",
+        "quiero",
+    }
+    core_terms = [term for term in (request.get("core_terms") or []) if term not in generic_terms]
+    if request.get("product_codes") or request.get("requested_unit") or core_terms:
+        return False
+
+    if extract_store_filters(text_value) or extract_email_address(text_value):
+        return False
+
+    pedido_pattern = r"(?:pedido|orden)"
+    cotizacion_pattern = r"(?:cotizacion|cotización)"
+    if intent == "pedido":
+        target_pattern = pedido_pattern
+    elif intent == "cotizacion":
+        target_pattern = cotizacion_pattern
+    else:
+        target_pattern = rf"(?:{pedido_pattern}|{cotizacion_pattern})"
+
+    return bool(re.match(
+        rf"^(?:hola\s+)?(?:(?:necesito|quiero|me\s+ayudas\s+con|ayudame\s+con|ayúdame\s+con|voy\s+a|vengo\s+por|regalame|regálame)\s+)?(?:(?:hacer|armar|crear|generar|tramitar)\s+)?(?:un|una|el|la)?\s*{target_pattern}\s*[.!?,\s]*$",
+        normalized,
+    ))
+
+
 def resolve_option_selections(text_value: Optional[str], existing_items: list[dict]):
     """Parse option selection patterns like '2a', '4b', 'la 1a y la 3b' from the message."""
     normalized = normalize_text_value(text_value)
@@ -11657,11 +11703,38 @@ def try_resolve_ambiguous_with_clarification(raw_line: str, existing_items: list
     return None
 
 
+def _build_empty_commercial_draft_state(
+    intent: str,
+    *,
+    store_filters: Optional[list[str]] = None,
+    delivery_channel: Optional[str] = None,
+    contact_email: Optional[str] = None,
+    raw_request_lines: Optional[list[str]] = None,
+):
+    return {
+        "intent": intent,
+        "store_filters": list(store_filters or []),
+        "delivery_channel": delivery_channel,
+        "contact_email": contact_email,
+        "internal_notified": False,
+        "customer_email_sent": False,
+        "ready_to_close": False,
+        "items_confirmed": False,
+        "destinatario": "",
+        "customer_identity_input": None,
+        "customer_context": None,
+        "customer_resolution_status": None,
+        "raw_request_lines": list(raw_request_lines or []),
+        "items": [],
+    }
+
+
 def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_message: Optional[str], conversation_context: Optional[dict]):
     context = conversation_context or {}
     existing_draft = dict(context.get("commercial_draft") or {})
     last_intent = context.get("last_direct_intent")
     normalized_message = normalize_text_value(user_message)
+    technical_guidance = _get_active_technical_guidance(context, existing_draft)
     incoming_request_lines = split_commercial_line_items(user_message)
     incoming_store_filters = extract_store_filters(user_message)
     incoming_email = extract_email_address(user_message)
@@ -11701,17 +11774,28 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             "task_summary": f"Nuevo {summary_label} iniciado por WhatsApp",
             "task_detail": {"mensaje": user_message, "mode": intent},
             "conversation_context_updates": {
-                "commercial_draft": {
-                    "intent": intent,
-                    "store_filters": [],
-                    "delivery_channel": None,
-                    "contact_email": None,
-                    "raw_request_lines": [],
-                    "items": [],
-                    "items_confirmed": False,
-                }
+                "commercial_draft": _build_empty_commercial_draft_state(intent)
             },
         }
+
+    if has_existing_items and is_fresh_commercial_kickoff_message(user_message, intent):
+        existing_draft = _build_empty_commercial_draft_state(
+            intent,
+            store_filters=incoming_store_filters,
+            delivery_channel=incoming_delivery_channel,
+            contact_email=incoming_email,
+        )
+        technical_guidance = {}
+        inherited_store_filters = incoming_store_filters or []
+        has_existing_items = False
+        incoming_customer_identity = ""
+        raw_request_lines = []
+
+    if not technical_guidance and context.get("latest_technical_guidance") and any(
+        token in normalized_message
+        for token in ["cotizacion", "cotización", "cotizar", "pdf", "pedido", "confirma", "confirmar"]
+    ):
+        technical_guidance = _get_active_technical_guidance(context, {})
 
     # ── Process option selections (e.g., "2a y 4b") ──
     option_updates = resolve_option_selections(user_message, existing_draft.get("items") or [])
@@ -11776,15 +11860,13 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             "task_summary": f"Solicitud de {summary_label} iniciada por WhatsApp",
             "task_detail": {"mensaje": user_message, "mode": intent},
             "conversation_context_updates": {
-                "commercial_draft": {
-                    "intent": intent,
-                    "store_filters": inherited_store_filters,
-                    "delivery_channel": incoming_delivery_channel,
-                    "contact_email": incoming_email,
-                    "raw_request_lines": raw_request_lines,
-                    "items": existing_draft.get("items") or [],
-                    "items_confirmed": False,
-                }
+                "commercial_draft": _build_empty_commercial_draft_state(
+                    intent,
+                    store_filters=inherited_store_filters,
+                    delivery_channel=incoming_delivery_channel,
+                    contact_email=incoming_email,
+                    raw_request_lines=raw_request_lines,
+                )
             },
         }
 
@@ -11839,6 +11921,11 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             resolved_items[matched_idx]["original_text"] = original_text or raw_line
         else:
             resolved_items.append(build_commercial_item_result(raw_line, inherited_store_filters, intent))
+
+    resolved_items, blocked_technical_products, missing_required_products = _enforce_technical_guidance_on_resolved_items(
+        resolved_items,
+        technical_guidance,
+    )
 
     matched_items = [item for item in resolved_items if item.get("status") == "matched"]
     ambiguous_items = [item for item in resolved_items if item.get("status") == "ambiguous"]
@@ -11899,6 +11986,18 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             closing_parts.append("¿En qué tienda o ciudad lo necesitas?")
         if requires_customer_resolution:
             closing_parts.append("Antes de cerrarlo necesito validar a nombre de qué cliente va. Envíame NIT, código o nombre completo para no cruzar la facturación.")
+        if blocked_technical_products:
+            closing_parts.append(
+                "Saqué del borrador productos que no corresponden al sistema técnico de este caso: "
+                + ", ".join(blocked_technical_products[:4])
+                + "."
+            )
+        if missing_required_products:
+            closing_parts.append(
+                "Para que la cotización salga bien estructurada todavía debo incluir la ruta técnica correcta: "
+                + ", ".join(missing_required_products[:4])
+                + "."
+            )
         if all_items_resolved and has_required_location and not items_confirmed:
             request_label = "cotización" if intent == "cotizacion" else "pedido"
             closing_parts.append(f"¿Te confirmo el {request_label}? ¿A nombre de quién va el despacho?")
@@ -11923,6 +12022,8 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
             "customer_identity_input": customer_identity_input or None,
             "customer_context": customer_context or None,
             "customer_resolution_status": customer_resolution_status,
+            "technical_guidance": technical_guidance or None,
+            "technical_missing_required_products": missing_required_products,
             "raw_request_lines": raw_request_lines,
             "items": resolved_items,
         }
@@ -11983,6 +12084,8 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
         "customer_identity_input": customer_identity_input or None,
         "customer_context": customer_context or None,
         "customer_resolution_status": customer_resolution_status,
+        "technical_guidance": technical_guidance or None,
+        "technical_missing_required_products": missing_required_products,
         "raw_request_lines": raw_request_lines,
         "items": resolved_items,
     }
@@ -12424,6 +12527,237 @@ def extract_candidate_products_from_rag_context(
         if normalized_file and normalized_file not in candidates:
             candidates.insert(0, normalized_file)
     return candidates[:12]
+
+
+def _derive_policy_inventory_candidate_terms(
+    guide: Optional[dict],
+    hard_policies: Optional[dict],
+    expert_notes: Optional[list[dict]] = None,
+    explicit_product: str = "",
+) -> list[str]:
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    def _append(value: Optional[str]):
+        cleaned = (value or "").strip()
+        if not cleaned:
+            return
+        normalized = normalize_text_value(cleaned)
+        if len(normalized) < 3 or normalized in seen:
+            return
+        seen.add(normalized)
+        candidates.append(cleaned)
+
+    if explicit_product:
+        _append(explicit_product)
+
+    for value in (hard_policies or {}).get("required_products") or []:
+        for item in _split_policy_items(value):
+            _append(item)
+
+    structured_guide = guide or {}
+    for value in structured_guide.get("base_or_primer") or []:
+        for item in _split_policy_items(value):
+            if not _is_tool_policy_item(item):
+                _append(item)
+
+    for option in structured_guide.get("finish_options") or []:
+        if isinstance(option, dict):
+            _append(option.get("producto"))
+        else:
+            _append(str(option))
+
+    for value in structured_guide.get("commercial_alternatives") or []:
+        if isinstance(value, dict):
+            _append(value.get("producto"))
+        else:
+            _append(str(value))
+
+    for note in expert_notes or []:
+        for item in _split_policy_items(note.get("producto_recomendado")):
+            if not _is_tool_policy_item(item):
+                _append(item)
+
+    return candidates[:12]
+
+
+def _text_matches_policy_product(text_value: Optional[str], policy_value: Optional[str]) -> bool:
+    normalized_text = normalize_text_value(text_value)
+    normalized_policy = normalize_text_value(policy_value)
+    if not normalized_text or not normalized_policy:
+        return False
+    if normalized_policy in normalized_text or normalized_text in normalized_policy:
+        return True
+
+    policy_tokens = [token for token in normalized_policy.split() if len(token) >= 4]
+    if not policy_tokens:
+        return False
+    matched_tokens = sum(1 for token in policy_tokens if token in normalized_text)
+    if len(policy_tokens) == 1:
+        return matched_tokens == 1
+    return matched_tokens >= max(2, min(len(policy_tokens), 3))
+
+
+def _filter_inventory_candidates_by_policy(candidates: list[dict], hard_policies: Optional[dict]) -> list[dict]:
+    if not candidates:
+        return []
+
+    policies = hard_policies or {}
+    required_products: list[str] = []
+    for value in policies.get("required_products") or []:
+        for item in _split_policy_items(value):
+            if not _is_tool_policy_item(item) and item not in required_products:
+                required_products.append(item)
+
+    forbidden_products: list[str] = []
+    for value in policies.get("forbidden_products") or []:
+        for item in _split_policy_items(value):
+            if not _is_tool_policy_item(item) and item not in forbidden_products:
+                forbidden_products.append(item)
+
+    filtered = []
+    for candidate in candidates:
+        candidate_text = " ".join(
+            str(value)
+            for value in [
+                candidate.get("descripcion"),
+                candidate.get("etiqueta_auditable"),
+                candidate.get("codigo"),
+                candidate.get("marca"),
+            ]
+            if value
+        )
+        if any(_text_matches_policy_product(candidate_text, forbidden) for forbidden in forbidden_products):
+            continue
+        filtered.append(candidate)
+
+    if not filtered:
+        return []
+
+    if required_products:
+        required_matches = [
+            candidate
+            for candidate in filtered
+            if any(
+                _text_matches_policy_product(
+                    " ".join(
+                        str(value)
+                        for value in [
+                            candidate.get("descripcion"),
+                            candidate.get("etiqueta_auditable"),
+                            candidate.get("codigo"),
+                            candidate.get("marca"),
+                        ]
+                        if value
+                    ),
+                    required,
+                )
+                for required in required_products
+            )
+        ]
+        if required_matches:
+            filtered = required_matches
+
+    return filtered[:4]
+
+
+def _extract_policy_product_terms(hard_policies: Optional[dict], bucket: str) -> list[str]:
+    results: list[str] = []
+    for value in (hard_policies or {}).get(bucket) or []:
+        for item in _split_policy_items(value):
+            if _is_tool_policy_item(item):
+                continue
+            if item not in results:
+                results.append(item)
+    return results
+
+
+def _build_latest_technical_guidance_snapshot(payload: dict, args: Optional[dict] = None) -> dict:
+    if not payload:
+        return {}
+    hard_policies = payload.get("politicas_duras_contexto") or {}
+    return {
+        "source_question": (args or {}).get("pregunta") or "",
+        "source_product": (args or {}).get("producto") or "",
+        "diagnostico_estructurado": payload.get("diagnostico_estructurado") or {},
+        "guia_tecnica_estructurada": payload.get("guia_tecnica_estructurada") or {},
+        "politicas_duras_contexto": hard_policies,
+        "productos_sistema_prioritarios": list(payload.get("productos_sistema_prioritarios") or []),
+        "productos_inventario_relacionados": list(payload.get("productos_inventario_relacionados") or []),
+        "required_products": _extract_policy_product_terms(hard_policies, "required_products"),
+        "forbidden_products": _extract_policy_product_terms(hard_policies, "forbidden_products"),
+    }
+
+
+def _get_active_technical_guidance(conversation_context: Optional[dict], commercial_draft: Optional[dict] = None) -> dict:
+    draft = commercial_draft or {}
+    if isinstance(draft.get("technical_guidance"), dict) and draft.get("technical_guidance"):
+        return draft["technical_guidance"]
+    context = conversation_context or {}
+    guidance = context.get("latest_technical_guidance")
+    return guidance if isinstance(guidance, dict) else {}
+
+
+def _build_commercial_item_match_text(item: dict) -> str:
+    matched_product = item.get("matched_product") or {}
+    parts = [
+        item.get("descripcion_comercial"),
+        item.get("original_text"),
+        item.get("audit_label"),
+        matched_product.get("descripcion"),
+        matched_product.get("nombre_articulo"),
+        matched_product.get("referencia"),
+        matched_product.get("codigo_articulo"),
+        matched_product.get("marca"),
+        matched_product.get("marca_producto"),
+    ]
+    return " ".join(str(value) for value in parts if value)
+
+
+def _item_matches_technical_product(item: dict, product_term: str) -> bool:
+    return _text_matches_policy_product(_build_commercial_item_match_text(item), product_term)
+
+
+def _enforce_technical_guidance_on_resolved_items(
+    resolved_items: list[dict],
+    technical_guidance: Optional[dict],
+) -> tuple[list[dict], list[str], list[str]]:
+    guidance = technical_guidance or {}
+    required_products = list(guidance.get("required_products") or [])
+    forbidden_products = list(guidance.get("forbidden_products") or [])
+    if not required_products and not forbidden_products:
+        return list(resolved_items), [], []
+
+    updated_items: list[dict] = []
+    blocked_products: list[str] = []
+    matched_required: list[str] = []
+
+    for item in resolved_items:
+        updated_item = dict(item)
+        if updated_item.get("status") == "matched":
+            forbidden_match = next(
+                (product for product in forbidden_products if _item_matches_technical_product(updated_item, product)),
+                None,
+            )
+            if forbidden_match:
+                updated_item["status"] = "missing"
+                updated_item["message"] = (
+                    f"{updated_item.get('original_text') or forbidden_match}: esa referencia no corresponde al sistema técnico aprobado para este caso. "
+                    f"Debo mantener la ruta correcta y no cotizar '{forbidden_match}' aquí."
+                )
+                updated_item["matched_product"] = None
+                updated_item["alternatives"] = []
+                updated_item["technical_conflict"] = forbidden_match
+                if forbidden_match not in blocked_products:
+                    blocked_products.append(forbidden_match)
+            else:
+                for required in required_products:
+                    if _item_matches_technical_product(updated_item, required) and required not in matched_required:
+                        matched_required.append(required)
+        updated_items.append(updated_item)
+
+    missing_required = [product for product in required_products if product not in matched_required]
+    return updated_items, blocked_products, missing_required
 
 
 def _expand_terms_with_portfolio_knowledge(terms: list[str]) -> list[str]:
@@ -18182,6 +18516,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     resumen_asesoria = args.get("resumen_asesoria", "")
     nombre_despacho_original = nombre_despacho  # Preservar el nombre que el LLM envió del cliente
     commercial_draft = dict(conversation_context.get("commercial_draft") or {})
+    technical_guidance = _get_active_technical_guidance(conversation_context, commercial_draft)
     draft_fallback_items = _draft_items_to_confirmation_payloads(commercial_draft)
     internal_auth = dict(conversation_context.get("internal_auth") or {})
     internal_user = resolve_internal_session(internal_auth.get("token")) if internal_auth.get("token") else None
@@ -18359,6 +18694,26 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             ensure_ascii=False,
         )
 
+    guidance_required_products = list((technical_guidance or {}).get("required_products") or [])
+    if guidance_required_products:
+        missing_required_products = []
+        for required_product in guidance_required_products:
+            if not any(_item_matches_technical_product(item, required_product) for item in confirmed_items):
+                missing_required_products.append(required_product)
+        if missing_required_products:
+            return json.dumps(
+                {
+                    "exito": False,
+                    "mensaje": (
+                        "La cotización todavía no está completa según la ruta técnica aprobada. "
+                        "Faltan estos componentes obligatorios del sistema: "
+                        + ", ".join(missing_required_products[:6])
+                        + ". Busca esas referencias con consultar_inventario/consultar_inventario_lote y vuelve a confirmar."
+                    ),
+                },
+                ensure_ascii=False,
+            )
+
     enrichment = _build_quote_completion_metadata(
         confirmed_items,
         store_filters,
@@ -18412,6 +18767,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     commercial_draft["customer_identity_input"] = customer_identity_input or None
     commercial_draft["customer_context"] = customer_context or None
     commercial_draft["customer_resolution_status"] = customer_resolution_status
+    commercial_draft["technical_guidance"] = technical_guidance or None
     conversation_context["commercial_draft"] = commercial_draft
     conversation_context["claim_case"] = None
 
@@ -19008,15 +19364,6 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     guide_source_files = list(dict.fromkeys(c.get("doc_filename", "") for c in guide_chunks if c.get("similarity", 0) >= 0.2))
     guide_profiles = fetch_technical_profiles(guide_canonical_families, guide_source_files, limit=3, segment_filters=segment_filters or None)
 
-    # Extract candidate products from RAG and resolve against real inventory
-    candidate_product_names = extract_candidate_products_from_rag_context(
-        rag_context, source_files[0] if source_files else None,
-        original_question=pregunta,
-    )
-    inventory_candidates = []
-    if candidate_product_names:
-        inventory_candidates = lookup_inventory_candidates_from_terms(candidate_product_names, conversation_context)
-
     expert_notes = fetch_expert_knowledge(f"{producto} {pregunta}", limit=8)
     structured_diagnosis = _build_structured_diagnosis(pregunta, producto, best_similarity)
     structured_guide = _build_structured_technical_guide(
@@ -19034,6 +19381,29 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         expert_notes,
     )
 
+    # Derive commercial candidates from the structured guide/policies first.
+    # RAG-only extraction is kept as a fallback, but it must not override
+    # products that the contextual policies already marked as required/prohibited.
+    candidate_product_names = _derive_policy_inventory_candidate_terms(
+        structured_guide,
+        hard_policies,
+        expert_notes=expert_notes,
+        explicit_product=producto,
+    )
+    rag_candidate_names = extract_candidate_products_from_rag_context(
+        rag_context,
+        source_files[0] if source_files else None,
+        original_question=pregunta,
+    )
+    for candidate_name in rag_candidate_names:
+        if candidate_name not in candidate_product_names:
+            candidate_product_names.append(candidate_name)
+
+    inventory_candidates = []
+    if candidate_product_names:
+        inventory_candidates = lookup_inventory_candidates_from_terms(candidate_product_names, conversation_context)
+        inventory_candidates = _filter_inventory_candidates_by_policy(inventory_candidates, hard_policies)
+
     result_payload = {
         "encontrado": True,
         "respuesta_rag": rag_context,
@@ -19045,6 +19415,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         "diagnostico_estructurado": structured_diagnosis,
         "guia_tecnica_estructurada": structured_guide,
         "politicas_duras_contexto": hard_policies,
+        "productos_sistema_prioritarios": candidate_product_names[:8],
         "preguntas_pendientes": structured_diagnosis.get("required_validations") or [],
         "mensaje": (
             "⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): "
@@ -19197,6 +19568,8 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         ]
         result_payload["instruccion_productos"] = (
             "CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). "
+            "Lee primero `productos_sistema_prioritarios`: esa es la lista canónica derivada de la guía estructurada y de las políticas duras. "
+            "Si `productos_inventario_relacionados` no cubre todos esos prioritarios, debes buscar los faltantes con `consultar_inventario` o `consultar_inventario_lote` usando esos nombres canónicos. "
             "Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como "
             "disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. "
             "OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar "
@@ -19574,6 +19947,12 @@ def _execute_agent_tool(tool_call, context, conversation_context):
             result = _handle_tool_buscar_documento_tecnico(fn_args, context, conversation_context)
         elif fn_name == "consultar_conocimiento_tecnico":
             result = _handle_tool_consultar_conocimiento_tecnico(fn_args, context, conversation_context)
+            try:
+                parsed_result = json.loads(result)
+            except Exception:
+                parsed_result = {}
+            if isinstance(parsed_result, dict) and parsed_result.get("encontrado"):
+                conversation_context["latest_technical_guidance"] = _build_latest_technical_guidance_snapshot(parsed_result, fn_args)
         elif fn_name == "radicar_reclamo":
             result = _handle_tool_radicar_reclamo(fn_args, context, conversation_context)
         elif fn_name == "confirmar_pedido_y_generar_pdf":
@@ -20400,7 +20779,7 @@ async def admin_importar_catalogo_abracol(
         df = pd.read_excel(BytesIO(response.content), sheet_name="Productos", dtype=str)
 
         # 2. Upsert into DB
-        engine = get_engine()
+        engine = get_db_engine()
         upsert_sql = """
         INSERT INTO public.abracol_productos (
             codigo, nombre_comercial, descripcion, grano, medida,

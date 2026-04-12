@@ -39,6 +39,43 @@ class GlobalPolicyMatrixTests(unittest.TestCase):
         self.assertContains(snapshot["policies"]["forbidden_tools"], "lijas")
         self.assertContains(snapshot["policies"]["policy_names"], "eternit_fibrocemento_exterior")
 
+    def test_eternit_policy_candidates_prioritize_required_system(self):
+        snapshot = _build_policy_snapshot("Techo de eternit exterior repintado y envejecido")
+        candidate_terms = m._derive_policy_inventory_candidate_terms(
+            snapshot["guide"],
+            snapshot["policies"],
+            expert_notes=[],
+            explicit_product="",
+        )
+        self.assertGreaterEqual(len(candidate_terms), 2)
+        self.assertEqual(candidate_terms[:2], ["Sellomax", "Koraza"])
+
+    def test_inventory_candidate_filter_removes_noise_against_required_products(self):
+        snapshot = _build_policy_snapshot("Techo de eternit exterior repintado y envejecido")
+        raw_candidates = [
+            {
+                "codigo": "5892274",
+                "descripcion": "PQ PINTUCO FILL 7 GRIS 2753 20K",
+                "etiqueta_auditable": "[5892274] - PQ PINTUCO FILL 7 GRIS 2753 20K",
+                "marca": "Pintuco",
+            },
+            {
+                "codigo": "5890001",
+                "descripcion": "PQ SELLOMAX ULTRA WHITE 3.79L",
+                "etiqueta_auditable": "[5890001] - PQ SELLOMAX ULTRA WHITE 3.79L",
+                "marca": "Pintuco",
+            },
+            {
+                "codigo": "5890706",
+                "descripcion": "PQ KORAZA MAT BLANCO 2650 3.79L",
+                "etiqueta_auditable": "[5890706] - PQ KORAZA MAT BLANCO 2650 3.79L",
+                "marca": "Pintuco",
+            },
+        ]
+        filtered = m._filter_inventory_candidates_by_policy(raw_candidates, snapshot["policies"])
+        filtered_codes = [item["codigo"] for item in filtered]
+        self.assertEqual(filtered_codes, ["5890001", "5890706"])
+
     def test_ladrillo_vista_prefers_cleaner_and_waterproofer(self):
         snapshot = _build_policy_snapshot("Ladrillo a la vista exterior sin cambiar apariencia")
         self.assertEqual(snapshot["diagnosis"]["problem_class"], "ladrillo_vista")
