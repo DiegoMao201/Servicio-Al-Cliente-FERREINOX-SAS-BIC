@@ -1079,10 +1079,29 @@ def build_turn_context(
             lines.append("  • Pintuco Fill NO es la solución si el problema es interior/capilaridad desde la base del muro.")
             lines.append("Acción: Presenta esta solución técnica completa y luego pide m² para cotizar cantidades exactas.")
 
+        # Para pisos, el tipo de tráfico es CRÍTICO para la recomendación
+        if problem_class == "piso_industrial" and not diagnostic.get("traffic"):
+            if "tipo de tráfico" not in " ".join(missing):
+                missing.append("tipo de tráfico (¿peatonal/liviano, vehicular, montacargas/pesado?)")
+        # Para pisos, la condición del piso es crítica
+        if problem_class == "piso_industrial" and not diagnostic.get("condition"):
+            if "estado del piso" not in " ".join(missing):
+                missing.append("estado del piso (¿nuevo, viejo, ya pintado?)")
+
         if missing:
             lines.append(f"Datos faltantes: {', '.join(missing)}")
-            lines.append("Acción: Haz 1-2 preguntas conversacionales breves para completar el diagnóstico.")
-            lines.append("Todavía NO recomiendes productos ni llames herramientas de inventario.")
+            lines.append("")
+            lines.append("🚫 BLOQUEO DE DIAGNÓSTICO INCOMPLETO 🚫")
+            lines.append("TIENES ESTRICTAMENTE PROHIBIDO en este turno:")
+            lines.append("  1. Llamar consultar_conocimiento_tecnico (el RAG no sirve sin diagnóstico completo).")
+            lines.append("  2. Llamar consultar_inventario o consultar_inventario_lote.")
+            lines.append("  3. Mencionar CUALQUIER nombre de producto, marca o referencia.")
+            lines.append("  4. Sugerir imprimantes, acabados, selladores o cualquier componente de un sistema.")
+            lines.append("  5. Decir frases como 'podría ser X' o 'generalmente se usa Y'.")
+            lines.append("")
+            lines.append("Tu ÚNICA acción permitida: Haz 1-2 preguntas conversacionales breves para completar los datos faltantes.")
+            lines.append("Ejemplo: '¿El piso es interior o exterior? ¿Qué tipo de tráfico tiene: peatonal, vehicular o montacargas?'")
+            lines.append("SOLO cuando tengas TODOS los datos podrás consultar el RAG y recomendar.")
         else:
             lines.append("Datos suficientes para recomendar.")
             lines.append("Acción: Llama consultar_conocimiento_tecnico con la superficie y condición EN ESTE MISMO TURNO.")
