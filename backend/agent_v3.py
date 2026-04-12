@@ -306,7 +306,11 @@ def generate_agent_reply_v3(
     tool_calls_made = []
     _rag_cache: dict[str, str] = {}
     _tool_type_counts: dict[str, int] = {}
-    _TOOL_MAX_CALLS = {"consultar_conocimiento_tecnico": 2, "buscar_documento_tecnico": 2}
+    has_active_technical_guidance = bool(conversation_context.get("latest_technical_guidance"))
+    _TOOL_MAX_CALLS = {
+        "consultar_conocimiento_tecnico": 1 if has_active_technical_guidance else 2,
+        "buscar_documento_tecnico": 2,
+    }
 
     technical_case = None
     if hasattr(m, "extract_technical_advisory_case"):
@@ -344,11 +348,27 @@ def generate_agent_reply_v3(
                 "role": "system",
                 "content": (
                     "CONSULTA TÉCNICA YA EJECUTADA EN ESTE TURNO. "
-                    "Usa este resultado como fuente obligatoria antes de responder y antes de decidir si requieres otras herramientas.\n"
+                    "Usa este resultado como fuente obligatoria antes de responder y antes de decidir si requieres otras herramientas. "
+                    "No vuelvas a llamar consultar_conocimiento_tecnico salvo que el cliente cambie de superficie, material o problema.\n"
                     f"Args consultar_conocimiento_tecnico: {json.dumps(preload_args, ensure_ascii=False)}\n"
                     f"Resultado: {preload_result}"
                 ),
             })
+
+    if has_active_technical_guidance:
+        active_guidance = conversation_context.get("latest_technical_guidance") or {}
+        active_products = ", ".join(active_guidance.get("required_products") or active_guidance.get("prioritized_products") or [])
+        active_problem = active_guidance.get("problem_class") or "caso técnico activo"
+        messages.append({
+            "role": "system",
+            "content": (
+                "YA EXISTE UNA GUÍA TÉCNICA ACTIVA PARA ESTE CASO. "
+                f"Problema: {active_problem}. "
+                f"Productos priorizados: {active_products or 'no definidos'}. "
+                "Reutiliza esa guía como verdad operativa del turno actual. "
+                "NO vuelvas a llamar consultar_conocimiento_tecnico salvo cambio real de superficie, material o patología."
+            ),
+        })
 
     def _needs_forced_technical_retry() -> bool:
         if tool_calls_made or assistant_message.tool_calls:
