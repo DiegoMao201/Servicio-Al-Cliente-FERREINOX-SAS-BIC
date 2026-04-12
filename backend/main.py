@@ -5539,6 +5539,11 @@ def _send_processing_status_message(context: dict, body: str, status_tag: str):
         provider_message_id = None
         if outbound_payload.get("messages"):
             provider_message_id = outbound_payload["messages"][0].get("id")
+        logger.info(
+            "Processing watchdog message sent conv=%s tag=%s",
+            context.get("conversation_id"),
+            status_tag,
+        )
         store_outbound_message(
             context["conversation_id"],
             provider_message_id,
@@ -5555,15 +5560,26 @@ def should_send_processing_ack(content: Optional[str], conversation_context: Opt
     normalized = normalize_text_value(content or "")
     draft = dict((conversation_context or {}).get("commercial_draft") or {})
     draft_has_items = bool(draft.get("items"))
+    active_intent = normalize_text_value(
+        draft.get("tipo_documento")
+        or draft.get("intent")
+        or (conversation_context or {}).get("intent")
+        or ""
+    )
     long_flow_tokens = [
         "cotizacion", "cotizar", "pedido", "pdf", "confirmar", "confirmo",
         "procede", "proceder", "generar", "genera", "envia", "enviar",
-        "manda", "cerrar pedido", "cerrar cotizacion",
+        "manda", "manda", "cerrar pedido", "cerrar cotizacion",
+        "me puedes enviar", "me puede enviar", "enviame", "envíame",
     ]
     if draft_has_items and any(token in normalized for token in long_flow_tokens):
         return True
+    if active_intent in {"cotizacion", "pedido"} and any(token in normalized for token in long_flow_tokens):
+        return True
     explicit_close_tokens = [
         "genera la cotizacion", "genera cotizacion", "envia la cotizacion", "manda la cotizacion",
+        "me puedes enviar la cotizacion", "me puede enviar la cotizacion", "enviame la cotizacion", "envíame la cotizacion",
+        "me puedes enviar el pedido", "me puede enviar el pedido", "enviame el pedido", "envíame el pedido",
         "genera el pedido", "genera pedido", "confirmar pedido", "confirmar cotizacion",
         "envia el pdf", "manda el pdf", "procede con el pedido", "procede con la cotizacion",
     ]
@@ -5581,6 +5597,7 @@ def start_processing_watchdog(context: dict, initial_message: Optional[str] = No
         _PROCESSING_WATCHDOGS[key] = {"stop_event": stop_event}
 
     if initial_message:
+        logger.info("Processing watchdog started conv=%s", context.get("conversation_id"))
         _send_processing_status_message(context, initial_message, "processing_ack")
 
     def _runner():
@@ -5610,6 +5627,7 @@ def stop_processing_watchdog(watchdog_key: Optional[str]):
         current = _PROCESSING_WATCHDOGS.pop(watchdog_key, None)
     if current:
         current["stop_event"].set()
+        logger.info("Processing watchdog stopped key=%s", watchdog_key)
 
 
 def normalize_store_code(store_value: Optional[str]):
@@ -19317,6 +19335,12 @@ def _execute_agent_tool(tool_call, context, conversation_context):
         fn_args = {}
 
     t0 = time.time()
+    logger.info(
+        "Tool %s started | conv=%s | args=%s",
+        fn_name,
+        context.get("conversation_id"),
+        json.dumps(fn_args, ensure_ascii=False)[:200],
+    )
     try:
         if fn_name == "consultar_inventario":
             result = _handle_tool_consultar_inventario(fn_args, conversation_context)
@@ -20449,6 +20473,14 @@ async def _flush_debounce_buffer(phone_number: str):
                     unified_content,
                     context,
                 )
+        except Exception as exc:
+            logger.error(
+                "Agent reply FAILED in debounce flush for conversation %s: %s",
+                context.get("conversation_id"),
+                exc,
+                exc_info=True,
+            )
+            ai_result = build_fallback_agent_result(unified_content, str(exc))
         finally:
             stop_processing_watchdog(watchdog_key)
 
@@ -20538,6 +20570,25 @@ async def _flush_debounce_buffer(phone_number: str):
 
     except Exception as exc:
         logger.error("DEBOUNCE FLUSH ERROR for %s: %s", phone_number, exc, exc_info=True)
+        try:
+            fallback_context = first_meta.get("context") if 'first_meta' in locals() else None
+            if fallback_context and fallback_context.get("telefono_e164"):
+                fallback_result = build_fallback_agent_result(unified_content if 'unified_content' in locals() else "", str(exc))
+                fallback_text = fallback_result.get("response_text") or "Recibimos tu mensaje. Un asesor te contactará pronto."
+                outbound_payload = send_whatsapp_text_message(fallback_context["telefono_e164"], fallback_text)
+                provider_message_id = None
+                if outbound_payload.get("messages"):
+                    provider_message_id = outbound_payload["messages"][0].get("id")
+                store_outbound_message(
+                    fallback_context["conversation_id"],
+                    provider_message_id,
+                    "text",
+                    fallback_text,
+                    outbound_payload,
+                    intent_detectado=fallback_result.get("intent"),
+                )
+        except Exception as fallback_exc:
+            logger.error("DEBOUNCE FLUSH fallback send FAILED for %s: %s", phone_number, fallback_exc, exc_info=True)
 
 
 @app.post("/webhooks/whatsapp")
