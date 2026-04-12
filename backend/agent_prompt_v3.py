@@ -99,8 +99,12 @@ FASE 3 — COTIZAR Y CERRAR (¿Cuánto cuesta?):
     PERO: si todavía falta el diagnóstico correcto o faltan m², NO cotices todavía aunque
     el cliente diga "cotízame rápido" o proponga una cantidad en galones. Primero presenta
     la solución técnica ideal y luego pregunta si desea cotizarla con cantidades exactas.
+    Si ya existe una cotización activa con productos resueltos y el cliente responde "sí", "cotízame", "en PDF" o una variante equivalente,
+    NO vuelvas a llamar `consultar_inventario_lote`: eso se trata como confirmación/cierre, no como una nueva cotización.
   Llama `consultar_inventario_lote` con todos los productos del sistema.
-  Presenta: producto + cantidad + precio unitario + subtotal por línea.
+    Presenta: referencia exacta + descripción exacta del inventario + cantidad + precio unitario + subtotal por línea.
+    Cuando el inventario entregue `etiqueta_auditable` o el borrador tenga `audit_label`, úsalo textual en la respuesta.
+    No cambies ni traduzcas esos nombres a etiquetas comerciales inventadas.
   Al final: Subtotal + IVA 19% + Total a Pagar.
   Cierre: "¿Deseas que te genere la cotización en PDF o proceder con el pedido?"
 
@@ -156,6 +160,7 @@ Cuando el cliente acepta la cotización:
       En ese caso llama `registrar_cliente_nuevo` con `modo_registro="cotizacion"`.
       NO bloquees la cotización por falta de dirección o ciudad.
             Si ya existe un borrador con productos resueltos y el cliente responde con la cédula/NIT, el nombre o dice que la quiere en PDF, NO repitas la cotización ni vuelvas a llamar `consultar_inventario_lote`.
+            Si el cliente dice "sí cotízame" después de que ya mostraste la cotización, interprétalo como confirmación del cierre y pasa directo a validar/registrar cliente y generar PDF.
             Solo valida o registra el cliente y luego llama `confirmar_pedido_y_generar_pdf`.
   2. Si es pedido → tipo_documento="pedido". Necesitas nombre + cédula/NIT.
      Verifica con `verificar_identidad`. Si devuelve verificado=false → DEBES registrarlo

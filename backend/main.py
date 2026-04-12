@@ -7059,6 +7059,31 @@ def build_product_audit_label(product_row: Optional[dict]):
     return f"[{reference_value}] - {get_exact_product_description(row)}"
 
 
+def build_item_audit_label(item: Optional[dict]):
+    row = dict(item or {})
+    matched_product = dict(row.get("matched_product") or {})
+    if matched_product:
+        return build_product_audit_label(matched_product)
+    if row.get("audit_label"):
+        return str(row["audit_label"])
+    reference_value = (
+        row.get("referencia")
+        or row.get("codigo_articulo")
+        or row.get("codigo")
+        or row.get("producto_codigo")
+        or "sin referencia"
+    )
+    description = (
+        row.get("descripcion_exacta")
+        or row.get("descripcion_comercial")
+        or row.get("descripcion")
+        or row.get("nombre_articulo")
+        or row.get("original_text")
+        or "Producto"
+    )
+    return f"[{reference_value}] - {re.sub(r'\s+', ' ', str(description).strip())}"
+
+
 def has_meaningful_product_anchor(product_request: Optional[dict]):
     request = product_request or {}
     if request.get("product_codes") or request.get("brand_filters"):
@@ -10761,7 +10786,7 @@ def extract_delivery_channel(text_value: Optional[str]):
 def summarize_commercial_item(item: dict):
     product_request = item.get("product_request") or {}
     matched_product = item.get("matched_product") or {}
-    exact_label = item.get("audit_label") or build_product_audit_label(matched_product or item)
+    exact_label = item.get("audit_label") or build_item_audit_label(matched_product or item)
     requested_quantity = parse_numeric_value(product_request.get("requested_quantity")) or 1
     requested_unit = product_request.get("requested_unit")
     if requested_unit:
@@ -11569,10 +11594,12 @@ def build_commercial_item_result(raw_line: str, inherited_store_filters: list[st
     requested_unit = product_request.get("requested_unit") or top_presentation or "unidad"
 
     item_result["descripcion_comercial"] = raw_description
+    item_result["descripcion_exacta"] = raw_description
     item_result["referencia"] = reference_value
     item_result["cantidad"] = requested_quantity
     item_result["unidad_medida"] = requested_unit
     item_result["audit_label"] = audit_label
+    item_result["etiqueta_auditable"] = audit_label
 
     if requested_store_label:
         if stock_value <= 0:
@@ -11749,7 +11776,7 @@ def build_commercial_flow_reply(intent: str, profile_name: Optional[str], user_m
     wants_quote_pdf = bool(
         has_existing_items
         and intent == "cotizacion"
-        and re.search(r"\b(cotizacion|cotización|pdf|genera|generar|envia|enví|manda)\b", normalized_message)
+        and re.search(r"\b(cotizacion|cotización|cotiza|cotizar|cotizame|cotízame|pdf|genera|generar|envia|enví|manda)\b", normalized_message)
     )
     incoming_customer_identity = extract_commercial_customer_candidate(user_message) if has_existing_items else ""
     raw_request_lines = _merge_unique_text_lines(
@@ -13960,6 +13987,7 @@ def _extract_confirmed_item_summary(item: dict) -> dict:
     raw_description = (
         matched_product.get("descripcion")
         or matched_product.get("nombre_articulo")
+        or item.get("descripcion_exacta")
         or item.get("descripcion_comercial")
         or item.get("original_text")
         or "Producto"
@@ -13984,6 +14012,7 @@ def _extract_confirmed_item_summary(item: dict) -> dict:
         "raw_description": str(raw_description),
         "normalized_text": normalize_text_value(raw_description),
         "reference": str(reference).strip(),
+        "audit_label": item.get("audit_label") or build_item_audit_label(item),
         "requested_unit": requested_unit,
         "requested_quantity": parse_numeric_value(requested_quantity),
     }
@@ -14004,6 +14033,9 @@ def _draft_items_to_confirmation_payloads(commercial_draft: dict) -> list[dict]:
             {
                 "referencia": summary.get("reference"),
                 "descripcion_comercial": summary.get("raw_description"),
+                "descripcion_exacta": summary.get("raw_description"),
+                "audit_label": summary.get("audit_label"),
+                "etiqueta_auditable": summary.get("audit_label"),
                 "cantidad": quantity_value,
                 "unidad_medida": summary.get("requested_unit") or item.get("unidad_medida") or "unidad",
             }
@@ -14044,9 +14076,12 @@ def _build_confirmed_item_from_row(
         "auto_note": auto_note or "",
         "original_text": description,
         "descripcion_comercial": description,
+        "descripcion_exacta": description,
         "referencia": reference,
         "cantidad": requested_quantity,
         "unidad_medida": unit_value,
+        "audit_label": build_product_audit_label(matched_product),
+        "etiqueta_auditable": build_product_audit_label(matched_product),
         "matched_product": matched_product,
         "product_request": {
             "requested_quantity": requested_quantity,
@@ -18664,9 +18699,9 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             )
             continue
         matched_product = dict(matched_row)
-        matched_product.setdefault("referencia", reference_value)
-        matched_product.setdefault("codigo_articulo", reference_value)
-        matched_product.setdefault("descripcion", it.get("descripcion_comercial", ""))
+        matched_product["referencia"] = matched_product.get("referencia") or reference_value
+        matched_product["codigo_articulo"] = matched_product.get("codigo_articulo") or reference_value
+        matched_product["descripcion"] = get_exact_product_description(matched_row)
         confirmed_items.append(
             _build_confirmed_item_from_row(
                 matched_product,
@@ -18916,7 +18951,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         # Build items summary for the store email
         _items_summary_lines = []
         for _item in (commercial_draft.get("items") or []):
-            _desc = _item.get("descripcion_comercial") or _item.get("text") or "Producto"
+            _desc = _item.get("audit_label") or build_item_audit_label(_item)
             _qty = _item.get("quantity") or _item.get("cantidad") or 1
             _ref = _item.get("referencia") or _item.get("reference") or ""
             _items_summary_lines.append(f"• {_qty}x {_desc} (ref: {_ref})")

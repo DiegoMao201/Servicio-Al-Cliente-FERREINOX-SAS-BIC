@@ -570,8 +570,23 @@ _CORRECTION_PATTERNS = re.compile(
 
 _COMMERCIAL_CLOSE_SIGNALS = [
     "pdf", "cotizacion", "cotización", "genera", "generar", "envia", "enví", "manda",
-    "procede", "confirma", "cerrar",
+    "procede", "confirma", "cerrar", "cotiza", "cotizar", "cotizame", "cotízame",
 ]
+
+
+def _draft_item_display_label(item: dict) -> str:
+    if item.get("audit_label"):
+        return str(item["audit_label"])
+    reference_value = item.get("referencia") or item.get("codigo_articulo") or item.get("codigo") or "sin referencia"
+    description = (
+        item.get("descripcion_exacta")
+        or item.get("descripcion_comercial")
+        or item.get("descripcion")
+        or item.get("original_text")
+        or "Producto"
+    )
+    description = re.sub(r"\s+", " ", str(description).strip())
+    return f"[{reference_value}] - {description}"
 
 
 def _extract_commercial_customer_identity_like_text(message: str) -> str:
@@ -873,7 +888,7 @@ def build_turn_context(
         items = commercial_draft.get("items") or []
         if items:
             items_text = ", ".join(
-                f"{it.get('cantidad', '?')}x {it.get('descripcion_comercial', it.get('descripcion', '?'))}"
+                f"{it.get('cantidad', '?')}x {_draft_item_display_label(it)}"
                 for it in items[:8]
             )
             lines.append(f"Carrito activo: [{items_text}]")
