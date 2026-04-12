@@ -140,6 +140,23 @@ def generate_agent_reply_v3(
     if teaching_result is not None:
         return teaching_result
 
+    initial_intent = classify_intent(user_message, conversation_context, recent_messages, internal_auth)
+    if initial_intent == "saludo" and m.is_simple_greeting(user_message or ""):
+        greeting_name = (profile_name or nombre_cliente or "").strip()
+        if greeting_name:
+            response_text = f"Hola, {greeting_name}. ¿En qué te puedo ayudar?"
+        else:
+            response_text = "Hola, ¿en qué te puedo ayudar?"
+        return {
+            "response_text": response_text,
+            "intent": "saludo",
+            "tool_calls": [],
+            "context_updates": {},
+            "should_create_task": False,
+            "confidence": m.score_agent_confidence(response_text, [], "saludo"),
+            "is_farewell": False,
+        }
+
     # ── Construir contexto de turno dinámico ─────────────────────────────
     contexto_turno = build_turn_context(
         conversation_context=conversation_context,
@@ -172,7 +189,6 @@ def generate_agent_reply_v3(
 
     messages.append({"role": "user", "content": user_message})
 
-    initial_intent = classify_intent(user_message, conversation_context, recent_messages, internal_auth)
     initial_diagnostic = extract_diagnostic_data(user_message, recent_messages)
     normalized_user_message = m.normalize_text_value(user_message)
 
