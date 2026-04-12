@@ -155,6 +155,8 @@ Cuando el cliente acepta la cotización:
       Si el cliente no existe todavía, para cotización basta con nombre + cédula/NIT.
       En ese caso llama `registrar_cliente_nuevo` con `modo_registro="cotizacion"`.
       NO bloquees la cotización por falta de dirección o ciudad.
+            Si ya existe un borrador con productos resueltos y el cliente responde con la cédula/NIT, el nombre o dice que la quiere en PDF, NO repitas la cotización ni vuelvas a llamar `consultar_inventario_lote`.
+            Solo valida o registra el cliente y luego llama `confirmar_pedido_y_generar_pdf`.
   2. Si es pedido → tipo_documento="pedido". Necesitas nombre + cédula/NIT.
      Verifica con `verificar_identidad`. Si devuelve verificado=false → DEBES registrarlo
      con `registrar_cliente_nuevo` ANTES de generar el PDF. Pide: nombre, cédula, dirección, ciudad.

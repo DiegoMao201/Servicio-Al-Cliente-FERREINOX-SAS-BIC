@@ -568,6 +568,42 @@ _CORRECTION_PATTERNS = re.compile(
     re.IGNORECASE,
 )
 
+_COMMERCIAL_CLOSE_SIGNALS = [
+    "pdf", "cotizacion", "cotización", "genera", "generar", "envia", "enví", "manda",
+    "procede", "confirma", "cerrar",
+]
+
+
+def _extract_commercial_customer_identity_like_text(message: str) -> str:
+    raw_value = (message or "").strip()
+    if not raw_value:
+        return ""
+    compact_value = " ".join(raw_value.split()).strip(" ,.;:-")
+    if re.fullmatch(r"\d{6,15}", compact_value):
+        return compact_value
+
+    patterns = [
+        r"^(?:para|va\s+para|seria\s+para|sería\s+para|a\s+nombre\s+de)\s+(.+)$",
+        r"^(?:cc|c\.c\.|cedula|cédula|nit|nif)\s*[:#-]?\s*(.+)$",
+    ]
+    for pattern in patterns:
+        match = re.match(pattern, compact_value, flags=re.IGNORECASE)
+        if not match:
+            continue
+        candidate = match.group(1).strip(" ,.;:-")
+        if candidate:
+            return candidate
+    return ""
+
+
+def _has_ready_commercial_draft(conversation_context: dict) -> bool:
+    commercial_draft = conversation_context.get("commercial_draft") or {}
+    draft_intent = commercial_draft.get("tipo_documento") or commercial_draft.get("intent")
+    items = commercial_draft.get("items") or []
+    if draft_intent not in {"pedido", "cotizacion"} or not items:
+        return False
+    return all(item.get("status") == "matched" for item in items)
+
 
 # ─── Clasificación de intención ─────────────────────────────────────────────
 
@@ -610,22 +646,30 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
     if any(kw in msg_lower for kw in ["ficha técnica", "ficha tecnica", "hoja de seguridad", "fds", "msds"]):
         return "documento"
 
-    # 6. Identity (pure numeric 6-15 digits)
+    # 6. Commercial close follow-up (identity/PDF after a resolved draft)
+    if _has_ready_commercial_draft(conversation_context):
+        customer_candidate = _extract_commercial_customer_identity_like_text(msg)
+        if customer_candidate:
+            return "confirmacion"
+        if any(signal in msg_lower for signal in _COMMERCIAL_CLOSE_SIGNALS):
+            return "confirmacion"
+
+    # 7. Identity (pure numeric 6-15 digits)
     if re.match(r"^\d{6,15}$", msg.strip()):
         pending = conversation_context.get("pending_intent")
         if pending:
             return "identidad"
 
-    # 7. Correction (if last bot msg was a quotation)
+    # 8. Correction (if last bot msg was a quotation)
     last_bot = _get_last_bot_message(recent_messages)
     if last_bot and "$" in last_bot and _CORRECTION_PATTERNS.search(msg_lower):
         return "correccion"
 
-    # 8. Confirmation (short affirmative after quotation)
+    # 9. Confirmation (short affirmative after quotation)
     if last_bot and "$" in last_bot and _CONFIRMATION_PATTERNS.match(msg):
         return "confirmacion"
 
-    # 9. Direct order (names specific products + quantities)
+    # 10. Direct order (names specific products + quantities)
     has_specific = any(p in msg_lower for p in _SPECIFIC_PRODUCTS)
     has_quantity = bool(_DIRECT_ORDER_PATTERNS.search(msg))
     has_price_request = any(s in msg_lower for s in _PRICE_SIGNALS)
@@ -643,16 +687,16 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
     if has_specific and has_price_request:
         return "pedido_directo"
 
-    # 10. Advisory (describes surface/need without naming specific product)
+    # 11. Advisory (describes surface/need without naming specific product)
     has_advisory = any(s in msg_lower for s in _ADVISORY_SIGNALS)
     if (has_advisory or has_surface) and not has_specific:
         return "asesoria"
 
-    # 11. Quotation request (asks for prices on prior topic)
+    # 12. Quotation request (asks for prices on prior topic)
     if has_price_request:
         return "cotizacion"
 
-    # 12. If names a specific product without quantity (info request)
+    # 13. If names a specific product without quantity (info request)
     if has_specific:
         return "pedido_directo"
 
@@ -1010,6 +1054,7 @@ def build_turn_context(
 
     elif intent == "confirmacion":
         lines.append("El cliente aceptó la cotización.")
+        lines.append("Si el cliente solo envía cédula/NIT, nombre o dice que la quiere en PDF, NO vuelvas a cotizar ni a consultar inventario.")
         draft_tipo = (commercial_draft or {}).get("tipo_documento")
         if draft_tipo == "cotizacion":
             lines.append("Acción: Si el cliente no está validado, para cotización pide nombre + cédula/NIT y usa registrar_cliente_nuevo en modo cotizacion.")
