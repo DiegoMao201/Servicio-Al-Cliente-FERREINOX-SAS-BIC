@@ -11,6 +11,7 @@ import hmac
 import hashlib
 import secrets
 import asyncio
+import threading
 from difflib import SequenceMatcher
 from datetime import date, timedelta, datetime
 from html import escape
@@ -5513,6 +5514,102 @@ def send_sendgrid_email(
             error_payload = {"raw": response.text}
         raise RuntimeError(f"SendGrid devolvió {response.status_code}: {safe_json_dumps(error_payload)}")
     return True
+
+
+def run_background_io(task_name: str, target, *args, **kwargs):
+    def _runner():
+        try:
+            target(*args, **kwargs)
+        except Exception as exc:
+            logger.warning("Background task %s failed: %s", task_name, exc)
+
+    thread = threading.Thread(target=_runner, name=f"bg-{task_name}", daemon=True)
+    thread.start()
+    return thread
+
+
+_PROCESSING_WATCHDOGS: dict[str, dict] = {}
+_PROCESSING_WATCHDOG_LOCK = threading.Lock()
+PROCESSING_FOLLOWUP_SECONDS = int(os.getenv("WA_PROCESSING_FOLLOWUP_SECONDS", "120"))
+
+
+def _send_processing_status_message(context: dict, body: str, status_tag: str):
+    try:
+        outbound_payload = send_whatsapp_text_message(context["telefono_e164"], body)
+        provider_message_id = None
+        if outbound_payload.get("messages"):
+            provider_message_id = outbound_payload["messages"][0].get("id")
+        store_outbound_message(
+            context["conversation_id"],
+            provider_message_id,
+            "text",
+            body,
+            outbound_payload,
+            intent_detectado=status_tag,
+        )
+    except Exception as exc:
+        logger.warning("Failed to send processing status message (%s): %s", status_tag, exc)
+
+
+def should_send_processing_ack(content: Optional[str], conversation_context: Optional[dict]) -> bool:
+    normalized = normalize_text_value(content or "")
+    draft = dict((conversation_context or {}).get("commercial_draft") or {})
+    draft_has_items = bool(draft.get("items"))
+    long_flow_tokens = [
+        "cotizacion", "cotizar", "pedido", "pdf", "confirmar", "confirmo",
+        "procede", "proceder", "generar", "genera", "envia", "enviar",
+        "manda", "cerrar pedido", "cerrar cotizacion",
+    ]
+    if draft_has_items and any(token in normalized for token in long_flow_tokens):
+        return True
+    explicit_close_tokens = [
+        "genera la cotizacion", "genera cotizacion", "envia la cotizacion", "manda la cotizacion",
+        "genera el pedido", "genera pedido", "confirmar pedido", "confirmar cotizacion",
+        "envia el pdf", "manda el pdf", "procede con el pedido", "procede con la cotizacion",
+    ]
+    return any(token in normalized for token in explicit_close_tokens)
+
+
+def start_processing_watchdog(context: dict, initial_message: Optional[str] = None):
+    key = f"{context.get('conversation_id')}:{context.get('telefono_e164')}"
+    stop_event = threading.Event()
+
+    with _PROCESSING_WATCHDOG_LOCK:
+        previous = _PROCESSING_WATCHDOGS.pop(key, None)
+        if previous:
+            previous["stop_event"].set()
+        _PROCESSING_WATCHDOGS[key] = {"stop_event": stop_event}
+
+    if initial_message:
+        _send_processing_status_message(context, initial_message, "processing_ack")
+
+    def _runner():
+        followup_count = 0
+        while not stop_event.wait(PROCESSING_FOLLOWUP_SECONDS):
+            followup_count += 1
+            if followup_count == 1:
+                body = "⏳ Un momento por favor, sigo procesando tu solicitud y casi termino."
+            else:
+                body = "⏳ Gracias por la espera. Sigo trabajando en tu solicitud para entregártela completa."
+            _send_processing_status_message(context, body, "processing_followup")
+
+        with _PROCESSING_WATCHDOG_LOCK:
+            current = _PROCESSING_WATCHDOGS.get(key)
+            if current and current.get("stop_event") is stop_event:
+                _PROCESSING_WATCHDOGS.pop(key, None)
+
+    thread = threading.Thread(target=_runner, name=f"processing-watchdog-{context.get('conversation_id')}", daemon=True)
+    thread.start()
+    return key
+
+
+def stop_processing_watchdog(watchdog_key: Optional[str]):
+    if not watchdog_key:
+        return
+    with _PROCESSING_WATCHDOG_LOCK:
+        current = _PROCESSING_WATCHDOGS.pop(watchdog_key, None)
+    if current:
+        current["stop_event"].set()
 
 
 def normalize_store_code(store_value: Optional[str]):
@@ -17870,6 +17967,7 @@ def _handle_tool_radicar_reclamo(args, context, conversation_context):
 
 
 def _handle_tool_confirmar_pedido(args, context, conversation_context):
+    t_confirm_start = time.time()
     nombre_despacho = args.get("nombre_despacho", "")
     canal_envio = args.get("canal_envio", "whatsapp")
     correo_cliente = args.get("correo_cliente", "")
@@ -17879,6 +17977,14 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     nombre_despacho_original = nombre_despacho  # Preservar el nombre que el LLM envió del cliente
     internal_auth = dict(conversation_context.get("internal_auth") or {})
     internal_user = resolve_internal_session(internal_auth.get("token")) if internal_auth.get("token") else None
+    logger.info(
+        "confirmar_pedido_y_generar_pdf START conv=%s tipo=%s canal=%s items=%d internal=%s",
+        context.get("conversation_id"),
+        tipo_documento,
+        canal_envio,
+        len(items_pedido or []),
+        bool(internal_user),
+    )
 
     # --- Validación: el LLM DEBE mandar items_pedido con referencias válidas ---
     if not items_pedido:
@@ -18008,6 +18114,13 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                 it.get("unidad_medida") or infer_product_presentation_from_row(matched_product) or "unidad",
             )
         )
+    logger.info(
+        "confirmar_pedido_y_generar_pdf validated items conv=%s confirmed=%d rejected=%d elapsed=%dms",
+        context.get("conversation_id"),
+        len(confirmed_items),
+        len(rejected_items),
+        int((time.time() - t_confirm_start) * 1000),
+    )
 
     if rejected_items:
         nombres = ", ".join(rejected_items)
@@ -18026,6 +18139,11 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         store_filters,
         conversation_context,
         resumen_asesoria,
+    )
+    logger.info(
+        "confirmar_pedido_y_generar_pdf enrichment ready conv=%s elapsed=%dms",
+        context.get("conversation_id"),
+        int((time.time() - t_confirm_start) * 1000),
     )
     commercial_draft["items"] = enrichment.get("items") or confirmed_items
     commercial_draft["store_filters"] = store_filters
@@ -18109,6 +18227,12 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         commercial_draft["draft_id"] = order_id
         mark_agent_order_status(order_id, "confirmado", metadata_update={"nombre_despacho": nombre_despacho})
         update_conversation_context(context["conversation_id"], {"commercial_draft": commercial_draft, "claim_case": None})
+        logger.info(
+            "confirmar_pedido_y_generar_pdf persisted draft conv=%s order_id=%s elapsed=%dms",
+            context.get("conversation_id"),
+            order_id,
+            int((time.time() - t_confirm_start) * 1000),
+        )
     except Exception as exc:
         return json.dumps(
             {"exito": False, "mensaje": f"No pude persistir el pedido en PostgreSQL: {exc}"},
@@ -18122,6 +18246,12 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             context.get("nombre_visible"),
             cliente_contexto,
             commercial_draft,
+        )
+        logger.info(
+            "confirmar_pedido_y_generar_pdf pdf ready conv=%s pdf_id=%s elapsed=%dms",
+            context.get("conversation_id"),
+            pdf_id,
+            int((time.time() - t_confirm_start) * 1000),
         )
     except Exception as exc:
         return json.dumps(
@@ -18151,6 +18281,12 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                 export_summary,
                 intent_detectado="pedido_icg_exportado",
             )
+            logger.info(
+                "confirmar_pedido_y_generar_pdf ICG export ok conv=%s order_id=%s elapsed=%dms",
+                context.get("conversation_id"),
+                order_id,
+                int((time.time() - t_confirm_start) * 1000),
+            )
         except Exception as exc:
             export_error = str(exc)
             store_outbound_message(
@@ -18176,7 +18312,6 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         )
 
     # ── NOTIFICACIÓN A TIENDA/CIUDAD: enviar correo a la sede de despacho ──
-    _store_email_sent = False
     try:
         # Determine delivery city from customer context or conversation
         _delivery_city = (
@@ -18219,17 +18354,17 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             f"<p><strong>PDF:</strong> <a href='{pdf_url}'>{pdf_filename}</a></p>"
             f"<p>Pedido generado automáticamente por FERRO (Agente IA).</p>"
         )
-        send_sendgrid_email(
+        run_background_io(
+            "store-order-email",
+            send_sendgrid_email,
             _dest_email,
             _store_subject,
             _store_html,
             f"Nuevo pedido WhatsApp: {nombre_despacho} | {_items_html}",
-            cc=DEFAULT_TRANSFER_CC_EMAILS,
+            cc_emails=DEFAULT_TRANSFER_CC_EMAILS,
         )
-        _store_email_sent = True
-        logger.info("Store notification email sent to %s for order %s", _dest_email, order_id)
     except Exception as _store_exc:
-        logger.warning("Failed to send store notification email: %s", _store_exc)
+        logger.warning("Failed to queue store notification email: %s", _store_exc)
 
     if canal_envio == "email" and correo_cliente:
         try:
@@ -18249,6 +18384,12 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                 f"PDF pedido enviado por correo a {correo_cliente}",
                 {"pdf_id": pdf_id, "email": correo_cliente},
                 intent_detectado="pedido_pdf_email",
+            )
+            logger.info(
+                "confirmar_pedido_y_generar_pdf customer email sent conv=%s order_id=%s elapsed=%dms",
+                context.get("conversation_id"),
+                order_id,
+                int((time.time() - t_confirm_start) * 1000),
             )
             return json.dumps(
                 {"exito": True, "canal": "email", "correo": correo_cliente,
@@ -18270,17 +18411,43 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             )
     else:
         try:
-            send_whatsapp_document_bytes(
-                context["telefono_e164"],
-                PDF_STORAGE[pdf_id]["buffer"],
-                pdf_filename,
-                caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
-            )
+            if pdf_url:
+                logger.info(
+                    "confirmar_pedido_y_generar_pdf send whatsapp by link conv=%s order_id=%s pdf_url=yes elapsed=%dms",
+                    context.get("conversation_id"),
+                    order_id,
+                    int((time.time() - t_confirm_start) * 1000),
+                )
+                send_whatsapp_document_message(
+                    context["telefono_e164"],
+                    pdf_url,
+                    pdf_filename,
+                    caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
+                )
+            else:
+                logger.warning(
+                    "confirmar_pedido_y_generar_pdf BACKEND_PUBLIC_URL missing; using whatsapp binary upload conv=%s order_id=%s elapsed=%dms",
+                    context.get("conversation_id"),
+                    order_id,
+                    int((time.time() - t_confirm_start) * 1000),
+                )
+                send_whatsapp_document_bytes(
+                    context["telefono_e164"],
+                    PDF_STORAGE[pdf_id]["buffer"],
+                    pdf_filename,
+                    caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
+                )
             store_outbound_message(
                 context["conversation_id"], None, "system",
                 f"PDF pedido enviado por WhatsApp: {pdf_filename}",
                 {"pdf_id": pdf_id, "pdf_url": pdf_url},
                 intent_detectado="pedido_pdf_whatsapp",
+            )
+            logger.info(
+                "confirmar_pedido_y_generar_pdf whatsapp sent conv=%s order_id=%s total_elapsed=%dms",
+                context.get("conversation_id"),
+                order_id,
+                int((time.time() - t_confirm_start) * 1000),
             )
             return json.dumps(
                 {"exito": True, "canal": "whatsapp", "archivo": pdf_filename,
@@ -18297,9 +18464,9 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         except Exception as exc:
             if pdf_url:
                 try:
-                    send_whatsapp_document_message(
+                    send_whatsapp_document_bytes(
                         context["telefono_e164"],
-                        pdf_url,
+                        PDF_STORAGE[pdf_id]["buffer"],
                         pdf_filename,
                         caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
                     )
@@ -20264,16 +20431,26 @@ async def _flush_debounce_buffer(phone_number: str):
         context = first_meta["context"]
         conversation_context = first_meta["conversation_context"]
         recent_messages = first_meta["recent_messages"]
+        watchdog_key = None
 
-        ai_result = handle_internal_whatsapp_message(unified_content, context, conversation_context)
-        if ai_result is None:
-            ai_result = generate_agent_reply_v3(
-                context.get("nombre_visible"),
-                conversation_context,
-                recent_messages,
-                unified_content,
+        if should_send_processing_ack(unified_content, conversation_context):
+            watchdog_key = start_processing_watchdog(
                 context,
+                "⏳ Un momento, estoy procesando tu solicitud para enviártela completa.",
             )
+
+        try:
+            ai_result = handle_internal_whatsapp_message(unified_content, context, conversation_context)
+            if ai_result is None:
+                ai_result = generate_agent_reply_v3(
+                    context.get("nombre_visible"),
+                    conversation_context,
+                    recent_messages,
+                    unified_content,
+                    context,
+                )
+        finally:
+            stop_processing_watchdog(watchdog_key)
 
         response_text = ai_result.get("response_text") or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
 
@@ -20580,7 +20757,13 @@ async def receive_whatsapp_webhook(request: Request):
                         continue
 
                     # ── Non-debounced path: documents, images, buttons, interactive ──
+                    watchdog_key = None
                     try:
+                        if should_send_processing_ack(content, conversation_context):
+                            watchdog_key = start_processing_watchdog(
+                                context,
+                                "⏳ Un momento, estoy procesando tu solicitud para enviártela completa.",
+                            )
                         ai_result = handle_internal_whatsapp_message(content, context, conversation_context)
                         if ai_result is None:
                             ai_result = generate_agent_reply_v3(
@@ -20593,6 +20776,8 @@ async def receive_whatsapp_webhook(request: Request):
                     except Exception as exc:
                         logger.error("Agent reply FAILED for conversation %s: %s", context.get("conversation_id"), exc, exc_info=True)
                         ai_result = build_fallback_agent_result(content, str(exc))
+                    finally:
+                        stop_processing_watchdog(watchdog_key)
 
                     response_text = ai_result.get("response_text") or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
 

@@ -15,6 +15,8 @@ from typing import Optional
 
 logger = logging.getLogger("agent_context")
 
+_EXPERT_DIRECTIVE_INTENTS = {"asesoria", "pedido_directo", "cotizacion", "confirmacion", "correccion", "reclamo"}
+
 # ─── Cache de embeddings por turno (evita llamadas redundantes a OpenAI) ──────
 # TTL de 120s: si el mismo semantic_query se repite en menos de 2 min, reutiliza el embedding.
 _EMBEDDING_CACHE: dict[str, tuple[list[float], float]] = {}
@@ -857,9 +859,11 @@ def build_turn_context(
         lines.extend(problem_protocol_lines)
 
     # ─── Directrices de Gerencia (conocimiento experto elevado) ──────────
-    expert_directives = _fetch_expert_directives_for_turn(
-        user_message, diagnostic, intent,
-    )
+    expert_directives = []
+    if intent in _EXPERT_DIRECTIVE_INTENTS:
+        expert_directives = _fetch_expert_directives_for_turn(
+            user_message, diagnostic, intent,
+        )
     if expert_directives:
         lines.append("")
         lines.append("═══ DIRECTRIZ DE GERENCIA (PRIORIDAD MÁXIMA) ═══")
