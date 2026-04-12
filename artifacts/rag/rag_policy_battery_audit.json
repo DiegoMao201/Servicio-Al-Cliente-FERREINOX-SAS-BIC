@@ -1,0 +1,813 @@
+{
+  "records": [
+    {
+      "battery": "base_200",
+      "group": "base",
+      "name": "humedad_capilaridad",
+      "question": "muro interior con salitre y humedad que sube desde la base del muro",
+      "problem_class": "humedad_interior_capilaridad",
+      "mejor_similitud": 0.5338,
+      "source_files": [
+        "ESTUCOR MOLDURAS.pdf",
+        "AQUABLOCK ULTRA.pdf",
+        "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf"
+      ],
+      "productos_recomendados": [
+        "Aquablock",
+        "Aquablock Ultra - 2 manos con brocha para cargar producto.",
+        "Estuco Acrílico después del Aquablock para nivelar. NUNCA antes.",
+        "Viniltex Advanced",
+        "Intervinil",
+        "Pinturama"
+      ],
+      "productos_portafolio_relacionado": [
+        "ESTUCOR BULTO *25 KLS MOLDURA",
+        "ESTUCOR BULTO *25 KL LISTO",
+        "PQ AQUABLOCK ULTRA MAT BLANC 27070 3.79L",
+        "PQ AQUABLOCK ULTRA MAT BLANC 27070 0.95L"
+      ],
+      "productos_prohibidos": [
+        "Koraza como imprimante o acabado interior",
+        "Pintuco Fill como solución principal para capilaridad interior desde la base del muro",
+        "Cotizar por galones sugeridos por el cliente sin metraje",
+        "Koraza",
+        "Pintuco Fill",
+        "Koraza como imprimante o acabado interior.",
+        "Pintuco Fill como solución principal para capilaridad interior desde la base del muro.",
+        "Cotizar por galones sugeridos por el cliente sin metraje."
+      ],
+      "base_or_primer": [
+        "Aquablock Ultra - 2 manos con brocha para cargar producto."
+      ],
+      "intermediate_steps": [
+        "Estuco Acrílico después del Aquablock para nivelar. NUNCA antes."
+      ],
+      "finish_options": [
+        "Viniltex Advanced",
+        "Intervinil",
+        "Pinturama"
+      ],
+      "tools": [
+        "Brocha Goya Profesional",
+        "Rodillo",
+        "Lija / raspado para preparación"
+      ],
+      "required_tools": [],
+      "forbidden_tools": [],
+      "mandatory_steps": [
+        "Remover por completo pintura soplada/descascarada y salitre hasta base sana.",
+        "Si el revoque está quemado o meteorizado, reemplazarlo antes del sistema nuevo.",
+        "Retirar acabado soplado, salitre y base floja hasta sustrato sano antes del bloqueador.",
+        "Bloquear la humedad primero y solo despues reconstruir el acabado decorativo."
+      ],
+      "required_questions": [
+        "Confirmar origen de humedad desde base del muro/piso/jardinera.",
+        "Validar estado del revoque o base soplada.",
+        "Solicitar m² reales antes de cotizar."
+      ],
+      "policy_names": [
+        "humedad_interior_negativa"
+      ],
+      "critical_policy_names": [],
+      "dominant_policy_names": [
+        "humedad_interior_negativa"
+      ],
+      "highest_priority_level": "high",
+      "pricing_gate": "m2_required",
+      "inventory_candidates": [
+        {
+          "codigo": "F9017239B",
+          "descripcion": "ESTUCOR BULTO *25 KLS MOLDURA",
+          "etiqueta_auditable": "[F9017239B] - ESTUCOR BULTO *25 KLS MOLDURA",
+          "marca": null,
+          "presentacion": null,
+          "disponible": true,
+          "complementarios": []
+        },
+        {
+          "codigo": "F9017239AB",
+          "descripcion": "ESTUCOR BULTO *25 KL LISTO",
+          "etiqueta_auditable": "[F9017239AB] - ESTUCOR BULTO *25 KL LISTO",
+          "marca": null,
+          "presentacion": null,
+          "disponible": true,
+          "complementarios": []
+        },
+        {
+          "codigo": "5891459",
+          "descripcion": "PQ AQUABLOCK ULTRA MAT BLANC 27070 3.79L",
+          "etiqueta_auditable": "[5891459] - PQ AQUABLOCK ULTRA MAT BLANC 27070 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "disponible": true,
+          "complementarios": []
+        },
+        {
+          "codigo": "5892400",
+          "descripcion": "PQ AQUABLOCK ULTRA MAT BLANC 27070 0.95L",
+          "etiqueta_auditable": "[5892400] - PQ AQUABLOCK ULTRA MAT BLANC 27070 0.95L",
+          "marca": "58",
+          "presentacion": "cuarto",
+          "disponible": true,
+          "complementarios": []
+        }
+      ]
+    },
+    {
+      "battery": "base_200",
+      "group": "base",
+      "name": "humedad_general",
+      "question": "pared interior con humedad, moho y filtracion lateral",
+      "problem_class": "humedad_interior_general",
+      "mejor_similitud": 0.5461,
+      "source_files": [
+        "ALTA TEMPERATURA GRIS 902.pdf",
+        "PINTUCO FILL 12.pdf",
+        "INTERVINIL.pdf",
+        "PINTUCO FILL 7.pdf",
+        "AQUABLOCK ULTRA.pdf",
+        "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf"
+      ],
+      "productos_recomendados": [
+        "Aquablock",
+        "Viniltex Baños y Cocinas",
+        "Aquablock / Aquablock Ultra según presión negativa y severidad.",
+        "Estuco Acrílico si se requiere nivelación después del bloqueador de humedad.",
+        "Viniltex Advanced",
+        "Intervinil",
+        "Pinturama"
+      ],
+      "productos_portafolio_relacionado": [
+        "ALTAS TEMPERATURAS 902 UEA800/3.7L/AA7",
+        "SILICONA ACETICA ALTA TEMP GRIS 50GR BLI",
+        "PQ PINTUCO FILL 12 GRIS 27505 20K",
+        "PQ PINTUCO FILL 12 BASE ACCENT 20K"
+      ],
+      "productos_prohibidos": [
+        "Koraza como sellador de humedad interior",
+        "Koraza",
+        "Pintuco Fill",
+        "Pintucoat",
+        "Interseal",
+        "Intergard",
+        "Interthane 990",
+        "Koraza como sellador de humedad interior."
+      ],
+      "base_or_primer": [
+        "Aquablock / Aquablock Ultra según presión negativa y severidad."
+      ],
+      "intermediate_steps": [
+        "Estuco Acrílico si se requiere nivelación después del bloqueador de humedad."
+      ],
+      "finish_options": [
+        "Viniltex Advanced",
+        "Intervinil",
+        "Pinturama"
+      ],
+      "tools": [
+        "Brocha",
+        "Rodillo",
+        "Lija / raspado para preparación"
+      ],
+      "required_tools": [],
+      "forbidden_tools": [],
+      "mandatory_steps": [
+        "Diagnosticar causa de humedad antes de pintar.",
+        "Remover base dañada y salitre donde aplique.",
+        "Retirar acabado soplado, salitre y base floja hasta sustrato sano antes del bloqueador.",
+        "Bloquear la humedad primero y solo despues reconstruir el acabado decorativo.",
+        "Separar condensacion o hongos superficiales de una humedad estructural real antes de definir el sistema."
+      ],
+      "required_questions": [
+        "Confirmar causa: base del muro, arriba, lateral o temporada.",
+        "Validar estado de la base/revoque.",
+        "Solicitar m² reales antes de cotizar."
+      ],
+      "policy_names": [
+        "humedad_interior_negativa",
+        "bano_cocina_antihongos"
+      ],
+      "critical_policy_names": [],
+      "dominant_policy_names": [
+        "humedad_interior_negativa"
+      ],
+      "highest_priority_level": "high",
+      "pricing_gate": "m2_required",
+      "inventory_candidates": [
+        {
+          "codigo": "5890597",
+          "descripcion": "ALTAS TEMPERATURAS 902 UEA800/3.7L/AA7",
+          "etiqueta_auditable": "[5890597] - ALTAS TEMPERATURAS 902 UEA800/3.7L/AA7",
+          "marca": "54",
+          "presentacion": null,
+          "disponible": false,
+          "complementarios": []
+        },
+        {
+          "codigo": "F51060176",
+          "descripcion": "SILICONA ACETICA ALTA TEMP GRIS 50GR BLI",
+          "etiqueta_auditable": "[F51060176] - SILICONA ACETICA ALTA TEMP GRIS 50GR BLI",
+          "marca": null,
+          "presentacion": null,
+          "disponible": true,
+          "complementarios": []
+        },
+        {
+          "codigo": "5892286",
+          "descripcion": "PQ PINTUCO FILL 12 GRIS 27505 20K",
+          "etiqueta_auditable": "[5892286] - PQ PINTUCO FILL 12 GRIS 27505 20K",
+          "marca": "58",
+          "presentacion": null,
+          "disponible": true,
+          "complementarios": []
+        },
+        {
+          "codigo": "5892421",
+          "descripcion": "PQ PINTUCO FILL 12 BASE ACCENT 20K",
+          "etiqueta_auditable": "[5892421] - PQ PINTUCO FILL 12 BASE ACCENT 20K",
+          "marca": "58",
+          "presentacion": null,
+          "disponible": true,
+          "complementarios": []
+        }
+      ]
+    },
+    {
+      "battery": "base_200",
+      "group": "base",
+      "name": "fachada_exterior",
+      "question": "fachada exterior expuesta a lluvia y sol con pintura soplada",
+      "problem_class": "fachada_exterior",
+      "mejor_similitud": 0.6342,
+      "source_files": [
+        "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA.pdf",
+        "FICHA TECNICA KORAZA® PROTECCIÓN SOL & LLUVIA PINTURA IMPERMEABILIZANTE.pdf",
+        "KORAZA SOL Y LLUVIA IMPERMEABILIZANTE.pdf",
+        "KORAZA IMPERMEABLE.pdf"
+      ],
+      "productos_recomendados": [
+        "Koraza",
+        "Viniltex"
+      ],
+      "productos_portafolio_relacionado": [
+        "ESTUCO ACRILICO PINTUCO /KILO",
+        "ESTUCO ACRILICO PINTUCO / CUARTO",
+        "PQ KORAZA MAT BLANCO 2650 18.93L",
+        "PQ KORAZA MAT ACCENT BASE 127477 3.79L"
+      ],
+      "productos_prohibidos": [
+        "Intervinil o Pinturama como acabado en fachadas de alta exposicion",
+        "Aquablock como acabado exterior",
+        "Intervinil",
+        "Pinturama",
+        "vinilos interiores",
+        "Aquablock",
+        "Intervinil o Pinturama como acabado en fachadas de alta exposicion.",
+        "Aquablock como acabado exterior."
+      ],
+      "base_or_primer": [],
+      "intermediate_steps": [],
+      "finish_options": [
+        "Koraza",
+        "Viniltex"
+      ],
+      "tools": [
+        "Lija Abracol",
+        "Brocha Goya Profesional",
+        "Rodillo"
+      ],
+      "required_tools": [],
+      "forbidden_tools": [],
+      "mandatory_steps": [
+        "Remover pintura suelta o base soplada antes de repintar.",
+        "Retirar pintura suelta o base soplada antes del acabado exterior."
+      ],
+      "required_questions": [
+        "Confirmar si es exterior real y nivel de deterioro.",
+        "Solicitar m² reales antes de cotizar."
+      ],
+      "policy_names": [
+        "fachada_alta_exposicion"
+      ],
+      "critical_policy_names": [],
+      "dominant_policy_names": [
+        "fachada_alta_exposicion"
+      ],
+      "highest_priority_level": "normal",
+      "pricing_gate": "m2_required",
+      "inventory_candidates": [
+        {
+          "codigo": "56253303",
+          "descripcion": "ESTUCO ACRILICO PINTUCO /KILO",
+          "etiqueta_auditable": "[56253303] - ESTUCO ACRILICO PINTUCO /KILO",
+          "marca": "0",
+          "presentacion": null,
+          "disponible": false,
+          "complementarios": []
+        },
+        {
+          "codigo": "56253575",
+          "descripcion": "ESTUCO ACRILICO PINTUCO / CUARTO",
+          "etiqueta_auditable": "[56253575] - ESTUCO ACRILICO PINTUCO / CUARTO",
+          "marca": "0",
+          "presentacion": "cuarto",
+          "disponible": false,
+          "complementarios": []
+        },
+        {
+          "codigo": "5891122",
+          "descripcion": "PQ KORAZA MAT BLANCO 2650 18.93L",
+          "etiqueta_auditable": "[5891122] - PQ KORAZA MAT BLANCO 2650 18.93L",
+          "marca": "58",
+          "presentacion": "cuñete",
+          "disponible": true,
+          "complementarios": []
+        },
+        {
+          "codigo": "5890736",
+          "descripcion": "PQ KORAZA MAT ACCENT BASE 127477 3.79L",
+          "etiqueta_auditable": "[5890736] - PQ KORAZA MAT ACCENT BASE 127477 3.79L",
+          "marca": "58",
+          "presentacion": "galon",
+          "disponible": true,
+          "complementarios": []
+        }
+      ]
+    },
+    {
+      "battery": "base_200",
+      "group": "base",
+      "name": "eternit_exterior",
+      "question": "techo de eternit exterior repintado y envejecido",
+      "problem_class": "eternit_fibrocemento",
+      "mejor_similitud": 0.5791,
+      "source_files": [
+        "ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA.pdf"
+      ],
+      "productos_recomendados": [
+        "Sellomax",
+        "Koraza",
+        "Sellomax antes del acabado si el eternit ya esta pintado o envejecido."
+      ],
+      "productos_portafolio_relacionado": [
+        "ESTUCO ACRILICO PINTUCO /KILO",
+        "ESTUCO ACRILICO PINTUCO / CUARTO",
+        "PQ PINTUCO FILL 7 GRIS 2753 20K",
+        "PQ PINTUCO FILL 7 GRIS 2753 4.2K"
+      ],
+      "productos_prohibidos": [
+        "Intervinil",
+        "Pinturama o vinilos interiores como acabado exterior",
+        "rasqueteo o preparacion mecanica que genere polvo",
+        "Pinturama",
+        "vinilos interiores",
+        "Intervinil, Pinturama o vinilos interiores como acabado exterior.",
+        "Lijado en seco, rasqueteo o preparacion mecanica que genere polvo."
+      ],
+      "base_or_primer": [
+        "Sellomax antes del acabado si el eternit ya esta pintado o envejecido."
+      ],
+      "intermediate_steps": [],
+      "finish_options": [
+        "Koraza"
+      ],
+      "tools": [
+        "Hidrolavadora",
+        "Cepillo",
+        "Escoba de cerdas duras",
+        "Brocha",
+        "Rodillo"
+      ],
+      "required_tools": [
+        "hidrolavadora",
+        "cepillo"
+      ],
+      "forbidden_tools": [
+        "Lijado en seco",
+        "lijas",
+        "rasqueta",
+        "preparacion mecanica"
+      ],
+      "mandatory_steps": [
+        "Preparacion humeda con hidrolavadora, jabon, hipoclorito y cepillo; nunca lijar en seco ni rasquetear.",
+        "Retirar solo material flojo sin generar polvo.",
+        "Preparacion humeda obligatoria; nunca lijar en seco ni rasquetear.",
+        "En eternit envejecido o repintado, Sellomax va antes del acabado exterior.",
+        "Preparación húmeda obligatoria; nunca lijar en seco ni rasquetear."
+      ],
+      "required_questions": [
+        "Confirmar si el fibrocemento es exterior y si ya esta pintado o envejecido.",
+        "Validar si hay polvo de asbesto o deterioro que obligue a preparacion humeda.",
+        "Solicitar m2 reales antes de cotizar."
+      ],
+      "policy_names": [
+        "eternit_fibrocemento_exterior"
+      ],
+      "critical_policy_names": [],
+      "dominant_policy_names": [
+        "eternit_fibrocemento_exterior"
+      ],
+      "highest_priority_level": "normal",
+      "pricing_gate": "m2_required",
+      "inventory_candidates": [
+        {
+          "codigo": "56253303",
+          "descripcion": "ESTUCO ACRILICO PINTUCO /KILO",
+          "etiqueta_auditable": "[56253303] - ESTUCO ACRILICO PINTUCO /KILO",
+          "marca": "0",
+          "presentacion": null,
+          "disponible": false,
+          "complementarios": []
+        },
+        {
+          "codigo": "56253575",
+          "descripcion": "ESTUCO ACRILICO PINTUCO / CUARTO",
+          "etiqueta_auditable": "[56253575] - ESTUCO ACRILICO PINTUCO / CUARTO",
+          "marca": "0",
+          "presentacion": "cuarto",
+          "disponible": false,
+          "complementarios": []
+        },
+        {
+          "codigo": "5892274",
+          "descripcion": "PQ PINTUCO FILL 7 GRIS 2753 20K",
+          "etiqueta_auditable": "[5892274] - PQ PINTUCO FILL 7 GRIS 2753 20K",
+          "marca": "58",
+          "presentacion": null,
+          "disponible": true,
+          "complementarios": []
+        },
+        {
+          "codigo": "5892276",
+          "descripcion": "PQ PINTUCO FILL 7 GRIS 2753 4.2K",
+          "etiqueta_auditable": "[5892276] - PQ PINTUCO FILL 7 GRIS 2753 4.2K",
+          "marca": "58",
+          "presentacion": null,
+          "disponible": true,
+          "complementarios": []
+        }
+      ]
+    },
+    {
+      "battery": "base_200",
+      "group": "base",
+      "name": "ladrillo_vista",
+      "question": "ladrillo a la vista exterior sin cambiar apariencia",
+      "problem_class": "ladrillo_vista",
+      "mejor_similitud": 0.5162,
+      "source_files": [
+        "CONSTRUCLEANER LADRILLO CLARO.pdf",
+        "CONSTRUCLEANER RESTAURADOR FACHADAS.pdf",
+        "CONSTRUCLEANER LADRILLO ROJO.pdf",
+        "CONSTRUCLEANER LIMPIADOR ECOLOGICO LADRILLO.pdf",
+        "ESTUCOR MOLDURAS.pdf",
+        "CONSTRUCLEANER LIMPIADOR NO CORROSIVO.pdf"
+      ],
+      "productos_recomendados": [
+        "Construcleaner Limpiador Desengrasante",
+        "Siliconite 7",
+        "Construcleaner Limpiador Desengrasante como limpieza previa."
+      ],
+      "productos_portafolio_relacionado": [
+        "SELLO SISMO LADRILLO CLARO CANECA 30 KG",
+        "PINTURA EN AERO AZUL CLARO 350ML/250 GR",
+        "CONSTRUCLEANER RESTAURADOR FACHA 52.83G",
+        "CONSTRUCLEANER RINSE LADRILLO ROJ 52.83G"
+      ],
+      "productos_prohibidos": [
+        "Acido muriatico para limpieza",
+        "Koraza si el objetivo es conservar el ladrillo a la vista",
+        "Koraza",
+        "acido muriatico",
+        "Acido muriatico para limpieza.",
+        "Koraza si el objetivo es conservar el ladrillo a la vista."
+      ],
+      "base_or_primer": [
+        "Construcleaner Limpiador Desengrasante como limpieza previa."
+      ],
+      "intermediate_steps": [],
+      "finish_options": [
+        "Siliconite 7"
+      ],
+      "tools": [
+        "Cepillo",
+        "Brocha",
+        "Rodillo segun absorcion"
+      ],
+      "required_tools": [],
+      "forbidden_tools": [],
+      "mandatory_steps": [
+        "Limpieza tecnica del ladrillo antes de protegerlo.",
+        "Limpiar el ladrillo con limpiador adecuado antes de hidrofugar.",
+        "Conservar la apariencia del sustrato; proteger sin formar pelicula opaca."
+      ],
+      "required_questions": [
+        "Confirmar si el cliente quiere conservar la apariencia natural del ladrillo.",
+        "Validar si requiere solo limpieza o limpieza mas hidrofugacion.",
+        "Solicitar m2 reales antes de cotizar."
+      ],
+      "policy_names": [
+        "ladrillo_a_la_vista"
+      ],
+      "critical_policy_names": [],
+      "dominant_policy_names": [
+        "ladrillo_a_la_vista"
+      ],
+      "highest_priority_level": "normal",
+      "pricing_gate": "m2_required",
+      "inventory_candidates": [
+        {
+          "codigo": "20014121",
+          "descripcion": "SELLO SISMO LADRILLO CLARO CANECA 30 KG",
+          "etiqueta_auditable": "[20014121] - SELLO SISMO LADRILLO CLARO CANECA 30 KG",
+          "marca": "24",
+          "presentacion": "cuñete",
+          "disponible": false,
+          "complementarios": []
+        },
+        {
+          "codigo": "F51060583",
+          "descripcion": "PINTURA EN AERO AZUL CLARO 350ML/250 GR",
+          "etiqueta_auditable": "[F51060583] - PINTURA EN AERO AZUL CLARO 350ML/250 GR",
+          "marca": null,
+          "presentacion": null,
+          "disponible": true,
+          "complementarios": []
+        },
+        {
+          "codigo": "10347882",
+          "descripcion": "CONSTRUCLEANER RESTAURADOR FACHA 52.83G",
+          "etiqueta_auditable": "[10347882] - CONSTRUCLEANER RESTAURADOR FACHA 52.83G",
+          "marca": "0",
+          "presentacion": null,
+          "disponible": false,
+          "complementarios": []
+        },
+        {
+          "codigo": "10347881",
+          "descripcion": "CONSTRUCLEANER RINSE LADRILLO ROJ 52.83G",
+          "etiqueta_auditable": "[10347881] - CONSTRUCLEANER RINSE LADRILLO ROJ 52.83G",
+          "marca": "24",
+          "presentacion": null,
+          "disponible": false,
+          "complementarios": []
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "top_recommended": [
+      [
+        "Aquablock",
+        2
+      ],
+      [
+        "Viniltex Advanced",
+        2
+      ],
+      [
+        "Intervinil",
+        2
+      ],
+      [
+        "Pinturama",
+        2
+      ],
+      [
+        "Koraza",
+        2
+      ],
+      [
+        "ESTUCO ACRILICO PINTUCO /KILO",
+        2
+      ],
+      [
+        "ESTUCO ACRILICO PINTUCO / CUARTO",
+        2
+      ],
+      [
+        "Aquablock Ultra - 2 manos con brocha para cargar producto.",
+        1
+      ],
+      [
+        "Estuco Acrílico después del Aquablock para nivelar. NUNCA antes.",
+        1
+      ],
+      [
+        "ESTUCOR BULTO *25 KLS MOLDURA",
+        1
+      ],
+      [
+        "ESTUCOR BULTO *25 KL LISTO",
+        1
+      ],
+      [
+        "PQ AQUABLOCK ULTRA MAT BLANC 27070 3.79L",
+        1
+      ],
+      [
+        "PQ AQUABLOCK ULTRA MAT BLANC 27070 0.95L",
+        1
+      ],
+      [
+        "Viniltex Baños y Cocinas",
+        1
+      ],
+      [
+        "Aquablock / Aquablock Ultra según presión negativa y severidad.",
+        1
+      ],
+      [
+        "Estuco Acrílico si se requiere nivelación después del bloqueador de humedad.",
+        1
+      ],
+      [
+        "ALTAS TEMPERATURAS 902 UEA800/3.7L/AA7",
+        1
+      ],
+      [
+        "SILICONA ACETICA ALTA TEMP GRIS 50GR BLI",
+        1
+      ],
+      [
+        "PQ PINTUCO FILL 12 GRIS 27505 20K",
+        1
+      ],
+      [
+        "PQ PINTUCO FILL 12 BASE ACCENT 20K",
+        1
+      ],
+      [
+        "Viniltex",
+        1
+      ],
+      [
+        "PQ KORAZA MAT BLANCO 2650 18.93L",
+        1
+      ],
+      [
+        "PQ KORAZA MAT ACCENT BASE 127477 3.79L",
+        1
+      ],
+      [
+        "Sellomax",
+        1
+      ],
+      [
+        "Sellomax antes del acabado si el eternit ya esta pintado o envejecido.",
+        1
+      ]
+    ],
+    "top_forbidden": [
+      [
+        "Koraza",
+        3
+      ],
+      [
+        "Pintuco Fill",
+        2
+      ],
+      [
+        "Intervinil",
+        2
+      ],
+      [
+        "Pinturama",
+        2
+      ],
+      [
+        "vinilos interiores",
+        2
+      ],
+      [
+        "Koraza como imprimante o acabado interior",
+        1
+      ],
+      [
+        "Pintuco Fill como solución principal para capilaridad interior desde la base del muro",
+        1
+      ],
+      [
+        "Cotizar por galones sugeridos por el cliente sin metraje",
+        1
+      ],
+      [
+        "Koraza como imprimante o acabado interior.",
+        1
+      ],
+      [
+        "Pintuco Fill como solución principal para capilaridad interior desde la base del muro.",
+        1
+      ],
+      [
+        "Cotizar por galones sugeridos por el cliente sin metraje.",
+        1
+      ],
+      [
+        "Koraza como sellador de humedad interior",
+        1
+      ],
+      [
+        "Pintucoat",
+        1
+      ],
+      [
+        "Interseal",
+        1
+      ],
+      [
+        "Intergard",
+        1
+      ],
+      [
+        "Interthane 990",
+        1
+      ],
+      [
+        "Koraza como sellador de humedad interior.",
+        1
+      ],
+      [
+        "Intervinil o Pinturama como acabado en fachadas de alta exposicion",
+        1
+      ],
+      [
+        "Aquablock como acabado exterior",
+        1
+      ],
+      [
+        "Aquablock",
+        1
+      ],
+      [
+        "Intervinil o Pinturama como acabado en fachadas de alta exposicion.",
+        1
+      ],
+      [
+        "Aquablock como acabado exterior.",
+        1
+      ],
+      [
+        "Pinturama o vinilos interiores como acabado exterior",
+        1
+      ],
+      [
+        "rasqueteo o preparacion mecanica que genere polvo",
+        1
+      ],
+      [
+        "Intervinil, Pinturama o vinilos interiores como acabado exterior.",
+        1
+      ]
+    ],
+    "top_policies": [
+      [
+        "humedad_interior_negativa",
+        2
+      ],
+      [
+        "bano_cocina_antihongos",
+        1
+      ],
+      [
+        "fachada_alta_exposicion",
+        1
+      ],
+      [
+        "eternit_fibrocemento_exterior",
+        1
+      ],
+      [
+        "ladrillo_a_la_vista",
+        1
+      ]
+    ],
+    "top_critical": [],
+    "top_finish_options": [
+      [
+        "Viniltex Advanced",
+        2
+      ],
+      [
+        "Intervinil",
+        2
+      ],
+      [
+        "Pinturama",
+        2
+      ],
+      [
+        "Koraza",
+        2
+      ],
+      [
+        "Viniltex",
+        1
+      ],
+      [
+        "Siliconite 7",
+        1
+      ]
+    ]
+  }
+}

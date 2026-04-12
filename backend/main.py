@@ -1525,6 +1525,10 @@ PRODUCT_TECHNICAL_HARD_RULES = {
         "es_para": "Sellador y bloqueador de humedad para muros interiores con filtración. Disponible en presentación para interiores (Aquablock) y como impermeabilizante (Aquablock Ultra).",
         "no_es_para": "NO es para fachadas (para fachadas usar Koraza). NO es para pisos ni piscinas.",
     },
+    "sellamur": {
+        "es_para": "Sellador para muros minerales y bases alcalinas donde se necesita uniformar absorción o apoyar sistemas arquitectónicos compatibles.",
+        "no_es_para": "NO sustituye un bloqueador de humedad activa ni es acabado final exterior de alta exigencia.",
+    },
     "pintuco fill": {
         "es_para": "Impermeabilizante para techos, cubiertas, terrazas. La línea más grande de impermeabilizantes del portafolio (Fill 7, Fill 12).",
         "no_es_para": "NO es para piscinas ni inmersión en agua.",
@@ -1533,6 +1537,30 @@ PRODUCT_TECHNICAL_HARD_RULES = {
         "es_para": "Pintura vinílica premium para muros interiores y exteriores. Lavable, buen cubrimiento.",
         "no_es_para": "NO es para pisos, NO es para piscinas, NO es para metal desnudo, NO es para inmersión en agua.",
     },
+    "siliconite": {
+        "es_para": "Hidrofugante para sustratos minerales vistos como ladrillo, concreto arquitectónico o fachaleta cuando se quiere proteger sin formar película opaca.",
+        "no_es_para": "NO es pintura de acabado decorativo ni reemplaza un elastomérico de fachada cuando el objetivo es cubrir y decorar.",
+    },
+    "espuma de poliuretano": {
+        "es_para": "Sellado, relleno y aislamiento de huecos, juntas y pasos de instalaciones en construcción y montaje liviano.",
+        "no_es_para": "NO es pintura, NO es acabado decorativo ni reemplaza un impermeabilizante de cubierta o un sistema anticorrosivo.",
+    },
+    "esmaltes top quality": {
+        "es_para": "Acabado decorativo brillante para metal, madera, cemento o asbesto-cemento en usos arquitectónicos o de mantenimiento liviano.",
+        "no_es_para": "NO reemplaza un sistema industrial 2K para ambientes químicos, inmersión o alta exigencia anticorrosiva.",
+    },
+    "wash primer": {
+        "es_para": "Imprimante de adherencia para galvanizado, aluminio y metales no ferrosos antes del sistema anticorrosivo o de acabado.",
+        "no_es_para": "NO es acabado final y NO sustituye un anticorrosivo ni un sistema de pisos de concreto.",
+    },
+    "interfine": {
+        "es_para": "Acabado industrial de altas prestaciones estéticas y alta retención de color para estructuras metálicas o proyectos donde la apariencia final es crítica.",
+        "no_es_para": "NO es primer ni capa anticorrosiva inicial. Debe ir sobre sistema industrial compatible y superficie preparada.",
+    },
+    "interchar": {
+        "es_para": "Recubrimiento intumescente para protección pasiva contra incendio en estructuras metálicas, bajo diseño y espesor calculado.",
+        "no_es_para": "NO es esmalte decorativo común ni se debe recomendar sin definir rating de fuego, perfil estructural y espesor requerido.",
+    },
     "pintura canchas": {
         "es_para": "Pintura EXCLUSIVA para canchas deportivas, escenarios deportivos, senderos peatonales y ciclo rutas.",
         "no_es_para": "NO es para garajes, NO es para parqueaderos, NO es para bodegas, NO es para tráfico vehicular. Para garajes usar Pintucoat, para industrial Intergard 2002 + cuarzo.",
@@ -1540,10 +1568,442 @@ PRODUCT_TECHNICAL_HARD_RULES = {
 }
 
 
+GLOBAL_TECHNICAL_POLICY_RULES = [
+    {
+        "name": "humedad_interior_negativa",
+        "problem_classes": {"humedad_interior_capilaridad", "humedad_interior_general"},
+        "priority": "high",
+        "required_products": ["Aquablock"],
+        "forbidden_products": ["Koraza", "Pintuco Fill"],
+        "mandatory_steps": [
+            "Retirar acabado soplado, salitre y base floja hasta sustrato sano antes del bloqueador.",
+            "Bloquear la humedad primero y solo despues reconstruir el acabado decorativo.",
+        ],
+        "mandatory_step_signals": ["aquablock", "retirar el acabado", "bloquear la humedad"],
+        "rules_text": [
+            "La humedad interior por capilaridad o presion negativa no se resuelve con pintura decorativa ni con elastomericos de fachada.",
+        ],
+    },
+    {
+        "name": "fachada_alta_exposicion",
+        "problem_classes": {"fachada_exterior"},
+        "required_products": ["Koraza"],
+        "forbidden_products": ["Intervinil", "Pinturama", "vinilos interiores", "Aquablock"],
+        "mandatory_steps": [
+            "Retirar pintura suelta o base soplada antes del acabado exterior.",
+        ],
+        "mandatory_step_signals": ["koraza", "pintura suelta"],
+        "rules_text": [
+            "En fachadas reales expuestas a lluvia y sol el acabado debe ser exterior; no cerrar con vinilos interiores ni con bloqueadores de humedad interior.",
+        ],
+    },
+    {
+        "name": "eternit_fibrocemento_exterior",
+        "match_any": ["eternit", "fibrocemento", "asbesto", "asbesto cemento"],
+        "required_products": ["Sellomax", "Koraza"],
+        "required_tools": ["hidrolavadora", "cepillo"],
+        "forbidden_products": ["Intervinil", "Pinturama", "vinilos interiores"],
+        "forbidden_tools": ["lijas", "rasqueta", "preparacion mecanica"],
+        "mandatory_steps": [
+            "Preparacion humeda obligatoria; nunca lijar en seco ni rasquetear.",
+            "En eternit envejecido o repintado, Sellomax va antes del acabado exterior.",
+        ],
+        "mandatory_step_signals": ["preparacion humeda", "sellomax", "koraza"],
+        "rules_text": [
+            "El fibrocemento exterior se maneja con control de polvo y sistema exterior; no con vinilos interiores.",
+        ],
+    },
+    {
+        "name": "ladrillo_a_la_vista",
+        "match_any": ["ladrillo a la vista", "ladrillo", "fachaleta", "mamposteria a la vista"],
+        "required_products": ["Construcleaner Limpiador Desengrasante", "Siliconite 7"],
+        "forbidden_products": ["Koraza", "acido muriatico"],
+        "mandatory_steps": [
+            "Limpiar el ladrillo con limpiador adecuado antes de hidrofugar.",
+            "Conservar la apariencia del sustrato; proteger sin formar pelicula opaca.",
+        ],
+        "mandatory_step_signals": ["construcleaner", "siliconite"],
+        "rules_text": [
+            "El ladrillo a la vista se limpia e hidrofuga; no se debe deteriorar con acidos fuertes ni taparlo con pintura elastomerica si se quiere conservar la textura.",
+        ],
+    },
+    {
+        "name": "metal_pintado_alquidico",
+        "problem_classes": {"metal_pintado_alquidico"},
+        "forbidden_products": ["Interseal 670", "Interseal", "Intergard", "Interthane 990", "Pintucoat"],
+        "mandatory_steps": [
+            "Remocion total hasta metal desnudo antes de migrar a epoxicos o poliuretanos.",
+        ],
+        "mandatory_step_signals": ["metal desnudo", "remocion total"],
+        "rules_text": [
+            "No migrar directo de anticorrosivo alquidico viejo o esmalte sintetico a un sistema industrial 2K.",
+        ],
+    },
+    {
+        "name": "arquitectonico_sobre_base_agua",
+        "match_any": ["base agua", "vinilo", "viniltex", "intervinil", "pinturama", "acrilico", "muros de casa"],
+        "forbidden_products": ["Interthane 990", "Interseal", "Intergard", "Pintucoat"],
+        "mandatory_steps": [
+            "Mantener compatibilidad de familia: agua con agua sobre sistemas arquitectonicos existentes.",
+        ],
+        "mandatory_step_signals": ["misma familia", "agua con agua"],
+        "rules_text": [
+            "Sobre pintura base agua o sistema arquitectonico existente no ofrecer sistemas industriales bicomponentes como solucion directa.",
+        ],
+    },
+    {
+        "name": "piso_industrial_trafico_pesado",
+        "problem_classes": {"piso_industrial"},
+        "match_any": ["montacargas", "estibador", "llantas duras", "trafico pesado", "trafico industrial pesado"],
+        "required_products": ["Interseal gris RAL 7038", "Intergard 2002", "Arena de Cuarzo ref 5891610"],
+        "forbidden_products": ["Pintucoat", "Primer 50RS", "Epoxy Primer 50RS"],
+        "mandatory_steps": [
+            "Preparacion mecanica y desengrase profundo antes del sistema epoxico.",
+            "Confirmar m2, estado del concreto y tipo de trafico antes de cerrar sistema o cantidades.",
+        ],
+        "mandatory_step_signals": ["intergard 2002", "cuarzo", "preparacion mecanica"],
+        "rules_text": [
+            "El trafico pesado de montacargas o estibadores no se resuelve con Pintucoat y tampoco con imprimantes para metal.",
+        ],
+    },
+    {
+        "name": "piso_industrial_trafico_medio",
+        "problem_classes": {"piso_industrial"},
+        "match_any": ["trafico medio", "peatonal", "garaje", "parqueadero", "carretilla manual", "residencial"],
+        "required_products": ["Interseal gris RAL 7038", "Pintucoat"],
+        "forbidden_products": ["Primer 50RS", "Epoxy Primer 50RS"],
+        "mandatory_steps": [
+            "Confirmar si el piso es nuevo o ya pintado antes de definir compatibilidad.",
+        ],
+        "mandatory_step_signals": ["pintucoat", "interseal gris"],
+        "rules_text": [
+            "Para concreto de trafico medio, el imprimante correcto es Interseal gris RAL 7038; Primer 50RS es solo para metal.",
+        ],
+    },
+    {
+        "name": "piso_exterior_uv",
+        "problem_classes": {"piso_industrial"},
+        "match_any": ["exterior", "sol", "uv", "intemperie"],
+        "required_products": ["Interthane 990 + Catalizador"],
+        "mandatory_steps": [
+            "Todo sistema epoxico de piso exterior expuesto al sol debe cerrarse con poliuretano UV.",
+        ],
+        "mandatory_step_signals": ["interthane"],
+        "rules_text": [
+            "Los epoxicos expuestos al sol entizan; no pueden quedar como acabado final exterior.",
+        ],
+    },
+    {
+        "name": "concreto_sin_curado",
+        "problem_classes": {"piso_industrial"},
+        "match_any": ["recien fundido", "reci en fundido", "recien", "recien vaciado", "obra gris", "concreto nuevo", "sin curar"],
+        "priority": "high",
+        "mandatory_steps": [
+            "Esperar minimo 28 dias de curado y validar humedad antes de pintar.",
+        ],
+        "mandatory_step_signals": ["28 dias", "curado"],
+        "rules_text": [
+            "No se debe pintar concreto fresco porque la humedad residual destruye el recubrimiento.",
+        ],
+    },
+    {
+        "name": "madera_exterior",
+        "problem_classes": {"madera"},
+        "match_any": ["exterior", "intemperie", "deck", "pergola", "pergola", "fachada"],
+        "required_products": ["Barnex", "Wood Stain"],
+        "forbidden_products": ["Poliuretano Alto Trafico 1550/1551"],
+        "mandatory_steps": [
+            "En madera exterior usar sistema con proteccion UV y no un poliuretano transparente de piso interior.",
+        ],
+        "mandatory_step_signals": ["barnex", "wood stain"],
+        "rules_text": [
+            "La madera exterior necesita proteccion UV y flexibilidad; el poliuretano de alto trafico interior no sirve para intemperie.",
+        ],
+    },
+    {
+        "name": "madera_interior_alto_trafico",
+        "problem_classes": {"madera"},
+        "match_any": ["piso", "escalera", "vitrificar", "laca piso", "interior"],
+        "required_products": ["Poliuretano Alto Trafico 1550/1551"],
+        "forbidden_products": ["Barnex", "Pintulac", "barniz arquitectonico"],
+        "mandatory_steps": [
+            "Mezclar A+B y respetar el lijado fino entre manos en el sistema poliuretano interior.",
+        ],
+        "mandatory_step_signals": ["poliuretano alto trafico", "a+b"],
+        "rules_text": [
+            "Cuando el cliente quiere vitrificado resistente en piso o escalera interior, el sistema correcto es el poliuretano bicomponente 1550/1551.",
+        ],
+    },
+    {
+        "name": "techo_concreto_grietas",
+        "match_all": ["techo", "concreto"],
+        "match_any": ["grieta", "grietas", "fisura", "fisuras", "terraza", "losa"],
+        "required_products": ["Pintuco Fill"],
+        "forbidden_products": ["Koraza", "Viniltex", "Intervinil", "Pinturama"],
+        "mandatory_steps": [
+            "En techos de concreto con grietas tratar la impermeabilizacion como sistema de cubierta, no como pintura decorativa.",
+            "Definir si requiere refuerzo de tela o tratamiento de fisuras antes del acabado final.",
+        ],
+        "mandatory_step_signals": ["pintuco fill", "grietas"],
+        "rules_text": [
+            "La losa o terraza con fisuras debe entrar por la ruta de impermeabilizacion de cubiertas y no por pintura de fachada.",
+        ],
+    },
+    {
+        "name": "bano_cocina_antihongos",
+        "match_any": ["bano", "baño", "cocina", "hongos", "moho", "zona humeda", "zona húmeda"],
+        "exclude_any": ["capilaridad", "salitre", "presion negativa", "presión negativa", "jardinera"],
+        "required_products": ["Viniltex Baños y Cocinas"],
+        "forbidden_products": ["Koraza", "Pintucoat", "Interseal", "Intergard", "Interthane 990"],
+        "mandatory_steps": [
+            "Separar condensacion o hongos superficiales de una humedad estructural real antes de definir el sistema.",
+        ],
+        "mandatory_step_signals": ["viniltex baños y cocinas"],
+        "rules_text": [
+            "En baños y cocinas con hongos superficiales sin presión de agua activa, el acabado debe ser antihongos y lavable, no un industrial 2K.",
+        ],
+    },
+    {
+        "name": "interior_koraza_redirect",
+        "match_any": ["muro interior", "sala", "alcoba", "pasillo cerrado", "habitacion", "habitación", "interior"],
+        "match_all_non_negated": ["koraza"],
+        "required_products": ["Viniltex Advanced"],
+        "forbidden_products": ["Koraza"],
+        "mandatory_steps": [
+            "Si el cliente pide Koraza para interior cerrado, reconducir a un vinilo premium compatible con ese uso.",
+        ],
+        "mandatory_step_signals": ["viniltex advanced"],
+        "rules_text": [
+            "Koraza es una ruta de intemperie y no debe quedar como recomendacion principal en interiores cerrados convencionales.",
+        ],
+    },
+    {
+        "name": "cancha_sendero_peatonal",
+        "match_any": ["cancha", "ciclo ruta", "cicloruta", "sendero peatonal", "escenario deportivo"],
+        "required_products": ["Pintura Canchas"],
+        "forbidden_products": ["Pintucoat", "Intergard 2002", "Intergard 740"],
+        "mandatory_steps": [
+            "No mezclar la ruta deportiva con pisos industriales de montacargas o bodegas.",
+        ],
+        "mandatory_step_signals": ["pintura canchas"],
+        "rules_text": [
+            "La cancha o sendero peatonal debe resolverse con sistema deportivo o peatonal, no con epoxicos industriales de bodega.",
+        ],
+    },
+    {
+        "name": "metal_nuevo_galvanizado",
+        "match_any": ["galvanizado", "galvanizada", "aluminio", "metal nuevo", "lamina zinc", "lámina zinc"],
+        "required_products": ["Wash Primer"],
+        "forbidden_products": ["Interseal gris RAL 7038", "Pintucoat"],
+        "mandatory_steps": [
+            "En galvanizado o metal no ferroso primero resolver adherencia con wash primer antes del anticorrosivo o acabado.",
+        ],
+        "mandatory_step_signals": ["wash primer"],
+        "rules_text": [
+            "El galvanizado no se trata igual que el acero negro oxidado ni como un piso de concreto.",
+        ],
+    },
+    {
+        "name": "metal_oxidado_mantenimiento",
+        "match_any": ["reja oxidada", "metal oxidado", "oxido superficial", "óxido superficial", "corrosion superficial", "corrosión superficial", "oxidada"],
+        "required_products": ["Pintóxido", "Corrotec"],
+        "forbidden_products": ["Viniltex", "Koraza", "Pintucoat"],
+        "mandatory_steps": [
+            "Separar oxido superficial de corrosion profunda antes de definir transformador o remocion mecanica intensiva.",
+        ],
+        "mandatory_step_signals": ["pintoxido", "corrotec"],
+        "rules_text": [
+            "El metal oxidado de mantenimiento liviano debe entrar por desoxidante y anticorrosivo, no por pinturas para muro ni sistemas de piso.",
+        ],
+    },
+    {
+        "name": "metal_oxidado_preparacion_incorrecta",
+        "match_any": ["reja oxidada", "metal oxidado", "oxido superficial", "óxido superficial", "oxidada"],
+        "match_any_non_negated": ["agua y jabon", "agua con jabon", "lavar con agua", "lavarlo con agua", "agua jabonosa", "jabon", "jabón", "con agua antes del anticorrosivo", "lavar la reja oxidada con agua"],
+        "priority": "high",
+        "required_tools": ["grata", "lija"],
+        "forbidden_tools": ["agua y jabon"],
+        "mandatory_steps": [
+            "En metal oxidado no usar agua y jabón como preparación principal; retirar óxido y cascarilla con grata o lija antes del convertidor o anticorrosivo.",
+            "Aplicar el sistema solo sobre metal seco y con el óxido flojo removido.",
+        ],
+        "mandatory_step_signals": ["grata", "lija", "metal seco"],
+        "rules_text": [
+            "El lavado con agua y jabón no sustituye la preparación mecánica del metal oxidado y puede empeorar la condición si deja humedad retenida.",
+        ],
+    },
+    {
+        "name": "espuma_poliuretano_sellado",
+        "match_any": ["espuma de poliuretano", "sellar huecos", "rellenar huecos", "aislamiento termico", "aislamiento térmico", "espuma expansiva"],
+        "required_products": ["Espuma de Poliuretano"],
+        "forbidden_products": ["Koraza", "Viniltex", "Pintuco Fill", "Interseal"],
+        "mandatory_steps": [
+            "Usar la espuma como sistema de sellado o relleno sobre superficie limpia, no como pintura o acabado decorativo.",
+        ],
+        "mandatory_step_signals": ["espuma de poliuretano"],
+        "rules_text": [
+            "La espuma expansiva es una solucion de sellado y aislamiento, no una pintura ni un impermeabilizante de acabado.",
+        ],
+    },
+    {
+        "name": "esmalte_decorativo_mantenimiento",
+        "match_any": ["esmalte top quality", "esmalte brillante", "acabado brillante", "mantenimiento liviano", "metal decorativo", "madera decorativa"],
+        "exclude_any": ["ambiente quimico", "ambiente químico", "interseal", "interthane", "intergard", "inmersion", "inmersión"],
+        "required_products": ["Esmaltes Top Quality"],
+        "forbidden_products": ["Interseal", "Intergard", "Interthane 990"],
+        "mandatory_steps": [
+            "Tratar el caso como acabado decorativo o mantenimiento liviano, no como sistema industrial 2K.",
+        ],
+        "mandatory_step_signals": ["esmaltes top quality"],
+        "rules_text": [
+            "Cuando la necesidad es decorativa con brillo y exposición convencional, el esmalte arquitectónico es mejor ruta que un sistema industrial completo.",
+        ],
+    },
+    {
+        "name": "inmersion_agua_potable_condicional",
+        "match_any": ["inmersion", "inmersión", "sumergido", "sumergida", "tanque agua potable", "agua potable", "nsf", "ansi 61"],
+        "priority": "critical",
+        "forbidden_products": ["Pintucoat", "Viniltex", "Koraza", "Pintulux 3 en 1"],
+        "mandatory_steps": [
+            "Validar ficha tecnica, certificacion aplicable y preparacion Sa 2.5 o SSPC-SP10 antes de recomendar un sistema de inmersion o agua potable.",
+            "Si se trata de agua potable, confirmar la condicion NSF/ANSI 61 y el volumen del tanque antes de cerrar el sistema.",
+        ],
+        "mandatory_step_signals": ["agua potable", "sa 2.5", "nsf"],
+        "rules_text": [
+            "Las consultas de inmersion o agua potable requieren ruta tecnica condicionada; no se deben resolver con pinturas arquitectonicas ni con Pintucoat.",
+        ],
+    },
+    {
+        "name": "proteccion_pasiva_incendio",
+        "match_any": ["interchar", "intumescente", "proteccion fuego", "protección fuego", "incendio", "ignifugo", "ignífugo"],
+        "priority": "critical",
+        "required_products": ["Interchar"],
+        "forbidden_products": ["Koraza", "Viniltex", "Pintulux 3 en 1"],
+        "mandatory_steps": [
+            "Definir rating de fuego, perfil estructural y espesor requerido antes de recomendar el sistema intumescente.",
+            "No tratar la proteccion pasiva contra incendio como una pintura decorativa comun.",
+        ],
+        "mandatory_step_signals": ["interchar", "espesor requerido"],
+        "rules_text": [
+            "El intumescente exige calculo y compatibilidad de sistema; no es una respuesta genérica de pintura para metal.",
+        ],
+    },
+    {
+        "name": "acabado_industrial_alta_estetica",
+        "match_any": ["interfine", "alto brillo industrial", "alta estetica", "alta estética", "retencion de color", "retención de color"],
+        "required_products": ["Interfine"],
+        "forbidden_products": ["Corrotec", "Pintulux 3 en 1"],
+        "mandatory_steps": [
+            "Usar Interfine solo como acabado de altas prestaciones sobre sistema industrial compatible, no como primer.",
+        ],
+        "mandatory_step_signals": ["interfine"],
+        "rules_text": [
+            "Cuando el requerimiento es estético industrial de alto nivel, la conversación debe ir por Interfine o poliuretano industrial compatible, no por esmaltes domésticos.",
+        ],
+    },
+    {
+        "name": "ambiente_quimico_industrial",
+        "match_any": ["ambiente quimico", "ambiente químico", "quimicos", "químicos", "planta industrial", "corrosion industrial", "corrosión industrial", "iso 12944", "sspc"],
+        "priority": "high",
+        "required_products": ["Intergard", "Interseal", "Interthane 990 + Catalizador"],
+        "forbidden_products": ["Corrotec", "Pintulux 3 en 1", "Viniltex", "Koraza"],
+        "mandatory_steps": [
+            "Resolver preparacion de superficie y ambiente de exposición antes de cerrar un sistema industrial anticorrosivo.",
+            "No degradar una consulta industrial severa a soluciones arquitectonicas o esmaltes domesticos.",
+        ],
+        "mandatory_step_signals": ["intergard", "interseal", "interthane"],
+        "rules_text": [
+            "Ambiente químico o anticorrosión industrial severa exige sistema industrial completo y no productos de mantenimiento liviano.",
+        ],
+    },
+    {
+        "name": "concreto_sin_curado_acido_incorrecto",
+        "problem_classes": {"piso_industrial"},
+        "match_any": ["recien fundido", "reci en fundido", "recien vaciado", "concreto nuevo", "sin curar", "obra gris"],
+        "match_any_non_negated": ["acido muriatico", "ácido muriático", "echar acido muriatico", "echar ácido muriático"],
+        "priority": "high",
+        "forbidden_tools": ["acido muriatico"],
+        "mandatory_steps": [
+            "No usar ácido muriático para forzar curado ni preparación temprana del concreto recién fundido.",
+            "Esperar el curado mínimo, validar humedad y luego definir el tratamiento de superficie correcto.",
+        ],
+        "mandatory_step_signals": ["28 dias", "curado"],
+        "rules_text": [
+            "El ácido muriático no acelera el curado del concreto fresco y puede comprometer la superficie antes del sistema de recubrimiento.",
+        ],
+    },
+]
+
+
+def _mention_is_negated_in_query(normalized_query: str, start_index: int) -> bool:
+    window = normalized_query[max(0, start_index - 45):start_index]
+    negation_cues = [
+        " no ", " nunca ", " evita ", " evitar ", " prohibido ", " jamas ", " jamás ",
+        " no quiero ", " no usar ", " no voy a usar ", " no pienso usar ", " no aplicar ",
+    ]
+    return any(cue in f" {window} " for cue in negation_cues)
+
+
+def _query_matches_token(normalized_query: str, token: str, allow_negated: bool = True) -> bool:
+    padded_query = f" {normalized_query} "
+    normalized_token = normalize_text_value(token)
+    if not normalized_token:
+        return False
+
+    search_candidates = [f" {normalized_token} ", normalized_token]
+    for search_token in search_candidates:
+        start = padded_query.find(search_token)
+        while start != -1:
+            if allow_negated or not _mention_is_negated_in_query(padded_query, start):
+                return True
+            start = padded_query.find(search_token, start + len(search_token))
+    return False
+
+
+def _query_matches_all_tokens(normalized_query: str, tokens: list[str], allow_negated: bool = True) -> bool:
+    return all(_query_matches_token(normalized_query, token, allow_negated=allow_negated) for token in tokens or [])
+
+
+def _query_matches_any_token(normalized_query: str, tokens: list[str], allow_negated: bool = True) -> bool:
+    return any(_query_matches_token(normalized_query, token, allow_negated=allow_negated) for token in tokens or [])
+
+
+def _matches_global_policy_rule(rule: dict, normalized_query: str, diagnosis: dict) -> bool:
+    problem_class = diagnosis.get("problem_class")
+    problem_classes = rule.get("problem_classes") or set()
+    if problem_classes and problem_class not in problem_classes:
+        return False
+    if rule.get("match_all") and not _query_matches_all_tokens(normalized_query, rule.get("match_all") or []):
+        return False
+    if rule.get("match_all_non_negated") and not _query_matches_all_tokens(normalized_query, rule.get("match_all_non_negated") or [], allow_negated=False):
+        return False
+    if rule.get("match_any") and not _query_matches_any_token(normalized_query, rule.get("match_any") or []):
+        return False
+    if rule.get("match_any_non_negated") and not _query_matches_any_token(normalized_query, rule.get("match_any_non_negated") or [], allow_negated=False):
+        return False
+    if rule.get("exclude_any") and _query_matches_any_token(normalized_query, rule.get("exclude_any") or []):
+        return False
+    return bool(problem_classes or rule.get("match_all") or rule.get("match_all_non_negated") or rule.get("match_any") or rule.get("match_any_non_negated"))
+
+
 def _infer_problem_class_from_rag_query(question: str, product: str = "") -> Optional[str]:
     normalized = normalize_text_value(f"{question} {product}")
     if not normalized:
         return None
+
+    if any(token in normalized for token in ["eternit", "fibrocemento", "asbesto", "asbesto cemento"]):
+        return "eternit_fibrocemento"
+
+    if any(token in normalized for token in ["ladrillo a la vista", "ladrillo", "fachaleta", "mamposteria a la vista"]):
+        return "ladrillo_vista"
+
+    if any(token in normalized for token in ["madera", "barnex", "wood stain", "barniz", "vitrificar", "escalera madera", "deck", "pergola", "pérgola"]):
+        return "madera"
+
+    if any(token in normalized for token in ["metal", "reja", "porton", "acero", "hierro"]) and any(
+        token in normalized for token in ["alquidico", "alquidico", "esmalte sintetico", "pintura de aceite", "anticorrosivo viejo", "ya pintado", "pintada"]
+    ):
+        return "metal_pintado_alquidico"
 
     if any(token in normalized for token in ["humedad", "salitre", "capilaridad", "presion negativa", "presión negativa", "filtracion", "filtración", "moho", "pared mojada", "muro mojado"]):
         if any(token in normalized for token in ["interior", "muro", "pared", "base del muro", "viene del piso", "jardinera", "sube del piso"]):
@@ -1553,17 +2013,14 @@ def _infer_problem_class_from_rag_query(question: str, product: str = "") -> Opt
         if any(token in normalized for token in ["fachada", "exterior", "lluvia", "sol y lluvia"]):
             return "fachada_exterior"
 
+    if any(token in normalized for token in ["piso", "garaje", "montacargas", "trafico", "tráfico", "estibador", "intergard 2002", "pintucoat", "intergard 740", "epoxico", "epóxico", "epoxi", "concreto nuevo", "recien fundido", "reci en fundido", "recien vaciado", "sin curar", "obra gris"]):
+        return "piso_industrial"
+
     if any(token in normalized for token in ["fachada", "muro exterior", "exterior", "intemperie", "lluvia sol"]):
         return "fachada_exterior"
 
     if any(token in normalized for token in ["oxido", "óxido", "reja", "metal", "corrosion", "corrosión", "corrotec", "pintoxido"]):
         return "metal_oxidado"
-
-    if any(token in normalized for token in ["piso", "concreto", "montacargas", "trafico", "tráfico", "estibador", "intergard 2002", "pintucoat", "intergard 740"]):
-        return "piso_industrial"
-
-    if any(token in normalized for token in ["madera", "barnex", "wood stain", "barniz"]):
-        return "madera"
 
     return None
 
@@ -1575,6 +2032,9 @@ def _estimate_problem_class_confidence(problem_class: Optional[str], question: s
     normalized = normalize_text_value(f"{question} {product}")
     signal_count = 0
     signal_map = {
+        "eternit_fibrocemento": ["eternit", "fibrocemento", "asbesto", "sellomax", "koraza"],
+        "ladrillo_vista": ["ladrillo", "siliconite", "construcleaner"],
+        "metal_pintado_alquidico": ["metal", "reja", "alquidico", "esmalte", "anticorrosivo viejo"],
         "humedad_interior_capilaridad": ["humedad", "salitre", "interior", "muro", "viene del piso", "jardinera", "capilaridad"],
         "humedad_interior_general": ["humedad", "salitre", "interior", "muro", "pared"],
         "fachada_exterior": ["fachada", "exterior", "intemperie", "lluvia"],
@@ -1599,7 +2059,13 @@ def _build_structured_diagnosis(question: str, product: str, best_similarity: fl
     normalized = normalize_text_value(f"{question} {product}")
 
     probable_cause = None
-    if problem_class == "humedad_interior_capilaridad":
+    if problem_class == "eternit_fibrocemento":
+        probable_cause = "fibrocemento exterior sensible a polvo y envejecimiento"
+    elif problem_class == "ladrillo_vista":
+        probable_cause = "sustrato mineral expuesto que debe protegerse sin ocultar la textura"
+    elif problem_class == "metal_pintado_alquidico":
+        probable_cause = "incompatibilidad quimica entre base alquidica vieja y sistema industrial 2K"
+    elif problem_class == "humedad_interior_capilaridad":
         probable_cause = "capilaridad/presión negativa"
     elif problem_class == "humedad_interior_general":
         probable_cause = "humedad interior por definir"
@@ -1611,6 +2077,21 @@ def _build_structured_diagnosis(question: str, product: str, best_similarity: fl
         probable_cause = "desgaste mecánico / requerimiento por tráfico"
 
     required_validations_map = {
+        "eternit_fibrocemento": [
+            "Confirmar si el fibrocemento es exterior y si ya esta pintado o envejecido.",
+            "Validar si hay polvo de asbesto o deterioro que obligue a preparacion humeda.",
+            "Solicitar m2 reales antes de cotizar.",
+        ],
+        "ladrillo_vista": [
+            "Confirmar si el cliente quiere conservar la apariencia natural del ladrillo.",
+            "Validar si requiere solo limpieza o limpieza mas hidrofugacion.",
+            "Solicitar m2 reales antes de cotizar.",
+        ],
+        "metal_pintado_alquidico": [
+            "Confirmar si la base actual es esmalte sintetico, anticorrosivo alquidico o pintura de aceite.",
+            "Validar si aceptan remocion total hasta metal desnudo.",
+            "Solicitar m2 o dimensiones antes de cotizar.",
+        ],
         "humedad_interior_capilaridad": [
             "Confirmar origen de humedad desde base del muro/piso/jardinera.",
             "Validar estado del revoque o base soplada.",
@@ -1644,7 +2125,7 @@ def _build_structured_diagnosis(question: str, product: str, best_similarity: fl
     }
 
     observed_signals = []
-    for token in ["humedad", "salitre", "capilaridad", "jardinera", "muro", "interior", "fachada", "exterior", "oxido", "óxido", "reja", "piso", "montacargas", "madera", "barniz"]:
+    for token in ["humedad", "salitre", "capilaridad", "jardinera", "muro", "interior", "fachada", "exterior", "oxido", "óxido", "reja", "piso", "montacargas", "madera", "barniz", "eternit", "fibrocemento", "ladrillo", "alquidico"]:
         if token in normalized:
             observed_signals.append(token)
 
@@ -1652,7 +2133,7 @@ def _build_structured_diagnosis(question: str, product: str, best_similarity: fl
         "problem_class": problem_class,
         "confidence": confidence,
         "probable_cause": probable_cause,
-        "pricing_ready": False if problem_class in {"humedad_interior_capilaridad", "humedad_interior_general", "fachada_exterior", "metal_oxidado", "piso_industrial", "madera"} else True,
+        "pricing_ready": False if problem_class in {"eternit_fibrocemento", "ladrillo_vista", "metal_pintado_alquidico", "humedad_interior_capilaridad", "humedad_interior_general", "fachada_exterior", "metal_oxidado", "piso_industrial", "madera"} else True,
         "required_validations": required_validations_map.get(problem_class, []),
         "observed_signals": observed_signals,
     }
@@ -1674,11 +2155,53 @@ def _build_structured_technical_guide(question: str, product: str, diagnosis: di
         "required_questions": diagnosis.get("required_validations") or [],
         "forbidden_products_or_shortcuts": [],
         "commercial_alternatives": [],
-        "pricing_gate": "m2_required" if problem_class in {"humedad_interior_capilaridad", "humedad_interior_general", "fachada_exterior", "metal_oxidado", "piso_industrial", "madera"} else "none",
+        "pricing_gate": "m2_required" if problem_class in {"eternit_fibrocemento", "ladrillo_vista", "metal_pintado_alquidico", "humedad_interior_capilaridad", "humedad_interior_general", "fachada_exterior", "metal_oxidado", "piso_industrial", "madera"} else "none",
         "hard_rules_applied": [],
     }
 
-    if problem_class == "humedad_interior_capilaridad":
+    if problem_class == "eternit_fibrocemento":
+        guide["preparation_steps"] = [
+            "Preparacion humeda con hidrolavadora, jabon, hipoclorito y cepillo; nunca lijar en seco ni rasquetear.",
+            "Retirar solo material flojo sin generar polvo.",
+        ]
+        guide["base_or_primer"] = ["Sellomax antes del acabado si el eternit ya esta pintado o envejecido."]
+        guide["finish_options"] = [
+            {"producto": "Koraza", "rol": "acabado exterior", "nivel": "premium"},
+        ]
+        guide["tools"] = ["Hidrolavadora", "Cepillo", "Escoba de cerdas duras", "Brocha", "Rodillo"]
+        guide["forbidden_products_or_shortcuts"] = [
+            "Intervinil, Pinturama o vinilos interiores como acabado exterior.",
+            "Lijado en seco, rasqueteo o preparacion mecanica que genere polvo.",
+        ]
+        guide["hard_rules_applied"] = [
+            "Fibrocemento exterior: preparacion humeda obligatoria + Sellomax + acabado exterior.",
+        ]
+    elif problem_class == "ladrillo_vista":
+        guide["preparation_steps"] = [
+            "Limpieza tecnica del ladrillo antes de protegerlo.",
+        ]
+        guide["base_or_primer"] = ["Construcleaner Limpiador Desengrasante como limpieza previa."]
+        guide["finish_options"] = [
+            {"producto": "Siliconite 7", "rol": "hidrofugante", "nivel": "premium"},
+        ]
+        guide["tools"] = ["Cepillo", "Brocha", "Rodillo segun absorcion"]
+        guide["forbidden_products_or_shortcuts"] = [
+            "Acido muriatico para limpieza.",
+            "Koraza si el objetivo es conservar el ladrillo a la vista.",
+        ]
+    elif problem_class == "metal_pintado_alquidico":
+        guide["preparation_steps"] = [
+            "Remocion total hasta metal desnudo antes de migrar a sistema epoxico o poliuretano.",
+        ]
+        guide["base_or_primer"] = ["Corrotec si se mantiene sistema alquidico. Wash Primer o sistema epoxico solo despues de remocion total."]
+        guide["finish_options"] = [
+            {"producto": "Pintulux 3 en 1", "rol": "acabado compatible si se mantiene familia alquidica", "nivel": "estándar"},
+        ]
+        guide["tools"] = ["Disco flap", "Grata", "Lija Abracol", "Brocha Goya Profesional"]
+        guide["forbidden_products_or_shortcuts"] = [
+            "Aplicar epoxicos o poliuretanos directamente sobre esmalte sintetico o anticorrosivo alquidico viejo.",
+        ]
+    elif problem_class == "humedad_interior_capilaridad":
         guide["preparation_steps"] = [
             "Remover por completo pintura soplada/descascarada y salitre hasta base sana.",
             "Si el revoque está quemado o meteorizado, reemplazarlo antes del sistema nuevo.",
@@ -1719,10 +2242,13 @@ def _build_structured_technical_guide(question: str, product: str, diagnosis: di
         guide["preparation_steps"] = ["Remover pintura suelta o base soplada antes de repintar."]
         guide["finish_options"] = [
             {"producto": "Koraza", "rol": "acabado exterior", "nivel": "premium"},
-            {"producto": "Intervinil", "rol": "acabado exterior", "nivel": "intermedio"},
-            {"producto": "Pinturama", "rol": "acabado exterior", "nivel": "económico"},
+            {"producto": "Viniltex", "rol": "acabado exterior cuando la exposicion es moderada y el sistema es arquitectonico compatible", "nivel": "intermedio"},
         ]
         guide["tools"] = ["Lija Abracol", "Brocha Goya Profesional", "Rodillo"]
+        guide["forbidden_products_or_shortcuts"] = [
+            "Intervinil o Pinturama como acabado en fachadas de alta exposicion.",
+            "Aquablock como acabado exterior.",
+        ]
     elif problem_class == "metal_oxidado":
         guide["preparation_steps"] = ["Preparación mecánica con lija, disco flap o grata según el grado de óxido."]
         guide["base_or_primer"] = ["Pintóxido si hay óxido profundo.", "Corrotec o Corrotec Premium como anticorrosivo."]
@@ -1768,6 +2294,149 @@ def _build_structured_technical_guide(question: str, product: str, diagnosis: di
         guide["expert_overrides"] = []
 
     return guide
+
+
+def _split_policy_items(raw_value: Optional[str]) -> list[str]:
+    if not raw_value:
+        return []
+    cleaned = raw_value.replace("\n", ",")
+    chunks = re.split(r"[;,]|\s+\+\s+|\s+y\s+", cleaned, flags=re.IGNORECASE)
+    results = []
+    for chunk in chunks:
+        value = (chunk or "").strip(" .:-")
+        normalized = normalize_text_value(value)
+        if len(normalized) < 3:
+            continue
+        if value not in results:
+            results.append(value)
+    return results
+
+
+def _is_tool_policy_item(item: str) -> bool:
+    normalized = normalize_text_value(item)
+    tool_tokens = {
+        "hidrolavadora", "escoba", "cepillo", "brocha", "rodillo", "lija", "lijas",
+        "rasqueta", "espatula", "espátula", "grata", "disco flap", "pulidora",
+        "pistola", "airless", "thinner", "solvente", "jabón", "jabon", "hipoclorito",
+    }
+    return any(token in normalized for token in tool_tokens)
+
+
+def _extract_forbidden_note_items(note_text: str) -> list[str]:
+    items = []
+    patterns = [
+        r"nunca\s+(?:recomendar|usar|aplicar|incluir|listar ni incluir)\s+(.+?)(?:\.|$)",
+        r"prohibido\s+(?:usar|recomendar|incluir)\s+(.+?)(?:\.|$)",
+        r"evitar\s+(.+?)(?:\.|$)",
+    ]
+    for pattern in patterns:
+        for match in re.finditer(pattern, note_text or "", flags=re.IGNORECASE):
+            for item in _split_policy_items(match.group(1)):
+                if item not in items:
+                    items.append(item)
+    return items
+
+
+def _build_hard_policies_for_context(question: str, product: str, diagnosis: dict, guide: dict, expert_notes: list[dict]) -> dict:
+    policies = {
+        "problem_class": diagnosis.get("problem_class"),
+        "required_products": [],
+        "forbidden_products": [],
+        "required_tools": [],
+        "forbidden_tools": [],
+        "mandatory_steps": [],
+        "mandatory_step_signals": [],
+        "rules_text": [],
+        "policy_names": [],
+        "critical_policy_names": [],
+        "high_priority_policy_names": [],
+        "dominant_policy_names": [],
+        "highest_priority_level": "none",
+    }
+
+    def _append_unique(bucket: str, value: str):
+        cleaned = (value or "").strip()
+        if not cleaned:
+            return
+        if cleaned not in policies[bucket]:
+            policies[bucket].append(cleaned)
+
+    for step in (guide.get("preparation_steps") or []):
+        _append_unique("mandatory_steps", step)
+
+    for step in (guide.get("preparation_steps") or []):
+        lowered_step = normalize_text_value(step)
+        for candidate in ["preparacion humeda", "sellomax", "koraza", "aquablock", "retirar el acabado", "metal desnudo", "intergard 2002", "cuarzo", "interthane", "28 dias", "curado", "construcleaner", "siliconite", "barnex", "wood stain", "poliuretano alto trafico"]:
+            if candidate in lowered_step:
+                _append_unique("mandatory_step_signals", candidate)
+
+    for note in expert_notes or []:
+        note_text = (note.get("nota_comercial") or "").strip()
+        if note_text:
+            _append_unique("rules_text", note_text)
+
+        for item in _split_policy_items(note.get("producto_recomendado")):
+            bucket = "required_tools" if _is_tool_policy_item(item) else "required_products"
+            _append_unique(bucket, item)
+
+        explicit_avoid_items = _split_policy_items(note.get("producto_desestimado"))
+        note_avoid_items = _extract_forbidden_note_items(note_text)
+        for item in explicit_avoid_items + note_avoid_items:
+            bucket = "forbidden_tools" if _is_tool_policy_item(item) else "forbidden_products"
+            _append_unique(bucket, item)
+
+        normalized_note = normalize_text_value(note_text)
+        for candidate in ["preparacion humeda", "sellomax", "koraza", "aquablock", "metal desnudo", "intergard 2002", "cuarzo", "interthane", "28 dias", "curado", "construcleaner", "siliconite", "barnex", "wood stain", "poliuretano alto trafico", "misma familia", "agua con agua"]:
+            if candidate in normalized_note:
+                _append_unique("mandatory_step_signals", candidate)
+
+    for forbidden in (guide.get("forbidden_products_or_shortcuts") or []):
+        _append_unique("rules_text", forbidden)
+        for item in _split_policy_items(forbidden):
+            bucket = "forbidden_tools" if _is_tool_policy_item(item) else "forbidden_products"
+            _append_unique(bucket, item)
+
+    normalized_query = normalize_text_value(f"{question} {product}")
+    for rule in GLOBAL_TECHNICAL_POLICY_RULES:
+        if not _matches_global_policy_rule(rule, normalized_query, diagnosis):
+            continue
+        rule_name = rule.get("name") or "regla_contextual"
+        _append_unique("policy_names", rule_name)
+        priority = normalize_text_value(rule.get("priority") or "normal")
+        if priority == "critical":
+            _append_unique("critical_policy_names", rule_name)
+        elif priority == "high":
+            _append_unique("high_priority_policy_names", rule_name)
+        for value in rule.get("required_products") or []:
+            _append_unique("required_products", value)
+        for value in rule.get("forbidden_products") or []:
+            _append_unique("forbidden_products", value)
+        for value in rule.get("required_tools") or []:
+            _append_unique("required_tools", value)
+        for value in rule.get("forbidden_tools") or []:
+            _append_unique("forbidden_tools", value)
+        for value in rule.get("mandatory_steps") or []:
+            _append_unique("mandatory_steps", value)
+        for value in rule.get("mandatory_step_signals") or []:
+            _append_unique("mandatory_step_signals", value)
+        for value in rule.get("rules_text") or []:
+            _append_unique("rules_text", value)
+
+    if any(token in normalized_query for token in ["eternit", "fibrocemento", "asbesto"]):
+        _append_unique("mandatory_steps", "Preparación húmeda obligatoria; nunca lijar en seco ni rasquetear.")
+        _append_unique("mandatory_step_signals", "preparacion humeda")
+
+    if policies["critical_policy_names"]:
+        policies["dominant_policy_names"] = list(policies["critical_policy_names"])
+        policies["highest_priority_level"] = "critical"
+    elif policies["high_priority_policy_names"]:
+        policies["dominant_policy_names"] = list(policies["high_priority_policy_names"])
+        policies["highest_priority_level"] = "high"
+    elif policies["policy_names"]:
+        policies["dominant_policy_names"] = [policies["policy_names"][0]]
+        policies["highest_priority_level"] = "normal"
+
+    return policies
 
 # ── Catálogo verificado de productos bicomponentes ────────────────────────
 # Fuente de verdad interna: los catalizadores y proporciones aquí registrados
@@ -1989,8 +2658,48 @@ def get_postgrest_url():
     return os.getenv("PGRST_URL", "http://localhost:3000").rstrip("/")
 
 
+def _read_streamlit_secret_value(*keys: str) -> Optional[str]:
+    secrets_path = Path(__file__).resolve().parent.parent / ".streamlit" / "secrets.toml"
+    if not secrets_path.exists() or not keys:
+        return None
+    try:
+        raw_text = secrets_path.read_text(encoding="utf-8")
+    except Exception:
+        return None
+
+    last_key = re.escape(keys[-1])
+    quoted_match = re.search(rf"(?mi)^\s*{last_key}\s*=\s*\"([^\"]+)\"\s*$", raw_text)
+    if quoted_match:
+        return quoted_match.group(1).strip()
+
+    bare_match = re.search(rf"(?mi)^\s*{last_key}\s*=\s*([^#\r\n]+)", raw_text)
+    if bare_match:
+        return bare_match.group(1).strip().strip('"').strip("'")
+
+    try:
+        parsed = tomllib.loads(raw_text)
+    except Exception:
+        return None
+
+    current = parsed
+    for key in keys:
+        if not isinstance(current, dict):
+            return None
+        current = current.get(key)
+        if current is None:
+            return None
+    if isinstance(current, str):
+        return current.strip()
+    return None
+
+
 def get_database_url():
-    database_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_DB_URI")
+    database_url = (
+        os.getenv("DATABASE_URL")
+        or os.getenv("POSTGRES_DB_URI")
+        or _read_streamlit_secret_value("DATABASE_URL")
+        or _read_streamlit_secret_value("postgres", "db_uri")
+    )
     if not database_url:
         raise RuntimeError("No se encontró DATABASE_URL o POSTGRES_DB_URI para el backend.")
     return database_url
@@ -2001,7 +2710,7 @@ def get_whatsapp_verify_token():
 
 
 def get_openai_api_key():
-    return os.getenv("OPENAI_API_KEY")
+    return os.getenv("OPENAI_API_KEY") or _read_streamlit_secret_value("openai", "api_key")
 
 
 def get_openai_model():
@@ -3940,13 +4649,21 @@ def _is_clear_customer_product_message(normalized: str) -> bool:
         "koraza", "viniltex", "pintulux", "pintucoat", "interthane", "intergard",
         "interseal", "barnex", "esmalte", "anticorrosivo", "corrotec", "pintoxido",
         "pintóxido", "aquablock", "impermeabilizante", "lija", "brocha", "rodillo",
+        "pinturama", "intervinil", "sellomax", "eternit", "fibrocemento",
         "pintar", "pintura", "barniz", "sellador", "estuco",
         "humedad", "salitre", "oxido", "óxido", "fachada", "pared", "muro",
-        "piso", "techo", "madera", "metal", "hierro", "rejas",
+        "piso", "techo", "madera", "metal", "hierro", "rejas", "exterior", "interior",
+        "obra nueva", "repintura", "pelado", "soplado", "descascarado",
         "me cotizas", "me cotiza", "cotizacion", "cotización", "precio", "precios",
         "cuanto vale", "cuánto vale", "cuanto cuesta", "cuánto cuesta",
         "necesito", "quiero comprar", "metros cuadrados", "m2", "m²",
     ]
+    _CUSTOMER_OBJECTION_SIGNALS = [
+        "no compro", "no comprar", "no me sirve", "no es para exterior", "no es exterior",
+        "para exterior", "para interior", "eso no", "ese no", "esa no",
+    ]
+    if any(signal in normalized for signal in _CUSTOMER_OBJECTION_SIGNALS):
+        return True
     return sum(1 for signal in _CUSTOMER_PRODUCT_SIGNALS if signal in normalized) >= 2
 
 
@@ -3978,7 +4695,12 @@ def detect_internal_query_intent(text_value: Optional[str]):
         return "consulta_traslados"
     if any(fragment in normalized for fragment in ["cartera", "saldo", "vencid"]):
         return "consulta_cartera"
-    if any(fragment in normalized for fragment in ["compras", "compra", "compro", "compró", "ultimo pedido", "último pedido", "ultima compra", "última compra"]):
+    _internal_purchase_signals = [
+        "compras de", "historial de compras", "ultima compra", "última compra",
+        "ultimo pedido", "último pedido", "que compro", "qué compró", "que compro el cliente",
+        "qué compró el cliente", "que compro este cliente", "qué compró este cliente",
+    ]
+    if any(fragment in normalized for fragment in _internal_purchase_signals):
         return "consulta_compras"
     if any(fragment in normalized for fragment in ["contexto", "resumen", "perfil", "todo del cliente", "info del cliente"]):
         return "consulta_contexto"
@@ -7294,26 +8016,87 @@ def fetch_expert_knowledge(query: str, limit: int = 8) -> list[dict]:
         return []
     try:
         normalized = normalize_text_value(query)
-        terms = [t for t in normalized.split() if len(t) >= 2][:10]
+        raw_terms = re.findall(r"[a-z0-9áéíóúñ]+", normalized)
+        stop_terms = {
+            "para", "con", "sin", "por", "que", "como", "sobre", "entre", "desde",
+            "hasta", "este", "esta", "estos", "estas", "solo", "necesito", "quiero",
+            "techo", "techos", "pintar", "pintado", "exterior", "interior", "anos",
+            "ano", "hace", "viejo", "vieja", "nuevo", "nueva", "usar", "aplicar",
+            "producto", "productos", "sistema", "recomendar", "recomendacion",
+        }
+        terms = []
+        for term in raw_terms:
+            if len(term) < 3 or term in stop_terms or term in terms:
+                continue
+            terms.append(term)
+        if not terms:
+            terms = [t for t in raw_terms if len(t) >= 2][:10]
         if not terms:
             return []
 
         all_rows = _get_expert_knowledge_cache()
 
-        # Score each row by how many terms match
         scored = []
+        seen_keys = set()
+        anchor_terms = [
+            t for t in terms
+            if len(t) >= 6 or t in {"eternit", "fibrocemento", "asbesto", "sellomax", "koraza", "intervinil"}
+        ]
         for row in all_rows:
+            context_text = normalize_text_value(row.get("contexto_tags") or "")
+            note_text = normalize_text_value(row.get("nota_comercial") or "")
+            recommended_text = normalize_text_value(row.get("producto_recomendado") or "")
+            rejected_text = normalize_text_value(row.get("producto_desestimado") or "")
             searchable = (
-                (row.get("contexto_tags") or "").lower()
-                + " " + (row.get("nota_comercial") or "").lower()
-                + " " + (row.get("producto_recomendado") or "").lower()
-                + " " + (row.get("producto_desestimado") or "").lower()
+                context_text
+                + " " + note_text
+                + " " + recommended_text
+                + " " + rejected_text
             )
-            score = sum(1 for t in terms if t in searchable)
-            if score > 0:
-                scored.append((score, row))
-        scored.sort(key=lambda x: (-x[0], -(x[1].get("_ts") or 0)))
-        return [r for _, r in scored[:limit]]
+            matched_terms = [t for t in terms if t in searchable]
+            if not matched_terms:
+                continue
+
+            score = 0.0
+            context_hits = 0
+            for term in matched_terms:
+                score += 1.0
+                if term in context_text:
+                    score += 2.0
+                    context_hits += 1
+                elif term in note_text:
+                    score += 1.0
+                elif term in recommended_text or term in rejected_text:
+                    score += 0.4
+                if len(term) >= 7:
+                    score += 0.35
+
+            anchor_context_hits = sum(1 for term in anchor_terms if term in context_text)
+            if anchor_context_hits:
+                score += 2.5 * anchor_context_hits
+            elif anchor_terms:
+                score -= 1.5
+
+            if row.get("tipo") == "alerta_superficie" and context_hits:
+                score += 1.5
+            if row.get("tipo") == "evitar" and any(term in rejected_text for term in matched_terms):
+                score += 0.75
+
+            dedupe_key = (
+                row.get("tipo") or "",
+                context_text,
+                note_text,
+                recommended_text,
+                rejected_text,
+            )
+            if dedupe_key in seen_keys:
+                continue
+            seen_keys.add(dedupe_key)
+
+            if score >= 2.0:
+                scored.append((score, len(matched_terms), row))
+        scored.sort(key=lambda item: (-item[0], -item[1], -(item[2].get("_ts") or 0)))
+        return [row for _, _, row in scored[:limit]]
     except Exception as exc:
         logger.debug("fetch_expert_knowledge error: %s", exc)
         return []
@@ -17844,6 +18627,13 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         expert_notes,
         best_similarity,
     )
+    hard_policies = _build_hard_policies_for_context(
+        pregunta,
+        producto,
+        structured_diagnosis,
+        structured_guide,
+        expert_notes,
+    )
 
     result_payload = {
         "encontrado": True,
@@ -17855,12 +18645,15 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         "mejor_similitud": round(best_similarity, 4),
         "diagnostico_estructurado": structured_diagnosis,
         "guia_tecnica_estructurada": structured_guide,
+        "politicas_duras_contexto": hard_policies,
         "preguntas_pendientes": structured_diagnosis.get("required_validations") or [],
         "mensaje": (
             "⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): "
             "Lee PRIMERO 'perfil_tecnico_principal'. Esa ficha JSON es la base más rica del producto: cómo se aplica, dónde se aplica, dilución, rendimiento, restricciones y alertas. "
             "Luego lee 'guias_tecnicas_relacionadas' y 'contexto_guias' para capturar sistemas completos, preguntas de diagnóstico y rutas de decisión. "
             "Luego lee 'diagnostico_estructurado' y 'guia_tecnica_estructurada'. Esos campos son la fuente prioritaria para: clase de problema, validaciones pendientes, sistema recomendado, productos prohibidos y compuerta de cotización. "
+            "Luego lee 'politicas_duras_contexto'. Ese objeto es CONTRACTUAL: productos prohibidos, productos obligatorios, herramientas prohibidas y pasos obligatorios. "
+            "Si aparece ahí, debes obedecerlo literalmente. No lo conviertas en sugerencia. "
             "Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. "
             "DEBES SINTETIZARLOS como un ingeniero de aplicaciones: "
             "0) Si 'pricing_ready' es false o 'pricing_gate' es 'm2_required', primero diagnostica y pide los datos faltantes. NO cotices todavía. "
@@ -17873,6 +18666,10 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "3) Si 'conocimiento_comercial_ferreinox' está presente → PREVALECE SOBRE TODO. "
             "   El conocimiento del asesor Ferreinox ha sido enseñado directamente por los expertos Pablo y Diego. "
             "   Si contradice al RAG, EL EXPERTO PREVALECE. Integra como '💡 Experiencia Ferreinox: [nota]'. "
+            "   Si 'politicas_duras_contexto.forbidden_products' o 'forbidden_tools' contiene algo, PROHIBIDO ofrecerlo como opción válida. "
+            "   Si 'politicas_duras_contexto.required_products' contiene algo, DEBE aparecer en tu sistema recomendado salvo que expliques por qué aún falta validación técnica. "
+            "   Si 'politicas_duras_contexto.critical_policy_names' trae valores, DEBES abrir el primer párrafo con ese riesgo crítico y su advertencia principal antes de mezclarlo con rutas decorativas o secundarias. "
+            "   Si 'politicas_duras_contexto.dominant_policy_names' trae valores, prioriza esas rutas como eje de la asesoría. "
             "4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. "
             "5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. "
             "6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' "

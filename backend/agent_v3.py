@@ -15,6 +15,13 @@ import time
 import logging
 from typing import Optional
 
+_TECHNICAL_PRODUCT_GUARD_SIGNALS = [
+    "koraza", "intervinil", "pinturama", "viniltex", "aquablock", "sellomax",
+    "pintucoat", "intergard", "interseal", "interthane", "corrotec", "pintulux",
+    "barnex", "siliconite", "construcleaner", "wood stain", "pintoxido", "pintóxido",
+    "lija abracol", "lijas de agua", "papel de lija",
+]
+
 logger = logging.getLogger("agent_v3")
 
 # Importaciones diferidas de main.py (se configuran en init)
@@ -30,6 +37,40 @@ def _get_main():
             from backend import main as _m
         _main = _m
     return _main
+
+
+def _user_explicitly_named_product(product_candidate: Optional[str], user_message: str, recent_messages: list[dict], m) -> bool:
+    if not product_candidate:
+        return False
+    combined_user_text = " ".join(
+        [(msg.get("contenido") or "") for msg in recent_messages if msg.get("direction") == "inbound"]
+        + [user_message or ""]
+    )
+    normalized_user_text = f" {m.normalize_text_value(combined_user_text)} "
+    normalized_candidate = m.normalize_text_value(product_candidate)
+    if not normalized_candidate:
+        return False
+    if f" {normalized_candidate} " in normalized_user_text:
+        return True
+
+    generic_tokens = {
+        "pintura", "pinturas", "acabado", "acabados", "sistema", "sistemas",
+        "sellador", "selladores", "primer", "imprimante", "vinilo", "acrilico", "acrilica",
+    }
+    candidate_tokens = [
+        token for token in re.findall(r"[a-z0-9áéíóúñ]+", normalized_candidate)
+        if len(token) >= 4 and token not in generic_tokens
+    ]
+    return any(f" {token} " in normalized_user_text for token in candidate_tokens)
+
+
+def _sanitize_technical_lookup_args(raw_args: dict, user_message: str, recent_messages: list[dict], m) -> dict:
+    args = dict(raw_args or {})
+    product_candidate = (args.get("producto") or "").strip()
+    if product_candidate and not _user_explicitly_named_product(product_candidate, user_message, recent_messages, m):
+        logger.info("V3 tech lookup sanitized guessed product: %s", product_candidate)
+        args["producto"] = ""
+    return args
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -133,18 +174,34 @@ def generate_agent_reply_v3(
 
     initial_intent = classify_intent(user_message, conversation_context, recent_messages, internal_auth)
     initial_diagnostic = extract_diagnostic_data(user_message, recent_messages)
+    normalized_user_message = m.normalize_text_value(user_message)
 
     def _needs_forced_technical_retry() -> bool:
         if tool_calls_made or assistant_message.tool_calls:
             return False
         if initial_intent != "asesoria":
             return False
+        high_risk_tokens = [
+            "humedad", "salitre", "capilaridad", "eternit", "fibrocemento", "asbesto", "ladrillo",
+            "metal", "reja", "porton", "interseal", "interthane", "intergard", "pintucoat",
+            "koraza", "aquablock", "siliconite", "construcleaner", "barnex", "wood stain",
+            "montacargas", "estibadores", "trafico pesado", "poliuretano alto trafico",
+        ]
+        decision_tokens = [
+            "que sistema", "que me recomiendas", "me recomiendan", "se puede directo",
+            "me sirve", "que va", "que aplico", "cual va", "sirve o no",
+        ]
+        has_high_risk_context = any(token in normalized_user_message for token in high_risk_tokens)
+        asks_for_decision = any(token in normalized_user_message for token in decision_tokens)
         if not (initial_diagnostic.get("surface") and initial_diagnostic.get("interior_exterior") and initial_diagnostic.get("condition")):
-            return False
+            draft_text = (assistant_message.content or "").lower()
+            return has_high_risk_context and asks_for_decision and any(
+                token in draft_text for token in ["koraza", "aquablock", "interseal", "interthane", "intergard", "pintucoat", "siliconite", "construcleaner", "barnex"]
+            )
         draft_text = (assistant_message.content or "").lower()
         if any(token in draft_text for token in ["voy a consultar", "voy a revisar", "un momento", "déjame revisar", "dejame revisar"]):
             return True
-        return False
+        return has_high_risk_context and asks_for_decision
 
     # ══════════════════════════════════════════════════════════════════════
     # LLM CALL + TOOL LOOP
@@ -228,10 +285,16 @@ def generate_agent_reply_v3(
                     logger.info("V3 tool budget exceeded: %s", fn_name_raw)
 
             if not _skip:
-                fn_name, fn_args, result = m._execute_agent_tool(tc, context, conversation_context)
+                if fn_name_raw == "consultar_conocimiento_tecnico":
+                    original_args = json.loads(tc.function.arguments or "{}")
+                    fn_args = _sanitize_technical_lookup_args(original_args, user_message, recent_messages, m)
+                    fn_name = fn_name_raw
+                    result = m._handle_tool_consultar_conocimiento_tecnico(fn_args, context, conversation_context)
+                else:
+                    fn_name, fn_args, result = m._execute_agent_tool(tc, context, conversation_context)
                 if fn_name == "consultar_conocimiento_tecnico":
                     try:
-                        _tc_args = json.loads(tc.function.arguments or "{}")
+                        _tc_args = fn_args
                         _cache_key = m.normalize_text_value(
                             (_tc_args.get("pregunta") or "") + "|" + (_tc_args.get("producto") or "")
                         )
@@ -307,6 +370,11 @@ def generate_agent_reply_v3(
     # ── GUARDIA IVA: desglose obligatorio en cotizaciones ────────────────
     if not is_greeting:
         assistant_message = _guardia_iva(assistant_message, messages, m)
+
+    # ── GUARDIA CONSISTENCIA TÉCNICA: expert rules / RAG duro vs respuesta final ─────
+    assistant_message = _guardia_consistencia_tecnica(
+        assistant_message, messages, tool_calls_made, context, conversation_context, m
+    )
 
     # ══════════════════════════════════════════════════════════════════════
     # POST-PROCESAMIENTO
@@ -407,9 +475,37 @@ def _extract_teaching_payload(user_message: str) -> Optional[dict]:
     if len(content) < 20:
         return None
 
+    structured_fields = {}
+    for raw_chunk in re.split(r"[\n;]+", content):
+        chunk = raw_chunk.strip()
+        if not chunk:
+            continue
+        match = re.match(r"^(tipo|contexto|ctx|sustrato|ubicacion|ubicación|estado|etapa|recomendar|evitar|regla|nota)\s*[:=]\s*(.+)$", chunk, flags=re.IGNORECASE)
+        if not match:
+            continue
+        field = match.group(1).strip().lower()
+        value = match.group(2).strip()
+        structured_fields[field] = value
+
+    explicit_context_parts = []
+    if structured_fields.get("contexto"):
+        explicit_context_parts.append(structured_fields["contexto"])
+    if structured_fields.get("ctx"):
+        explicit_context_parts.append(structured_fields["ctx"])
+    for field in ["sustrato", "ubicacion", "ubicación", "estado", "etapa"]:
+        if structured_fields.get(field):
+            explicit_context_parts.append(structured_fields[field])
+
+    explicit_note = structured_fields.get("regla") or structured_fields.get("nota")
+    explicit_tipo = (structured_fields.get("tipo") or "").strip().lower()
+    explicit_recomendar = structured_fields.get("recomendar")
+    explicit_evitar = structured_fields.get("evitar")
+
     lowered = content.lower()
     tipo = "proceso"
-    if "alerta superficie" in lowered or "asbesto" in lowered:
+    if explicit_tipo in {"recomendar", "evitar", "proceso", "sustitucion", "sustitución", "alerta_superficie"}:
+        tipo = "sustitucion" if explicit_tipo == "sustitución" else explicit_tipo
+    elif "alerta superficie" in lowered or "asbesto" in lowered:
         tipo = "alerta_superficie"
     elif "nunca recomendar" in lowered or "nunca aplicar" in lowered or "nunca usar" in lowered or "nunca recomendar," in lowered:
         tipo = "evitar"
@@ -417,23 +513,33 @@ def _extract_teaching_payload(user_message: str) -> Optional[dict]:
         tipo = "proceso"
 
     contexto_match = re.search(r"para\s+(.+?)(?:\s+nunca|\s+siempre|\.|:)", lowered, flags=re.IGNORECASE)
-    contexto_tags = (contexto_match.group(1).strip() if contexto_match else content[:140].strip())
+    if explicit_context_parts:
+        contexto_tags = ", ".join(part.strip() for part in explicit_context_parts if part.strip())[:220]
+    else:
+        contexto_tags = (contexto_match.group(1).strip() if contexto_match else content[:140].strip())
+    contexto_tags = contexto_tags.strip(" ,.;:")
 
     producto_recomendado = None
     rec_match = re.search(r"recomendar\s+(.+?)(?:\s+seguido de|\.|,|$)", content, flags=re.IGNORECASE)
-    if rec_match:
+    if explicit_recomendar:
+        producto_recomendado = explicit_recomendar.strip()
+    elif rec_match and not re.search(r"nunca\s+recomendar", content, flags=re.IGNORECASE):
         producto_recomendado = rec_match.group(1).strip()
     elif "sellomax" in lowered and "koraza" in lowered:
         producto_recomendado = "Sellomax + Koraza"
 
     producto_desestimado = None
     avoid_match = re.search(r"NUNCA\s+(?:recomendar|aplicar|usar|listar ni incluir)\s+(.+?)(?:\.|$)", content, flags=re.IGNORECASE)
-    if avoid_match:
+    if explicit_evitar:
+        producto_desestimado = explicit_evitar.strip()
+    elif avoid_match:
         producto_desestimado = avoid_match.group(1).strip()
+
+    nota_comercial = explicit_note.strip() if explicit_note else content
 
     return {
         "contexto_tags": contexto_tags,
-        "nota_comercial": content,
+        "nota_comercial": nota_comercial,
         "tipo": tipo,
         "producto_recomendado": producto_recomendado,
         "producto_desestimado": producto_desestimado,
@@ -603,6 +709,244 @@ def _guardia_bicomponente(assistant_message, messages, tool_calls_made, context,
             logger.info("V3 GUARDIA BICOMPONENTE completed: %dms", int((time.time() - t) * 1000))
             response_text = (assistant_message.content or "").lower()
 
+    return assistant_message
+
+
+def _extract_latest_technical_payload(tool_calls_made: list) -> Optional[dict]:
+    for tool_call in reversed(tool_calls_made or []):
+        if tool_call.get("name") != "consultar_conocimiento_tecnico":
+            continue
+        raw_result = tool_call.get("result")
+        if not raw_result:
+            continue
+        try:
+            return json.loads(raw_result) if isinstance(raw_result, str) else raw_result
+        except Exception:
+            continue
+    return None
+
+
+def _split_policy_values(raw_value: Optional[str], m) -> list[str]:
+    if not raw_value:
+        return []
+    cleaned = raw_value.replace("\n", ",")
+    chunks = re.split(r"[;,]|\s+\|\s+", cleaned)
+    results = []
+    for chunk in chunks:
+        value = (chunk or "").strip(" .:-")
+        normalized = m.normalize_text_value(value)
+        if len(normalized) < 3:
+            continue
+        if value not in results:
+            results.append(value)
+    return results
+
+
+def _extract_forbidden_phrases_from_notes(expert_notes: list, m) -> list[str]:
+    phrases = []
+    patterns = [
+        r"nunca\s+(?:recomendar|usar|aplicar|listar ni incluir|incluir)\s+(.+?)(?:\.|$)",
+        r"prohibido\s+(?:usar|recomendar|incluir)\s+(.+?)(?:\.|$)",
+        r"evitar\s+(.+?)(?:\.|$)",
+    ]
+    for note in expert_notes or []:
+        for phrase in _split_policy_values(note.get("evitar"), m):
+            if phrase not in phrases:
+                phrases.append(phrase)
+        note_text = note.get("nota") or ""
+        for pattern in patterns:
+            for match in re.finditer(pattern, note_text, flags=re.IGNORECASE):
+                for phrase in _split_policy_values(match.group(1), m):
+                    if phrase not in phrases:
+                        phrases.append(phrase)
+    return phrases
+
+
+def _mention_is_negated(normalized_response: str, start_index: int) -> bool:
+    window = normalized_response[max(0, start_index - 35):start_index]
+    negation_cues = [" no ", " nunca ", " evita ", " evitar ", " prohibido ", " sin ", " jamas ", " jamás "]
+    return any(cue in f" {window} " for cue in negation_cues)
+
+
+def _find_positive_mentions(response_text: str, phrases: list[str], m) -> list[str]:
+    normalized_response = f" {m.normalize_text_value(response_text or '')} "
+    hits = []
+    for phrase in phrases:
+        normalized_phrase = m.normalize_text_value(phrase)
+        if len(normalized_phrase) < 3:
+            continue
+        search_token = f" {normalized_phrase} "
+        start = normalized_response.find(search_token)
+        while start != -1:
+            if not _mention_is_negated(normalized_response, start):
+                if phrase not in hits:
+                    hits.append(phrase)
+                break
+            start = normalized_response.find(search_token, start + len(search_token))
+    return hits
+
+
+def _find_missing_mentions(response_text: str, phrases: list[str], m) -> list[str]:
+    normalized_response = f" {m.normalize_text_value(response_text or '')} "
+    missing = []
+    for phrase in phrases:
+        normalized_phrase = m.normalize_text_value(phrase)
+        if len(normalized_phrase) < 3:
+            continue
+        if f" {normalized_phrase} " not in normalized_response:
+            missing.append(phrase)
+    return missing
+
+
+def _collect_technical_evidence_text(technical_payload: dict, tool_calls_made: list, m) -> str:
+    parts = []
+    for key in [
+        "diagnostico_estructurado",
+        "guia_tecnica_estructurada",
+        "perfil_tecnico_principal",
+        "guias_tecnicas_relacionadas",
+        "contexto_guias",
+        "conocimiento_comercial_ferreinox",
+        "respuesta_rag",
+    ]:
+        value = technical_payload.get(key)
+        if not value:
+            continue
+        try:
+            parts.append(json.dumps(value, ensure_ascii=False, default=str))
+        except Exception:
+            parts.append(str(value))
+
+    for tool_call in tool_calls_made or []:
+        if tool_call.get("name") != "consultar_conocimiento_tecnico":
+            continue
+        args = tool_call.get("args") or {}
+        if args:
+            try:
+                parts.append(json.dumps(args, ensure_ascii=False, default=str))
+            except Exception:
+                parts.append(str(args))
+
+    return m.normalize_text_value(" ".join(parts))
+
+
+def _guardia_consistencia_tecnica(assistant_message, messages, tool_calls_made, context, conversation_context, m):
+    technical_payload = _extract_latest_technical_payload(tool_calls_made)
+    if not technical_payload:
+        return assistant_message
+
+    response_text = assistant_message.content or ""
+    if not response_text.strip():
+        return assistant_message
+
+    expert_notes = technical_payload.get("conocimiento_comercial_ferreinox") or []
+    structured_guide = technical_payload.get("guia_tecnica_estructurada") or {}
+    hard_policies = technical_payload.get("politicas_duras_contexto") or {}
+    forbidden_phrases = _extract_forbidden_phrases_from_notes(expert_notes, m)
+    for forbidden in structured_guide.get("forbidden_products_or_shortcuts") or []:
+        for phrase in _split_policy_values(forbidden, m):
+            if phrase not in forbidden_phrases:
+                forbidden_phrases.append(phrase)
+    for forbidden in (hard_policies.get("forbidden_products") or []) + (hard_policies.get("forbidden_tools") or []):
+        if forbidden not in forbidden_phrases:
+            forbidden_phrases.append(forbidden)
+
+    forbidden_hits = _find_positive_mentions(response_text, forbidden_phrases, m)
+    required_items = list(dict.fromkeys((hard_policies.get("required_products") or []) + (hard_policies.get("required_tools") or [])))
+    missing_required_items = _find_missing_mentions(response_text, required_items, m) if required_items else []
+    mandatory_step_signals = hard_policies.get("mandatory_step_signals") or []
+    missing_mandatory_steps = _find_missing_mentions(response_text, mandatory_step_signals, m) if mandatory_step_signals else []
+
+    evidence_text = _collect_technical_evidence_text(technical_payload, tool_calls_made, m)
+    unsupported_products = []
+    normalized_response = m.normalize_text_value(response_text)
+    for product_name in _TECHNICAL_PRODUCT_GUARD_SIGNALS:
+        normalized_product = m.normalize_text_value(product_name)
+        if f" {normalized_product} " not in f" {normalized_response} ":
+            continue
+        if f" {normalized_product} " in f" {evidence_text} ":
+            continue
+        response_index = normalized_response.find(normalized_product)
+        if _mention_is_negated(f" {normalized_response} ", response_index + 1):
+            continue
+        if product_name not in unsupported_products:
+            unsupported_products.append(product_name)
+
+    if not forbidden_hits and not unsupported_products and not missing_required_items and not missing_mandatory_steps:
+        return assistant_message
+
+    try:
+        from agent_prompt_v3 import AGENT_TOOLS_V3
+    except ImportError:
+        from backend.agent_prompt_v3 import AGENT_TOOLS_V3
+
+    correction_lines = [
+        "⛔ INCONSISTENCIA TÉCNICA DETECTADA.",
+        "Tu respuesta final contradice reglas duras o está ofreciendo productos no respaldados por las herramientas de este turno.",
+    ]
+    if forbidden_hits:
+        correction_lines.append("PROHIBIDOS mencionados como opción válida: " + ", ".join(forbidden_hits[:8]))
+    if unsupported_products:
+        correction_lines.append("PRODUCTOS SIN RESPALDO en herramientas de este turno: " + ", ".join(unsupported_products[:8]))
+    if missing_required_items:
+        correction_lines.append("ELEMENTOS OBLIGATORIOS AUSENTES en la respuesta: " + ", ".join(missing_required_items[:8]))
+    if missing_mandatory_steps:
+        correction_lines.append("PASOS O SEÑALES OBLIGATORIAS AUSENTES en la respuesta: " + ", ".join(missing_mandatory_steps[:8]))
+
+    if hard_policies:
+        correction_lines.append("POLÍTICAS DURAS ACTIVAS:")
+        if hard_policies.get("policy_names"):
+            correction_lines.append("- Paquetes activos: " + ", ".join(hard_policies.get("policy_names")[:8]))
+        if hard_policies.get("critical_policy_names"):
+            correction_lines.append("- Políticas críticas dominantes: " + ", ".join(hard_policies.get("critical_policy_names")[:6]))
+        elif hard_policies.get("dominant_policy_names"):
+            correction_lines.append("- Rutas dominantes a priorizar: " + ", ".join(hard_policies.get("dominant_policy_names")[:6]))
+        if hard_policies.get("required_products"):
+            correction_lines.append("- Productos obligatorios: " + ", ".join(hard_policies.get("required_products")[:8]))
+        if hard_policies.get("forbidden_products"):
+            correction_lines.append("- Productos prohibidos: " + ", ".join(hard_policies.get("forbidden_products")[:8]))
+        if hard_policies.get("required_tools"):
+            correction_lines.append("- Herramientas obligatorias: " + ", ".join(hard_policies.get("required_tools")[:8]))
+        if hard_policies.get("forbidden_tools"):
+            correction_lines.append("- Herramientas prohibidas: " + ", ".join(hard_policies.get("forbidden_tools")[:8]))
+        if hard_policies.get("mandatory_steps"):
+            correction_lines.append("- Pasos obligatorios: " + "; ".join(hard_policies.get("mandatory_steps")[:6]))
+        if hard_policies.get("mandatory_step_signals"):
+            correction_lines.append("- Señales mínimas que deben quedar explícitas: " + ", ".join(hard_policies.get("mandatory_step_signals")[:8]))
+
+    if expert_notes:
+        correction_lines.append("REGLAS EXPERTAS ACTIVAS:")
+        for note in expert_notes[:6]:
+            line = f"- [{(note.get('tipo') or '').upper()}] {note.get('nota') or ''}"
+            if note.get("recomendar"):
+                line += f" | RECOMENDAR: {note.get('recomendar')}"
+            if note.get("evitar"):
+                line += f" | EVITAR: {note.get('evitar')}"
+            correction_lines.append(line)
+
+    if structured_guide.get("forbidden_products_or_shortcuts"):
+        correction_lines.append(
+            "ATAJOS / PROHIBICIONES DE LA GUÍA: "
+            + "; ".join(structured_guide.get("forbidden_products_or_shortcuts")[:6])
+        )
+
+    correction_lines.extend([
+        "REESCRIBE la respuesta FINAL usando SOLO productos, procesos y herramientas respaldados por las herramientas ya ejecutadas.",
+        "Si no tienes evidencia suficiente para un producto, NO lo ofrezcas como alternativa.",
+        "Puedes advertir explícitamente lo prohibido, pero NO listarlo como opción de compra o aplicación.",
+        "No llames más herramientas.",
+    ])
+
+    messages.append(assistant_message)
+    messages.append({"role": "system", "content": "\n".join(correction_lines)})
+
+    t = time.time()
+    resp = m.get_openai_client().chat.completions.create(
+        model=m.get_openai_model(), messages=messages,
+        tools=AGENT_TOOLS_V3, tool_choice="none", temperature=0.2,
+    )
+    assistant_message = resp.choices[0].message
+    logger.info("V3 GUARDIA CONSISTENCIA TÉCNICA completed: %dms", int((time.time() - t) * 1000))
     return assistant_message
 
 
