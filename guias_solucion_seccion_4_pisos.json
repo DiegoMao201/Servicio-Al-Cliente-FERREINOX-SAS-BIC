@@ -37,7 +37,365 @@
         "exterior_medio": "→ Intergard 740 o sistema con Interthane (GS-PIS-005)",
         "exterior_pesado": "→ Intergard 2002 + cuarzo + Interthane (GS-PIS-005)"
       }
-    }
+    },
+    "frases_cliente_equivalentes": [
+      "pintar piso",
+      "con qué pinto piso",
+      "qué le echo a piso",
+      "qué sistema lleva piso",
+      "cómo preparo piso antes de pintar",
+      "pintura para pisos",
+      "pintar el piso",
+      "con qué pinto el piso",
+      "qué le echo a el piso",
+      "qué sistema lleva el piso",
+      "cómo preparo el piso antes de pintar",
+      "piso de concreto",
+      "piso de cemento",
+      "piso del garaje",
+      "piso de la bodega",
+      "piso industrial",
+      "pintar el suelo",
+      "con qué pinto el suelo",
+      "qué le echo a el suelo",
+      "qué sistema lleva el suelo",
+      "cómo preparo el suelo antes de pintar",
+      "pintar concreto",
+      "con qué pinto concreto",
+      "qué le echo a concreto",
+      "qué sistema lleva concreto",
+      "cómo preparo concreto antes de pintar",
+      "pintar piso de cemento",
+      "con qué pinto piso de cemento",
+      "qué le echo a piso de cemento",
+      "qué sistema lleva piso de cemento",
+      "cómo preparo piso de cemento antes de pintar",
+      "pintar patio",
+      "con qué pinto patio",
+      "qué le echo a patio",
+      "qué sistema lleva patio",
+      "cómo preparo patio antes de pintar",
+      "piso del parqueadero",
+      "pintar piso parqueadero",
+      "con qué pinto piso parqueadero",
+      "qué le echo a piso parqueadero",
+      "qué sistema lleva piso parqueadero",
+      "cómo preparo piso parqueadero antes de pintar",
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara",
+      "se me cuarteo la fachada",
+      "la pared por fuera se ve manchada",
+      "quiero dejar la fachada como nueva",
+      "el frente se puso opaco",
+      "la pintura de afuera ya no da mas",
+      "se me soplo el estuco por fuera",
+      "la fachada esta chorreada",
+      "la casa por fuera se ve cansada",
+      "la pared de afuera se pela por pedazos",
+      "quiero una pintura que aguante sol y agua",
+      "la reja se me herrumbro",
+      "se lo esta comiendo el oxido",
+      "el porton sangra oxido"
+    ],
+    "preguntas_diagnostico_alternativas": [
+      "1. ¿El piso es INTERIOR o EXTERIOR?",
+      "2. ¿Qué tipo de TRÁFICO va a tener? (peatonal liviano, vehicular medio, montacargas/industrial pesado)",
+      "3. ¿El piso es nuevo (concreto fresco) o ya está pintado/viejo?",
+      "4. ¿Cuántos metros cuadrados (m²)?",
+      "¿Le pega lluvia directa o está protegida por alero?",
+      "¿La base está firme o suena hueca/soplada?",
+      "¿Quiere solo cambiar color o también corregir grietas/fisuras?",
+      "¿Es ladrillo a la vista, fibrocemento, pañete, estuco o textura?",
+      "¿La humedad está abajo en el zócalo o por toda la fachada?",
+      "¿Es hierro/acero negro, galvanizado, aluminio o ya tiene pintura vieja?",
+      "¿Está a la intemperie, bajo techo o en ambiente químico/industrial?",
+      "¿Quiere mantenimiento convencional o subir a sistema industrial?",
+      "¿La pintura vieja está firme, arrugada o se pela como cáscara/plástico?",
+      "¿Hay óxido superficial, corrosión profunda o metal ya perforado?",
+      "¿Es peatonal, vehicular liviano o montacargas/pesado?",
+      "¿El piso está nuevo, viejo, ya pintado o contaminado con grasa?",
+      "¿Es interior, exterior o recibe lluvia directa?",
+      "¿Busca demarcación de líneas o recubrimiento completo?",
+      "¿La exposición es química, abrasiva, UV, inmersión o solo ambiente severo?",
+      "¿Es un ambiente interior o exterior?",
+      "¿La base actual es alquídica, epóxica o metal/concreto desnudo?",
+      "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+      "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+      "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+      "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+      "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?",
+      "¿Es ladrillo/fachaleta realmente absorbente o tiene selladores, brillo o baja porosidad?",
+      "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?"
+    ],
+    "rutas_de_decision": [
+      "Si la base suena hueca o está soplada, tumbar y reconstruir antes del acabado.",
+      "Si el cliente quiere conservar ladrillo visible, priorizar hidrofugante transparente en vez de acabado opaco.",
+      "Si hay fisuras que meten agua, sellar la falla mecánica antes de impermeabilizar el paño.",
+      "Si es fibrocemento, bloquear cualquier preparación en seco por riesgo de asbesto.",
+      "Si es galvanizado/aluminio, el Wash Primer es la ruta prioritaria antes de anticorrosivo o acabado.",
+      "Si el metal ya tiene base alquídica y quieren epóxico, remover totalmente hasta metal desnudo.",
+      "Si es estructura exterior industrial, cerrar sistemas epóxicos con acabado resistente a UV.",
+      "Si es oxidación convencional a la intemperie, el sistema mínimo debe incluir preparación, anticorrosivo y acabado.",
+      "Si es demarcación de líneas, usar ruta de pintura de tráfico y no recubrimiento epóxico general.",
+      "Si hay grasa, aceite o piso contaminado, priorizar descontaminación antes de cualquier acabado.",
+      "Si el ambiente es exterior, no dejar epóxico convencional como acabado final expuesto al sol.",
+      "Si el sustrato tiene sistema viejo incompatible, remover completamente antes de migrar."
+    ],
+    "casos_vecinos_mismo_resultado": [
+      "frente de casa descolorido",
+      "fachada con fisuras de telaraña",
+      "muro exterior con moho verde por escurrimiento",
+      "eternit envejecido y verdoso",
+      "ladrillo a la vista que absorbe agua",
+      "reja oxidada de casa",
+      "tubería galvanizada mal pintada",
+      "techo de zinc o pérgola metálica",
+      "estructura con pintura de aceite vieja",
+      "baranda exterior expuesta a lluvia y sol",
+      "garaje residencial",
+      "parqueadero comercial",
+      "cancha o zona recreativa",
+      "piso de bodega o taller",
+      "planta industrial",
+      "estructura metálica de alto desempeño",
+      "ambiente químico o abrasivo"
+    ],
+    "errores_comunes_cliente": [
+      "Pintar fachada con vinilos interiores o económicos en alta exposición.",
+      "Aplicar Koraza encima de base soplada o húmeda sin reparar soporte.",
+      "Confundir capilaridad en la base con simple lluvia superficial.",
+      "Pintar galvanizado directo sin Wash Primer.",
+      "Dejar Corrotec solo como acabado final exterior.",
+      "Recomendar epóxico sobre esmalte alquídico viejo.",
+      "Cruzar problemas de metal con soluciones de humedad de muro.",
+      "No pedir tipo de tráfico antes de recomendar el sistema del piso.",
+      "Confundir demarcación con pintura integral de piso.",
+      "Vender sistema industrial sin revisar compatibilidad con la base existente.",
+      "No cerrar con acabado UV un sistema epóxico exterior.",
+      "Advertencia técnica de ficha: deben sellarse otra vez, y se recomienda que después de paros prolongados el trabajo recomience con unidades",
+      "Advertencia técnica de ficha: contenedores vacíos deben ser desechados de acuerdo con la legislación regional apropiada.",
+      "Advertencia técnica de ficha: Todo el trabajo que involucre la aplicación y uso de este producto debe ser realizado de acuerdo con todos",
+      "Advertencia técnica de ficha: Antes de usar, obtenga, consulte y siga la Hoja de Seguridad del Material (MSDS) de este producto, que",
+      "Advertencia técnica de ficha: La información contenida en esta ficha técnica no pretende ser exhaustiva; cualquier persona que use el producto para cualquier propósito distinto que el específicamente recomendado",
+      "Advertencia técnica de ficha: que se deriven de lo indicado sobre el producto (incluidos en esta ficha técnica o no) están basados con la mejor intención de nuestro conocimiento pero nosotros no tenemos control",
+      "Advertencia técnica de ficha: aceptamos cualquier responsabilidad en absoluto por la calidad del producto o para (sujeto a los límites permitidos por la ley) cualquier pérdida o daño producida por el uso del producto.",
+      "Advertencia técnica de ficha: debería solicitar una copia de este documento y revisarla cuidadosamente. La información contenida en esta ficha técnica está sujeta a modificación de vez en cuando en función de",
+      "No cruzar este sistema sobre superficie restringida: piso.",
+      "No cruzar este sistema sobre superficie restringida: exterior.",
+      "Advertencia técnica de ficha: Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+      "Advertencia técnica de ficha: consultar previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de",
+      "Advertencia técnica de ficha: La superficie debe estar libre de humedad, polvo, mugre, grasa, cera, pintura deteriorada y óxido. Los",
+      "Advertencia técnica de ficha: mecánicas (SSPC-SP2 y SP3). En ambientes agresivos deben ser preparados con chorro abrasivo mínimo a",
+      "Advertencia técnica de ficha: Intergard 740 cures by a crosslinking reaction between the epoxy and polyamide resins. No catalyst is included",
+      "Advertencia técnica de ficha: There are no significant problems envisaged, provided both components are stored in dry, shaded conditions",
+      "Advertencia técnica de ficha: of our knowledge but we have no control over the quality or the condition of the substrate or the many factors affecting the use and application of",
+      "Advertencia técnica de ficha: contiene información de salud y seguridad. Lea y siga todos los avisos de precaución en la MSDS y la",
+      "Advertencia técnica de ficha: etiqueta. Si no entiende totalmente estas advertencias e instrucciones o si no puede seguirlas"
+    ],
+    "productos_relacionados_rag": [
+      "Interthane 990",
+      "Intergard 740",
+      "Pintucoat"
+    ],
+    "anclas_tecnicas_rag": [
+      {
+        "familia_tecnica": "INTERSHIELD 300",
+        "fuente": "INTERSHIELD 300.pdf",
+        "superficies_compatibles": [
+          "metal",
+          "inmersion",
+          "exterior",
+          "cubierta"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "deben sellarse otra vez, y se recomienda que después de paros prolongados el trabajo recomience con unidades",
+          "contenedores vacíos deben ser desechados de acuerdo con la legislación regional apropiada.",
+          "Todo el trabajo que involucre la aplicación y uso de este producto debe ser realizado de acuerdo con todos",
+          "Antes de usar, obtenga, consulte y siga la Hoja de Seguridad del Material (MSDS) de este producto, que"
+        ],
+        "resumen_ficha": "(167 - 333 micras en húmedo) puede ser especificada según el uso final.",
+        "extractos_clave": [
+          "{'text': 'Recubrimiento epóxi con aluminio, de color claro, resistente a la abrasión, que ofrece excelente protección', 'section': 'description'}",
+          "{'text': 'anticorrosiva de largo plazo y capacidad de aplicación a bajas temperaturas.', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "INTERTHANE 990",
+        "fuente": "INTERTHANE 990.pdf",
+        "superficies_compatibles": [
+          "metal",
+          "exterior",
+          "piso",
+          "inmersion"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "La información contenida en esta ficha técnica no pretende ser exhaustiva; cualquier persona que use el producto para cualquier propósito distinto que el específicamente recomendado",
+          "que se deriven de lo indicado sobre el producto (incluidos en esta ficha técnica o no) están basados con la mejor intención de nuestro conocimiento pero nosotros no tenemos control",
+          "aceptamos cualquier responsabilidad en absoluto por la calidad del producto o para (sujeto a los límites permitidos por la ley) cualquier pérdida o daño producida por el uso del producto.",
+          "debería solicitar una copia de este documento y revisarla cuidadosamente. La información contenida en esta ficha técnica está sujeta a modificación de vez en cuando en función de"
+        ],
+        "resumen_ficha": "",
+        "extractos_clave": [
+          "{'text': 'Acabado de poliuretano acrílico alifático de dos componentes que proporciona una excelente durabilidad y', 'section': 'description'}",
+          "{'text': 'repintado a largo plazo.', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO ESTABILIDAD DE PRODUCTOS2",
+        "fuente": "ESTABILIDAD DE PRODUCTOS2.pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "piso",
+          "interior",
+          "exterior",
+          "ladrillo",
+          "metal"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Es ladrillo/fachaleta realmente absorbente o tiene selladores, brillo o baja porosidad?"
+        ],
+        "alertas_ficha": [],
+        "resumen_ficha": "Para conocer la estabilidad del producto, es importante entender la información de fabricación que presentan las etiquetas de los productos y los tiempos de estabilidad que",
+        "extractos_clave": [
+          "{'text': 'Lectura y Entendimiento de Código de Barras', 'section': 'description'}",
+          "{'text': 'TIEMPO DE', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCOAT PLUS",
+        "fuente": "PINTUCOAT PLUS.pdf",
+        "superficies_compatibles": [
+          "interior",
+          "exterior",
+          "metal",
+          "concreto",
+          "madera",
+          "inmersion"
+        ],
+        "superficies_restringidas": [
+          "piso",
+          "exterior"
+        ],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?"
+        ],
+        "alertas_ficha": [
+          "Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+          "consultar previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de",
+          "La superficie debe estar libre de humedad, polvo, mugre, grasa, cera, pintura deteriorada y óxido. Los",
+          "mecánicas (SSPC-SP2 y SP3). En ambientes agresivos deben ser preparados con chorro abrasivo mínimo a"
+        ],
+        "resumen_ficha": "productos acrílicos, poliuretanos y los esmaltes epóxicos",
+        "extractos_clave": [
+          "{'text': 'Pintura epóxica base solvente en dos componentes, que', 'section': 'description'}",
+          "{'text': 'con la mezcla apropiada de ambos proporciona altas', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "INTERGARD 740",
+        "fuente": "Intergard 740 (2).pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "metal",
+          "exterior"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?"
+        ],
+        "alertas_ficha": [
+          "Intergard 740 cures by a crosslinking reaction between the epoxy and polyamide resins. No catalyst is included",
+          "There are no significant problems envisaged, provided both components are stored in dry, shaded conditions",
+          "of our knowledge but we have no control over the quality or the condition of the substrate or the many factors affecting the use and application of"
+        ],
+        "resumen_ficha": "",
+        "extractos_clave": [
+          "{'text': 'PRODUCT TECHNICAL PROFILE', 'section': 'description'}",
+          "{'text': 'Revision 08', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "INTERSHIED 6GV",
+        "fuente": "INTERSHIED 6GV.pdf",
+        "superficies_compatibles": [
+          "cubierta",
+          "metal"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?"
+        ],
+        "alertas_ficha": [
+          "Todo el trabajo que involucre la aplicación y uso de este producto debe ser realizado de acuerdo con todos",
+          "Antes de usar, obtenga, consulte y siga la Hoja de Seguridad del Material (MSDS) de este producto, que",
+          "contiene información de salud y seguridad. Lea y siga todos los avisos de precaución en la MSDS y la",
+          "etiqueta. Si no entiende totalmente estas advertencias e instrucciones o si no puede seguirlas"
+        ],
+        "resumen_ficha": "",
+        "extractos_clave": [
+          "{'text': 'Una pintura epoxi antideslizante de altos sólidos, larga duración y de Baja Absorción Solar (LSA). Desarrollada', 'section': 'description'}",
+          "{'text': 'según la norma MIL-PRF-24667C Types I, II and V, Composition G.', 'section': 'description'}"
+        ]
+      }
+    ],
+    "senales_cliente_coloquiales": [
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara",
+      "se me cuarteo la fachada",
+      "la pared por fuera se ve manchada",
+      "quiero dejar la fachada como nueva",
+      "el frente se puso opaco",
+      "la pintura de afuera ya no da mas",
+      "se me soplo el estuco por fuera",
+      "la fachada esta chorreada",
+      "la casa por fuera se ve cansada",
+      "la pared de afuera se pela por pedazos",
+      "quiero una pintura que aguante sol y agua",
+      "la reja se me herrumbro",
+      "se lo esta comiendo el oxido",
+      "el porton sangra oxido",
+      "la baranda esta picada",
+      "se me pela como un plastico",
+      "el tubo escupe la pintura",
+      "la lamina esta herrumbrada",
+      "el soldador le echo pintura y se cayo",
+      "la estructura se esta descascarando",
+      "quiero salvar una reja muy oxidada"
+    ]
   },
   {
     "id": "GS-PIS-002",
@@ -70,7 +428,10 @@
           {
             "paso": 1,
             "accion": "PREPARACIÓN: Verificar que el concreto esté seco y curado (28 días mínimo). Lijar imperfecciones y limpiar polvo.",
-            "herramientas": ["Lija Abracol grano 80", "Escoba industrial"],
+            "herramientas": [
+              "Lija Abracol grano 80",
+              "Escoba industrial"
+            ],
             "nota_tecnica": "El concreto nuevo absorbe más en la primera mano de imprimante. Calcular ~20% más de imprimante que en concreto viejo."
           },
           {
@@ -95,6 +456,380 @@
         "producto": "Cualquier pintura sobre concreto con menos de 28 días",
         "razon": "El concreto sin curar tiene humedad residual que impide la adherencia. SIEMPRE esperar 28 días."
       }
+    ],
+    "frases_cliente_equivalentes": [
+      "piso de concreto nuevo",
+      "piso recién vaciado",
+      "concreto fresco",
+      "placa nueva",
+      "piso acabado de fundir",
+      "concreto recién hecho",
+      "piso nuevo sin pintar",
+      "cuándo puedo pintar el piso",
+      "la pared me esta llorando",
+      "el muro me suda",
+      "se me esta botando la pintura",
+      "la pared se me abombo",
+      "se me soplo el muro",
+      "me sale polvillo blanco",
+      "la pared escupe la pintura",
+      "me vuelve y me sale la humedad",
+      "se me mancha otra vez aunque repinte",
+      "la base del muro siempre amanece mojada",
+      "el zocalo se esta pudriendo",
+      "la pared esta empapada por dentro",
+      "me quedo olor a guardado",
+      "la pintura se me globo",
+      "la pared se me pela desde abajo",
+      "se me pone amarilla la pared",
+      "el muro se me puso negro",
+      "me salen hongos cada rato",
+      "cuando llueve se me marca la pared",
+      "la humedad me sigue saliendo aunque la pinte",
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara",
+      "se me cuarteo la fachada",
+      "la pared por fuera se ve manchada",
+      "quiero dejar la fachada como nueva",
+      "el frente se puso opaco",
+      "la pintura de afuera ya no da mas",
+      "se me soplo el estuco por fuera",
+      "la fachada esta chorreada",
+      "la casa por fuera se ve cansada",
+      "la pared de afuera se pela por pedazos",
+      "quiero una pintura que aguante sol y agua",
+      "la reja se me herrumbro",
+      "se lo esta comiendo el oxido",
+      "el porton sangra oxido",
+      "la baranda esta picada",
+      "se me pela como un plastico",
+      "el tubo escupe la pintura",
+      "la lamina esta herrumbrada",
+      "el soldador le echo pintura y se cayo",
+      "la estructura se esta descascarando",
+      "quiero salvar una reja muy oxidada",
+      "la pintura del zinc se levanto toda",
+      "el techo metalico se pela por placas",
+      "quiero pasar de esmalte a epoxico",
+      "la puerta de hierro esta comida",
+      "el tubo galvanizado no agarra pintura",
+      "la pintura se me arrugo en el metal",
+      "esa reja esta vuelta nada de oxido"
+    ],
+    "preguntas_diagnostico_alternativas": [
+      "¿Hace cuántos días se fundió la placa/piso?",
+      "¿Interior o exterior?",
+      "¿Nivel de tráfico esperado?",
+      "¿Cuántos m²?",
+      "¿La humedad arranca desde el piso o viene desde arriba?",
+      "¿Sale salitre blanco o solo manchas oscuras/moho?",
+      "¿Eso aparece solo en invierno o vive así todo el tiempo?",
+      "¿Al otro lado hay jardinera, terreno, baño o cocina?",
+      "¿La pared está fría/húmeda al tacto o solo se ve manchada?",
+      "¿Le pega lluvia directa o está protegida por alero?",
+      "¿La base está firme o suena hueca/soplada?",
+      "¿Quiere solo cambiar color o también corregir grietas/fisuras?",
+      "¿Es ladrillo a la vista, fibrocemento, pañete, estuco o textura?",
+      "¿La humedad está abajo en el zócalo o por toda la fachada?",
+      "¿Es hierro/acero negro, galvanizado, aluminio o ya tiene pintura vieja?",
+      "¿Está a la intemperie, bajo techo o en ambiente químico/industrial?",
+      "¿Quiere mantenimiento convencional o subir a sistema industrial?",
+      "¿La pintura vieja está firme, arrugada o se pela como cáscara/plástico?",
+      "¿Hay óxido superficial, corrosión profunda o metal ya perforado?",
+      "¿Es peatonal, vehicular liviano o montacargas/pesado?",
+      "¿El piso está nuevo, viejo, ya pintado o contaminado con grasa?",
+      "¿Es interior, exterior o recibe lluvia directa?",
+      "¿Busca demarcación de líneas o recubrimiento completo?",
+      "¿La exposición es química, abrasiva, UV, inmersión o solo ambiente severo?",
+      "¿Es un ambiente interior o exterior?",
+      "¿La base actual es alquídica, epóxica o metal/concreto desnudo?",
+      "¿Es junta de dilatación, fisura, ventana, baño o cubierta?",
+      "¿El sustrato es poroso, liso o metálico?",
+      "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+      "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?"
+    ],
+    "rutas_de_decision": [
+      "Si el daño se concentra en los primeros 50-80 cm y hay salitre blanco, priorizar capilaridad/presión negativa.",
+      "Si el daño está del enchape hacia arriba o en el cielo raso de baño, priorizar condensación por vapor.",
+      "Si la mancha aparece cuando llueve duro y coincide con una grieta o fachada exterior, priorizar filtración desde exterior.",
+      "Si el revoque se deshace con la mano, bloquear pintura y mandar a reconstrucción del sustrato.",
+      "Si la base suena hueca o está soplada, tumbar y reconstruir antes del acabado.",
+      "Si el cliente quiere conservar ladrillo visible, priorizar hidrofugante transparente en vez de acabado opaco.",
+      "Si hay fisuras que meten agua, sellar la falla mecánica antes de impermeabilizar el paño.",
+      "Si es fibrocemento, bloquear cualquier preparación en seco por riesgo de asbesto.",
+      "Si es galvanizado/aluminio, el Wash Primer es la ruta prioritaria antes de anticorrosivo o acabado.",
+      "Si el metal ya tiene base alquídica y quieren epóxico, remover totalmente hasta metal desnudo.",
+      "Si es estructura exterior industrial, cerrar sistemas epóxicos con acabado resistente a UV.",
+      "Si es oxidación convencional a la intemperie, el sistema mínimo debe incluir preparación, anticorrosivo y acabado.",
+      "Si es demarcación de líneas, usar ruta de pintura de tráfico y no recubrimiento epóxico general.",
+      "Si hay grasa, aceite o piso contaminado, priorizar descontaminación antes de cualquier acabado.",
+      "Si el ambiente es exterior, no dejar epóxico convencional como acabado final expuesto al sol.",
+      "Si el sustrato tiene sistema viejo incompatible, remover completamente antes de migrar."
+    ],
+    "casos_vecinos_mismo_resultado": [
+      "closet con olor a guardado",
+      "cielo raso de baño que se descaracha",
+      "muro medianero que se moja en invierno",
+      "pared detrás de jardinera o tierra",
+      "mancha negra recurrente en cuarto poco ventilado",
+      "frente de casa descolorido",
+      "fachada con fisuras de telaraña",
+      "muro exterior con moho verde por escurrimiento",
+      "eternit envejecido y verdoso",
+      "ladrillo a la vista que absorbe agua",
+      "reja oxidada de casa",
+      "tubería galvanizada mal pintada",
+      "techo de zinc o pérgola metálica",
+      "estructura con pintura de aceite vieja",
+      "baranda exterior expuesta a lluvia y sol",
+      "garaje residencial",
+      "parqueadero comercial",
+      "cancha o zona recreativa",
+      "piso de bodega o taller",
+      "planta industrial"
+    ],
+    "errores_comunes_cliente": [
+      "Repintar encima de salitre o base soplada sin retirar lo dañado.",
+      "Aplicar estuco antes del bloqueador en muros con presión negativa.",
+      "Confundir condensación de baño con capilaridad del muro.",
+      "Cotizar galones sin pedir m² reales del paño afectado.",
+      "Pintar fachada con vinilos interiores o económicos en alta exposición.",
+      "Aplicar Koraza encima de base soplada o húmeda sin reparar soporte.",
+      "Confundir capilaridad en la base con simple lluvia superficial.",
+      "Pintar galvanizado directo sin Wash Primer.",
+      "Dejar Corrotec solo como acabado final exterior.",
+      "Recomendar epóxico sobre esmalte alquídico viejo.",
+      "Cruzar problemas de metal con soluciones de humedad de muro.",
+      "No pedir tipo de tráfico antes de recomendar el sistema del piso.",
+      "Confundir demarcación con pintura integral de piso.",
+      "Vender sistema industrial sin revisar compatibilidad con la base existente.",
+      "No cerrar con acabado UV un sistema epóxico exterior.",
+      "Tapar juntas móviles con materiales rígidos.",
+      "Error común a bloquear: Primer 50RS como imprimante para concreto. Razón: Primer 50RS es EXCLUSIVAMENTE para metal. Para concreto el imprimante correcto es Interseal Gris.",
+      "Error común a bloquear: Cualquier pintura sobre concreto con menos de 28 días. Razón: El concreto sin curar tiene humedad residual que impide la adherencia. SIEMPRE esperar 28 días.",
+      "Advertencia técnica de ficha: 1 x 150μm (6 mils) de espesor de película seca de Interseal 670HS, Sin defectos en la película después de 1 año de exposición",
+      "Advertencia técnica de ficha: La información contenida en esta ficha técnica no pretende ser exhaustiva; cualquier persona que use el producto para cualquier propósito distinto que el específicamente recomendado",
+      "Advertencia técnica de ficha: que se deriven de lo indicado sobre el producto (incluidos en esta ficha técnica o no) están basados con la mejor intención de nuestro conocimiento pero nosotros no tenemos control",
+      "Advertencia técnica de ficha: aceptamos cualquier responsabilidad en absoluto por la calidad del producto o para (sujeto a los límites permitidos por la ley) cualquier pérdida o daño producida por el uso del",
+      "Advertencia técnica de ficha: Usted debería solicitar una copia de este documento y revisarla cuidadosamente. La información contenida en esta ficha técnica esta sujeta a modificación de vez en cuando en función",
+      "Advertencia técnica de ficha: no worse than Grade HB2.5M (refer to International Hydroblasting Standards) or Grade SB2.5M (refer to",
+      "Advertencia técnica de ficha: (whether in this data sheet or otherwise) is correct to the best of our knowledge but we have no control over the quality or the condition of the substrate or the many factors affecting the",
+      "Advertencia técnica de ficha: PRECAUTIONS",
+      "No cruzar este sistema sobre superficie restringida: madera.",
+      "Advertencia técnica de ficha: elemento plano, tipo destornillador.",
+      "Advertencia técnica de ficha: Su mecanismo evita el cierre accidental.",
+      "Advertencia técnica de ficha: Baño / Alcoba"
+    ],
+    "productos_relacionados_rag": [
+      "Interseal 670HS"
+    ],
+    "anclas_tecnicas_rag": [
+      {
+        "familia_tecnica": "INTERSEAL 670HS EN",
+        "fuente": "INTERSEAL 670HS [EN] (1).pdf",
+        "superficies_compatibles": [
+          "inmersion",
+          "metal",
+          "cubierta",
+          "exterior"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "1 x 150μm (6 mils) de espesor de película seca de Interseal 670HS, Sin defectos en la película después de 1 año de exposición"
+        ],
+        "resumen_ficha": "• Ideal para aplicación sobre varios tipos",
+        "extractos_clave": [
+          "{'text': '• Epoxi tolerante a las superficies, con alto contenido de', 'section': 'description'}",
+          "{'text': 'sólidos y baja emisión de VOCs', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO INTERSEAL 670 HS",
+        "fuente": "Interseal 670 HS.pdf",
+        "superficies_compatibles": [
+          "metal",
+          "inmersion",
+          "concreto",
+          "exterior",
+          "cubierta"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?"
+        ],
+        "alertas_ficha": [
+          "La información contenida en esta ficha técnica no pretende ser exhaustiva; cualquier persona que use el producto para cualquier propósito distinto que el específicamente recomendado",
+          "que se deriven de lo indicado sobre el producto (incluidos en esta ficha técnica o no) están basados con la mejor intención de nuestro conocimiento pero nosotros no tenemos control",
+          "aceptamos cualquier responsabilidad en absoluto por la calidad del producto o para (sujeto a los límites permitidos por la ley) cualquier pérdida o daño producida por el uso del",
+          "Usted debería solicitar una copia de este documento y revisarla cuidadosamente. La información contenida en esta ficha técnica esta sujeta a modificación de vez en cuando en función"
+        ],
+        "resumen_ficha": "Para su aplicación en una amplia variedad de sustratos incluidos acero oxidado preparado a mano y acero",
+        "extractos_clave": [
+          "{'text': 'Para su aplicación en una amplia variedad de sustratos incluidos acero oxidado preparado a mano y acero', 'section': 'description'}",
+          "{'text': 'preparado por chorro abrasivo y por hidroblasting, y una amplia gama de recubrimientos antiguos intactos.', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "INTERSEAL 670HS",
+        "fuente": "INTERSEAL 670HS.pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "exterior",
+          "metal"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?"
+        ],
+        "alertas_ficha": [
+          "no worse than Grade HB2.5M (refer to International Hydroblasting Standards) or Grade SB2.5M (refer to",
+          "(whether in this data sheet or otherwise) is correct to the best of our knowledge but we have no control over the quality or the condition of the substrate or the many factors affecting the",
+          "PRECAUTIONS"
+        ],
+        "resumen_ficha": "",
+        "extractos_clave": [
+          "{'text': 'Page 1 of 4', 'section': 'description'}",
+          "{'text': 'Issue Date: 22/01/2019', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "ACCENT",
+        "fuente": "Ficha Tecnica Accent.pdf",
+        "superficies_compatibles": [
+          "interior",
+          "exterior",
+          "metal",
+          "madera",
+          "cubierta",
+          "piso"
+        ],
+        "superficies_restringidas": [
+          "madera"
+        ],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?",
+          "¿La condición real del proyecto coincide exactamente con las restricciones de uso que declara la ficha?"
+        ],
+        "alertas_ficha": [
+          "elemento plano, tipo destornillador.",
+          "Su mecanismo evita el cierre accidental.",
+          "Baño / Alcoba",
+          "Para instalación en puertas de madera, el contenido de la humedad de la puerta no debe ser superior"
+        ],
+        "resumen_ficha": "Seguir las recomendaciones y secuencia de instalación según indica la bolsa de empaque de la",
+        "extractos_clave": [
+          "{'text': 'Cerradura Cilíndrica Accent', 'section': 'description'}",
+          "{'text': 'NOTA: Los acabados “Satín Níquel” y “Anticado” pueden presentar diferencia de tonos.', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "ACRILICA MANTENIMIENTO ES",
+        "fuente": "ACRILICA MANTENIMIENTO [ES].pdf",
+        "superficies_compatibles": [
+          "concreto",
+          "metal",
+          "piso",
+          "interior",
+          "exterior",
+          "madera"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?",
+          "¿La condición real del proyecto coincide exactamente con las restricciones de uso que declara la ficha?"
+        ],
+        "alertas_ficha": [
+          "La información contenida en esta hoja técnica no pretende ser exhaustiva; cualquier persona que utilice el producto para un propósito distinto al específicamente recomendado en esta hoja técnica,",
+          "realizadas sobre el producto (ya sea en esta hoja técnica o de otro modo) son correctos según nuestro leal saber y entender, pero no tenemos control sobre la calidad o el estado del sustrato ni",
+          "sobre los muchos factores que afectan el uso y la aplicación del producto. Por lo tanto, a menos que lo acordemos específicamente por escrito, no aceptamos responsabilidad alguna por el",
+          "desempeño del producto ni por (en la máxima medida permitida por la ley) cualquier pérdida o daño que surja del uso del producto. Por la presente, rechazamos cualquier garantía o declaración,"
+        ],
+        "resumen_ficha": "Ideal para proteger y decorar superficies de concreto y metal como pisos, realizar",
+        "extractos_clave": [
+          "{'text': 'Ideal para proteger y decorar superficies de concreto y metal como pisos, realizar', 'section': 'description'}",
+          "{'text': 'demarcación horizontal*, canchas, estanterías, pasamanos, transformadores,', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "BELL WOOD",
+        "fuente": "Ficha Tecnica Bell Wood.pdf",
+        "superficies_compatibles": [
+          "madera",
+          "metal",
+          "exterior",
+          "interior",
+          "ladrillo",
+          "cubierta"
+        ],
+        "superficies_restringidas": [
+          "madera"
+        ],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?",
+          "¿La condición real del proyecto coincide exactamente con las restricciones de uso que declara la ficha?"
+        ],
+        "alertas_ficha": [
+          "Baño / Alcoba sin llaves.",
+          "Su mecanismo evita el cierre accidental.",
+          "elemento plano, tipo destornillador.",
+          "Baño / Alcoba"
+        ],
+        "resumen_ficha": "Seguir las recomendaciones y secuencia de instalación según indica la bolsa de empaque de la",
+        "extractos_clave": [
+          "{'text': 'Cerradura Cilíndrica Bell Wood', 'section': 'description'}",
+          "{'text': 'NOTA: El acabado “Anticado” puede presentar diferencia de tono.', 'section': 'description'}"
+        ]
+      }
+    ],
+    "senales_cliente_coloquiales": [
+      "la pared me esta llorando",
+      "el muro me suda",
+      "se me esta botando la pintura",
+      "la pared se me abombo",
+      "se me soplo el muro",
+      "me sale polvillo blanco",
+      "la pared escupe la pintura",
+      "me vuelve y me sale la humedad",
+      "se me mancha otra vez aunque repinte",
+      "la base del muro siempre amanece mojada",
+      "el zocalo se esta pudriendo",
+      "la pared esta empapada por dentro",
+      "me quedo olor a guardado",
+      "la pintura se me globo",
+      "la pared se me pela desde abajo",
+      "se me pone amarilla la pared",
+      "el muro se me puso negro",
+      "me salen hongos cada rato",
+      "cuando llueve se me marca la pared",
+      "la humedad me sigue saliendo aunque la pinte",
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara"
     ]
   },
   {
@@ -131,7 +866,11 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Lijar el piso para crear perfil de agarre. Limpiar polvo y grasa. Si tiene pintura vieja suelta, remover con disco copa.",
-          "herramientas": ["Lija Abracol grano 60-80 (para concreto)", "Pulidora con disco copa", "Escoba industrial"]
+          "herramientas": [
+            "Lija Abracol grano 60-80 (para concreto)",
+            "Pulidora con disco copa",
+            "Escoba industrial"
+          ]
         },
         {
           "paso": 2,
@@ -143,14 +882,26 @@
           "paso": 3,
           "accion": "ACABADO: Aplicar 2 manos de Pintucoat. Dejar 12-16 horas entre manos.",
           "producto": "Pintucoat",
-          "herramientas": ["Rodillo de felpa corta", "Brocha Goya para bordes"],
+          "herramientas": [
+            "Rodillo de felpa corta",
+            "Brocha Goya para bordes"
+          ],
           "nota_tecnica": "Pintucoat es epóxico de 2 componentes (A+B). Mezclar TODO el kit junto (A=pintura + B=catalizador). Una vez mezclado, tiene vida útil limitada (~4 horas). Calcular bien cuánto mezclar. Rendimiento: ~10-12 m²/galón por mano."
         }
       ],
       "herramientas_siempre_incluir": [
-        {"producto": "Rodillo de felpa corta", "uso": "Aplicación uniforme de Pintucoat"},
-        {"producto": "Brocha Goya", "uso": "Bordes y esquinas"},
-        {"producto": "Lija Abracol grano 60-80", "uso": "Preparación del concreto"}
+        {
+          "producto": "Rodillo de felpa corta",
+          "uso": "Aplicación uniforme de Pintucoat"
+        },
+        {
+          "producto": "Brocha Goya",
+          "uso": "Bordes y esquinas"
+        },
+        {
+          "producto": "Lija Abracol grano 60-80",
+          "uso": "Preparación del concreto"
+        }
       ]
     },
     "productos_prohibidos": [
@@ -168,7 +919,375 @@
       }
     ],
     "alerta_metraje": "SIEMPRE calcular m² y cotizar kits completos (Pintucoat Parte A + Parte B + Interseal Gris + herramientas). Rendimiento Pintucoat: ~10-12 m²/galón por mano. 2 manos = dividir m² entre 5-6 para obtener galones necesarios.",
-    "alerta_color": "Preguntar color. Pintucoat viene en gris, verde, rojo óxido y otros."
+    "alerta_color": "Preguntar color. Pintucoat viene en gris, verde, rojo óxido y otros.",
+    "frases_cliente_equivalentes": [
+      "piso garaje",
+      "piso bodega",
+      "piso oficina",
+      "piso interior",
+      "piso tráfico liviano",
+      "piso tráfico medio",
+      "pintar piso del garaje",
+      "con qué pinto piso del garaje",
+      "qué le echo a piso del garaje",
+      "qué sistema lleva piso del garaje",
+      "cómo preparo piso del garaje antes de pintar",
+      "pintar piso de la bodega",
+      "con qué pinto piso de la bodega",
+      "qué le echo a piso de la bodega",
+      "qué sistema lleva piso de la bodega",
+      "cómo preparo piso de la bodega antes de pintar",
+      "piso de concreto interior",
+      "piso residencial",
+      "pintar piso casa",
+      "con qué pinto piso casa",
+      "qué le echo a piso casa",
+      "qué sistema lleva piso casa",
+      "cómo preparo piso casa antes de pintar",
+      "pintar piso apartamento",
+      "con qué pinto piso apartamento",
+      "qué le echo a piso apartamento",
+      "qué sistema lleva piso apartamento",
+      "cómo preparo piso apartamento antes de pintar",
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara",
+      "se me cuarteo la fachada",
+      "la pared por fuera se ve manchada",
+      "quiero dejar la fachada como nueva",
+      "el frente se puso opaco",
+      "la pintura de afuera ya no da mas",
+      "se me soplo el estuco por fuera",
+      "la fachada esta chorreada",
+      "la casa por fuera se ve cansada",
+      "la pared de afuera se pela por pedazos",
+      "quiero una pintura que aguante sol y agua",
+      "la reja se me herrumbro",
+      "se lo esta comiendo el oxido",
+      "el porton sangra oxido",
+      "la baranda esta picada",
+      "se me pela como un plastico",
+      "el tubo escupe la pintura",
+      "la lamina esta herrumbrada",
+      "el soldador le echo pintura y se cayo",
+      "la estructura se esta descascarando",
+      "quiero salvar una reja muy oxidada",
+      "la pintura del zinc se levanto toda",
+      "el techo metalico se pela por placas",
+      "quiero pasar de esmalte a epoxico",
+      "la puerta de hierro esta comida",
+      "el tubo galvanizado no agarra pintura",
+      "la pintura se me arrugo en el metal",
+      "esa reja esta vuelta nada de oxido"
+    ],
+    "preguntas_diagnostico_alternativas": [
+      "¿Es garaje residencial, bodega, oficina o cuál uso?",
+      "¿Pasan vehículos o solo personas?",
+      "¿El piso es nuevo o ya está pintado?",
+      "¿Cuántos m²?",
+      "¿Color?",
+      "¿Le pega lluvia directa o está protegida por alero?",
+      "¿La base está firme o suena hueca/soplada?",
+      "¿Quiere solo cambiar color o también corregir grietas/fisuras?",
+      "¿Es ladrillo a la vista, fibrocemento, pañete, estuco o textura?",
+      "¿La humedad está abajo en el zócalo o por toda la fachada?",
+      "¿Es hierro/acero negro, galvanizado, aluminio o ya tiene pintura vieja?",
+      "¿Está a la intemperie, bajo techo o en ambiente químico/industrial?",
+      "¿Quiere mantenimiento convencional o subir a sistema industrial?",
+      "¿La pintura vieja está firme, arrugada o se pela como cáscara/plástico?",
+      "¿Hay óxido superficial, corrosión profunda o metal ya perforado?",
+      "¿Es peatonal, vehicular liviano o montacargas/pesado?",
+      "¿El piso está nuevo, viejo, ya pintado o contaminado con grasa?",
+      "¿Es interior, exterior o recibe lluvia directa?",
+      "¿Busca demarcación de líneas o recubrimiento completo?",
+      "¿La exposición es química, abrasiva, UV, inmersión o solo ambiente severo?",
+      "¿Es un ambiente interior o exterior?",
+      "¿La base actual es alquídica, epóxica o metal/concreto desnudo?",
+      "¿Es junta de dilatación, fisura, ventana, baño o cubierta?",
+      "¿El sustrato es poroso, liso o metálico?",
+      "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+      "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+      "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+      "¿Es ladrillo/fachaleta realmente absorbente o tiene selladores, brillo o baja porosidad?",
+      "¿La superficie es porosa/absorbente o está sellada, vitrificada o tipo fachaleta?",
+      "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?"
+    ],
+    "rutas_de_decision": [
+      "Si la base suena hueca o está soplada, tumbar y reconstruir antes del acabado.",
+      "Si el cliente quiere conservar ladrillo visible, priorizar hidrofugante transparente en vez de acabado opaco.",
+      "Si hay fisuras que meten agua, sellar la falla mecánica antes de impermeabilizar el paño.",
+      "Si es fibrocemento, bloquear cualquier preparación en seco por riesgo de asbesto.",
+      "Si es galvanizado/aluminio, el Wash Primer es la ruta prioritaria antes de anticorrosivo o acabado.",
+      "Si el metal ya tiene base alquídica y quieren epóxico, remover totalmente hasta metal desnudo.",
+      "Si es estructura exterior industrial, cerrar sistemas epóxicos con acabado resistente a UV.",
+      "Si es oxidación convencional a la intemperie, el sistema mínimo debe incluir preparación, anticorrosivo y acabado.",
+      "Si es demarcación de líneas, usar ruta de pintura de tráfico y no recubrimiento epóxico general.",
+      "Si hay grasa, aceite o piso contaminado, priorizar descontaminación antes de cualquier acabado.",
+      "Si el ambiente es exterior, no dejar epóxico convencional como acabado final expuesto al sol.",
+      "Si el sustrato tiene sistema viejo incompatible, remover completamente antes de migrar.",
+      "Si hay movimiento de junta, priorizar sellador flexible y no resane rígido."
+    ],
+    "casos_vecinos_mismo_resultado": [
+      "frente de casa descolorido",
+      "fachada con fisuras de telaraña",
+      "muro exterior con moho verde por escurrimiento",
+      "eternit envejecido y verdoso",
+      "ladrillo a la vista que absorbe agua",
+      "reja oxidada de casa",
+      "tubería galvanizada mal pintada",
+      "techo de zinc o pérgola metálica",
+      "estructura con pintura de aceite vieja",
+      "baranda exterior expuesta a lluvia y sol",
+      "garaje residencial",
+      "parqueadero comercial",
+      "cancha o zona recreativa",
+      "piso de bodega o taller",
+      "planta industrial",
+      "estructura metálica de alto desempeño",
+      "ambiente químico o abrasivo",
+      "ventana",
+      "baño",
+      "junta exterior"
+    ],
+    "errores_comunes_cliente": [
+      "Pintar fachada con vinilos interiores o económicos en alta exposición.",
+      "Aplicar Koraza encima de base soplada o húmeda sin reparar soporte.",
+      "Confundir capilaridad en la base con simple lluvia superficial.",
+      "Pintar galvanizado directo sin Wash Primer.",
+      "Dejar Corrotec solo como acabado final exterior.",
+      "Recomendar epóxico sobre esmalte alquídico viejo.",
+      "Cruzar problemas de metal con soluciones de humedad de muro.",
+      "No pedir tipo de tráfico antes de recomendar el sistema del piso.",
+      "Confundir demarcación con pintura integral de piso.",
+      "Vender sistema industrial sin revisar compatibilidad con la base existente.",
+      "No cerrar con acabado UV un sistema epóxico exterior.",
+      "Tapar juntas móviles con materiales rígidos.",
+      "Error común a bloquear: Viniltex / Koraza / pintura de muros. Razón: Las pinturas para muros NO resisten tráfico en pisos. Se pelan en días.",
+      "Error común a bloquear: Pintura de Tráfico para todo el piso. Razón: La pintura de tráfico (5891322) es para DEMARCACIÓN de líneas, no para cubrir pisos enteros.",
+      "Error común a bloquear: Primer 50RS. Razón: Es imprimante para METAL. Para concreto usar Interseal Gris.",
+      "Advertencia técnica de ficha: calor. No vierta el producto en desagües, sobre",
+      "Advertencia técnica de ficha: envase original, este debe permanecer cerrado",
+      "Advertencia técnica de ficha: mientras no se esté utilizando. Se debe",
+      "Advertencia técnica de ficha: superficies esmaltadas o muy selladas se debe",
+      "No cruzar este sistema sobre superficie restringida: piso.",
+      "No cruzar este sistema sobre superficie restringida: exterior.",
+      "Advertencia técnica de ficha: Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+      "Advertencia técnica de ficha: consultar previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de",
+      "Advertencia técnica de ficha: La superficie debe estar libre de humedad, polvo, mugre, grasa, cera, pintura deteriorada y óxido. Los",
+      "Advertencia técnica de ficha: mecánicas (SSPC-SP2 y SP3). En ambientes agresivos deben ser preparados con chorro abrasivo mínimo a",
+      "Advertencia técnica de ficha: no worse than Grade HB2.5M (refer to International Hydroblasting Standards) or Grade SB2.5M (refer to",
+      "Advertencia técnica de ficha: (whether in this data sheet or otherwise) is correct to the best of our knowledge but we have no control over the quality or the condition of the substrate or the many factors affecting the",
+      "Advertencia técnica de ficha: PRECAUTIONS",
+      "Advertencia técnica de ficha: 1 x 150μm (6 mils) de espesor de película seca de Interseal 670HS, Sin defectos en la película después de 1 año de exposición",
+      "No cruzar este sistema sobre superficie restringida: metal."
+    ],
+    "productos_relacionados_rag": [
+      "Koraza",
+      "Viniltex",
+      "Interseal 670HS",
+      "Pintucoat",
+      "Pintura de Tráfico"
+    ],
+    "anclas_tecnicas_rag": [
+      {
+        "familia_tecnica": "PINTUCO ESTABILIDAD DE PRODUCTOS2",
+        "fuente": "ESTABILIDAD DE PRODUCTOS2.pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "piso",
+          "interior",
+          "exterior",
+          "ladrillo",
+          "metal"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Es ladrillo/fachaleta realmente absorbente o tiene selladores, brillo o baja porosidad?"
+        ],
+        "alertas_ficha": [],
+        "resumen_ficha": "Para conocer la estabilidad del producto, es importante entender la información de fabricación que presentan las etiquetas de los productos y los tiempos de estabilidad que",
+        "extractos_clave": [
+          "{'text': 'Lectura y Entendimiento de Código de Barras', 'section': 'description'}",
+          "{'text': 'TIEMPO DE', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO KORAZA PROTECCION 3 EN 1",
+        "fuente": "KORAZA PROTECCION 3 EN 1.pdf",
+        "superficies_compatibles": [
+          "cubierta",
+          "interior",
+          "fachada",
+          "mamposteria",
+          "piso",
+          "concreto"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie es porosa/absorbente o está sellada, vitrificada o tipo fachaleta?",
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "calor. No vierta el producto en desagües, sobre",
+          "envase original, este debe permanecer cerrado",
+          "mientras no se esté utilizando. Se debe",
+          "superficies esmaltadas o muy selladas se debe"
+        ],
+        "resumen_ficha": "resistenteal agua. Además recomendada para aplicar en zonas cálidas para reducir la temperatura",
+        "extractos_clave": [
+          "{'text': 'Es una pintura premium base agua con micro esferas plásticas que le dan triple acción:', 'section': 'description'}",
+          "{'text': 'impermeabilizar, pintar y aislar térmicamente al interior del hogar. Ideal para fachadas, techos y', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCOAT PLUS",
+        "fuente": "PINTUCOAT PLUS.pdf",
+        "superficies_compatibles": [
+          "interior",
+          "exterior",
+          "metal",
+          "concreto",
+          "madera",
+          "inmersion"
+        ],
+        "superficies_restringidas": [
+          "piso",
+          "exterior"
+        ],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?"
+        ],
+        "alertas_ficha": [
+          "Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+          "consultar previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de",
+          "La superficie debe estar libre de humedad, polvo, mugre, grasa, cera, pintura deteriorada y óxido. Los",
+          "mecánicas (SSPC-SP2 y SP3). En ambientes agresivos deben ser preparados con chorro abrasivo mínimo a"
+        ],
+        "resumen_ficha": "productos acrílicos, poliuretanos y los esmaltes epóxicos",
+        "extractos_clave": [
+          "{'text': 'Pintura epóxica base solvente en dos componentes, que', 'section': 'description'}",
+          "{'text': 'con la mezcla apropiada de ambos proporciona altas', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "INTERSEAL 670HS",
+        "fuente": "INTERSEAL 670HS.pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "exterior",
+          "metal"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?"
+        ],
+        "alertas_ficha": [
+          "no worse than Grade HB2.5M (refer to International Hydroblasting Standards) or Grade SB2.5M (refer to",
+          "(whether in this data sheet or otherwise) is correct to the best of our knowledge but we have no control over the quality or the condition of the substrate or the many factors affecting the",
+          "PRECAUTIONS"
+        ],
+        "resumen_ficha": "",
+        "extractos_clave": [
+          "{'text': 'Page 1 of 4', 'section': 'description'}",
+          "{'text': 'Issue Date: 22/01/2019', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "INTERSEAL 670HS EN",
+        "fuente": "INTERSEAL 670HS [EN] (1).pdf",
+        "superficies_compatibles": [
+          "inmersion",
+          "metal",
+          "cubierta",
+          "exterior"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "1 x 150μm (6 mils) de espesor de película seca de Interseal 670HS, Sin defectos en la película después de 1 año de exposición"
+        ],
+        "resumen_ficha": "• Ideal para aplicación sobre varios tipos",
+        "extractos_clave": [
+          "{'text': '• Epoxi tolerante a las superficies, con alto contenido de', 'section': 'description'}",
+          "{'text': 'sólidos y baja emisión de VOCs', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO ACRILTEX VINILTEX",
+        "fuente": "ACRILTEX VINILTEX.pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "interior",
+          "cubierta",
+          "metal"
+        ],
+        "superficies_restringidas": [
+          "metal"
+        ],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?"
+        ],
+        "alertas_ficha": [
+          "aplicar Viniltex® Acriltex satinado verifique que la",
+          "temperatura ambiental debe ser mayor a 5°C y la",
+          "temperatura de la superficie no debe ser mayor a",
+          "superficie pintada, evite lavarla con agua y jabón antes"
+        ],
+        "resumen_ficha": "aplicar Viniltex® Acriltex satinado verifique que la",
+        "extractos_clave": [
+          "{'text': 'aplicar Viniltex® Acriltex satinado verifique que la', 'section': 'description'}",
+          "{'text': 'superficie esté seca, libre de polvo, mugre, grasa y', 'section': 'description'}"
+        ]
+      }
+    ],
+    "senales_cliente_coloquiales": [
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara",
+      "se me cuarteo la fachada",
+      "la pared por fuera se ve manchada",
+      "quiero dejar la fachada como nueva",
+      "el frente se puso opaco",
+      "la pintura de afuera ya no da mas",
+      "se me soplo el estuco por fuera",
+      "la fachada esta chorreada",
+      "la casa por fuera se ve cansada",
+      "la pared de afuera se pela por pedazos",
+      "quiero una pintura que aguante sol y agua",
+      "la reja se me herrumbro",
+      "se lo esta comiendo el oxido",
+      "el porton sangra oxido",
+      "la baranda esta picada",
+      "se me pela como un plastico",
+      "el tubo escupe la pintura",
+      "la lamina esta herrumbrada",
+      "el soldador le echo pintura y se cayo",
+      "la estructura se esta descascarando",
+      "quiero salvar una reja muy oxidada"
+    ]
   },
   {
     "id": "GS-PIS-004",
@@ -205,7 +1324,11 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Pulir el concreto con disco copa diamante o granallado. Limpiar absolutamente todo el polvo. El concreto debe quedar con perfil de agarre visible.",
-          "herramientas": ["Pulidora industrial con disco copa diamante", "Aspiradora industrial", "Lija Abracol grano 36-60"],
+          "herramientas": [
+            "Pulidora industrial con disco copa diamante",
+            "Aspiradora industrial",
+            "Lija Abracol grano 36-60"
+          ],
           "nota_tecnica": "En pisos industriales la preparación es CRÍTICA. Un mal perfil de concreto = falla del sistema completo."
         },
         {
@@ -217,7 +1340,10 @@
           "paso": 3,
           "accion": "CAPA INTERMEDIA REFORZADA: Intergard 2002 mezclado con arena de cuarzo. 1-2 manos según espesor requerido.",
           "producto": "Intergard 2002",
-          "herramientas": ["Rodillo de felpa corta", "Llana dentada"],
+          "herramientas": [
+            "Rodillo de felpa corta",
+            "Llana dentada"
+          ],
           "nota_tecnica": "Mezclar Intergard 2002 (Parte A + Parte B) y agregar cuarzo sílice para refuerzo mecánico. Proporción según ficha técnica. El cuarzo aumenta resistencia al desgaste y genera textura antideslizante."
         },
         {
@@ -240,7 +1366,381 @@
       }
     ],
     "alerta_cuarzo": "El cuarzo sílice se vende por separado. Incluirlo en la cotización.",
-    "alerta_metraje": "SIEMPRE calcular m² y cotizar sistema completo bicomponente (Parte A + Parte B para cada producto)."
+    "alerta_metraje": "SIEMPRE calcular m² y cotizar sistema completo bicomponente (Parte A + Parte B para cada producto).",
+    "frases_cliente_equivalentes": [
+      "piso industrial",
+      "piso tráfico pesado",
+      "piso montacargas",
+      "piso bodega industrial",
+      "piso fábrica",
+      "piso pesado",
+      "piso centro logístico",
+      "piso alta resistencia",
+      "piso resistente a químicos",
+      "epóxico para piso industrial",
+      "piso epóxico",
+      "piso autonivelante",
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara",
+      "se me cuarteo la fachada",
+      "la pared por fuera se ve manchada",
+      "quiero dejar la fachada como nueva",
+      "el frente se puso opaco",
+      "la pintura de afuera ya no da mas",
+      "se me soplo el estuco por fuera",
+      "la fachada esta chorreada",
+      "la casa por fuera se ve cansada",
+      "la pared de afuera se pela por pedazos",
+      "quiero una pintura que aguante sol y agua",
+      "la reja se me herrumbro",
+      "se lo esta comiendo el oxido",
+      "el porton sangra oxido",
+      "la baranda esta picada",
+      "se me pela como un plastico",
+      "el tubo escupe la pintura",
+      "la lamina esta herrumbrada",
+      "el soldador le echo pintura y se cayo",
+      "la estructura se esta descascarando",
+      "quiero salvar una reja muy oxidada",
+      "la pintura del zinc se levanto toda",
+      "el techo metalico se pela por placas",
+      "quiero pasar de esmalte a epoxico",
+      "la puerta de hierro esta comida",
+      "el tubo galvanizado no agarra pintura",
+      "la pintura se me arrugo en el metal",
+      "esa reja esta vuelta nada de oxido",
+      "quiero anticorrosivo para una reja vieja",
+      "la teja de zinc ya no aguanta mas sol",
+      "el pasamanos se me pica cada invierno",
+      "el piso se me pela con el trafico",
+      "la pintura del garaje no duro nada",
+      "quiero pintar el piso del local",
+      "el parqueadero se me gasta rapido",
+      "la cancha se me borro",
+      "el concreto me esta soltando polvo",
+      "quiero demarcar lineas de parqueadero",
+      "el piso se me pone jabonoso",
+      "quiero un piso que aguante montacargas",
+      "el piso del taller se me mancha con aceite",
+      "el drywall se me marco",
+      "se me ven todas las juntas",
+      "quiero arreglar cielo raso en drywall"
+    ],
+    "preguntas_diagnostico_alternativas": [
+      "¿Qué tipo de tráfico? (montacargas, camiones, peatonal pesado)",
+      "¿Hay exposición a químicos, aceites o solventes?",
+      "¿Es piso nuevo o ya pintado?",
+      "¿Cuántos m²?",
+      "¿Necesita acabado liso brillante o antideslizante?",
+      "¿Le pega lluvia directa o está protegida por alero?",
+      "¿La base está firme o suena hueca/soplada?",
+      "¿Quiere solo cambiar color o también corregir grietas/fisuras?",
+      "¿Es ladrillo a la vista, fibrocemento, pañete, estuco o textura?",
+      "¿La humedad está abajo en el zócalo o por toda la fachada?",
+      "¿Es hierro/acero negro, galvanizado, aluminio o ya tiene pintura vieja?",
+      "¿Está a la intemperie, bajo techo o en ambiente químico/industrial?",
+      "¿Quiere mantenimiento convencional o subir a sistema industrial?",
+      "¿La pintura vieja está firme, arrugada o se pela como cáscara/plástico?",
+      "¿Hay óxido superficial, corrosión profunda o metal ya perforado?",
+      "¿Es peatonal, vehicular liviano o montacargas/pesado?",
+      "¿El piso está nuevo, viejo, ya pintado o contaminado con grasa?",
+      "¿Es interior, exterior o recibe lluvia directa?",
+      "¿Busca demarcación de líneas o recubrimiento completo?",
+      "¿Es panel yeso, masilla, revoque o concreto?",
+      "¿Busca alisar, texturizar o solo repintar?",
+      "¿Hay fisuras, juntas marcadas o alcalinidad?",
+      "¿La exposición es química, abrasiva, UV, inmersión o solo ambiente severo?",
+      "¿Es un ambiente interior o exterior?",
+      "¿La base actual es alquídica, epóxica o metal/concreto desnudo?",
+      "¿Es junta de dilatación, fisura, ventana, baño o cubierta?",
+      "¿El sustrato es poroso, liso o metálico?",
+      "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+      "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+      "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?"
+    ],
+    "rutas_de_decision": [
+      "Si la base suena hueca o está soplada, tumbar y reconstruir antes del acabado.",
+      "Si el cliente quiere conservar ladrillo visible, priorizar hidrofugante transparente en vez de acabado opaco.",
+      "Si hay fisuras que meten agua, sellar la falla mecánica antes de impermeabilizar el paño.",
+      "Si es fibrocemento, bloquear cualquier preparación en seco por riesgo de asbesto.",
+      "Si es galvanizado/aluminio, el Wash Primer es la ruta prioritaria antes de anticorrosivo o acabado.",
+      "Si el metal ya tiene base alquídica y quieren epóxico, remover totalmente hasta metal desnudo.",
+      "Si es estructura exterior industrial, cerrar sistemas epóxicos con acabado resistente a UV.",
+      "Si es oxidación convencional a la intemperie, el sistema mínimo debe incluir preparación, anticorrosivo y acabado.",
+      "Si es demarcación de líneas, usar ruta de pintura de tráfico y no recubrimiento epóxico general.",
+      "Si hay grasa, aceite o piso contaminado, priorizar descontaminación antes de cualquier acabado.",
+      "Si es panel yeso muy absorbente o reparado, considerar sellado/base antes del acabado.",
+      "Si es alcalinidad o sustrato fresco, bloquear curado y preparación antes del acabado decorativo.",
+      "Si el ambiente es exterior, no dejar epóxico convencional como acabado final expuesto al sol.",
+      "Si el sustrato tiene sistema viejo incompatible, remover completamente antes de migrar.",
+      "Si hay movimiento de junta, priorizar sellador flexible y no resane rígido."
+    ],
+    "casos_vecinos_mismo_resultado": [
+      "frente de casa descolorido",
+      "fachada con fisuras de telaraña",
+      "muro exterior con moho verde por escurrimiento",
+      "eternit envejecido y verdoso",
+      "ladrillo a la vista que absorbe agua",
+      "reja oxidada de casa",
+      "tubería galvanizada mal pintada",
+      "techo de zinc o pérgola metálica",
+      "estructura con pintura de aceite vieja",
+      "baranda exterior expuesta a lluvia y sol",
+      "garaje residencial",
+      "parqueadero comercial",
+      "cancha o zona recreativa",
+      "piso de bodega o taller",
+      "cielo raso de drywall",
+      "muro interior resanado",
+      "pared con juntas marcadas",
+      "planta industrial",
+      "estructura metálica de alto desempeño",
+      "ambiente químico o abrasivo"
+    ],
+    "errores_comunes_cliente": [
+      "Pintar fachada con vinilos interiores o económicos en alta exposición.",
+      "Aplicar Koraza encima de base soplada o húmeda sin reparar soporte.",
+      "Confundir capilaridad en la base con simple lluvia superficial.",
+      "Pintar galvanizado directo sin Wash Primer.",
+      "Dejar Corrotec solo como acabado final exterior.",
+      "Recomendar epóxico sobre esmalte alquídico viejo.",
+      "Cruzar problemas de metal con soluciones de humedad de muro.",
+      "No pedir tipo de tráfico antes de recomendar el sistema del piso.",
+      "Confundir demarcación con pintura integral de piso.",
+      "Pintar panel reparado sin uniformar absorción.",
+      "No diferenciar textura decorativa de reparación de juntas.",
+      "Vender sistema industrial sin revisar compatibilidad con la base existente.",
+      "No cerrar con acabado UV un sistema epóxico exterior.",
+      "Tapar juntas móviles con materiales rígidos.",
+      "Error común a bloquear: Pintucoat para tráfico pesado. Razón: Pintucoat es para tráfico liviano a medio. Para montacargas e industrial pesado se requiere Intergard 2002.",
+      "Error común a bloquear: Viniltex / Koraza. Razón: Pinturas de muro no resisten tráfico de pisos.",
+      "Advertencia técnica de ficha: calor. No vierta el producto en desagües, sobre",
+      "Advertencia técnica de ficha: envase original, este debe permanecer cerrado",
+      "Advertencia técnica de ficha: mientras no se esté utilizando. Se debe",
+      "Advertencia técnica de ficha: superficies esmaltadas o muy selladas se debe",
+      "Advertencia técnica de ficha: *Este valor aplica solo para color blanco, en otros colores el valor aumenta",
+      "Advertencia técnica de ficha: de aplicar verifique que la superficie esté seca y",
+      "Advertencia técnica de ficha: temperatura ambiental debe ser mayor a 5°C y la",
+      "Advertencia técnica de ficha: temperatura de la superficie no debe ser mayor a",
+      "Advertencia técnica de ficha: Mantenga fuera del alcance de los niños. No ingiera el producto. Evite el contacto con la piel y los",
+      "Advertencia técnica de ficha: ojos. No consuma alimentos mientras manipula el producto. Aplique en un lugar con buena",
+      "Advertencia técnica de ficha: Mantenga el recipiente bien tapado mientras no esté utilizando el producto. Almacene el producto en",
+      "Advertencia técnica de ficha: el recipiente original cerrado, en un lugar bajo techo, seco y alejado de fuentes de calor. No vierta el",
+      "No cruzar este sistema sobre superficie restringida: piso.",
+      "No cruzar este sistema sobre superficie restringida: exterior."
+    ],
+    "productos_relacionados_rag": [
+      "Koraza",
+      "Viniltex",
+      "Interseal 670HS",
+      "Intergard 740",
+      "Pintucoat"
+    ],
+    "anclas_tecnicas_rag": [
+      {
+        "familia_tecnica": "PINTUCO ESTABILIDAD DE PRODUCTOS2",
+        "fuente": "ESTABILIDAD DE PRODUCTOS2.pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "piso",
+          "interior",
+          "exterior",
+          "ladrillo",
+          "metal"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Es ladrillo/fachaleta realmente absorbente o tiene selladores, brillo o baja porosidad?"
+        ],
+        "alertas_ficha": [],
+        "resumen_ficha": "Para conocer la estabilidad del producto, es importante entender la información de fabricación que presentan las etiquetas de los productos y los tiempos de estabilidad que",
+        "extractos_clave": [
+          "{'text': 'Lectura y Entendimiento de Código de Barras', 'section': 'description'}",
+          "{'text': 'TIEMPO DE', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO KORAZA PROTECCION 3 EN 1",
+        "fuente": "KORAZA PROTECCION 3 EN 1.pdf",
+        "superficies_compatibles": [
+          "cubierta",
+          "interior",
+          "fachada",
+          "mamposteria",
+          "piso",
+          "concreto"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie es porosa/absorbente o está sellada, vitrificada o tipo fachaleta?",
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "calor. No vierta el producto en desagües, sobre",
+          "envase original, este debe permanecer cerrado",
+          "mientras no se esté utilizando. Se debe",
+          "superficies esmaltadas o muy selladas se debe"
+        ],
+        "resumen_ficha": "resistenteal agua. Además recomendada para aplicar en zonas cálidas para reducir la temperatura",
+        "extractos_clave": [
+          "{'text': 'Es una pintura premium base agua con micro esferas plásticas que le dan triple acción:', 'section': 'description'}",
+          "{'text': 'impermeabilizar, pintar y aislar térmicamente al interior del hogar. Ideal para fachadas, techos y', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO VINILTEX PRO 650",
+        "fuente": "VINILTEX PRO 650 (2).pdf",
+        "superficies_compatibles": [
+          "interior",
+          "cubierta",
+          "mamposteria",
+          "piso",
+          "exterior",
+          "concreto"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?",
+          "¿Es ladrillo/fachaleta realmente absorbente o tiene selladores, brillo o baja porosidad?"
+        ],
+        "alertas_ficha": [
+          "*Este valor aplica solo para color blanco, en otros colores el valor aumenta",
+          "de aplicar verifique que la superficie esté seca y",
+          "temperatura ambiental debe ser mayor a 5°C y la",
+          "temperatura de la superficie no debe ser mayor a"
+        ],
+        "resumen_ficha": "ideal para ser aplicada en proyectos que estén o",
+        "extractos_clave": [
+          "{'text': 'Viniltex® Pro 650 es una pintura Tipo 1 base agua,', 'section': 'description'}",
+          "{'text': 'fabricada', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO VINILTEX VIDA",
+        "fuente": "VINILTEX VIDA.pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "piso",
+          "interior",
+          "exterior",
+          "concreto",
+          "cubierta"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "Mantenga fuera del alcance de los niños. No ingiera el producto. Evite el contacto con la piel y los",
+          "ojos. No consuma alimentos mientras manipula el producto. Aplique en un lugar con buena",
+          "Mantenga el recipiente bien tapado mientras no esté utilizando el producto. Almacene el producto en",
+          "el recipiente original cerrado, en un lugar bajo techo, seco y alejado de fuentes de calor. No vierta el"
+        ],
+        "resumen_ficha": "Recomendada para decorar y proteger muros y cielos rasos de residencias, oficinas, zonas de alto tráfico y edificaciones en general, en ambientes interiores y exteriores bajo sombra.",
+        "extractos_clave": [
+          "{'text': 'Viniltex® Vida', 'section': 'description'}",
+          "{'text': 'Pintura Tipo 1* diluible con agua fabricada a partir de copolímeros acrílicos. Esta', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCOAT PLUS",
+        "fuente": "PINTUCOAT PLUS.pdf",
+        "superficies_compatibles": [
+          "interior",
+          "exterior",
+          "metal",
+          "concreto",
+          "madera",
+          "inmersion"
+        ],
+        "superficies_restringidas": [
+          "piso",
+          "exterior"
+        ],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?"
+        ],
+        "alertas_ficha": [
+          "Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+          "consultar previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de",
+          "La superficie debe estar libre de humedad, polvo, mugre, grasa, cera, pintura deteriorada y óxido. Los",
+          "mecánicas (SSPC-SP2 y SP3). En ambientes agresivos deben ser preparados con chorro abrasivo mínimo a"
+        ],
+        "resumen_ficha": "productos acrílicos, poliuretanos y los esmaltes epóxicos",
+        "extractos_clave": [
+          "{'text': 'Pintura epóxica base solvente en dos componentes, que', 'section': 'description'}",
+          "{'text': 'con la mezcla apropiada de ambos proporciona altas', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "AJUSTADOR XILOL 21204",
+        "fuente": "AJUSTADOR XILOL 21204.pdf",
+        "superficies_compatibles": [
+          "piso"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "La información contenida en esta hoja técnica no pretende ser exhaustiva; cualquier persona que utilice el producto para un propósito distinto al específicamente recomendado en esta hoja técnica,",
+          "realizadas sobre el producto (ya sea en esta hoja técnica o de otro modo) son correctos según nuestro leal saber y entender, pero no tenemos control sobre la calidad o el estado del sustrato ni",
+          "sobre los muchos factores que afectan el uso y la aplicación del producto. Por lo tanto, a menos que lo acordemos específicamente por escrito, no aceptamos responsabilidad alguna por el",
+          "desempeño del producto ni por (en la máxima medida permitida por la ley) cualquier pérdida o daño que surja del uso del producto. Por la presente, rechazamos cualquier garantía o declaración,"
+        ],
+        "resumen_ficha": "Producto auxiliar para dilución, ajuste o limpieza del sistema AJUSTADOR XILOL 21204.",
+        "extractos_clave": [
+          "{'text': 'Dilución de pinturas Aroflex, Pintutráfico®, Epoxiestructuras, Pintucoat®,', 'section': 'description'}",
+          "{'text': 'Pintucoat plus, Acrílicas Mantenimiento, Poliéster de Coil Coating, Esmaltes', 'section': 'description'}"
+        ]
+      }
+    ],
+    "senales_cliente_coloquiales": [
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara",
+      "se me cuarteo la fachada",
+      "la pared por fuera se ve manchada",
+      "quiero dejar la fachada como nueva",
+      "el frente se puso opaco",
+      "la pintura de afuera ya no da mas",
+      "se me soplo el estuco por fuera",
+      "la fachada esta chorreada",
+      "la casa por fuera se ve cansada",
+      "la pared de afuera se pela por pedazos",
+      "quiero una pintura que aguante sol y agua",
+      "la reja se me herrumbro",
+      "se lo esta comiendo el oxido",
+      "el porton sangra oxido",
+      "la baranda esta picada",
+      "se me pela como un plastico",
+      "el tubo escupe la pintura",
+      "la lamina esta herrumbrada",
+      "el soldador le echo pintura y se cayo",
+      "la estructura se esta descascarando",
+      "quiero salvar una reja muy oxidada"
+    ]
   },
   {
     "id": "GS-PIS-005",
@@ -325,7 +1825,366 @@
       "Intergard": "Thinner Pintuco (estándar)",
       "Interthane_990": "Thinner UFA151 (ref F0118421050). NO usar otro thinner.",
       "Pintura_Trafico": "Thinner 21204 (ref F0116621204). NO usar UFA151."
-    }
+    },
+    "frases_cliente_equivalentes": [
+      "piso exterior",
+      "piso patio",
+      "piso terraza",
+      "piso zona BBQ",
+      "piso garaje exterior",
+      "piso entrada vehicular",
+      "piso rampa exterior",
+      "piso exterior sol",
+      "pintar piso al aire libre",
+      "con qué pinto piso al aire libre",
+      "qué le echo a piso al aire libre",
+      "qué sistema lleva piso al aire libre",
+      "cómo preparo piso al aire libre antes de pintar",
+      "piso andén",
+      "piso expuesto al sol",
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara",
+      "se me cuarteo la fachada",
+      "la pared por fuera se ve manchada",
+      "quiero dejar la fachada como nueva",
+      "el frente se puso opaco",
+      "la pintura de afuera ya no da mas",
+      "se me soplo el estuco por fuera",
+      "la fachada esta chorreada",
+      "la casa por fuera se ve cansada",
+      "la pared de afuera se pela por pedazos",
+      "quiero una pintura que aguante sol y agua",
+      "la reja se me herrumbro",
+      "se lo esta comiendo el oxido",
+      "el porton sangra oxido",
+      "la baranda esta picada",
+      "se me pela como un plastico",
+      "el tubo escupe la pintura",
+      "la lamina esta herrumbrada",
+      "el soldador le echo pintura y se cayo",
+      "la estructura se esta descascarando",
+      "quiero salvar una reja muy oxidada",
+      "la pintura del zinc se levanto toda",
+      "el techo metalico se pela por placas",
+      "quiero pasar de esmalte a epoxico",
+      "la puerta de hierro esta comida",
+      "el tubo galvanizado no agarra pintura",
+      "la pintura se me arrugo en el metal",
+      "esa reja esta vuelta nada de oxido",
+      "quiero anticorrosivo para una reja vieja",
+      "la teja de zinc ya no aguanta mas sol",
+      "el pasamanos se me pica cada invierno",
+      "el piso se me pela con el trafico",
+      "la pintura del garaje no duro nada",
+      "quiero pintar el piso del local",
+      "el parqueadero se me gasta rapido",
+      "la cancha se me borro",
+      "el concreto me esta soltando polvo",
+      "quiero demarcar lineas de parqueadero",
+      "el piso se me pone jabonoso",
+      "quiero un piso que aguante montacargas",
+      "el piso del taller se me mancha con aceite"
+    ],
+    "preguntas_diagnostico_alternativas": [
+      "¿El piso recibe sol directo?",
+      "¿Nivel de tráfico: peatonal, vehicular o industrial?",
+      "¿Es piso nuevo o ya pintado?",
+      "¿Cuántos m²?",
+      "¿Color?",
+      "¿Le pega lluvia directa o está protegida por alero?",
+      "¿La base está firme o suena hueca/soplada?",
+      "¿Quiere solo cambiar color o también corregir grietas/fisuras?",
+      "¿Es ladrillo a la vista, fibrocemento, pañete, estuco o textura?",
+      "¿La humedad está abajo en el zócalo o por toda la fachada?",
+      "¿Es hierro/acero negro, galvanizado, aluminio o ya tiene pintura vieja?",
+      "¿Está a la intemperie, bajo techo o en ambiente químico/industrial?",
+      "¿Quiere mantenimiento convencional o subir a sistema industrial?",
+      "¿La pintura vieja está firme, arrugada o se pela como cáscara/plástico?",
+      "¿Hay óxido superficial, corrosión profunda o metal ya perforado?",
+      "¿Es peatonal, vehicular liviano o montacargas/pesado?",
+      "¿El piso está nuevo, viejo, ya pintado o contaminado con grasa?",
+      "¿Es interior, exterior o recibe lluvia directa?",
+      "¿Busca demarcación de líneas o recubrimiento completo?",
+      "¿La exposición es química, abrasiva, UV, inmersión o solo ambiente severo?",
+      "¿Es un ambiente interior o exterior?",
+      "¿La base actual es alquídica, epóxica o metal/concreto desnudo?",
+      "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+      "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+      "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+      "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+      "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?",
+      "¿Es ladrillo/fachaleta realmente absorbente o tiene selladores, brillo o baja porosidad?",
+      "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?"
+    ],
+    "rutas_de_decision": [
+      "Si la base suena hueca o está soplada, tumbar y reconstruir antes del acabado.",
+      "Si el cliente quiere conservar ladrillo visible, priorizar hidrofugante transparente en vez de acabado opaco.",
+      "Si hay fisuras que meten agua, sellar la falla mecánica antes de impermeabilizar el paño.",
+      "Si es fibrocemento, bloquear cualquier preparación en seco por riesgo de asbesto.",
+      "Si es galvanizado/aluminio, el Wash Primer es la ruta prioritaria antes de anticorrosivo o acabado.",
+      "Si el metal ya tiene base alquídica y quieren epóxico, remover totalmente hasta metal desnudo.",
+      "Si es estructura exterior industrial, cerrar sistemas epóxicos con acabado resistente a UV.",
+      "Si es oxidación convencional a la intemperie, el sistema mínimo debe incluir preparación, anticorrosivo y acabado.",
+      "Si es demarcación de líneas, usar ruta de pintura de tráfico y no recubrimiento epóxico general.",
+      "Si hay grasa, aceite o piso contaminado, priorizar descontaminación antes de cualquier acabado.",
+      "Si el ambiente es exterior, no dejar epóxico convencional como acabado final expuesto al sol.",
+      "Si el sustrato tiene sistema viejo incompatible, remover completamente antes de migrar."
+    ],
+    "casos_vecinos_mismo_resultado": [
+      "frente de casa descolorido",
+      "fachada con fisuras de telaraña",
+      "muro exterior con moho verde por escurrimiento",
+      "eternit envejecido y verdoso",
+      "ladrillo a la vista que absorbe agua",
+      "reja oxidada de casa",
+      "tubería galvanizada mal pintada",
+      "techo de zinc o pérgola metálica",
+      "estructura con pintura de aceite vieja",
+      "baranda exterior expuesta a lluvia y sol",
+      "garaje residencial",
+      "parqueadero comercial",
+      "cancha o zona recreativa",
+      "piso de bodega o taller",
+      "planta industrial",
+      "estructura metálica de alto desempeño",
+      "ambiente químico o abrasivo"
+    ],
+    "errores_comunes_cliente": [
+      "Pintar fachada con vinilos interiores o económicos en alta exposición.",
+      "Aplicar Koraza encima de base soplada o húmeda sin reparar soporte.",
+      "Confundir capilaridad en la base con simple lluvia superficial.",
+      "Pintar galvanizado directo sin Wash Primer.",
+      "Dejar Corrotec solo como acabado final exterior.",
+      "Recomendar epóxico sobre esmalte alquídico viejo.",
+      "Cruzar problemas de metal con soluciones de humedad de muro.",
+      "No pedir tipo de tráfico antes de recomendar el sistema del piso.",
+      "Confundir demarcación con pintura integral de piso.",
+      "Vender sistema industrial sin revisar compatibilidad con la base existente.",
+      "No cerrar con acabado UV un sistema epóxico exterior.",
+      "Error común a bloquear: Pintucoat como acabado final exterior sin advertencia UV. Razón: Se DEBE advertir al cliente que el Pintucoat pierde brillo y color con el sol. No es un defecto — es una limitación del producto. Si quiere mantener estética, usar Interthane 990.",
+      "Advertencia técnica de ficha: deben sellarse otra vez, y se recomienda que después de paros prolongados el trabajo recomience con unidades",
+      "Advertencia técnica de ficha: contenedores vacíos deben ser desechados de acuerdo con la legislación regional apropiada.",
+      "Advertencia técnica de ficha: Todo el trabajo que involucre la aplicación y uso de este producto debe ser realizado de acuerdo con todos",
+      "Advertencia técnica de ficha: Antes de usar, obtenga, consulte y siga la Hoja de Seguridad del Material (MSDS) de este producto, que",
+      "Advertencia técnica de ficha: La información contenida en esta ficha técnica no pretende ser exhaustiva; cualquier persona que use el producto para cualquier propósito distinto que el específicamente recomendado",
+      "Advertencia técnica de ficha: que se deriven de lo indicado sobre el producto (incluidos en esta ficha técnica o no) están basados con la mejor intención de nuestro conocimiento pero nosotros no tenemos control",
+      "Advertencia técnica de ficha: aceptamos cualquier responsabilidad en absoluto por la calidad del producto o para (sujeto a los límites permitidos por la ley) cualquier pérdida o daño producida por el uso del producto.",
+      "Advertencia técnica de ficha: debería solicitar una copia de este documento y revisarla cuidadosamente. La información contenida en esta ficha técnica está sujeta a modificación de vez en cuando en función de",
+      "No cruzar este sistema sobre superficie restringida: piso.",
+      "No cruzar este sistema sobre superficie restringida: exterior.",
+      "Advertencia técnica de ficha: Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+      "Advertencia técnica de ficha: consultar previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de",
+      "Advertencia técnica de ficha: La superficie debe estar libre de humedad, polvo, mugre, grasa, cera, pintura deteriorada y óxido. Los",
+      "Advertencia técnica de ficha: mecánicas (SSPC-SP2 y SP3). En ambientes agresivos deben ser preparados con chorro abrasivo mínimo a",
+      "Advertencia técnica de ficha: La información contenida en esta hoja técnica no pretende ser exhaustiva; cualquier persona que utilice el producto para un propósito distinto al específicamente recomendado en esta hoja técnica,",
+      "Advertencia técnica de ficha: realizadas sobre el producto (ya sea en esta hoja técnica o de otro modo) son correctos según nuestro leal saber y entender, pero no tenemos control sobre la calidad o el estado del sustrato ni",
+      "Advertencia técnica de ficha: sobre los muchos factores que afectan el uso y la aplicación del producto. Por lo tanto, a menos que lo acordemos específicamente por escrito, no aceptamos responsabilidad alguna por el",
+      "Advertencia técnica de ficha: desempeño del producto ni por (en la máxima medida permitida por la ley) cualquier pérdida o daño que surja del uso del producto. Por la presente, rechazamos cualquier garantía o declaración,"
+    ],
+    "productos_relacionados_rag": [
+      "Interseal 670HS",
+      "Interthane 990",
+      "Intergard 740",
+      "Pintucoat",
+      "Thinner 21204"
+    ],
+    "anclas_tecnicas_rag": [
+      {
+        "familia_tecnica": "INTERSHIELD 300",
+        "fuente": "INTERSHIELD 300.pdf",
+        "superficies_compatibles": [
+          "metal",
+          "inmersion",
+          "exterior",
+          "cubierta"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "deben sellarse otra vez, y se recomienda que después de paros prolongados el trabajo recomience con unidades",
+          "contenedores vacíos deben ser desechados de acuerdo con la legislación regional apropiada.",
+          "Todo el trabajo que involucre la aplicación y uso de este producto debe ser realizado de acuerdo con todos",
+          "Antes de usar, obtenga, consulte y siga la Hoja de Seguridad del Material (MSDS) de este producto, que"
+        ],
+        "resumen_ficha": "(167 - 333 micras en húmedo) puede ser especificada según el uso final.",
+        "extractos_clave": [
+          "{'text': 'Recubrimiento epóxi con aluminio, de color claro, resistente a la abrasión, que ofrece excelente protección', 'section': 'description'}",
+          "{'text': 'anticorrosiva de largo plazo y capacidad de aplicación a bajas temperaturas.', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "INTERTHANE 990",
+        "fuente": "INTERTHANE 990.pdf",
+        "superficies_compatibles": [
+          "metal",
+          "exterior",
+          "piso",
+          "inmersion"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "La información contenida en esta ficha técnica no pretende ser exhaustiva; cualquier persona que use el producto para cualquier propósito distinto que el específicamente recomendado",
+          "que se deriven de lo indicado sobre el producto (incluidos en esta ficha técnica o no) están basados con la mejor intención de nuestro conocimiento pero nosotros no tenemos control",
+          "aceptamos cualquier responsabilidad en absoluto por la calidad del producto o para (sujeto a los límites permitidos por la ley) cualquier pérdida o daño producida por el uso del producto.",
+          "debería solicitar una copia de este documento y revisarla cuidadosamente. La información contenida en esta ficha técnica está sujeta a modificación de vez en cuando en función de"
+        ],
+        "resumen_ficha": "",
+        "extractos_clave": [
+          "{'text': 'Acabado de poliuretano acrílico alifático de dos componentes que proporciona una excelente durabilidad y', 'section': 'description'}",
+          "{'text': 'repintado a largo plazo.', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO ESTABILIDAD DE PRODUCTOS2",
+        "fuente": "ESTABILIDAD DE PRODUCTOS2.pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "piso",
+          "interior",
+          "exterior",
+          "ladrillo",
+          "metal"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Es ladrillo/fachaleta realmente absorbente o tiene selladores, brillo o baja porosidad?"
+        ],
+        "alertas_ficha": [],
+        "resumen_ficha": "Para conocer la estabilidad del producto, es importante entender la información de fabricación que presentan las etiquetas de los productos y los tiempos de estabilidad que",
+        "extractos_clave": [
+          "{'text': 'Lectura y Entendimiento de Código de Barras', 'section': 'description'}",
+          "{'text': 'TIEMPO DE', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCOAT PLUS",
+        "fuente": "PINTUCOAT PLUS.pdf",
+        "superficies_compatibles": [
+          "interior",
+          "exterior",
+          "metal",
+          "concreto",
+          "madera",
+          "inmersion"
+        ],
+        "superficies_restringidas": [
+          "piso",
+          "exterior"
+        ],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?"
+        ],
+        "alertas_ficha": [
+          "Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+          "consultar previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de",
+          "La superficie debe estar libre de humedad, polvo, mugre, grasa, cera, pintura deteriorada y óxido. Los",
+          "mecánicas (SSPC-SP2 y SP3). En ambientes agresivos deben ser preparados con chorro abrasivo mínimo a"
+        ],
+        "resumen_ficha": "productos acrílicos, poliuretanos y los esmaltes epóxicos",
+        "extractos_clave": [
+          "{'text': 'Pintura epóxica base solvente en dos componentes, que', 'section': 'description'}",
+          "{'text': 'con la mezcla apropiada de ambos proporciona altas', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "AJUSTADOR XILOL 21204",
+        "fuente": "AJUSTADOR XILOL 21204.pdf",
+        "superficies_compatibles": [
+          "piso"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "La información contenida en esta hoja técnica no pretende ser exhaustiva; cualquier persona que utilice el producto para un propósito distinto al específicamente recomendado en esta hoja técnica,",
+          "realizadas sobre el producto (ya sea en esta hoja técnica o de otro modo) son correctos según nuestro leal saber y entender, pero no tenemos control sobre la calidad o el estado del sustrato ni",
+          "sobre los muchos factores que afectan el uso y la aplicación del producto. Por lo tanto, a menos que lo acordemos específicamente por escrito, no aceptamos responsabilidad alguna por el",
+          "desempeño del producto ni por (en la máxima medida permitida por la ley) cualquier pérdida o daño que surja del uso del producto. Por la presente, rechazamos cualquier garantía o declaración,"
+        ],
+        "resumen_ficha": "Producto auxiliar para dilución, ajuste o limpieza del sistema AJUSTADOR XILOL 21204.",
+        "extractos_clave": [
+          "{'text': 'Dilución de pinturas Aroflex, Pintutráfico®, Epoxiestructuras, Pintucoat®,', 'section': 'description'}",
+          "{'text': 'Pintucoat plus, Acrílicas Mantenimiento, Poliéster de Coil Coating, Esmaltes', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "INTERGARD 740",
+        "fuente": "Intergard 740 (2).pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "metal",
+          "exterior"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?"
+        ],
+        "alertas_ficha": [
+          "Intergard 740 cures by a crosslinking reaction between the epoxy and polyamide resins. No catalyst is included",
+          "There are no significant problems envisaged, provided both components are stored in dry, shaded conditions",
+          "of our knowledge but we have no control over the quality or the condition of the substrate or the many factors affecting the use and application of"
+        ],
+        "resumen_ficha": "",
+        "extractos_clave": [
+          "{'text': 'PRODUCT TECHNICAL PROFILE', 'section': 'description'}",
+          "{'text': 'Revision 08', 'section': 'description'}"
+        ]
+      }
+    ],
+    "senales_cliente_coloquiales": [
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara",
+      "se me cuarteo la fachada",
+      "la pared por fuera se ve manchada",
+      "quiero dejar la fachada como nueva",
+      "el frente se puso opaco",
+      "la pintura de afuera ya no da mas",
+      "se me soplo el estuco por fuera",
+      "la fachada esta chorreada",
+      "la casa por fuera se ve cansada",
+      "la pared de afuera se pela por pedazos",
+      "quiero una pintura que aguante sol y agua",
+      "la reja se me herrumbro",
+      "se lo esta comiendo el oxido",
+      "el porton sangra oxido",
+      "la baranda esta picada",
+      "se me pela como un plastico",
+      "el tubo escupe la pintura",
+      "la lamina esta herrumbrada",
+      "el soldador le echo pintura y se cayo",
+      "la estructura se esta descascarando",
+      "quiero salvar una reja muy oxidada"
+    ]
   },
   {
     "id": "GS-PIS-006",
@@ -359,13 +2218,19 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Lavar la cancha con agua a presión. Dejar secar completamente. Si hay pintura vieja suelta, raspar.",
-          "herramientas": ["Hidrolavadora", "Escoba industrial"]
+          "herramientas": [
+            "Hidrolavadora",
+            "Escoba industrial"
+          ]
         },
         {
           "paso": 2,
           "accion": "PINTURA BASE: Aplicar Pintura Canchas como base de color para toda la superficie.",
           "producto": "Pintura Canchas (Pintuco)",
-          "herramientas": ["Rodillo de felpa media", "Brocha para bordes"],
+          "herramientas": [
+            "Rodillo de felpa media",
+            "Brocha para bordes"
+          ],
           "nota_tecnica": "Pintura Canchas es el producto específico de Pintuco para superficies deportivas. Tiene la resistencia y textura correcta para tráfico deportivo."
         },
         {
@@ -385,6 +2250,360 @@
         "producto": "Viniltex / Koraza para canchas",
         "razon": "Las pinturas de muro no resisten tráfico deportivo."
       }
+    ],
+    "frases_cliente_equivalentes": [
+      "pintar cancha",
+      "con qué pinto cancha",
+      "qué le echo a cancha",
+      "qué sistema lleva cancha",
+      "cómo preparo cancha antes de pintar",
+      "cancha de fútbol",
+      "cancha de microfútbol",
+      "cancha de básquetbol",
+      "cancha múltiple",
+      "pintura para canchas",
+      "demarcación cancha",
+      "pintar zona deportiva",
+      "con qué pinto zona deportiva",
+      "qué le echo a zona deportiva",
+      "qué sistema lleva zona deportiva",
+      "cómo preparo zona deportiva antes de pintar",
+      "cancha deportiva",
+      "polideportivo",
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara",
+      "se me cuarteo la fachada",
+      "la pared por fuera se ve manchada",
+      "quiero dejar la fachada como nueva",
+      "el frente se puso opaco",
+      "la pintura de afuera ya no da mas",
+      "se me soplo el estuco por fuera",
+      "la fachada esta chorreada",
+      "la casa por fuera se ve cansada",
+      "la pared de afuera se pela por pedazos",
+      "quiero una pintura que aguante sol y agua",
+      "el piso se me pela con el trafico",
+      "la pintura del garaje no duro nada",
+      "quiero pintar el piso del local",
+      "el parqueadero se me gasta rapido",
+      "la cancha se me borro",
+      "el concreto me esta soltando polvo",
+      "quiero demarcar lineas de parqueadero",
+      "el piso se me pone jabonoso",
+      "quiero un piso que aguante montacargas",
+      "el piso del taller se me mancha con aceite",
+      "el drywall se me marco",
+      "se me ven todas las juntas",
+      "quiero arreglar cielo raso en drywall",
+      "el muro en panel yeso se me fisuro",
+      "quiero textura para una pared lisa",
+      "la pared se me alcalinizo",
+      "quiero algo bien industrial",
+      "necesito maxima resistencia",
+      "eso va para planta o fabrica",
+      "quiero un sistema pesado de verdad",
+      "eso va a recibir quimicos",
+      "necesito algo para alto desempeño"
+    ],
+    "preguntas_diagnostico_alternativas": [
+      "¿Qué tipo de cancha? (fútbol, básquetbol, múltiple)",
+      "¿Es interior o exterior?",
+      "¿Superficie actual: concreto, asfalto, ya pintada?",
+      "¿Cuántos m²?",
+      "¿Colores de las zonas y líneas?",
+      "¿Le pega lluvia directa o está protegida por alero?",
+      "¿La base está firme o suena hueca/soplada?",
+      "¿Quiere solo cambiar color o también corregir grietas/fisuras?",
+      "¿Es ladrillo a la vista, fibrocemento, pañete, estuco o textura?",
+      "¿La humedad está abajo en el zócalo o por toda la fachada?",
+      "¿Es peatonal, vehicular liviano o montacargas/pesado?",
+      "¿El piso está nuevo, viejo, ya pintado o contaminado con grasa?",
+      "¿Es interior, exterior o recibe lluvia directa?",
+      "¿Busca demarcación de líneas o recubrimiento completo?",
+      "¿Es panel yeso, masilla, revoque o concreto?",
+      "¿Busca alisar, texturizar o solo repintar?",
+      "¿Hay fisuras, juntas marcadas o alcalinidad?",
+      "¿La exposición es química, abrasiva, UV, inmersión o solo ambiente severo?",
+      "¿Es un ambiente interior o exterior?",
+      "¿La base actual es alquídica, epóxica o metal/concreto desnudo?",
+      "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+      "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+      "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+      "¿La superficie es porosa/absorbente o está sellada, vitrificada o tipo fachaleta?",
+      "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+      "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?",
+      "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?",
+      "¿Es ladrillo/fachaleta realmente absorbente o tiene selladores, brillo o baja porosidad?"
+    ],
+    "rutas_de_decision": [
+      "Si la base suena hueca o está soplada, tumbar y reconstruir antes del acabado.",
+      "Si el cliente quiere conservar ladrillo visible, priorizar hidrofugante transparente en vez de acabado opaco.",
+      "Si hay fisuras que meten agua, sellar la falla mecánica antes de impermeabilizar el paño.",
+      "Si es fibrocemento, bloquear cualquier preparación en seco por riesgo de asbesto.",
+      "Si es demarcación de líneas, usar ruta de pintura de tráfico y no recubrimiento epóxico general.",
+      "Si hay grasa, aceite o piso contaminado, priorizar descontaminación antes de cualquier acabado.",
+      "Si es panel yeso muy absorbente o reparado, considerar sellado/base antes del acabado.",
+      "Si es alcalinidad o sustrato fresco, bloquear curado y preparación antes del acabado decorativo.",
+      "Si el ambiente es exterior, no dejar epóxico convencional como acabado final expuesto al sol.",
+      "Si el sustrato tiene sistema viejo incompatible, remover completamente antes de migrar."
+    ],
+    "casos_vecinos_mismo_resultado": [
+      "frente de casa descolorido",
+      "fachada con fisuras de telaraña",
+      "muro exterior con moho verde por escurrimiento",
+      "eternit envejecido y verdoso",
+      "ladrillo a la vista que absorbe agua",
+      "garaje residencial",
+      "parqueadero comercial",
+      "cancha o zona recreativa",
+      "piso de bodega o taller",
+      "cielo raso de drywall",
+      "muro interior resanado",
+      "pared con juntas marcadas",
+      "planta industrial",
+      "estructura metálica de alto desempeño",
+      "ambiente químico o abrasivo"
+    ],
+    "errores_comunes_cliente": [
+      "Pintar fachada con vinilos interiores o económicos en alta exposición.",
+      "Aplicar Koraza encima de base soplada o húmeda sin reparar soporte.",
+      "Confundir capilaridad en la base con simple lluvia superficial.",
+      "No pedir tipo de tráfico antes de recomendar el sistema del piso.",
+      "Confundir demarcación con pintura integral de piso.",
+      "Pintar panel reparado sin uniformar absorción.",
+      "No diferenciar textura decorativa de reparación de juntas.",
+      "Vender sistema industrial sin revisar compatibilidad con la base existente.",
+      "No cerrar con acabado UV un sistema epóxico exterior.",
+      "Error común a bloquear: Pintucoat para canchas. Razón: Pintucoat es epóxico industrial — no tiene la textura adecuada para uso deportivo y es de mayor costo innecesario.",
+      "Error común a bloquear: Viniltex / Koraza para canchas. Razón: Las pinturas de muro no resisten tráfico deportivo.",
+      "No cruzar este sistema sobre superficie restringida: metal.",
+      "Advertencia técnica de ficha: aplicar Viniltex® Acriltex satinado verifique que la",
+      "Advertencia técnica de ficha: temperatura ambiental debe ser mayor a 5°C y la",
+      "Advertencia técnica de ficha: temperatura de la superficie no debe ser mayor a",
+      "Advertencia técnica de ficha: superficie pintada, evite lavarla con agua y jabón antes",
+      "Advertencia técnica de ficha: Mantenga fuera del alcance de los niños. No ingiera el producto. Evite el contacto con la piel y los",
+      "Advertencia técnica de ficha: ojos. No consuma alimentos mientras manipula el producto. Aplique en un lugar con buena",
+      "Advertencia técnica de ficha: Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el",
+      "Advertencia técnica de ficha: información, se recomienda consultar previamente con al área de servicio técnico. La garantía de",
+      "Advertencia técnica de ficha: Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+      "Advertencia técnica de ficha: consultar previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de",
+      "Advertencia técnica de ficha: anticorrosiva ya aplicada. Se debe evitar la contaminación de los componentes separados con la mezcla",
+      "Advertencia técnica de ficha: de ellos. Preparar únicamente la cantidad que se va a utilizar. Después de ocho horas a 25°C el producto",
+      "Advertencia técnica de ficha: Evita el deterioro de la superficie por cuenta de fisuras y posteriores filtraciones gracias a su película flexible que acompaña los movimientos.",
+      "No cruzar este sistema sobre superficie restringida: cubierta.",
+      "No cruzar este sistema sobre superficie restringida: exterior.",
+      "Advertencia técnica de ficha: elaborado granos de cuarzo de tamaño controlado, resistente a la intemperie y con buena estabilidad del",
+      "Advertencia técnica de ficha: pintura en fachadas de concreto cuando se aplica sobre Masilla de Relleno o Revoque Plástico",
+      "Advertencia técnica de ficha: Profesional Exterior de Pintuco®. No se debe aplicar sobre superficies metálicas."
+    ],
+    "productos_relacionados_rag": [
+      "Koraza",
+      "Viniltex",
+      "Pintucoat",
+      "Pintura de Tráfico"
+    ],
+    "anclas_tecnicas_rag": [
+      {
+        "familia_tecnica": "PINTUCO ACRILTEX VINILTEX",
+        "fuente": "ACRILTEX VINILTEX.pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "interior",
+          "cubierta",
+          "metal"
+        ],
+        "superficies_restringidas": [
+          "metal"
+        ],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?"
+        ],
+        "alertas_ficha": [
+          "aplicar Viniltex® Acriltex satinado verifique que la",
+          "temperatura ambiental debe ser mayor a 5°C y la",
+          "temperatura de la superficie no debe ser mayor a",
+          "superficie pintada, evite lavarla con agua y jabón antes"
+        ],
+        "resumen_ficha": "aplicar Viniltex® Acriltex satinado verifique que la",
+        "extractos_clave": [
+          "{'text': 'aplicar Viniltex® Acriltex satinado verifique que la', 'section': 'description'}",
+          "{'text': 'superficie esté seca, libre de polvo, mugre, grasa y', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO ACUALUX",
+        "fuente": "ACUALUX.pdf",
+        "superficies_compatibles": [
+          "madera",
+          "interior",
+          "exterior",
+          "cubierta"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie es porosa/absorbente o está sellada, vitrificada o tipo fachaleta?",
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?"
+        ],
+        "alertas_ficha": [
+          "Mantenga fuera del alcance de los niños. No ingiera el producto. Evite el contacto con la piel y los",
+          "ojos. No consuma alimentos mientras manipula el producto. Aplique en un lugar con buena",
+          "Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el",
+          "información, se recomienda consultar previamente con al área de servicio técnico. La garantía de"
+        ],
+        "resumen_ficha": "Recomendado para proteger y decorar superficies y/o artículos de madera,",
+        "extractos_clave": [
+          "{'text': 'Esmalte 100% acrílico, diluible con agua, acabado semibrillante, durable y', 'section': 'description'}",
+          "{'text': 'resistente, no amarillea, tiene bajo olor y rápido secamiento; optima adherencia,', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO ANTICORROSIVO ROJO 10050 545",
+        "fuente": "ANTICORROSIVO ROJO 10050 - 545.pdf",
+        "superficies_compatibles": [
+          "interior",
+          "exterior",
+          "inmersion",
+          "metal",
+          "cubierta"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El producto va a trabajar en inmersión continua, salpicadura ocasional o solo ambiente húmedo?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+          "consultar previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de",
+          "anticorrosiva ya aplicada. Se debe evitar la contaminación de los componentes separados con la mezcla",
+          "de ellos. Preparar únicamente la cantidad que se va a utilizar. Después de ocho horas a 25°C el producto"
+        ],
+        "resumen_ficha": "Versión 1.0 / 2017 Ideal para proteger interior o exterior de tanques para",
+        "extractos_clave": [
+          "{'text': 'Versión 1.0 / 2017 Ideal para proteger interior o exterior de tanques para', 'section': 'description'}",
+          "{'text': 'ANTICORROSIVA EPÓXICA ROJA PINTUCOAT 545®ANTICOR', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO BROCHURE KORAZA PINTURA IMPERMEABILIZANTE",
+        "fuente": "BROCHURE KORAZA PINTURA IMPERMEABILIZANTE.pdf",
+        "superficies_compatibles": [
+          "exterior",
+          "fachada",
+          "mamposteria",
+          "concreto"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie es porosa/absorbente o está sellada, vitrificada o tipo fachaleta?",
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?"
+        ],
+        "alertas_ficha": [
+          "Evita el deterioro de la superficie por cuenta de fisuras y posteriores filtraciones gracias a su película flexible que acompaña los movimientos."
+        ],
+        "resumen_ficha": "Ideal para uso en ambientes exterior, protegiendo las fachadas como nuevas por más tiempo.",
+        "extractos_clave": [
+          "{'text': '**PROTECCIÓN SOL & LLUVIA**', 'section': 'description'}",
+          "{'text': '**PINTURA IMPERMEABILIZANTE**', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO ESGRAFIADO STANDARD GRANIPLAST",
+        "fuente": "ESGRAFIADO STANDARD GRANIPLAST.pdf",
+        "superficies_compatibles": [
+          "exterior",
+          "interior",
+          "concreto",
+          "fibrocemento",
+          "fachada",
+          "metal"
+        ],
+        "superficies_restringidas": [
+          "metal",
+          "cubierta",
+          "exterior"
+        ],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie es porosa/absorbente o está sellada, vitrificada o tipo fachaleta?",
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?"
+        ],
+        "alertas_ficha": [
+          "elaborado granos de cuarzo de tamaño controlado, resistente a la intemperie y con buena estabilidad del",
+          "pintura en fachadas de concreto cuando se aplica sobre Masilla de Relleno o Revoque Plástico",
+          "Profesional Exterior de Pintuco®. No se debe aplicar sobre superficies metálicas.",
+          " No es combustible y no es tóxico."
+        ],
+        "resumen_ficha": "recomendaciones de preparación de superficie y aplicación del producto.",
+        "extractos_clave": [
+          "{'text': 'Versión 1.0 / 2018 Acabado Texturizado Tipo Rayado', 'section': 'description'}",
+          "{'text': 'Graniplast® Estándar Esgrafiado® es un revestimiento plástico de acabado texturizado tipo rayado,', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO ESTABILIDAD DE PRODUCTOS2",
+        "fuente": "ESTABILIDAD DE PRODUCTOS2.pdf",
+        "superficies_compatibles": [
+          "mamposteria",
+          "piso",
+          "interior",
+          "exterior",
+          "ladrillo",
+          "metal"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿Es ladrillo/fachaleta realmente absorbente o tiene selladores, brillo o baja porosidad?"
+        ],
+        "alertas_ficha": [],
+        "resumen_ficha": "Para conocer la estabilidad del producto, es importante entender la información de fabricación que presentan las etiquetas de los productos y los tiempos de estabilidad que",
+        "extractos_clave": [
+          "{'text': 'Lectura y Entendimiento de Código de Barras', 'section': 'description'}",
+          "{'text': 'TIEMPO DE', 'section': 'description'}"
+        ]
+      }
+    ],
+    "senales_cliente_coloquiales": [
+      "quiero arreglar el frente de la casa",
+      "la cara de la casa se ve fea",
+      "la lluvia me lava la pintura",
+      "el sol me quemo la fachada",
+      "la pared de afuera se me descascara",
+      "se me cuarteo la fachada",
+      "la pared por fuera se ve manchada",
+      "quiero dejar la fachada como nueva",
+      "el frente se puso opaco",
+      "la pintura de afuera ya no da mas",
+      "se me soplo el estuco por fuera",
+      "la fachada esta chorreada",
+      "la casa por fuera se ve cansada",
+      "la pared de afuera se pela por pedazos",
+      "quiero una pintura que aguante sol y agua",
+      "el piso se me pela con el trafico",
+      "la pintura del garaje no duro nada",
+      "quiero pintar el piso del local",
+      "el parqueadero se me gasta rapido",
+      "la cancha se me borro",
+      "el concreto me esta soltando polvo",
+      "quiero demarcar lineas de parqueadero",
+      "el piso se me pone jabonoso",
+      "quiero un piso que aguante montacargas",
+      "el piso del taller se me mancha con aceite"
     ]
   },
   {
@@ -431,6 +2650,319 @@
         "nota": "Thinner alquídico estándar"
       }
     },
-    "regla_critica": "NUNCA mezclar familias de solventes. NUNCA usar UFA151 en tráfico ni Thinner 21204 en poliuretano. Cada familia tiene su diluyente — no son intercambiables."
+    "regla_critica": "NUNCA mezclar familias de solventes. NUNCA usar UFA151 en tráfico ni Thinner 21204 en poliuretano. Cada familia tiene su diluyente — no son intercambiables.",
+    "frases_cliente_equivalentes": [
+      "thinner para piso",
+      "solvente para epóxico",
+      "thinner para Pintucoat",
+      "thinner para Interthane",
+      "solvente para pintura de tráfico",
+      "qué thinner uso",
+      "cómo diluir",
+      "diluyente para piso",
+      "la reja se me herrumbro",
+      "se lo esta comiendo el oxido",
+      "el porton sangra oxido",
+      "la baranda esta picada",
+      "se me pela como un plastico",
+      "el tubo escupe la pintura",
+      "la lamina esta herrumbrada",
+      "el soldador le echo pintura y se cayo",
+      "la estructura se esta descascarando",
+      "quiero salvar una reja muy oxidada",
+      "la pintura del zinc se levanto toda",
+      "el techo metalico se pela por placas",
+      "quiero pasar de esmalte a epoxico",
+      "la puerta de hierro esta comida",
+      "el tubo galvanizado no agarra pintura",
+      "la pintura se me arrugo en el metal",
+      "esa reja esta vuelta nada de oxido",
+      "quiero anticorrosivo para una reja vieja",
+      "la teja de zinc ya no aguanta mas sol",
+      "el pasamanos se me pica cada invierno",
+      "el piso se me pela con el trafico",
+      "la pintura del garaje no duro nada",
+      "quiero pintar el piso del local",
+      "el parqueadero se me gasta rapido",
+      "la cancha se me borro",
+      "el concreto me esta soltando polvo",
+      "quiero demarcar lineas de parqueadero",
+      "el piso se me pone jabonoso",
+      "quiero un piso que aguante montacargas",
+      "el piso del taller se me mancha con aceite",
+      "quiero algo bien industrial",
+      "necesito maxima resistencia",
+      "eso va para planta o fabrica",
+      "quiero un sistema pesado de verdad",
+      "eso va a recibir quimicos",
+      "necesito algo para alto desempeño"
+    ],
+    "preguntas_diagnostico_alternativas": [
+      "¿Es hierro/acero negro, galvanizado, aluminio o ya tiene pintura vieja?",
+      "¿Está a la intemperie, bajo techo o en ambiente químico/industrial?",
+      "¿Quiere mantenimiento convencional o subir a sistema industrial?",
+      "¿La pintura vieja está firme, arrugada o se pela como cáscara/plástico?",
+      "¿Hay óxido superficial, corrosión profunda o metal ya perforado?",
+      "¿Es peatonal, vehicular liviano o montacargas/pesado?",
+      "¿El piso está nuevo, viejo, ya pintado o contaminado con grasa?",
+      "¿Es interior, exterior o recibe lluvia directa?",
+      "¿Busca demarcación de líneas o recubrimiento completo?",
+      "¿La exposición es química, abrasiva, UV, inmersión o solo ambiente severo?",
+      "¿Es un ambiente interior o exterior?",
+      "¿La base actual es alquídica, epóxica o metal/concreto desnudo?",
+      "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+      "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+      "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?",
+      "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?",
+      "¿La condición real del proyecto coincide exactamente con las restricciones de uso que declara la ficha?",
+      "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?"
+    ],
+    "rutas_de_decision": [
+      "Si es galvanizado/aluminio, el Wash Primer es la ruta prioritaria antes de anticorrosivo o acabado.",
+      "Si el metal ya tiene base alquídica y quieren epóxico, remover totalmente hasta metal desnudo.",
+      "Si es estructura exterior industrial, cerrar sistemas epóxicos con acabado resistente a UV.",
+      "Si es oxidación convencional a la intemperie, el sistema mínimo debe incluir preparación, anticorrosivo y acabado.",
+      "Si es demarcación de líneas, usar ruta de pintura de tráfico y no recubrimiento epóxico general.",
+      "Si hay grasa, aceite o piso contaminado, priorizar descontaminación antes de cualquier acabado.",
+      "Si el ambiente es exterior, no dejar epóxico convencional como acabado final expuesto al sol.",
+      "Si el sustrato tiene sistema viejo incompatible, remover completamente antes de migrar."
+    ],
+    "casos_vecinos_mismo_resultado": [
+      "reja oxidada de casa",
+      "tubería galvanizada mal pintada",
+      "techo de zinc o pérgola metálica",
+      "estructura con pintura de aceite vieja",
+      "baranda exterior expuesta a lluvia y sol",
+      "garaje residencial",
+      "parqueadero comercial",
+      "cancha o zona recreativa",
+      "piso de bodega o taller",
+      "planta industrial",
+      "estructura metálica de alto desempeño",
+      "ambiente químico o abrasivo"
+    ],
+    "errores_comunes_cliente": [
+      "Pintar galvanizado directo sin Wash Primer.",
+      "Dejar Corrotec solo como acabado final exterior.",
+      "Recomendar epóxico sobre esmalte alquídico viejo.",
+      "Cruzar problemas de metal con soluciones de humedad de muro.",
+      "No pedir tipo de tráfico antes de recomendar el sistema del piso.",
+      "Confundir demarcación con pintura integral de piso.",
+      "Vender sistema industrial sin revisar compatibilidad con la base existente.",
+      "No cerrar con acabado UV un sistema epóxico exterior.",
+      "Advertencia técnica de ficha: No Pick Up (ASTM",
+      "Advertencia técnica de ficha: NOTA: Para el rendimiento práctico se deben tener en cuenta",
+      "Advertencia técnica de ficha: superficie debe estar libre de humedad, polvo,",
+      "Advertencia técnica de ficha: Para mayor información deberá verificar ficha",
+      "Advertencia técnica de ficha: Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+      "Advertencia técnica de ficha: previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de aplicación.",
+      "Advertencia técnica de ficha: El producto se debe aplicar por sembrado directamente sobre la pintura recién aplicada siempre y cuando",
+      "Advertencia técnica de ficha: y mínimo 200 gr por m2 Cuando va solo mínimo 350 gr / m2",
+      "No cruzar este sistema sobre superficie restringida: madera.",
+      "Advertencia técnica de ficha: elemento plano, tipo destornillador.",
+      "Advertencia técnica de ficha: Su mecanismo evita el cierre accidental.",
+      "Advertencia técnica de ficha: Baño / Alcoba",
+      "Advertencia técnica de ficha: Para instalación en puertas de madera, el contenido de la humedad de la puerta no debe ser superior",
+      "Advertencia técnica de ficha: La información contenida en esta hoja técnica no pretende ser exhaustiva; cualquier persona que utilice el producto para un propósito distinto al específicamente recomendado en esta hoja técnica,",
+      "Advertencia técnica de ficha: realizadas sobre el producto (ya sea en esta hoja técnica o de otro modo) son correctos según nuestro leal saber y entender, pero no tenemos control sobre la calidad o el estado del sustrato ni",
+      "Advertencia técnica de ficha: sobre los muchos factores que afectan el uso y la aplicación del producto. Por lo tanto, a menos que lo acordemos específicamente por escrito, no aceptamos responsabilidad alguna por el",
+      "Advertencia técnica de ficha: desempeño del producto ni por (en la máxima medida permitida por la ley) cualquier pérdida o daño que surja del uso del producto. Por la presente, rechazamos cualquier garantía o declaración,"
+    ],
+    "productos_relacionados_rag": [
+      "Pintura de Tráfico",
+      "Thinner 21204"
+    ],
+    "anclas_tecnicas_rag": [
+      {
+        "familia_tecnica": "PINTUCO PINTUTRAFICO ACRILICO BASE SOLVENTE",
+        "fuente": "PINTUTRÁFICO ACRILICO BASE SOLVENTE.pdf",
+        "superficies_compatibles": [
+          "piso",
+          "concreto",
+          "exterior"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "No Pick Up (ASTM",
+          "NOTA: Para el rendimiento práctico se deben tener en cuenta",
+          "superficie debe estar libre de humedad, polvo,",
+          "Para mayor información deberá verificar ficha"
+        ],
+        "resumen_ficha": "Producto auxiliar para dilución, ajuste o limpieza del sistema PINTUTRÁFICO ACRILICO BASE SOLVENTE.",
+        "extractos_clave": [
+          "{'text': 'Pintura con resinas acrílicas puras a base de solvente,', 'section': 'description'}",
+          "{'text': 'con excelente resistencia a la abrasión severa y a', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO PINTUTRAFICO ACRILICO BASE SOLVENTE 13754 55 56",
+        "fuente": "PINTUTRAFICO ACRILICO BASE SOLVENTE 13754 55 56.pdf",
+        "superficies_compatibles": [
+          "piso",
+          "concreto",
+          "exterior"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?"
+        ],
+        "alertas_ficha": [
+          "No Pick Up (ASTM",
+          "NOTA: Para el rendimiento práctico se deben tener en cuenta",
+          "superficie debe estar libre de humedad, polvo,",
+          "Para mayor información deberá verificar ficha"
+        ],
+        "resumen_ficha": "Producto auxiliar para dilución, ajuste o limpieza del sistema PINTUTRAFICO ACRILICO BASE SOLVENTE 13754 55 56.",
+        "extractos_clave": [
+          "{'text': 'Pintura con resinas acrílicas puras a base de solvente,', 'section': 'description'}",
+          "{'text': 'con excelente resistencia a la abrasión severa y a', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO SUPER GRIP",
+        "fuente": "SUPER GRIP.pdf",
+        "superficies_compatibles": [
+          "piso"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?",
+          "¿La condición real del proyecto coincide exactamente con las restricciones de uso que declara la ficha?"
+        ],
+        "alertas_ficha": [
+          "Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+          "previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de aplicación.",
+          "El producto se debe aplicar por sembrado directamente sobre la pintura recién aplicada siempre y cuando",
+          "y mínimo 200 gr por m2 Cuando va solo mínimo 350 gr / m2"
+        ],
+        "resumen_ficha": "Aplicación recomendada | Con micro esferas en proporción 3:1 (Micro esferas: Super Grip)",
+        "extractos_clave": [
+          "{'text': 'Material granular, irregular, de alta dureza, especial para mejorar la resistencia al deslizamiento. Aplicable', 'section': 'description'}",
+          "{'text': 'sobre cualquier pintura de tráfico.', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "PINTUCO SUPER GRIP ANTIDESLIZANTE",
+        "fuente": "SUPER GRIP ANTIDESLIZANTE.pdf",
+        "superficies_compatibles": [
+          "piso"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?",
+          "¿La condición real del proyecto coincide exactamente con las restricciones de uso que declara la ficha?"
+        ],
+        "alertas_ficha": [
+          "Toda la información contenida en esta ficha no constituye garantía expresa o implícita sobre el comportamiento del producto,",
+          "previamente con al área de servicio técnico. La garantía de resultados depende de las condiciones específicas de aplicación.",
+          "El producto se debe aplicar por sembrado directamente sobre la pintura recién aplicada siempre y cuando",
+          "y mínimo 200 gr por m2 Cuando va solo mínimo 350 gr / m2"
+        ],
+        "resumen_ficha": "Aplicación recomendada | Con micro esferas en proporción 3:1 (Micro esferas: Super Grip)",
+        "extractos_clave": [
+          "{'text': 'Material granular, irregular, de alta dureza, especial para mejorar la resistencia al deslizamiento. Aplicable', 'section': 'description'}",
+          "{'text': 'sobre cualquier pintura de tráfico.', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "ACCENT",
+        "fuente": "Ficha Tecnica Accent.pdf",
+        "superficies_compatibles": [
+          "interior",
+          "exterior",
+          "metal",
+          "madera",
+          "cubierta",
+          "piso"
+        ],
+        "superficies_restringidas": [
+          "madera"
+        ],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿Qué nivel de tráfico, abrasión o exposición química real va a soportar la superficie?",
+          "¿La condición real del proyecto coincide exactamente con las restricciones de uso que declara la ficha?"
+        ],
+        "alertas_ficha": [
+          "elemento plano, tipo destornillador.",
+          "Su mecanismo evita el cierre accidental.",
+          "Baño / Alcoba",
+          "Para instalación en puertas de madera, el contenido de la humedad de la puerta no debe ser superior"
+        ],
+        "resumen_ficha": "Seguir las recomendaciones y secuencia de instalación según indica la bolsa de empaque de la",
+        "extractos_clave": [
+          "{'text': 'Cerradura Cilíndrica Accent', 'section': 'description'}",
+          "{'text': 'NOTA: Los acabados “Satín Níquel” y “Anticado” pueden presentar diferencia de tonos.', 'section': 'description'}"
+        ]
+      },
+      {
+        "familia_tecnica": "ACRILICA MANTENIMIENTO ES",
+        "fuente": "ACRILICA MANTENIMIENTO [ES].pdf",
+        "superficies_compatibles": [
+          "concreto",
+          "metal",
+          "piso",
+          "interior",
+          "exterior",
+          "madera"
+        ],
+        "superficies_restringidas": [],
+        "preguntas_diagnosticas_ficha": [
+          "¿La superficie está completamente seca y estable o todavía tiene humedad, sales o filtración activa?",
+          "¿El servicio real es interior, exterior o exposición directa a intemperie/UV?",
+          "¿El metal está oxidado, galvanizado, previamente pintado o ya fue preparado mecánicamente?",
+          "¿El concreto/mortero ya está curado y libre de polvo, lechada o desmoldantes?",
+          "¿La condición real del proyecto coincide exactamente con las restricciones de uso que declara la ficha?"
+        ],
+        "alertas_ficha": [
+          "La información contenida en esta hoja técnica no pretende ser exhaustiva; cualquier persona que utilice el producto para un propósito distinto al específicamente recomendado en esta hoja técnica,",
+          "realizadas sobre el producto (ya sea en esta hoja técnica o de otro modo) son correctos según nuestro leal saber y entender, pero no tenemos control sobre la calidad o el estado del sustrato ni",
+          "sobre los muchos factores que afectan el uso y la aplicación del producto. Por lo tanto, a menos que lo acordemos específicamente por escrito, no aceptamos responsabilidad alguna por el",
+          "desempeño del producto ni por (en la máxima medida permitida por la ley) cualquier pérdida o daño que surja del uso del producto. Por la presente, rechazamos cualquier garantía o declaración,"
+        ],
+        "resumen_ficha": "Ideal para proteger y decorar superficies de concreto y metal como pisos, realizar",
+        "extractos_clave": [
+          "{'text': 'Ideal para proteger y decorar superficies de concreto y metal como pisos, realizar', 'section': 'description'}",
+          "{'text': 'demarcación horizontal*, canchas, estanterías, pasamanos, transformadores,', 'section': 'description'}"
+        ]
+      }
+    ],
+    "senales_cliente_coloquiales": [
+      "la reja se me herrumbro",
+      "se lo esta comiendo el oxido",
+      "el porton sangra oxido",
+      "la baranda esta picada",
+      "se me pela como un plastico",
+      "el tubo escupe la pintura",
+      "la lamina esta herrumbrada",
+      "el soldador le echo pintura y se cayo",
+      "la estructura se esta descascarando",
+      "quiero salvar una reja muy oxidada",
+      "la pintura del zinc se levanto toda",
+      "el techo metalico se pela por placas",
+      "quiero pasar de esmalte a epoxico",
+      "la puerta de hierro esta comida",
+      "el tubo galvanizado no agarra pintura",
+      "la pintura se me arrugo en el metal",
+      "esa reja esta vuelta nada de oxido",
+      "quiero anticorrosivo para una reja vieja",
+      "la teja de zinc ya no aguanta mas sol",
+      "el pasamanos se me pica cada invierno",
+      "el piso se me pela con el trafico",
+      "la pintura del garaje no duro nada",
+      "quiero pintar el piso del local",
+      "el parqueadero se me gasta rapido",
+      "la cancha se me borro"
+    ]
   }
 ]

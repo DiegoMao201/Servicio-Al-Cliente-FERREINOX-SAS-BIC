@@ -38,7 +38,15 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 BATCH_EMBED_SIZE = 50
+MAX_EMBED_BATCH_ESTIMATED_TOKENS = 180000
 GUIDE_FILES_PATTERN = "guias_solucion_seccion_*.json"
+SERIALIZED_STANDARD_KEYS = {
+    "id", "titulo", "doc_type", "escenario", "palabras_clave_cliente",
+    "diagnostico", "sistema_recomendado", "productos_prohibidos",
+    "rendimientos_referencia", "alerta_metraje", "errores_comunes",
+    "nota_critica", "nota_importante", "nota_tecnica", "nota_especial",
+    "regla_critica", "nota_practica", "nota_calculo", "tabla_referencia",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -142,6 +150,37 @@ def _serialize_guide_to_text(guide: dict) -> str:
         for row in tabla:
             line_parts = [f"{k}: {v}" for k, v in row.items()]
             parts.append(f"  - {' | '.join(line_parts)}")
+
+    # Campos enriquecidos / futuros: serialización genérica para no perder
+    # contexto semántico nuevo agregado a las guías.
+    for key in sorted(guide.keys()):
+        if key in SERIALIZED_STANDARD_KEYS:
+            continue
+        value = guide.get(key)
+        if value in (None, "", [], {}):
+            continue
+        title = key.upper().replace("_", " ")
+        if isinstance(value, str):
+            parts.append(f"{title}: {value}")
+        elif isinstance(value, list):
+            parts.append(f"{title}:")
+            for item in value:
+                if isinstance(item, dict):
+                    line_parts = [f"{k}: {v}" for k, v in item.items() if v not in (None, "", [], {})]
+                    if line_parts:
+                        parts.append(f"  - {' | '.join(line_parts)}")
+                else:
+                    parts.append(f"  - {item}")
+        elif isinstance(value, dict):
+            parts.append(f"{title}:")
+            for sub_key, sub_val in value.items():
+                if sub_val in (None, "", [], {}):
+                    continue
+                if isinstance(sub_val, list):
+                    joined = " | ".join(str(item) for item in sub_val)
+                    parts.append(f"  - {sub_key}: {joined}")
+                else:
+                    parts.append(f"  - {sub_key}: {sub_val}")
 
     return "\n".join(parts)
 
@@ -256,9 +295,27 @@ def prepare_chunks(guides: list[dict]) -> list[dict]:
 def generate_embeddings_batch(client: OpenAI, texts: list[str]) -> list[list[float]]:
     """Genera embeddings en lotes."""
     all_embeddings = []
-    for i in range(0, len(texts), BATCH_EMBED_SIZE):
-        batch = texts[i:i + BATCH_EMBED_SIZE]
-        logger.info(f"  Embedding batch {i // BATCH_EMBED_SIZE + 1} ({len(batch)} textos)...")
+    batches: list[list[str]] = []
+    current_batch: list[str] = []
+    current_estimated_tokens = 0
+
+    for text_value in texts:
+        # Aproximación suficiente para evitar superar 300k tokens/request.
+        estimated_tokens = max(1, int(len(text_value.split()) * 1.35))
+        if current_batch and (
+            len(current_batch) >= BATCH_EMBED_SIZE
+            or current_estimated_tokens + estimated_tokens > MAX_EMBED_BATCH_ESTIMATED_TOKENS
+        ):
+            batches.append(current_batch)
+            current_batch = []
+            current_estimated_tokens = 0
+        current_batch.append(text_value)
+        current_estimated_tokens += estimated_tokens
+    if current_batch:
+        batches.append(current_batch)
+
+    for i, batch in enumerate(batches, start=1):
+        logger.info(f"  Embedding batch {i} ({len(batch)} textos)...")
         response = client.embeddings.create(
             model=EMBEDDING_MODEL,
             input=batch,
