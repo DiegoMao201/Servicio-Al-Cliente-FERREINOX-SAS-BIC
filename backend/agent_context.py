@@ -127,7 +127,7 @@ _PROBLEM_PROTOCOLS: dict[str, dict] = {
             "Remover pintura suelta, salitre y base dañada hasta sustrato sano.",
             "Si el revoque está malo, reemplazarlo antes del sistema nuevo.",
             "Aplicar Aquablock Ultra en 2 manos.",
-            "Aplicar Estuco Acrílico después del Aquablock.",
+            "Aplicar Estuco Profesional Exterior después del Aquablock.",
             "Cerrar con vinilo interior compatible; si el cliente pide economía, solo cambia el vinilo final.",
         ],
         "forbidden_shortcuts": [
@@ -147,7 +147,7 @@ _PROBLEM_PROTOCOLS: dict[str, dict] = {
         "required_system": [
             "Diagnosticar la causa.",
             "Definir si corresponde Aquablock/Sellamur como base técnica.",
-            "Nivelar con estuco acrílico cuando aplique.",
+            "Nivelar con Estuco Profesional Exterior cuando aplique.",
             "Cerrar con vinilo interior compatible.",
         ],
         "forbidden_shortcuts": [
@@ -1135,7 +1135,7 @@ def build_turn_context(
             lines.append("  1. Remover totalmente la pintura soplada/descascarada y el salitre hasta llegar a base sana.")
             lines.append("  2. Si el revoque está quemado o meteorizado, reemplazarlo antes del sistema nuevo (ej. Revofast o revoque acondicionado).")
             lines.append("  3. Aplicar Aquablock Ultra en 2 manos, preferiblemente con brocha para cargar bien el producto.")
-            lines.append("  4. Después del Aquablock, aplicar Estuco Acrílico para nivelar. NUNCA antes.")
+            lines.append("  4. Después del Aquablock, aplicar Estuco Profesional Exterior (en inventario: 'estuco prof ext blanco') para nivelar. NUNCA antes.")
             lines.append("  5. El acabado final debe ser un VINILO para interior. Prioriza Viniltex Advanced; si el cliente pide algo más económico, ofrece otra opción vinílica compatible, pero SIN cambiar la base Aquablock + Estuco.")
             lines.append("Prohibiciones absolutas para este caso:")
             lines.append("  • Koraza NO va como imprimante ni como acabado en muro interior con humedad/salitre.")

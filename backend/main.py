@@ -764,7 +764,7 @@ PORTFOLIO_ALIASES = {
     "thinner": ["thinner", "tinner", "diluyente", "disolvente", "solvente"],
     "varsol": ["varsol", "disolvente varsol"],
     "aguarras": ["aguarras", "aguarrás", "trementina"],
-    "estuco": ["estuco", "masilla", "estuco plastico", "estuco plástico"],
+    "estuco": ["estuco", "masilla", "estuco plastico", "estuco plástico", "estuco acrilico", "estuco acrílico", "estuco profesional", "estuco prof", "estuco exterior", "estuco ext", "estuco prof ext"],
     # ── BARNICES / LACAS / SD ──
     "barniz sd-1": ["barniz sd-1", "barniz sd1", "sd-1", "sd1", "barniz incoloro sd", "barniz br incoloro sd"],
     "barniz sd-2": ["barniz sd-2", "barniz sd2", "sd-2", "sd2"],
@@ -1576,7 +1576,7 @@ GLOBAL_TECHNICAL_POLICY_RULES = [
         "problem_classes": {"humedad_interior_capilaridad", "humedad_interior_general"},
         "priority": "high",
         "required_products": ["Aquablock"],
-        "forbidden_products": ["Koraza", "Pintuco Fill"],
+        "forbidden_products": ["Koraza", "Pintuco Fill", "Pintucoat", "Intergard", "Interseal"],
         "mandatory_steps": [
             "Retirar acabado soplado, salitre y base floja hasta sustrato sano antes del bloqueador.",
             "Bloquear la humedad primero y solo despues reconstruir el acabado decorativo.",
@@ -2209,7 +2209,7 @@ def _build_structured_technical_guide(question: str, product: str, diagnosis: di
             "Si el revoque está quemado o meteorizado, reemplazarlo antes del sistema nuevo.",
         ]
         guide["base_or_primer"] = ["Aquablock Ultra - 2 manos con brocha para cargar producto."]
-        guide["intermediate_steps"] = ["Estuco Acrílico después del Aquablock para nivelar. NUNCA antes."]
+        guide["intermediate_steps"] = ["Estuco Profesional Exterior (buscar: estuco prof ext blanco) después del Aquablock para nivelar. NUNCA antes."]
         guide["finish_options"] = [
             {"producto": "Viniltex Advanced", "rol": "acabado final", "nivel": "premium"},
             {"producto": "Intervinil", "rol": "acabado final", "nivel": "intermedio"},
@@ -2231,7 +2231,7 @@ def _build_structured_technical_guide(question: str, product: str, diagnosis: di
             "Remover base dañada y salitre donde aplique.",
         ]
         guide["base_or_primer"] = ["Aquablock / Aquablock Ultra según presión negativa y severidad."]
-        guide["intermediate_steps"] = ["Estuco Acrílico si se requiere nivelación después del bloqueador de humedad."]
+        guide["intermediate_steps"] = ["Estuco Profesional Exterior (buscar: estuco prof ext blanco) si se requiere nivelación después del bloqueador de humedad."]
         guide["finish_options"] = [
             {"producto": "Viniltex Advanced", "rol": "acabado final", "nivel": "premium"},
             {"producto": "Intervinil", "rol": "acabado final", "nivel": "intermedio"},
@@ -2891,6 +2891,10 @@ FERRETERIA_WORD_EXPANSIONS: list[tuple[str, str]] = [
     (r"\bsatinado\b", "acriltex"),
     (r"\bacabado\s+satinado\b", "acriltex"),
     (r"\bpintura\s+satinada\b", "acriltex"),
+    # ── Nombres comerciales → nombre ERP ──
+    (r"\bestuco\s+acr[ií]lico(?:\s+exterior)?\b", "estuco prof ext"),
+    (r"\bestuco\s+acrilico(?:\s+exterior)?\b", "estuco prof ext"),
+    (r"\bestuco\s+profesional(?:\s+ext(?:erior)?)?\b", "estuco prof ext"),
 ]
 
 # ── Bidirectional search-term variants ──────────────────────────────────────
@@ -2917,6 +2921,7 @@ _SEARCH_TERM_VARIANTS: dict[str, list[str]] = {
     "acrilico":    ["acril"],
     "anticorrosivo": ["anticorr", "anticorrosi"],
     "impermeabilizante": ["imperm", "impermeab"],
+    "estuco":     ["estuc", "prof ext"],
 }
 
 
@@ -13082,6 +13087,9 @@ def _derive_policy_inventory_candidate_terms(
             _append(str(value))
 
     for note in expert_notes or []:
+        note_score = note.get("_expert_score") or note.get("score") or 0
+        if note_score < 5.0:
+            continue  # Skip low-relevance expert notes to avoid product contamination
         for item in _split_policy_items(note.get("producto_recomendado")):
             if not _is_tool_policy_item(item):
                 _append(item)
@@ -17004,6 +17012,17 @@ def _handle_tool_consultar_inventario_lote(args, conversation_context):
             )
             product_request["nlu_processed"] = True  # Ensure it stays set
             rows = lookup_product_context(producto_text, product_request)
+            # ── Fallback: retry with just the brand/core term if combined search failed ──
+            if not rows:
+                core_terms = product_request.get("nlu_extraction", {}).get("marca") or product_request.get("brand") or ""
+                if not core_terms:
+                    # Try first word(s) as base name
+                    core_terms = " ".join(producto_text.split()[:2])
+                if core_terms and core_terms.lower() != producto_text.lower():
+                    fallback_request = extract_product_request(core_terms)
+                    fallback_request["nlu_processed"] = True
+                    fallback_request = apply_deterministic_product_alias_rules(core_terms, fallback_request)
+                    rows = lookup_product_context(core_terms, fallback_request)
             if not rows:
                 producto_key = producto_text.strip().lower()
                 if producto_key in PORTFOLIO_GAPS:
