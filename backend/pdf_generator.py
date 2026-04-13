@@ -405,22 +405,9 @@ def generate_commercial_pdf_v2(
     _draw_summary_card(154, summary_y, 46, "Total", _fmt_money(grand_total), accent=True)
 
     # ------------------------------------------------------------------
-    # RESUMEN ASESORIA / PEDIDO DEL CLIENTE
+    # After summary cards, move cursor for next section
     # ------------------------------------------------------------------
     pdf.set_xy(10, 132)
-    if resumen_asesoria:
-        pdf.set_font("Arial", "B", 11)
-        pdf.set_text_color(*Theme.PRIMARY_DARK)
-        section_title = "Pedido del Cliente" if request_type in {"pedido", "cotizacion"} else "Resumen de la Asesoria"
-        pdf.cell(0, 6, _safe(section_title), 0, 1)
-        _draw_separator(pdf)
-        lines = [l.strip(" -*\t") for l in resumen_asesoria.splitlines() if l.strip()]
-        pdf.set_font("Arial", "", 8.5)
-        pdf.set_text_color(*Theme.TEXT_MAIN)
-        for line in lines:
-            _ensure_space(pdf, 6)
-            pdf.cell(0, 4.8, _safe(f"  - {line}"), 0, 1)
-        pdf.ln(3)
 
     # ------------------------------------------------------------------
     # JUSTIFICACION COMERCIAL (green box)

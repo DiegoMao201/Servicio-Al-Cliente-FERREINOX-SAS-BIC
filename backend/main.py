@@ -5590,7 +5590,7 @@ def run_background_io(task_name: str, target, *args, **kwargs):
 
 _PROCESSING_WATCHDOGS: dict[str, dict] = {}
 _PROCESSING_WATCHDOG_LOCK = threading.Lock()
-PROCESSING_FOLLOWUP_SECONDS = int(os.getenv("WA_PROCESSING_FOLLOWUP_SECONDS", "120"))
+PROCESSING_FOLLOWUP_SECONDS = int(os.getenv("WA_PROCESSING_FOLLOWUP_SECONDS", "90"))
 
 
 def _send_processing_status_message(context: dict, body: str, status_tag: str):
@@ -5617,7 +5617,10 @@ def _send_processing_status_message(context: dict, body: str, status_tag: str):
 
 
 def should_send_processing_ack(content: Optional[str], conversation_context: Optional[dict]) -> bool:
-    normalized = normalize_text_value(content or "")
+    raw = content or ""
+    if is_simple_greeting(raw) or detect_farewell(raw):
+        return False
+    normalized = normalize_text_value(raw)
     draft = dict((conversation_context or {}).get("commercial_draft") or {})
     draft_has_items = bool(draft.get("items"))
     active_intent = normalize_text_value(
