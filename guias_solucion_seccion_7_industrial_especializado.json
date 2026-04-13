@@ -1,0 +1,361 @@
+[
+  {
+    "id": "GS-IND-001",
+    "titulo": "Guía de Solución: Alta Temperatura (chimeneas, hornos, tuberías de vapor)",
+    "doc_type": "guia_solucion",
+    "escenario": "alta_temperatura",
+    "palabras_clave_cliente": [
+      "pintura alta temperatura",
+      "altas temperaturas",
+      "pintar chimenea",
+      "pintar horno",
+      "tubo de escape",
+      "tubería caliente",
+      "tubería de vapor",
+      "resistente al calor",
+      "pintura para calor",
+      "superficie caliente",
+      "caldero",
+      "pintura 200 grados",
+      "pintura 300 grados",
+      "pintura 400 grados",
+      "pintura resistente a temperatura",
+      "chimenea industrial",
+      "exhosto"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Superficies metálicas que operan a temperaturas elevadas (200-900°C). La pintura convencional se quema y carboniza. Requiere pintura de Altas Temperaturas específica con resina de silicona.",
+      "preguntas_obligatorias": [
+        "¿Cuál es la temperatura máxima de operación de la superficie?",
+        "¿Es metal (acero, hierro fundido) u otro material?",
+        "¿Interior o exterior?",
+        "¿Color? (disponibles: negro, aluminio en la mayoría de rangos)",
+        "¿Cuántos m² o metros lineales?"
+      ]
+    },
+    "sistema_recomendado": {
+      "rangos_temperatura": [
+        {
+          "rango": "Hasta 200°C",
+          "producto": "Pintulux 3en1 convencional",
+          "nota": "El esmalte alquídico resiste hasta ~200°C sin degradación significativa."
+        },
+        {
+          "rango": "200-750°C",
+          "producto": "Altas Temperaturas Pintuco ref 901 (UEA750)",
+          "nota": "Pintura de silicona. Colores limitados. Para chimeneas domésticas, estufas, tuberías."
+        },
+        {
+          "rango": "200-800°C",
+          "producto": "Altas Temperaturas Pintuco ref 902 (UEA800)",
+          "nota": "Mayor rango de temperatura."
+        },
+        {
+          "rango": "200-850°C",
+          "producto": "Altas Temperaturas Pintuco ref 904 (UEA850)",
+          "nota": "Para aplicaciones industriales de mayor exigencia."
+        },
+        {
+          "rango": "200-900°C",
+          "producto": "Altas Temperaturas Pintuco ref 905 (UEA900)",
+          "nota": "Máxima resistencia térmica. Para calderas, hornos industriales, chimeneas industriales."
+        }
+      ],
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Limpiar con solvente para remover grasa y aceite. Lijar con grata o disco flap hasta metal limpio.",
+          "herramientas": ["Solvente desengrasante", "Grata", "Disco flap", "Lija Abracol grano 80"],
+          "nota_tecnica": "La preparación para alta temperatura es la misma que para metal: limpieza absoluta y perfil de agarre. NO aplicar sobre óxido."
+        },
+        {
+          "paso": 2,
+          "accion": "APLICACIÓN: 2 manos de Altas Temperaturas según el rango de temperatura requerido. Se puede aplicar con brocha, rodillo o pistola.",
+          "herramientas": ["Brocha Goya Profesional", "Pistola de aspersión"],
+          "nota_tecnica": "Las pinturas de alta temperatura tienen un curado especial: alcanzan máxima dureza con el primer encendido del equipo (curado por calor). Dejar secar al aire 24h antes de encender. El primer encendido debe ser gradual."
+        }
+      ],
+      "presentacion_aerosol": {
+        "producto": "Altas Temperaturas Negro en aerosol (400cc)",
+        "nota": "Para retoques y piezas pequeñas existe la presentación en aerosol. Para superficies grandes usar presentación en galón (3.7L)."
+      }
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Corrotec / Pintulux como base de alta temperatura",
+        "razon": "Los anticorrosivos y esmaltes convencionales se carbonizan por encima de 200°C. NO pueden sustituir la pintura de Altas Temperaturas."
+      },
+      {
+        "producto": "Interseal / Interthane en superficies calientes",
+        "razon": "Los epóxicos y poliuretanos no resisten temperaturas elevadas."
+      }
+    ],
+    "alerta_color": "Preguntar color. Los colores disponibles en alta temperatura son limitados (generalmente negro, aluminio, y algunos colores oscuros según referencia)."
+  },
+  {
+    "id": "GS-IND-002",
+    "titulo": "Guía de Solución: Protección Intumescente Contra Incendio (Interchar)",
+    "doc_type": "guia_solucion",
+    "escenario": "intumescente_fuego",
+    "palabras_clave_cliente": [
+      "intumescente",
+      "interchar",
+      "protección contra fuego",
+      "pintura ignífuga",
+      "resistencia al fuego",
+      "protección pasiva contra incendio",
+      "norma fuego estructura",
+      "retardante de fuego",
+      "pintura contra fuego",
+      "estructura resistente al fuego",
+      "pintura protección fuego",
+      "NSR 10 fuego",
+      "protección pasiva"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Estructura metálica que debe cumplir norma de resistencia al fuego (NSR-10 en Colombia). La pintura intumescente se expande con el calor formando una capa aislante que protege el metal. Ferreinox maneja la línea Interchar.",
+      "preguntas_obligatorias": [
+        "¿Cuántas horas de resistencia al fuego necesita? (30, 60, 90, 120 minutos)",
+        "¿Tipo de estructura: columnas, vigas, cerchas?",
+        "¿Perfil del acero: tipo H, I, tubular?",
+        "¿Factor de masividad (Hp/A)?",
+        "¿Interior o exterior?",
+        "¿Cuántos m²?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Limpieza y preparación del acero según norma SSPC-SP6 mínimo. Grata/sandblast hasta metal limpio.",
+          "nota_tecnica": "La preparación de superficie para intumescente es CRÍTICA — la adherencia del sistema completo depende de ella."
+        },
+        {
+          "paso": 2,
+          "accion": "IMPRIMANTE COMPATIBLE: Aplicar imprimante aprobado para uso bajo intumescente (coordinar con ficha técnica Interchar).",
+          "nota_tecnica": "NO cualquier imprimante es compatible con el sistema intumescente. Consultar ficha de compatibilidad Interchar."
+        },
+        {
+          "paso": 3,
+          "accion": "APLICACIÓN INTERCHAR: Aplicar espesor calculado según factor de masividad y tiempo de resistencia requerido. Generalmente requiere múltiples capas.",
+          "producto": "Interchar",
+          "nota_tecnica": "El espesor de película seca (EPS) se calcula con tablas del fabricante basadas en: tipo de perfil + factor Hp/A + tiempo de resistencia requerido. NUNCA estimar — calcularlo."
+        },
+        {
+          "paso": 4,
+          "accion": "ACABADO DE PROTECCIÓN (exterior): Si la estructura está al exterior, aplicar acabado de protección sobre el intumescente para evitar degradación por agua/UV.",
+          "nota_tecnica": "El intumescente sin protección en exterior se degrada con agua. Coordinar acabado compatible."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Pintulux / Koraza como sustituto de intumescente",
+        "razon": "NINGUNA pintura convencional reemplaza al sistema intumescente. La protección contra fuego es una especialidad con certificaciones."
+      }
+    ],
+    "alerta_especial": "Los sistemas intumescentes son proyectos especializados. Ferreinox puede cotizar el producto pero se recomienda que la especificación técnica (cálculo de espesores) sea hecha por un profesional certificado.",
+    "alerta_cotizacion": "Pedir factor de masividad (Hp/A) y tiempo de resistencia para calcular consumo. Sin esto es imposible cotizar correctamente."
+  },
+  {
+    "id": "GS-IND-003",
+    "titulo": "Guía de Solución: Tubería Industrial y de Proceso",
+    "doc_type": "guia_solucion",
+    "escenario": "tuberia_industrial",
+    "palabras_clave_cliente": [
+      "pintar tubería",
+      "tubería industrial",
+      "pintar tubo de agua",
+      "pintar tubo de gas",
+      "piping",
+      "tubería de proceso",
+      "pintar tubería de vapor",
+      "código de colores tubería",
+      "pintura para tuberías",
+      "tubo galvanizado",
+      "tubo de acero",
+      "tubería exterior",
+      "tubo PVC pintar"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Tuberías de proceso, agua, gas o vapor en ambientes industriales. El sistema depende del material del tubo (acero, galvanizado, PVC), temperatura de operación y ambiente (interior/exterior/químico).",
+      "preguntas_obligatorias": [
+        "¿De qué material es la tubería? (acero carbono, galvanizado, PVC, cobre)",
+        "¿Qué fluido transporta? (agua, gas, vapor, químicos)",
+        "¿Temperatura de operación?",
+        "¿Interior o exterior?",
+        "¿Requiere código de colores norma colombiana?",
+        "¿Diámetro y metros lineales?"
+      ]
+    },
+    "sistema_recomendado": {
+      "tuberia_acero_carbono": {
+        "descripcion": "Tubería de acero carbono (negro) — sin galvanizar",
+        "sistema_basico": "Corrotec Premium (anticorrosivo) + Pintulux 3en1 (acabado)",
+        "sistema_industrial": "Interseal 670HS (imprimante) + Interthane 990 (acabado poliuretano)",
+        "nota": "Para temperatura normal (<100°C). Si opera a >200°C, usar Altas Temperaturas (GS-IND-001)."
+      },
+      "tuberia_galvanizada": {
+        "descripcion": "Tubo galvanizado",
+        "sistema": "Wash Primer (obligatorio) + Corrotec (anticorrosivo) + Pintulux 3en1 (acabado)",
+        "nota": "Sin Wash Primer, la pintura se despega del galvanizado."
+      },
+      "tuberia_pvc": {
+        "descripcion": "Tubo PVC",
+        "nota": "El PVC generalmente no se pinta. Si es necesario por estética o código de colores, lijar suavemente con grano 220 y aplicar pintura acrílica en aerosol o esmalte sintético. La adherencia en PVC es limitada.",
+        "advertencia": "Informar al cliente que la pintura sobre PVC tiene adherencia limitada y puede requerir retoques periódicos."
+      },
+      "codigo_colores": {
+        "tabla": {
+          "Agua potable": "Verde",
+          "Vapor": "Gris plata",
+          "Gas natural": "Amarillo",
+          "Combustible (ACPM, fuel oil)": "Café/marrón",
+          "Aire comprimido": "Azul",
+          "Aguas residuales": "Negro",
+          "Agentes extintores": "Rojo",
+          "Químicos/ácidos": "Naranja"
+        },
+        "nota": "El código de colores de tuberías es norma NTC 3458 en Colombia. Preguntar al cliente si tiene requerimiento específico."
+      }
+    }
+  },
+  {
+    "id": "GS-IND-004",
+    "titulo": "Guía de Solución: Breas Epóxicas (protección pesada antifouling/inmersión)",
+    "doc_type": "guia_solucion",
+    "escenario": "breas_epoxicas",
+    "palabras_clave_cliente": [
+      "brea epóxica",
+      "coal tar epoxy",
+      "alquitrán epóxico",
+      "brea monocomponente",
+      "protección subterránea",
+      "tubería enterrada",
+      "pilote sumergido",
+      "recubrimiento anti humedad enterrado",
+      "protección pesada",
+      "anticorrosivo para entierro",
+      "pilotes",
+      "tanque enterrado"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Protección anticorrosiva de alta resistencia para superficies enterradas, sumergidas o en contacto permanente con agua/suelo. Las breas epóxicas forman una barrera impermeable extrema.",
+      "preguntas_obligatorias": [
+        "¿Qué se va a proteger: tubería enterrada, pilote, tanque, estructura sumergida?",
+        "¿Es acero o concreto?",
+        "¿Cuántos m²?",
+        "¿Se necesita resistencia química específica?"
+      ]
+    },
+    "sistema_recomendado": {
+      "brea_bicomponente": {
+        "producto": "Breas Epóxicas bicomponentes",
+        "uso": "Máxima protección. Para tuberías enterradas, pilotes de concreto/acero, tanques."
+      },
+      "brea_monocomponente": {
+        "producto": "Brea Monocomponente",
+        "uso": "Menor exigencia. Más fácil de aplicar (1 componente). Para protección general."
+      },
+      "pasos": [
+        {"paso": 1, "accion": "PREPARACIÓN: Limpieza total del sustrato. En metal: grata/sandblast. En concreto: limpieza mecánica."},
+        {"paso": 2, "accion": "IMPRIMANTE: Según sustrato (Interseal para metal, Interseal Gris para concreto)."},
+        {"paso": 3, "accion": "BREA EPÓXICA: 2-3 manos según espesor requerido.", "nota_tecnica": "Las breas forman película gruesa. Respetar espesores de ficha técnica."}
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Corrotec / Pintulux para enterramiento",
+        "razon": "Los alquídicos no resisten contacto permanente con suelo húmedo. Para enterramiento se requiere brea epóxica."
+      }
+    ],
+    "alerta_especial": "Los proyectos de protección enterrada son especializados. Verificar si se requiere tela de refuerzo o revestimiento adicional."
+  },
+  {
+    "id": "GS-IND-005",
+    "titulo": "Guía de Solución: Antigraffiti (protección preventiva de fachadas)",
+    "doc_type": "guia_solucion",
+    "escenario": "antigraffiti",
+    "palabras_clave_cliente": [
+      "antigraffiti",
+      "anti graffiti",
+      "protección contra graffiti",
+      "proteger fachada de graffiti",
+      "fachada vandalismo",
+      "recubrimiento protector graffiti",
+      "quitar graffiti",
+      "la fachada la pintaron con graffiti"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Protección preventiva contra graffiti o remediación de graffiti existente. El recubrimiento antigraffiti permite limpiar el graffiti con agua/solvente sin dañar la pintura base.",
+      "preguntas_obligatorias": [
+        "¿Quiere prevenir graffiti futuro o limpiar graffiti existente?",
+        "¿Sobre qué superficie: fachada pintada, ladrillo, concreto?",
+        "¿Ya tiene acabado (Koraza, Viniltex, textura)?",
+        "¿Cuántos m²?"
+      ]
+    },
+    "sistema_recomendado": {
+      "preventivo": {
+        "pasos": [
+          {"paso": 1, "accion": "Asegurar que la superficie esté pintada con su acabado final (Koraza, textura, etc.)."},
+          {"paso": 2, "accion": "Aplicar recubrimiento Antigraffiti Pintuco sobre el acabado curado.", "producto": "Antigraffiti Pintuco", "nota_tecnica": "El antigraffiti crea una capa sacrificial o permanente (según tipo) que impide que la pintura del graffiti penetre. Se limpia con agua a presión o solvente suave."}
+        ]
+      },
+      "remediacion": {
+        "pasos": [
+          {"paso": 1, "accion": "Limpiar graffiti con solvente adecuado según tipo de pintura del graffiti."},
+          {"paso": 2, "accion": "Si dañó la base, repintar con el acabado original."},
+          {"paso": 3, "accion": "Aplicar Antigraffiti para prevenir futuros episodios."}
+        ]
+      }
+    }
+  },
+  {
+    "id": "GS-IND-006",
+    "titulo": "Guía de Solución: Recubrimiento Epóxico para Alimentos (NSF / grado alimenticio)",
+    "doc_type": "guia_solucion",
+    "escenario": "grado_alimenticio",
+    "palabras_clave_cliente": [
+      "pintura grado alimenticio",
+      "pintura para planta de alimentos",
+      "NSF",
+      "epóxico para alimentos",
+      "recubrimiento sanitario",
+      "planta procesadora alimentos",
+      "norma alimentos pintura",
+      "pintura INVIMA",
+      "piso planta alimentos",
+      "muro planta alimentos",
+      "pintura lavable industrial",
+      "ambiente sanitario"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Plantas de procesamiento de alimentos, cocinas industriales, áreas refrigeradas que requieren recubrimientos lavables con certificación sanitaria. Ferreinox maneja Epoxipoliamida con certificación NSF.",
+      "preguntas_obligatorias": [
+        "¿Es piso, muro o cielo raso?",
+        "¿Requiere certificación NSF/INVIMA?",
+        "¿Hay exposición a químicos de limpieza (cloro, detergentes)?",
+        "¿Rango de temperatura del ambiente (refrigerado, ambiente, caliente)?",
+        "¿Cuántos m²?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {"paso": 1, "accion": "PREPARACIÓN: Superficie limpia, seca, sin grasa. Muros: sellador + estuco epóxico si hay imperfecciones. Pisos: Interseal Gris."},
+        {"paso": 2, "accion": "ACABADO SANITARIO: Aplicar recubrimiento epóxico NSF certificado según especificación.", "producto": "Epoxipoliamida NSF (consultar referencia específica)", "nota_tecnica": "Los recubrimientos para plantas de alimentos deben tener certificación NSF o equivalente. NO cualquier epóxico sirve — debe ser la formulación aprobada para contacto incidental con alimentos."}
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Viniltex / Koraza en plantas de alimentos",
+        "razon": "Las pinturas decorativas no tienen la resistencia química ni la certificación sanitaria requerida."
+      },
+      {
+        "producto": "Pintucoat genérico para pisos de alimentos",
+        "razon": "El Pintucoat estándar no tiene certificación NSF. Usar la formulación específica para alimentos."
+      }
+    ],
+    "alerta_especial": "Proyectos de plantas de alimentos suelen requerir ficha técnica con certificación específica. Coordinar con asesor técnico para confirmar referencia con certificación NSF."
+  }
+]

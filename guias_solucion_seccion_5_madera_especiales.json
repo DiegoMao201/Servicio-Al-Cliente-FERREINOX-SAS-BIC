@@ -1,0 +1,544 @@
+[
+  {
+    "id": "GS-MAD-001",
+    "titulo": "Guía de Solución: Protocolo Diagnóstico Madera (PROHIBIDO recomendar en primer mensaje)",
+    "doc_type": "guia_solucion",
+    "escenario": "diagnostico_madera",
+    "palabras_clave_cliente": [
+      "pintar madera",
+      "pintura para madera",
+      "barnizar madera",
+      "madera exterior",
+      "madera interior",
+      "puerta de madera",
+      "mueble de madera",
+      "deck de madera",
+      "pasamanos de madera",
+      "piso de madera",
+      "madera vieja",
+      "renovar madera",
+      "restaurar madera",
+      "proteger madera",
+      "madera sin pintar",
+      "madera con barniz viejo",
+      "pintar closet",
+      "pintar cocina de madera"
+    ],
+    "diagnostico": {
+      "tipo_problema": "La madera es un sustrato complejo. PROHIBIDO recomendar producto en el primer mensaje. Se debe diagnosticar completamente antes de sugerir.",
+      "preguntas_obligatorias": [
+        "1. ¿La madera es NUEVA (sin ningún acabado) o ya tiene barniz/pintura vieja?",
+        "2. ¿Es uso INTERIOR o EXTERIOR?",
+        "3. ¿Quiere acabado NATURAL (que se vea la veta) o COLOR SÓLIDO (que tape la madera)?",
+        "4. ¿Si es natural, quiere acabado MATE o BRILLANTE?",
+        "5. ¿Qué tipo de madera? (pino, cedro, triplex, MDF, etc.)",
+        "6. ¿Es piso de madera, mueble, puerta, deck exterior?"
+      ],
+      "arbol_decision": {
+        "acabado_natural_interior": "→ Barnex / Wood Stain (GS-MAD-003)",
+        "acabado_natural_exterior": "→ Barnex UV / Wood Stain Exterior (GS-MAD-004)",
+        "color_solido_interior": "→ Doméstico / Pintulux Máxima Protección (GS-MAD-005)",
+        "color_solido_exterior": "→ Doméstico / Pintulux MP (GS-MAD-005)",
+        "piso_madera": "→ Poliuretano Alto Tráfico 1550/1551 (GS-MAD-006)",
+        "madera_vieja_con_barniz": "→ Primero preparación completa (GS-MAD-002)"
+      }
+    },
+    "regla_critica": "PROHIBIDO recomendar cualquier producto de madera antes de tener las 6 respuestas. La madera requiere diagnóstico completo."
+  },
+  {
+    "id": "GS-MAD-002",
+    "titulo": "Guía de Solución: Preparación de Madera Vieja (remoción de acabado anterior)",
+    "doc_type": "guia_solucion",
+    "escenario": "preparacion_madera_vieja",
+    "palabras_clave_cliente": [
+      "quitar barniz viejo",
+      "remover pintura de madera",
+      "madera con barniz viejo",
+      "madera descascarada",
+      "madera pelada",
+      "restaurar madera vieja",
+      "lijar madera",
+      "cómo preparar madera",
+      "madera con laca vieja",
+      "quitar laca de la madera"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Madera con acabado viejo (barniz, laca, pintura). Se debe remover completamente antes de aplicar nuevo acabado. NO se puede aplicar barniz sobre barniz viejo deteriorado.",
+      "preguntas_obligatorias": [
+        "¿Qué acabado tiene actualmente (barniz, laca, pintura, sellador)?",
+        "¿Está descascarado o todavía firme?",
+        "¿Es madera maciza o enchapado/MDF?",
+        "¿Interior o exterior?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "REMOCIÓN QUÍMICA: Aplicar Removedor Pintuco sobre toda la superficie con acabado viejo. Dejar actuar 15-30 minutos hasta que la pintura/barniz se ampolla.",
+          "producto": "Removedor Pintuco",
+          "herramientas": ["Brocha vieja", "Espátula plástica"],
+          "nota_tecnica": "El Removedor Pintuco ablanda el acabado viejo para removerlo fácilmente. Usar en área ventilada."
+        },
+        {
+          "paso": 2,
+          "accion": "REMOCIÓN MECÁNICA: Raspar con espátula o cuchilla. Limpiar residuos.",
+          "herramientas": ["Espátula", "Cuchilla"]
+        },
+        {
+          "paso": 3,
+          "accion": "LIJADO GRUESO: Lija Abracol grano 80 para remover residuos del acabado viejo y emparejar la superficie.",
+          "herramientas": ["Lija Abracol grano 80"],
+          "nota_tecnica": "El grano 80 es para remoción inicial. SIEMPRE seguir con grano fino después."
+        },
+        {
+          "paso": 4,
+          "accion": "LIJADO FINO: Lija Abracol grano 150-220 para dejar la madera suave y lista para el nuevo acabado.",
+          "herramientas": ["Lija Abracol grano 150", "Lija Abracol grano 220"],
+          "nota_tecnica": "El lijado fino es fundamental para acabados de madera. Sin lijado fino, el barniz queda con textura rugosa."
+        },
+        {
+          "paso": 5,
+          "accion": "LIMPIEZA: Remover TODO el polvo de lijado con trapo húmedo. La madera debe quedar limpia y seca antes de aplicar cualquier producto.",
+          "herramientas": ["Trapo húmedo", "Aspiradora"]
+        }
+      ],
+      "sustitucion_lijas": "Si no hay grano específico: grano 60 sustituye al 80 (más agresivo). Grano 120 sustituye al 150. Grano 180 sustituye al 220."
+    },
+    "herramientas_siempre_incluir": [
+      {"producto": "Removedor Pintuco", "uso": "Remoción química del acabado viejo"},
+      {"producto": "Lija Abracol grano 80", "uso": "Remoción mecánica / lijado grueso"},
+      {"producto": "Lija Abracol grano 150-220", "uso": "Lijado fino"},
+      {"producto": "Espátula", "uso": "Raspar acabado ablandado"},
+      {"producto": "Brocha Goya Profesional", "uso": "Aplicar Removedor y luego el acabado"}
+    ]
+  },
+  {
+    "id": "GS-MAD-003",
+    "titulo": "Guía de Solución: Madera Interior Acabado Natural (Barnex / Wood Stain)",
+    "doc_type": "guia_solucion",
+    "escenario": "madera_interior_natural",
+    "palabras_clave_cliente": [
+      "barnizar madera interior",
+      "barniz para puerta",
+      "barniz para mueble",
+      "barniz para madera",
+      "madera natural interior",
+      "ver la veta de la madera",
+      "acabado natural madera",
+      "Wood Stain",
+      "Barnex",
+      "barniz mate",
+      "barniz brillante",
+      "proteger madera sin tapar"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Madera interior donde se quiere conservar la apariencia natural (veta visible). Preguntar SIEMPRE si quiere mate o brillante.",
+      "preguntas_obligatorias": [
+        "¿Mate o brillante?",
+        "¿Color natural de la madera o tono oscurecido (caoba, nogal, etc.)?",
+        "¿Madera nueva o con acabado viejo?",
+        "¿Cuántos m² o cuántas puertas/muebles?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Si es madera nueva: lijar con grano 150-220 y limpiar polvo. Si tiene acabado viejo: seguir GS-MAD-002.",
+          "herramientas": ["Lija Abracol grano 150-220"]
+        },
+        {
+          "paso": 2,
+          "accion": "ACABADO NATURAL: Aplicar Barnex (brillante o mate según preferencia) O Wood Stain (si se quiere teñir con tono). Aplicar 2-3 manos con lijado suave entre manos.",
+          "producto": "Barnex (mate o brillante) / Wood Stain (si quiere tono)",
+          "herramientas": ["Brocha Goya Profesional"],
+          "nota_tecnica": "La Brocha Goya Profesional es OBLIGATORIA para madera — no usar brocha económica que suelta pelo y arruina el acabado. El Wood Stain tiñe la madera con color (caoba, nogal, ébano) manteniendo la veta visible. El Barnex es transparente (no cambia color)."
+        },
+        {
+          "paso": 3,
+          "accion": "ENTRE MANOS: Lijar suavemente con grano 320 o lana de acero entre cada mano. Limpiar polvo.",
+          "herramientas": ["Lija Abracol grano 320 o lana de acero"],
+          "nota_tecnica": "El lijado entre manos elimina el poro levantado y deja acabado sedoso."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Sellador para madera ANTES de Barnex o Wood Stain",
+        "razon": "NUNCA aplicar sellador antes de Barnex o Wood Stain. El sellador sella los poros y el Wood Stain/Barnex no penetra correctamente. El sellador es para ANTES de lacas, no antes de barnices."
+      },
+      {
+        "producto": "Viniltex / pintura de agua sobre madera",
+        "razon": "Las pinturas acrílicas de muro no tienen adherencia ni durabilidad sobre madera."
+      }
+    ],
+    "regla_sellador": "REGLA DEL SELLADOR: Sellador se usa ANTES de lacas (Laca Piroxilina). NUNCA antes de Barnex o Wood Stain. El sellador impide la penetración del barniz.",
+    "alerta_brocha": "Brocha Goya Profesional OBLIGATORIA. Brocha popular suelta pelo y arruina el acabado de la madera."
+  },
+  {
+    "id": "GS-MAD-004",
+    "titulo": "Guía de Solución: Madera Exterior (Barnex UV / Wood Stain Exterior)",
+    "doc_type": "guia_solucion",
+    "escenario": "madera_exterior",
+    "palabras_clave_cliente": [
+      "madera exterior",
+      "deck de madera",
+      "puerta exterior madera",
+      "madera al sol",
+      "pérgola de madera",
+      "baranda de madera exterior",
+      "madera a la intemperie",
+      "proteger madera del sol",
+      "madera balcón",
+      "portón de madera"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Madera expuesta al sol y lluvia. Requiere productos con protección UV. La madera exterior se degrada más rápido — planear mantenimiento periódico.",
+      "preguntas_obligatorias": [
+        "¿Exposición directa al sol o parcialmente protegida?",
+        "¿Tipo de madera?",
+        "¿Es piso (deck) o estructura vertical (pérgola, puerta)?",
+        "¿Madera nueva o con acabado viejo?",
+        "¿Mate o brillante?",
+        "¿Cuántos m²?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Si es nueva: lijar grano 120-150. Si tiene acabado viejo: seguir GS-MAD-002.",
+          "herramientas": ["Lija Abracol grano 120-150"]
+        },
+        {
+          "paso": 2,
+          "accion": "ACABADO EXTERIOR: Aplicar Wood Stain Exterior o Barnex con protección UV. 3 manos mínimo para exterior.",
+          "producto": "Wood Stain Exterior / Barnex UV",
+          "herramientas": ["Brocha Goya Profesional"],
+          "nota_tecnica": "Para madera exterior: 3 manos mínimo (una más que interior). El mantenimiento se recomienda cada 1-2 años dependiendo de la exposición solar."
+        }
+      ],
+      "caso_deck_piso": {
+        "producto_alternativo": "Poliuretano Alto Tráfico 1550 o 1551",
+        "nota": "Si la madera exterior es un PISO (deck), considerar el Poliuretano Alto Tráfico como alternativa más resistente al desgaste peatonal. Ver GS-MAD-006."
+      }
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Sellador antes de Barnex/Wood Stain",
+        "razon": "Misma regla que interior: el sellador impide la penetración del barniz."
+      }
+    ],
+    "regla_mantenimiento": "INFORMAR al cliente: la madera exterior requiere mantenimiento periódico (1-2 años). No es 'aplicar y olvidar'."
+  },
+  {
+    "id": "GS-MAD-005",
+    "titulo": "Guía de Solución: Madera Color Sólido (Doméstico / Pintulux MP)",
+    "doc_type": "guia_solucion",
+    "escenario": "madera_color_solido",
+    "palabras_clave_cliente": [
+      "pintar madera de color",
+      "pintar mueble de color",
+      "pintar puerta blanca",
+      "esmalte para madera",
+      "madera color sólido",
+      "pintar closet de color",
+      "pintar cocina integral",
+      "pintar mueble de cocina",
+      "cubrir veta de madera",
+      "madera pintada de blanco",
+      "madera pintada de color"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Madera donde se quiere un color sólido que tape la veta. Se usa esmalte (Doméstico o Pintulux MP), no barniz. SIEMPRE preguntar el color y si quiere mate o brillante.",
+      "preguntas_obligatorias": [
+        "¿Qué color desea?",
+        "¿Acabado mate, satinado o brillante?",
+        "¿Es interior o exterior?",
+        "¿Madera nueva o ya pintada?",
+        "¿Cuántos m² o cuántas piezas?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Si es madera nueva: lijar grano 150-220 y limpiar. Si tiene acabado viejo: seguir GS-MAD-002.",
+          "herramientas": ["Lija Abracol grano 150-220"]
+        },
+        {
+          "paso": 2,
+          "accion": "IMPRIMANTE/SELLADOR: Aplicar sellador para madera si la madera es muy porosa o tiene nudos.",
+          "producto": "Sellador para Madera (Pintuco)",
+          "nota_tecnica": "Para color sólido SÍ se usa sellador — sella poros y da base uniforme para el esmalte.",
+          "condicional": true,
+          "condicion": "Si la madera es porosa, tiene nudos, o es MDF/triplex"
+        },
+        {
+          "paso": 3,
+          "accion": "ACABADO COLOR SÓLIDO: Aplicar 2-3 manos de Doméstico (brillante) o Pintulux Máxima Protección (mate/satinado/brillante).",
+          "producto": "Doméstico (brillante) / Pintulux Máxima Protección (varios acabados)",
+          "herramientas": ["Brocha Goya Profesional", "Mini rodillo de espuma (para superficies grandes planas)"],
+          "nota_tecnica": "Doméstico: esmalte brillante tradicional, económico. Pintulux Máxima Protección: más durable, disponible en mate, satinado y brillante."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Viniltex sobre madera",
+        "razon": "Viniltex es pintura de agua para muros. No tiene dureza ni adherencia sobre madera."
+      },
+      {
+        "producto": "Barnex / Wood Stain",
+        "razon": "El barniz es para acabado natural. Si el cliente quiere color sólido, usar esmalte."
+      }
+    ],
+    "alerta_color": "SIEMPRE preguntar color ANTES de cotizar. Los esmaltes vienen en bases que se tinturan."
+  },
+  {
+    "id": "GS-MAD-006",
+    "titulo": "Guía de Solución: Piso de Madera / Vitrificado (Poliuretano Alto Tráfico)",
+    "doc_type": "guia_solucion",
+    "escenario": "piso_madera_vitrificado",
+    "palabras_clave_cliente": [
+      "vitrificar piso",
+      "vitrificar madera",
+      "piso de madera",
+      "piso madera",
+      "poliuretano piso",
+      "poliuretano para pisos de madera",
+      "proteger piso de madera",
+      "piso parquet",
+      "renovar piso de madera",
+      "piso de tabla",
+      "piso machihembrado"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Piso de madera que necesita protección contra tráfico peatonal. Requiere Poliuretano Alto Tráfico — ni barniz ni esmalte sirven para pisos.",
+      "preguntas_obligatorias": [
+        "¿El piso es nuevo o tiene vitrificado/barniz viejo?",
+        "¿Qué tipo de tráfico? (residencial, oficina, comercial)",
+        "¿Acabado mate (ref 1551) o brillante (ref 1550)?",
+        "¿Cuántos m²?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Pulir/ciclar el piso completo con pulidora de pisos. Empezar con lija gruesa (60-80), luego media (120), luego fina (150-220).",
+          "herramientas": ["Pulidora de pisos", "Lija Abracol grano 60, 120, 150-220"],
+          "nota_tecnica": "Si tiene vitrificado viejo: se debe pulir/ciclar todo hasta madera limpia. No aplicar poliuretano sobre poliuretano viejo deteriorado."
+        },
+        {
+          "paso": 2,
+          "accion": "LIMPIEZA: Aspirar y trapear con trapo húmedo. NO usar agua en exceso — la madera absorbe y se hincha.",
+          "herramientas": ["Aspiradora", "Trapo húmedo"]
+        },
+        {
+          "paso": 3,
+          "accion": "APLICACIÓN: 3 manos de Poliuretano Alto Tráfico. Ref 1550 (brillante) o 1551 (mate). Lijado suave entre manos con grano 220-320.",
+          "producto": "Poliuretano Alto Tráfico 1550 (brillante) / 1551 (mate)",
+          "herramientas": ["Aplicador de lana de cordero o felpa", "Lija Abracol grano 220-320"],
+          "nota_tecnica": "El Poliuretano Alto Tráfico es monocomponente (no necesita catalizador). Dar 3 manos. Lijar con grano 220-320 entre manos para adherencia. NO pisar durante el secado (mínimo 4 horas entre manos, 24 horas para tráfico después de la última mano)."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Barnex / Wood Stain en pisos",
+        "razon": "Los barnices decorativos no resisten tráfico peatonal. Para pisos SOLO Poliuretano Alto Tráfico."
+      },
+      {
+        "producto": "Pintucoat / Intergard en madera",
+        "razon": "Los epóxicos de piso de concreto no son compatibles con madera."
+      },
+      {
+        "producto": "Sellador antes del Poliuretano Alto Tráfico",
+        "razon": "El Poliuretano Alto Tráfico es su propio sellador en la primera mano. No requiere sellador previo."
+      }
+    ],
+    "alerta_metraje": "Pedir m². Rendimiento: ~12-15 m²/galón por mano. Con 3 manos: dividir m² entre 4-5 para galones.",
+    "regla_espuma": "NUNCA usar espuma de poliuretano en aerosol para pisos — eso es un sellante de grietas, no un recubrimiento."
+  },
+  {
+    "id": "GS-ESP-001",
+    "titulo": "Guía de Solución: Estucos (interior y exterior)",
+    "doc_type": "guia_solucion",
+    "escenario": "estucos",
+    "palabras_clave_cliente": [
+      "estuco",
+      "estucar",
+      "estuco para pared",
+      "estuco acrílico",
+      "estuco plástico",
+      "empañetar",
+      "aplicar estuco",
+      "pared sin estuco",
+      "pared con huecos",
+      "resanar pared",
+      "masilla para pared"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Preparación de muros antes de pintar. El estuco correcto depende de si es interior o exterior.",
+      "preguntas_obligatorias": [
+        "¿Es para interior o exterior?",
+        "¿El muro es nuevo (revoque fresco) o viejo (ya tiene pintura)?",
+        "¿Necesita resanar huecos grandes o solo emparejar?"
+      ]
+    },
+    "sistema_recomendado": {
+      "interior": {
+        "producto": "Estuco Plástico Pintuco",
+        "nota": "Para muros interiores. Se aplica con llana. Lijar después de seco."
+      },
+      "exterior": {
+        "producto": "Estuco Acrílico Pintuco",
+        "nota": "OBLIGATORIO para exteriores. El Estuco Plástico NO resiste intemperie. El Estuco Acrílico tiene mayor flexibilidad y resistencia al agua."
+      }
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Estuco Plástico en exteriores",
+        "razon": "El Estuco Plástico no resiste agua ni intemperie. Para exteriores SOLO Estuco Acrílico."
+      }
+    ],
+    "referencia_estuco": "Cuando el cliente pide ref de estuco, las ref son: Estuco Plástico ref por presentación, Estuco Acrílico ref por presentación. Consultar catálogo para ref exactas."
+  },
+  {
+    "id": "GS-ESP-002",
+    "titulo": "Guía de Solución: Colores Especiales RAL y Bases de Tinturación",
+    "doc_type": "guia_solucion",
+    "escenario": "colores_especiales",
+    "palabras_clave_cliente": [
+      "color RAL",
+      "color especial",
+      "tinturar pintura",
+      "base de tinturación",
+      "color que no encuentro",
+      "color personalizado",
+      "base T",
+      "base profunda",
+      "color oscuro intenso",
+      "negro en viniltex"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Cliente necesita un color que no viene listo en carta estándar. Requiere sistema de tinturación con bases.",
+      "preguntas_obligatorias": [
+        "¿Tiene el código RAL o NCS del color?",
+        "¿Es para interior o exterior?",
+        "¿Qué producto necesita tinturar (Viniltex, Koraza, Pintulux, etc.)?",
+        "¿Cuántos galones?"
+      ]
+    },
+    "sistema_recomendado": {
+      "reglas_bases": [
+        {
+          "regla": "Colores CLAROS (pasteles, blancos, cremas): Base BLANCA o Base P (pastel)",
+          "nota": "La base blanca tiene alto contenido de Dióxido de Titanio (TiO2) para opacidad."
+        },
+        {
+          "regla": "Colores MEDIOS (azules, verdes, rojos medio): Base M (media) o Base T",
+          "nota": "Tienen menos TiO2 para permitir mayor saturación de tinte."
+        },
+        {
+          "regla": "Colores OSCUROS/INTENSOS (negro, azul oscuro, rojo intenso): Base DEEP o Base Accent",
+          "nota": "Tienen mínimo TiO2. Es la base correcta para colores profundos."
+        }
+      ],
+      "regla_saturacion": "PROHIBIDO sobrecargar una base blanca con tinte para lograr un color oscuro — el resultado es un color sucio y sin intensidad. Usar la base correcta según profundidad del color."
+    },
+    "alerta_ral": "Si el cliente da un código RAL, verificar que exista la fórmula. Si no existe fórmula, ofrecer la aproximación más cercana en carta Pintuco."
+  },
+  {
+    "id": "GS-ESP-003",
+    "titulo": "Guía de Solución: Matemática Obligatoria de Cotización (rendimiento y cálculo)",
+    "doc_type": "guia_solucion",
+    "escenario": "calculo_cotizacion",
+    "palabras_clave_cliente": [
+      "cuánta pintura necesito",
+      "cuántos galones",
+      "calcular pintura",
+      "rendimiento",
+      "cuánto rinde un galón",
+      "cotización de pintura",
+      "presupuesto de pintura",
+      "cuánto material necesito",
+      "cálculo de material"
+    ],
+    "diagnostico": {
+      "tipo_problema": "El agente DEBE hacer cálculo matemático de cantidades cuando el cliente da metraje. PROHIBIDO dar cantidades aproximadas sin cálculo. SIEMPRE mostrar la fórmula.",
+      "preguntas_obligatorias": [
+        "¿Cuántos metros cuadrados (m²)?",
+        "Si no sabe m²: ¿Cuánto mide de largo y ancho? (para calcular: largo × ancho = m²)"
+      ]
+    },
+    "rendimientos_referencia": {
+      "Viniltex Advanced": "10-12 m²/galón por mano, 2 manos",
+      "Koraza": "8-10 m²/galón por mano, 2 manos",
+      "Viniltex Baños y Cocinas": "10-12 m²/galón por mano, 2 manos",
+      "Intervinil": "10-12 m²/galón por mano, 2 manos",
+      "Pinturama": "8-10 m²/galón por mano, 2 manos",
+      "Koraza Tipo 1 (Pinturama Ext)": "8-10 m²/galón por mano, 2 manos",
+      "Pintucoat": "10-12 m²/galón por mano, 2 manos",
+      "Intergard 2002": "8-10 m²/galón por mano, según espesor",
+      "Interthane 990": "10-14 m²/galón por mano, 2 manos",
+      "Corrotec": "12-14 m²/galón por mano, 2 manos",
+      "Pintulux 3en1": "12-14 m²/galón por mano, 2 manos",
+      "Barnex / Wood Stain": "12-15 m²/galón por mano, 2-3 manos",
+      "Poliuretano Alto Tráfico": "12-15 m²/galón por mano, 3 manos",
+      "Estuco Plástico": "3-4 m²/kg según espesor",
+      "Estuco Acrílico": "3-4 m²/kg según espesor"
+    },
+    "formula_calculo": "Galones = (m² × número_de_manos) ÷ rendimiento_por_galón. SIEMPRE redondear hacia ARRIBA al envase comercial más cercano (1/4, 1 galón, cuñete 5 galones).",
+    "ejemplo": "Fachada de 80 m², Koraza, 2 manos: (80 × 2) ÷ 9 = 17.8 galones → 18 galones → 4 cuñetes (20 galones, y sobra un poco para retoques). SIEMPRE mostrar este tipo de cálculo al cliente.",
+    "regla_critica": "PROHIBIDO decir 'compre unos galones' sin cálculo. SIEMPRE calcular con la fórmula y mostrar el resultado desglosado."
+  },
+  {
+    "id": "GS-ESP-004",
+    "titulo": "Guía de Solución: Kit de Accesorios y Herramientas Siempre Incluir",
+    "doc_type": "guia_solucion",
+    "escenario": "kits_accesorios",
+    "palabras_clave_cliente": [
+      "qué herramientas necesito",
+      "rodillo",
+      "brocha",
+      "felpa",
+      "bandeja",
+      "cinta de enmascarar",
+      "accesorios para pintar",
+      "kit de pintura"
+    ],
+    "diagnostico": {
+      "tipo_problema": "TODA cotización debe incluir herramientas y accesorios. NUNCA cotizar solo la pintura sin herramientas."
+    },
+    "kits_por_aplicacion": {
+      "muros_interiores_exteriores": [
+        "Rodillo Profesional 9\" con felpa según acabado",
+        "Brocha Goya Profesional 2\" o 3\" para bordes",
+        "Bandeja para rodillo",
+        "Cinta de enmascarar (papel) para bordes y marcos",
+        "Plástico para proteger pisos"
+      ],
+      "metal_rejas_estructuras": [
+        "Brocha Goya Profesional 2\" o 3\" (NO brocha popular — suelta pelo)",
+        "Grata copa o circular",
+        "Lija Abracol grano 80-100",
+        "Disco flap (si hay óxido pesado)"
+      ],
+      "madera_muebles_puertas": [
+        "Brocha Goya Profesional 2\" (OBLIGATORIA — las brochas económicas arruinan acabados de madera)",
+        "Lija Abracol grano 150-220",
+        "Lija Abracol grano 320 (para entre manos de barniz)"
+      ],
+      "pisos_concreto": [
+        "Rodillo de felpa corta (epóxico)",
+        "Brocha Goya para bordes",
+        "Lija Abracol grano 60-80 (para preparación del concreto)"
+      ]
+    },
+    "regla_brocha": "SIEMPRE recomendar Brocha Goya Profesional para metal y madera. La brocha económica suelta pelo y arruina el acabado. Solo para muros se pueden usar brochas estándar.",
+    "regla_cotizacion": "SIEMPRE incluir accesorios en la cotización. Si el cliente dice 'ya tengo rodillo', está bien. Pero por defecto INCLUIR todo."
+  }
+]

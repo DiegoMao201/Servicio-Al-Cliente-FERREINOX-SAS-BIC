@@ -1,0 +1,408 @@
+[
+  {
+    "id": "GS-DRY-001",
+    "titulo": "Guía de Solución: Pintar Drywall / Superboard (Cartón Yeso / Fibrocemento Interior)",
+    "doc_type": "guia_solucion",
+    "escenario": "drywall_superboard",
+    "palabras_clave_cliente": [
+      "pintar drywall",
+      "drywall",
+      "superboard",
+      "cielo raso drywall",
+      "placa de yeso",
+      "cartón yeso",
+      "gypsum",
+      "pintar cielo falso",
+      "cielo falso",
+      "placa drywall",
+      "pared de drywall",
+      "división drywall",
+      "tabique drywall",
+      "pintar superboard",
+      "primera vez drywall"
+    ],
+    "diagnostico": {
+      "tipo_problema": "El drywall y superboard son sustratos altamente absorbentes. Requieren sellador/imprimante obligatorio antes de pintar. Sin imprimante, la pintura se absorbe de forma desigual y queda con parches visibles (especialmente en juntas con masilla).",
+      "preguntas_obligatorias": [
+        "¿Es drywall (cartón yeso) o superboard (fibrocemento)?",
+        "¿Ya tiene masilla y cinta en las juntas?",
+        "¿Es primera vez o repintar?",
+        "¿Es cielo raso o muro?",
+        "¿Interior o exterior (superboard)?",
+        "¿Cuántos m²?",
+        "¿Color?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "MASILLA Y JUNTAS: Verificar que todas las juntas tengan cinta y masilla de acabado. Lijar juntas con grano 150-220 hasta quedar lisas y a nivel.",
+          "herramientas": ["Lija Abracol grano 150-220", "Espátula"],
+          "nota_tecnica": "Las juntas de drywall son las zonas más críticas. Si no se preparan bien, se notan como líneas oscuras después de pintar."
+        },
+        {
+          "paso": 2,
+          "accion": "IMPRIMANTE/SELLADOR OBLIGATORIO: Aplicar Sellador para Drywall Pintuco o Viniltex Una Mano como primera capa selladora.",
+          "producto": "Sellador Drywall Pintuco / Viniltex Una Mano",
+          "herramientas": ["Rodillo de felpa media", "Brocha para bordes"],
+          "nota_tecnica": "El imprimante sella la alta porosidad del drywall y la masilla de juntas, logrando absorción uniforme. SIN imprimante, la pintura final se ve dispareja: las juntas (masilla) absorben diferente al cartón yeso. Viniltex Una Mano es alternativa válida como sellador + acabado en una sola capa para zonas de bajo compromiso estético."
+        },
+        {
+          "paso": 3,
+          "accion": "ACABADO: 2 manos de Viniltex Advanced (o vinilo según presupuesto).",
+          "producto": "Viniltex Advanced / Intervinil / Pinturama",
+          "herramientas": ["Rodillo de felpa media", "Brocha Goya para cortes"],
+          "nota_tecnica": "Para cielo raso alto sin contacto directo: Pinturama es aceptable. Para muros visibles: Viniltex Advanced."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Pintar directo sin imprimante",
+        "razon": "Sin imprimante, el drywall absorbe desigual y las juntas quedan marcadas."
+      },
+      {
+        "producto": "Koraza / pinturas elastoméricas",
+        "razon": "Koraza es para exteriores. En drywall interior usar Viniltex."
+      },
+      {
+        "producto": "Estuco tradicional spobre drywall",
+        "razon": "El drywall no necesita estuco si las juntas están bien preparadas con masilla y cinta."
+      }
+    ]
+  },
+  {
+    "id": "GS-DRY-002",
+    "titulo": "Guía de Solución: Superficies Alcalinas / Concreto Fresco / Revoque Nuevo",
+    "doc_type": "guia_solucion",
+    "escenario": "superficie_alcalina",
+    "palabras_clave_cliente": [
+      "superficie alcalina",
+      "concreto fresco",
+      "revoque nuevo",
+      "pared nueva húmeda",
+      "muro recién pañetado",
+      "la pintura se pela en pared nueva",
+      "eflorescencias en muro nuevo",
+      "salitre en pared nueva",
+      "alcalinidad del concreto",
+      "muro de bloque nuevo",
+      "bloque de concreto sin pañetar",
+      "muro sin estuco",
+      "cemento sin preparar"
+    ],
+    "diagnostico": {
+      "tipo_problema": "El concreto, mortero, revoque y bloques de cemento son superficies ALCALINAS (pH alto). La alcalinidad degrada muchas pinturas si no se neutraliza o sella correctamente. El revoque debe estar curado y seco antes de pintar.",
+      "preguntas_obligatorias": [
+        "¿Cuántos días tiene el revoque/pañete desde que se aplicó?",
+        "¿Hay eflorescencias (manchas blancas/salitre)?",
+        "¿Ya tiene estuco o está sobre revoque crudo?",
+        "¿Es interior o exterior?",
+        "¿Cuántos m²?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "CURADO OBLIGATORIO: Esperar MÍNIMO 28 días para concreto vaciado, 14-21 días para revoque de mortero. El revoque debe estar completamente seco.",
+          "nota_tecnica": "La alcalinidad del concreto/mortero fresco (pH 12-13) destruye las resinas de la pintura. Con el curado, el pH baja a niveles aceptables (~9). NUNCA pintar sobre revoque húmedo."
+        },
+        {
+          "paso": 2,
+          "accion": "LIMPIEZA DE EFLORESCENCIAS: Si hay manchas blancas (salitre), lavar con agua y cepillo. NO usar ácido muriático — daña la superficie y dificulta adherencia.",
+          "herramientas": ["Cepillo de fibra", "Agua limpia"],
+          "nota_tecnica": "Las eflorescencias son sales que migran desde el interior del concreto. Se limpian con agua. Si reaparecen, indica que hay humedad activa y se debe resolver primero (ver guías GS-HUM)."
+        },
+        {
+          "paso": 3,
+          "accion": "SELLADOR/IMPRIMANTE: Aplicar Sellomax o imprimante acrílico como barrera entre la alcalinidad residual del sustrato y la pintura final.",
+          "producto": "Sellomax / Imprimante Pintuco",
+          "herramientas": ["Rodillo", "Brocha"],
+          "nota_tecnica": "El Sellomax sella la porosidad y reduce la migración de alcalinidad hacia la pintura. Sobre bloques de concreto sin pañetar, Sellomax es OBLIGATORIO."
+        },
+        {
+          "paso": 4,
+          "accion": "ESTUCO (si se requiere acabado liso): Estuco Plástico (interior) o Estuco Acrílico (exterior).",
+          "producto": "Estuco Plástico / Estuco Acrílico",
+          "condicional": true,
+          "condicion": "Si se quiere acabado liso"
+        },
+        {
+          "paso": 5,
+          "accion": "ACABADO: Pintura según ubicación (Viniltex interior, Koraza exterior).",
+          "producto": "Viniltex Advanced (interior) / Koraza (exterior)"
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Pintar sin esperar curado",
+        "razon": "El sustrato alcalino sin curar (pH 12+) saponifica la resina de la pintura = la pintura se descascara en semanas."
+      },
+      {
+        "producto": "Ácido muriático para limpiar",
+        "razon": "Daña la integridad del sustrato y deja residuos que afectan adherencia."
+      }
+    ]
+  },
+  {
+    "id": "GS-TEX-001",
+    "titulo": "Guía de Solución: Texturas Decorativas (Esgrafiado, Graniacryl, Silcoplast)",
+    "doc_type": "guia_solucion",
+    "escenario": "texturas_decorativas",
+    "palabras_clave_cliente": [
+      "textura decorativa",
+      "textura para pared",
+      "pared con textura",
+      "esgrafiado",
+      "graniacryl",
+      "silcoplast",
+      "acabado texturizado",
+      "textura para fachada",
+      "textura interior",
+      "textura exterior",
+      "textura tipo estuco",
+      "acabado rústico pared",
+      "textura 3D",
+      "pared con relieve",
+      "aplicar textura",
+      "cómo aplicar textura",
+      "textura pintuco"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Las texturas decorativas son acabados con cuerpo que dan relieve y efecto visual a muros y fachadas. Hay 3 familias principales: Esgrafiado (granulado fino), Graniacryl (granulado grueso), Silcoplast (premium elastomérico). Se selecciona según interior/exterior, efecto deseado y presupuesto.",
+      "preguntas_obligatorias": [
+        "¿Es para interior o exterior (fachada)?",
+        "¿Qué efecto quiere: granulado fino (arena), granulado grueso, o liso flexible?",
+        "¿Sobre qué sustrato: revoque, estuco, drywall, pintura vieja?",
+        "¿Cuántos m²?",
+        "¿Color?"
+      ]
+    },
+    "sistema_recomendado": {
+      "seleccion_textura": {
+        "Esgrafiado": {
+          "tipo": "Granulado fino estándar",
+          "uso": "Interior y exterior. El más versátil y económico. Acabado arena fina.",
+          "presentacion": "Cuñete 30 kg (4 galones)"
+        },
+        "Esgrafiado Obras": {
+          "tipo": "Granulado fino económico",
+          "uso": "Proyectos de obra masiva, constructoras. Menor costo por m².",
+          "presentacion": "Cuñete 30 kg"
+        },
+        "Graniacryl": {
+          "tipo": "Granulado grueso decorativo",
+          "uso": "Interior y exterior. Mayor cuerpo y textura más pronunciada.",
+          "presentacion": "Cuñete 30 kg"
+        },
+        "Silcoplast": {
+          "tipo": "Textura premium elastomérica",
+          "uso": "Exterior alta exposición. Elástico — sella microfisuras. Máxima protección.",
+          "presentacion": "Cuñete 30 kg"
+        }
+      },
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: La superficie debe estar sana, seca, sin polvo ni pintura suelta. Lijar si hay pintura vieja. Aplicar Sellomax si la superficie es muy porosa o alcalina.",
+          "herramientas": ["Espátula", "Lija Abracol", "Sellomax (si requiere)"],
+          "nota_tecnica": "Las texturas tienen mayor cuerpo que la pintura — cubren imperfecciones menores. Pero grietas grandes deben sellarse antes con Pintuco Flex."
+        },
+        {
+          "paso": 2,
+          "accion": "APLICACIÓN: Aplicar la textura con llana, rodillo de textura o pistola de proyección (según efecto). El espesor de la capa determina el consumo.",
+          "herramientas": ["Llana metálica o plástica", "Rodillo de textura", "Pistola de proyección (para grandes áreas)"],
+          "nota_tecnica": "La textura se aplica en una sola capa gruesa, NO como pintura convencional en múltiples manos finas. El acabado final depende de la técnica: llana = rasgueado; rodillo = uniforme; pistola = proyectado."
+        }
+      ],
+      "rendimiento_referencia": {
+        "Esgrafiado": "2-3 m²/kg dependiendo del espesor (un cuñete de 30 kg cubre ~60-90 m²)",
+        "Graniacryl": "1.5-2.5 m²/kg (grano más grueso = mayor consumo)",
+        "Silcoplast": "2-3 m²/kg"
+      }
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Viniltex o Koraza como sustituto de textura",
+        "razon": "Las pinturas lisas no dan efecto texturizado. Si el cliente quiere textura, usar Esgrafiado/Graniacryl/Silcoplast."
+      },
+      {
+        "producto": "Textura interior (Esgrafiado simple) en exterior muy expuesto",
+        "razon": "Para exterior de alta exposición, recomendar Silcoplast (elastomérico) o Esgrafiado de exterior."
+      }
+    ],
+    "alerta_metraje": "Pedir m² para calcular kg/cuñetes. El rendimiento de texturas varía mucho según espesor de aplicación.",
+    "alerta_color": "Las texturas vienen en carta de colores propia. Verificar disponibilidad del color solicitado."
+  },
+  {
+    "id": "GS-TEX-002",
+    "titulo": "Guía de Solución: Repintar o Reparar sobre Textura Existente",
+    "doc_type": "guia_solucion",
+    "escenario": "reparar_textura",
+    "palabras_clave_cliente": [
+      "repintar textura",
+      "textura vieja",
+      "la textura se está pelando",
+      "cambiar color de la textura",
+      "reparar textura dañada",
+      "textura descascarada",
+      "pintar sobre textura",
+      "textura con moho",
+      "textura manchada"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Textura decorativa existente que necesita mantenimiento, cambio de color o reparación.",
+      "preguntas_obligatorias": [
+        "¿La textura está firme o se descascara?",
+        "¿Quiere cambiar el color o reparar?",
+        "¿Hay humedad o moho?",
+        "¿Es interior o exterior?",
+        "¿Cuántos m²?"
+      ]
+    },
+    "sistema_recomendado": {
+      "opcion_a_cambiar_color": {
+        "descripcion": "Si la textura está firme y solo quiere cambiar el color:",
+        "pasos": [
+          {"paso": 1, "accion": "Lavar la superficie con agua y detergente. Dejar secar."},
+          {"paso": 2, "accion": "Aplicar 2 manos de Koraza (exterior) o Viniltex Advanced (interior) directamente sobre la textura.", "nota_tecnica": "La pintura se aplica sobre la textura existente como superficie de agarre — la textura da un efecto visual interesante incluso con pintura lisa encima."}
+        ]
+      },
+      "opcion_b_reparar_zona": {
+        "descripcion": "Si hay zonas dañadas/desprendidas:",
+        "pasos": [
+          {"paso": 1, "accion": "Raspar textura suelta hasta llegar a base firme."},
+          {"paso": 2, "accion": "Resanar con la misma textura (Esgrafiado/Graniacryl según lo existente). Emparejar con el patrón existente."},
+          {"paso": 3, "accion": "Pintar toda la superficie para uniformar color."}
+        ]
+      }
+    }
+  },
+  {
+    "id": "GS-IMP-001",
+    "titulo": "Guía de Solución: Impermeabilizantes y Membranas (Techos, Terrazas, Cubiertas)",
+    "doc_type": "guia_solucion",
+    "escenario": "impermeabilizantes_membranas",
+    "palabras_clave_cliente": [
+      "impermeabilizar terraza",
+      "impermeabilizar techo",
+      "membrana impermeabilizante",
+      "impermeabilizante líquido",
+      "techo con goteras",
+      "terraza se filtra",
+      "cubierta plana con goteras",
+      "impermeabilizante para techo",
+      "membrana para terraza",
+      "impermeabilizante para concreto",
+      "filtración en losa",
+      "mortero impermeable",
+      "impermeabilizante acrílico",
+      "cómo impermeabilizar"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Terrazas, techos planos, cubiertas y losas expuestas a lluvia que necesitan impermeabilización. Hay varias tecnologías: membrana líquida (Pintuco Fill), mortero impermeable, o membrana prefabricada.",
+      "preguntas_obligatorias": [
+        "¿Dónde está la filtración: techo plano, terraza, cubierta?",
+        "¿Es losa de concreto, teja Eternit o estructura metálica?",
+        "¿Ya tiene impermeabilización o es primera vez?",
+        "¿Hay tránsito peatonal sobre la superficie?",
+        "¿Cuántos m²?"
+      ]
+    },
+    "sistema_recomendado": {
+      "opcion_a_pintuco_fill": {
+        "descripcion": "Sistema Pintuco Fill — membrana acrílica líquida con tela de refuerzo",
+        "uso": "Techos planos de concreto, terrazas. El más común para residencial.",
+        "pasos": [
+          {"paso": 1, "accion": "Limpiar la superficie. Sellar grietas con Pintuco Flex."},
+          {"paso": 2, "accion": "Aplicar primera mano de Pintuco Fill."},
+          {"paso": 3, "accion": "Embeber tela de refuerzo en la primera mano mientras está húmeda."},
+          {"paso": 4, "accion": "Aplicar segunda mano de Pintuco Fill sobre la tela curada."},
+          {"paso": 5, "accion": "Opcional: tercera mano para mayor protección."}
+        ],
+        "nota_tecnica": "Pintuco Fill forma una membrana elástica continua. La tela de refuerzo da resistencia mecánica. PROHIBIDO usar Koraza o Viniltex como impermeabilizante — no son membranas."
+      },
+      "opcion_b_mortero_impermeable": {
+        "descripcion": "Mortero Impermeable — para superficies de concreto con tránsito pesado",
+        "uso": "Terrazas transitables, jardineras, tanques.",
+        "producto": "Mortero Impermeable Pintuco",
+        "nota": "Se aplica como pañete/revoque. Impermeabiliza por cristalización dentro del concreto."
+      }
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Koraza / Viniltex como impermeabilizante de techo",
+        "razon": "Koraza es impermeabilizante de FACHADA (vertical, salpicadura). Para techos planos con encharcamiento se necesita membrana real (Pintuco Fill) o mortero impermeable."
+      },
+      {
+        "producto": "Pintucoat / Intergard en techos",
+        "razon": "Los epóxicos no son impermeabilizantes — son para pisos interiores."
+      }
+    ]
+  },
+  {
+    "id": "GS-IMP-002",
+    "titulo": "Guía de Solución: Imprimantes y Selladores de Fondo (cuál usar para cada sustrato)",
+    "doc_type": "guia_solucion",
+    "escenario": "imprimantes_selladores",
+    "palabras_clave_cliente": [
+      "imprimante",
+      "sellador de fondo",
+      "primer",
+      "fondo para pintar",
+      "sellador para pared",
+      "qué primer uso",
+      "sellomax",
+      "cuál imprimante",
+      "fondo antes de pintar",
+      "base para pintar",
+      "preparador de superficie"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Cada sustrato requiere un imprimante/sellador específico. Usar el imprimante incorrecto = falla del sistema completo. Esta guía es una tabla de referencia rápida.",
+      "preguntas_obligatorias": [
+        "¿Sobre qué sustrato va a pintar? (concreto, drywall, metal, madera, fibrocemento)",
+        "¿El sustrato es nuevo o ya pintado?",
+        "¿Interior o exterior?"
+      ]
+    },
+    "tabla_imprimantes_por_sustrato": {
+      "Concreto/revoque/estuco (muros)": {
+        "imprimante": "Sellomax",
+        "nota": "Sella porosidad y reduce alcalinidad. Obligatorio en sustratos nuevos muy porosos."
+      },
+      "Drywall / Superboard": {
+        "imprimante": "Sellador Drywall / Viniltex Una Mano",
+        "nota": "Iguala absorción entre masilla de juntas y cartón yeso."
+      },
+      "Concreto piso": {
+        "imprimante": "Interseal Gris",
+        "nota": "Imprimante epóxico para pisos de concreto. NO usar Primer 50RS."
+      },
+      "Metal ferroso (hierro, acero)": {
+        "imprimante": "Corrotec / Corrotec Premium (alquídico) o Interseal 670HS (epóxico)",
+        "nota": "Alquídico para mantenimiento convencional. Epóxico para alta durabilidad."
+      },
+      "Metal galvanizado / aluminio": {
+        "imprimante": "Wash Primer",
+        "nota": "OBLIGATORIO como promotor de adherencia. Sin Wash Primer, la pintura se despega."
+      },
+      "Fibrocemento / Eternit": {
+        "imprimante": "Sellomax",
+        "nota": "Sella la porosidad del fibrocemento envejecido."
+      },
+      "Madera nueva (acabado natural)": {
+        "imprimante": "NINGUNO — aplicar Barnex/Wood Stain directo",
+        "nota": "PROHIBIDO sellador antes de barniz."
+      },
+      "Madera nueva (color sólido)": {
+        "imprimante": "Sellador para Madera",
+        "nota": "Sella poros y nudos antes del esmalte."
+      }
+    },
+    "regla_critica": "NUNCA usar Primer 50RS como imprimante de concreto — es para METAL. NUNCA usar sellador de madera antes de barniz/Wood Stain — impide penetración. NUNCA omitir Wash Primer en galvanizado."
+  }
+]

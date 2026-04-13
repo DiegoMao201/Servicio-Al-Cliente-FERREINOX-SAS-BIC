@@ -1,0 +1,469 @@
+[
+  {
+    "id": "GS-MET-001",
+    "titulo": "Guía de Solución: Metal Oxidado a la Intemperie (rejas, portones, toboganes)",
+    "doc_type": "guia_solucion",
+    "escenario": "metal_oxidado_intemperie",
+    "palabras_clave_cliente": [
+      "reja oxidada",
+      "pintar reja oxidada",
+      "portón oxidado",
+      "metal oxidado",
+      "hierro oxidado",
+      "la reja tiene óxido",
+      "pintar metal con óxido",
+      "quitar óxido de la reja",
+      "tobogán oxidado",
+      "baranda oxidada",
+      "pasamanos oxidado",
+      "metal corroído",
+      "corrosión en metal",
+      "puerta de hierro oxidada",
+      "estructura oxidada",
+      "tubo oxidado",
+      "anticorrosivo para reja",
+      "pintar reja",
+      "pintar portón"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Metal ferroso (hierro, acero) con óxido por exposición a intemperie. Requiere sistema de 3 capas: convertidor/preparación + anticorrosivo + acabado. NUNCA recomendar solo anticorrosivo sin acabado.",
+      "preguntas_obligatorias": [
+        "¿La reja/estructura tiene óxido superficial o está muy comida (corrosión profunda)?",
+        "¿Está a la intemperie o bajo techo?",
+        "¿Actualmente tiene pintura vieja o está en metal desnudo?",
+        "¿Cuántos metros cuadrados (m²) o metros lineales tiene la estructura?",
+        "¿En qué color desea pintar?"
+      ]
+    },
+    "sistema_recomendado": {
+      "resumen": "Preparación mecánica → Pintóxido (si hay óxido profundo) → Corrotec anticorrosivo (2 manos) → Pintulux 3en1 acabado final. Sistema completo de 3 capas SIEMPRE.",
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN MECÁNICA: Retirar óxido suelto y cascarilla con grata o disco flap. Llegar hasta metal firme.",
+          "herramientas": ["Grata copa o circular", "Disco flap", "Lija Abracol grano 80-100"],
+          "nota_tecnica": "La preparación del metal oxidado es MECÁNICA (grata, lija, disco flap). NO lavar con agua y jabón como primera preparación — el agua sobre metal oxidado empeora la condición si deja humedad retenida. El metal debe estar SECO antes de aplicar cualquier producto."
+        },
+        {
+          "paso": 2,
+          "accion": "CONVERTIDOR DE ÓXIDO (si hay óxido profundo incrustado): Aplicar Pintóxido sobre el óxido residual que no se pudo remover mecánicamente.",
+          "producto": "Pintóxido",
+          "herramientas": ["Brocha Goya Profesional"],
+          "nota_tecnica": "Pintóxido convierte el óxido remanente en una capa protectora. Solo se usa si después de la preparación mecánica queda óxido incrustado que no se puede quitar. No sustituye la preparación mecánica.",
+          "condicional": true,
+          "condicion": "Solo si hay óxido profundo que no se remueve con grata/disco"
+        },
+        {
+          "paso": 3,
+          "accion": "ANTICORROSIVO: Aplicar 2 manos de Corrotec o Corrotec Premium como anticorrosivo. Dejar secar entre manos según ficha técnica.",
+          "producto": "Corrotec / Corrotec Premium",
+          "herramientas": ["Brocha Goya Profesional"],
+          "nota_tecnica": "El Corrotec sella el metal y previene nueva oxidación. SIEMPRE 2 manos para cobertura uniforme. Corrotec Premium tiene mayor resistencia — recomendarlo para estructuras críticas."
+        },
+        {
+          "paso": 4,
+          "accion": "ACABADO FINAL: Aplicar 2 manos de Pintulux 3en1 como acabado con protección UV y estética.",
+          "producto": "Pintulux 3 en 1",
+          "herramientas": ["Brocha Goya Profesional"],
+          "nota_tecnica": "NUNCA dejar el Corrotec como capa final. Sin Pintulux, el anticorrosivo se degrada en meses por UV. Pintulux 3en1 da protección UV, color y brillo. Preguntar el color al cliente ANTES de cotizar."
+        }
+      ],
+      "herramientas_siempre_incluir": [
+        {"producto": "Grata copa o circular", "uso": "Preparación mecánica del óxido"},
+        {"producto": "Disco flap", "uso": "Remoción de óxido y cascarilla"},
+        {"producto": "Lija Abracol grano 80-100", "uso": "Repaso de zonas difíciles"},
+        {"producto": "Brocha Goya Profesional", "uso": "Aplicación de todos los productos (evitar brocha popular que suelta pelo)"}
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Viniltex / Koraza / Pintucoat",
+        "razon": "Las pinturas para muro no protegen metal contra corrosión. Pintucoat es para pisos de concreto, no para metal de mantenimiento liviano."
+      },
+      {
+        "producto": "Solo anticorrosivo sin acabado",
+        "razon": "Sin Pintulux encima, el Corrotec se degrada en meses. SIEMPRE completar el sistema de 3 capas."
+      },
+      {
+        "producto": "Agua y jabón como preparación principal de metal oxidado",
+        "razon": "El lavado con agua y jabón NO sustituye la preparación mecánica del metal oxidado y puede empeorar la condición si deja humedad retenida."
+      }
+    ],
+    "alerta_color": "SIEMPRE preguntar el color ANTES de cotizar el Pintulux 3en1.",
+    "alerta_metraje": "Pedir m² o metros lineales para calcular cantidad de producto."
+  },
+  {
+    "id": "GS-MET-002",
+    "titulo": "Guía de Solución: Metal Galvanizado o Aluminio (metal no ferroso nuevo)",
+    "doc_type": "guia_solucion",
+    "escenario": "metal_galvanizado",
+    "palabras_clave_cliente": [
+      "pintar galvanizado",
+      "metal galvanizado",
+      "lámina galvanizada",
+      "tubo galvanizado",
+      "zinc galvanizado",
+      "pintar lámina de zinc",
+      "pintar aluminio",
+      "metal nuevo sin pintar",
+      "acero galvanizado",
+      "estructura galvanizada",
+      "cómo pintar galvanizado",
+      "la pintura no pega en galvanizado"
+    ],
+    "diagnostico": {
+      "tipo_problema": "El metal galvanizado o aluminio tiene una superficie lisa y tratada que rechaza la pintura convencional. Requiere Wash Primer como promotor de adherencia ANTES de cualquier anticorrosivo o acabado.",
+      "preguntas_obligatorias": [
+        "¿Es galvanizado, aluminio o qué tipo de metal?",
+        "¿Está nuevo o ya tiene pintura vieja?",
+        "¿Es interior o exterior (expuesto al sol)?",
+        "¿Cuántos metros cuadrados (m²)?",
+        "¿En qué color desea pintar?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Lijar suavemente para crear perfil de agarre. Limpiar con solvente para remover grasa.",
+          "herramientas": ["Lija Abracol grano 150-220", "Trapo con solvente"],
+          "nota_tecnica": "El galvanizado tiene una capa de zinc que es lisa. El lijado suave crea micro-rayas para que el Wash Primer agarre."
+        },
+        {
+          "paso": 2,
+          "accion": "PROMOTOR DE ADHERENCIA: Aplicar Wash Primer como primera capa. Es obligatorio sobre galvanizado/aluminio.",
+          "producto": "Wash Primer",
+          "herramientas": ["Brocha", "Pistola de aspersión"],
+          "nota_tecnica": "El Wash Primer ataca químicamente la superficie galvanizada/aluminio y crea un perfil de agarre para las capas siguientes. Sin Wash Primer, cualquier pintura se despega."
+        },
+        {
+          "paso": 3,
+          "accion": "ANTICORROSIVO: Aplicar Corrotec sobre el Wash Primer curado.",
+          "producto": "Corrotec",
+          "herramientas": ["Brocha Goya Profesional"]
+        },
+        {
+          "paso": 4,
+          "accion": "ACABADO: Aplicar Pintulux 3en1 como acabado final con protección UV.",
+          "producto": "Pintulux 3 en 1",
+          "herramientas": ["Brocha Goya Profesional"],
+          "nota_tecnica": "Preguntar color antes de cotizar."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Interseal / Pintucoat sobre galvanizado sin Wash Primer",
+        "razon": "El Interseal es imprimante para concreto y acero preparado, no para galvanizado. Sobre galvanizado el primer obligatorio es Wash Primer."
+      },
+      {
+        "producto": "Pintar directo sin Wash Primer",
+        "razon": "Sin promotor de adherencia, TODA pintura se despega del galvanizado en semanas."
+      }
+    ],
+    "alerta_metraje": "Pedir m² para calcular producto."
+  },
+  {
+    "id": "GS-MET-003",
+    "titulo": "Guía de Solución: Metal con Pintura Alquídica Vieja (migrar a sistema industrial)",
+    "doc_type": "guia_solucion",
+    "escenario": "metal_pintado_alquidico",
+    "palabras_clave_cliente": [
+      "metal ya pintado",
+      "reja ya tiene pintura",
+      "repintar estructura metálica",
+      "pintura vieja en metal",
+      "cambiar pintura del metal",
+      "esmalte viejo en la reja",
+      "anticorrosivo viejo",
+      "la pintura del portón se pela",
+      "puerta de hierro ya pintada",
+      "metal con pintura de aceite"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Metal que ya tiene pintura alquídica (esmalte, anticorrosivo Corrotec viejo, Pintulux viejo). Si el cliente quiere subir a sistema epóxico/industrial (Interseal, Intergard, Interthane), se DEBE remover TODO hasta metal desnudo. No se puede aplicar epóxico sobre alquídico.",
+      "preguntas_obligatorias": [
+        "¿Qué pintura tiene actualmente (esmalte, anticorrosivo)?",
+        "¿Quiere mantener el sistema alquídico (Corrotec + Pintulux) o migrar a sistema industrial?",
+        "¿La pintura actual está firme o se descascara?",
+        "¿Es interior o exterior?",
+        "¿Cuántos m²?"
+      ]
+    },
+    "sistema_recomendado": {
+      "resumen": "Si MANTIENE sistema alquídico: lijar, aplicar Corrotec + Pintulux 3en1. Si MIGRA a epóxico/industrial: REMOCIÓN TOTAL hasta metal desnudo + sistema nuevo completo.",
+      "opcion_a_mantener_alquidico": {
+        "descripcion": "Mantener sistema alquídico (más económico, válido para mantenimiento convencional)",
+        "pasos": [
+          {
+            "paso": 1,
+            "accion": "Lijar y raspar pintura suelta. Dejar superficie firme y limpia.",
+            "herramientas": ["Lija Abracol", "Grata", "Espátula"]
+          },
+          {
+            "paso": 2,
+            "accion": "Aplicar Corrotec anticorrosivo sobre zonas expuestas.",
+            "producto": "Corrotec"
+          },
+          {
+            "paso": 3,
+            "accion": "Acabar con Pintulux 3en1.",
+            "producto": "Pintulux 3 en 1"
+          }
+        ]
+      },
+      "opcion_b_migrar_industrial": {
+        "descripcion": "Migrar a sistema epóxico/industrial (mayor durabilidad pero mayor costo y trabajo)",
+        "pasos": [
+          {
+            "paso": 1,
+            "accion": "REMOCIÓN TOTAL: Quitar absolutamente toda la pintura vieja hasta llegar a metal desnudo. Usar removedor químico + disco flap + grata.",
+            "herramientas": ["Removedor Pintuco", "Disco flap", "Grata", "Espátula"],
+            "nota_tecnica": "Es OBLIGATORIO llegar a metal desnudo. Si queda CUALQUIER residuo de alquídico, el epóxico SE ARRUGA y destruye todo el sistema."
+          },
+          {
+            "paso": 2,
+            "accion": "Aplicar imprimante epóxico (Interseal 670HS).",
+            "producto": "Interseal 670HS"
+          },
+          {
+            "paso": 3,
+            "accion": "Acabar con Interthane 990 (poliuretano) si es exterior, o Intergard 740 si es interior.",
+            "producto": "Interthane 990 (exterior) / Intergard 740 (interior)"
+          }
+        ]
+      }
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Epóxico (Interseal, Intergard, Interthane, Pintucoat) sobre base alquídica",
+        "razon": "El epóxico remueve y ARRUGA la base alquídica (Corrotec, Pintóxido, esmalte sintético). Es incompatible químicamente. SIEMPRE remover todo hasta metal desnudo antes de aplicar epóxico."
+      }
+    ],
+    "regla_compatibilidad": "Sobre base alquídica: solo acabados alquídicos (Corrotec + Pintulux). Sobre base epóxica: se pueden aplicar acabados epóxicos, poliuretanos, acrílicos O alquídicos. Anticorrosivo alquídico + acabado alquídico = OK. Anticorrosivo epóxico + acabado de cualquier tipo = OK. Anticorrosivo alquídico + acabado epóxico = PROHIBIDO."
+  },
+  {
+    "id": "GS-MET-004",
+    "titulo": "Guía de Solución: Estructuras Metálicas Interiores (bajo techo, sin humedad)",
+    "doc_type": "guia_solucion",
+    "escenario": "estructura_metalica_interior",
+    "palabras_clave_cliente": [
+      "estructura metálica interior",
+      "pintar estructura bajo techo",
+      "viga de metal interior",
+      "columna metálica interior",
+      "metal interior sin humedad",
+      "pintar estructura de bodega",
+      "techo metálico interior",
+      "cercha metálica"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Estructura metálica en ambiente interior protegido. El sistema se selecciona según nivel de desempeño requerido y presupuesto.",
+      "preguntas_obligatorias": [
+        "¿Hay exposición a humedad o químicos?",
+        "¿Es estructura nueva o ya tiene pintura?",
+        "¿Cuál es el presupuesto: básico, intermedio o alto desempeño?",
+        "¿Cuántos metros cuadrados (m²)?",
+        "¿En qué color?"
+      ]
+    },
+    "sistema_recomendado": {
+      "sistemas_por_nivel": [
+        {
+          "nivel": "básico",
+          "descripcion": "Anticorrosivo alquídico + acabado alquídico. Económico, funcional para estructuras convencionales.",
+          "productos": ["Corrotec Premium (anticorrosivo)", "Pintulux 3 en 1 (acabado)"],
+          "nota": "Sistema más económico. Aceptable para interiores secos sin exposición química."
+        },
+        {
+          "nivel": "intermedio",
+          "descripcion": "Imprimante epóxico + acabado alquídico o acrílico. Mayor durabilidad.",
+          "productos": ["Primer Epóxico 10046 o 10050 (imprimante)", "Pintulux 3 en 1 o Pintulux Máxima Protección (acabado)"],
+          "nota": "Mejor protección que el básico. El imprimante epóxico tiene mayor adherencia y resistencia."
+        },
+        {
+          "nivel": "alto desempeño",
+          "descripcion": "Interseal 670HS + acabado epóxico o poliuretano. Máxima durabilidad.",
+          "productos": ["Interseal 670HS (imprimante)", "Pintucoat (acabado mate interior)", "Intergard 740 (acabado brillante)"],
+          "nota": "Para estructuras que requieren máxima durabilidad. Pintucoat es mate, Intergard 740 es brillante."
+        }
+      ]
+    },
+    "regla_compatibilidad": "Anticorrosivo alquídico (Corrotec) solo con acabado alquídico (Pintulux). Anticorrosivo epóxico (Interseal) puede recibir acabado epóxico, poliuretano, acrílico o alquídico.",
+    "alerta_metraje": "Pedir m²."
+  },
+  {
+    "id": "GS-MET-005",
+    "titulo": "Guía de Solución: Estructuras Metálicas Exteriores (expuestas al sol y lluvia)",
+    "doc_type": "guia_solucion",
+    "escenario": "estructura_metalica_exterior",
+    "palabras_clave_cliente": [
+      "estructura metálica exterior",
+      "estructura a la intemperie",
+      "pintar estructura expuesta al sol",
+      "torre metálica",
+      "puente metálico",
+      "estructura metálica expuesta",
+      "estructura industrial exterior",
+      "metal exterior sol y lluvia",
+      "baranda exterior",
+      "estructura acero exterior"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Estructura metálica expuesta a sol (UV) y lluvia. Condición CRÍTICA: los epóxicos se ENTIZAN (pierden color y brillo) con UV. Nunca dejar epóxico como acabado final en exterior.",
+      "preguntas_obligatorias": [
+        "¿Es estructura nueva (acero virgen) o ya tiene pintura?",
+        "¿Qué tipo de pintura tiene actualmente (si la tiene)?",
+        "¿Nivel de exposición: sol directo todo el día o parcialmente protegida?",
+        "¿Presupuesto: básico, intermedio o alto desempeño?",
+        "¿Cuántos metros cuadrados (m²)?",
+        "¿Color?"
+      ]
+    },
+    "sistema_recomendado": {
+      "sistemas_por_nivel": [
+        {
+          "nivel": "básico exterior",
+          "descripcion": "Anticorrosivo alquídico + Pintulux. Económico pero menor durabilidad.",
+          "productos": ["Corrotec Premium (anticorrosivo)", "Pintulux 3 en 1 o Pintulux Máxima Protección (acabado con protección UV)"],
+          "nota": "Funciona para mantenimiento convencional. Retocar cada 2-3 años según exposición."
+        },
+        {
+          "nivel": "intermedio exterior",
+          "descripcion": "Primer epóxico + acabado alquídico/acrílico resistente a UV.",
+          "productos": ["Primer Epóxico 10046 o 10050", "Pintulux 3 en 1 o Pintulux Máxima Protección"],
+          "nota": "Más durable que el básico. El imprimante epóxico protege mejor contra corrosión."
+        },
+        {
+          "nivel": "alto desempeño exterior",
+          "descripcion": "Interseal 670HS + Interthane 990 (poliuretano). Máxima protección UV y clima.",
+          "productos": ["Interseal 670HS (imprimante epóxico)", "Interthane 990 + Catalizador PHA046 (acabado poliuretano)"],
+          "nota": "Sistema industrial de máxima durabilidad. Interthane 990 resiste UV y clima. Es la inversión más alta pero la más durable."
+        }
+      ],
+      "alternativa_epoxico_exterior": {
+        "producto": "Intergard 740",
+        "nota": "Intergard 740 es el ÚNICO epóxico que tiene mejor comportamiento en exterior frente a otros. Es una alternativa cuando no se usa poliuretano. Pero Interthane 990 sigue siendo superior en retención de color."
+      }
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Epóxicos como acabado final en exterior (excepto Intergard 740)",
+        "razon": "Los epóxicos se ENTIZAN con el sol (pierden color, brillo, chalking). NUNCA dejar Interseal, Pintucoat, Intergard 2002 como capa final expuesta al sol. Siempre requieren acabado resistente a UV (Interthane o Pintulux)."
+      },
+      {
+        "producto": "Corrotec solo sin acabado",
+        "razon": "Sin acabado resistente a UV, el anticorrosivo se degrada rápidamente en exterior."
+      }
+    ],
+    "regla_uv": "REGLA DE UV: Todo sistema epóxico expuesto al sol DEBE cerrarse con acabado resistente a UV (Interthane 990 para industrial, Pintulux para convencional). Excepción parcial: Intergard 740.",
+    "alerta_metraje": "Pedir m² para calcular productos y kits bicomponentes."
+  },
+  {
+    "id": "GS-MET-006",
+    "titulo": "Guía de Solución: Acero Virgen Nuevo (sin pintar, sin óxido)",
+    "doc_type": "guia_solucion",
+    "escenario": "acero_virgen_nuevo",
+    "palabras_clave_cliente": [
+      "acero nuevo",
+      "metal nuevo sin pintar",
+      "acero virgen",
+      "estructura nueva",
+      "hierro nuevo",
+      "perfil de acero nuevo",
+      "metal limpio sin óxido",
+      "acero laminado nuevo",
+      "pintar estructura nueva de acero"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Acero nuevo (virgen) sin óxido y sin pintura previa. La preparación debe eliminar grasa de fábrica y crear perfil de agarre.",
+      "preguntas_obligatorias": [
+        "¿Es acero carbono (negro) o galvanizado?",
+        "¿Interior o exterior?",
+        "¿Nivel de presupuesto: básico, intermedio, alto desempeño?",
+        "¿Cuántos m²?",
+        "¿Color?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Desengrase con solvente o detergente industrial. Luego lijado con disco flap o grata para crear perfil de agarre.",
+          "herramientas": ["Solvente / detergente industrial", "Disco flap", "Lija Abracol"],
+          "nota_tecnica": "El acero nuevo viene con grasa de fábrica que impide adherencia. SIEMPRE desengrasar antes. Si es galvanizado → Wash Primer primero."
+        },
+        {
+          "paso": 2,
+          "accion": "ANTICORROSIVO según sistema elegido.",
+          "nota_tecnica": "Básico: Corrotec Premium. Intermedio: Primer Epóxico 10046. Alto: Interseal 670HS."
+        },
+        {
+          "paso": 3,
+          "accion": "ACABADO según ubicación y presupuesto.",
+          "nota_tecnica": "Interior: Pintulux, Pintucoat, o Intergard 740. Exterior: Pintulux, Interthane 990 (ver GS-MET-005). El sistema correcto para acero virgen con acabado poliuretano es: Interseal 670HS (imprimante) + Interthane 990 (acabado)."
+        }
+      ]
+    },
+    "alerta_metraje": "Pedir m²."
+  },
+  {
+    "id": "GS-MET-007",
+    "titulo": "Guía de Solución: Demarcación de Parqueaderos y Pintura de Tráfico",
+    "doc_type": "guia_solucion",
+    "escenario": "demarcacion_trafico",
+    "palabras_clave_cliente": [
+      "demarcación parqueadero",
+      "pintura de tráfico",
+      "demarcar parqueadero",
+      "pintar líneas parqueadero",
+      "pintura tráfico amarilla",
+      "señalización vial",
+      "demarcar piso",
+      "pintar líneas en el piso",
+      "demarcación vial",
+      "pintura para señalizar"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Demarcación de líneas en parqueaderos, vías o zonas peatonales. Requiere pintura de tráfico específica — NO Pintucoat ni epóxicos.",
+      "preguntas_obligatorias": [
+        "¿Es para demarcación de líneas o para todo el piso?",
+        "¿Interior o exterior?",
+        "¿Cuántos metros lineales de línea?",
+        "¿Color amarillo, blanco u otro?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Limpiar el piso de polvo y grasa en las zonas a demarcar.",
+          "herramientas": ["Escoba", "Detergente"]
+        },
+        {
+          "paso": 2,
+          "accion": "APLICACIÓN: Pintura de Tráfico código 5891322 (amarilla). Aplicar con rodillo fino o pistola airless.",
+          "producto": "Pintura de Tráfico Amarilla (ref 5891322)",
+          "herramientas": ["Rodillo fino", "Cinta de enmascarar para líneas rectas"],
+          "nota_tecnica": "PROHIBIDO cotizar 'Pintucoat' para demarcar parqueaderos. La pintura de tráfico es obligatoriamente el código 5891322. Es tecnología acrílica — no epóxica."
+        },
+        {
+          "paso": 3,
+          "accion": "SOLVENTE OBLIGATORIO: Thinner 21204 (ref F0116621204) en la proporción correcta.",
+          "producto": "Thinner 21204 (ref F0116621204)",
+          "nota_tecnica": "El ÚNICO solvente autorizado para Pintura de Tráfico es Thinner 21204. PROHIBIDO usar Thinner 21050 (UFA151, que es para poliuretano). Proporción: 1 galón de pintura = 5 botellas de Thinner 21204. 1 cuñete (5 galones) = 25 botellas de Thinner 21204."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Pintucoat",
+        "razon": "PROHIBIDO para demarcación. Pintucoat es epóxico para pisos, no para líneas de tráfico."
+      },
+      {
+        "producto": "Thinner 21050 (UFA151)",
+        "razon": "PROHIBIDO con pintura de tráfico. El UFA151 es exclusivo para poliuretanos (Interthane). Para tráfico: solo Thinner 21204."
+      }
+    ]
+  }
+]

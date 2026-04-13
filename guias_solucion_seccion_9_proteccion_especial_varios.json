@@ -1,0 +1,442 @@
+[
+  {
+    "id": "GS-LIM-001",
+    "titulo": "Guía de Solución: Limpieza y Preparación de Superficies (Construcleaner y otros)",
+    "doc_type": "guia_solucion",
+    "escenario": "limpieza_superficies",
+    "palabras_clave_cliente": [
+      "limpiar pared",
+      "limpiar fachada",
+      "quitar grasa de la pared",
+      "limpiar antes de pintar",
+      "construcleaner",
+      "desengrasante",
+      "limpieza industrial",
+      "limpiar moho de la pared",
+      "quitar salitre",
+      "eflorescencias",
+      "lavar fachada",
+      "preparar superficie",
+      "limpiar antes de aplicar",
+      "removedor de pintura",
+      "quitar pintura vieja"
+    ],
+    "diagnostico": {
+      "tipo_problema": "La preparación de superficie es el paso MÁS importante de cualquier trabajo de pintura. Una superficie mal preparada = falla del sistema. Ferreinox tiene productos específicos para cada tipo de limpieza.",
+      "preguntas_obligatorias": [
+        "¿Qué tipo de superficie? (muro, metal, ladrillo, madera, piso)",
+        "¿Qué necesita limpiar? (grasa, moho, salitre, pintura vieja, polvo)",
+        "¿Interior o exterior?"
+      ]
+    },
+    "tabla_productos_limpieza": {
+      "Grasa y suciedad en muros/pisos": {
+        "producto": "Construcleaner Limpiador Desengrasante",
+        "uso": "Fachadas, ladrillos, pisos, concreto. Diluir en agua según ficha. Frotar con cepillo. Enjuagar."
+      },
+      "Moho y hongos": {
+        "producto": "Hipoclorito de sodio diluido (1:8-10 en agua)",
+        "uso": "Aplicar con brocha, dejar actuar 15-20 min, enjuagar. La mezcla solo es efectiva 1 HORA después de preparada.",
+        "nota": "No vender como producto Ferreinox — es recomendación técnica."
+      },
+      "Pintura vieja en madera/metal": {
+        "producto": "Removedor Pintuco",
+        "uso": "Aplicar, dejar 15-30 min, raspar con espátula. Para madera y metal. NO para muros."
+      },
+      "Eflorescencias/salitre en muros": {
+        "producto": "Agua + cepillo de fibra (NO ácido muriático)",
+        "uso": "Cepillar en seco, luego lavar con agua. Si reaparecen = humedad activa, resolver primero."
+      },
+      "Grasa de fábrica en metal nuevo": {
+        "producto": "Solvente desengrasante / Thinner",
+        "uso": "Limpiar con trapo impregnado. El metal nuevo viene con grasa protectora que impide adherencia."
+      }
+    }
+  },
+  {
+    "id": "GS-PROT-001",
+    "titulo": "Guía de Solución: Piscinas, Tanques de Agua y Productos Fuera del Portafolio",
+    "doc_type": "guia_solucion",
+    "escenario": "fuera_portafolio",
+    "palabras_clave_cliente": [
+      "pintura para piscina",
+      "piscina",
+      "tanque de agua",
+      "tanque potable",
+      "pintura para alberca",
+      "recubrimiento piscinas",
+      "pintar piscina",
+      "epóxico para piscina",
+      "pintura marina",
+      "anti-fouling",
+      "pintura para barco",
+      "pintura náutica"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Estos productos están FUERA del portafolio de Ferreinox. El agente NO debe inventar soluciones para estos casos.",
+      "respuesta_modelo": "Ferreinox actualmente no maneja pinturas especializadas para piscinas/tanques de agua potable ni línea marina (anti-fouling/náutica). Estos productos requieren certificaciones específicas de inocuidad y desempeño en inmersión que las líneas convencionales no ofrecen. Le recomendamos consultar directamente con un asesor especializado."
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Pintucoat / Intergard para piscinas",
+        "razon": "Los epóxicos industriales NO sirven para inmersión permanente en agua ni para contacto con agua potable. PROHIBIDO recomendarlos para piscinas o tanques de agua."
+      },
+      {
+        "producto": "Koraza para tanques de agua",
+        "razon": "Koraza es para fachadas exteriores. NO es recubrimiento de inmersión."
+      }
+    ],
+    "regla_critica": "NUNCA inventar una solución cuando el producto no existe en el portafolio. Es mejor decir 'no manejamos ese producto' que recomendar algo incorrecto."
+  },
+  {
+    "id": "GS-PROT-002",
+    "titulo": "Guía de Solución: Condensación vs Humedad Estructural (diagnóstico diferencial)",
+    "doc_type": "guia_solucion",
+    "escenario": "condensacion_vs_humedad",
+    "palabras_clave_cliente": [
+      "pared sudando",
+      "pared trasuda",
+      "gotas en la pared",
+      "pared mojada por dentro",
+      "humedad o condensación",
+      "la pared llora",
+      "agua en el cielo raso",
+      "gotas en el techo",
+      "techo suda",
+      "cielo raso húmedo",
+      "condensación en baño",
+      "habitación húmeda"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Diferenciar entre CONDENSACIÓN (vapor de agua del ambiente que se deposita en superficies frías) y HUMEDAD ESTRUCTURAL (agua que migra a través del muro/techo). El tratamiento es completamente diferente.",
+      "metodo_diagnostico": {
+        "condensacion": {
+          "señales": [
+            "Aparece en ventanas, espejos, superficies metálicas o muros fríos",
+            "Peor en la mañana o en épocas frías",
+            "La humedad está ENCIMA de la superficie (se limpia con trapo)",
+            "Común en baños, cocinas, habitaciones sin ventilación"
+          ],
+          "solucion": "Mejorar ventilación. En baños: usar Viniltex Baños y Cocinas (antihongos). NO se necesita Aquablock ni impermeabilizante — el problema es ventilación, no infiltración."
+        },
+        "humedad_estructural": {
+          "señales": [
+            "Mancha húmeda que sale DESDE DENTRO del muro",
+            "Eflorescencias (manchas blancas de salitre)",
+            "Pintura ampollada o descascarada",
+            "La mancha reaparece después de pintar",
+            "Peor en época de lluvias"
+          ],
+          "solucion": "Tratar la fuente de humedad primero. Ver guías GS-HUM-001 a GS-HUM-006 según tipo."
+        }
+      }
+    },
+    "regla_critica": "NUNCA tratar condensación como humedad estructural (no necesita Aquablock) ni humedad estructural como condensación (no se soluciona con ventilación). El diagnóstico diferencial es el paso más importante."
+  },
+  {
+    "id": "GS-PROT-003",
+    "titulo": "Guía de Solución: Protección UV y Entizamiento (por qué la pintura pierde color)",
+    "doc_type": "guia_solucion",
+    "escenario": "proteccion_uv_entizamiento",
+    "palabras_clave_cliente": [
+      "la pintura perdió color",
+      "la pintura se decoloró",
+      "pintura opaca",
+      "entizamiento",
+      "chalking",
+      "la pintura suelta polvo",
+      "pintura blancuzca",
+      "piso blanquecino",
+      "fachada decolorada",
+      "el epóxico cambió de color",
+      "pintura se opacó al sol",
+      "protección UV",
+      "por qué se decolora la pintura"
+    ],
+    "diagnostico": {
+      "tipo_problema": "El entizamiento (chalking) es la degradación de la resina de la pintura por radiación UV. La pintura pierde brillo y color, y al pasar el dedo queda un polvo blancuzco. Es un fenómeno NORMAL en ciertas pinturas expuestas al sol — no es un defecto del producto sino una limitación del tipo de resina.",
+      "productos_afectados": [
+        {"producto": "Epóxicos (Pintucoat, Intergard, Interseal)", "severidad": "ALTA — los epóxicos se entizan severamente al sol"},
+        {"producto": "Esmaltes alquídicos (Pintulux)", "severidad": "MEDIA — pierden brillo lentamente"},
+        {"producto": "Acrílicos de alta calidad (Koraza)", "severidad": "BAJA — diseñados para resistir UV"},
+        {"producto": "Poliuretanos (Interthane)", "severidad": "MUY BAJA — máxima resistencia UV"}
+      ],
+      "solucion": "Si ya se entizó: lavar superficie, lijar suavemente, y reaplicar con un acabado resistente a UV (Koraza para muros, Interthane para metal/pisos). Para prevenir: NUNCA dejar epóxicos como acabado final en exterior."
+    },
+    "regla_critica": "REGLA DE UV: En exterior expuesto al sol, el acabado final DEBE ser resistente a UV: Koraza (muros), Interthane 990 (metal/industrial), Pintulux 3en1 (metal convencional). Los epóxicos NUNCA como capa final al sol (excepción parcial: Intergard 740)."
+  },
+  {
+    "id": "GS-PROT-004",
+    "titulo": "Guía de Solución: Incompatibilidad entre Familias de Pintura (reglas de convivencia)",
+    "doc_type": "guia_solucion",
+    "escenario": "incompatibilidad_familias",
+    "palabras_clave_cliente": [
+      "la pintura se arrugó",
+      "la pintura se cuarteó",
+      "la pintura se levantó al aplicar encima",
+      "mezclar pinturas",
+      "puedo aplicar epóxico sobre esmalte",
+      "compatibilidad de pinturas",
+      "la pintura nueva no pega",
+      "epóxico sobre alquídico",
+      "vinilo sobre esmalte",
+      "esmalte sobre vinilo",
+      "incompatibilidad pinturas"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Un problema frecuente es aplicar una pintura sobre otra de familia incompatible. Esto causa arrugamiento, descascaramiento o fallas de adherencia. Las familias de pintura tienen reglas de convivencia estrictas."
+    },
+    "tabla_compatibilidad": {
+      "resumen": "Las capas superiores deben ser IGUALES o de MENOR poder de solvente que la capa inferior.",
+      "reglas": [
+        {
+          "base_existente": "Alquídica (Corrotec, Pintulux, Doméstico)",
+          "puede_recibir": ["Alquídica (Pintulux, Doméstico)", "Acrílica de agua (Viniltex, Koraza)"],
+          "NO_puede_recibir": ["Epóxica (Interseal, Pintucoat, Intergard)", "Poliuretano (Interthane)"],
+          "razon_incompatibilidad": "Los solventes del epóxico disuelven y ARRUGAN la película alquídica. Se debe remover TODO el alquídico hasta el sustrato antes de aplicar epóxico."
+        },
+        {
+          "base_existente": "Epóxica (Interseal, Pintucoat, Intergard)",
+          "puede_recibir": ["Epóxica", "Poliuretano (Interthane)", "Alquídica (Pintulux)", "Acrílica (Koraza, Viniltex)"],
+          "NO_puede_recibir": [],
+          "razon_incompatibilidad": "La base epóxica acepta prácticamente cualquier familia encima. Es la base más versátil."
+        },
+        {
+          "base_existente": "Acrílica de agua (Viniltex, Koraza)",
+          "puede_recibir": ["Acrílica de agua (Viniltex, Koraza)", "Alquídica (Pintulux) con precaución"],
+          "NO_puede_recibir": ["Epóxica directa sin imprimante"],
+          "razon_incompatibilidad": "La base acrílica de agua es flexible y puede no tener la dureza para recibir epóxicos directos en pisos."
+        },
+        {
+          "base_existente": "Poliuretano (Interthane)",
+          "puede_recibir": ["Poliuretano", "Acrílica con lijado"],
+          "NO_puede_recibir": [],
+          "razon_incompatibilidad": "Lijar antes de reaplicar para crear perfil de agarre."
+        }
+      ]
+    },
+    "regla_critica": "REGLA DE ORO: Si hay duda sobre la base existente, LIJAR y aplicar capa de adherencia (promotor) antes de arriesgarse. Para migrar de alquídico a epóxico: SIEMPRE remover todo hasta el sustrato."
+  },
+  {
+    "id": "GS-PROT-005",
+    "titulo": "Guía de Solución: Errores Comunes y Fallas de Aplicación (diagnóstico de problemas)",
+    "doc_type": "guia_solucion",
+    "escenario": "fallas_aplicacion",
+    "palabras_clave_cliente": [
+      "la pintura se descascaró",
+      "la pintura se peló",
+      "la pintura tiene burbujas",
+      "la pintura se ampollón",
+      "marcas de rodillo",
+      "la pintura quedó rayada",
+      "la pintura quedó dispareja",
+      "la pintura no cubrió",
+      "se ven las pasadas del rodillo",
+      "la pintura se cuarteó",
+      "la pintura se agrietó",
+      "la pintura huele mal",
+      "la pintura no seca",
+      "la pintura cambió de color",
+      "el barniz quedó blancuzco",
+      "problemas con la pintura",
+      "falla en la pintura"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Guía de diagnóstico para problemas comunes de aplicación",
+      "problemas_y_causas": [
+        {
+          "problema": "Descascaramiento / peeling",
+          "causas": [
+            "Superficie no preparada (sin lijar, con polvo o grasa)",
+            "Se pintó sobre humedad activa",
+            "Incompatibilidad de familias (epóxico sobre alquídico)",
+            "Se pintó sobre superficie muy caliente (secado flash)"
+          ],
+          "solucion": "Remover pintura suelta, preparar correctamente y reaplicar con sistema compatible."
+        },
+        {
+          "problema": "Burbujas / ampollas",
+          "causas": [
+            "Humedad debajo de la película de pintura",
+            "Se pintó con sol directo (la superficie caliente evapora el solvente antes de que la pintura nivele)",
+            "Capas muy gruesas sin secar entre manos"
+          ],
+          "solucion": "Raspar ampollas, secar sustrato, reaplicar en condiciones correctas (no sol directo, no humedad)."
+        },
+        {
+          "problema": "Marcas de rodillo / aplicación dispareja",
+          "causas": [
+            "Rodillo incorrecto (felpa muy larga para pintura lisa, o muy corta para textura)",
+            "No se distribuyó la pintura en la bandeja antes de aplicar",
+            "Pintura muy espesa (falta dilución)"
+          ],
+          "solucion": "Usar rodillo correcto, distribuir bien en bandeja, diluir según ficha técnica."
+        },
+        {
+          "problema": "No cubre / baja opacidad",
+          "causas": [
+            "Base muy oscura bajo color claro (necesita más manos o base de tinturación incorrecta)",
+            "Pintura muy diluida",
+            "Solo 1 mano (siempre se necesitan mínimo 2)"
+          ],
+          "solucion": "Aplicar manos adicionales. Si es cambio de oscuro a claro, considerar sellador/primer blanco primero."
+        },
+        {
+          "problema": "Barniz blancuzco en madera (blanching)",
+          "causas": [
+            "Se aplicó barniz con humedad ambiental alta (>80% HR)",
+            "La madera tenía humedad"
+          ],
+          "solucion": "Lijar la capa afectada y reaplicar cuando la humedad relativa sea menor al 75%."
+        },
+        {
+          "problema": "Arrugamiento (wrinkling)",
+          "causas": [
+            "Epóxico aplicado sobre base alquídica (incompatibilidad)",
+            "Capa muy gruesa que seca por fuera pero está húmeda por dentro"
+          ],
+          "solucion": "Remover todo y reaplicar. Si es incompatibilidad, remover hasta sustrato."
+        }
+      ]
+    }
+  },
+  {
+    "id": "GS-PROT-006",
+    "titulo": "Guía de Solución: Viniltex Pro y Línea Profesional para Constructoras",
+    "doc_type": "guia_solucion",
+    "escenario": "linea_profesional_constructoras",
+    "palabras_clave_cliente": [
+      "viniltex pro",
+      "viniltex profesional",
+      "pintura para constructora",
+      "pintura por cuñete constructora",
+      "proyecto de construcción",
+      "obra grande",
+      "pintura masiva",
+      "volumen de pintura",
+      "proyecto residencial",
+      "pintura de entrega VIS",
+      "vivienda de interés social"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Línea profesional de alto volumen para constructoras y proyectos de entrega. Viniltex Pro viene en presentaciones profesionales (cuñetes de 5 galones / 18.93L) y es la línea diseñada para volúmenes de obra.",
+      "preguntas_obligatorias": [
+        "¿Cuántas unidades y m² totales del proyecto?",
+        "¿Interior, exterior o ambos?",
+        "¿Colores (generalmente blanco estándar para entrega)?",
+        "¿Requiere especificación técnica formal?"
+      ]
+    },
+    "sistema_recomendado": {
+      "interior": {
+        "producto": "Viniltex Pro 450 o 650 Blanco",
+        "presentacion": "Cuñete 5 galones (18.93L)",
+        "nota": "Pro 450: estándar de entrega. Pro 650: mayor cubrición y lavabilidad."
+      },
+      "exterior": {
+        "producto": "Koraza cuñete o Viniltex Pro para exterior",
+        "presentacion": "Cuñete 5 galones"
+      }
+    }
+  },
+  {
+    "id": "GS-HER-001",
+    "titulo": "Guía de Solución: Abrasivos Abracol (lijas, discos, gratas) — selección correcta",
+    "doc_type": "guia_solucion",
+    "escenario": "abrasivos_lijas",
+    "palabras_clave_cliente": [
+      "lija",
+      "lija para madera",
+      "lija para metal",
+      "lija para pared",
+      "disco flap",
+      "grata",
+      "lija abracol",
+      "qué grano de lija",
+      "lija número 80",
+      "lija número 150",
+      "lija número 220",
+      "lijar pared",
+      "lijar metal",
+      "lijar madera",
+      "abrasivo",
+      "disco de copa"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Selección correcta de abrasivos (lijas) según sustrato y propósito. Ferreinox maneja la línea Abracol de lijas y discos.",
+      "preguntas_obligatorias": [
+        "¿Para qué material? (madera, metal, concreto/muro, masilla automotriz)",
+        "¿Es para preparación inicial (remoción) o acabado fino?",
+        "¿Manual o con máquina?"
+      ]
+    },
+    "tabla_granos": {
+      "Remoción pesada (óxido, pintura vieja, concreto)": {
+        "grano": "36-60",
+        "formato": "Disco flap, disco copa, lija en rollo"
+      },
+      "Preparación estándar (crear perfil de agarre)": {
+        "grano": "80-100",
+        "formato": "Lija en hoja, disco flap"
+      },
+      "Alisado intermedio (entre manos, masilla)": {
+        "grano": "120-150",
+        "formato": "Lija en hoja"
+      },
+      "Acabado fino (madera antes de barniz, estuco)": {
+        "grano": "180-220",
+        "formato": "Lija en hoja"
+      },
+      "Pulido/entre manos de barniz": {
+        "grano": "320-400",
+        "formato": "Lija en hoja, lana de acero"
+      },
+      "Acabado automotriz (antes de pintura)": {
+        "grano": "400-600",
+        "formato": "Lija al agua"
+      },
+      "Pulido automotriz final": {
+        "grano": "1000-2000",
+        "formato": "Lija al agua"
+      }
+    },
+    "regla_sustitucion": "Si no hay el grano exacto: grano 60 sustituye al 80 (más agresivo). Grano 120 sustituye al 150. Grano 180 sustituye al 220. SIEMPRE informar al cliente la sustitución.",
+    "por_sustrato": {
+      "Madera nueva": "Grano 150-220 para preparación. Grano 320 entre manos de barniz.",
+      "Metal oxidado": "Disco flap o grata + lija 80-100.",
+      "Muro/estuco": "Grano 150-220 para alisar estuco.",
+      "Masilla automotriz": "Grano 120 → 220 → 400-600 progresivo.",
+      "Concreto/piso": "Grano 36-80 con pulidora."
+    }
+  },
+  {
+    "id": "GS-HER-002",
+    "titulo": "Guía de Solución: Cerraduras, Herrajes y Productos de Ferretería (no pintura)",
+    "doc_type": "guia_solucion",
+    "escenario": "cerraduras_herrajes",
+    "palabras_clave_cliente": [
+      "cerradura",
+      "chapa",
+      "herraje",
+      "manija",
+      "candado",
+      "cerrojo",
+      "bisagra",
+      "grifa",
+      "tornillo",
+      "clavo",
+      "pasador",
+      "yale"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Ferreinox vende cerraduras y herrajes como parte de su catálogo de ferretería. Estos productos no requieren guía técnica de aplicación — se venden directamente.",
+      "preguntas_obligatorias": [
+        "¿Qué tipo de puerta? (madera, metal, vidrio)",
+        "¿Para entrada principal, interior, baño?",
+        "¿Con llave o sin llave?",
+        "¿Tipo de instalación?"
+      ]
+    },
+    "nota": "Para cerraduras y herrajes, consultar el catálogo de ferretería de Ferreinox directamente. No hay sistema de aplicación como en pintura."
+  }
+]

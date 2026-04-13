@@ -1,0 +1,523 @@
+[
+  {
+    "id": "GS-HUM-001",
+    "titulo": "Guía de Solución: Humedad Interior por Capilaridad o Presión Negativa",
+    "doc_type": "guia_solucion",
+    "escenario": "humedad_interior_capilaridad",
+    "palabras_clave_cliente": [
+      "humedad en la pared",
+      "pared mojada por dentro",
+      "salitre en la pared",
+      "ampollas en la pintura",
+      "pintura soplada por humedad",
+      "humedad que sube del piso",
+      "humedad por capilaridad",
+      "presión negativa en el muro",
+      "muro húmedo por dentro",
+      "la pintura se pela por humedad",
+      "humedad interior",
+      "pared con salitre",
+      "base del muro mojada",
+      "humedad que viene del piso",
+      "jardinera filtra humedad",
+      "revoque quemado por humedad",
+      "meteorizado",
+      "estuco dañado por humedad interior"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Humedad que ingresa al muro desde el suelo o desde el lado opuesto de la pared (jardinera, terreno adyacente). No es humedad de lluvia directa sobre fachada — es presión negativa o capilaridad.",
+      "señales_confirmatorias": [
+        "El daño se concentra en la base del muro (primeros 50-80 cm desde el piso).",
+        "Hay salitre blanco (eflorescencias) en la superficie.",
+        "La pintura se ampolla, se sopla o se descascara desde abajo.",
+        "El revoque está meteorizado: blando, se deshace con la mano.",
+        "El problema reaparece aunque repinten encima."
+      ],
+      "preguntas_obligatorias": [
+        "¿La humedad está en un muro interior o en una fachada expuesta a la lluvia?",
+        "¿Está en la base del muro o por toda la pared?",
+        "¿Hay jardinera, terreno o jardín al otro lado de esa pared?",
+        "¿Cuántos metros cuadrados (m²) tiene el área afectada?",
+        "¿La pintura actual se pela, tiene ampollas o se ve salitre blanco?"
+      ]
+    },
+    "sistema_recomendado": {
+      "resumen": "Preparación profunda → Aquablock Ultra (bloqueador de humedad) → Estuco Acrílico (nivelador) → Viniltex Advanced (acabado). El ORDEN es crítico: NUNCA aplicar estuco antes del Aquablock.",
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Raspar y tumbar absolutamente toda pintura suelta, ampollas, salitre y base soplada hasta llegar al revoque original (sustrato sano).",
+          "producto": null,
+          "herramientas": ["Espátula", "Rasqueta", "Lija Abracol grano 80-100"],
+          "nota_tecnica": "Si el revoque está meteorizado o 'quemado' (blando, se deshace), hay que reemplazarlo completamente. NO aplicar nada sobre revoque dañado."
+        },
+        {
+          "paso": 2,
+          "accion": "REVOQUE NUEVO (solo si el revoque original está dañado): Reemplazar con Revofast de Pintuco o revoque acondicionado con ligante impermeabilizante.",
+          "producto": "Revofast de Pintuco",
+          "herramientas": ["Llana", "Plana"],
+          "nota_tecnica": "Revofast seca rápido — se puede continuar al siguiente paso en 48 horas. Si se usa revoque tradicional, esperar mínimo 5-7 días.",
+          "condicional": true,
+          "condicion": "Solo si el revoque original está meteorizado o quemado"
+        },
+        {
+          "paso": 3,
+          "accion": "BLOQUEADOR DE HUMEDAD — 1ª MANO: Aplicar Aquablock Ultra CON BROCHA (no rodillo) para cargar bien el producto sobre la superficie y que penetre en los poros del muro.",
+          "producto": "Aquablock Ultra",
+          "presentacion_recomendada": "Galón o cuñete según área",
+          "herramientas": ["Brocha Goya Profesional"],
+          "nota_tecnica": "Se aplica con BROCHA obligatoriamente — el rodillo no carga suficiente producto. Dejar secar completamente (mínimo 12-24 horas según clima).",
+          "rendimiento": "18-20 m² por galón (a dos manos bien cargadas)"
+        },
+        {
+          "paso": 4,
+          "accion": "BLOQUEADOR DE HUMEDAD — 2ª MANO: Aplicar segunda mano de Aquablock Ultra. Dejar secar mínimo 24 horas.",
+          "producto": "Aquablock Ultra",
+          "herramientas": ["Brocha Goya Profesional"],
+          "nota_tecnica": "El sistema de Aquablock son SIEMPRE 2 manos. Con una sola mano no se logra el sellado suficiente."
+        },
+        {
+          "paso": 5,
+          "accion": "NIVELACIÓN: Aplicar Estuco Acrílico para nivelar y dejar la superficie lisa y uniforme.",
+          "producto": "Estuco Acrílico Exterior/Humedad",
+          "herramientas": ["Llana", "Espátula"],
+          "nota_tecnica": "El estuco va DESPUÉS del Aquablock, NUNCA antes. Si se aplica estuco antes del bloqueador, la humedad lo destruye desde abajo. Usar Estuco Acrílico Exterior — NO estuco interior tradicional, porque la humedad lo daña."
+        },
+        {
+          "paso": 6,
+          "accion": "ACABADO FINAL: Aplicar 2 manos de Viniltex Advanced como acabado decorativo.",
+          "producto": "Viniltex Advanced",
+          "presentacion_recomendada": "Galón o cuñete según área",
+          "herramientas": ["Rodillo", "Brocha para cortes y bordes"],
+          "nota_tecnica": "Viniltex Advanced es el acabado premium para interiores. Alternativas más económicas: Intervinil (intermedio) o Pinturama (económico).",
+          "rendimiento": "20-25 m² por galón (a dos manos)"
+        }
+      ],
+      "orden_critico": "Aquablock Ultra → Estuco Acrílico → Pintura. NUNCA: Estuco → Aquablock.",
+      "jerarquia_acabados": [
+        {"producto": "Viniltex Advanced", "nivel": "premium", "precio_relativo": "alto"},
+        {"producto": "Intervinil", "nivel": "intermedio", "precio_relativo": "medio"},
+        {"producto": "Pinturama", "nivel": "económico", "precio_relativo": "bajo"}
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Koraza",
+        "razon": "Koraza es un acabado de FACHADA EXTERIOR (intemperie). No es sellador de humedad interior y no tiene la capacidad de bloquear capilaridad desde dentro del muro."
+      },
+      {
+        "producto": "Pintuco Fill",
+        "razon": "Pintuco Fill es un impermeabilizante de CUBIERTAS y TECHOS para filtraciones de lluvia. No es para capilaridad interior desde la base del muro."
+      },
+      {
+        "producto": "Estuco interior tradicional",
+        "razon": "El estuco interior tradicional se destruye con la humedad. Usar siempre Estuco Acrílico Exterior/Humedad."
+      }
+    ],
+    "rendimientos_referencia": {
+      "Aquablock Ultra": "18-20 m² por galón (2 manos con brocha)",
+      "Estuco Acrílico": "Depende del estado de la superficie — consultar ficha técnica",
+      "Viniltex Advanced": "20-25 m² por galón (2 manos)"
+    },
+    "ejemplo_cotizacion": {
+      "area_ejemplo_m2": 20,
+      "calculo": "Aquablock Ultra: 20 m² ÷ 18 m²/gal = 1.11 → 2 galones (se cubren las 2 manos). Viniltex Advanced: 20 m² ÷ 20 m²/gal = 1 galón (2 manos). Más Estuco Acrílico según estado de la pared."
+    },
+    "alerta_metraje": "SIEMPRE pedir los m² antes de cotizar. No aceptar que el cliente diga 'necesito 2 galones' — primero calcular cuánto realmente necesita según el área."
+  },
+  {
+    "id": "GS-HUM-002",
+    "titulo": "Guía de Solución: Humedad Interior General (sin capilaridad confirmada)",
+    "doc_type": "guia_solucion",
+    "escenario": "humedad_interior_general",
+    "palabras_clave_cliente": [
+      "pared con humedad",
+      "pintura dañada por humedad",
+      "humedad en el muro interior",
+      "se me daña la pintura por humedad",
+      "la pintura se cae",
+      "manchas de humedad en la pared",
+      "muro con humedad",
+      "pared interior humeda",
+      "paredes con moho",
+      "humedad en habitación",
+      "humedad en sala",
+      "humedad en el cuarto"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Humedad interior sin causa raíz confirmada. Puede ser capilaridad, condensación, filtración desde exterior, o tubería rota. Se debe diagnosticar ANTES de recomendar el sistema.",
+      "señales_confirmatorias": [
+        "Manchas húmedas o pintura dañada en muro interior.",
+        "No se ha confirmado si la humedad sube del piso o viene de otro lado.",
+        "El cliente sabe que tiene humedad pero no sabe la causa."
+      ],
+      "preguntas_obligatorias": [
+        "¿Dónde está la humedad — en la base del muro, en la parte alta, o por toda la pared?",
+        "¿Hay jardinera, terreno o jardín al otro lado?",
+        "¿El baño o la cocina están al otro lado de esa pared? (posible tubería rota)",
+        "¿El problema aparece solo en época de lluvia o es permanente?",
+        "¿Hay salitre blanco o solo manchas oscuras/moho?",
+        "¿Cuántos metros cuadrados (m²) tiene el área afectada?"
+      ]
+    },
+    "sistema_recomendado": {
+      "resumen": "Primero diagnosticar la causa. Si es capilaridad: sistema Aquablock Ultra (ver GS-HUM-001). Si es condensación/moho superficial: limpieza + pintura antihongos. Si es filtración: resolver la fuente antes de pintar.",
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "DIAGNÓSTICO: Determinar la causa raíz de la humedad antes de recomendar cualquier producto.",
+          "producto": null,
+          "nota_tecnica": "Si la humedad está en la base del muro y hay salitre → capilaridad → ir a sistema Aquablock Ultra. Si hay moho pero no salitre → puede ser condensación → sistema antihongos. Si hay filtración activa → resolver primero la fuente del agua."
+        },
+        {
+          "paso": 2,
+          "accion": "PREPARACIÓN: Remover base suelta, salitre o moho según corresponda.",
+          "producto": null,
+          "herramientas": ["Espátula", "Lija Abracol", "Cepillo"],
+          "nota_tecnica": "Si hay moho: lavar con hipoclorito diluido (1 parte hipoclorito por 8-10 partes agua). ADVERTENCIA: esta mezcla solo funciona durante 1 hora máximo después de preparada."
+        },
+        {
+          "paso": 3,
+          "accion": "BLOQUEADOR (si hay humedad activa): Aplicar Aquablock o Aquablock Ultra según severidad.",
+          "producto": "Aquablock / Aquablock Ultra",
+          "herramientas": ["Brocha Goya Profesional"],
+          "nota_tecnica": "Aquablock Ultra para casos severos (capilaridad, presión negativa). Aquablock estándar para humedad leve sin presión activa."
+        },
+        {
+          "paso": 4,
+          "accion": "NIVELACIÓN: Estuco Acrílico si se requiere nivelar después del bloqueador.",
+          "producto": "Estuco Acrílico",
+          "nota_tecnica": "Siempre DESPUÉS del bloqueador de humedad, nunca antes."
+        },
+        {
+          "paso": 5,
+          "accion": "ACABADO: Aplicar 2 manos de acabado según presupuesto del cliente.",
+          "producto": "Viniltex Advanced / Intervinil / Pinturama",
+          "nota_tecnica": "Para zonas con recurrencia de moho, considerar Viniltex Baños y Cocinas (tiene aditivo antihongos)."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Koraza",
+        "razon": "Koraza es acabado de fachada exterior. No funciona como sellador de humedad interior."
+      }
+    ],
+    "rendimientos_referencia": {
+      "Aquablock Ultra": "18-20 m² por galón (2 manos con brocha)",
+      "Viniltex Advanced": "20-25 m² por galón (2 manos)"
+    },
+    "alerta_metraje": "SIEMPRE pedir los m² antes de cotizar."
+  },
+  {
+    "id": "GS-HUM-003",
+    "titulo": "Guía de Solución: Fachada Exterior con Problemas de Humedad",
+    "doc_type": "guia_solucion",
+    "escenario": "fachada_exterior_humedad",
+    "palabras_clave_cliente": [
+      "pintar fachada con humedad",
+      "fachada con humedad",
+      "fachada mojada",
+      "humedad en la fachada",
+      "la fachada se pela",
+      "pintura fachada se cae",
+      "fachada con moho",
+      "fachada con hongo",
+      "repintar fachada dañada",
+      "fachada exterior humeda",
+      "humedad fachada exterior",
+      "pintura exterior se ampolla",
+      "pintura se sopla en la fachada",
+      "fachada con estuco dañado",
+      "la fachada tiene salitre",
+      "quiero pintar la fachada pero tiene humedad",
+      "la fachada se descascara"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Fachada exterior expuesta a lluvia y sol con problemas de humedad, pintura soplada, desprendimiento o moho. La humedad puede venir por lluvia directa, por capilaridad desde la base, o por base/estuco en mal estado. Se debe determinar la fuente.",
+      "señales_confirmatorias": [
+        "La pintura de la fachada se ampolla, descascara o se sopla.",
+        "Hay moho verde/negro visible en la superficie.",
+        "El estuco o textura actual está soplado (suena hueco al golpear).",
+        "Visible deterioro en la base de la fachada.",
+        "El problema reaparece aunque repinten encima cada año."
+      ],
+      "preguntas_obligatorias": [
+        "¿La humedad está solo en la base de la fachada o por toda la superficie?",
+        "¿Actualmente la fachada tiene estuco, textura o está sobre revoque directo?",
+        "¿Al golpear la fachada suena hueco (base soplada)?",
+        "¿Hay moho o hongo verde/negro?",
+        "¿Cuántos metros cuadrados (m²) tiene la fachada?",
+        "¿Es una fachada expuesta directamente a la lluvia o está parcialmente protegida?"
+      ]
+    },
+    "sistema_recomendado": {
+      "resumen": "Si la base está soplada: tumbar TODO hasta el revoque y reconstruir el sistema completo. Si la base está sana: preparar, tratar moho si hay, y aplicar Koraza. Para humedad en la BASE de la fachada por capilaridad: tratar primero con Aquablock Ultra por dentro antes de pintar por fuera.",
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "EVALUACIÓN DE BASE: Verificar si el estuco/textura actual está soplado golpeando la superficie. Si suena hueco → tumbar todo.",
+          "producto": null,
+          "herramientas": ["Martillo de goma para prueba de adherencia"],
+          "nota_tecnica": "Si la base actual está mala o soplada, se debe tumbar ABSOLUTAMENTE TODO hasta el revoque y comenzar un sistema nuevo desde cero. Esa es la ÚNICA garantía de curar la humedad y asegurar el desempeño de la Koraza. NO se puede pintar sobre una base dañada."
+        },
+        {
+          "paso": 2,
+          "accion": "TRATAMIENTO DE MOHO (si aplica): Lavar con solución de hipoclorito de sodio diluido (1 parte hipoclorito × 8-10 partes agua).",
+          "producto": "Hipoclorito de sodio",
+          "herramientas": ["Cepillo de cerdas duras", "Escoba", "Balde"],
+          "nota_tecnica": "ADVERTENCIA OBLIGATORIA: la mezcla de hipoclorito SOLO funciona durante 1 hora (máximo hora y media) después de preparada. Después pierde TODO su efecto antimicrobiano. Preparar solo lo que se va a usar de inmediato. Dejar secar completamente antes de pintar.",
+          "condicional": true,
+          "condicion": "Solo si hay moho/hongo visible"
+        },
+        {
+          "paso": 3,
+          "accion": "PREPARACIÓN DE SUPERFICIE: Raspar y retirar toda pintura suelta, ampollas y material soplado. Lijar la superficie para mejorar agarre.",
+          "producto": null,
+          "herramientas": ["Espátula", "Lija Abracol grano 80-100", "Brocha Goya Profesional"],
+          "nota_tecnica": "Si se tumbó todo el estuco (Paso 1), aplicar revoque nuevo y dejarlo curar. Luego opcional: Estuco Acrílico Exterior para nivelar y dar acabado liso."
+        },
+        {
+          "paso": 4,
+          "accion": "ESTUCO EXTERIOR (si se requiere nivelar): Aplicar Estuco Acrílico Exterior para dejar la superficie uniforme.",
+          "producto": "Estuco Acrílico Exterior",
+          "herramientas": ["Llana", "Espátula"],
+          "nota_tecnica": "Usar SIEMPRE Estuco Acrílico Exterior — NUNCA estuco interior tradicional en fachadas. El estuco interior no resiste intemperie ni humedad. Si hay grietas, aplicar Pintuco Flex antes del estuco como masilla flexible para grietas.",
+          "condicional": true,
+          "condicion": "Si se necesita nivelar o si se tumbó el estuco anterior"
+        },
+        {
+          "paso": 5,
+          "accion": "ACABADO FINAL — KORAZA: Aplicar 2-3 manos de Koraza como acabado exterior impermeabilizante.",
+          "producto": "Koraza",
+          "presentacion_recomendada": "Cuñete (5 galones) para fachadas grandes",
+          "herramientas": ["Rodillo de pelo largo (felpa)", "Brocha Goya Profesional para cortes"],
+          "nota_tecnica": "Koraza es el acabado PREMIUM para fachadas expuestas a lluvia y sol. Es una pintura impermeabilizante elastomérica que sella microfisuras y protege contra la lluvia. Aplicar mínimo 2 manos.",
+          "rendimiento": "20-25 m² por galón (a dos manos)"
+        }
+      ],
+      "jerarquia_acabados_fachada": [
+        {"producto": "Koraza", "nivel": "premium", "descripcion": "Impermeabilizante elastomérico, máxima protección sol + lluvia"},
+        {"producto": "Viniltex Advanced", "nivel": "tipo 1", "descripcion": "Exterior exposición moderada, sistema arquitectónico compatible"},
+        {"producto": "Intervinil", "nivel": "tipo 2", "descripcion": "Exterior económico, menor durabilidad"},
+        {"producto": "Pinturama", "nivel": "tipo 3", "descripcion": "Solo para presupuesto muy ajustado, menor protección"}
+      ],
+      "accesorios_complementarios": [
+        {"producto": "Estuco Acrílico Exterior", "uso": "Nivelación de superficie antes del acabado"},
+        {"producto": "Pintuco Flex", "uso": "Masilla flexible para sellar grietas antes del estuco"},
+        {"producto": "Lija Abracol", "uso": "Preparación de superficie"},
+        {"producto": "Brocha Goya Profesional", "uso": "Aplicación y cortes"}
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Aquablock Ultra",
+        "razon": "Aquablock es para HUMEDAD INTERIOR (capilaridad, presión negativa desde dentro). Si la humedad es por lluvia directa sobre la fachada, Aquablock NO es la solución — se necesita Koraza como acabado exterior impermeabilizante. Excepción: si la capilaridad afecta la base de la fachada por dentro, tratar con Aquablock por el lado interior."
+      },
+      {
+        "producto": "Pintura interior (Intervinil, Pinturama) como acabado principal",
+        "razon": "En fachadas de alta exposición a lluvia y sol, los vinilos interiores se degradan rápidamente. Koraza o mínimo Viniltex Advanced."
+      }
+    ],
+    "caso_especial_humedad_base_fachada": {
+      "descripcion": "Si la humedad está en la BASE de la fachada (primeros 50-80 cm) y hay salitre, probablemente es CAPILARIDAD que viene desde el suelo. En este caso el tratamiento es DOBLE:",
+      "tratamiento": [
+        "POR DENTRO (si es accesible): Tratar la pared interior con sistema Aquablock Ultra (ver GS-HUM-001).",
+        "POR FUERA: Preparar y pintar con Koraza como acabado exterior."
+      ]
+    },
+    "rendimientos_referencia": {
+      "Koraza": "20-25 m² por galón (2-3 manos)",
+      "Estuco Acrílico Exterior": "Según estado de superficie — consultar ficha técnica",
+      "Viniltex Advanced": "20-25 m² por galón (2 manos)"
+    },
+    "ejemplo_cotizacion": {
+      "area_ejemplo_m2": 50,
+      "calculo": "Koraza: 50 m² ÷ 20 m²/gal = 2.5 galones por mano × 2 manos = 5 galones → 1 cuñete. Más Estuco Acrílico si hay que nivelar. Más Lija Abracol + Brocha Goya Profesional."
+    },
+    "alerta_metraje": "SIEMPRE pedir los m² de la fachada antes de cotizar. No aceptar 'necesito pintura para la fachada' sin metraje."
+  },
+  {
+    "id": "GS-HUM-004",
+    "titulo": "Guía de Solución: Moho y Hongo en Muros y Fachadas",
+    "doc_type": "guia_solucion",
+    "escenario": "moho_hongo",
+    "palabras_clave_cliente": [
+      "moho en la pared",
+      "hongo en la pared",
+      "pared con moho",
+      "fachada con hongo verde",
+      "manchas negras de humedad",
+      "moho en el baño",
+      "hongo en la fachada",
+      "como quitar moho de la pared",
+      "quitar hongo de la fachada",
+      "mancha verde en la pared",
+      "mancha negra en la pared",
+      "la pared tiene moho",
+      "moho por humedad"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Presencia de moho/hongo en superficies. Hay que diferenciar: moho superficial (solo necesita limpieza + pintura adecuada) vs. moho causado por humedad estructural (necesita resolver la fuente de agua primero).",
+      "preguntas_obligatorias": [
+        "¿Es en una fachada exterior o en un muro interior?",
+        "¿La zona es muy húmeda, poco ventilada, o está cerca de baño/cocina?",
+        "¿Se seca la pared si se abre ventilación o el moho siempre regresa?",
+        "¿Hay humedad activa detrás de la pared (filtración, capilaridad)?",
+        "¿Cuántos metros cuadrados (m²) tiene el área afectada?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "LIMPIEZA ANTIMICROBIANA: Preparar solución de hipoclorito de sodio — 1 parte de hipoclorito por 8 a 10 partes de agua.",
+          "producto": "Hipoclorito de sodio",
+          "herramientas": ["Cepillo de cerdas duras", "Guantes", "Gafas de protección", "Balde"],
+          "nota_tecnica": "ADVERTENCIA CRÍTICA: esta mezcla SOLO es funcional durante 1 hora (máximo hora y media) después de preparada. Después de ese tiempo pierde TODO su efecto para matar el hongo. Preparar SOLO la cantidad que se va a usar de inmediato. Aplicar con cepillo sobre la superficie, dejar actuar 15-20 minutos, enjuagar y dejar secar completamente."
+        },
+        {
+          "paso": 2,
+          "accion": "PREPARACIÓN: Una vez seco, raspar pintura suelta si la hay. Lijar suavemente para mejorar adhesión.",
+          "producto": null,
+          "herramientas": ["Lija Abracol grano 100-150", "Espátula"]
+        },
+        {
+          "paso": 3,
+          "accion": "ACABADO según ubicación.",
+          "producto": null,
+          "nota_tecnica": "Si es FACHADA EXTERIOR: acabar con Koraza (ver GS-HUM-003). Si es INTERIOR en baño/cocina: acabar con Viniltex Baños y Cocinas (tiene aditivo antihongos). Si es INTERIOR en otras zonas: Viniltex Advanced."
+        }
+      ]
+    },
+    "productos_segun_ubicacion": {
+      "fachada_exterior": "Koraza (impermeabilizante + protección UV)",
+      "baño_cocina": "Viniltex Baños y Cocinas (aditivo antihongos + lavable)",
+      "interior_general": "Viniltex Advanced + buena ventilación"
+    },
+    "alerta_metraje": "Pedir m² para cotizar correctamente."
+  },
+  {
+    "id": "GS-HUM-005",
+    "titulo": "Guía de Solución: Revoque Dañado / Meteorizado / Quemado por Humedad",
+    "doc_type": "guia_solucion",
+    "escenario": "revoque_danado",
+    "palabras_clave_cliente": [
+      "revoque dañado",
+      "revoque quemado",
+      "la pared se deshace",
+      "el muro se desmorona",
+      "el revoque está blando",
+      "se cae el revoque",
+      "sustrato malo",
+      "la pared por dentro se deshace",
+      "meteorizado",
+      "revoque podrido",
+      "la base de la pared está mala"
+    ],
+    "diagnostico": {
+      "tipo_problema": "El revoque (pañete, friso) se ha deteriorado por exposición prolongada a la humedad. Se siente blando al tacto, se deshace con la mano, o se despega en capas. NINGÚN producto de pintura o impermeabilización funcionará sobre un revoque quemado — hay que reemplazarlo primero.",
+      "preguntas_obligatorias": [
+        "¿El revoque está blando, se deshace al rascarlo con la mano?",
+        "¿Cuánta área tiene el revoque dañado (m²)?",
+        "¿Es muro interior o fachada exterior?",
+        "¿Se ha identificado la fuente de la humedad que dañó el revoque?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "REMOCIÓN: Tumbar completamente el revoque dañado hasta encontrar base sana (ladrillo, bloque). No dejar nada blando o suelto.",
+          "herramientas": ["Cincel", "Martillo", "Espátula grande"]
+        },
+        {
+          "paso": 2,
+          "accion": "REVOQUE NUEVO: Aplicar Revofast de Pintuco o revoque tradicional acondicionado con ligante impermeabilizante.",
+          "producto": "Revofast de Pintuco",
+          "nota_tecnica": "Revofast de Pintuco — ventaja: seca rápido (48 horas para aplicar siguiente paso). El revoque tradicional requiere 5-7 días de secado. NUNCA aplicar impermeabilizante o pintura sobre un revoque quemado sin reemplazarlo primero."
+        },
+        {
+          "paso": 3,
+          "accion": "Continuar con el sistema correspondiente según ubicación: Aquablock Ultra (si humedad interior), o Koraza (si fachada exterior).",
+          "producto": null,
+          "nota_tecnica": "Después del Revofast curado (48h), seguir con el sistema completo: si es interior → GS-HUM-001 desde el paso 3. Si es fachada → GS-HUM-003 desde el paso 4."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Cualquier pintura o impermeabilizante aplicado sobre revoque dañado",
+        "razon": "Pintar sobre revoque quemado es tirar el dinero. El producto se va a desprender junto con el revoque en semanas. La ÚNICA solución es reemplazar el revoque primero."
+      }
+    ]
+  },
+  {
+    "id": "GS-HUM-006",
+    "titulo": "Guía de Solución: Techo de Concreto con Goteras, Grietas o Filtraciones",
+    "doc_type": "guia_solucion",
+    "escenario": "techo_concreto_goteras",
+    "palabras_clave_cliente": [
+      "gotera en el techo",
+      "techo con goteras",
+      "impermeabilizar el techo",
+      "impermeabilizar terraza",
+      "filtraciones en la losa",
+      "grietas en la terraza",
+      "techo que filtra",
+      "sellar grietas del techo",
+      "impermeabilizar la placa",
+      "la terraza filtra agua",
+      "el techo se moja",
+      "humedad en el techo",
+      "gotera en la terraza",
+      "losa con fisuras"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Losa o terraza de concreto con filtraciones, grietas o fisuras que dejan pasar agua. Esta es una ruta de IMPERMEABILIZACIÓN DE CUBIERTAS — no es pintura decorativa de fachada.",
+      "preguntas_obligatorias": [
+        "¿Es techo/terraza transitable o no transitable?",
+        "¿Hay grietas o fisuras visibles?",
+        "¿Actualmente tiene algún impermeabilizante aplicado?",
+        "¿Cuántos metros cuadrados (m²) tiene la losa/terraza?",
+        "¿La filtración es en puntos específicos o por toda la superficie?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Limpiar la superficie, retirar impermeabilizante viejo si está desprendido. Verificar y marcar grietas/fisuras.",
+          "herramientas": ["Escoba", "Espátula", "Cepillo"]
+        },
+        {
+          "paso": 2,
+          "accion": "TRATAMIENTO DE GRIETAS: Sellar fisuras con masilla flexible o refuerzo de tela según el ancho de la grieta.",
+          "nota_tecnica": "Definir si requiere refuerzo de tela geotextil o tratamiento de fisuras antes del impermeabilizante."
+        },
+        {
+          "paso": 3,
+          "accion": "IMPERMEABILIZACIÓN: Aplicar Pintuco Fill como sistema de impermeabilización de cubierta.",
+          "producto": "Pintuco Fill",
+          "herramientas": ["Brocha gruesa", "Rodillo de pelo largo"],
+          "rendimiento": "12-15 m² por galón",
+          "nota_tecnica": "Pintuco Fill es el producto correcto para impermeabilizar techos y terrazas de concreto. Se aplica como sistema de cubierta, NO como pintura decorativa."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Koraza",
+        "razon": "Koraza es pintura impermeabilizante para FACHADAS VERTICALES. No es para impermeabilización de cubiertas/techos horizontales con estancamiento de agua."
+      },
+      {
+        "producto": "Viniltex / Intervinil / Pinturama",
+        "razon": "Las pinturas decorativas no impermeabilizan techos. El problema requiere sistema de impermeabilización de cubierta."
+      }
+    ],
+    "rendimientos_referencia": {
+      "Pintuco Fill": "12-15 m² por galón"
+    },
+    "alerta_metraje": "SIEMPRE pedir los m² de la losa/terraza antes de cotizar."
+  }
+]

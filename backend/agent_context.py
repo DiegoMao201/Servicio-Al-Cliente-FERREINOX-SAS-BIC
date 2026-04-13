@@ -891,17 +891,36 @@ def is_diagnostic_incomplete(intent: str, diagnostic: dict) -> bool:
 
     Used by agent_v3 to enforce the BLOQUEO at the Python level —
     stripping advisory tools so the LLM physically cannot skip the diagnostic.
+
+    Checks 3 universal fields (surface, interior_exterior, condition) PLUS
+    surface-specific critical fields:
+      - pisos → traffic is mandatory (defines the entire product line)
+      - interior húmedo → humidity_source is mandatory (defines the system)
+      - madera → condition is mandatory (new vs old changes system completely)
+      - metal → condition is mandatory (virgin vs rusted vs already primed)
     """
     if intent != "asesoria":
         return False
     missing = []
-    if not diagnostic.get("surface"):
+    surface = diagnostic.get("surface") or ""
+    if not surface:
         missing.append("surface")
     if not diagnostic.get("interior_exterior"):
-        if diagnostic.get("surface") not in ("fachada", "exterior", "madera exterior", "piso deportivo"):
+        if surface not in ("fachada", "exterior", "madera exterior", "piso deportivo"):
             missing.append("interior_exterior")
     if not diagnostic.get("condition"):
         missing.append("condition")
+
+    # ── Surface-specific critical fields (Python-level enforcement) ──
+    # Pisos: sin tipo de tráfico es imposible elegir el sistema correcto
+    if surface in ("piso", "piso industrial", "piso vehicular", "piso deportivo"):
+        if not diagnostic.get("traffic"):
+            missing.append("traffic")
+    # Humedad interior: sin origen de la humedad no podemos definir el sistema base
+    if surface == "interior húmedo":
+        if not diagnostic.get("humidity_source"):
+            missing.append("humidity_source")
+
     return bool(missing)
 
 

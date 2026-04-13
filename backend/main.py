@@ -2377,15 +2377,22 @@ def _build_hard_policies_for_context(question: str, product: str, diagnosis: dic
         if note_text:
             _append_unique("rules_text", note_text)
 
-        for item in _split_policy_items(note.get("producto_recomendado")):
-            bucket = "required_tools" if _is_tool_policy_item(item) else "required_products"
-            _append_unique(bucket, item)
+        # Only inject products into required/forbidden from high-relevance notes.
+        # Low-scoring notes still contribute their text (rules_text) for LLM context
+        # but should not override product recommendations from better-matched rules.
+        note_score = note.get("_expert_score") or 0.0
+        inject_products = note_score >= 5.0
 
-        explicit_avoid_items = _split_policy_items(note.get("producto_desestimado"))
-        note_avoid_items = _extract_forbidden_note_items(note_text)
-        for item in explicit_avoid_items + note_avoid_items:
-            bucket = "forbidden_tools" if _is_tool_policy_item(item) else "forbidden_products"
-            _append_unique(bucket, item)
+        if inject_products:
+            for item in _split_policy_items(note.get("producto_recomendado")):
+                bucket = "required_tools" if _is_tool_policy_item(item) else "required_products"
+                _append_unique(bucket, item)
+
+            explicit_avoid_items = _split_policy_items(note.get("producto_desestimado"))
+            note_avoid_items = _extract_forbidden_note_items(note_text)
+            for item in explicit_avoid_items + note_avoid_items:
+                bucket = "forbidden_tools" if _is_tool_policy_item(item) else "forbidden_products"
+                _append_unique(bucket, item)
 
         normalized_note = normalize_text_value(note_text)
         for candidate in ["preparacion humeda", "sellomax", "koraza", "aquablock", "metal desnudo", "intergard 2002", "cuarzo", "interthane", "28 dias", "curado", "construcleaner", "siliconite", "barnex", "wood stain", "poliuretano alto trafico", "misma familia", "agua con agua"]:
@@ -2437,6 +2444,62 @@ def _build_hard_policies_for_context(question: str, product: str, diagnosis: dic
     elif policies["policy_names"]:
         policies["dominant_policy_names"] = [policies["policy_names"][0]]
         policies["highest_priority_level"] = "normal"
+
+    # ── Resolve contradictions: product in both required AND forbidden ─────
+    # GLOBAL_TECHNICAL_POLICY_RULES are authoritative (already filtered by
+    # problem_class).  Expert notes may inject conflicting recommendations
+    # from different contexts (e.g., interior-humidity rule forbids Koraza
+    # while facade rule requires it).  Use the global rules as tiebreaker.
+    required_set = {normalize_text_value(p) for p in policies["required_products"]}
+    forbidden_set = {normalize_text_value(p) for p in policies["forbidden_products"]}
+    norm_to_original_req = {normalize_text_value(p): p for p in policies["required_products"]}
+    norm_to_original_forb = {normalize_text_value(p): p for p in policies["forbidden_products"]}
+    conflicts = required_set & forbidden_set
+    if conflicts:
+        # Collect what the context-filtered global rules say
+        global_required_norms: set[str] = set()
+        global_forbidden_norms: set[str] = set()
+        for rule in GLOBAL_TECHNICAL_POLICY_RULES:
+            if not _matches_global_policy_rule(rule, normalized_query, diagnosis):
+                continue
+            for p in rule.get("required_products") or []:
+                global_required_norms.add(normalize_text_value(p))
+            for p in rule.get("forbidden_products") or []:
+                global_forbidden_norms.add(normalize_text_value(p))
+
+        # Also collect what the structured guide recommends
+        guide_product_norms: set[str] = set()
+        for opt in guide.get("finish_options") or []:
+            if isinstance(opt, dict) and opt.get("producto"):
+                guide_product_norms.add(normalize_text_value(opt["producto"]))
+        for primer_text in guide.get("base_or_primer") or []:
+            guide_product_norms.add(normalize_text_value(primer_text))
+
+        for norm_product in conflicts:
+            in_global_req = any(norm_product in gr or gr in norm_product for gr in global_required_norms)
+            in_global_forb = any(norm_product in gf or gf in norm_product for gf in global_forbidden_norms)
+            in_guide = any(norm_product in gp or gp in norm_product for gp in guide_product_norms)
+
+            if in_global_req and not in_global_forb:
+                # Global rule requires it → remove from forbidden
+                original = norm_to_original_forb.get(norm_product)
+                if original and original in policies["forbidden_products"]:
+                    policies["forbidden_products"].remove(original)
+            elif in_global_forb and not in_global_req:
+                # Global rule forbids it → remove from required
+                original = norm_to_original_req.get(norm_product)
+                if original and original in policies["required_products"]:
+                    policies["required_products"].remove(original)
+            elif in_guide:
+                # Structured guide recommends it → favour required
+                original = norm_to_original_forb.get(norm_product)
+                if original and original in policies["forbidden_products"]:
+                    policies["forbidden_products"].remove(original)
+            else:
+                # Ambiguous → remove from required (conservative: do not mandate)
+                original = norm_to_original_req.get(norm_product)
+                if original and original in policies["required_products"]:
+                    policies["required_products"].remove(original)
 
     return policies
 
@@ -8536,7 +8599,12 @@ def fetch_expert_knowledge(query: str, limit: int = 8) -> list[dict]:
             if score >= 2.0:
                 scored.append((score, len(matched_terms), row))
         scored.sort(key=lambda item: (-item[0], -item[1], -(item[2].get("_ts") or 0)))
-        return [row for _, _, row in scored[:limit]]
+        results = []
+        for score_val, _match_count, row in scored[:limit]:
+            row_copy = dict(row)
+            row_copy["_expert_score"] = round(score_val, 2)
+            results.append(row_copy)
+        return results
     except Exception as exc:
         logger.debug("fetch_expert_knowledge error: %s", exc)
         return []

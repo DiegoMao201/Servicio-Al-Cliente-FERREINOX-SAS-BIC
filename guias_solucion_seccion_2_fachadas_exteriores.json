@@ -1,0 +1,467 @@
+[
+  {
+    "id": "GS-FAC-001",
+    "titulo": "Guía de Solución: Repintar Fachada en Buen Estado (sin humedad)",
+    "doc_type": "guia_solucion",
+    "escenario": "fachada_repintar_buen_estado",
+    "palabras_clave_cliente": [
+      "pintar la fachada",
+      "repintar fachada",
+      "fachada vieja",
+      "la fachada está pelada",
+      "pintura fachada exterior",
+      "fachada deteriorada",
+      "renovar la fachada",
+      "la fachada perdió color",
+      "quiero cambiar color fachada",
+      "pintar frente de la casa",
+      "pintar el frente",
+      "pintura para exterior",
+      "fachada descascarada",
+      "exterior casa pintar",
+      "pintura que aguante sol y lluvia",
+      "pintura resistente exterior"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Fachada que necesita mantenimiento o cambio de color. No hay problemas de humedad activos — simplemente la pintura está vieja, decolorada o descascarada por exposición al clima.",
+      "preguntas_obligatorias": [
+        "¿Cuántos metros cuadrados (m²) tiene la fachada?",
+        "¿La fachada actualmente está pintada o es primera vez?",
+        "¿Hay humedad, salitre o moho visible en alguna parte?",
+        "¿Hay grietas o fisuras en la superficie?",
+        "¿La pintura actual se descascara al raspar o está firme?",
+        "¿En qué color desea pintar?"
+      ]
+    },
+    "sistema_recomendado": {
+      "resumen": "Preparación de superficie → Estuco Acrílico Exterior (si hay imperfecciones) → Acabado exterior según presupuesto (Koraza premium, Viniltex Advanced tipo 1, Intervinil tipo 2, Pinturama tipo 3).",
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Raspar pintura suelta con espátula. Lijar con Lija Abracol grano 80-100 para crear perfil de agarre. Limpiar polvo.",
+          "herramientas": ["Espátula", "Lija Abracol grano 80-100", "Brocha Goya Profesional", "Escoba"],
+          "nota_tecnica": "Si la pintura actual está firme, solo lijar suavemente para crear adherencia. Si se descascara, raspar hasta llegar a base sana."
+        },
+        {
+          "paso": 2,
+          "accion": "NIVELACIÓN (si se requiere): Aplicar Estuco Acrílico Exterior para nivelar imperfecciones, huecos o zonas donde se raspó.",
+          "producto": "Estuco Acrílico Exterior",
+          "herramientas": ["Llana", "Espátula"],
+          "nota_tecnica": "Usar SIEMPRE Estuco Acrílico Exterior — nunca estuco interior tradicional. Si hay grietas, aplicar Pintuco Flex como masilla flexible antes del estuco. Referencia estuco exterior: PQ ESTUCO PROF EXT BLAN 27060.",
+          "condicional": true,
+          "condicion": "Solo si la superficie tiene imperfecciones o zonas raspadas"
+        },
+        {
+          "paso": 3,
+          "accion": "ACABADO EXTERIOR: Aplicar 2 manos del acabado seleccionado según presupuesto del cliente.",
+          "producto": "Koraza / Viniltex Advanced / Intervinil / Pinturama",
+          "herramientas": ["Rodillo de felpa (pelo largo)", "Brocha Goya Profesional para cortes y bordes"],
+          "nota_tecnica": "Koraza es el PREMIUM: impermeabilizante elastomérico, máxima protección. Para presupuesto intermedio: Viniltex Advanced. Para económico: Intervinil o Pinturama (menor durabilidad)."
+        }
+      ],
+      "jerarquia_acabados_fachada": [
+        {"producto": "Koraza", "nivel": "premium", "descripcion": "Impermeabilizante elastomérico. Máxima protección contra sol y lluvia. Sella microfisuras.", "rendimiento": "20-25 m²/galón"},
+        {"producto": "Viniltex Advanced", "nivel": "tipo 1", "descripcion": "Exterior exposición moderada. Lavable, buena durabilidad.", "rendimiento": "20-25 m²/galón"},
+        {"producto": "Intervinil", "nivel": "tipo 2", "descripcion": "Exterior económico. Aceptable para zonas protegidas.", "rendimiento": "18-22 m²/galón"},
+        {"producto": "Pinturama", "nivel": "tipo 3", "descripcion": "Presupuesto muy ajustado. Menor protección y durabilidad.", "rendimiento": "16-20 m²/galón"}
+      ],
+      "accesorios_siempre_incluir": [
+        {"producto": "Estuco Acrílico Exterior", "uso": "Nivelación de imperfecciones"},
+        {"producto": "Pintuco Flex", "uso": "Masilla flexible para grietas (si hay grietas visibles)"},
+        {"producto": "Lija Abracol grano 80-100", "uso": "Preparación de superficie"},
+        {"producto": "Brocha Goya Profesional", "uso": "Aplicación en cortes y bordes"}
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Pintura interior como acabado de fachada",
+        "razon": "Los vinilos interiores no resisten lluvia ni UV. Se degradan en semanas en exteriores expuestos."
+      }
+    ],
+    "rendimientos_referencia": {
+      "Koraza": "20-25 m² por galón (2 manos)",
+      "Viniltex Advanced": "20-25 m² por galón (2 manos)",
+      "Intervinil": "18-22 m² por galón (2 manos)",
+      "Pinturama": "16-20 m² por galón (2 manos)"
+    },
+    "alerta_metraje": "SIEMPRE pedir los m² ANTES de recomendar presentación (galón vs cuñete) o dar precios. Calcular según rendimiento real."
+  },
+  {
+    "id": "GS-FAC-002",
+    "titulo": "Guía de Solución: Pintar Eternit / Fibrocemento Exterior",
+    "doc_type": "guia_solucion",
+    "escenario": "eternit_fibrocemento",
+    "palabras_clave_cliente": [
+      "pintar eternit",
+      "pintar fibrocemento",
+      "techo de eternit",
+      "pared de fibrocemento",
+      "eternit viejo",
+      "eternit envejecido",
+      "pintar teja de eternit",
+      "pintar asbesto cemento",
+      "eternit pelado",
+      "fibrocemento deteriorado",
+      "pintar placa eternit",
+      "como pintar eternit",
+      "eternit se pela",
+      "fibrocemento exterior",
+      "fachada de fibrocemento"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Superficie de fibrocemento (eternit) exterior que necesita pintura o mantenimiento. REQUIERE preparación húmeda obligatoria — NUNCA preparación mecánica en seco por riesgo de asbesto.",
+      "señales_confirmatorias": [
+        "Superficie envejecida, verdosa o con moho.",
+        "Pintura anterior descascarada o soplada.",
+        "Material gris original expuesto."
+      ],
+      "preguntas_obligatorias": [
+        "¿El eternit ya está pintado o es la primera vez?",
+        "¿Está envejecido o con moho/liquen verde?",
+        "¿Cuántos metros cuadrados (m²) tiene la superficie?",
+        "¿Es vertical (fachada) u horizontal (techo)?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN HÚMEDA OBLIGATORIA: Lavar con hidrolavadora + jabón + hipoclorito diluido y cepillo de cerdas duras. NUNCA lijar en seco ni rasquetear.",
+          "herramientas": ["Hidrolavadora", "Cepillo de cerdas duras", "Escoba", "Jabón", "Hipoclorito de sodio"],
+          "nota_tecnica": "ALERTA DE SEGURIDAD: El fibrocemento puede contener asbesto. La preparación SIEMPRE debe ser HÚMEDA para evitar generar polvo. Está PROHIBIDO lijar en seco, rasquetear o hacer cualquier preparación mecánica que genere polvo. Solo retirar material flojo sin generar partículas."
+        },
+        {
+          "paso": 2,
+          "accion": "SELLADOR (si el eternit ya está pintado o envejecido): Aplicar Sellomax como imprimante/sellador antes del acabado.",
+          "producto": "Sellomax",
+          "herramientas": ["Rodillo", "Brocha"],
+          "nota_tecnica": "Sellomax sella la porosidad del eternit y mejora la adherencia del acabado. En eternit envejecido o repintado es obligatorio.",
+          "condicional": true,
+          "condicion": "Si el eternit ya está pintado o tiene más de 5 años"
+        },
+        {
+          "paso": 3,
+          "accion": "ACABADO EXTERIOR: Aplicar Koraza (2 manos) como acabado exterior impermeabilizante.",
+          "producto": "Koraza",
+          "herramientas": ["Rodillo de felpa", "Brocha Goya Profesional"],
+          "rendimiento": "20-25 m² por galón",
+          "nota_tecnica": "Koraza es el acabado indicado para fibrocemento exterior por su capacidad impermeabilizante y elastomérica."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Intervinil / Pinturama / vinilos interiores",
+        "razon": "El fibrocemento exterior necesita un acabado resistente a intemperie. Los vinilos interiores no protegen."
+      },
+      {
+        "producto": "Lijas / rasqueta / preparación mecánica en seco",
+        "razon": "PROHIBIDO por riesgo de asbesto. Solo preparación húmeda."
+      }
+    ],
+    "alerta_metraje": "Pedir m² antes de cotizar."
+  },
+  {
+    "id": "GS-FAC-003",
+    "titulo": "Guía de Solución: Proteger Ladrillo a la Vista",
+    "doc_type": "guia_solucion",
+    "escenario": "ladrillo_vista",
+    "palabras_clave_cliente": [
+      "ladrillo a la vista",
+      "proteger ladrillo",
+      "sellar ladrillo",
+      "ladrillo sin pintar",
+      "hidrofugar ladrillo",
+      "impermeabilizar ladrillo",
+      "ladrillo se moja",
+      "ladrillo absorbe agua",
+      "fachaleta",
+      "muro ladrillo limpio",
+      "proteger fachaleta",
+      "ladrillo decorativo",
+      "mampostería a la vista",
+      "ladrillo con eflorescencias",
+      "ladrillo con salitre"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Ladrillo expuesto que se quiere proteger SIN tapar la apariencia natural. La solución es hidrofugar (repeler agua) sin formar película visible, no pintar con pintura opaca.",
+      "preguntas_obligatorias": [
+        "¿Quiere conservar la apariencia del ladrillo o taparlo con pintura?",
+        "¿Hay eflorescencias (manchas blancas) o salitre?",
+        "¿Es muro exterior o interior?",
+        "¿Cuántos metros cuadrados (m²)?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "LIMPIEZA: Aplicar Construcleaner Limpiador Desengrasante para limpiar el ladrillo de suciedad, grasa y eflorescencias.",
+          "producto": "Construcleaner Limpiador Desengrasante",
+          "herramientas": ["Cepillo", "Brocha", "Balde"],
+          "nota_tecnica": "NO usar ácido muriático para limpiar ladrillo. Daña la superficie y deja residuos que afectan el hidrofugante."
+        },
+        {
+          "paso": 2,
+          "accion": "HIDROFUGANTE: Aplicar Siliconite 7 sobre el ladrillo limpio y seco. Es transparente — no cambia la apariencia.",
+          "producto": "Siliconite 7",
+          "herramientas": ["Rodillo según absorción", "Brocha"],
+          "nota_tecnica": "Siliconite 7 es hidrofugante transparente a base de silicona/silano. Repele el agua sin tapar el ladrillo. No forma película visible. Aplicar cuando el ladrillo esté completamente seco."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Koraza",
+        "razon": "Si el objetivo es conservar el ladrillo a la vista, Koraza lo tapa con una película opaca. Solo usar Koraza si el cliente quiere pintar ENCIMA del ladrillo."
+      },
+      {
+        "producto": "Ácido muriático",
+        "razon": "Daña la superficie del ladrillo y deja residuos que afectan la adherencia del hidrofugante."
+      }
+    ],
+    "alerta_metraje": "Pedir m² para calcular Siliconite 7 y Construcleaner."
+  },
+  {
+    "id": "GS-FAC-004",
+    "titulo": "Guía de Solución: Pintar Muros Interiores (repintar sala, cuarto, habitación)",
+    "doc_type": "guia_solucion",
+    "escenario": "interior_repintar",
+    "palabras_clave_cliente": [
+      "pintar la sala",
+      "pintar el cuarto",
+      "pintar habitación",
+      "repintar muro interior",
+      "pintar interior casa",
+      "pintura para interiores",
+      "cambiar color paredes",
+      "pintar las paredes",
+      "renovar la pintura interior",
+      "la pintura interior está vieja",
+      "pintar la alcoba",
+      "pintura para sala",
+      "vinilo para interior",
+      "pintar el cielo raso",
+      "pintar el techo interior",
+      "pintar pasillo"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Muro interior sin problemas de humedad que necesita repintar por estética, cambio de color o mantenimiento. Si hay humedad → redirigir a guías GS-HUM.",
+      "preguntas_obligatorias": [
+        "¿Cuántos metros cuadrados (m²) tiene el área a pintar?",
+        "¿Las paredes tienen humedad, salitre o moho?",
+        "¿La pintura actual está firme o se descascara?",
+        "¿En qué color desea pintar?",
+        "¿Es pared, cielo raso, o ambos?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Lijar suavemente con Lija Abracol grano 150-220 para crear adherencia. Limpiar polvo.",
+          "herramientas": ["Lija Abracol grano 150-220", "Trapo húmedo"],
+          "nota_tecnica": "Si la pintura actual está firme, solo lijar suave. Si se descascara, raspar con espátula hasta base sana y estucar con Estuco Plástico para nivelar."
+        },
+        {
+          "paso": 2,
+          "accion": "ESTUCADO (si hay imperfecciones): Aplicar Estuco Plástico para nivelar huecos e imperfecciones.",
+          "producto": "Estuco Plástico",
+          "herramientas": ["Espátula", "Llana"],
+          "condicional": true,
+          "condicion": "Solo si hay huecos, grietas o zonas raspadas"
+        },
+        {
+          "paso": 3,
+          "accion": "ACABADO: Aplicar 2 manos del vinilo seleccionado.",
+          "producto": "Viniltex Advanced / Intervinil / Pinturama",
+          "herramientas": ["Rodillo", "Brocha para cortes"],
+          "nota_tecnica": "Para interiores húmedos (baño, cocina): usar Viniltex Baños y Cocinas. Para interiores normales: Viniltex Advanced (premium), Intervinil (intermedio), Pinturama (económico). Color blanco por defecto — preguntar color al cliente."
+        }
+      ],
+      "jerarquia_acabados_interior": [
+        {"producto": "Viniltex Advanced", "nivel": "premium", "descripcion": "Lavable, máxima cubrición, durabilidad", "rendimiento": "20-25 m²/galón"},
+        {"producto": "Viniltex Baños y Cocinas", "nivel": "especializado", "descripcion": "Antihongos + lavable, para zonas húmedas interiores", "rendimiento": "18-22 m²/galón"},
+        {"producto": "Intervinil", "nivel": "intermedio", "descripcion": "Buena relación precio/calidad", "rendimiento": "18-22 m²/galón"},
+        {"producto": "Pinturama", "nivel": "económico", "descripcion": "Presupuesto ajustado, menor cubrición", "rendimiento": "16-20 m²/galón"}
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Koraza",
+        "razon": "Koraza es acabado de fachada exterior. En interiores cerrados convencionales, usar Viniltex Advanced."
+      }
+    ],
+    "alerta_metraje": "Pedir m² antes de cotizar. No aceptar 'quiero 2 galones' sin calcular el área."
+  },
+  {
+    "id": "GS-FAC-005",
+    "titulo": "Guía de Solución: Pintar Baños y Cocinas (zonas húmedas interiores)",
+    "doc_type": "guia_solucion",
+    "escenario": "bano_cocina",
+    "palabras_clave_cliente": [
+      "pintar el baño",
+      "pintura para baño",
+      "pintar la cocina",
+      "pintura para cocina",
+      "pintura antihongos",
+      "pintura lavable para baño",
+      "baño con moho",
+      "cocina con grasa",
+      "pintura resistente a humedad baño",
+      "baño húmedo",
+      "zona húmeda",
+      "pintura baños y cocinas"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Baño o cocina que necesita pintura resistente a la humedad por condensación, salpicaduras y grasa. No es humedad estructural — es humedad ambiental de uso.",
+      "preguntas_obligatorias": [
+        "¿Hay moho o hongos actualmente en las paredes?",
+        "¿Hay humedad real detrás de las paredes (tubería, capilaridad)?",
+        "¿Cuántos metros cuadrados (m²)?",
+        "¿En qué color desea pintar?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "LIMPIEZA DE MOHO (si hay): Lavar con hipoclorito diluido (1:8-10 en agua). Dejar secar.",
+          "nota_tecnica": "La mezcla de hipoclorito solo funciona 1 hora después de preparada. Preparar solo lo necesario.",
+          "condicional": true,
+          "condicion": "Si hay moho/hongos visibles"
+        },
+        {
+          "paso": 2,
+          "accion": "PREPARACIÓN: Lijar y limpiar la superficie.",
+          "herramientas": ["Lija Abracol grano 150", "Espátula"]
+        },
+        {
+          "paso": 3,
+          "accion": "ACABADO: Aplicar 2 manos de Viniltex Baños y Cocinas.",
+          "producto": "Viniltex Baños y Cocinas",
+          "herramientas": ["Rodillo", "Brocha para cortes"],
+          "nota_tecnica": "Viniltex Baños y Cocinas tiene aditivo antihongos y es altamente lavable. Es el producto específico para estas zonas. Si hay humedad ESTRUCTURAL (capilaridad), primero resolver con sistema Aquablock Ultra (GS-HUM-001)."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Koraza / Pintucoat / Interseal / Intergard / Interthane",
+        "razon": "No usar productos industriales ni de fachada en baños y cocinas interiores. Viniltex Baños y Cocinas es la solución correcta."
+      }
+    ],
+    "alerta_metraje": "Pedir m² antes de cotizar."
+  },
+  {
+    "id": "GS-FAC-006",
+    "titulo": "Guía de Solución: Fachada con Grietas y Fisuras",
+    "doc_type": "guia_solucion",
+    "escenario": "fachada_grietas",
+    "palabras_clave_cliente": [
+      "fachada con grietas",
+      "grietas en la fachada",
+      "fisuras en la pared exterior",
+      "fachada agrietada",
+      "sellar grietas fachada",
+      "grietas en el muro exterior",
+      "la fachada tiene fisuras",
+      "grietas en la pared",
+      "reparar grietas fachada",
+      "grietas por donde entra agua"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Fachada exterior con grietas o fisuras que permiten ingreso de agua o deterioro estético. Las grietas deben sellarse antes de aplicar el acabado.",
+      "preguntas_obligatorias": [
+        "¿Las grietas son finas (capilares) o anchas (más de 2mm)?",
+        "¿Entra agua por las grietas?",
+        "¿Cuántos metros cuadrados (m²) tiene la fachada?",
+        "¿La fachada tiene estuco, textura o está sobre revoque?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Raspar pintura suelta, abrir grietas en V con espátula o cincel para que la masilla penetre.",
+          "herramientas": ["Espátula", "Cincel fino", "Lija Abracol grano 80-100"]
+        },
+        {
+          "paso": 2,
+          "accion": "SELLADO DE GRIETAS: Aplicar Pintuco Flex como masilla flexible en las grietas. Dejar secar según ficha técnica.",
+          "producto": "Pintuco Flex",
+          "herramientas": ["Espátula", "Llana"],
+          "nota_tecnica": "Pintuco Flex es una masilla flexible que absorbe el movimiento de la estructura. Para grietas muy anchas, puede requerir tela de refuerzo."
+        },
+        {
+          "paso": 3,
+          "accion": "NIVELACIÓN: Estuco Acrílico Exterior para emparejar la superficie.",
+          "producto": "Estuco Acrílico Exterior",
+          "herramientas": ["Llana", "Espátula"],
+          "nota_tecnica": "Siempre Estuco Acrílico Exterior, nunca estuco interior."
+        },
+        {
+          "paso": 4,
+          "accion": "ACABADO: 2 manos de Koraza como acabado impermeabilizante elastomérico.",
+          "producto": "Koraza",
+          "herramientas": ["Rodillo de felpa", "Brocha Goya Profesional"],
+          "nota_tecnica": "Koraza es la mejor opción para fachadas con historial de grietas porque su película elastomérica sella microfisuras."
+        }
+      ]
+    },
+    "alerta_metraje": "Pedir m² para cotizar."
+  },
+  {
+    "id": "GS-FAC-007",
+    "titulo": "Guía de Solución: Pintar Primera Vez (obra nueva, estuco fresco)",
+    "doc_type": "guia_solucion",
+    "escenario": "primera_vez_obra_nueva",
+    "palabras_clave_cliente": [
+      "pintar por primera vez",
+      "obra nueva",
+      "casa nueva sin pintar",
+      "estuco nuevo",
+      "estuco fresco",
+      "primera mano de pintura",
+      "muro sin pintar",
+      "pared nueva",
+      "muro obra gris",
+      "acabado sobre estuco",
+      "pintar sobre estuco nuevo",
+      "casa en obra gris",
+      "apartamento nuevo sin pintar"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Superficie nueva (estuco fresco, revoque nuevo) que va a recibir pintura por primera vez. Requiere que el estuco esté completamente seco y curado.",
+      "preguntas_obligatorias": [
+        "¿La superficie ya tiene estuco o está en revoque/obra gris?",
+        "¿Cuántos días tiene el estuco desde que se aplicó?",
+        "¿Es muro interior o fachada exterior?",
+        "¿Cuántos metros cuadrados (m²)?",
+        "¿En qué color desea pintar?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "VERIFICAR CURADO: Asegurar que el estuco tenga mínimo 7-14 días de secado (según clima). No pintar sobre estuco húmedo.",
+          "nota_tecnica": "El estuco húmedo dañará la pintura. Si al tocar la superficie se siente fría o húmeda, esperar más."
+        },
+        {
+          "paso": 2,
+          "accion": "PREPARACIÓN: Lijar suavemente el estuco con Lija Abracol grano 150-220 para quitar rebabas y crear perfil. Limpiar polvo con trapo húmedo.",
+          "herramientas": ["Lija Abracol grano 150-220", "Trapo húmedo"]
+        },
+        {
+          "paso": 3,
+          "accion": "ACABADO: Aplicar 2-3 manos del vinilo o pintura seleccionada.",
+          "producto": "Según ubicación: Koraza (fachada) / Viniltex Advanced (interior)",
+          "herramientas": ["Rodillo", "Brocha Goya Profesional"],
+          "nota_tecnica": "En primera mano sobre estuco nuevo, la pintura absorbe más de lo normal. Se puede requerir una mano adicional para lograr cubrición uniforme."
+        }
+      ]
+    },
+    "alerta_metraje": "Pedir m² antes de cotizar. Considerar que en primera vez se consume más producto (mayor absorción del estuco nuevo)."
+  }
+]

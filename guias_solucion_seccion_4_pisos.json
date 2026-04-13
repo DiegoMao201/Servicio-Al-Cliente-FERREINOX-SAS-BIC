@@ -1,0 +1,436 @@
+[
+  {
+    "id": "GS-PIS-001",
+    "titulo": "Guía de Solución: Protocolo de Diagnóstico de Pisos (4 preguntas obligatorias)",
+    "doc_type": "guia_solucion",
+    "escenario": "diagnostico_pisos",
+    "palabras_clave_cliente": [
+      "pintar piso",
+      "pintura para pisos",
+      "pintar el piso",
+      "piso de concreto",
+      "piso de cemento",
+      "piso del garaje",
+      "piso de la bodega",
+      "piso industrial",
+      "pintar el suelo",
+      "pintar concreto",
+      "pintar piso de cemento",
+      "pintar patio",
+      "piso del parqueadero",
+      "pintar piso parqueadero"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Toda consulta sobre pintar pisos DEBE iniciar con el protocolo de 4 preguntas antes de recomendar cualquier producto. NO existe una sola pintura universal para todos los pisos.",
+      "preguntas_obligatorias": [
+        "1. ¿El piso es INTERIOR o EXTERIOR?",
+        "2. ¿Qué tipo de TRÁFICO va a tener? (peatonal liviano, vehicular medio, montacargas/industrial pesado)",
+        "3. ¿El piso es nuevo (concreto fresco) o ya está pintado/viejo?",
+        "4. ¿Cuántos metros cuadrados (m²)?"
+      ],
+      "nota_tecnica": "PROHIBIDO recomendar cualquier producto de piso antes de tener respuesta a las 4 preguntas. El sistema varía radicalmente según interior/exterior y nivel de tráfico.",
+      "arbol_decision": {
+        "interior_liviano": "→ Pintucoat (GS-PIS-003)",
+        "interior_medio": "→ Pintucoat (GS-PIS-003)",
+        "interior_pesado": "→ Intergard 2002 con cuarzo (GS-PIS-004)",
+        "exterior_liviano": "→ Pintucoat con consideración UV + Interthane (GS-PIS-005)",
+        "exterior_medio": "→ Intergard 740 o sistema con Interthane (GS-PIS-005)",
+        "exterior_pesado": "→ Intergard 2002 + cuarzo + Interthane (GS-PIS-005)"
+      }
+    }
+  },
+  {
+    "id": "GS-PIS-002",
+    "titulo": "Guía de Solución: Piso de Concreto Nuevo (regla de 28 días)",
+    "doc_type": "guia_solucion",
+    "escenario": "piso_concreto_nuevo",
+    "palabras_clave_cliente": [
+      "piso de concreto nuevo",
+      "piso recién vaciado",
+      "concreto fresco",
+      "placa nueva",
+      "piso acabado de fundir",
+      "concreto recién hecho",
+      "piso nuevo sin pintar",
+      "cuándo puedo pintar el piso"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Concreto nuevo que necesita pintura. REGLA INVIOLABLE: el concreto debe tener mínimo 28 DÍAS de curado antes de aplicar cualquier pintura. Aplicar pintura antes causa fallas de adherencia y burbujas.",
+      "preguntas_obligatorias": [
+        "¿Hace cuántos días se fundió la placa/piso?",
+        "¿Interior o exterior?",
+        "¿Nivel de tráfico esperado?",
+        "¿Cuántos m²?"
+      ]
+    },
+    "sistema_recomendado": {
+      "regla_critica": "REGLA DE 28 DÍAS: El concreto DEBE tener mínimo 28 días (4 semanas) de curado antes de aplicar cualquier recubrimiento. Si el piso tiene menos de 28 días, se DEBE esperar. Aplicar antes = falla garantizada.",
+      "despues_de_28_dias": {
+        "pasos": [
+          {
+            "paso": 1,
+            "accion": "PREPARACIÓN: Verificar que el concreto esté seco y curado (28 días mínimo). Lijar imperfecciones y limpiar polvo.",
+            "herramientas": ["Lija Abracol grano 80", "Escoba industrial"],
+            "nota_tecnica": "El concreto nuevo absorbe más en la primera mano de imprimante. Calcular ~20% más de imprimante que en concreto viejo."
+          },
+          {
+            "paso": 2,
+            "accion": "IMPRIMANTE: Aplicar Interseal Gris como sellador/imprimante del concreto.",
+            "producto": "Interseal Gris",
+            "nota_tecnica": "El Interseal Gris sella los poros del concreto y prepara la base para el acabado. NO usar Primer 50RS — ese es exclusivamente para metal, no para concreto."
+          },
+          {
+            "paso": 3,
+            "accion": "ACABADO: Según tráfico (ver GS-PIS-003, GS-PIS-004, GS-PIS-005)."
+          }
+        ]
+      }
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Primer 50RS como imprimante para concreto",
+        "razon": "Primer 50RS es EXCLUSIVAMENTE para metal. Para concreto el imprimante correcto es Interseal Gris."
+      },
+      {
+        "producto": "Cualquier pintura sobre concreto con menos de 28 días",
+        "razon": "El concreto sin curar tiene humedad residual que impide la adherencia. SIEMPRE esperar 28 días."
+      }
+    ]
+  },
+  {
+    "id": "GS-PIS-003",
+    "titulo": "Guía de Solución: Piso Interior Tráfico Liviano a Medio (Pintucoat)",
+    "doc_type": "guia_solucion",
+    "escenario": "piso_interior_medio",
+    "palabras_clave_cliente": [
+      "piso garaje",
+      "piso bodega",
+      "piso oficina",
+      "piso interior",
+      "piso tráfico liviano",
+      "piso tráfico medio",
+      "pintar piso del garaje",
+      "pintar piso de la bodega",
+      "piso de concreto interior",
+      "piso residencial",
+      "pintar piso casa",
+      "pintar piso apartamento"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Piso de concreto interior con tráfico peatonal o vehicular liviano a medio (garajes residenciales, bodegas pequeñas, oficinas, locales).",
+      "preguntas_obligatorias": [
+        "¿Es garaje residencial, bodega, oficina o cuál uso?",
+        "¿Pasan vehículos o solo personas?",
+        "¿El piso es nuevo o ya está pintado?",
+        "¿Cuántos m²?",
+        "¿Color?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Lijar el piso para crear perfil de agarre. Limpiar polvo y grasa. Si tiene pintura vieja suelta, remover con disco copa.",
+          "herramientas": ["Lija Abracol grano 60-80 (para concreto)", "Pulidora con disco copa", "Escoba industrial"]
+        },
+        {
+          "paso": 2,
+          "accion": "IMPRIMANTE: Aplicar Interseal Gris como sellador base. 1 mano, dejar secar 12-16 horas.",
+          "producto": "Interseal Gris",
+          "nota_tecnica": "Interseal Gris sella poros del concreto y mejora adherencia del Pintucoat. NO omitir el imprimante."
+        },
+        {
+          "paso": 3,
+          "accion": "ACABADO: Aplicar 2 manos de Pintucoat. Dejar 12-16 horas entre manos.",
+          "producto": "Pintucoat",
+          "herramientas": ["Rodillo de felpa corta", "Brocha Goya para bordes"],
+          "nota_tecnica": "Pintucoat es epóxico de 2 componentes (A+B). Mezclar TODO el kit junto (A=pintura + B=catalizador). Una vez mezclado, tiene vida útil limitada (~4 horas). Calcular bien cuánto mezclar. Rendimiento: ~10-12 m²/galón por mano."
+        }
+      ],
+      "herramientas_siempre_incluir": [
+        {"producto": "Rodillo de felpa corta", "uso": "Aplicación uniforme de Pintucoat"},
+        {"producto": "Brocha Goya", "uso": "Bordes y esquinas"},
+        {"producto": "Lija Abracol grano 60-80", "uso": "Preparación del concreto"}
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Viniltex / Koraza / pintura de muros",
+        "razon": "Las pinturas para muros NO resisten tráfico en pisos. Se pelan en días."
+      },
+      {
+        "producto": "Pintura de Tráfico para todo el piso",
+        "razon": "La pintura de tráfico (5891322) es para DEMARCACIÓN de líneas, no para cubrir pisos enteros."
+      },
+      {
+        "producto": "Primer 50RS",
+        "razon": "Es imprimante para METAL. Para concreto usar Interseal Gris."
+      }
+    ],
+    "alerta_metraje": "SIEMPRE calcular m² y cotizar kits completos (Pintucoat Parte A + Parte B + Interseal Gris + herramientas). Rendimiento Pintucoat: ~10-12 m²/galón por mano. 2 manos = dividir m² entre 5-6 para obtener galones necesarios.",
+    "alerta_color": "Preguntar color. Pintucoat viene en gris, verde, rojo óxido y otros."
+  },
+  {
+    "id": "GS-PIS-004",
+    "titulo": "Guía de Solución: Piso Interior Tráfico Pesado (Intergard 2002 + Cuarzo)",
+    "doc_type": "guia_solucion",
+    "escenario": "piso_interior_pesado",
+    "palabras_clave_cliente": [
+      "piso industrial",
+      "piso tráfico pesado",
+      "piso montacargas",
+      "piso bodega industrial",
+      "piso fábrica",
+      "piso pesado",
+      "piso centro logístico",
+      "piso alta resistencia",
+      "piso resistente a químicos",
+      "epóxico para piso industrial",
+      "piso epóxico",
+      "piso autonivelante"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Piso de concreto interior con tráfico pesado (montacargas, camiones, tráfico industrial). Requiere sistema de alto desempeño con múltiples capas y refuerzo con cuarzo.",
+      "preguntas_obligatorias": [
+        "¿Qué tipo de tráfico? (montacargas, camiones, peatonal pesado)",
+        "¿Hay exposición a químicos, aceites o solventes?",
+        "¿Es piso nuevo o ya pintado?",
+        "¿Cuántos m²?",
+        "¿Necesita acabado liso brillante o antideslizante?"
+      ]
+    },
+    "sistema_recomendado": {
+      "resumen": "Sistema multicapa: Interseal Gris (sellador) → Intergard 2002 rica en cuarzo (alta resistencia) → opcionalmente cuarzo espolvoreado entre capas para mayor grip. Para brillo: Intergard 740 como acabado final.",
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Pulir el concreto con disco copa diamante o granallado. Limpiar absolutamente todo el polvo. El concreto debe quedar con perfil de agarre visible.",
+          "herramientas": ["Pulidora industrial con disco copa diamante", "Aspiradora industrial", "Lija Abracol grano 36-60"],
+          "nota_tecnica": "En pisos industriales la preparación es CRÍTICA. Un mal perfil de concreto = falla del sistema completo."
+        },
+        {
+          "paso": 2,
+          "accion": "IMPRIMANTE: Interseal Gris como sellador base del concreto.",
+          "producto": "Interseal Gris"
+        },
+        {
+          "paso": 3,
+          "accion": "CAPA INTERMEDIA REFORZADA: Intergard 2002 mezclado con arena de cuarzo. 1-2 manos según espesor requerido.",
+          "producto": "Intergard 2002",
+          "herramientas": ["Rodillo de felpa corta", "Llana dentada"],
+          "nota_tecnica": "Mezclar Intergard 2002 (Parte A + Parte B) y agregar cuarzo sílice para refuerzo mecánico. Proporción según ficha técnica. El cuarzo aumenta resistencia al desgaste y genera textura antideslizante."
+        },
+        {
+          "paso": 4,
+          "accion": "ACABADO BRILLANTE (opcional): Si se necesita acabado liso y brillante, aplicar Intergard 740 como sello final sobre el Intergard 2002 curado.",
+          "producto": "Intergard 740",
+          "condicional": true,
+          "condicion": "Solo si el cliente requiere acabado liso brillante"
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Pintucoat para tráfico pesado",
+        "razon": "Pintucoat es para tráfico liviano a medio. Para montacargas e industrial pesado se requiere Intergard 2002."
+      },
+      {
+        "producto": "Viniltex / Koraza",
+        "razon": "Pinturas de muro no resisten tráfico de pisos."
+      }
+    ],
+    "alerta_cuarzo": "El cuarzo sílice se vende por separado. Incluirlo en la cotización.",
+    "alerta_metraje": "SIEMPRE calcular m² y cotizar sistema completo bicomponente (Parte A + Parte B para cada producto)."
+  },
+  {
+    "id": "GS-PIS-005",
+    "titulo": "Guía de Solución: Piso Exterior (regla de entizamiento UV)",
+    "doc_type": "guia_solucion",
+    "escenario": "piso_exterior",
+    "palabras_clave_cliente": [
+      "piso exterior",
+      "piso patio",
+      "piso terraza",
+      "piso zona BBQ",
+      "piso garaje exterior",
+      "piso entrada vehicular",
+      "piso rampa exterior",
+      "piso exterior sol",
+      "pintar piso al aire libre",
+      "piso andén",
+      "piso expuesto al sol"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Piso de concreto exterior expuesto a sol y lluvia. REGLA CRÍTICA: los recubrimientos epóxicos se ENTIZAN (pierden color y brillo = chalking) con la exposición UV. Se necesita acabado resistente a UV o aceptar la limitación.",
+      "preguntas_obligatorias": [
+        "¿El piso recibe sol directo?",
+        "¿Nivel de tráfico: peatonal, vehicular o industrial?",
+        "¿Es piso nuevo o ya pintado?",
+        "¿Cuántos m²?",
+        "¿Color?"
+      ]
+    },
+    "sistema_recomendado": {
+      "opcion_a_trafico_liviano": {
+        "descripcion": "Sistema para tráfico peatonal exterior",
+        "pasos": [
+          {
+            "paso": 1,
+            "accion": "Interseal Gris (imprimante)",
+            "producto": "Interseal Gris"
+          },
+          {
+            "paso": 2,
+            "accion": "Pintucoat (2 manos). ADVERTENCIA: al estar al sol, el Pintucoat se entizará con el tiempo (perderá brillo y color). Es aceptable si el cliente acepta la limitación estética.",
+            "producto": "Pintucoat",
+            "nota_tecnica": "Informar al cliente: el Pintucoat, al ser epóxico, pierde brillo y color con UV. Funciona mecánicamente pero no mantiene estética."
+          }
+        ]
+      },
+      "opcion_b_trafico_medio_alto": {
+        "descripcion": "Sistema para tráfico vehicular o pesado exterior — máxima durabilidad UV",
+        "pasos": [
+          {
+            "paso": 1,
+            "accion": "Interseal Gris (imprimante)",
+            "producto": "Interseal Gris"
+          },
+          {
+            "paso": 2,
+            "accion": "Intergard 2002 (capa intermedia, opcional cuarzo para antideslizante)",
+            "producto": "Intergard 2002"
+          },
+          {
+            "paso": 3,
+            "accion": "Interthane 990 (acabado poliuretano resistente a UV) como capa final.",
+            "producto": "Interthane 990 + Catalizador PHA046",
+            "nota_tecnica": "El Interthane 990 es poliuretano que resiste UV — no se entiza. Es el acabado correcto para pisos exteriores donde se necesita mantener color y brillo. Requiere catalizador PHA046 y solvente UFA151."
+          }
+        ]
+      },
+      "opcion_c_intergard_740": {
+        "descripcion": "Alternativa intermedia: Intergard 740 como acabado en exterior",
+        "nota": "Intergard 740 tiene mejor comportamiento a UV que otros epóxicos, pero no iguala al Interthane 990. Opción válida cuando el presupuesto no alcanza para poliuretano."
+      }
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Pintucoat como acabado final exterior sin advertencia UV",
+        "razon": "Se DEBE advertir al cliente que el Pintucoat pierde brillo y color con el sol. No es un defecto — es una limitación del producto. Si quiere mantener estética, usar Interthane 990."
+      }
+    ],
+    "alerta_metraje": "Pedir m². Los sistemas de pisos exteriores son más caros — dar precio completo para evitar sorpresas.",
+    "regla_solventes": {
+      "Pintucoat": "Thinner Pintuco (estándar)",
+      "Intergard": "Thinner Pintuco (estándar)",
+      "Interthane_990": "Thinner UFA151 (ref F0118421050). NO usar otro thinner.",
+      "Pintura_Trafico": "Thinner 21204 (ref F0116621204). NO usar UFA151."
+    }
+  },
+  {
+    "id": "GS-PIS-006",
+    "titulo": "Guía de Solución: Canchas Deportivas y Demarcación",
+    "doc_type": "guia_solucion",
+    "escenario": "canchas_deportivas",
+    "palabras_clave_cliente": [
+      "pintar cancha",
+      "cancha de fútbol",
+      "cancha de microfútbol",
+      "cancha de básquetbol",
+      "cancha múltiple",
+      "pintura para canchas",
+      "demarcación cancha",
+      "pintar zona deportiva",
+      "cancha deportiva",
+      "polideportivo"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Canchas deportivas requieren Pintura Canchas (producto específico de Pintuco). No usar Pintucoat ni pintura de tráfico para canchas.",
+      "preguntas_obligatorias": [
+        "¿Qué tipo de cancha? (fútbol, básquetbol, múltiple)",
+        "¿Es interior o exterior?",
+        "¿Superficie actual: concreto, asfalto, ya pintada?",
+        "¿Cuántos m²?",
+        "¿Colores de las zonas y líneas?"
+      ]
+    },
+    "sistema_recomendado": {
+      "pasos": [
+        {
+          "paso": 1,
+          "accion": "PREPARACIÓN: Lavar la cancha con agua a presión. Dejar secar completamente. Si hay pintura vieja suelta, raspar.",
+          "herramientas": ["Hidrolavadora", "Escoba industrial"]
+        },
+        {
+          "paso": 2,
+          "accion": "PINTURA BASE: Aplicar Pintura Canchas como base de color para toda la superficie.",
+          "producto": "Pintura Canchas (Pintuco)",
+          "herramientas": ["Rodillo de felpa media", "Brocha para bordes"],
+          "nota_tecnica": "Pintura Canchas es el producto específico de Pintuco para superficies deportivas. Tiene la resistencia y textura correcta para tráfico deportivo."
+        },
+        {
+          "paso": 3,
+          "accion": "DEMARCACIÓN DE LÍNEAS: Usar la misma Pintura de Tráfico (5891322) o cinta de demarcación para las líneas reglamentarias.",
+          "producto": "Pintura de Tráfico (para líneas)",
+          "nota_tecnica": "Las líneas de demarcación de canchas pueden hacerse con Pintura de Tráfico o con Pintura Canchas en color contrastante."
+        }
+      ]
+    },
+    "productos_prohibidos": [
+      {
+        "producto": "Pintucoat para canchas",
+        "razon": "Pintucoat es epóxico industrial — no tiene la textura adecuada para uso deportivo y es de mayor costo innecesario."
+      },
+      {
+        "producto": "Viniltex / Koraza para canchas",
+        "razon": "Las pinturas de muro no resisten tráfico deportivo."
+      }
+    ]
+  },
+  {
+    "id": "GS-PIS-007",
+    "titulo": "Guía de Solución: Solventes Correctos por Familia de Producto (Pisos y Metal)",
+    "doc_type": "guia_solucion",
+    "escenario": "solventes_correctos",
+    "palabras_clave_cliente": [
+      "thinner para piso",
+      "solvente para epóxico",
+      "thinner para Pintucoat",
+      "thinner para Interthane",
+      "solvente para pintura de tráfico",
+      "qué thinner uso",
+      "cómo diluir",
+      "diluyente para piso"
+    ],
+    "diagnostico": {
+      "tipo_problema": "Cada familia de producto tiene un solvente/thinner específico. Usar el thinner incorrecto arruina el producto. NUNCA mezclar familias de solventes."
+    },
+    "tabla_solventes": {
+      "Pintucoat (epóxico pisos)": {
+        "solvente": "Thinner Pintuco (estándar, componente C del kit)",
+        "nota": "Generalmente incluido en el kit"
+      },
+      "Intergard 2002 / Intergard 740 (epóxicos industriales)": {
+        "solvente": "Thinner Pintuco estándar",
+        "nota": "Para dilución y limpieza de herramientas"
+      },
+      "Interseal 670HS (imprimante epóxico)": {
+        "solvente": "Thinner Pintuco estándar",
+        "nota": "Para dilución y limpieza"
+      },
+      "Interthane 990 (poliuretano)": {
+        "solvente": "Thinner UFA151 (ref F0118421050 / Thinner 21050)",
+        "nota": "EXCLUSIVO para poliuretanos. PROHIBIDO usar otro thinner."
+      },
+      "Pintura de Tráfico 5891322": {
+        "solvente": "Thinner 21204 (ref F0116621204)",
+        "nota": "EXCLUSIVO para pintura de tráfico. 1 galón = 5 botellas de thinner. PROHIBIDO usar Thinner UFA151."
+      },
+      "Pintulux 3en1 / Corrotec (alquídicos)": {
+        "solvente": "Thinner Pintuco o varsol",
+        "nota": "Thinner alquídico estándar"
+      }
+    },
+    "regla_critica": "NUNCA mezclar familias de solventes. NUNCA usar UFA151 en tráfico ni Thinner 21204 en poliuretano. Cada familia tiene su diluyente — no son intercambiables."
+  }
+]
