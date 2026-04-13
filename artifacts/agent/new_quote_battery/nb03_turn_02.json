@@ -1,0 +1,21 @@
+{
+  "case_id": "NB03",
+  "case_name": "Ladrillo A La Vista Hollín",
+  "turn_index": 2,
+  "elapsed_ms": 2708,
+  "user_message": "La idea NO es pintarla, sino limpiarla y dejarla protegida conservando el ladrillo natural.",
+  "result": {
+    "response_text": "Perfecto, entiendo que quieres conservar el ladrillo a la vista. Para eso, te recomiendo usar **Construcleaner** para limpiar y luego aplicar **Siliconite 7** para protegerlo. \n\n¿Te gustaría que revise disponibilidad y precios para esos productos? También necesito saber cuántos m² son para calcular las cantidades.",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 1.0,
+      "level": "alta",
+      "signals": []
+    },
+    "is_farewell": false
+  },
+  "conversation_context_after_turn": {}
+}

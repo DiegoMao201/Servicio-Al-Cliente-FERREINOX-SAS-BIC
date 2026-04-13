@@ -19131,23 +19131,22 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         )
 
     guidance_required_products = list((technical_guidance or {}).get("required_products") or [])
+    _missing_guidance_warning = None
     if guidance_required_products:
         missing_required_products = []
         for required_product in guidance_required_products:
             if not any(_item_matches_technical_product(item, required_product) for item in confirmed_items):
                 missing_required_products.append(required_product)
         if missing_required_products:
-            return json.dumps(
-                {
-                    "exito": False,
-                    "mensaje": (
-                        "La cotización todavía no está completa según la ruta técnica aprobada. "
-                        "Faltan estos componentes obligatorios del sistema: "
-                        + ", ".join(missing_required_products[:6])
-                        + ". Busca esas referencias con consultar_inventario/consultar_inventario_lote y vuelve a confirmar."
-                    ),
-                },
-                ensure_ascii=False,
+            _missing_guidance_warning = (
+                "⚠️ ADVERTENCIA: Según la ruta técnica, faltan componentes del sistema: "
+                + ", ".join(missing_required_products[:6])
+                + ". El PDF se generó con los productos confirmados, pero el sistema puede estar incompleto."
+            )
+            logger.warning(
+                "confirmar_pedido_y_generar_pdf missing guidance products conv=%s missing=%s",
+                context.get("conversation_id"),
+                missing_required_products,
             )
 
     enrichment = _build_quote_completion_metadata(
@@ -19430,9 +19429,11 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                  "export_icg": export_summary,
                  "export_error": export_error,
                  "alertas_conocimiento_experto": _alertas_experto_str,
+                 "advertencia_sistema_incompleto": _missing_guidance_warning,
                  "mensaje": (
                      f"El PDF del pedido fue enviado al correo {correo_cliente} exitosamente."
                      + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
+                     + (f" {_missing_guidance_warning}" if _missing_guidance_warning else "")
                  )},
                 ensure_ascii=False,
             )
@@ -19473,9 +19474,11 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                  "export_icg": export_summary,
                  "export_error": export_error,
                  "alertas_conocimiento_experto": _alertas_experto_str,
+                 "advertencia_sistema_incompleto": _missing_guidance_warning,
                  "mensaje": (
                      f"El PDF del pedido '{pdf_filename}' fue enviado por WhatsApp exitosamente."
                      + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
+                     + (f" {_missing_guidance_warning}" if _missing_guidance_warning else "")
                  )},
                 ensure_ascii=False,
             )
@@ -19500,9 +19503,11 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                          "export_icg": export_summary,
                          "export_error": export_error,
                          "alertas_conocimiento_experto": _alertas_experto_str,
+                         "advertencia_sistema_incompleto": _missing_guidance_warning,
                          "mensaje": (
                              f"El PDF del pedido '{pdf_filename}' fue enviado por WhatsApp exitosamente."
                              + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
+                             + (f" {_missing_guidance_warning}" if _missing_guidance_warning else "")
                          )},
                         ensure_ascii=False,
                     )
@@ -21480,7 +21485,8 @@ async def _flush_debounce_buffer(phone_number: str):
     )
 
     # Process the unified message through the normal pipeline
-    try:
+    def _sync_flush_processing():
+        """Run all blocking processing in a thread so the event loop stays free."""
         context = first_meta["context"]
         conversation_context = first_meta["conversation_context"]
         recent_messages = first_meta["recent_messages"]
@@ -21597,6 +21603,11 @@ async def _flush_debounce_buffer(phone_number: str):
                 summary=unified_content[:200],
             )
 
+    # End of _sync_flush_processing
+
+    try:
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, _sync_flush_processing)
     except Exception as exc:
         logger.error("DEBOUNCE FLUSH ERROR for %s: %s", phone_number, exc, exc_info=True)
         try:

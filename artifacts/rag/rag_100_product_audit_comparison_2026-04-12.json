@@ -1,0 +1,416 @@
+{
+  "generated_at": "2026-04-12T20:08:06.026617",
+  "baseline_path": "artifacts\\rag\\snapshots\\2026-04-12-pre-reingest\\rag_100_product_audit_2026-04-12.json",
+  "current_path": "artifacts\\rag\\rag_100_product_audit_2026-04-12.json",
+  "totals": {
+    "baseline_ready_profiles": 306,
+    "current_ready_profiles": 325,
+    "baseline_exported_profiles": 100,
+    "current_exported_profiles": 100,
+    "baseline_avg_completeness": 0.6819,
+    "current_avg_completeness": 0.7703,
+    "avg_completeness_delta": 0.0884
+  },
+  "field_presence": {
+    "baseline": {
+      "surface_targets": 91,
+      "restricted_surfaces": 5,
+      "application_methods": 83,
+      "diagnostic_questions": 0,
+      "alerts": 100,
+      "source_excerpts": 49,
+      "mixing_ratio": 0,
+      "drying_times": 100,
+      "dilution": 100
+    },
+    "current": {
+      "surface_targets": 100,
+      "restricted_surfaces": 33,
+      "application_methods": 84,
+      "diagnostic_questions": 100,
+      "alerts": 100,
+      "source_excerpts": 100,
+      "mixing_ratio": 0,
+      "drying_times": 100,
+      "dilution": 100
+    },
+    "delta": {
+      "surface_targets": 9,
+      "restricted_surfaces": 28,
+      "application_methods": 1,
+      "diagnostic_questions": 100,
+      "alerts": 0,
+      "source_excerpts": 51,
+      "mixing_ratio": 0,
+      "drying_times": 0,
+      "dilution": 0
+    }
+  },
+  "distribution_delta": {
+    "missing_fields_before": {
+      "diagnostic_questions": 100,
+      "mixing_ratio": 90,
+      "source_excerpts": 51,
+      "brand": 18,
+      "application_methods": 17,
+      "surface_targets": 9,
+      "drying_times": 5
+    },
+    "missing_fields_after": {
+      "mixing_ratio": 100,
+      "brand": 21,
+      "application_methods": 16,
+      "drying_times": 4
+    }
+  },
+  "product_comparison": {
+    "shared_families": 86,
+    "improved_count": 86,
+    "worsened_count": 0,
+    "unchanged_count": 0,
+    "gains_counter": {
+      "diagnostic_questions": 86,
+      "source_excerpts": 44,
+      "surface_targets": 8,
+      "application_methods": 1
+    },
+    "losses_counter": {
+      "mixing_ratio": 9
+    },
+    "top_improved": [
+      {
+        "canonical_family": "PINTUCO IMPADOC LISTO",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts",
+          "surface_targets"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO AEROCOLOR MULTISUPERFICIE",
+        "before_score": 0.7778,
+        "after_score": 0.9167,
+        "score_delta": 0.1389,
+        "gained_fields": [
+          "application_methods",
+          "diagnostic_questions"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO CONSTRUCLEANER LIMPIADOR NO CORROSIVO",
+        "before_score": 0.7778,
+        "after_score": 0.8333,
+        "score_delta": 0.0555,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO CONSTRUCLEANER LIMPIADOR ECOLOGICO LADRILLO",
+        "before_score": 0.7778,
+        "after_score": 0.8333,
+        "score_delta": 0.0555,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO ALTA TEMPERATURA ALUMINIO 904",
+        "before_score": 0.7778,
+        "after_score": 0.8333,
+        "score_delta": 0.0555,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO AEROCOLOR PARA RINES",
+        "before_score": 0.7778,
+        "after_score": 0.8333,
+        "score_delta": 0.0555,
+        "gained_fields": [
+          "diagnostic_questions",
+          "surface_targets"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO AEROCOLOR ALTAS TEMPERATURAS",
+        "before_score": 0.7778,
+        "after_score": 0.8333,
+        "score_delta": 0.0555,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO ACRILICA PARA MANTENIMIENTO",
+        "before_score": 0.7778,
+        "after_score": 0.8333,
+        "score_delta": 0.0555,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "MASTIC EPOXY ES",
+        "before_score": 0.7778,
+        "after_score": 0.8333,
+        "score_delta": 0.0555,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "INTERTUF 262",
+        "before_score": 0.7778,
+        "after_score": 0.8333,
+        "score_delta": 0.0555,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "INTERSEAL 670HS EN",
+        "before_score": 0.7778,
+        "after_score": 0.8333,
+        "score_delta": 0.0555,
+        "gained_fields": [
+          "diagnostic_questions",
+          "surface_targets"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "EPOXI POLIAMIDA ES",
+        "before_score": 0.7778,
+        "after_score": 0.8333,
+        "score_delta": 0.0555,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "ACRILICA MANTENIMIENTO ES",
+        "before_score": 0.7778,
+        "after_score": 0.8333,
+        "score_delta": 0.0555,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "REMOVEDOR PINTUCO 1020",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "surface_targets"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCOAT PLUS",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [
+          "mixing_ratio"
+        ],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCOAT BASE AGUA",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [
+          "mixing_ratio"
+        ],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO WASH PRIMER 509A B",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO WASH PRIMER",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [
+          "mixing_ratio"
+        ],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO TOP QUALITY PLUS",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO SELLADOR DE CORROSION",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO PRIMER EPOXICO 10046",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO PRIMER EPOXI RAPIDO SECADO 50RS",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO PINTURA PARA TRAFICO ACRILICA TERTRAFICO 29205 BLANCA TERINSA",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      },
+      {
+        "canonical_family": "PINTUCO PINTURA ACRILICA PARA MANTENIMIENTO",
+        "before_score": 0.8889,
+        "after_score": 0.9167,
+        "score_delta": 0.0278,
+        "gained_fields": [
+          "diagnostic_questions",
+          "source_excerpts"
+        ],
+        "lost_fields": [],
+        "before_schema": null,
+        "after_schema": "2026-04-12.profile.v3"
+      }
+    ],
+    "top_worsened": []
+  }
+}

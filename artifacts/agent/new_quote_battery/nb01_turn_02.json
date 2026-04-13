@@ -1,0 +1,23 @@
+{
+  "case_id": "NB01",
+  "case_name": "Cubierta Eternit Tizada",
+  "turn_index": 2,
+  "elapsed_ms": 2982,
+  "user_message": "Es exterior, ya tiene pintura vieja como de muchos años y no quiero levantar polvo porque está bastante deteriorada.",
+  "result": {
+    "response_text": "Perfecto, gracias por la información. Para recuperar esa cubierta de fibrocemento exterior, te recomendaría un sistema que incluya:\n\n🔹 **Preparación de la superficie**: Limpieza suave para evitar levantar polvo, puedes usar un cepillo suave o agua a presión con cuidado.\n\n🔹 **Imprimante**: Usar un sellador específico para fibrocemento que ayude a mejorar la adherencia de la pintura.\n\n🔹 **Acabado**: Aplicar una pintura acrílica o un recubrimiento específico para fibrocemento.\n\n🔹 **Diluyente**: Dependiendo de la pintura que elijas, necesitarás un diluyente adecuado.\n\n¿Te parece bien este enfoque? Además, ¿cuántos m² son aproximadamente?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  },
+  "conversation_context_after_turn": {}
+}

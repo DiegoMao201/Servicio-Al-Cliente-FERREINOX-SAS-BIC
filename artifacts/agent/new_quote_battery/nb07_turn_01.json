@@ -1,0 +1,14 @@
+{
+  "case_id": "NB07",
+  "case_name": "Lámina Galvanizada Nueva",
+  "turn_index": 1,
+  "elapsed_ms": 0,
+  "user_message": "Voy a pintar unas láminas galvanizadas nuevas y no quiero que se levante la pintura.",
+  "result": {
+    "response_text": "ERROR EN BATERÍA: HTTPSConnectionPool(host='apicrm.datovatenexuspro.com', port=443): Read timed out. (read timeout=20)",
+    "tool_calls": [],
+    "context_updates": {},
+    "battery_error": "HTTPSConnectionPool(host='apicrm.datovatenexuspro.com', port=443): Read timed out. (read timeout=20)"
+  },
+  "conversation_context_after_turn": {}
+}

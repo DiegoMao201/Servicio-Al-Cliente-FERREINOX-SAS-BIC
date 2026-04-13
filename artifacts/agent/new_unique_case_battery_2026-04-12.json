@@ -1,0 +1,172 @@
+{
+  "generated_at": "2026-04-12T20:08:05.052430",
+  "purpose": "Casos completamente nuevos redactados para evaluación manual o batería futura, distintos a los anchors usados en tests y reportes actuales.",
+  "case_count": 15,
+  "cases": [
+    {
+      "id": "UC01",
+      "title": "Cabina Ascensor Rayada",
+      "anchor": "Quiero recuperar una cabina de ascensor en lámina pintada que quedó rayada y opaca por desinfectantes.",
+      "turns": [
+        "Quiero recuperar una cabina de ascensor en lámina pintada que quedó rayada y opaca por desinfectantes.",
+        "Es interior, tráfico alto de personas, no quiero repintarla completa si existe una ruta de mantenimiento seria.",
+        "Son 18 metros cuadrados y si sí aplica, necesito cotización formal."
+      ],
+      "goal": "Evaluar mantenimiento técnico sobre metal pintado interior con desgaste químico liviano."
+    },
+    {
+      "id": "UC02",
+      "title": "Muro Cocina Vapor Grasa",
+      "anchor": "Necesito corregir un muro de cocina industrial que se mancha por vapor y grasa cerca a la línea de cocción.",
+      "turns": [
+        "Necesito corregir un muro de cocina industrial que se mancha por vapor y grasa cerca a la línea de cocción.",
+        "Es interior, lavan seguido, y me interesa una solución que aguante limpieza frecuente sin ampollarse.",
+        "El frente completo suma 42 metros cuadrados."
+      ],
+      "goal": "Probar diagnóstico arquitectónico interior con exigencia de lavabilidad y ambiente agresivo liviano."
+    },
+    {
+      "id": "UC03",
+      "title": "Teja Traslúcida Policarbonato",
+      "anchor": "Voy a intervenir una cubierta en policarbonato alveolar y necesito saber si se pinta o se protege de otra forma.",
+      "turns": [
+        "Voy a intervenir una cubierta en policarbonato alveolar y necesito saber si se pinta o se protege de otra forma.",
+        "Es exterior total, ya está amarillenta por UV y quiero una respuesta honesta si no conviene pintarla.",
+        "El área aproximada es de 27 metros cuadrados."
+      ],
+      "goal": "Medir si el agente declara gap o limitación técnica en un sustrato menos típico."
+    },
+    {
+      "id": "UC04",
+      "title": "Piso Cuarto Frío",
+      "anchor": "Necesito recubrir el piso de un cuarto frío donde lavan con agua y químicos suaves todos los días.",
+      "turns": [
+        "Necesito recubrir el piso de un cuarto frío donde lavan con agua y químicos suaves todos los días.",
+        "Es concreto interior, tráfico de carros de carga manual, y me preocupa el choque térmico con limpieza.",
+        "Son 63 metros cuadrados y quiero sistema completo bien aterrizado."
+      ],
+      "goal": "Forzar evaluación de piso industrial interior con humedad recurrente y exigencia operativa nueva."
+    },
+    {
+      "id": "UC05",
+      "title": "Madera Sauna Exterior",
+      "anchor": "Tengo un cerramiento en madera termotratada alrededor de una zona de jacuzzi exterior y quiero protegerlo sin plastificarlo.",
+      "turns": [
+        "Tengo un cerramiento en madera termotratada alrededor de una zona de jacuzzi exterior y quiero protegerlo sin plastificarlo.",
+        "Le pega vapor, algo de sol y salpicadura, pero quiero conservar tacto y veta natural.",
+        "El proyecto son 31 metros cuadrados."
+      ],
+      "goal": "Probar asesoría de madera en ambiente húmedo exterior no igual a deck clásico."
+    },
+    {
+      "id": "UC06",
+      "title": "Revestimiento Fibrocemento Fachada Ventilada",
+      "anchor": "Estoy revisando paneles lisos de fibrocemento en una fachada ventilada y necesito saber la ruta correcta de repinte.",
+      "turns": [
+        "Estoy revisando paneles lisos de fibrocemento en una fachada ventilada y necesito saber la ruta correcta de repinte.",
+        "Es exterior, ya tienen acabado viejo cuarteado y debo evitar lijado agresivo por seguridad.",
+        "El frente intervenido tiene 86 metros cuadrados."
+      ],
+      "goal": "Separar fibrocemento arquitectónico de eternit clásico con exigencia de preparación segura."
+    },
+    {
+      "id": "UC07",
+      "title": "Baranda Marina Hotel",
+      "anchor": "Necesito sistema anticorrosivo para barandas metálicas de hotel frente al mar con mantenimiento premium.",
+      "turns": [
+        "Necesito sistema anticorrosivo para barandas metálicas de hotel frente al mar con mantenimiento premium.",
+        "Es exterior total, brisa salina constante, y el cliente quiere retención de color y brillo serio.",
+        "Son 54 metros cuadrados y si aplica, también quiero cotización."
+      ],
+      "goal": "Probar ruta industrial/marina de alta estética sin mezclarla con esmalte decorativo simple."
+    },
+    {
+      "id": "UC08",
+      "title": "Muro Sótano Contra Terreno",
+      "anchor": "Quiero corregir un muro de sótano que da contra terreno y marca humedad permanente con acabado levantado.",
+      "turns": [
+        "Quiero corregir un muro de sótano que da contra terreno y marca humedad permanente con acabado levantado.",
+        "Es interior, la base está débil y no quiero pintura cosmética porque vuelve a botar sales.",
+        "El paño total es de 39 metros cuadrados."
+      ],
+      "goal": "Medir si el sistema reconoce presión negativa real en ambiente interior distinto a lavandería."
+    },
+    {
+      "id": "UC09",
+      "title": "Cubierta Domo Acrílico",
+      "anchor": "Tengo unos domos acrílicos viejos en cubierta y necesito saber si existe recubrimiento válido o si toca reemplazo.",
+      "turns": [
+        "Tengo unos domos acrílicos viejos en cubierta y necesito saber si existe recubrimiento válido o si toca reemplazo.",
+        "Están craquelados por sol y lo más importante es que no me vendan algo que falle al poco tiempo.",
+        "Son 12 unidades, equivalente a unos 16 metros cuadrados."
+      ],
+      "goal": "Forzar respuesta honesta sobre un sustrato posiblemente fuera de ruta."
+    },
+    {
+      "id": "UC10",
+      "title": "Piso Taller Motocicletas",
+      "anchor": "Necesito un recubrimiento para el piso de un taller de motos con derrame de gasolina y aceites livianos.",
+      "turns": [
+        "Necesito un recubrimiento para el piso de un taller de motos con derrame de gasolina y aceites livianos.",
+        "Es concreto interior, tráfico peatonal y de motos, y el dueño quiere que se pueda lavar fácil.",
+        "El área son 74 metros cuadrados."
+      ],
+      "goal": "Agregar un caso industrial-comercial nuevo con exposición química ligera y tráfico mixto."
+    },
+    {
+      "id": "UC11",
+      "title": "Tanque Agua Cruda No Potable",
+      "anchor": "Necesito proteger por dentro un tanque metálico de agua cruda para proceso, no es agua potable pero sí queda en inmersión.",
+      "turns": [
+        "Necesito proteger por dentro un tanque metálico de agua cruda para proceso, no es agua potable pero sí queda en inmersión.",
+        "Va sumergido permanentemente y necesito que el agente distinga eso de un tanque para consumo humano.",
+        "El área mojada es de 44 metros cuadrados."
+      ],
+      "goal": "Medir si el motor diferencia inmersión no potable de agua potable sin alucinar."
+    },
+    {
+      "id": "UC12",
+      "title": "Cubierta Zinc Envejecida Bodega Agrícola",
+      "anchor": "Voy a repintar una cubierta en zinc envejecido de una bodega agrícola y necesito saber la ruta correcta sin que se descascare.",
+      "turns": [
+        "Voy a repintar una cubierta en zinc envejecido de una bodega agrícola y necesito saber la ruta correcta sin que se descascare.",
+        "Está en exterior, tiene oxidación leve en traslapos y bastante radiación solar.",
+        "El techo suma 118 metros cuadrados."
+      ],
+      "goal": "Introducir un caso de zinc envejecido distinto a galvanizado nuevo."
+    },
+    {
+      "id": "UC13",
+      "title": "Fachada Estuco Mineral Centro Histórico",
+      "anchor": "Necesito intervenir una fachada de estuco mineral en casa antigua del centro y debo respetar transpirabilidad.",
+      "turns": [
+        "Necesito intervenir una fachada de estuco mineral en casa antigua del centro y debo respetar transpirabilidad.",
+        "La superficie tiene microfisuras y zonas resecas, pero no quiero encapsular humedad con cualquier pintura.",
+        "Son 67 metros cuadrados."
+      ],
+      "goal": "Probar criterio técnico cuando el usuario restringe soluciones por transpirabilidad."
+    },
+    {
+      "id": "UC14",
+      "title": "Señalización Piso Hospital",
+      "anchor": "Necesito demarcar rutas peatonales en piso interior de hospital con olor bajo y salida rápida a servicio.",
+      "turns": [
+        "Necesito demarcar rutas peatonales en piso interior de hospital con olor bajo y salida rápida a servicio.",
+        "Es un concreto sellado existente, no quiero algo que obligue a cerrar el área muchos días.",
+        "La demarcación total son 190 metros lineales."
+      ],
+      "goal": "Agregar un caso de demarcación especial distinto a parqueaderos o canchas."
+    },
+    {
+      "id": "UC15",
+      "title": "Portón Con Pintura Electroestática",
+      "anchor": "Tengo un portón con pintura electrostática deteriorada y quiero saber si se repara por encima o si toca migrar de sistema.",
+      "turns": [
+        "Tengo un portón con pintura electrostática deteriorada y quiero saber si se repara por encima o si toca migrar de sistema.",
+        "Es exterior, hay pérdida de brillo y pelado puntual, pero no quiero una recomendación incompatible.",
+        "El elemento completo tiene 21 metros cuadrados."
+      ],
+      "goal": "Probar compatibilidad sobre recubrimiento previo especial sin caer en respuesta genérica."
+    }
+  ]
+}

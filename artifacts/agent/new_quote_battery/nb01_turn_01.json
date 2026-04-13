@@ -1,0 +1,23 @@
+{
+  "case_id": "NB01",
+  "case_name": "Cubierta Eternit Tizada",
+  "turn_index": 1,
+  "elapsed_ms": 2448,
+  "user_message": "Hola, necesito recuperar una cubierta de fibrocemento que ya está toda tizada y fea.",
+  "result": {
+    "response_text": "¡Hola! Entiendo que necesitas recuperar un techo de fibrocemento que está en mal estado. Para poder ayudarte mejor, ¿me puedes decir si el techo está en el exterior o interior? Además, ¿tiene humedad, óxido o solo está deteriorado por el tiempo?",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  },
+  "conversation_context_after_turn": {}
+}

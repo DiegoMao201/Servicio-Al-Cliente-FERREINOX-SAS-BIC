@@ -1,0 +1,23 @@
+{
+  "case_id": "NB04",
+  "case_name": "Lavandería Con Capilaridad",
+  "turn_index": 2,
+  "elapsed_ms": 8902,
+  "user_message": "Es interior, sale salitre desde la base y no quiero que me manden una solución cosmética que se vuelva a soplar.",
+  "result": {
+    "response_text": "Entiendo, lo que necesitas es una solución efectiva y duradera. Para un muro interior con salitre, el sistema ideal es el siguiente:\n\n🔹 **Preparación de la superficie**: Remover completamente la pintura descascarada y el salitre hasta llegar a una base sana. \n\n🔹 **Imprimante**: Aplicar **Aquablock Ultra** en 2 manos, preferiblemente con brocha para asegurar una buena carga del producto.\n\n🔹 **Nivelación**: Después del Aquablock, aplicar **Estuco Acrílico** para nivelar la superficie.\n\n🔹 **Acabado**: Finalizar con un **vinilo para interior**, como **Viniltex Advanced**. Si deseas una opción más económica, puedo sugerir otra opción vinílica compatible.\n\n🔹 **Herramientas**: Necesitarás brochas y lijas para la preparación.\n\nAhora, ¿cuántos m² son y tienes algún color en mente para el acabado? Esto me ayudará a calcular las cantidades exactas. 😊",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  },
+  "conversation_context_after_turn": {}
+}

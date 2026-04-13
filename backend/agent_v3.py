@@ -442,7 +442,7 @@ def generate_agent_reply_v3(
     _TOOL_MAX_CALLS = {
         "consultar_conocimiento_tecnico": 1 if has_active_technical_guidance else 2,
         "buscar_documento_tecnico": 2,
-        "confirmar_pedido_y_generar_pdf": 1,
+        "confirmar_pedido_y_generar_pdf": 2,
         "registrar_reclamo": 1,
     }
 

@@ -1,0 +1,23 @@
+{
+  "case_id": "NB03",
+  "case_name": "Ladrillo A La Vista Hollín",
+  "turn_index": 1,
+  "elapsed_ms": 20291,
+  "user_message": "Tengo una fachada de ladrillo a la vista y se puso negra por humo y agua.",
+  "result": {
+    "response_text": "¡Qué fastidio con esa situación! Para poder ayudarte mejor, necesito saber si la base está pelada o si es obra nueva. También, ¿cuántos m² tiene la fachada? Esto me ayudará a recomendarte el sistema adecuado.",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  },
+  "conversation_context_after_turn": {}
+}

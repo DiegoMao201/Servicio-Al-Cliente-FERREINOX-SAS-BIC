@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-04-12T20:08:06.050491",
+  "status": "completed",
+  "counts": {
+    "total_profiles": 325,
+    "ready_profiles": 325,
+    "v3_profiles": 325,
+    "total_chunks": 10002
+  },
+  "comparison_json": "artifacts/rag/rag_100_product_audit_comparison_2026-04-12.json",
+  "comparison_md": "artifacts/rag/rag_100_product_audit_comparison_2026-04-12.md"
+}

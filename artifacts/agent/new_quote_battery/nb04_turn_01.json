@@ -1,0 +1,23 @@
+{
+  "case_id": "NB04",
+  "case_name": "Lavandería Con Capilaridad",
+  "turn_index": 1,
+  "elapsed_ms": 4101,
+  "user_message": "Necesito arreglar un muro interior de la zona de ropas porque se está descascarando desde abajo.",
+  "result": {
+    "response_text": "¡Qué fastidio con esa situación! Para ayudarte mejor, necesito un par de detalles:\n\n1. ¿De dónde viene la humedad? ¿Es del piso, de arriba, lateral o por temporada?\n2. ¿La base está completamente descascarada o hay partes que están sanas?\n\nCon esta información, podré recomendarte el sistema adecuado. 😊",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  },
+  "conversation_context_after_turn": {}
+}

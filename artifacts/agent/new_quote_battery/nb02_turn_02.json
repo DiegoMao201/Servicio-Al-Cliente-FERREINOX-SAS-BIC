@@ -1,0 +1,23 @@
+{
+  "case_id": "NB02",
+  "case_name": "Terraza Con Fisuras Finas",
+  "turn_index": 2,
+  "elapsed_ms": 4516,
+  "user_message": "Es una placa de concreto ya pintada hace años, tiene fisuras finas y tránsito peatonal normal.",
+  "result": {
+    "response_text": "Perfecto, gracias por la información. Para tu terraza transitable con fisuras y problemas de filtración, te recomiendo el siguiente sistema:\n\n🔹 **Preparación de la superficie**: Limpia bien la terraza, eliminando polvo y suciedad. Rellena las fisuras con un sellador adecuado.\n\n🔹 **Imprimante**: Aplica un sellador impermeabilizante, como Aquablock Ultra, para asegurar que no haya filtraciones.\n\n🔹 **Acabado**: Usa una pintura impermeable para exteriores, como Koraza, que es resistente al tráfico peatonal.\n\n🔹 **Diluyente**: Si es necesario, usa el diluyente recomendado para el producto que elijas.\n\n🔹 **Herramientas de aplicación**: Brocha o rodillo, según prefieras.\n\n¿Me puedes confirmar cuántos metros cuadrados tiene la terraza para calcular las cantidades? 😊",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  },
+  "conversation_context_after_turn": {}
+}

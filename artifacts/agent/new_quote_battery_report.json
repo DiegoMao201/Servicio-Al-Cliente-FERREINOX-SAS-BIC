@@ -1,0 +1,83 @@
+[
+  {
+    "id": "NB01",
+    "status": "FAIL",
+    "name": "Cubierta Eternit Tizada",
+    "quoted_products": [],
+    "notes": "Diagnostico generico y timeout al pedir m2. Corrida parcial previa si cotizo Sellomax + Koraza: 2 galones Sellomax, 3 galones Koraza, total 571313 con IVA."
+  },
+  {
+    "id": "NB02",
+    "status": "FAIL",
+    "name": "Terraza Con Fisuras Finas",
+    "quoted_products": [],
+    "notes": "Timeout en turno 1 del barrido acotado. Corrida parcial previa recomendo Aquablock Ultra + Koraza sin herramientas y fuera de la ruta esperada para terraza transitable."
+  },
+  {
+    "id": "NB03",
+    "status": "PASS",
+    "name": "Ladrillo A La Vista Hollin",
+    "quoted_products": [
+      {
+        "product": "Construcleaner Limpiador Desengrasante",
+        "quantity": "1 galon",
+        "unit_price_before_tax": 117563
+      },
+      {
+        "product": "Siliconite 7",
+        "quantity": "2 galones",
+        "unit_price_before_tax": 108072
+      }
+    ],
+    "notes": "Cerro la cotizacion con total 397104 con IVA. Persistio contaminacion de inventario en la busqueda intermedia de Construcleaner."
+  },
+  {
+    "id": "NB04",
+    "status": "WARN",
+    "name": "Lavanderia Con Capilaridad",
+    "quoted_products": [],
+    "notes": "Ruta parcial: Aquablock Ultra + Estuco Acrilico + Viniltex Advanced. Timeout al entrar a cantidades."
+  },
+  {
+    "id": "NB05",
+    "status": "FAIL",
+    "name": "Deck Exterior En Madera",
+    "quoted_products": [],
+    "notes": "Timeout en primer turno."
+  },
+  {
+    "id": "NB06",
+    "status": "FAIL",
+    "name": "Reja Oxidada Frente Calle",
+    "quoted_products": [],
+    "notes": "Timeout en primer turno."
+  },
+  {
+    "id": "NB07",
+    "status": "FAIL",
+    "name": "Lamina Galvanizada Nueva",
+    "quoted_products": [],
+    "notes": "Timeout en primer turno."
+  },
+  {
+    "id": "NB08",
+    "status": "WARN",
+    "name": "Cancha Escolar Multideporte",
+    "quoted_products": [],
+    "notes": "Solo pidio aclaraciones iniciales sin herramientas; timeout en turno 2."
+  },
+  {
+    "id": "NB09",
+    "status": "FAIL",
+    "name": "Ducto Metalico Caliente",
+    "quoted_products": [],
+    "notes": "Timeout en primer turno de la corrida completa. En sonda previa solo pidio aclaraciones y no uso herramientas."
+  },
+  {
+    "id": "NB10",
+    "status": "FAIL",
+    "name": "Tanque Agua Potable",
+    "quoted_products": [],
+    "notes": "Timeout en primer turno de la corrida completa. En sonda previa recomendo Aquablock para agua potable, hallazgo critico."
+  }
+]
