@@ -48,14 +48,21 @@
           "paso": 1,
           "accion": "PREPARACIÓN: Raspar y tumbar absolutamente toda pintura suelta, ampollas, salitre y base soplada hasta llegar al revoque original (sustrato sano).",
           "producto": null,
-          "herramientas": ["Espátula", "Rasqueta", "Lija Abracol grano 80-100"],
+          "herramientas": [
+            "Espátula",
+            "Rasqueta",
+            "Lija Abracol grano 80-100"
+          ],
           "nota_tecnica": "Si el revoque está meteorizado o 'quemado' (blando, se deshace), hay que reemplazarlo completamente. NO aplicar nada sobre revoque dañado."
         },
         {
           "paso": 2,
           "accion": "REVOQUE NUEVO (solo si el revoque original está dañado): Reemplazar con Revofast de Pintuco o revoque acondicionado con ligante impermeabilizante.",
           "producto": "Revofast de Pintuco",
-          "herramientas": ["Llana", "Plana"],
+          "herramientas": [
+            "Llana",
+            "Plana"
+          ],
           "nota_tecnica": "Revofast seca rápido — se puede continuar al siguiente paso en 48 horas. Si se usa revoque tradicional, esperar mínimo 5-7 días.",
           "condicional": true,
           "condicion": "Solo si el revoque original está meteorizado o quemado"
@@ -65,7 +72,9 @@
           "accion": "BLOQUEADOR DE HUMEDAD — 1ª MANO: Aplicar Aquablock Ultra CON BROCHA (no rodillo) para cargar bien el producto sobre la superficie y que penetre en los poros del muro.",
           "producto": "Aquablock Ultra",
           "presentacion_recomendada": "Galón o cuñete según área",
-          "herramientas": ["Brocha Goya Profesional"],
+          "herramientas": [
+            "Brocha Goya Profesional"
+          ],
           "nota_tecnica": "Se aplica con BROCHA obligatoriamente — el rodillo no carga suficiente producto. Dejar secar completamente (mínimo 12-24 horas según clima).",
           "rendimiento": "18-20 m² por galón (a dos manos bien cargadas)"
         },
@@ -73,28 +82,43 @@
           "paso": 4,
           "accion": "BLOQUEADOR DE HUMEDAD — 2ª MANO: Aplicar segunda mano de Aquablock Ultra. Dejar secar mínimo 24 horas.",
           "producto": "Aquablock Ultra",
-          "herramientas": ["Brocha Goya Profesional"],
+          "herramientas": [
+            "Brocha Goya Profesional"
+          ],
           "nota_tecnica": "El sistema de Aquablock son SIEMPRE 2 manos. Con una sola mano no se logra el sellado suficiente."
         },
         {
           "paso": 5,
           "accion": "NIVELACIÓN: Aplicar Estuco Profesional Exterior para nivelar y dejar la superficie lisa y uniforme.",
           "producto": "Estuco Profesional Exterior",
-          "herramientas": ["Llana", "Espátula"],
-          "nota_tecnica": "El estuco va DESPUÉS del Aquablock, NUNCA antes. Si se aplica estuco antes del bloqueador, la humedad lo destruye desde abajo. Usar Estuco Profesional Exterior — NO estuco interior tradicional, porque la humedad lo daña."
+          "herramientas": [
+            "Llana",
+            "Espátula"
+          ],
+          "nota_tecnica": "El estuco va DESPUÉS del Aquablock, NUNCA antes. Si se aplica estuco antes del bloqueador, la humedad lo destruye desde abajo. Usar Estuco Profesional Exterior — NO estuco interior tradicional, porque la humedad lo daña. Buscar en inventario: 'estuco prof ext blanco'. NOTA: El Estuco Acrílico Multiuso (presentación 1kg) es para retoques pequeños — para sistemas completos usar siempre Estuco Profesional Exterior en presentación galón."
         },
         {
           "paso": 6,
           "accion": "ACABADO FINAL: Aplicar 2 manos de Viniltex Advanced como acabado decorativo.",
           "producto": "Viniltex Advanced",
           "presentacion_recomendada": "Galón o cuñete según área",
-          "herramientas": ["Rodillo", "Brocha para cortes y bordes"],
-          "nota_tecnica": "Viniltex Advanced es el acabado premium para interiores. Alternativas más económicas: Intervinil (intermedio) o Pinturama (económico).",
+          "herramientas": [
+            "Rodillo",
+            "Brocha para cortes y bordes"
+          ],
+          "nota_tecnica": "Viniltex Advanced es el acabado premium para interiores con máxima lavabilidad. Viniltex Ultralavable es la especialidad superior con tecnología hidrofóbica antimanchas. Otras opciones: Intervinil (buena relación precio/calidad) o Pinturama (presupuesto ajustado).",
           "rendimiento": "20-25 m² por galón (a dos manos)"
         }
       ],
       "orden_critico": "Aquablock Ultra → Estuco Profesional Exterior → Pintura. NUNCA: Estuco → Aquablock.",
       "jerarquia_acabados": [
+        {
+          "producto": "Viniltex Ultralavable",
+          "nivel": "especialidad superior",
+          "precio_relativo": "alto",
+          "argumento_cliente": "Viniltex Ultralavable repele líquidos y evita que las manchas penetren la superficie. Antibacterial 99%. En una zona que tuvo humedad, esta tecnología hidrofóbica es ideal porque si le cae agua no la absorbe. Dura 10+ años.",
+          "busqueda_inventario": "viniltex ultralav blanco galon"
+        },
         {
           "producto": "Viniltex Advanced",
           "nivel": "premium",
@@ -117,7 +141,7 @@
           "busqueda_inventario": "pinturama blanco galon"
         }
       ],
-      "regla_opciones": "SIEMPRE presenta las opciones como SISTEMAS COMPLETOS con precio total. La base técnica (Aquablock + Estuco) NO cambia entre opciones — solo cambia el acabado final. Pregunta al cliente: '¿Buscamos máxima durabilidad o una opción más económica?' ANTES de listar todo."
+      "regla_opciones": "SIEMPRE presenta las opciones como SISTEMAS COMPLETOS con precio total. La base técnica (Aquablock + Estuco) NO cambia entre opciones — solo cambia el acabado final. Presenta TODAS las opciones disponibles de mayor a menor prestación: Ultralavable → Advanced → Intervinil → Pinturama. NO rotules ninguna marca top como 'económica'."
     },
     "productos_prohibidos": [
       {
@@ -200,21 +224,27 @@
           "paso": 2,
           "accion": "PREPARACIÓN: Remover base suelta, salitre o moho según corresponda.",
           "producto": null,
-          "herramientas": ["Espátula", "Lija Abracol", "Cepillo"],
+          "herramientas": [
+            "Espátula",
+            "Lija Abracol",
+            "Cepillo"
+          ],
           "nota_tecnica": "Si hay moho: lavar con hipoclorito diluido (1 parte hipoclorito por 8-10 partes agua). ADVERTENCIA: esta mezcla solo funciona durante 1 hora máximo después de preparada."
         },
         {
           "paso": 3,
           "accion": "BLOQUEADOR (si hay humedad activa): Aplicar Aquablock o Aquablock Ultra según severidad.",
           "producto": "Aquablock / Aquablock Ultra",
-          "herramientas": ["Brocha Goya Profesional"],
+          "herramientas": [
+            "Brocha Goya Profesional"
+          ],
           "nota_tecnica": "Aquablock Ultra para casos severos (capilaridad, presión negativa). Aquablock estándar para humedad leve sin presión activa."
         },
         {
           "paso": 4,
           "accion": "NIVELACIÓN: Estuco Profesional Exterior si se requiere nivelar después del bloqueador.",
           "producto": "Estuco Profesional Exterior",
-          "nota_tecnica": "Siempre DESPUÉS del bloqueador de humedad, nunca antes."
+          "nota_tecnica": "Siempre DESPUÉS del bloqueador de humedad, nunca antes. Buscar en inventario: 'estuco prof ext blanco'. NOTA: El Estuco Acrílico Multiuso (presentación 1kg) es para retoques pequeños — para sistemas completos usar siempre Estuco Profesional Exterior en presentación galón."
         },
         {
           "paso": 5,
@@ -293,14 +323,20 @@
           "paso": 1,
           "accion": "EVALUACIÓN DE BASE: Verificar si el estuco/textura actual está soplado golpeando la superficie. Si suena hueco → tumbar todo.",
           "producto": null,
-          "herramientas": ["Martillo de goma para prueba de adherencia"],
+          "herramientas": [
+            "Martillo de goma para prueba de adherencia"
+          ],
           "nota_tecnica": "Si la base actual está mala o soplada, se debe tumbar ABSOLUTAMENTE TODO hasta el revoque y comenzar un sistema nuevo desde cero. Esa es la ÚNICA garantía de curar la humedad y asegurar el desempeño de la Koraza. NO se puede pintar sobre una base dañada."
         },
         {
           "paso": 2,
           "accion": "TRATAMIENTO DE MOHO (si aplica): Lavar con solución de hipoclorito de sodio diluido (1 parte hipoclorito × 8-10 partes agua).",
           "producto": "Hipoclorito de sodio",
-          "herramientas": ["Cepillo de cerdas duras", "Escoba", "Balde"],
+          "herramientas": [
+            "Cepillo de cerdas duras",
+            "Escoba",
+            "Balde"
+          ],
           "nota_tecnica": "ADVERTENCIA OBLIGATORIA: la mezcla de hipoclorito SOLO funciona durante 1 hora (máximo hora y media) después de preparada. Después pierde TODO su efecto antimicrobiano. Preparar solo lo que se va a usar de inmediato. Dejar secar completamente antes de pintar.",
           "condicional": true,
           "condicion": "Solo si hay moho/hongo visible"
@@ -309,15 +345,22 @@
           "paso": 3,
           "accion": "PREPARACIÓN DE SUPERFICIE: Raspar y retirar toda pintura suelta, ampollas y material soplado. Lijar la superficie para mejorar agarre.",
           "producto": null,
-          "herramientas": ["Espátula", "Lija Abracol grano 80-100", "Brocha Goya Profesional"],
+          "herramientas": [
+            "Espátula",
+            "Lija Abracol grano 80-100",
+            "Brocha Goya Profesional"
+          ],
           "nota_tecnica": "Si se tumbó todo el estuco (Paso 1), aplicar revoque nuevo y dejarlo curar. Luego opcional: Estuco Profesional Exterior para nivelar y dar acabado liso."
         },
         {
           "paso": 4,
           "accion": "ESTUCO EXTERIOR (si se requiere nivelar): Aplicar Estuco Profesional Exterior para dejar la superficie uniforme.",
           "producto": "Estuco Profesional Exterior",
-          "herramientas": ["Llana", "Espátula"],
-          "nota_tecnica": "Usar SIEMPRE Estuco Profesional Exterior — NUNCA estuco interior tradicional en fachadas. El estuco interior no resiste intemperie ni humedad. Si hay grietas, aplicar Pintuco Flex antes del estuco como masilla flexible para grietas.",
+          "herramientas": [
+            "Llana",
+            "Espátula"
+          ],
+          "nota_tecnica": "Usar SIEMPRE Estuco Profesional Exterior — NUNCA estuco interior tradicional en fachadas. El estuco interior no resiste intemperie ni humedad. Si hay grietas, aplicar Pintuco Flex antes del estuco como masilla flexible para grietas. Buscar en inventario: 'estuco prof ext blanco'. NOTA: El Estuco Acrílico Multiuso (presentación 1kg) es para retoques pequeños — para sistemas completos usar siempre Estuco Profesional Exterior en presentación galón.",
           "condicional": true,
           "condicion": "Si se necesita nivelar o si se tumbó el estuco anterior"
         },
@@ -326,24 +369,34 @@
           "accion": "ACABADO FINAL — KORAZA: Aplicar 2-3 manos de Koraza como acabado exterior impermeabilizante.",
           "producto": "Koraza",
           "presentacion_recomendada": "Cuñete (5 galones) para fachadas grandes",
-          "herramientas": ["Rodillo de pelo largo (felpa)", "Brocha Goya Profesional para cortes"],
+          "herramientas": [
+            "Rodillo de pelo largo (felpa)",
+            "Brocha Goya Profesional para cortes"
+          ],
           "nota_tecnica": "Koraza es el acabado PREMIUM para fachadas expuestas a lluvia y sol. Es una pintura impermeabilizante elastomérica que sella microfisuras y protege contra la lluvia. Aplicar mínimo 2 manos.",
           "rendimiento": "20-25 m² por galón (a dos manos)"
         }
       ],
       "jerarquia_acabados_fachada": [
         {
+          "producto": "Koraza Doble Vida",
+          "nivel": "especialidad máxima duración",
+          "descripcion": "Koraza con tecnología Doble Vida — 10 años de protección garantizada",
+          "argumento_cliente": "Koraza Doble Vida tiene tecnología de doble protección que garantiza 10 años sin repintar. Si la fachada tiene alta exposición a sol y lluvia, esta es la máxima inversión disponible.",
+          "busqueda_inventario": "koraza doble vida blanco galon"
+        },
+        {
           "producto": "Koraza",
           "nivel": "premium",
           "descripcion": "Impermeabilizante elastomérico, máxima protección sol + lluvia",
-          "argumento_cliente": "Koraza forma una membrana elástica que sella microfisuras y resiste lluvia directa. Es la mejor inversión para fachadas porque elimina repintadas frecuentes. Dura 10-12 años en condiciones normales.",
+          "argumento_cliente": "Koraza es una pintura impermeabilizante elastomérica que sella microfisuras y resiste lluvia directa. Excelente protección para fachadas. Dura 5 años en condiciones normales.",
           "busqueda_inventario": "koraza blanco galon"
         },
         {
           "producto": "Viniltex Advanced",
           "nivel": "tipo 1",
           "descripcion": "Exterior exposición moderada, sistema arquitectónico compatible",
-          "argumento_cliente": "Viniltex Advanced funciona en exteriores con exposición moderada (poca lluvia directa). Más económico que Koraza pero con menor protección contra intemperie. Dura 5-7 años en fachada.",
+          "argumento_cliente": "Viniltex Advanced es una pintura premium de alta lavabilidad. Funciona en exteriores con exposición moderada (fachada protegida). Diferente tecnología que Koraza — no es elastomérica pero tiene excelente acabado. Dura 5-7 años en fachada.",
           "busqueda_inventario": "viniltex advanced blanco galon"
         },
         {
@@ -355,10 +408,22 @@
         }
       ],
       "accesorios_complementarios": [
-        {"producto": "Estuco Profesional Exterior", "uso": "Nivelación de superficie antes del acabado"},
-        {"producto": "Pintuco Flex", "uso": "Masilla flexible para sellar grietas antes del estuco"},
-        {"producto": "Lija Abracol", "uso": "Preparación de superficie"},
-        {"producto": "Brocha Goya Profesional", "uso": "Aplicación y cortes"}
+        {
+          "producto": "Estuco Profesional Exterior",
+          "uso": "Nivelación de superficie antes del acabado"
+        },
+        {
+          "producto": "Pintuco Flex",
+          "uso": "Masilla flexible para sellar grietas antes del estuco"
+        },
+        {
+          "producto": "Lija Abracol",
+          "uso": "Preparación de superficie"
+        },
+        {
+          "producto": "Brocha Goya Profesional",
+          "uso": "Aplicación y cortes"
+        }
       ]
     },
     "productos_prohibidos": [
@@ -425,14 +490,22 @@
           "paso": 1,
           "accion": "LIMPIEZA ANTIMICROBIANA: Preparar solución de hipoclorito de sodio — 1 parte de hipoclorito por 8 a 10 partes de agua.",
           "producto": "Hipoclorito de sodio",
-          "herramientas": ["Cepillo de cerdas duras", "Guantes", "Gafas de protección", "Balde"],
+          "herramientas": [
+            "Cepillo de cerdas duras",
+            "Guantes",
+            "Gafas de protección",
+            "Balde"
+          ],
           "nota_tecnica": "ADVERTENCIA CRÍTICA: esta mezcla SOLO es funcional durante 1 hora (máximo hora y media) después de preparada. Después de ese tiempo pierde TODO su efecto para matar el hongo. Preparar SOLO la cantidad que se va a usar de inmediato. Aplicar con cepillo sobre la superficie, dejar actuar 15-20 minutos, enjuagar y dejar secar completamente."
         },
         {
           "paso": 2,
           "accion": "PREPARACIÓN: Una vez seco, raspar pintura suelta si la hay. Lijar suavemente para mejorar adhesión.",
           "producto": null,
-          "herramientas": ["Lija Abracol grano 100-150", "Espátula"]
+          "herramientas": [
+            "Lija Abracol grano 100-150",
+            "Espátula"
+          ]
         },
         {
           "paso": 3,
@@ -481,7 +554,11 @@
         {
           "paso": 1,
           "accion": "REMOCIÓN: Tumbar completamente el revoque dañado hasta encontrar base sana (ladrillo, bloque). No dejar nada blando o suelto.",
-          "herramientas": ["Cincel", "Martillo", "Espátula grande"]
+          "herramientas": [
+            "Cincel",
+            "Martillo",
+            "Espátula grande"
+          ]
         },
         {
           "paso": 2,
@@ -540,7 +617,11 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Limpiar la superficie, retirar impermeabilizante viejo si está desprendido. Verificar y marcar grietas/fisuras.",
-          "herramientas": ["Escoba", "Espátula", "Cepillo"]
+          "herramientas": [
+            "Escoba",
+            "Espátula",
+            "Cepillo"
+          ]
         },
         {
           "paso": 2,
@@ -551,7 +632,10 @@
           "paso": 3,
           "accion": "IMPERMEABILIZACIÓN: Aplicar Pintuco Fill como sistema de impermeabilización de cubierta.",
           "producto": "Pintuco Fill",
-          "herramientas": ["Brocha gruesa", "Rodillo de pelo largo"],
+          "herramientas": [
+            "Brocha gruesa",
+            "Rodillo de pelo largo"
+          ],
           "rendimiento": "12-15 m² por galón",
           "nota_tecnica": "Pintuco Fill es el producto correcto para impermeabilizar techos y terrazas de concreto. Se aplica como sistema de cubierta, NO como pintura decorativa."
         }

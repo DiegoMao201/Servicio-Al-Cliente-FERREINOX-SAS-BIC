@@ -77,40 +77,69 @@
           "paso": 1,
           "accion": "REMOCIÓN QUÍMICA: Aplicar Removedor Pintuco sobre toda la superficie con acabado viejo. Dejar actuar 15-30 minutos hasta que la pintura/barniz se ampolla.",
           "producto": "Removedor Pintuco",
-          "herramientas": ["Brocha vieja", "Espátula plástica"],
+          "herramientas": [
+            "Brocha vieja",
+            "Espátula plástica"
+          ],
           "nota_tecnica": "El Removedor Pintuco ablanda el acabado viejo para removerlo fácilmente. Usar en área ventilada."
         },
         {
           "paso": 2,
           "accion": "REMOCIÓN MECÁNICA: Raspar con espátula o cuchilla. Limpiar residuos.",
-          "herramientas": ["Espátula", "Cuchilla"]
+          "herramientas": [
+            "Espátula",
+            "Cuchilla"
+          ]
         },
         {
           "paso": 3,
           "accion": "LIJADO GRUESO: Lija Abracol grano 80 para remover residuos del acabado viejo y emparejar la superficie.",
-          "herramientas": ["Lija Abracol grano 80"],
+          "herramientas": [
+            "Lija Abracol grano 80"
+          ],
           "nota_tecnica": "El grano 80 es para remoción inicial. SIEMPRE seguir con grano fino después."
         },
         {
           "paso": 4,
           "accion": "LIJADO FINO: Lija Abracol grano 150-220 para dejar la madera suave y lista para el nuevo acabado.",
-          "herramientas": ["Lija Abracol grano 150", "Lija Abracol grano 220"],
+          "herramientas": [
+            "Lija Abracol grano 150",
+            "Lija Abracol grano 220"
+          ],
           "nota_tecnica": "El lijado fino es fundamental para acabados de madera. Sin lijado fino, el barniz queda con textura rugosa."
         },
         {
           "paso": 5,
           "accion": "LIMPIEZA: Remover TODO el polvo de lijado con trapo húmedo. La madera debe quedar limpia y seca antes de aplicar cualquier producto.",
-          "herramientas": ["Trapo húmedo", "Aspiradora"]
+          "herramientas": [
+            "Trapo húmedo",
+            "Aspiradora"
+          ]
         }
       ],
       "sustitucion_lijas": "Si no hay grano específico: grano 60 sustituye al 80 (más agresivo). Grano 120 sustituye al 150. Grano 180 sustituye al 220."
     },
     "herramientas_siempre_incluir": [
-      {"producto": "Removedor Pintuco", "uso": "Remoción química del acabado viejo"},
-      {"producto": "Lija Abracol grano 80", "uso": "Remoción mecánica / lijado grueso"},
-      {"producto": "Lija Abracol grano 150-220", "uso": "Lijado fino"},
-      {"producto": "Espátula", "uso": "Raspar acabado ablandado"},
-      {"producto": "Brocha Goya Profesional", "uso": "Aplicar Removedor y luego el acabado"}
+      {
+        "producto": "Removedor Pintuco",
+        "uso": "Remoción química del acabado viejo"
+      },
+      {
+        "producto": "Lija Abracol grano 80",
+        "uso": "Remoción mecánica / lijado grueso"
+      },
+      {
+        "producto": "Lija Abracol grano 150-220",
+        "uso": "Lijado fino"
+      },
+      {
+        "producto": "Espátula",
+        "uso": "Raspar acabado ablandado"
+      },
+      {
+        "producto": "Brocha Goya Profesional",
+        "uso": "Aplicar Removedor y luego el acabado"
+      }
     ]
   },
   {
@@ -146,19 +175,25 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Si es madera nueva: lijar con grano 150-220 y limpiar polvo. Si tiene acabado viejo: seguir GS-MAD-002.",
-          "herramientas": ["Lija Abracol grano 150-220"]
+          "herramientas": [
+            "Lija Abracol grano 150-220"
+          ]
         },
         {
           "paso": 2,
           "accion": "ACABADO NATURAL: Aplicar Barnex (brillante o mate según preferencia) O Wood Stain (si se quiere teñir con tono). Aplicar 2-3 manos con lijado suave entre manos.",
           "producto": "Barnex (mate o brillante) / Wood Stain (si quiere tono)",
-          "herramientas": ["Brocha Goya Profesional"],
+          "herramientas": [
+            "Brocha Goya Profesional"
+          ],
           "nota_tecnica": "La Brocha Goya Profesional es OBLIGATORIA para madera — no usar brocha económica que suelta pelo y arruina el acabado. El Wood Stain tiñe la madera con color (caoba, nogal, ébano) manteniendo la veta visible. El Barnex es transparente (no cambia color)."
         },
         {
           "paso": 3,
           "accion": "ENTRE MANOS: Lijar suavemente con grano 320 o lana de acero entre cada mano. Limpiar polvo.",
-          "herramientas": ["Lija Abracol grano 320 o lana de acero"],
+          "herramientas": [
+            "Lija Abracol grano 320 o lana de acero"
+          ],
           "nota_tecnica": "El lijado entre manos elimina el poro levantado y deja acabado sedoso."
         }
       ]
@@ -209,13 +244,17 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Si es nueva: lijar grano 120-150. Si tiene acabado viejo: seguir GS-MAD-002.",
-          "herramientas": ["Lija Abracol grano 120-150"]
+          "herramientas": [
+            "Lija Abracol grano 120-150"
+          ]
         },
         {
           "paso": 2,
           "accion": "ACABADO EXTERIOR: Aplicar Wood Stain Exterior o Barnex con protección UV. 3 manos mínimo para exterior.",
           "producto": "Wood Stain Exterior / Barnex UV",
-          "herramientas": ["Brocha Goya Profesional"],
+          "herramientas": [
+            "Brocha Goya Profesional"
+          ],
           "nota_tecnica": "Para madera exterior: 3 manos mínimo (una más que interior). El mantenimiento se recomienda cada 1-2 años dependiendo de la exposición solar."
         }
       ],
@@ -265,7 +304,9 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Si es madera nueva: lijar grano 150-220 y limpiar. Si tiene acabado viejo: seguir GS-MAD-002.",
-          "herramientas": ["Lija Abracol grano 150-220"]
+          "herramientas": [
+            "Lija Abracol grano 150-220"
+          ]
         },
         {
           "paso": 2,
@@ -278,9 +319,12 @@
         {
           "paso": 3,
           "accion": "ACABADO COLOR SÓLIDO: Aplicar 2-3 manos de Doméstico (brillante) o Pintulux Máxima Protección (mate/satinado/brillante).",
-          "producto": "Doméstico (brillante) / Pintulux Máxima Protección (varios acabados)",
-          "herramientas": ["Brocha Goya Profesional", "Mini rodillo de espuma (para superficies grandes planas)"],
-          "nota_tecnica": "Doméstico: esmalte brillante tradicional, económico. Pintulux Máxima Protección: más durable, disponible en mate, satinado y brillante."
+          "producto": "Pintulux Máxima Protección / Pintulux 3 en 1",
+          "herramientas": [
+            "Brocha Goya Profesional",
+            "Mini rodillo de espuma (para superficies grandes planas)"
+          ],
+          "nota_tecnica": "Doméstico: esmalte brillante tradicional, económico. Pintulux Máxima Protección: más durable, disponible en mate, satinado y brillante. Alternativa: Pintulux 3 en 1 (incluye anticorrosivo en un solo paso, acabado decorativo). Pintulux Máxima Protección ofrece mayor resistencia."
         }
       ]
     },
@@ -328,19 +372,28 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Pulir/ciclar el piso completo con pulidora de pisos. Empezar con lija gruesa (60-80), luego media (120), luego fina (150-220).",
-          "herramientas": ["Pulidora de pisos", "Lija Abracol grano 60, 120, 150-220"],
+          "herramientas": [
+            "Pulidora de pisos",
+            "Lija Abracol grano 60, 120, 150-220"
+          ],
           "nota_tecnica": "Si tiene vitrificado viejo: se debe pulir/ciclar todo hasta madera limpia. No aplicar poliuretano sobre poliuretano viejo deteriorado."
         },
         {
           "paso": 2,
           "accion": "LIMPIEZA: Aspirar y trapear con trapo húmedo. NO usar agua en exceso — la madera absorbe y se hincha.",
-          "herramientas": ["Aspiradora", "Trapo húmedo"]
+          "herramientas": [
+            "Aspiradora",
+            "Trapo húmedo"
+          ]
         },
         {
           "paso": 3,
           "accion": "APLICACIÓN: 3 manos de Poliuretano Alto Tráfico. Ref 1550 (brillante) o 1551 (mate). Lijado suave entre manos con grano 220-320.",
           "producto": "Poliuretano Alto Tráfico 1550 (brillante) / 1551 (mate)",
-          "herramientas": ["Aplicador de lana de cordero o felpa", "Lija Abracol grano 220-320"],
+          "herramientas": [
+            "Aplicador de lana de cordero o felpa",
+            "Lija Abracol grano 220-320"
+          ],
           "nota_tecnica": "El Poliuretano Alto Tráfico es monocomponente (no necesita catalizador). Dar 3 manos. Lijar con grano 220-320 entre manos para adherencia. NO pisar durante el secado (mínimo 4 horas entre manos, 24 horas para tráfico después de la última mano)."
         }
       ]

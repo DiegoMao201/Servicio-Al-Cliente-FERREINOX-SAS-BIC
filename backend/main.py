@@ -655,6 +655,7 @@ PORTFOLIO_ALIASES = {
                  # Códigos de color Viniltex (cliente dice "1501" para Viniltex Blanco, "1525" para amarillo vivo, etc.)
                  "1501", "viniltex blanco", "viniltex blanco 1501",
                  "1525", "viniltex amarillo", "viniltex amarillo vivo 1525"],
+    "viniltex ultralavable": ["viniltex ultralavable", "viniltex ultralav", "ultralavable", "viniltex antimanchas", "vinilo antimanchas", "viniltex hidrofobico", "viniltex hidrofóbico"],
     "vinilico": ["vinilico", "vinilo", "vinilica", "viniloco", "vinilico blanco", "viniltex blanco", "vinilo tipo 1"],
     "viniloco": ["viniloco", "vinilico", "viniltex", "vinilo", "vinilico blanco", "viniltex blanco"],
     "vinil plus": ["vinil plus", "vinilplus", "vinil+", "vinilo plus", "vinilo tipo 1"],
@@ -696,6 +697,7 @@ PORTFOLIO_ALIASES = {
     "pintulac": ["pintulac", "laca pintuco", "laca", "laca madera"],
     "aerocolor": ["aerocolor", "aerosol pintuco", "aerosol", "spray pintuco", "spray pintura", "pintura spray", "pintura aerosol", "spray"],
     "koraza": ["koraza", "impermeabilizante koraza", "koraza elastomerica", "koraza elastomerico", "pintura fachada", "pintura exterior fachada"],
+    "koraza doble vida": ["koraza doble vida", "doble vida", "koraza 10 anos", "koraza 10 años", "koraza doble", "koraza maxima duracion", "koraza máxima duración"],
     "world color": ["world color", "worldcolor", "tinte pintuco", "base tintometrica", "base tintométrica"],
     "imprimante": ["imprimante", "imprimante pintuco", "primer", "fondo", "sellador fondo", "primer pintuco"],
     "pintuco fill": ["pintuco fill", "impermeabilizante pintuco", "fill 7", "fill 12", "pintuco fill 7", "pintuco fill 12"],
@@ -2895,6 +2897,12 @@ FERRETERIA_WORD_EXPANSIONS: list[tuple[str, str]] = [
     (r"\bestuco\s+acr[ií]lico(?:\s+exterior)?\b", "estuco prof ext"),
     (r"\bestuco\s+acrilico(?:\s+exterior)?\b", "estuco prof ext"),
     (r"\bestuco\s+profesional(?:\s+ext(?:erior)?)?\b", "estuco prof ext"),
+    # ── Especialidades / Variantes nuevas ──
+    (r"\bultralavable\b", "ultralav"),
+    (r"\bviniltex\s+ultralavable\b", "viniltex ultralav"),
+    (r"\bkoraza\s+doble\s+vida\b", "koraza doble vida"),
+    (r"\bdoble\s+vida\b", "koraza doble vida"),
+    (r"\bestuco\s+(?:acr[ií]lico\s+)?multiuso\b", "estuco acrilico multiuso"),
 ]
 
 # ── Bidirectional search-term variants ──────────────────────────────────────
@@ -2922,6 +2930,10 @@ _SEARCH_TERM_VARIANTS: dict[str, list[str]] = {
     "anticorrosivo": ["anticorr", "anticorrosi"],
     "impermeabilizante": ["imperm", "impermeab"],
     "estuco":     ["estuc", "prof ext"],
+    "ultralavable": ["ultralav"],
+    "ultralav":     ["ultralavable"],
+    "doble vida":   ["doble"],
+    "multiuso":     ["multiu"],
 }
 
 

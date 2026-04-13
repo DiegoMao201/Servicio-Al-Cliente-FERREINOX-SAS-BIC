@@ -41,14 +41,20 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN MECÁNICA: Retirar óxido suelto y cascarilla con grata o disco flap. Llegar hasta metal firme.",
-          "herramientas": ["Grata copa o circular", "Disco flap", "Lija Abracol grano 80-100"],
+          "herramientas": [
+            "Grata copa o circular",
+            "Disco flap",
+            "Lija Abracol grano 80-100"
+          ],
           "nota_tecnica": "La preparación del metal oxidado es MECÁNICA (grata, lija, disco flap). NO lavar con agua y jabón como primera preparación — el agua sobre metal oxidado empeora la condición si deja humedad retenida. El metal debe estar SECO antes de aplicar cualquier producto."
         },
         {
           "paso": 2,
           "accion": "CONVERTIDOR DE ÓXIDO (si hay óxido profundo incrustado): Aplicar Pintóxido sobre el óxido residual que no se pudo remover mecánicamente.",
           "producto": "Pintóxido",
-          "herramientas": ["Brocha Goya Profesional"],
+          "herramientas": [
+            "Brocha Goya Profesional"
+          ],
           "nota_tecnica": "Pintóxido convierte el óxido remanente en una capa protectora. Solo se usa si después de la preparación mecánica queda óxido incrustado que no se puede quitar. No sustituye la preparación mecánica.",
           "condicional": true,
           "condicion": "Solo si hay óxido profundo que no se remueve con grata/disco"
@@ -57,22 +63,38 @@
           "paso": 3,
           "accion": "ANTICORROSIVO: Aplicar 2 manos de Corrotec o Corrotec Premium como anticorrosivo. Dejar secar entre manos según ficha técnica.",
           "producto": "Corrotec / Corrotec Premium",
-          "herramientas": ["Brocha Goya Profesional"],
+          "herramientas": [
+            "Brocha Goya Profesional"
+          ],
           "nota_tecnica": "El Corrotec sella el metal y previene nueva oxidación. SIEMPRE 2 manos para cobertura uniforme. Corrotec Premium tiene mayor resistencia — recomendarlo para estructuras críticas."
         },
         {
           "paso": 4,
           "accion": "ACABADO FINAL: Aplicar 2 manos de Pintulux 3en1 como acabado con protección UV y estética.",
           "producto": "Pintulux 3 en 1",
-          "herramientas": ["Brocha Goya Profesional"],
-          "nota_tecnica": "NUNCA dejar el Corrotec como capa final. Sin Pintulux, el anticorrosivo se degrada en meses por UV. Pintulux 3en1 da protección UV, color y brillo. Preguntar el color al cliente ANTES de cotizar."
+          "herramientas": [
+            "Brocha Goya Profesional"
+          ],
+          "nota_tecnica": "NUNCA dejar el Corrotec como capa final. Sin Pintulux, el anticorrosivo se degrada en meses por UV. Pintulux 3en1 da protección UV, color y brillo. Preguntar el color al cliente ANTES de cotizar. Pintulux 3 en 1 integra anticorrosivo + acabado en un solo producto: prepara, protege y decora en un solo paso. Es una solución DECORATIVA (ambientes C1 residencial/comercial), no para ambientes industriales C2+."
         }
       ],
       "herramientas_siempre_incluir": [
-        {"producto": "Grata copa o circular", "uso": "Preparación mecánica del óxido"},
-        {"producto": "Disco flap", "uso": "Remoción de óxido y cascarilla"},
-        {"producto": "Lija Abracol grano 80-100", "uso": "Repaso de zonas difíciles"},
-        {"producto": "Brocha Goya Profesional", "uso": "Aplicación de todos los productos (evitar brocha popular que suelta pelo)"}
+        {
+          "producto": "Grata copa o circular",
+          "uso": "Preparación mecánica del óxido"
+        },
+        {
+          "producto": "Disco flap",
+          "uso": "Remoción de óxido y cascarilla"
+        },
+        {
+          "producto": "Lija Abracol grano 80-100",
+          "uso": "Repaso de zonas difíciles"
+        },
+        {
+          "producto": "Brocha Goya Profesional",
+          "uso": "Aplicación de todos los productos (evitar brocha popular que suelta pelo)"
+        }
       ]
     },
     "productos_prohibidos": [
@@ -126,28 +148,38 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Lijar suavemente para crear perfil de agarre. Limpiar con solvente para remover grasa.",
-          "herramientas": ["Lija Abracol grano 150-220", "Trapo con solvente"],
+          "herramientas": [
+            "Lija Abracol grano 150-220",
+            "Trapo con solvente"
+          ],
           "nota_tecnica": "El galvanizado tiene una capa de zinc que es lisa. El lijado suave crea micro-rayas para que el Wash Primer agarre."
         },
         {
           "paso": 2,
           "accion": "PROMOTOR DE ADHERENCIA: Aplicar Wash Primer como primera capa. Es obligatorio sobre galvanizado/aluminio.",
           "producto": "Wash Primer",
-          "herramientas": ["Brocha", "Pistola de aspersión"],
+          "herramientas": [
+            "Brocha",
+            "Pistola de aspersión"
+          ],
           "nota_tecnica": "El Wash Primer ataca químicamente la superficie galvanizada/aluminio y crea un perfil de agarre para las capas siguientes. Sin Wash Primer, cualquier pintura se despega."
         },
         {
           "paso": 3,
           "accion": "ANTICORROSIVO: Aplicar Corrotec sobre el Wash Primer curado.",
           "producto": "Corrotec",
-          "herramientas": ["Brocha Goya Profesional"]
+          "herramientas": [
+            "Brocha Goya Profesional"
+          ]
         },
         {
           "paso": 4,
           "accion": "ACABADO: Aplicar Pintulux 3en1 como acabado final con protección UV.",
           "producto": "Pintulux 3 en 1",
-          "herramientas": ["Brocha Goya Profesional"],
-          "nota_tecnica": "Preguntar color antes de cotizar."
+          "herramientas": [
+            "Brocha Goya Profesional"
+          ],
+          "nota_tecnica": "Preguntar color antes de cotizar. Pintulux 3 en 1 integra anticorrosivo + acabado en un solo producto: prepara, protege y decora en un solo paso. Es una solución DECORATIVA (ambientes C1 residencial/comercial), no para ambientes industriales C2+."
         }
       ]
     },
@@ -198,7 +230,11 @@
           {
             "paso": 1,
             "accion": "Lijar y raspar pintura suelta. Dejar superficie firme y limpia.",
-            "herramientas": ["Lija Abracol", "Grata", "Espátula"]
+            "herramientas": [
+              "Lija Abracol",
+              "Grata",
+              "Espátula"
+            ]
           },
           {
             "paso": 2,
@@ -218,7 +254,12 @@
           {
             "paso": 1,
             "accion": "REMOCIÓN TOTAL: Quitar absolutamente toda la pintura vieja hasta llegar a metal desnudo. Usar removedor químico + disco flap + grata.",
-            "herramientas": ["Removedor Pintuco", "Disco flap", "Grata", "Espátula"],
+            "herramientas": [
+              "Removedor Pintuco",
+              "Disco flap",
+              "Grata",
+              "Espátula"
+            ],
             "nota_tecnica": "Es OBLIGATORIO llegar a metal desnudo. Si queda CUALQUIER residuo de alquídico, el epóxico SE ARRUGA y destruye todo el sistema."
           },
           {
@@ -272,19 +313,29 @@
         {
           "nivel": "básico",
           "descripcion": "Anticorrosivo alquídico + acabado alquídico. Económico, funcional para estructuras convencionales.",
-          "productos": ["Corrotec Premium (anticorrosivo)", "Pintulux 3 en 1 (acabado)"],
+          "productos": [
+            "Corrotec Premium (anticorrosivo)",
+            "Pintulux 3 en 1 (acabado)"
+          ],
           "nota": "Sistema más económico. Aceptable para interiores secos sin exposición química."
         },
         {
           "nivel": "intermedio",
           "descripcion": "Imprimante epóxico + acabado alquídico o acrílico. Mayor durabilidad.",
-          "productos": ["Primer Epóxico 10046 o 10050 (imprimante)", "Pintulux 3 en 1 o Pintulux Máxima Protección (acabado)"],
+          "productos": [
+            "Primer Epóxico 10046 o 10050 (imprimante)",
+            "Pintulux 3 en 1 o Pintulux Máxima Protección (acabado)"
+          ],
           "nota": "Mejor protección que el básico. El imprimante epóxico tiene mayor adherencia y resistencia."
         },
         {
           "nivel": "alto desempeño",
           "descripcion": "Interseal 670HS + acabado epóxico o poliuretano. Máxima durabilidad.",
-          "productos": ["Interseal 670HS (imprimante)", "Pintucoat (acabado mate interior)", "Intergard 740 (acabado brillante)"],
+          "productos": [
+            "Interseal 670HS (imprimante)",
+            "Pintucoat (acabado mate interior)",
+            "Intergard 740 (acabado brillante)"
+          ],
           "nota": "Para estructuras que requieren máxima durabilidad. Pintucoat es mate, Intergard 740 es brillante."
         }
       ]
@@ -325,19 +376,28 @@
         {
           "nivel": "básico exterior",
           "descripcion": "Anticorrosivo alquídico + Pintulux. Económico pero menor durabilidad.",
-          "productos": ["Corrotec Premium (anticorrosivo)", "Pintulux 3 en 1 o Pintulux Máxima Protección (acabado con protección UV)"],
+          "productos": [
+            "Corrotec Premium (anticorrosivo)",
+            "Pintulux 3 en 1 o Pintulux Máxima Protección (acabado con protección UV)"
+          ],
           "nota": "Funciona para mantenimiento convencional. Retocar cada 2-3 años según exposición."
         },
         {
           "nivel": "intermedio exterior",
           "descripcion": "Primer epóxico + acabado alquídico/acrílico resistente a UV.",
-          "productos": ["Primer Epóxico 10046 o 10050", "Pintulux 3 en 1 o Pintulux Máxima Protección"],
+          "productos": [
+            "Primer Epóxico 10046 o 10050",
+            "Pintulux 3 en 1 o Pintulux Máxima Protección"
+          ],
           "nota": "Más durable que el básico. El imprimante epóxico protege mejor contra corrosión."
         },
         {
           "nivel": "alto desempeño exterior",
           "descripcion": "Interseal 670HS + Interthane 990 (poliuretano). Máxima protección UV y clima.",
-          "productos": ["Interseal 670HS (imprimante epóxico)", "Interthane 990 + Catalizador PHA046 (acabado poliuretano)"],
+          "productos": [
+            "Interseal 670HS (imprimante epóxico)",
+            "Interthane 990 + Catalizador PHA046 (acabado poliuretano)"
+          ],
           "nota": "Sistema industrial de máxima durabilidad. Interthane 990 resiste UV y clima. Es la inversión más alta pero la más durable."
         }
       ],
@@ -390,7 +450,11 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Desengrase con solvente o detergente industrial. Luego lijado con disco flap o grata para crear perfil de agarre.",
-          "herramientas": ["Solvente / detergente industrial", "Disco flap", "Lija Abracol"],
+          "herramientas": [
+            "Solvente / detergente industrial",
+            "Disco flap",
+            "Lija Abracol"
+          ],
           "nota_tecnica": "El acero nuevo viene con grasa de fábrica que impide adherencia. SIEMPRE desengrasar antes. Si es galvanizado → Wash Primer primero."
         },
         {
@@ -438,13 +502,19 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Limpiar el piso de polvo y grasa en las zonas a demarcar.",
-          "herramientas": ["Escoba", "Detergente"]
+          "herramientas": [
+            "Escoba",
+            "Detergente"
+          ]
         },
         {
           "paso": 2,
           "accion": "APLICACIÓN: Pintura de Tráfico código 5891322 (amarilla). Aplicar con rodillo fino o pistola airless.",
           "producto": "Pintura de Tráfico Amarilla (ref 5891322)",
-          "herramientas": ["Rodillo fino", "Cinta de enmascarar para líneas rectas"],
+          "herramientas": [
+            "Rodillo fino",
+            "Cinta de enmascarar para líneas rectas"
+          ],
           "nota_tecnica": "PROHIBIDO cotizar 'Pintucoat' para demarcar parqueaderos. La pintura de tráfico es obligatoriamente el código 5891322. Es tecnología acrílica — no epóxica."
         },
         {

@@ -38,21 +38,30 @@
         {
           "paso": 1,
           "accion": "MASILLA Y JUNTAS: Verificar que todas las juntas tengan cinta y masilla de acabado. Lijar juntas con grano 150-220 hasta quedar lisas y a nivel.",
-          "herramientas": ["Lija Abracol grano 150-220", "Espátula"],
+          "herramientas": [
+            "Lija Abracol grano 150-220",
+            "Espátula"
+          ],
           "nota_tecnica": "Las juntas de drywall son las zonas más críticas. Si no se preparan bien, se notan como líneas oscuras después de pintar."
         },
         {
           "paso": 2,
           "accion": "IMPRIMANTE/SELLADOR OBLIGATORIO: Aplicar Sellador para Drywall Pintuco o Viniltex Una Mano como primera capa selladora.",
           "producto": "Sellador Drywall Pintuco / Viniltex Una Mano",
-          "herramientas": ["Rodillo de felpa media", "Brocha para bordes"],
+          "herramientas": [
+            "Rodillo de felpa media",
+            "Brocha para bordes"
+          ],
           "nota_tecnica": "El imprimante sella la alta porosidad del drywall y la masilla de juntas, logrando absorción uniforme. SIN imprimante, la pintura final se ve dispareja: las juntas (masilla) absorben diferente al cartón yeso. Viniltex Una Mano es alternativa válida como sellador + acabado en una sola capa para zonas de bajo compromiso estético."
         },
         {
           "paso": 3,
           "accion": "ACABADO: 2 manos de Viniltex Advanced (o vinilo según presupuesto).",
           "producto": "Viniltex Advanced / Intervinil / Pinturama",
-          "herramientas": ["Rodillo de felpa media", "Brocha Goya para cortes"],
+          "herramientas": [
+            "Rodillo de felpa media",
+            "Brocha Goya para cortes"
+          ],
           "nota_tecnica": "Para cielo raso alto sin contacto directo: Pinturama es aceptable. Para muros visibles: Viniltex Advanced."
         }
       ]
@@ -112,14 +121,20 @@
         {
           "paso": 2,
           "accion": "LIMPIEZA DE EFLORESCENCIAS: Si hay manchas blancas (salitre), lavar con agua y cepillo. NO usar ácido muriático — daña la superficie y dificulta adherencia.",
-          "herramientas": ["Cepillo de fibra", "Agua limpia"],
+          "herramientas": [
+            "Cepillo de fibra",
+            "Agua limpia"
+          ],
           "nota_tecnica": "Las eflorescencias son sales que migran desde el interior del concreto. Se limpian con agua. Si reaparecen, indica que hay humedad activa y se debe resolver primero (ver guías GS-HUM)."
         },
         {
           "paso": 3,
           "accion": "SELLADOR/IMPRIMANTE: Aplicar Sellomax o imprimante acrílico como barrera entre la alcalinidad residual del sustrato y la pintura final.",
           "producto": "Sellomax / Imprimante Pintuco",
-          "herramientas": ["Rodillo", "Brocha"],
+          "herramientas": [
+            "Rodillo",
+            "Brocha"
+          ],
           "nota_tecnica": "El Sellomax sella la porosidad y reduce la migración de alcalinidad hacia la pintura. Sobre bloques de concreto sin pañetar, Sellomax es OBLIGATORIO."
         },
         {
@@ -127,12 +142,14 @@
           "accion": "ESTUCO (si se requiere acabado liso): Estuco Plástico (interior) o Estuco Profesional Exterior (exterior).",
           "producto": "Estuco Plástico / Estuco Profesional Exterior",
           "condicional": true,
-          "condicion": "Si se quiere acabado liso"
+          "condicion": "Si se quiere acabado liso",
+          "nota_tecnica": ". Buscar en inventario: 'estuco prof ext blanco'. NOTA: El Estuco Acrílico Multiuso (presentación 1kg) es para retoques pequeños — para sistemas completos usar siempre Estuco Profesional Exterior en presentación galón."
         },
         {
           "paso": 5,
           "accion": "ACABADO: Pintura según ubicación (Viniltex interior, Koraza exterior).",
-          "producto": "Viniltex Advanced (interior) / Koraza (exterior)"
+          "producto": "Viniltex Advanced (interior) / Koraza (exterior)",
+          "nota_tecnica": ". Para máxima duración exterior (10 años), existe Koraza Doble Vida."
         }
       ]
     },
@@ -208,13 +225,21 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: La superficie debe estar sana, seca, sin polvo ni pintura suelta. Lijar si hay pintura vieja. Aplicar Sellomax si la superficie es muy porosa o alcalina.",
-          "herramientas": ["Espátula", "Lija Abracol", "Sellomax (si requiere)"],
+          "herramientas": [
+            "Espátula",
+            "Lija Abracol",
+            "Sellomax (si requiere)"
+          ],
           "nota_tecnica": "Las texturas tienen mayor cuerpo que la pintura — cubren imperfecciones menores. Pero grietas grandes deben sellarse antes con Pintuco Flex."
         },
         {
           "paso": 2,
           "accion": "APLICACIÓN: Aplicar la textura con llana, rodillo de textura o pistola de proyección (según efecto). El espesor de la capa determina el consumo.",
-          "herramientas": ["Llana metálica o plástica", "Rodillo de textura", "Pistola de proyección (para grandes áreas)"],
+          "herramientas": [
+            "Llana metálica o plástica",
+            "Rodillo de textura",
+            "Pistola de proyección (para grandes áreas)"
+          ],
           "nota_tecnica": "La textura se aplica en una sola capa gruesa, NO como pintura convencional en múltiples manos finas. El acabado final depende de la técnica: llana = rasgueado; rodillo = uniforme; pistola = proyectado."
         }
       ],
@@ -267,16 +292,32 @@
       "opcion_a_cambiar_color": {
         "descripcion": "Si la textura está firme y solo quiere cambiar el color:",
         "pasos": [
-          {"paso": 1, "accion": "Lavar la superficie con agua y detergente. Dejar secar."},
-          {"paso": 2, "accion": "Aplicar 2 manos de Koraza (exterior) o Viniltex Advanced (interior) directamente sobre la textura.", "nota_tecnica": "La pintura se aplica sobre la textura existente como superficie de agarre — la textura da un efecto visual interesante incluso con pintura lisa encima."}
+          {
+            "paso": 1,
+            "accion": "Lavar la superficie con agua y detergente. Dejar secar."
+          },
+          {
+            "paso": 2,
+            "accion": "Aplicar 2 manos de Koraza (exterior) o Viniltex Advanced (interior) directamente sobre la textura.",
+            "nota_tecnica": "La pintura se aplica sobre la textura existente como superficie de agarre — la textura da un efecto visual interesante incluso con pintura lisa encima."
+          }
         ]
       },
       "opcion_b_reparar_zona": {
         "descripcion": "Si hay zonas dañadas/desprendidas:",
         "pasos": [
-          {"paso": 1, "accion": "Raspar textura suelta hasta llegar a base firme."},
-          {"paso": 2, "accion": "Resanar con la misma textura (Esgrafiado/Graniacryl según lo existente). Emparejar con el patrón existente."},
-          {"paso": 3, "accion": "Pintar toda la superficie para uniformar color."}
+          {
+            "paso": 1,
+            "accion": "Raspar textura suelta hasta llegar a base firme."
+          },
+          {
+            "paso": 2,
+            "accion": "Resanar con la misma textura (Esgrafiado/Graniacryl según lo existente). Emparejar con el patrón existente."
+          },
+          {
+            "paso": 3,
+            "accion": "Pintar toda la superficie para uniformar color."
+          }
         ]
       }
     }
@@ -317,11 +358,26 @@
         "descripcion": "Sistema Pintuco Fill — membrana acrílica líquida con tela de refuerzo",
         "uso": "Techos planos de concreto, terrazas. El más común para residencial.",
         "pasos": [
-          {"paso": 1, "accion": "Limpiar la superficie. Sellar grietas con Pintuco Flex."},
-          {"paso": 2, "accion": "Aplicar primera mano de Pintuco Fill."},
-          {"paso": 3, "accion": "Embeber tela de refuerzo en la primera mano mientras está húmeda."},
-          {"paso": 4, "accion": "Aplicar segunda mano de Pintuco Fill sobre la tela curada."},
-          {"paso": 5, "accion": "Opcional: tercera mano para mayor protección."}
+          {
+            "paso": 1,
+            "accion": "Limpiar la superficie. Sellar grietas con Pintuco Flex."
+          },
+          {
+            "paso": 2,
+            "accion": "Aplicar primera mano de Pintuco Fill."
+          },
+          {
+            "paso": 3,
+            "accion": "Embeber tela de refuerzo en la primera mano mientras está húmeda."
+          },
+          {
+            "paso": 4,
+            "accion": "Aplicar segunda mano de Pintuco Fill sobre la tela curada."
+          },
+          {
+            "paso": 5,
+            "accion": "Opcional: tercera mano para mayor protección."
+          }
         ],
         "nota_tecnica": "Pintuco Fill forma una membrana elástica continua. La tela de refuerzo da resistencia mecánica. PROHIBIDO usar Koraza o Viniltex como impermeabilizante — no son membranas."
       },

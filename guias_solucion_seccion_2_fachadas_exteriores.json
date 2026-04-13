@@ -39,15 +39,23 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Raspar pintura suelta con espátula. Lijar con Lija Abracol grano 80-100 para crear perfil de agarre. Limpiar polvo.",
-          "herramientas": ["Espátula", "Lija Abracol grano 80-100", "Brocha Goya Profesional", "Escoba"],
+          "herramientas": [
+            "Espátula",
+            "Lija Abracol grano 80-100",
+            "Brocha Goya Profesional",
+            "Escoba"
+          ],
           "nota_tecnica": "Si la pintura actual está firme, solo lijar suavemente para crear adherencia. Si se descascara, raspar hasta llegar a base sana."
         },
         {
           "paso": 2,
           "accion": "NIVELACIÓN (si se requiere): Aplicar Estuco Profesional Exterior para nivelar imperfecciones, huecos o zonas donde se raspó.",
           "producto": "Estuco Profesional Exterior",
-          "herramientas": ["Llana", "Espátula"],
-          "nota_tecnica": "Usar SIEMPRE Estuco Profesional Exterior — nunca estuco interior tradicional. Si hay grietas, aplicar Pintuco Flex como masilla flexible antes del estuco. Referencia estuco exterior: PQ ESTUCO PROF EXT BLAN 27060.",
+          "herramientas": [
+            "Llana",
+            "Espátula"
+          ],
+          "nota_tecnica": "Usar SIEMPRE Estuco Profesional Exterior — nunca estuco interior tradicional. Si hay grietas, aplicar Pintuco Flex como masilla flexible antes del estuco. Referencia estuco exterior: PQ ESTUCO PROF EXT BLAN 27060. Buscar en inventario: 'estuco prof ext blanco'. NOTA: El Estuco Acrílico Multiuso (presentación 1kg) es para retoques pequeños — para sistemas completos usar siempre Estuco Profesional Exterior en presentación galón.",
           "condicional": true,
           "condicion": "Solo si la superficie tiene imperfecciones o zonas raspadas"
         },
@@ -55,17 +63,28 @@
           "paso": 3,
           "accion": "ACABADO EXTERIOR: Aplicar 2 manos del acabado seleccionado según presupuesto del cliente.",
           "producto": "Koraza / Viniltex Advanced / Intervinil / Pinturama",
-          "herramientas": ["Rodillo de felpa (pelo largo)", "Brocha Goya Profesional para cortes y bordes"],
+          "herramientas": [
+            "Rodillo de felpa (pelo largo)",
+            "Brocha Goya Profesional para cortes y bordes"
+          ],
           "nota_tecnica": "Koraza es el PREMIUM: impermeabilizante elastomérico, máxima protección. Para presupuesto intermedio: Viniltex Advanced. Para económico: Intervinil o Pinturama (menor durabilidad)."
         }
       ],
       "jerarquia_acabados_fachada": [
         {
+          "producto": "Koraza Doble Vida",
+          "nivel": "especialidad máxima duración",
+          "descripcion": "Koraza con tecnología Doble Vida — 10 años de protección garantizada",
+          "rendimiento": "20-25 m²/galón",
+          "argumento_cliente": "Koraza Doble Vida tiene tecnología de doble protección que garantiza 10 años sin repintar. La máxima inversión para fachadas con alta exposición.",
+          "busqueda_inventario": "koraza doble vida blanco galon"
+        },
+        {
           "producto": "Koraza",
           "nivel": "premium",
           "descripcion": "Impermeabilizante elastomérico. Máxima protección contra sol y lluvia. Sella microfisuras.",
           "rendimiento": "20-25 m²/galón",
-          "argumento_cliente": "Koraza forma una membrana elástica que sella microfisuras y protege contra lluvia directa y rayos UV. Es la mejor inversión para fachadas expuestas — dura 10-12 años sin repintado en condiciones normales.",
+          "argumento_cliente": "Koraza es una pintura impermeabilizante elastomérica que sella microfisuras y protege contra lluvia directa y rayos UV. Gran inversión para fachadas expuestas. Dura 5 años en condiciones normales.",
           "busqueda_inventario": "koraza blanco galon"
         },
         {
@@ -73,15 +92,15 @@
           "nivel": "tipo 1",
           "descripcion": "Exterior exposición moderada. Lavable, buena durabilidad.",
           "rendimiento": "20-25 m²/galón",
-          "argumento_cliente": "Viniltex Advanced funciona en exteriores con exposición moderada (fachada protegida, sin lluvia directa). Más económico que Koraza pero sin protección elastomérica. Dura 5-7 años en fachada.",
+          "argumento_cliente": "Viniltex Advanced es una pintura premium de alta lavabilidad, ideal para fachadas con exposición moderada (protegidas, sin lluvia directa constante). Diferente tecnología que Koraza — excelente acabado sin protección elastomérica. Dura 5-7 años en fachada.",
           "busqueda_inventario": "viniltex advanced blanco galon"
         },
         {
           "producto": "Intervinil",
           "nivel": "tipo 2",
-          "descripcion": "Exterior económico. Aceptable para zonas protegidas.",
+          "descripcion": "Opción decorativa para zonas protegidas.",
           "rendimiento": "18-22 m²/galón",
-          "argumento_cliente": "Intervinil es la opción económica para exteriores. Menor resistencia a intemperie — si la fachada recibe sol y lluvia directa, necesitará repintado cada 3-4 años.",
+          "argumento_cliente": "Intervinil tiene buena relación precio/calidad para exteriores protegidos. No es elastomérica. Si la fachada recibe sol y lluvia directa, considere Koraza. Repintado cada 3-4 años.",
           "busqueda_inventario": "intervinil blanco galon"
         },
         {
@@ -93,12 +112,24 @@
           "busqueda_inventario": "pinturama blanco galon"
         }
       ],
-      "regla_opciones": "SIEMPRE presenta las opciones como SISTEMAS COMPLETOS (base + acabado + herramientas) con OPCIÓN A (Premium con Koraza) y OPCIÓN B (Económica). Argumenta POR QUÉ el premium es mejor inversión a largo plazo.",
+      "regla_opciones": "SIEMPRE presenta las opciones como SISTEMAS COMPLETOS (base + acabado + herramientas). Presenta TODAS las opciones de mayor a menor prestación: Koraza Doble Vida → Koraza → Viniltex Advanced → Intervinil → Pinturama. Argumenta las diferencias técnicas (elastomérica, lavabilidad, duración). NO rotules marcas top como 'económicas'.",
       "accesorios_siempre_incluir": [
-        {"producto": "Estuco Profesional Exterior", "uso": "Nivelación de imperfecciones"},
-        {"producto": "Pintuco Flex", "uso": "Masilla flexible para grietas (si hay grietas visibles)"},
-        {"producto": "Lija Abracol grano 80-100", "uso": "Preparación de superficie"},
-        {"producto": "Brocha Goya Profesional", "uso": "Aplicación en cortes y bordes"}
+        {
+          "producto": "Estuco Profesional Exterior",
+          "uso": "Nivelación de imperfecciones"
+        },
+        {
+          "producto": "Pintuco Flex",
+          "uso": "Masilla flexible para grietas (si hay grietas visibles)"
+        },
+        {
+          "producto": "Lija Abracol grano 80-100",
+          "uso": "Preparación de superficie"
+        },
+        {
+          "producto": "Brocha Goya Profesional",
+          "uso": "Aplicación en cortes y bordes"
+        }
       ]
     },
     "productos_prohibidos": [
@@ -156,14 +187,23 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN HÚMEDA OBLIGATORIA: Lavar con hidrolavadora + jabón + hipoclorito diluido y cepillo de cerdas duras. NUNCA lijar en seco ni rasquetear.",
-          "herramientas": ["Hidrolavadora", "Cepillo de cerdas duras", "Escoba", "Jabón", "Hipoclorito de sodio"],
+          "herramientas": [
+            "Hidrolavadora",
+            "Cepillo de cerdas duras",
+            "Escoba",
+            "Jabón",
+            "Hipoclorito de sodio"
+          ],
           "nota_tecnica": "ALERTA DE SEGURIDAD: El fibrocemento puede contener asbesto. La preparación SIEMPRE debe ser HÚMEDA para evitar generar polvo. Está PROHIBIDO lijar en seco, rasquetear o hacer cualquier preparación mecánica que genere polvo. Solo retirar material flojo sin generar partículas."
         },
         {
           "paso": 2,
           "accion": "SELLADOR (si el eternit ya está pintado o envejecido): Aplicar Sellomax como imprimante/sellador antes del acabado.",
           "producto": "Sellomax",
-          "herramientas": ["Rodillo", "Brocha"],
+          "herramientas": [
+            "Rodillo",
+            "Brocha"
+          ],
           "nota_tecnica": "Sellomax sella la porosidad del eternit y mejora la adherencia del acabado. En eternit envejecido o repintado es obligatorio.",
           "condicional": true,
           "condicion": "Si el eternit ya está pintado o tiene más de 5 años"
@@ -172,9 +212,12 @@
           "paso": 3,
           "accion": "ACABADO EXTERIOR: Aplicar Koraza (2 manos) como acabado exterior impermeabilizante.",
           "producto": "Koraza",
-          "herramientas": ["Rodillo de felpa", "Brocha Goya Profesional"],
+          "herramientas": [
+            "Rodillo de felpa",
+            "Brocha Goya Profesional"
+          ],
           "rendimiento": "20-25 m² por galón",
-          "nota_tecnica": "Koraza es el acabado indicado para fibrocemento exterior por su capacidad impermeabilizante y elastomérica."
+          "nota_tecnica": "Koraza es el acabado indicado para fibrocemento exterior por su capacidad impermeabilizante y elastomérica. Para máxima duración (10 años), existe Koraza Doble Vida como especialidad superior."
         }
       ]
     },
@@ -227,14 +270,21 @@
           "paso": 1,
           "accion": "LIMPIEZA: Aplicar Construcleaner Limpiador Desengrasante para limpiar el ladrillo de suciedad, grasa y eflorescencias.",
           "producto": "Construcleaner Limpiador Desengrasante",
-          "herramientas": ["Cepillo", "Brocha", "Balde"],
+          "herramientas": [
+            "Cepillo",
+            "Brocha",
+            "Balde"
+          ],
           "nota_tecnica": "NO usar ácido muriático para limpiar ladrillo. Daña la superficie y deja residuos que afectan el hidrofugante."
         },
         {
           "paso": 2,
           "accion": "HIDROFUGANTE: Aplicar Siliconite 7 sobre el ladrillo limpio y seco. Es transparente — no cambia la apariencia.",
           "producto": "Siliconite 7",
-          "herramientas": ["Rodillo según absorción", "Brocha"],
+          "herramientas": [
+            "Rodillo según absorción",
+            "Brocha"
+          ],
           "nota_tecnica": "Siliconite 7 es hidrofugante transparente a base de silicona/silano. Repele el agua sin tapar el ladrillo. No forma película visible. Aplicar cuando el ladrillo esté completamente seco."
         }
       ]
@@ -289,14 +339,20 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Lijar suavemente con Lija Abracol grano 150-220 para crear adherencia. Limpiar polvo.",
-          "herramientas": ["Lija Abracol grano 150-220", "Trapo húmedo"],
+          "herramientas": [
+            "Lija Abracol grano 150-220",
+            "Trapo húmedo"
+          ],
           "nota_tecnica": "Si la pintura actual está firme, solo lijar suave. Si se descascara, raspar con espátula hasta base sana y estucar con Estuco Plástico para nivelar."
         },
         {
           "paso": 2,
           "accion": "ESTUCADO (si hay imperfecciones): Aplicar Estuco Plástico para nivelar huecos e imperfecciones.",
           "producto": "Estuco Plástico",
-          "herramientas": ["Espátula", "Llana"],
+          "herramientas": [
+            "Espátula",
+            "Llana"
+          ],
           "condicional": true,
           "condicion": "Solo si hay huecos, grietas o zonas raspadas"
         },
@@ -304,11 +360,22 @@
           "paso": 3,
           "accion": "ACABADO: Aplicar 2 manos del vinilo seleccionado.",
           "producto": "Viniltex Advanced / Intervinil / Pinturama",
-          "herramientas": ["Rodillo", "Brocha para cortes"],
-          "nota_tecnica": "Para interiores húmedos (baño, cocina): usar Viniltex Baños y Cocinas. Para interiores normales: Viniltex Advanced (premium), Intervinil (intermedio), Pinturama (económico). Color blanco por defecto — preguntar color al cliente."
+          "herramientas": [
+            "Rodillo",
+            "Brocha para cortes"
+          ],
+          "nota_tecnica": "Para interiores húmedos (baño, cocina): usar Viniltex Baños y Cocinas. Para interiores normales: Viniltex Ultralavable (antimanchas), Viniltex Advanced (máxima lavabilidad), Intervinil (buena calidad/precio), Pinturama (presupuesto ajustado). Color blanco por defecto — preguntar color al cliente."
         }
       ],
       "jerarquia_acabados_interior": [
+        {
+          "producto": "Viniltex Ultralavable",
+          "nivel": "especialidad antimanchas",
+          "descripcion": "Repele líquidos, máxima resistencia a manchas, antibacterial 99%",
+          "rendimiento": "20-25 m²/galón",
+          "argumento_cliente": "Viniltex Ultralavable repele líquidos y evita que las manchas penetren. Tecnología hidrofóbica superior. Ideal para interiores de alto tráfico o familias con niños. Dura 10+ años.",
+          "busqueda_inventario": "viniltex ultralav blanco galon"
+        },
         {
           "producto": "Viniltex Advanced",
           "nivel": "premium",
@@ -342,7 +409,7 @@
           "busqueda_inventario": "pinturama blanco galon"
         }
       ],
-      "regla_opciones": "SIEMPRE presenta las opciones como SISTEMAS COMPLETOS (base + acabado + herramientas) con OPCIÓN A (Premium) y OPCIÓN B (Económica). Argumenta POR QUÉ el premium es mejor inversión."
+      "regla_opciones": "SIEMPRE presenta las opciones como SISTEMAS COMPLETOS. Presenta de mayor a menor prestación: Ultralavable → Advanced → Baños y Cocinas (para zonas húmedas) → Intervinil → Pinturama. NO rotules marcas top como 'económicas'."
     },
     "productos_prohibidos": [
       {
@@ -392,13 +459,19 @@
         {
           "paso": 2,
           "accion": "PREPARACIÓN: Lijar y limpiar la superficie.",
-          "herramientas": ["Lija Abracol grano 150", "Espátula"]
+          "herramientas": [
+            "Lija Abracol grano 150",
+            "Espátula"
+          ]
         },
         {
           "paso": 3,
           "accion": "ACABADO: Aplicar 2 manos de Viniltex Baños y Cocinas.",
           "producto": "Viniltex Baños y Cocinas",
-          "herramientas": ["Rodillo", "Brocha para cortes"],
+          "herramientas": [
+            "Rodillo",
+            "Brocha para cortes"
+          ],
           "nota_tecnica": "Viniltex Baños y Cocinas tiene aditivo antihongos y es altamente lavable. Es el producto específico para estas zonas. Si hay humedad ESTRUCTURAL (capilaridad), primero resolver con sistema Aquablock Ultra (GS-HUM-001)."
         }
       ]
@@ -442,27 +515,40 @@
         {
           "paso": 1,
           "accion": "PREPARACIÓN: Raspar pintura suelta, abrir grietas en V con espátula o cincel para que la masilla penetre.",
-          "herramientas": ["Espátula", "Cincel fino", "Lija Abracol grano 80-100"]
+          "herramientas": [
+            "Espátula",
+            "Cincel fino",
+            "Lija Abracol grano 80-100"
+          ]
         },
         {
           "paso": 2,
           "accion": "SELLADO DE GRIETAS: Aplicar Pintuco Flex como masilla flexible en las grietas. Dejar secar según ficha técnica.",
           "producto": "Pintuco Flex",
-          "herramientas": ["Espátula", "Llana"],
+          "herramientas": [
+            "Espátula",
+            "Llana"
+          ],
           "nota_tecnica": "Pintuco Flex es una masilla flexible que absorbe el movimiento de la estructura. Para grietas muy anchas, puede requerir tela de refuerzo."
         },
         {
           "paso": 3,
           "accion": "NIVELACIÓN: Estuco Profesional Exterior para emparejar la superficie.",
           "producto": "Estuco Profesional Exterior",
-          "herramientas": ["Llana", "Espátula"],
-          "nota_tecnica": "Siempre Estuco Profesional Exterior, nunca estuco interior."
+          "herramientas": [
+            "Llana",
+            "Espátula"
+          ],
+          "nota_tecnica": "Siempre Estuco Profesional Exterior, nunca estuco interior. Buscar en inventario: 'estuco prof ext blanco'. NOTA: El Estuco Acrílico Multiuso (presentación 1kg) es para retoques pequeños — para sistemas completos usar siempre Estuco Profesional Exterior en presentación galón."
         },
         {
           "paso": 4,
           "accion": "ACABADO: 2 manos de Koraza como acabado impermeabilizante elastomérico.",
           "producto": "Koraza",
-          "herramientas": ["Rodillo de felpa", "Brocha Goya Profesional"],
+          "herramientas": [
+            "Rodillo de felpa",
+            "Brocha Goya Profesional"
+          ],
           "nota_tecnica": "Koraza es la mejor opción para fachadas con historial de grietas porque su película elastomérica sella microfisuras."
         }
       ]
@@ -509,13 +595,19 @@
         {
           "paso": 2,
           "accion": "PREPARACIÓN: Lijar suavemente el estuco con Lija Abracol grano 150-220 para quitar rebabas y crear perfil. Limpiar polvo con trapo húmedo.",
-          "herramientas": ["Lija Abracol grano 150-220", "Trapo húmedo"]
+          "herramientas": [
+            "Lija Abracol grano 150-220",
+            "Trapo húmedo"
+          ]
         },
         {
           "paso": 3,
           "accion": "ACABADO: Aplicar 2-3 manos del vinilo o pintura seleccionada.",
           "producto": "Según ubicación: Koraza (fachada) / Viniltex Advanced (interior)",
-          "herramientas": ["Rodillo", "Brocha Goya Profesional"],
+          "herramientas": [
+            "Rodillo",
+            "Brocha Goya Profesional"
+          ],
           "nota_tecnica": "En primera mano sobre estuco nuevo, la pintura absorbe más de lo normal. Se puede requerir una mano adicional para lograr cubrición uniforme."
         }
       ]
