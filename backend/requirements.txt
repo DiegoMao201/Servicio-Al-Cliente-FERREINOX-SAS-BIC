@@ -10,6 +10,7 @@ pandas
 openpyxl
 xlrd
 reportlab
+fpdf2
 pymupdf
 pgvector
 python-multipart
