@@ -543,17 +543,21 @@ def generate_agent_reply_v3(
     # ══════════════════════════════════════════════════════════════════════
     # LLM CALL + TOOL LOOP
     # ══════════════════════════════════════════════════════════════════════
-    _tools_for_call = None if _diagnostic_blocked else AGENT_TOOLS_V3
-    _tool_choice_for_call = "none" if _diagnostic_blocked else "auto"
+    _llm_extra_kwargs: dict = {}
+    if _diagnostic_blocked:
+        # Omit tools AND tool_choice entirely — OpenAI rejects tool_choice without tools
+        pass
+    else:
+        _llm_extra_kwargs["tools"] = AGENT_TOOLS_V3
+        _llm_extra_kwargs["tool_choice"] = "auto"
+        _llm_extra_kwargs["parallel_tool_calls"] = True
 
     t_start = time.time()
     response = client.chat.completions.create(
         model=m.get_openai_model(),
         messages=messages,
-        tools=_tools_for_call,
-        tool_choice=_tool_choice_for_call,
-        parallel_tool_calls=True,
         temperature=0.2,
+        **_llm_extra_kwargs,
     )
     t_first = time.time()
     logger.info("V3 LLM initial: %dms", int((t_first - t_start) * 1000))
