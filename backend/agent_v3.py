@@ -438,6 +438,24 @@ def generate_agent_reply_v3(
     messages.append({"role": "user", "content": user_message})
 
     initial_diagnostic = extract_diagnostic_data(user_message, recent_messages)
+    _location_optional_surfaces = {"fachada", "exterior", "madera exterior", "piso deportivo", "interior húmedo"}
+    _has_actionable_diagnostic = bool(
+        initial_diagnostic.get("surface")
+        and initial_diagnostic.get("condition")
+        and (
+            initial_diagnostic.get("interior_exterior")
+            or initial_diagnostic.get("surface") in _location_optional_surfaces
+        )
+    )
+    effective_advisory_flow = initial_intent == "asesoria" or _has_actionable_diagnostic
+    if effective_advisory_flow and initial_intent != "asesoria":
+        logger.info(
+            "V3 advisory promotion: intent=%s surface=%s condition=%s location=%s",
+            initial_intent,
+            initial_diagnostic.get("surface"),
+            initial_diagnostic.get("condition"),
+            initial_diagnostic.get("interior_exterior"),
+        )
     normalized_user_message = m.normalize_text_value(user_message)
     tool_calls_made = []
     _rag_cache: dict[str, str] = {}
@@ -462,12 +480,12 @@ def generate_agent_reply_v3(
     # When the diagnostic is incomplete for advisory intent, REMOVE tools
     # so the LLM physically cannot skip the diagnostic phase.
     # ══════════════════════════════════════════════════════════════════════
-    _diagnostic_blocked = is_diagnostic_incomplete(initial_intent, initial_diagnostic)
+    _diagnostic_blocked = is_diagnostic_incomplete("asesoria" if effective_advisory_flow else initial_intent, initial_diagnostic)
     if _diagnostic_blocked:
         logger.info("V3 BLOQUEO ACTIVO: diagnostic incomplete — tools stripped, skipping preload")
 
     if not _diagnostic_blocked and _should_preload_technical_guidance(
-        initial_intent,
+        "asesoria" if effective_advisory_flow else initial_intent,
         initial_diagnostic,
         user_message,
         recent_messages,
@@ -520,7 +538,7 @@ def generate_agent_reply_v3(
     def _needs_forced_technical_retry() -> bool:
         if tool_calls_made or assistant_message.tool_calls:
             return False
-        if initial_intent != "asesoria":
+        if not effective_advisory_flow:
             return False
         high_risk_tokens = [
             "humedad", "salitre", "capilaridad", "eternit", "fibrocemento", "asbesto", "ladrillo",
@@ -556,7 +574,7 @@ def generate_agent_reply_v3(
         # For advisory with complete diagnosis, FORCE at least one tool call
         # so the LLM cannot skip RAG and hallucinate product recommendations.
         _advisory_complete = (
-            initial_intent == "asesoria"
+            effective_advisory_flow
             and not _diagnostic_blocked
             and initial_diagnostic.get("surface")
             and initial_diagnostic.get("condition")
@@ -1472,6 +1490,16 @@ def _guardia_universal_producto(
     if not product_mentions:
         return assistant_message  # No product names → nothing to validate
 
+    def _msg_role(msg):
+        if isinstance(msg, dict):
+            return msg.get("role")
+        return getattr(msg, "role", None)
+
+    def _msg_content(msg):
+        if isinstance(msg, dict):
+            return msg.get("content") or ""
+        return getattr(msg, "content", "") or ""
+
     # ── 2. Collect ALL allowed source text ───────────────────────────────
     source_texts = []
     # Tool results
@@ -1479,8 +1507,8 @@ def _guardia_universal_producto(
         source_texts.append((tc.get("result") or "").lower())
     # System messages (turn context, corrections, injected directives)
     for msg in messages:
-        if msg.get("role") == "system":
-            content = msg.get("content") or ""
+        if _msg_role(msg) == "system":
+            content = _msg_content(msg)
             if isinstance(content, str):
                 source_texts.append(content.lower())
     all_source_text = " ".join(source_texts)
@@ -1521,8 +1549,9 @@ def _guardia_universal_producto(
 
     _user_msg = ""
     for msg in reversed(messages):
-        if msg.get("role") == "user":
-            _user_msg = (msg.get("content") or "") if isinstance(msg.get("content"), str) else ""
+        if _msg_role(msg) == "user":
+            content = _msg_content(msg)
+            _user_msg = content if isinstance(content, str) else ""
             break
 
     _diag = extract_diagnostic_data(_user_msg, [])

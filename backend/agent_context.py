@@ -675,6 +675,18 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
     """
     msg = (user_message or "").strip()
     msg_lower = msg.lower()
+    diagnostic = extract_diagnostic_data(user_message, recent_messages)
+    diagnostic_surface = diagnostic.get("surface")
+    diagnostic_condition = diagnostic.get("condition")
+    diagnostic_location = diagnostic.get("interior_exterior")
+    diagnostic_surface_without_location = {
+        "fachada", "exterior", "madera exterior", "piso deportivo", "interior húmedo"
+    }
+    has_structured_diagnostic = bool(
+        diagnostic_surface
+        and diagnostic_condition
+        and (diagnostic_location or diagnostic_surface in diagnostic_surface_without_location)
+    )
 
     # 1. Greeting
     if _GREETING_PATTERNS.match(msg):
@@ -751,6 +763,12 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
     if has_specific and has_price_request:
         return "pedido_directo"
 
+    # 10.5 Structured follow-up diagnosis
+    # If Python can already infer a usable technical case from the current turn + history,
+    # force advisory intent even when the wording is brief or follow-up style.
+    if has_structured_diagnostic:
+        return "asesoria"
+
     # 11. Advisory (describes surface/need without naming specific product)
     has_advisory = any(s in msg_lower for s in _ADVISORY_SIGNALS)
     if (has_advisory or has_surface) and not has_specific:
@@ -784,6 +802,19 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
             texts.append((msg.get("contenido") or "").lower())
     texts.append((user_message or "").lower())
     combined = " ".join(texts)
+    combined_surface = combined
+    combined_without_negated_exterior = re.sub(
+        r"\bno\s+(?:es|era|viene|venia|venía|parece|pareciera)\b[^.\n]{0,80}\b(?:fachada|exterior|lluvia)\b",
+        " ",
+        combined,
+        flags=re.IGNORECASE,
+    )
+    for level_phrase in [
+        "primer piso", "segundo piso", "tercer piso", "cuarto piso", "quinto piso",
+        "sexto piso", "septimo piso", "séptimo piso", "octavo piso", "noveno piso",
+        "decimo piso", "décimo piso",
+    ]:
+        combined_surface = combined_surface.replace(level_phrase, " ")
 
     data = {
         "surface": None,
@@ -815,22 +846,33 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         "cielo raso": "interior", "pergola": "madera exterior",
         "pérgola": "madera exterior",
     }
+    _has_wall_context = any(kw in combined for kw in ["pared", "muro", "cielo raso"])
+    _has_humidity_context = any(kw in combined for kw in ["humedad", "salitre", "moho", "hongo", "filtra", "gotea", "descascar", "sopla", "vapor", "condensación", "condensacion"])
+    _has_exterior_wall_context = any(kw in combined for kw in ["fachada", "exterior", "intemperie", "culata"])
+
     if _forced_metal:
         data["surface"] = "metal"
+    elif _has_wall_context and _has_humidity_context and not _has_exterior_wall_context:
+        data["surface"] = "interior húmedo"
     else:
         for kw, surf in surface_map.items():
-            if kw in combined:
+            if kw in combined_surface:
                 data["surface"] = surf
                 break
 
     # Interior/Exterior
-    if any(w in combined for w in ["fachada", "terraza", "exterior", "intemperie", "azotea"]):
-        data["interior_exterior"] = "exterior"
-    elif any(w in combined for w in ["interior", "apartamento", "casa", "oficina", "habitación",
+    _has_explicit_interior = any(w in combined for w in ["interior", "apartamento", "casa", "oficina", "habitación",
                                       "habitacion", "sala", "cuarto", "dormitorio", "laboratorio",
                                       "consultorio", "clínica", "clinica", "hospital", "restaurante",
                                       "local", "almacén", "almacen", "aula", "colegio",
-                                      "baño", "ducha", "cocina"]):
+                                      "baño", "ducha", "cocina"])
+    _has_explicit_exterior = any(w in combined_without_negated_exterior for w in ["fachada", "terraza", "exterior", "intemperie", "azotea"])
+
+    if _has_explicit_interior and not _has_explicit_exterior:
+        data["interior_exterior"] = "interior"
+    elif _has_explicit_exterior:
+        data["interior_exterior"] = "exterior"
+    elif _has_explicit_interior:
         data["interior_exterior"] = "interior"
     elif any(w in combined for w in ["bodega", "fábrica", "fabrica", "planta", "nave", "taller"]):
         data["interior_exterior"] = "industrial"
@@ -861,14 +903,21 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
     elif any(w in combined for w in ["vehicular", "parqueadero", "garaje"]):
         data["traffic"] = "vehicular"
 
-    if any(w in combined for w in ["viene del piso", "sube del piso", "base del muro", "capilaridad", "jardinera", "jardiner", "presion negativa", "presión negativa", "permanente"]):
+    if any(w in combined for w in ["viene del piso", "sube del piso", "base del muro", "capilaridad", "jardinera", "jardiner", "presion negativa", "presión negativa", "permanente", "pegado al piso", "desde abajo", "arranca pegado al piso"]):
         data["humidity_source"] = "capilaridad/presión negativa"
-    elif any(w in combined for w in ["de arriba", "techo", "cubierta", "canal", "lluvia", "filtracion exterior", "filtración exterior"]):
+    elif any(w in combined_without_negated_exterior for w in ["de arriba", "techo", "cubierta", "canal", "lluvia", "filtracion exterior", "filtración exterior"]):
         data["humidity_source"] = "filtración superior/exterior"
     elif any(w in combined for w in ["temporada", "cuando llueve", "invierno", "solo en lluvia"]):
         data["humidity_source"] = "humedad por temporada"
     elif any(w in combined for w in ["vapor", "ducha", "condensación", "condensacion", "baño", "ventilación", "ventilacion"]):
         data["humidity_source"] = "condensación/vapor (baño o cocina)"
+
+    if (
+        any(kw in combined for kw in ["pared", "muro", "cielo raso"])
+        and data.get("interior_exterior") == "interior"
+        and data.get("condition") in {"humedad", "salitre", "filtración", "goteras", "moho/hongos", "pintura descascarando", "pintura soplada"}
+    ):
+        data["surface"] = "interior húmedo"
 
     # Muro interior con humedad/salitre se trata como "interior húmedo" para activar alertas duras.
     if (
