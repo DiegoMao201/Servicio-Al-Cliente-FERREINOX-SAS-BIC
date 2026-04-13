@@ -18972,6 +18972,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     ]
     arg_signatures = {_confirmation_item_signature(item) for item in items_pedido if item.get("referencia")}
     draft_signatures = {_confirmation_item_signature(item) for item in draft_fallback_items}
+    _using_authoritative_draft = False
     if draft_fallback_items and (
         not items_pedido
         or productos_sin_ref
@@ -18988,6 +18989,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         )
         items_pedido = draft_fallback_items
         productos_sin_ref = []
+        _using_authoritative_draft = True
 
     # --- Validación: el LLM DEBE mandar items_pedido con referencias válidas ---
     if not items_pedido:
@@ -19056,79 +19058,106 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
 
     confirmed_items = []
     rejected_items = []
-    for it in items_pedido:
-        reference_value = (it.get("referencia") or "").strip()
-        lookup_request = {
-            "product_codes": [reference_value] if reference_value else [],
-            "store_filters": store_filters,
-        }
-        lookup_rows = lookup_product_context(reference_value, lookup_request) if reference_value else []
-        matched_row = next(
-            (
-                row for row in lookup_rows
-                if normalize_reference_value(row.get("referencia") or row.get("codigo_articulo") or row.get("producto_codigo"))
-                == normalize_reference_value(reference_value)
-            ),
-            None,
-        )
-        if not matched_row:
-            rejected_items.append(f"{it.get('descripcion_comercial', 'Producto')} (ref: {reference_value})")
-            continue
-        # --- Cross-validate: detect when the LLM's description doesn't match the real product ---
-        real_desc = (matched_row.get("descripcion") or matched_row.get("nombre_articulo") or "").upper()
-        llm_desc = (it.get("descripcion_comercial") or "").upper()
-        # Check for color mismatch (LLM says BLANCO but ref is GRIS, etc.)
-        _color_keywords = ["BLANCO", "GRIS", "ROJO", "NEGRO", "VERDE", "AZUL", "AMARILLO", "BEIGE", "CREMA", "CAFE", "MARFIL", "OCRE"]
-        _llm_colors = [c for c in _color_keywords if c in llm_desc]
-        _real_colors = [c for c in _color_keywords if c in real_desc]
-        if _llm_colors and _real_colors and set(_llm_colors) != set(_real_colors):
-            rejected_items.append(
-                f"{it.get('descripcion_comercial', 'Producto')} (ref: {reference_value}) — "
-                f"ERROR DE COLOR: la referencia {reference_value} corresponde a '{real_desc.strip()}', "
-                f"pero tú pusiste '{llm_desc.strip()}'. Busca de nuevo con consultar_inventario usando el color correcto."
-            )
-            continue
-        # Check for size/presentation mismatch (LLM says 18.93L but ref is 9.46L, etc.)
-        _size_keywords = ["18.93", "9.46", "3.79", "0.95", "20K", "11K", "4.2K", "4K", "1K", "2.5K", "5K"]
-        _llm_sizes = [s for s in _size_keywords if s in llm_desc]
-        _real_sizes = [s for s in _size_keywords if s in real_desc]
-        if _llm_sizes and _real_sizes and set(_llm_sizes) != set(_real_sizes):
-            rejected_items.append(
-                f"{it.get('descripcion_comercial', 'Producto')} (ref: {reference_value}) — "
-                f"ERROR DE PRESENTACIÓN: la referencia {reference_value} corresponde a '{real_desc.strip()}', "
-                f"pero tú pusiste '{llm_desc.strip()}'. Busca de nuevo con consultar_inventario usando la presentación correcta."
-            )
-            continue
-        matched_product = dict(matched_row)
-        matched_product["referencia"] = matched_product.get("referencia") or reference_value
-        matched_product["codigo_articulo"] = matched_product.get("codigo_articulo") or reference_value
-        matched_product["descripcion"] = get_exact_product_description(matched_row)
-        confirmed_items.append(
-            _build_confirmed_item_from_row(
-                matched_product,
-                it.get("cantidad"),
-                it.get("unidad_medida") or infer_product_presentation_from_row(matched_product) or "unidad",
-            )
-        )
-    logger.info(
-        "confirmar_pedido_y_generar_pdf validated items conv=%s confirmed=%d rejected=%d elapsed=%dms",
-        context.get("conversation_id"),
-        len(confirmed_items),
-        len(rejected_items),
-        int((time.time() - t_confirm_start) * 1000),
-    )
 
-    if rejected_items:
-        nombres = ", ".join(rejected_items)
-        if not confirmed_items:
+    # ── When items come from the authoritative draft, they were already
+    #    validated by consultar_inventario. Skip the expensive re-lookup
+    #    that can fail if the reference format doesn't round-trip through
+    #    fetch_code_product_rows. ──────────────────────────────────────────
+    if _using_authoritative_draft:
+        for it in items_pedido:
+            confirmed_items.append({
+                "status": "matched",
+                "source": "draft",
+                "original_text": it.get("descripcion_comercial") or it.get("descripcion_exacta") or "",
+                "descripcion_comercial": it.get("descripcion_comercial") or it.get("descripcion_exacta") or "",
+                "descripcion_exacta": it.get("descripcion_exacta") or it.get("descripcion_comercial") or "",
+                "referencia": it.get("referencia") or "",
+                "codigo_articulo": it.get("referencia") or "",
+                "cantidad": it.get("cantidad") or 1,
+                "unidad_medida": it.get("unidad_medida") or "unidad",
+                "audit_label": it.get("audit_label") or it.get("etiqueta_auditable") or it.get("descripcion_comercial") or "",
+                "etiqueta_auditable": it.get("etiqueta_auditable") or it.get("audit_label") or it.get("descripcion_comercial") or "",
+            })
+        logger.info(
+            "confirmar_pedido_y_generar_pdf DRAFT FAST-PATH conv=%s confirmed=%d elapsed=%dms",
+            context.get("conversation_id"),
+            len(confirmed_items),
+            int((time.time() - t_confirm_start) * 1000),
+        )
+    else:
+        for it in items_pedido:
+            reference_value = (it.get("referencia") or "").strip()
+            lookup_request = {
+                "product_codes": [reference_value] if reference_value else [],
+                "store_filters": store_filters,
+            }
+            lookup_rows = lookup_product_context(reference_value, lookup_request) if reference_value else []
+            matched_row = next(
+                (
+                    row for row in lookup_rows
+                    if normalize_reference_value(row.get("referencia") or row.get("codigo_articulo") or row.get("producto_codigo"))
+                    == normalize_reference_value(reference_value)
+                ),
+                None,
+            )
+            if not matched_row:
+                rejected_items.append(f"{it.get('descripcion_comercial', 'Producto')} (ref: {reference_value})")
+                continue
+            # --- Cross-validate: detect when the LLM's description doesn't match the real product ---
+            real_desc = (matched_row.get("descripcion") or matched_row.get("nombre_articulo") or "").upper()
+            llm_desc = (it.get("descripcion_comercial") or "").upper()
+            # Check for color mismatch (LLM says BLANCO but ref is GRIS, etc.)
+            _color_keywords = ["BLANCO", "GRIS", "ROJO", "NEGRO", "VERDE", "AZUL", "AMARILLO", "BEIGE", "CREMA", "CAFE", "MARFIL", "OCRE"]
+            _llm_colors = [c for c in _color_keywords if c in llm_desc]
+            _real_colors = [c for c in _color_keywords if c in real_desc]
+            if _llm_colors and _real_colors and set(_llm_colors) != set(_real_colors):
+                rejected_items.append(
+                    f"{it.get('descripcion_comercial', 'Producto')} (ref: {reference_value}) — "
+                    f"ERROR DE COLOR: la referencia {reference_value} corresponde a '{real_desc.strip()}', "
+                    f"pero tú pusiste '{llm_desc.strip()}'. Busca de nuevo con consultar_inventario usando el color correcto."
+                )
+                continue
+            # Check for size/presentation mismatch (LLM says 18.93L but ref is 9.46L, etc.)
+            _size_keywords = ["18.93", "9.46", "3.79", "0.95", "20K", "11K", "4.2K", "4K", "1K", "2.5K", "5K"]
+            _llm_sizes = [s for s in _size_keywords if s in llm_desc]
+            _real_sizes = [s for s in _size_keywords if s in real_desc]
+            if _llm_sizes and _real_sizes and set(_llm_sizes) != set(_real_sizes):
+                rejected_items.append(
+                    f"{it.get('descripcion_comercial', 'Producto')} (ref: {reference_value}) — "
+                    f"ERROR DE PRESENTACIÓN: la referencia {reference_value} corresponde a '{real_desc.strip()}', "
+                    f"pero tú pusiste '{llm_desc.strip()}'. Busca de nuevo con consultar_inventario usando la presentación correcta."
+                )
+                continue
+            matched_product = dict(matched_row)
+            matched_product["referencia"] = matched_product.get("referencia") or reference_value
+            matched_product["codigo_articulo"] = matched_product.get("codigo_articulo") or reference_value
+            matched_product["descripcion"] = get_exact_product_description(matched_row)
+            confirmed_items.append(
+                _build_confirmed_item_from_row(
+                    matched_product,
+                    it.get("cantidad"),
+                    it.get("unidad_medida") or infer_product_presentation_from_row(matched_product) or "unidad",
+                )
+            )
+        logger.info(
+            "confirmar_pedido_y_generar_pdf validated items conv=%s confirmed=%d rejected=%d elapsed=%dms",
+            context.get("conversation_id"),
+            len(confirmed_items),
+            len(rejected_items),
+            int((time.time() - t_confirm_start) * 1000),
+        )
+
+        if rejected_items:
+            nombres = ", ".join(rejected_items)
+            if not confirmed_items:
+                return json.dumps(
+                    {"exito": False, "mensaje": f"Ningún producto pudo ser verificado en inventario. Referencias no encontradas: {nombres}. Usa consultar_inventario para obtener la referencia correcta de cada producto antes de confirmar."},
+                    ensure_ascii=False,
+                )
             return json.dumps(
-                {"exito": False, "mensaje": f"Ningún producto pudo ser verificado en inventario. Referencias no encontradas: {nombres}. Usa consultar_inventario para obtener la referencia correcta de cada producto antes de confirmar."},
+                {"exito": False, "mensaje": f"Los siguientes productos tienen referencias que no coinciden con el inventario real: {nombres}. Usa consultar_inventario para obtener la referencia correcta antes de confirmar."},
                 ensure_ascii=False,
             )
-        return json.dumps(
-            {"exito": False, "mensaje": f"Los siguientes productos tienen referencias que no coinciden con el inventario real: {nombres}. Usa consultar_inventario para obtener la referencia correcta antes de confirmar."},
-            ensure_ascii=False,
-        )
 
     guidance_required_products = list((technical_guidance or {}).get("required_products") or [])
     _missing_guidance_warning = None
