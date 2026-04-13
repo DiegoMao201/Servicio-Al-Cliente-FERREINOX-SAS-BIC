@@ -338,6 +338,8 @@ SELECT
     NULLIF(TRIM(COALESCE(am.cat_producto, '')), '') AS cat_producto,
     NULLIF(TRIM(COALESCE(am.descripcion_ebs, '')), '') AS descripcion_ebs,
     NULLIF(TRIM(COALESCE(am.tipo, '')), '') AS tipo_articulo,
+    NULLIF(TRIM(COALESCE(am.descripcion_adicional, '')), '') AS descripcion_adicional,
+    NULLIF(TRIM(COALESCE(am.seccion, '')), '') AS seccion,
     -- search_blob enriquecido con clasificación + ERP metadata
     public.fn_normalize_text(
         COALESCE(r.descripcion, '') || ' ' ||
@@ -806,6 +808,11 @@ SELECT
         COALESCE(MAX(inv.cat_producto), '') || ' ' ||
         COALESCE(MAX(inv.descripcion_ebs), '') || ' ' ||
         COALESCE(MAX(inv.tipo_articulo), '') || ' ' ||
+        -- descripcion_adicional: contiene codigos T-XX, aliases, codigos alternos
+        COALESCE(MAX(inv.descripcion_adicional), '') || ' ' ||
+        REPLACE(COALESCE(MAX(inv.descripcion_adicional), ''), '-', ' ') || ' ' ||
+        REPLACE(COALESCE(MAX(inv.descripcion_adicional), ''), '-', '') || ' ' ||
+        COALESCE(MAX(inv.seccion), '') || ' ' ||
         -- Abracol enrichment: nombre comercial + familia + descripcion larga + portafolio
         COALESCE(MAX(ab.nombre_comercial), '') || ' ' ||
         COALESCE(MAX(ab.familia), '') || ' ' ||
@@ -821,6 +828,7 @@ SELECT
         COALESCE(MAX(inv.familia_clasificacion), '') || ' ' ||
         COALESCE(MAX(inv.descripcion_ebs), '') || ' ' ||
         COALESCE(MAX(inv.cat_producto), '') || ' ' ||
+        COALESCE(MAX(inv.descripcion_adicional), '') || ' ' ||
         REPLACE(COALESCE(MAX(inv.descripcion), ''), '-', '') || ' ' ||
         REPLACE(COALESCE(MAX(inv.descripcion), ''), ' ', '') || ' ' ||
         -- Abracol compact: nombre comercial + familia
