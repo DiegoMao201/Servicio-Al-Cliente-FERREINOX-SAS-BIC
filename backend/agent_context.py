@@ -804,9 +804,11 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
     if any(w in combined for w in ["fachada", "terraza", "exterior", "intemperie", "azotea"]):
         data["interior_exterior"] = "exterior"
     elif any(w in combined for w in ["interior", "apartamento", "casa", "oficina", "habitación",
-                                      "habitacion", "sala", "cuarto", "dormitorio"]):
+                                      "habitacion", "sala", "cuarto", "dormitorio", "laboratorio",
+                                      "consultorio", "clínica", "clinica", "hospital", "restaurante",
+                                      "local", "almacén", "almacen", "aula", "colegio"]):
         data["interior_exterior"] = "interior"
-    elif any(w in combined for w in ["bodega", "fábrica", "fabrica", "planta", "nave"]):
+    elif any(w in combined for w in ["bodega", "fábrica", "fabrica", "planta", "nave", "taller"]):
         data["interior_exterior"] = "industrial"
 
     # Condition
@@ -882,6 +884,25 @@ def detect_topic_change(user_message: str, recent_messages: list) -> bool:
         "también necesito", "tambien necesito", "aparte de eso",
     ]
     return any(s in msg_lower for s in topic_signals)
+
+
+def is_diagnostic_incomplete(intent: str, diagnostic: dict) -> bool:
+    """Return True when intent is 'asesoria' and essential diagnostic data is missing.
+
+    Used by agent_v3 to enforce the BLOQUEO at the Python level —
+    stripping advisory tools so the LLM physically cannot skip the diagnostic.
+    """
+    if intent != "asesoria":
+        return False
+    missing = []
+    if not diagnostic.get("surface"):
+        missing.append("surface")
+    if not diagnostic.get("interior_exterior"):
+        if diagnostic.get("surface") not in ("fachada", "exterior", "madera exterior", "piso deportivo"):
+            missing.append("interior_exterior")
+    if not diagnostic.get("condition"):
+        missing.append("condition")
+    return bool(missing)
 
 
 # ─── Builder principal ───────────────────────────────────────────────────────

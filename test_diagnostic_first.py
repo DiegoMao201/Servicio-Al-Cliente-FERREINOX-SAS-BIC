@@ -104,6 +104,31 @@ class DiagnosticFirstTests(unittest.TestCase):
         # fachada implies exterior, descascarando is condition → should not block
         self.assertNotIn("BLOQUEO DE DIAGNÓSTICO INCOMPLETO", ctx)
 
+    # ── Test 14: "laboratorio" detecta interior ──
+    def test_laboratorio_detected_as_interior(self):
+        diag = extract_diagnostic_data("necesito pintar las paredes de un laboratorio", [])
+        self.assertEqual(diag["surface"], "muro")
+        self.assertEqual(diag["interior_exterior"], "interior")
+
+    # ── Test 15: is_diagnostic_incomplete helper ──
+    def test_is_diagnostic_incomplete(self):
+        from agent_context import is_diagnostic_incomplete
+        diag_empty = {"surface": "muro", "interior_exterior": None, "condition": None}
+        self.assertTrue(is_diagnostic_incomplete("asesoria", diag_empty))
+        diag_full = {"surface": "muro", "interior_exterior": "interior", "condition": "superficie nueva"}
+        self.assertFalse(is_diagnostic_incomplete("asesoria", diag_full))
+        # Non-asesoria intent should never block
+        self.assertFalse(is_diagnostic_incomplete("pedido_directo", diag_empty))
+
+    # ── Test 16: laboratorio → BLOQUEO because condition is missing ──
+    def test_laboratorio_blocks_without_condition(self):
+        ctx = self._build_ctx("necesito pintar las paredes de un laboratorio")
+        # interior detected from "laboratorio", surface from "paredes", but NO condition
+        self.assertIn("BLOQUEO DE DIAGNÓSTICO INCOMPLETO", ctx)
+        self.assertIn("condición", ctx)
+        # Should NOT ask for ubicación since laboratorio → interior is detected
+        self.assertNotIn("ubicación", ctx)
+
 
 if __name__ == "__main__":
     unittest.main()

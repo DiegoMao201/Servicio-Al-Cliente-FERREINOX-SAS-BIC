@@ -307,10 +307,10 @@ def generate_agent_reply_v3(
     Misma firma y mismo dict de retorno que generate_agent_reply_v2.
     """
     try:
-        from agent_context import build_turn_context, classify_intent, extract_diagnostic_data
+        from agent_context import build_turn_context, classify_intent, extract_diagnostic_data, is_diagnostic_incomplete
         from agent_prompt_v3 import AGENT_SYSTEM_PROMPT_V3, AGENT_TOOLS_V3
     except ImportError:
-        from backend.agent_context import build_turn_context, classify_intent, extract_diagnostic_data
+        from backend.agent_context import build_turn_context, classify_intent, extract_diagnostic_data, is_diagnostic_incomplete
         from backend.agent_prompt_v3 import AGENT_SYSTEM_PROMPT_V3, AGENT_TOOLS_V3
 
     m = _get_main()
@@ -453,7 +453,16 @@ def generate_agent_reply_v3(
         except Exception:
             technical_case = None
 
-    if _should_preload_technical_guidance(
+    # ══════════════════════════════════════════════════════════════════════
+    # PYTHON-LEVEL DIAGNOSTIC ENFORCEMENT
+    # When the diagnostic is incomplete for advisory intent, REMOVE tools
+    # so the LLM physically cannot skip the diagnostic phase.
+    # ══════════════════════════════════════════════════════════════════════
+    _diagnostic_blocked = is_diagnostic_incomplete(initial_intent, initial_diagnostic)
+    if _diagnostic_blocked:
+        logger.info("V3 BLOQUEO ACTIVO: diagnostic incomplete — tools stripped, skipping preload")
+
+    if not _diagnostic_blocked and _should_preload_technical_guidance(
         initial_intent,
         initial_diagnostic,
         user_message,
@@ -534,12 +543,15 @@ def generate_agent_reply_v3(
     # ══════════════════════════════════════════════════════════════════════
     # LLM CALL + TOOL LOOP
     # ══════════════════════════════════════════════════════════════════════
+    _tools_for_call = None if _diagnostic_blocked else AGENT_TOOLS_V3
+    _tool_choice_for_call = "none" if _diagnostic_blocked else "auto"
+
     t_start = time.time()
     response = client.chat.completions.create(
         model=m.get_openai_model(),
         messages=messages,
-        tools=AGENT_TOOLS_V3,
-        tool_choice="auto",
+        tools=_tools_for_call,
+        tool_choice=_tool_choice_for_call,
         parallel_tool_calls=True,
         temperature=0.2,
     )
@@ -1012,9 +1024,17 @@ def _guardia_bicomponente(assistant_message, messages, tool_calls_made, context,
         from backend.agent_prompt_v3 import AGENT_TOOLS_V3
     response_text = (assistant_message.content or "").lower()
 
+    # Also scan tool results — if inventory returned a bicomponent product,
+    # the LLM might have renamed it but the guard still needs to catch it.
+    tool_results_text = " ".join(
+        (tc.get("result") or "").lower() for tc in tool_calls_made
+        if tc.get("name") in ("consultar_inventario", "consultar_inventario_lote")
+    )
+    combined_text = response_text + " " + tool_results_text
+
     for prod_signals, cat_signals, prod_name, cat_name in _BICOMP_CHECKS:
-        has_product = any(s in response_text for s in prod_signals)
-        has_catalyst = any(s in response_text for s in cat_signals)
+        has_product = any(s in combined_text for s in prod_signals)
+        has_catalyst = any(s in combined_text for s in cat_signals)
         if has_product and not has_catalyst:
             logger.warning("⛔ V3 GUARDIA BICOMPONENTE: %s sin catalizador %s", prod_name, cat_name)
             messages.append(assistant_message)
