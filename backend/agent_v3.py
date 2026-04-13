@@ -727,6 +727,12 @@ def generate_agent_reply_v3(
         assistant_message, messages, tool_calls_made, context, conversation_context, m
     )
 
+    # ── GUARDIA ANTI-ALUCINACIÓN: recomendación sin herramientas ─────────
+    if not is_ensenar_msg and not is_greeting:
+        assistant_message = _guardia_recomendacion_sin_herramienta(
+            assistant_message, messages, tool_calls_made, context, conversation_context, m
+        )
+
     # ══════════════════════════════════════════════════════════════════════
     # POST-PROCESAMIENTO
     # ══════════════════════════════════════════════════════════════════════
@@ -1376,3 +1382,118 @@ def _classify_return_intent(tool_calls_made: list, user_message: str, m) -> str:
         elif name == "confirmar_pedido_y_generar_pdf":
             intent = "pedido"
     return intent
+
+
+# ── Patterns that signal the LLM is recommending products ──────────────
+_RECOMMENDATION_SIGNALS_RE = re.compile(
+    r"(?:te\s+recomiendo|recomiendo\s+(?:el|la|usar)|"
+    r"el\s+sistema\s+(?:correcto|ideal|recomendado)|"
+    r"(?:preparaci[oó]n|sellador|imprimante|acabado)\s*:\s*\*{0,2}\s*[A-Z]|"
+    r"(?:🔹|•)\s*(?:preparaci[oó]n|sellador|imprimante|acabado|base)\s*:)",
+    re.IGNORECASE,
+)
+
+# Extended product name patterns (brands + product lines)
+_HALLUCINATED_PRODUCT_RE = re.compile(
+    r"\b(?:viniltex|koraza|aquablock|pintucoat|intergard|interseal|interthane|"
+    r"corrotec|pintulux|barnex|sellomax|intervinil|pinturama|pintoxido|"
+    r"siliconite|construcleaner|intertherm|acriltex|toptex|"
+    r"pintutrafico|pintutecho|acryl[ií]tex)\b",
+    re.IGNORECASE,
+)
+
+
+def _guardia_recomendacion_sin_herramienta(
+    assistant_message, messages, tool_calls_made, context, conversation_context, m
+):
+    """Detect when the LLM recommends specific products without having called
+    consultar_conocimiento_tecnico or consultar_inventario.  If detected,
+    force a re-generation that only asks diagnostic questions."""
+    response_text = assistant_message.content or ""
+    if not response_text.strip():
+        return assistant_message
+
+    # If the LLM already called knowledge or inventory tools, it's fine
+    tools_used = {tc["name"] for tc in tool_calls_made}
+    _knowledge_tools = {"consultar_conocimiento_tecnico", "consultar_inventario", "consultar_inventario_lote"}
+    if tools_used & _knowledge_tools:
+        return assistant_message
+
+    # If the user is an internal employee doing a direct order, skip this guard
+    if (conversation_context or {}).get("internal_auth"):
+        return assistant_message
+
+    # Check if the response contains product recommendations
+    has_recommendation_signal = bool(_RECOMMENDATION_SIGNALS_RE.search(response_text))
+    has_product_names = bool(_HALLUCINATED_PRODUCT_RE.search(response_text))
+
+    if not (has_recommendation_signal and has_product_names):
+        return assistant_message
+
+    # The LLM is hallucinating product recommendations without tools
+    logger.warning(
+        "GUARDIA ANTI-ALUCINACIÓN: LLM recomendó productos sin herramientas conv=%s tools_used=%s",
+        context.get("conversation_id"),
+        list(tools_used),
+    )
+
+    # Force re-generation: strip the hallucinated response and tell LLM to use tools
+    messages_copy = list(messages)
+    messages_copy.append({
+        "role": "system",
+        "content": (
+            "CORRECCIÓN OBLIGATORIA: Tu respuesta anterior mencionó productos específicos "
+            "sin haber consultado ninguna herramienta. Eso está PROHIBIDO. "
+            "REGLA: No puedes mencionar NINGÚN nombre de producto sin haber llamado "
+            "consultar_conocimiento_tecnico o consultar_inventario primero. "
+            "RE-GENERA tu respuesta: si el diagnóstico está completo, llama "
+            "consultar_conocimiento_tecnico AHORA. Si falta información diagnóstica, "
+            "haz las preguntas necesarias SIN mencionar productos."
+        ),
+    })
+
+    try:
+        from backend.agent_prompt_v3 import AGENT_TOOLS_V3
+        t_fix = time.time()
+        resp_fix = m.get_openai_client().chat.completions.create(
+            model=m.get_openai_model(),
+            messages=messages_copy,
+            tools=AGENT_TOOLS_V3,
+            tool_choice="auto",
+            temperature=0.2,
+        )
+        fixed_message = resp_fix.choices[0].message
+        logger.info(
+            "GUARDIA ANTI-ALUCINACIÓN: re-generación %dms has_tools=%s",
+            int((time.time() - t_fix) * 1000),
+            bool(fixed_message.tool_calls),
+        )
+
+        # If the re-generated response calls tools, we need to execute them
+        if fixed_message.tool_calls:
+            messages_copy.append(fixed_message)
+            for tc in fixed_message.tool_calls:
+                fn_name_raw = tc.function.name
+                if fn_name_raw == "consultar_conocimiento_tecnico":
+                    original_args = json.loads(tc.function.arguments or "{}")
+                    fn_args = _sanitize_technical_lookup_args(original_args, None, [], m)
+                    result = m._handle_tool_consultar_conocimiento_tecnico(fn_args, context, conversation_context)
+                else:
+                    fn_name, fn_args, result = m._execute_agent_tool(tc, context, conversation_context)
+                messages_copy.append({"role": "tool", "tool_call_id": tc.id, "content": result})
+
+            # Get final text response after tool execution
+            resp_final = m._get_openai_client().chat.completions.create(
+                model=m.get_openai_model(),
+                messages=messages_copy,
+                tools=AGENT_TOOLS_V3,
+                tool_choice="none",
+                temperature=0.2,
+            )
+            return resp_final.choices[0].message
+
+        # If re-generation produced text without tools (hopefully just diagnostic questions)
+        return fixed_message
+    except Exception as exc:
+        logger.error("GUARDIA ANTI-ALUCINACIÓN error: %s", exc)
+        return assistant_message
