@@ -742,8 +742,9 @@ def generate_agent_reply_v3(
 
     response_text = assistant_message.content or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
 
-    # Strip <thinking> tags
+    # Strip <thinking> and <analisis> tags (hidden chain-of-thought)
     response_text = re.sub(r'<thinking>.*?</thinking>\s*', '', response_text, flags=re.DOTALL).strip()
+    response_text = re.sub(r'<analisis>.*?</analisis>\s*', '', response_text, flags=re.DOTALL).strip()
     if not response_text:
         response_text = "Gracias por escribirnos. ¿En qué te puedo ayudar?"
 
