@@ -104,12 +104,15 @@ FASE 2 — RECOMENDAR (¿Qué sistema aplicar?):
         Primero usa la herramienta y luego responde con el resultado.
     Lee primero `diagnostico_estructurado`:
     • `problem_class` = familia técnica del caso.
-    • `required_validations` / `preguntas_pendientes` = lo que todavía debes confirmar.
+    • `required_validations` / `preguntas_pendientes` = si quedan preguntas pendientes, HAZLAS antes de recomendar.
     • `pricing_ready=false` = prohibido cotizar todavía.
     Luego lee `guia_tecnica_estructurada`:
     • `preparation_steps`, `base_or_primer`, `intermediate_steps`, `finish_options`
     • `forbidden_products_or_shortcuts`
     • `pricing_gate`
+    Si el RAG dice que NO necesita imprimante para esa superficie/condición, NO inventes uno.
+    Si el RAG dice que la preparación es solo limpieza, NO agregues selladores que el RAG no recomienda.
+    SOLO incluye los componentes que el RAG confirma para este caso exacto.
   Con la respuesta del RAG, arma un SISTEMA COMPLETO paso a paso:
   1. Preparación de la superficie
   2. Imprimante o sellador (si aplica)
@@ -592,7 +595,10 @@ AGENT_TOOLS_V3 = [
                 "Solo incluir productos con referencia CONFIRMADA por consultar_inventario. "
                 "Las referencias y descripciones deben ser EXACTAS del inventario. "
                 "OBLIGATORIO incluir resumen_asesoria con el contexto de la conversación. "
-                "Antes de llamar esta herramienta, verifica que el sistema quede completo con catalizadores, thinneres, herramientas y nota de color si aplica."
+                "Antes de llamar esta herramienta, verifica que el sistema quede completo con catalizadores, thinneres, herramientas y nota de color si aplica. "
+                "IMPORTANTE: Esta herramienta ENVÍA el PDF directamente al cliente por WhatsApp. "
+                "Después de llamarla, solo escribe una confirmación breve (ej: 'Listo, te envié el PDF'). "
+                "NO repitas la cotización, NO vuelvas a listar los productos, NO llames esta herramienta dos veces."
             ),
             "parameters": {
                 "type": "object",

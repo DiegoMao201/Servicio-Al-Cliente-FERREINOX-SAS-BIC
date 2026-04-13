@@ -80,6 +80,30 @@ class DiagnosticFirstTests(unittest.TestCase):
         has_block = ("BLOQUEO" in ctx)
         self.assertTrue(has_block, "Muro con humedad debe tener algún tipo de bloqueo")
 
+    # ── Test 10: metal oxidado sin ubicación → BLOQUEO ──
+    def test_metal_oxidado_sin_ubicacion_bloquea(self):
+        ctx = self._build_ctx("necesito pintar una reja oxidada")
+        self.assertIn("BLOQUEO DE DIAGNÓSTICO INCOMPLETO", ctx)
+
+    # ── Test 11: madera sin condición → BLOQUEO ──
+    def test_madera_sin_condicion_bloquea(self):
+        ctx = self._build_ctx("quiero pintar unas puertas de madera")
+        self.assertIn("BLOQUEO DE DIAGNÓSTICO INCOMPLETO", ctx)
+
+    # ── Test 12: techo sin condición → BLOQUEO ──
+    def test_techo_sin_condicion_bloquea(self):
+        ctx = self._build_ctx("necesito asesoría para el techo")
+        self.assertIn("BLOQUEO DE DIAGNÓSTICO INCOMPLETO", ctx)
+
+    # ── Test 13: fachada con condición completa → NO bloqueo ──
+    def test_fachada_con_condicion_no_bloquea(self):
+        recent = [
+            {"direction": "inbound", "contenido": "quiero pintar la fachada de mi casa, está descascarando"},
+        ]
+        ctx = self._build_ctx("sí está pelando la pintura vieja", recent=recent)
+        # fachada implies exterior, descascarando is condition → should not block
+        self.assertNotIn("BLOQUEO DE DIAGNÓSTICO INCOMPLETO", ctx)
+
 
 if __name__ == "__main__":
     unittest.main()

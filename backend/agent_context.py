@@ -1049,7 +1049,30 @@ def build_turn_context(
             if diagnostic["surface"] not in ("fachada", "exterior", "madera exterior", "piso deportivo"):
                 missing.append("ubicación (¿interior o exterior?)")
         if not diagnostic["condition"]:
-            missing.append("condición (¿nuevo, pintado, con humedad, óxido?)")
+            missing.append("condición (¿nuevo, pintado, con humedad, óxido, descascarado?)")
+
+        # ── Preguntas específicas por tipo de superficie ──
+        # Para pisos: tráfico es CRÍTICO
+        if problem_class == "piso_industrial" and not diagnostic.get("traffic"):
+            missing.append("tipo de tráfico (¿peatonal/liviano, vehicular, montacargas/pesado?)")
+        if problem_class == "piso_industrial" and not diagnostic.get("condition"):
+            if "estado" not in " ".join(missing).lower():
+                missing.append("estado del piso (¿nuevo, viejo, ya pintado?)")
+        # Para metal: tipo de metal y exposición importan
+        if diagnostic.get("surface") in ("metal", "metal/inmersión") and not diagnostic.get("condition"):
+            if "condición" not in " ".join(missing):
+                missing.append("estado del metal (¿nuevo, oxidado, ya pintado con anticorrosivo?)")
+        # Para humedad: la fuente es crítica para la solución
+        if diagnostic.get("surface") == "interior húmedo" and not diagnostic.get("humidity_source"):
+            missing.append("origen de la humedad (¿viene del piso/base, de arriba, por temporada?)")
+        # Para madera: interior/exterior cambia el sistema completamente
+        if diagnostic.get("surface") in ("madera", "madera exterior") and not diagnostic.get("condition"):
+            if "condición" not in " ".join(missing):
+                missing.append("estado de la madera (¿nueva, barnizada, deteriorada?)")
+        # Para techo: goteras vs impermeabilizar vs repintar son flujos distintos
+        if diagnostic.get("surface") == "techo" and not diagnostic.get("condition"):
+            if "condición" not in " ".join(missing):
+                missing.append("problema del techo (¿goteras, impermeabilizar, solo repintar?)")
 
         if diagnostic["surface"]:
             lines.append(f"Superficie detectada: {diagnostic['surface']}")
@@ -1079,15 +1102,6 @@ def build_turn_context(
             lines.append("  • Pintuco Fill NO es la solución si el problema es interior/capilaridad desde la base del muro.")
             lines.append("Acción: Presenta esta solución técnica completa y luego pide m² para cotizar cantidades exactas.")
 
-        # Para pisos, el tipo de tráfico es CRÍTICO para la recomendación
-        if problem_class == "piso_industrial" and not diagnostic.get("traffic"):
-            if "tipo de tráfico" not in " ".join(missing):
-                missing.append("tipo de tráfico (¿peatonal/liviano, vehicular, montacargas/pesado?)")
-        # Para pisos, la condición del piso es crítica
-        if problem_class == "piso_industrial" and not diagnostic.get("condition"):
-            if "estado del piso" not in " ".join(missing):
-                missing.append("estado del piso (¿nuevo, viejo, ya pintado?)")
-
         if missing:
             lines.append(f"Datos faltantes: {', '.join(missing)}")
             lines.append("")
@@ -1100,7 +1114,23 @@ def build_turn_context(
             lines.append("  5. Decir frases como 'podría ser X' o 'generalmente se usa Y'.")
             lines.append("")
             lines.append("Tu ÚNICA acción permitida: Haz 1-2 preguntas conversacionales breves para completar los datos faltantes.")
-            lines.append("Ejemplo: '¿El piso es interior o exterior? ¿Qué tipo de tráfico tiene: peatonal, vehicular o montacargas?'")
+            lines.append("Adapta las preguntas al contexto del cliente. Ejemplos:")
+            if diagnostic.get("surface"):
+                surface_name = diagnostic["surface"]
+                if problem_class == "piso_industrial":
+                    lines.append(f"  '¿El {surface_name} es interior o exterior? ¿Qué tipo de tráfico tiene: peatonal, vehicular o montacargas?'")
+                elif surface_name in ("metal", "metal/inmersión"):
+                    lines.append(f"  '¿El metal está oxidado, ya tiene anticorrosivo, o es nuevo? ¿Es interior o exterior?'")
+                elif surface_name == "interior húmedo":
+                    lines.append(f"  '¿La humedad viene del piso o de la base del muro, de arriba, o solo aparece en temporada de lluvia?'")
+                elif surface_name in ("madera", "madera exterior"):
+                    lines.append(f"  '¿La madera es nueva o ya tiene barniz/pintura? ¿Está en interior o exterior?'")
+                elif surface_name == "techo":
+                    lines.append(f"  '¿El techo tiene goteras o solo quiere impermeabilizar/repintar? ¿Es terraza o cubierta?'")
+                else:
+                    lines.append(f"  '¿La superficie está en buen estado o tiene algún problema (humedad, descascarado, óxido)?'")
+            else:
+                lines.append("  '¿Qué superficie necesita pintar o proteger? ¿Está en interior o exterior?'")
             lines.append("SOLO cuando tengas TODOS los datos podrás consultar el RAG y recomendar.")
         else:
             lines.append("Datos suficientes para recomendar.")

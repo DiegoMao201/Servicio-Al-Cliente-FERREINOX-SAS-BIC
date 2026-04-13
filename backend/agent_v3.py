@@ -442,6 +442,8 @@ def generate_agent_reply_v3(
     _TOOL_MAX_CALLS = {
         "consultar_conocimiento_tecnico": 1 if has_active_technical_guidance else 2,
         "buscar_documento_tecnico": 2,
+        "confirmar_pedido_y_generar_pdf": 1,
+        "registrar_reclamo": 1,
     }
 
     technical_case = None
@@ -629,12 +631,20 @@ def generate_agent_reply_v3(
             tool_calls_made.append({"name": fn_name, "args": fn_args, "result": result})
             messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
 
+        # After successful PDF generation, force the LLM to produce only a short
+        # confirmation text — no more tool calls allowed.
+        _pdf_succeeded = any(
+            tc_info["name"] == "confirmar_pedido_y_generar_pdf"
+            and '"exito": true' in (tc_info.get("result") or "").lower()
+            for tc_info in tool_calls_made
+        )
+
         t_loop = time.time()
         response = client.chat.completions.create(
             model=m.get_openai_model(),
             messages=messages,
             tools=AGENT_TOOLS_V3,
-            tool_choice="auto",
+            tool_choice="none" if _pdf_succeeded else "auto",
             parallel_tool_calls=True,
             temperature=0.2,
         )
