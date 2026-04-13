@@ -124,8 +124,8 @@
         },
         {
           "paso": 4,
-          "accion": "ESTUCO (si se requiere acabado liso): Estuco Plástico (interior) o Estuco Acrílico (exterior).",
-          "producto": "Estuco Plástico / Estuco Acrílico",
+          "accion": "ESTUCO (si se requiere acabado liso): Estuco Plástico (interior) o Estuco Profesional Exterior (exterior).",
+          "producto": "Estuco Plástico / Estuco Profesional Exterior",
           "condicional": true,
           "condicion": "Si se quiere acabado liso"
         },

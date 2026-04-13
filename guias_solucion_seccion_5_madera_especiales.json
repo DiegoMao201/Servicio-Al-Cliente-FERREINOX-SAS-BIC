@@ -394,17 +394,17 @@
         "nota": "Para muros interiores. Se aplica con llana. Lijar después de seco."
       },
       "exterior": {
-        "producto": "Estuco Acrílico Pintuco",
-        "nota": "OBLIGATORIO para exteriores. El Estuco Plástico NO resiste intemperie. El Estuco Acrílico tiene mayor flexibilidad y resistencia al agua."
+        "producto": "Estuco Profesional Exterior Pintuco",
+        "nota": "OBLIGATORIO para exteriores. El Estuco Plástico NO resiste intemperie. El Estuco Profesional Exterior tiene mayor flexibilidad y resistencia al agua."
       }
     },
     "productos_prohibidos": [
       {
         "producto": "Estuco Plástico en exteriores",
-        "razon": "El Estuco Plástico no resiste agua ni intemperie. Para exteriores SOLO Estuco Acrílico."
+        "razon": "El Estuco Plástico no resiste agua ni intemperie. Para exteriores SOLO Estuco Profesional Exterior."
       }
     ],
-    "referencia_estuco": "Cuando el cliente pide ref de estuco, las ref son: Estuco Plástico ref por presentación, Estuco Acrílico ref por presentación. Consultar catálogo para ref exactas."
+    "referencia_estuco": "Cuando el cliente pide ref de estuco, las ref son: Estuco Plástico ref por presentación, Estuco Profesional Exterior ref por presentación. Consultar catálogo para ref exactas."
   },
   {
     "id": "GS-ESP-002",
@@ -489,7 +489,7 @@
       "Barnex / Wood Stain": "12-15 m²/galón por mano, 2-3 manos",
       "Poliuretano Alto Tráfico": "12-15 m²/galón por mano, 3 manos",
       "Estuco Plástico": "3-4 m²/kg según espesor",
-      "Estuco Acrílico": "3-4 m²/kg según espesor"
+      "Estuco Profesional Exterior": "3-4 m²/kg según espesor"
     },
     "formula_calculo": "Galones = (m² × número_de_manos) ÷ rendimiento_por_galón. SIEMPRE redondear hacia ARRIBA al envase comercial más cercano (1/4, 1 galón, cuñete 5 galones).",
     "ejemplo": "Fachada de 80 m², Koraza, 2 manos: (80 × 2) ÷ 9 = 17.8 galones → 18 galones → 4 cuñetes (20 galones, y sobra un poco para retoques). SIEMPRE mostrar este tipo de cálculo al cliente.",

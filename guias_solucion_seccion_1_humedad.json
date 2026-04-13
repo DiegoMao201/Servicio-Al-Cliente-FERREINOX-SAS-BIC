@@ -42,7 +42,7 @@
       ]
     },
     "sistema_recomendado": {
-      "resumen": "Preparación profunda → Aquablock Ultra (bloqueador de humedad) → Estuco Acrílico (nivelador) → Viniltex Advanced (acabado). El ORDEN es crítico: NUNCA aplicar estuco antes del Aquablock.",
+      "resumen": "Preparación profunda → Aquablock Ultra (bloqueador de humedad) → Estuco Profesional Exterior (nivelador) → Viniltex Advanced (acabado). El ORDEN es crítico: NUNCA aplicar estuco antes del Aquablock.",
       "pasos": [
         {
           "paso": 1,
@@ -78,10 +78,10 @@
         },
         {
           "paso": 5,
-          "accion": "NIVELACIÓN: Aplicar Estuco Acrílico para nivelar y dejar la superficie lisa y uniforme.",
-          "producto": "Estuco Acrílico Exterior/Humedad",
+          "accion": "NIVELACIÓN: Aplicar Estuco Profesional Exterior para nivelar y dejar la superficie lisa y uniforme.",
+          "producto": "Estuco Profesional Exterior",
           "herramientas": ["Llana", "Espátula"],
-          "nota_tecnica": "El estuco va DESPUÉS del Aquablock, NUNCA antes. Si se aplica estuco antes del bloqueador, la humedad lo destruye desde abajo. Usar Estuco Acrílico Exterior — NO estuco interior tradicional, porque la humedad lo daña."
+          "nota_tecnica": "El estuco va DESPUÉS del Aquablock, NUNCA antes. Si se aplica estuco antes del bloqueador, la humedad lo destruye desde abajo. Usar Estuco Profesional Exterior — NO estuco interior tradicional, porque la humedad lo daña."
         },
         {
           "paso": 6,
@@ -93,12 +93,31 @@
           "rendimiento": "20-25 m² por galón (a dos manos)"
         }
       ],
-      "orden_critico": "Aquablock Ultra → Estuco Acrílico → Pintura. NUNCA: Estuco → Aquablock.",
+      "orden_critico": "Aquablock Ultra → Estuco Profesional Exterior → Pintura. NUNCA: Estuco → Aquablock.",
       "jerarquia_acabados": [
-        {"producto": "Viniltex Advanced", "nivel": "premium", "precio_relativo": "alto"},
-        {"producto": "Intervinil", "nivel": "intermedio", "precio_relativo": "medio"},
-        {"producto": "Pinturama", "nivel": "económico", "precio_relativo": "bajo"}
-      ]
+        {
+          "producto": "Viniltex Advanced",
+          "nivel": "premium",
+          "precio_relativo": "alto",
+          "argumento_cliente": "Viniltex Advanced es lavable, antibacterial y tiene la mayor durabilidad de la línea. En una zona que ya tuvo humedad, necesitas un acabado que aguante limpieza frecuente sin deteriorarse. Dura 8-10 años sin repintar.",
+          "busqueda_inventario": "viniltex advanced blanco galon"
+        },
+        {
+          "producto": "Intervinil",
+          "nivel": "intermedio",
+          "precio_relativo": "medio",
+          "argumento_cliente": "Intervinil es lavable y tiene buen cubrimiento, pero su resistencia a la limpieza es menor que Viniltex Advanced. Buena opción si el presupuesto es ajustado. Dura 5-6 años.",
+          "busqueda_inventario": "intervinil blanco galon"
+        },
+        {
+          "producto": "Pinturama",
+          "nivel": "económico",
+          "precio_relativo": "bajo",
+          "argumento_cliente": "Pinturama es la opción más económica. Cubre bien pero NO es lavable — si la manchas, no la puedes limpiar sin dañarla. En zonas de humedad tratada necesitarás repintar más seguido (2-3 años). La base Aquablock + Estuco sigue siendo la misma.",
+          "busqueda_inventario": "pinturama blanco galon"
+        }
+      ],
+      "regla_opciones": "SIEMPRE presenta las opciones como SISTEMAS COMPLETOS con precio total. La base técnica (Aquablock + Estuco) NO cambia entre opciones — solo cambia el acabado final. Pregunta al cliente: '¿Buscamos máxima durabilidad o una opción más económica?' ANTES de listar todo."
     },
     "productos_prohibidos": [
       {
@@ -111,17 +130,25 @@
       },
       {
         "producto": "Estuco interior tradicional",
-        "razon": "El estuco interior tradicional se destruye con la humedad. Usar siempre Estuco Acrílico Exterior/Humedad."
+        "razon": "El estuco interior tradicional se destruye con la humedad. Usar siempre Estuco Profesional Exterior."
+      },
+      {
+        "producto": "Pintucoat",
+        "razon": "Pintucoat es un recubrimiento industrial epóxico, NO es para paredes residenciales con humedad."
+      },
+      {
+        "producto": "Intergard / Interseal",
+        "razon": "Son recubrimientos industriales de alta especificación. No aplican para problemas de humedad residencial."
       }
     ],
     "rendimientos_referencia": {
       "Aquablock Ultra": "18-20 m² por galón (2 manos con brocha)",
-      "Estuco Acrílico": "Depende del estado de la superficie — consultar ficha técnica",
+      "Estuco Profesional Exterior": "Depende del estado de la superficie — consultar ficha técnica",
       "Viniltex Advanced": "20-25 m² por galón (2 manos)"
     },
     "ejemplo_cotizacion": {
       "area_ejemplo_m2": 20,
-      "calculo": "Aquablock Ultra: 20 m² ÷ 18 m²/gal = 1.11 → 2 galones (se cubren las 2 manos). Viniltex Advanced: 20 m² ÷ 20 m²/gal = 1 galón (2 manos). Más Estuco Acrílico según estado de la pared."
+      "calculo": "Aquablock Ultra: 20 m² ÷ 18 m²/gal = 1.11 → 2 galones (se cubren las 2 manos). Viniltex Advanced: 20 m² ÷ 20 m²/gal = 1 galón (2 manos). Más Estuco Profesional Exterior según estado de la pared."
     },
     "alerta_metraje": "SIEMPRE pedir los m² antes de cotizar. No aceptar que el cliente diga 'necesito 2 galones' — primero calcular cuánto realmente necesita según el área."
   },
@@ -185,8 +212,8 @@
         },
         {
           "paso": 4,
-          "accion": "NIVELACIÓN: Estuco Acrílico si se requiere nivelar después del bloqueador.",
-          "producto": "Estuco Acrílico",
+          "accion": "NIVELACIÓN: Estuco Profesional Exterior si se requiere nivelar después del bloqueador.",
+          "producto": "Estuco Profesional Exterior",
           "nota_tecnica": "Siempre DESPUÉS del bloqueador de humedad, nunca antes."
         },
         {
@@ -201,6 +228,14 @@
       {
         "producto": "Koraza",
         "razon": "Koraza es acabado de fachada exterior. No funciona como sellador de humedad interior."
+      },
+      {
+        "producto": "Pintucoat",
+        "razon": "Pintucoat es un recubrimiento industrial epóxico, NO es para paredes residenciales."
+      },
+      {
+        "producto": "Intergard / Interseal",
+        "razon": "Son recubrimientos industriales. No aplican para humedad residencial."
       }
     ],
     "rendimientos_referencia": {
@@ -275,14 +310,14 @@
           "accion": "PREPARACIÓN DE SUPERFICIE: Raspar y retirar toda pintura suelta, ampollas y material soplado. Lijar la superficie para mejorar agarre.",
           "producto": null,
           "herramientas": ["Espátula", "Lija Abracol grano 80-100", "Brocha Goya Profesional"],
-          "nota_tecnica": "Si se tumbó todo el estuco (Paso 1), aplicar revoque nuevo y dejarlo curar. Luego opcional: Estuco Acrílico Exterior para nivelar y dar acabado liso."
+          "nota_tecnica": "Si se tumbó todo el estuco (Paso 1), aplicar revoque nuevo y dejarlo curar. Luego opcional: Estuco Profesional Exterior para nivelar y dar acabado liso."
         },
         {
           "paso": 4,
-          "accion": "ESTUCO EXTERIOR (si se requiere nivelar): Aplicar Estuco Acrílico Exterior para dejar la superficie uniforme.",
-          "producto": "Estuco Acrílico Exterior",
+          "accion": "ESTUCO EXTERIOR (si se requiere nivelar): Aplicar Estuco Profesional Exterior para dejar la superficie uniforme.",
+          "producto": "Estuco Profesional Exterior",
           "herramientas": ["Llana", "Espátula"],
-          "nota_tecnica": "Usar SIEMPRE Estuco Acrílico Exterior — NUNCA estuco interior tradicional en fachadas. El estuco interior no resiste intemperie ni humedad. Si hay grietas, aplicar Pintuco Flex antes del estuco como masilla flexible para grietas.",
+          "nota_tecnica": "Usar SIEMPRE Estuco Profesional Exterior — NUNCA estuco interior tradicional en fachadas. El estuco interior no resiste intemperie ni humedad. Si hay grietas, aplicar Pintuco Flex antes del estuco como masilla flexible para grietas.",
           "condicional": true,
           "condicion": "Si se necesita nivelar o si se tumbó el estuco anterior"
         },
@@ -297,13 +332,30 @@
         }
       ],
       "jerarquia_acabados_fachada": [
-        {"producto": "Koraza", "nivel": "premium", "descripcion": "Impermeabilizante elastomérico, máxima protección sol + lluvia"},
-        {"producto": "Viniltex Advanced", "nivel": "tipo 1", "descripcion": "Exterior exposición moderada, sistema arquitectónico compatible"},
-        {"producto": "Intervinil", "nivel": "tipo 2", "descripcion": "Exterior económico, menor durabilidad"},
-        {"producto": "Pinturama", "nivel": "tipo 3", "descripcion": "Solo para presupuesto muy ajustado, menor protección"}
+        {
+          "producto": "Koraza",
+          "nivel": "premium",
+          "descripcion": "Impermeabilizante elastomérico, máxima protección sol + lluvia",
+          "argumento_cliente": "Koraza forma una membrana elástica que sella microfisuras y resiste lluvia directa. Es la mejor inversión para fachadas porque elimina repintadas frecuentes. Dura 10-12 años en condiciones normales.",
+          "busqueda_inventario": "koraza blanco galon"
+        },
+        {
+          "producto": "Viniltex Advanced",
+          "nivel": "tipo 1",
+          "descripcion": "Exterior exposición moderada, sistema arquitectónico compatible",
+          "argumento_cliente": "Viniltex Advanced funciona en exteriores con exposición moderada (poca lluvia directa). Más económico que Koraza pero con menor protección contra intemperie. Dura 5-7 años en fachada.",
+          "busqueda_inventario": "viniltex advanced blanco galon"
+        },
+        {
+          "producto": "Intervinil",
+          "nivel": "tipo 2",
+          "descripcion": "Exterior económico, menor durabilidad",
+          "argumento_cliente": "Intervinil es la opción económica para exteriores. Requiere repintado más frecuente (3-4 años). Si la fachada recibe lluvia y sol directo, se degrada más rápido que Koraza.",
+          "busqueda_inventario": "intervinil blanco galon"
+        }
       ],
       "accesorios_complementarios": [
-        {"producto": "Estuco Acrílico Exterior", "uso": "Nivelación de superficie antes del acabado"},
+        {"producto": "Estuco Profesional Exterior", "uso": "Nivelación de superficie antes del acabado"},
         {"producto": "Pintuco Flex", "uso": "Masilla flexible para sellar grietas antes del estuco"},
         {"producto": "Lija Abracol", "uso": "Preparación de superficie"},
         {"producto": "Brocha Goya Profesional", "uso": "Aplicación y cortes"}
@@ -328,12 +380,12 @@
     },
     "rendimientos_referencia": {
       "Koraza": "20-25 m² por galón (2-3 manos)",
-      "Estuco Acrílico Exterior": "Según estado de superficie — consultar ficha técnica",
+      "Estuco Profesional Exterior": "Según estado de superficie — consultar ficha técnica",
       "Viniltex Advanced": "20-25 m² por galón (2 manos)"
     },
     "ejemplo_cotizacion": {
       "area_ejemplo_m2": 50,
-      "calculo": "Koraza: 50 m² ÷ 20 m²/gal = 2.5 galones por mano × 2 manos = 5 galones → 1 cuñete. Más Estuco Acrílico si hay que nivelar. Más Lija Abracol + Brocha Goya Profesional."
+      "calculo": "Koraza: 50 m² ÷ 20 m²/gal = 2.5 galones por mano × 2 manos = 5 galones → 1 cuñete. Más Estuco Profesional Exterior si hay que nivelar. Más Lija Abracol + Brocha Goya Profesional."
     },
     "alerta_metraje": "SIEMPRE pedir los m² de la fachada antes de cotizar. No aceptar 'necesito pintura para la fachada' sin metraje."
   },

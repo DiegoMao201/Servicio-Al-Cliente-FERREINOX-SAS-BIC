@@ -34,7 +34,7 @@
       ]
     },
     "sistema_recomendado": {
-      "resumen": "Preparación de superficie → Estuco Acrílico Exterior (si hay imperfecciones) → Acabado exterior según presupuesto (Koraza premium, Viniltex Advanced tipo 1, Intervinil tipo 2, Pinturama tipo 3).",
+      "resumen": "Preparación de superficie → Estuco Profesional Exterior (si hay imperfecciones) → Acabado exterior según presupuesto (Koraza premium, Viniltex Advanced tipo 1, Intervinil tipo 2, Pinturama tipo 3).",
       "pasos": [
         {
           "paso": 1,
@@ -44,10 +44,10 @@
         },
         {
           "paso": 2,
-          "accion": "NIVELACIÓN (si se requiere): Aplicar Estuco Acrílico Exterior para nivelar imperfecciones, huecos o zonas donde se raspó.",
-          "producto": "Estuco Acrílico Exterior",
+          "accion": "NIVELACIÓN (si se requiere): Aplicar Estuco Profesional Exterior para nivelar imperfecciones, huecos o zonas donde se raspó.",
+          "producto": "Estuco Profesional Exterior",
           "herramientas": ["Llana", "Espátula"],
-          "nota_tecnica": "Usar SIEMPRE Estuco Acrílico Exterior — nunca estuco interior tradicional. Si hay grietas, aplicar Pintuco Flex como masilla flexible antes del estuco. Referencia estuco exterior: PQ ESTUCO PROF EXT BLAN 27060.",
+          "nota_tecnica": "Usar SIEMPRE Estuco Profesional Exterior — nunca estuco interior tradicional. Si hay grietas, aplicar Pintuco Flex como masilla flexible antes del estuco. Referencia estuco exterior: PQ ESTUCO PROF EXT BLAN 27060.",
           "condicional": true,
           "condicion": "Solo si la superficie tiene imperfecciones o zonas raspadas"
         },
@@ -60,13 +60,42 @@
         }
       ],
       "jerarquia_acabados_fachada": [
-        {"producto": "Koraza", "nivel": "premium", "descripcion": "Impermeabilizante elastomérico. Máxima protección contra sol y lluvia. Sella microfisuras.", "rendimiento": "20-25 m²/galón"},
-        {"producto": "Viniltex Advanced", "nivel": "tipo 1", "descripcion": "Exterior exposición moderada. Lavable, buena durabilidad.", "rendimiento": "20-25 m²/galón"},
-        {"producto": "Intervinil", "nivel": "tipo 2", "descripcion": "Exterior económico. Aceptable para zonas protegidas.", "rendimiento": "18-22 m²/galón"},
-        {"producto": "Pinturama", "nivel": "tipo 3", "descripcion": "Presupuesto muy ajustado. Menor protección y durabilidad.", "rendimiento": "16-20 m²/galón"}
+        {
+          "producto": "Koraza",
+          "nivel": "premium",
+          "descripcion": "Impermeabilizante elastomérico. Máxima protección contra sol y lluvia. Sella microfisuras.",
+          "rendimiento": "20-25 m²/galón",
+          "argumento_cliente": "Koraza forma una membrana elástica que sella microfisuras y protege contra lluvia directa y rayos UV. Es la mejor inversión para fachadas expuestas — dura 10-12 años sin repintado en condiciones normales.",
+          "busqueda_inventario": "koraza blanco galon"
+        },
+        {
+          "producto": "Viniltex Advanced",
+          "nivel": "tipo 1",
+          "descripcion": "Exterior exposición moderada. Lavable, buena durabilidad.",
+          "rendimiento": "20-25 m²/galón",
+          "argumento_cliente": "Viniltex Advanced funciona en exteriores con exposición moderada (fachada protegida, sin lluvia directa). Más económico que Koraza pero sin protección elastomérica. Dura 5-7 años en fachada.",
+          "busqueda_inventario": "viniltex advanced blanco galon"
+        },
+        {
+          "producto": "Intervinil",
+          "nivel": "tipo 2",
+          "descripcion": "Exterior económico. Aceptable para zonas protegidas.",
+          "rendimiento": "18-22 m²/galón",
+          "argumento_cliente": "Intervinil es la opción económica para exteriores. Menor resistencia a intemperie — si la fachada recibe sol y lluvia directa, necesitará repintado cada 3-4 años.",
+          "busqueda_inventario": "intervinil blanco galon"
+        },
+        {
+          "producto": "Pinturama",
+          "nivel": "tipo 3",
+          "descripcion": "Presupuesto muy ajustado. Menor protección y durabilidad.",
+          "rendimiento": "16-20 m²/galón",
+          "argumento_cliente": "Pinturama es la opción más económica pero NO recomendada para fachadas expuestas. Se degrada rápido con lluvia y sol (2-3 años). Solo para presupuesto muy limitado.",
+          "busqueda_inventario": "pinturama blanco galon"
+        }
       ],
+      "regla_opciones": "SIEMPRE presenta las opciones como SISTEMAS COMPLETOS (base + acabado + herramientas) con OPCIÓN A (Premium con Koraza) y OPCIÓN B (Económica). Argumenta POR QUÉ el premium es mejor inversión a largo plazo.",
       "accesorios_siempre_incluir": [
-        {"producto": "Estuco Acrílico Exterior", "uso": "Nivelación de imperfecciones"},
+        {"producto": "Estuco Profesional Exterior", "uso": "Nivelación de imperfecciones"},
         {"producto": "Pintuco Flex", "uso": "Masilla flexible para grietas (si hay grietas visibles)"},
         {"producto": "Lija Abracol grano 80-100", "uso": "Preparación de superficie"},
         {"producto": "Brocha Goya Profesional", "uso": "Aplicación en cortes y bordes"}
@@ -280,11 +309,40 @@
         }
       ],
       "jerarquia_acabados_interior": [
-        {"producto": "Viniltex Advanced", "nivel": "premium", "descripcion": "Lavable, máxima cubrición, durabilidad", "rendimiento": "20-25 m²/galón"},
-        {"producto": "Viniltex Baños y Cocinas", "nivel": "especializado", "descripcion": "Antihongos + lavable, para zonas húmedas interiores", "rendimiento": "18-22 m²/galón"},
-        {"producto": "Intervinil", "nivel": "intermedio", "descripcion": "Buena relación precio/calidad", "rendimiento": "18-22 m²/galón"},
-        {"producto": "Pinturama", "nivel": "económico", "descripcion": "Presupuesto ajustado, menor cubrición", "rendimiento": "16-20 m²/galón"}
-      ]
+        {
+          "producto": "Viniltex Advanced",
+          "nivel": "premium",
+          "descripcion": "Lavable, máxima cubrición, durabilidad",
+          "rendimiento": "20-25 m²/galón",
+          "argumento_cliente": "Viniltex Advanced es lavable, antibacterial y de máxima cubrición. Puede limpiar manchas con un trapo húmedo sin dañar la pintura. Dura 8-10 años sin repintar.",
+          "busqueda_inventario": "viniltex advanced blanco galon"
+        },
+        {
+          "producto": "Viniltex Baños y Cocinas",
+          "nivel": "especializado",
+          "descripcion": "Antihongos + lavable, para zonas húmedas interiores",
+          "rendimiento": "18-22 m²/galón",
+          "argumento_cliente": "Viniltex Baños y Cocinas tiene fórmula antihongos + lavable, diseñada para resistir la humedad por condensación de baños y cocinas. Evita la aparición de moho.",
+          "busqueda_inventario": "viniltex banos cocinas blanco galon"
+        },
+        {
+          "producto": "Intervinil",
+          "nivel": "intermedio",
+          "descripcion": "Buena relación precio/calidad",
+          "rendimiento": "18-22 m²/galón",
+          "argumento_cliente": "Intervinil es lavable y con buena relación precio/calidad. Menor resistencia que Viniltex Advanced — dura 5-6 años.",
+          "busqueda_inventario": "intervinil blanco galon"
+        },
+        {
+          "producto": "Pinturama",
+          "nivel": "económico",
+          "descripcion": "Presupuesto ajustado, menor cubrición",
+          "rendimiento": "16-20 m²/galón",
+          "argumento_cliente": "Pinturama es la opción más económica pero NO es lavable. Cualquier mancha queda permanente y requiere repintado más seguido (2-3 años).",
+          "busqueda_inventario": "pinturama blanco galon"
+        }
+      ],
+      "regla_opciones": "SIEMPRE presenta las opciones como SISTEMAS COMPLETOS (base + acabado + herramientas) con OPCIÓN A (Premium) y OPCIÓN B (Económica). Argumenta POR QUÉ el premium es mejor inversión."
     },
     "productos_prohibidos": [
       {
@@ -395,10 +453,10 @@
         },
         {
           "paso": 3,
-          "accion": "NIVELACIÓN: Estuco Acrílico Exterior para emparejar la superficie.",
-          "producto": "Estuco Acrílico Exterior",
+          "accion": "NIVELACIÓN: Estuco Profesional Exterior para emparejar la superficie.",
+          "producto": "Estuco Profesional Exterior",
           "herramientas": ["Llana", "Espátula"],
-          "nota_tecnica": "Siempre Estuco Acrílico Exterior, nunca estuco interior."
+          "nota_tecnica": "Siempre Estuco Profesional Exterior, nunca estuco interior."
         },
         {
           "paso": 4,
