@@ -18970,22 +18970,58 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         for it in items_pedido
         if not (it.get("referencia") or "").strip()
     ]
-    arg_signatures = {_confirmation_item_signature(item) for item in items_pedido if item.get("referencia")}
-    draft_signatures = {_confirmation_item_signature(item) for item in draft_fallback_items}
+
+    # ── DRAFT MERGE STRATEGY ──────────────────────────────────────────────
+    # The draft (populated by consultar_inventario) contains authoritative
+    # product identity (status="matched"). The LLM provides the correct qty
+    # and unit. Merge: use draft identity + LLM quantities.
     _using_authoritative_draft = False
-    if draft_fallback_items and (
-        not items_pedido
-        or productos_sin_ref
-        or len(arg_signatures) != len(draft_signatures)
-        or arg_signatures != draft_signatures
-    ):
+    if draft_fallback_items and items_pedido and not productos_sin_ref:
+        draft_by_ref = {}
+        for di in draft_fallback_items:
+            norm = normalize_reference_value(di.get("referencia") or "")
+            if norm:
+                draft_by_ref[norm] = di
+
+        # Also index the full commercial_draft items (which have more fields)
+        full_draft_items = (commercial_draft.get("items") or [])
+        full_draft_by_ref = {}
+        for fdi in full_draft_items:
+            if fdi.get("status") == "matched":
+                norm = normalize_reference_value(fdi.get("referencia") or fdi.get("codigo_articulo") or "")
+                if norm:
+                    full_draft_by_ref[norm] = fdi
+
+        merged_items = []
+        for llm_item in items_pedido:
+            llm_ref = normalize_reference_value(llm_item.get("referencia") or "")
+            draft_match = draft_by_ref.get(llm_ref)
+            if draft_match:
+                # Trust draft identity, use LLM quantity
+                merged = dict(draft_match)
+                merged["cantidad"] = llm_item.get("cantidad") or draft_match.get("cantidad") or 1
+                merged["unidad_medida"] = llm_item.get("unidad_medida") or draft_match.get("unidad_medida") or "unidad"
+                merged_items.append(merged)
+            else:
+                # Item not in draft — keep LLM's version for re-validation
+                merged_items.append(llm_item)
+
+        # If we matched at least some items from draft, use merged list
+        if any(normalize_reference_value(m.get("referencia") or "") in draft_by_ref for m in merged_items):
+            items_pedido = merged_items
+            _using_authoritative_draft = True
+            logger.info(
+                "confirmar_pedido_y_generar_pdf DRAFT MERGED conv=%s llm_items=%d draft_matched=%d",
+                context.get("conversation_id"),
+                len(items_pedido),
+                sum(1 for m in merged_items if normalize_reference_value(m.get("referencia") or "") in draft_by_ref),
+            )
+    elif draft_fallback_items and (not items_pedido or productos_sin_ref):
         logger.info(
-            "confirmar_pedido_y_generar_pdf using authoritative draft conv=%s arg_items=%d draft_items=%d arg_signatures=%s draft_signatures=%s",
+            "confirmar_pedido_y_generar_pdf using full authoritative draft conv=%s arg_items=%d draft_items=%d",
             context.get("conversation_id"),
             len(items_pedido or []),
             len(draft_fallback_items),
-            sorted(arg_signatures),
-            sorted(draft_signatures),
         )
         items_pedido = draft_fallback_items
         productos_sin_ref = []
@@ -20384,6 +20420,47 @@ def _handle_tool_generar_memoria_tecnica(args, conversation_context):
         )
 
 
+def _accumulate_inventory_to_draft(result_json: str, fn_args: dict, conversation_context: dict):
+    """Bridge: after consultar_inventario returns, save matched products into
+    commercial_draft so confirmar_pedido can use the fast-path (no re-lookup)."""
+    try:
+        parsed = json.loads(result_json) if isinstance(result_json, str) else result_json
+        productos = parsed.get("productos") or []
+        if not productos:
+            return
+        draft = conversation_context.setdefault("commercial_draft", {})
+        existing_items = draft.setdefault("items", [])
+        existing_refs = {
+            normalize_reference_value(it.get("referencia") or it.get("codigo_articulo") or "")
+            for it in existing_items
+        }
+        for prod in productos:
+            ref = prod.get("codigo") or prod.get("referencia") or ""
+            if not ref:
+                continue
+            norm_ref = normalize_reference_value(ref)
+            if norm_ref in existing_refs:
+                continue  # already in draft
+            existing_refs.add(norm_ref)
+            desc = prod.get("descripcion") or prod.get("descripcion_exacta") or ""
+            existing_items.append({
+                "status": "matched",
+                "source": "consultar_inventario",
+                "original_text": desc,
+                "descripcion_comercial": desc,
+                "descripcion_exacta": prod.get("descripcion_exacta") or desc,
+                "referencia": ref,
+                "codigo_articulo": ref,
+                "cantidad": 1,
+                "unidad_medida": prod.get("presentacion") or "unidad",
+                "audit_label": prod.get("etiqueta_auditable") or desc,
+                "etiqueta_auditable": prod.get("etiqueta_auditable") or desc,
+                "precio_unitario": prod.get("precio_unitario"),
+            })
+    except Exception:
+        pass  # Never block the main flow
+
+
 def _execute_agent_tool(tool_call, context, conversation_context):
     fn_name = tool_call.function.name
     try:
@@ -20401,8 +20478,10 @@ def _execute_agent_tool(tool_call, context, conversation_context):
     try:
         if fn_name == "consultar_inventario":
             result = _handle_tool_consultar_inventario(fn_args, conversation_context)
+            _accumulate_inventory_to_draft(result, fn_args, conversation_context)
         elif fn_name == "consultar_inventario_lote":
             result = _handle_tool_consultar_inventario_lote(fn_args, conversation_context)
+            _accumulate_inventory_to_draft(result, fn_args, conversation_context)
         elif fn_name == "verificar_identidad":
             result = _handle_tool_verificar_identidad(fn_args, context, conversation_context)
         elif fn_name == "consultar_cartera":
@@ -21636,7 +21715,21 @@ async def _flush_debounce_buffer(phone_number: str):
 
     try:
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, _sync_flush_processing)
+        await asyncio.wait_for(
+            loop.run_in_executor(None, _sync_flush_processing),
+            timeout=180,  # 3 min hard cap — prevents stuck threads
+        )
+    except asyncio.TimeoutError:
+        logger.error("DEBOUNCE FLUSH TIMEOUT for %s after 180s", phone_number)
+        try:
+            fallback_context = first_meta.get("context")
+            if fallback_context and fallback_context.get("telefono_e164"):
+                send_whatsapp_text_message(
+                    fallback_context["telefono_e164"],
+                    "Lo siento, tu solicitud tardó más de lo esperado. Por favor intenta de nuevo.",
+                )
+        except Exception:
+            pass
     except Exception as exc:
         logger.error("DEBOUNCE FLUSH ERROR for %s: %s", phone_number, exc, exc_info=True)
         try:
