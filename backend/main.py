@@ -5622,6 +5622,9 @@ def should_send_processing_ack(content: Optional[str], conversation_context: Opt
         return False
     normalized = normalize_text_value(raw)
     draft = dict((conversation_context or {}).get("commercial_draft") or {})
+    # Si el draft ya fue confirmado y tiene PDF, no activar watchdog
+    if draft.get("draft_id") and draft.get("pdf_id"):
+        return False
     draft_has_items = bool(draft.get("items"))
     active_intent = normalize_text_value(
         draft.get("tipo_documento")
@@ -18632,6 +18635,34 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     resumen_asesoria = args.get("resumen_asesoria", "")
     nombre_despacho_original = nombre_despacho  # Preservar el nombre que el LLM envió del cliente
     commercial_draft = dict(conversation_context.get("commercial_draft") or {})
+
+    # ── GUARDIA DE IDEMPOTENCIA: si el draft ya fue confirmado y el PDF ──
+    # ya existe en memoria, reenviar el mismo PDF sin generar uno nuevo.
+    _existing_draft_id = commercial_draft.get("draft_id")
+    _existing_pdf_id = commercial_draft.get("pdf_id")
+    if _existing_draft_id and _existing_pdf_id and _existing_pdf_id in PDF_STORAGE:
+        logger.info(
+            "confirmar_pedido_y_generar_pdf IDEMPOTENT SKIP conv=%s draft_id=%s pdf_id=%s",
+            context.get("conversation_id"), _existing_draft_id, _existing_pdf_id,
+        )
+        _stored = PDF_STORAGE[_existing_pdf_id]
+        _pdf_filename = _stored.get("filename", f"Pedido_CRM_{context['conversation_id']}.pdf")
+        try:
+            send_whatsapp_document_bytes(
+                context["telefono_e164"],
+                _stored["buffer"],
+                _pdf_filename,
+                caption=f"📄 Aquí tienes nuevamente el soporte de tu pedido, {nombre_despacho or 'estimado cliente'}.",
+            )
+        except Exception as _resend_exc:
+            logger.warning("Idempotent PDF resend failed: %s", _resend_exc)
+        return json.dumps(
+            {"exito": True, "canal": "whatsapp", "archivo": _pdf_filename,
+             "order_id": _existing_draft_id, "reenvio": True,
+             "mensaje": f"El PDF '{_pdf_filename}' ya fue generado y enviado previamente. Se reenvió exitosamente."},
+            ensure_ascii=False,
+        )
+
     technical_guidance = _get_active_technical_guidance(conversation_context, commercial_draft)
     draft_fallback_items = _draft_items_to_confirmation_payloads(commercial_draft)
     internal_auth = dict(conversation_context.get("internal_auth") or {})
@@ -19008,7 +19039,6 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         )
         commercial_draft["draft_id"] = order_id
         mark_agent_order_status(order_id, "confirmado", metadata_update={"nombre_despacho": nombre_despacho})
-        update_conversation_context(context["conversation_id"], {"commercial_draft": commercial_draft, "claim_case": None})
         logger.info(
             "confirmar_pedido_y_generar_pdf persisted draft conv=%s order_id=%s elapsed=%dms",
             context.get("conversation_id"),
@@ -19029,6 +19059,9 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             cliente_contexto,
             commercial_draft,
         )
+        # Guardar pdf_id en el draft para la guardia de idempotencia
+        commercial_draft["pdf_id"] = pdf_id
+        update_conversation_context(context["conversation_id"], {"commercial_draft": commercial_draft, "claim_case": None})
         logger.info(
             "confirmar_pedido_y_generar_pdf pdf ready conv=%s pdf_id=%s elapsed=%dms",
             context.get("conversation_id"),
@@ -20130,6 +20163,27 @@ def _accumulate_inventory_to_draft(result_json: str, fn_args: dict, conversation
             normalize_reference_value(it.get("referencia") or it.get("codigo_articulo") or "")
             for it in existing_items
         }
+
+        # ── Detect product category keywords for variant replacement ──
+        # When user corrects a product (e.g., "no azul, quiero amarilla"), the
+        # new items should REPLACE old browsing items of the same base category.
+        _CATEGORY_KEYWORDS = [
+            "brocha", "disco", "velcro", "lija", "rodillo", "cinta",
+            "esmalte", "vinilo", "sellador", "barniz", "pintura", "thinner",
+        ]
+
+        def _extract_category(desc_text: str) -> str:
+            """Extract base product category from description."""
+            norm = normalize_text_value(desc_text)
+            for kw in _CATEGORY_KEYWORDS:
+                if kw in norm:
+                    # Include size/dimension if present (e.g., "brocha 3")
+                    import re as _re
+                    size_match = _re.search(r'(\d+[\s"\']*(?:pulgada|pulg|")?)', norm)
+                    size_tag = size_match.group(1).strip().rstrip('"\'') if size_match else ""
+                    return f"{kw}_{size_tag}" if size_tag else kw
+            return ""
+
         for prod in productos:
             ref = prod.get("codigo") or prod.get("referencia") or ""
             if not ref:
@@ -20137,8 +20191,40 @@ def _accumulate_inventory_to_draft(result_json: str, fn_args: dict, conversation
             norm_ref = normalize_reference_value(ref)
             if norm_ref in existing_refs:
                 continue  # already in draft
-            existing_refs.add(norm_ref)
             desc = prod.get("descripcion") or prod.get("descripcion_exacta") or ""
+            new_cat = _extract_category(desc)
+
+            # Replace old browsing items of the same category (variant correction)
+            if new_cat:
+                replaced = False
+                for i, existing in enumerate(existing_items):
+                    if existing.get("status") != "browsing":
+                        continue
+                    old_cat = _extract_category(existing.get("descripcion_comercial") or existing.get("original_text") or "")
+                    if old_cat == new_cat:
+                        old_ref = normalize_reference_value(existing.get("referencia") or existing.get("codigo_articulo") or "")
+                        existing_refs.discard(old_ref)
+                        existing_items[i] = {
+                            "status": "browsing",
+                            "source": "consultar_inventario",
+                            "original_text": desc,
+                            "descripcion_comercial": desc,
+                            "descripcion_exacta": prod.get("descripcion_exacta") or desc,
+                            "referencia": ref,
+                            "codigo_articulo": ref,
+                            "cantidad": 1,
+                            "unidad_medida": prod.get("presentacion") or "unidad",
+                            "audit_label": prod.get("etiqueta_auditable") or desc,
+                            "etiqueta_auditable": prod.get("etiqueta_auditable") or desc,
+                            "precio_unitario": prod.get("precio_unitario"),
+                        }
+                        existing_refs.add(norm_ref)
+                        replaced = True
+                        break
+                if replaced:
+                    continue
+
+            existing_refs.add(norm_ref)
             existing_items.append({
                 "status": "browsing",
                 "source": "consultar_inventario",
