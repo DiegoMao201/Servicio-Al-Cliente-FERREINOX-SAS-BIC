@@ -234,11 +234,15 @@ def _should_preload_technical_guidance(
         ]
     )
 
+    # If we have surface context AND any structured detail (condition, location, etc.),
+    # ALWAYS preload RAG. This is the #1 defense against hallucinated recommendations.
+    if has_surface_context and has_structured_detail:
+        return True
+
     return bool(
         has_surface_context
         and (
             (technical_case or {}).get("ready")
-            or has_structured_detail
             or has_decision_signal
             or has_high_risk_signal
             or inbound_turns >= 2
@@ -549,7 +553,19 @@ def generate_agent_reply_v3(
         pass
     else:
         _llm_extra_kwargs["tools"] = AGENT_TOOLS_V3
-        _llm_extra_kwargs["tool_choice"] = "auto"
+        # For advisory with complete diagnosis, FORCE at least one tool call
+        # so the LLM cannot skip RAG and hallucinate product recommendations.
+        _advisory_complete = (
+            initial_intent == "asesoria"
+            and not _diagnostic_blocked
+            and initial_diagnostic.get("surface")
+            and initial_diagnostic.get("condition")
+        )
+        if _advisory_complete and not tool_calls_made:
+            _llm_extra_kwargs["tool_choice"] = "required"
+            logger.info("V3 advisory complete — forcing tool_choice=required")
+        else:
+            _llm_extra_kwargs["tool_choice"] = "auto"
         _llm_extra_kwargs["parallel_tool_calls"] = True
 
     t_start = time.time()
@@ -731,6 +747,12 @@ def generate_agent_reply_v3(
     if not is_ensenar_msg and not is_greeting:
         assistant_message = _guardia_recomendacion_sin_herramienta(
             assistant_message, messages, tool_calls_made, context, conversation_context, m
+        )
+
+    # ── GUARDIA POST-RAG: productos recomendados deben venir de herramientas ──
+    if not is_ensenar_msg and not is_greeting and tool_calls_made:
+        assistant_message = _guardia_producto_fuera_de_rag(
+            assistant_message, tool_calls_made, m
         )
 
     # ══════════════════════════════════════════════════════════════════════
@@ -1399,7 +1421,11 @@ _HALLUCINATED_PRODUCT_RE = re.compile(
     r"\b(?:viniltex|koraza|aquablock|pintucoat|intergard|interseal|interthane|"
     r"corrotec|pintulux|barnex|sellomax|intervinil|pinturama|pintoxido|"
     r"siliconite|construcleaner|intertherm|acriltex|toptex|"
-    r"pintutrafico|pintutecho|acryl[ií]tex)\b",
+    r"pintutrafico|pintutecho|acryl[ií]tex|"
+    r"altas\s+temperaturas|wash\s+primer|pintura\s+canchas|"
+    r"estuco\s+profesional|estuco\s+prof|"
+    r"pintuco\s+fill|sellamur|imprimante|anticorrosivo|"
+    r"baños\s+y\s+cocinas|wood\s+stain|sellador\s+madera|ultralavable)\b",
     re.IGNORECASE,
 )
 
@@ -1438,7 +1464,64 @@ def _guardia_recomendacion_sin_herramienta(
         list(tools_used),
     )
 
-    # Force re-generation: strip the hallucinated response and tell LLM to use tools
+    # Check if diagnostic was blocked — if so, do NOT give tools back.
+    # Just force a clean diagnostic-only response.
+    try:
+        from agent_context import is_diagnostic_incomplete, extract_diagnostic_data, classify_intent
+    except ImportError:
+        from backend.agent_context import is_diagnostic_incomplete, extract_diagnostic_data, classify_intent
+
+    _user_msg_for_guard = ""
+    for msg in reversed(messages):
+        if msg.get("role") == "user":
+            _user_msg_for_guard = (msg.get("content") or "") if isinstance(msg.get("content"), str) else ""
+            break
+
+    _guard_diagnostic = extract_diagnostic_data(_user_msg_for_guard, [])
+    _guard_intent = classify_intent(_user_msg_for_guard, conversation_context, [], {})
+    _guard_blocked = is_diagnostic_incomplete(_guard_intent, _guard_diagnostic)
+
+    if _guard_blocked:
+        # Diagnostic is incomplete — do NOT give tools back, just force diagnostic questions
+        logger.warning("GUARDIA: diagnostic still incomplete — forcing diagnostic-only response (no tools)")
+        messages_copy = list(messages)
+        messages_copy.append({
+            "role": "system",
+            "content": (
+                "CORRECCIÓN OBLIGATORIA: Tu respuesta anterior mencionó productos específicos "
+                "sin haber consultado ninguna herramienta. Eso está PROHIBIDO. "
+                "Además, el diagnóstico está INCOMPLETO — te faltan datos críticos. "
+                "RE-GENERA tu respuesta: haz 1-2 preguntas diagnósticas SIN MENCIONAR "
+                "NINGÚN nombre de producto, marca o referencia. "
+                "NO digas 'te recomiendo', 'podría ser', 'generalmente se usa'. "
+                "SOLO haz preguntas para completar el diagnóstico."
+            ),
+        })
+        try:
+            t_fix = time.time()
+            resp_fix = m.get_openai_client().chat.completions.create(
+                model=m.get_openai_model(),
+                messages=messages_copy,
+                temperature=0.2,
+                # NO tools — diagnostic is incomplete
+            )
+            fixed_message = resp_fix.choices[0].message
+            logger.info("GUARDIA: forced diagnostic-only re-gen %dms", int((time.time() - t_fix) * 1000))
+
+            # Validate the re-generated response doesn't still hallucinate products
+            fixed_text = fixed_message.content or ""
+            if _HALLUCINATED_PRODUCT_RE.search(fixed_text):
+                logger.warning("GUARDIA: re-gen STILL has products — stripping them")
+                for match in _HALLUCINATED_PRODUCT_RE.finditer(fixed_text):
+                    fixed_text = fixed_text.replace(match.group(0), "[producto]", 1)
+                from types import SimpleNamespace
+                return SimpleNamespace(content=fixed_text, tool_calls=None)
+            return fixed_message
+        except Exception as exc:
+            logger.error("GUARDIA (diag-blocked) error: %s", exc)
+            return assistant_message
+
+    # Diagnostic is complete — force the LLM to call RAG tools
     messages_copy = list(messages)
     messages_copy.append({
         "role": "system",
@@ -1447,20 +1530,24 @@ def _guardia_recomendacion_sin_herramienta(
             "sin haber consultado ninguna herramienta. Eso está PROHIBIDO. "
             "REGLA: No puedes mencionar NINGÚN nombre de producto sin haber llamado "
             "consultar_conocimiento_tecnico o consultar_inventario primero. "
-            "RE-GENERA tu respuesta: si el diagnóstico está completo, llama "
-            "consultar_conocimiento_tecnico AHORA. Si falta información diagnóstica, "
-            "haz las preguntas necesarias SIN mencionar productos."
+            "RE-GENERA tu respuesta: el diagnóstico está completo, llama "
+            "consultar_conocimiento_tecnico AHORA con la superficie y condición del cliente. "
+            "Después, usa SOLO los productos que devuelva el RAG."
         ),
     })
 
     try:
-        from backend.agent_prompt_v3 import AGENT_TOOLS_V3
+        from agent_prompt_v3 import AGENT_TOOLS_V3 as _GUARD_TOOLS
+    except ImportError:
+        from backend.agent_prompt_v3 import AGENT_TOOLS_V3 as _GUARD_TOOLS
+
+    try:
         t_fix = time.time()
         resp_fix = m.get_openai_client().chat.completions.create(
             model=m.get_openai_model(),
             messages=messages_copy,
-            tools=AGENT_TOOLS_V3,
-            tool_choice="auto",
+            tools=_GUARD_TOOLS,
+            tool_choice="required",
             temperature=0.2,
         )
         fixed_message = resp_fix.choices[0].message
@@ -1484,10 +1571,10 @@ def _guardia_recomendacion_sin_herramienta(
                 messages_copy.append({"role": "tool", "tool_call_id": tc.id, "content": result})
 
             # Get final text response after tool execution
-            resp_final = m._get_openai_client().chat.completions.create(
+            resp_final = m.get_openai_client().chat.completions.create(
                 model=m.get_openai_model(),
                 messages=messages_copy,
-                tools=AGENT_TOOLS_V3,
+                tools=_GUARD_TOOLS,
                 tool_choice="none",
                 temperature=0.2,
             )
@@ -1498,3 +1585,58 @@ def _guardia_recomendacion_sin_herramienta(
     except Exception as exc:
         logger.error("GUARDIA ANTI-ALUCINACIÓN error: %s", exc)
         return assistant_message
+
+
+# ── Specific invalid-product patterns that the LLM commonly hallucinates ──
+_KNOWN_MISAPPLIED_PRODUCTS_RE = re.compile(
+    r"\b(?:altas\s+temperaturas|temperaturas?\s+905|905\s+altas|pintura\s+905)\b",
+    re.IGNORECASE,
+)
+
+def _guardia_producto_fuera_de_rag(assistant_message, tool_calls_made, m):
+    """Post-RAG guard: warn when the LLM recommends products known to be
+    commonly hallucinated or misapplied (e.g. Altas Temperaturas 905 for
+    non-thermal applications).
+
+    Also verify that major product recommendations appear somewhere in
+    the tool results, logging a warning if they don't.
+    """
+    response_text = assistant_message.content or ""
+    if not response_text.strip():
+        return assistant_message
+
+    # Collect all tool result text for cross-reference
+    tool_result_text = " ".join(
+        (tc.get("result") or "")
+        for tc in tool_calls_made
+    ).lower()
+
+    # Check for known misapplied products
+    if _KNOWN_MISAPPLIED_PRODUCTS_RE.search(response_text):
+        # Only flag if the product did NOT come from RAG/inventory
+        if "altas temperaturas" not in tool_result_text and "905" not in tool_result_text:
+            logger.warning("GUARDIA POST-RAG: 'Altas Temperaturas 905' hallucinated (not in any tool result)")
+            # Strip the hallucinated product mention and add a note
+            response_text = _KNOWN_MISAPPLIED_PRODUCTS_RE.sub("[producto no verificado]", response_text)
+            from types import SimpleNamespace
+            return SimpleNamespace(content=response_text, tool_calls=None)
+
+    # Cross-reference: check if recommended products appear in tool results
+    products_in_response = set()
+    for match in _HALLUCINATED_PRODUCT_RE.finditer(response_text):
+        products_in_response.add(match.group(0).lower().strip())
+
+    if products_in_response and tool_result_text:
+        missing_from_tools = [
+            p for p in products_in_response
+            if p not in tool_result_text
+        ]
+        if missing_from_tools:
+            logger.warning(
+                "GUARDIA POST-RAG: productos en respuesta NO encontrados en herramientas: %s",
+                missing_from_tools,
+            )
+            # Don't block — just log for now (the products might have come from
+            # the system prompt's mandatory protocols or expert directives)
+
+    return assistant_message

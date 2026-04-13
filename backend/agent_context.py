@@ -524,6 +524,9 @@ _ADVISORY_SIGNALS = [
     "qué le aplico", "que le aplico", "qué sistema", "que sistema",
     "cómo pinto", "como pinto", "me recomiendas", "qué necesito",
     "que necesito", "asesoría", "asesoria", "asesorame",
+    "qué se hace", "que se hace", "qué le echo", "que le echo",
+    "se está descascarando", "se esta descascarando", "se pela",
+    "se está pelando", "se esta pelando",
 ]
 
 _SURFACE_SIGNALS = [
@@ -531,12 +534,14 @@ _SURFACE_SIGNALS = [
     "madera", "puerta", "mueble", "mesa", "bodega", "garaje", "terraza",
     "baño", "cocina", "cancha", "metal", "tanque", "cubierta", "cielo raso",
     "pergola", "pérgola", "sendero", "cicloruta", "nave", "planta",
+    "tubería", "tuberia", "tubo", "galvanizado", "galvanizada",
 ]
 
 _CONDITION_SIGNALS = [
     "humedad", "filtra", "gotea", "moho", "hongo", "salitre", "óxido", "oxido",
     "descascar", "pela", "sopla", "grieta", "entiza", "llueve", "ampolla",
     "nuevo", "viejo", "pintado", "sin pintar", "deterioro",
+    "vapor", "condensación", "condensacion",
 ]
 
 _CLAIM_SIGNALS = [
@@ -726,6 +731,12 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
     if _looks_like_direct_commercial_batch(msg):
         return "pedido_directo"
 
+    # Si el cliente describe una condición problemática CON una superficie,
+    # SIEMPRE es asesoría técnica — incluso si nombra un producto específico.
+    # Ejemplo: "le aplicaron esmalte a la tubería galvanizada y se descascara" = ASESORÍA
+    if has_condition and has_surface:
+        return "asesoria"
+
     if has_inventory_request and has_reference_like and not has_price_request and not has_condition:
         return "consulta_productos"
 
@@ -784,6 +795,15 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
     }
 
     # Surface
+    # ── PRIORITY surface signals: metal/galvanizado beats "techo" when both appear ──
+    # ("hicimos un techo con tubería galvanizada" = metal, not techo)
+    _metal_priority_signals = [
+        "galvanizado", "galvanizada", "galvanizad", "tubería", "tuberia", "tubo ",
+        "reja", "porton", "portón", "baranda", "estructura metálica", "estructura metalica",
+        "lámina", "lamina", "perfil", "angulo", "ángulo",
+    ]
+    _forced_metal = any(kw in combined for kw in _metal_priority_signals)
+
     surface_map = {
         "piso": "piso", "fachada": "fachada", "techo": "techo",
         "muro": "muro", "pared": "muro", "reja": "metal",
@@ -795,10 +815,13 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         "cielo raso": "interior", "pergola": "madera exterior",
         "pérgola": "madera exterior",
     }
-    for kw, surf in surface_map.items():
-        if kw in combined:
-            data["surface"] = surf
-            break
+    if _forced_metal:
+        data["surface"] = "metal"
+    else:
+        for kw, surf in surface_map.items():
+            if kw in combined:
+                data["surface"] = surf
+                break
 
     # Interior/Exterior
     if any(w in combined for w in ["fachada", "terraza", "exterior", "intemperie", "azotea"]):
@@ -806,7 +829,8 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
     elif any(w in combined for w in ["interior", "apartamento", "casa", "oficina", "habitación",
                                       "habitacion", "sala", "cuarto", "dormitorio", "laboratorio",
                                       "consultorio", "clínica", "clinica", "hospital", "restaurante",
-                                      "local", "almacén", "almacen", "aula", "colegio"]):
+                                      "local", "almacén", "almacen", "aula", "colegio",
+                                      "baño", "ducha", "cocina"]):
         data["interior_exterior"] = "interior"
     elif any(w in combined for w in ["bodega", "fábrica", "fabrica", "planta", "nave", "taller"]):
         data["interior_exterior"] = "industrial"
@@ -843,6 +867,8 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         data["humidity_source"] = "filtración superior/exterior"
     elif any(w in combined for w in ["temporada", "cuando llueve", "invierno", "solo en lluvia"]):
         data["humidity_source"] = "humedad por temporada"
+    elif any(w in combined for w in ["vapor", "ducha", "condensación", "condensacion", "baño", "ventilación", "ventilacion"]):
+        data["humidity_source"] = "condensación/vapor (baño o cocina)"
 
     # Muro interior con humedad/salitre se trata como "interior húmedo" para activar alertas duras.
     if (
@@ -906,7 +932,7 @@ def is_diagnostic_incomplete(intent: str, diagnostic: dict) -> bool:
     if not surface:
         missing.append("surface")
     if not diagnostic.get("interior_exterior"):
-        if surface not in ("fachada", "exterior", "madera exterior", "piso deportivo"):
+        if surface not in ("fachada", "exterior", "madera exterior", "piso deportivo", "interior húmedo"):
             missing.append("interior_exterior")
     if not diagnostic.get("condition"):
         missing.append("condition")
@@ -1130,17 +1156,58 @@ def build_turn_context(
         _interior_humidity_conditions = {"humedad", "salitre", "filtración", "goteras", "moho/hongos", "pintura descascarando", "pintura soplada"}
         if diagnostic.get("surface") == "interior húmedo" and diagnostic.get("condition") in _interior_humidity_conditions:
             lines.append("")
-            lines.append("🚨 SISTEMA OBLIGATORIO FERREINOX PARA HUMEDAD INTERIOR: ESTE CASO NO SE RESUELVE CON KORAZA.")
-            lines.append("Secuencia técnica obligatoria:")
-            lines.append("  1. Remover totalmente la pintura soplada/descascarada y el salitre hasta llegar a base sana.")
-            lines.append("  2. Si el revoque está quemado o meteorizado, reemplazarlo antes del sistema nuevo (ej. Revofast o revoque acondicionado).")
-            lines.append("  3. Aplicar Aquablock Ultra en 2 manos, preferiblemente con brocha para cargar bien el producto.")
-            lines.append("  4. Después del Aquablock, aplicar Estuco Profesional Exterior (en inventario: 'estuco prof ext blanco') para nivelar. NUNCA antes.")
-            lines.append("  5. El acabado final debe ser un VINILO para interior. Prioriza Viniltex Advanced; si el cliente pide algo más económico, ofrece otra opción vinílica compatible, pero SIN cambiar la base Aquablock + Estuco.")
+            _humidity_src = diagnostic.get("humidity_source") or ""
+            if "condensación" in _humidity_src or "vapor" in _humidity_src or diagnostic.get("condition") == "moho/hongos":
+                lines.append("🚨 CASO ESPECIAL: MOHO/CONDENSACIÓN EN BAÑO O COCINA")
+                lines.append("La humedad por condensación (vapor de ducha/cocción) NO requiere Aquablock.")
+                lines.append("Secuencia técnica para moho por condensación:")
+                lines.append("  1. REMOCIÓN: Lijar/raspar todo el moho y pintura descascarada hasta superficie sana.")
+                lines.append("  2. LIMPIEZA: Lavar con solución de agua y cloro (50/50), dejar secar completamente.")
+                lines.append("  3. ACABADO ANTIHONGOS OBLIGATORIO: Viniltex Baños y Cocinas (fórmula antihongos + lavable).")
+                lines.append("     → NUNCA recomendar Viniltex Advanced aquí. Baños y Cocinas tiene aditivo antifúngico específico.")
+                lines.append("     → Buscar en inventario: 'viniltex baños cocinas blanco galon'")
+                lines.append("  4. Complementar con: buena ventilación, extractores si es baño sin ventana.")
+                lines.append("Prohibiciones absolutas:")
+                lines.append("  • Viniltex Advanced NO es la solución para moho recurrente — NO tiene antihongos.")
+                lines.append("  • Aquablock Ultra NO va en condensación — es para infiltración de agua, no vapor.")
+                lines.append("  • Koraza NO va en interiores.")
+                lines.append("  • Altas Temperaturas 905 NO va aquí — es para superficies que superan 100°C.")
+            else:
+                lines.append("🚨 SISTEMA OBLIGATORIO FERREINOX PARA HUMEDAD INTERIOR: ESTE CASO NO SE RESUELVE CON KORAZA.")
+                lines.append("Secuencia técnica obligatoria:")
+                lines.append("  1. Remover totalmente la pintura soplada/descascarada y el salitre hasta llegar a base sana.")
+                lines.append("  2. Si el revoque está quemado o meteorizado, reemplazarlo antes del sistema nuevo (ej. Revofast o revoque acondicionado).")
+                lines.append("  3. Aplicar Aquablock Ultra en 2 manos, preferiblemente con brocha para cargar bien el producto.")
+                lines.append("  4. Después del Aquablock, aplicar Estuco Profesional Exterior (en inventario: 'estuco prof ext blanco') para nivelar. NUNCA antes.")
+                lines.append("  5. El acabado final: Viniltex Baños y Cocinas (para baños/cocinas) o Viniltex Advanced (resto interiores). Para máxima protección antimanchas: Viniltex Ultralavable.")
             lines.append("Prohibiciones absolutas para este caso:")
             lines.append("  • Koraza NO va como imprimante ni como acabado en muro interior con humedad/salitre.")
             lines.append("  • Pintuco Fill NO es la solución si el problema es interior/capilaridad desde la base del muro.")
+            lines.append("  • Altas Temperaturas 905 NUNCA va como acabado en interiores — es solo para superficies que superan 100°C.")
             lines.append("Acción: Presenta esta solución técnica completa y luego pide m² para cotizar cantidades exactas.")
+
+        # ── Galvanizado: sistema obligatorio ──
+        _conv_text_lower = (user_message or "").lower() + " " + " ".join(
+            (msg.get("contenido") or "").lower()
+            for msg in (recent_messages or [])[-10:]
+            if msg.get("direction") == "inbound"
+        )
+        if diagnostic.get("surface") == "metal" and any(w in _conv_text_lower for w in ["galvanizado", "galvanizada", "galvanizad"]):
+            lines.append("")
+            lines.append("🚨 METAL GALVANIZADO DETECTADO — SISTEMA OBLIGATORIO:")
+            lines.append("El galvanizado tiene una capa de zinc que rechaza la pintura convencional.")
+            lines.append("Si el cliente aplicó esmalte directo, se descascara como un plástico. Sistema correcto:")
+            lines.append("  1. PREPARACIÓN: Lijar suavemente con lija 150-220 para crear perfil de agarre. Limpiar con Varsol.")
+            lines.append("  2. PROMOTOR DE ADHERENCIA OBLIGATORIO: Wash Primer (es OBLIGATORIO sobre galvanizado).")
+            lines.append("     → Buscar en inventario: 'wash primer'")
+            lines.append("  3. ANTICORROSIVO: Corrotec (o Corrotec Premium para máxima protección).")
+            lines.append("     → Buscar en inventario: 'corrotec gris galon'")
+            lines.append("  4. ACABADO: Pintulux 3 en 1 (decorativo, incluye anticorrosivo) o Esmalte Doméstico.")
+            lines.append("     → Buscar en inventario: 'pintulux 3 en 1 blanco galon'")
+            lines.append("Prohibiciones absolutas:")
+            lines.append("  • Pintura Altas Temperaturas 905 NO va aquí — es para superficies que superan 100°C (tubos de escape, chimeneas).")
+            lines.append("  • Esmalte directo sobre galvanizado NUNCA — se pela siempre sin Wash Primer.")
+            lines.append("  • Pinturas de agua (vinílicas/acrílicas) NO van sobre metal.")
 
         if missing:
             lines.append(f"Datos faltantes: {', '.join(missing)}")
