@@ -438,7 +438,7 @@ def generate_agent_reply_v3(
     messages.append({"role": "user", "content": user_message})
 
     initial_diagnostic = extract_diagnostic_data(user_message, recent_messages)
-    _location_optional_surfaces = {"fachada", "exterior", "madera exterior", "piso deportivo", "interior húmedo"}
+    _location_optional_surfaces = {"fachada", "exterior", "madera exterior", "piso deportivo"}
     _has_actionable_diagnostic = bool(
         initial_diagnostic.get("surface")
         and initial_diagnostic.get("condition")

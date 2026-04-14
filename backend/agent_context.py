@@ -680,7 +680,7 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
     diagnostic_condition = diagnostic.get("condition")
     diagnostic_location = diagnostic.get("interior_exterior")
     diagnostic_surface_without_location = {
-        "fachada", "exterior", "madera exterior", "piso deportivo", "interior húmedo"
+            "fachada", "exterior", "madera exterior", "piso deportivo"
     }
     has_structured_diagnostic = bool(
         diagnostic_surface
@@ -981,7 +981,7 @@ def is_diagnostic_incomplete(intent: str, diagnostic: dict) -> bool:
     if not surface:
         missing.append("surface")
     if not diagnostic.get("interior_exterior"):
-        if surface not in ("fachada", "exterior", "madera exterior", "piso deportivo", "interior húmedo"):
+        if surface not in ("fachada", "exterior", "madera exterior", "piso deportivo"):
             missing.append("interior_exterior")
     if not diagnostic.get("condition"):
         missing.append("condition")

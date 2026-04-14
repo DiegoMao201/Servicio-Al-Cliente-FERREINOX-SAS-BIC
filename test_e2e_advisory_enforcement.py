@@ -9,6 +9,18 @@ from agent_v3 import _guardia_universal_producto
 
 
 class AdvisoryEnforcementTests(unittest.TestCase):
+    def test_first_turn_humidity_without_location_stays_blocked(self):
+        user_message = "Buenas, detras del closet del primer piso la pared se esta soplando y sale polvillo blanco desde abajo."
+
+        diagnostic = extract_diagnostic_data(user_message, [])
+        intent = classify_intent(user_message, {}, [], {})
+
+        self.assertEqual(intent, "asesoria")
+        self.assertEqual(diagnostic["surface"], "interior húmedo")
+        self.assertEqual(diagnostic["condition"], "pintura soplada")
+        self.assertIsNone(diagnostic["interior_exterior"])
+        self.assertTrue(is_diagnostic_incomplete(intent, diagnostic))
+
     def test_followup_diagnostic_turn_stays_advisory(self):
         recent_messages = [
             {
