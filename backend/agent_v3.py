@@ -205,6 +205,15 @@ def _should_preload_technical_guidance(
     if conversation_context.get("latest_technical_guidance"):
         return False
 
+    # ── CRITICAL: never preload if diagnostic is still incomplete ──
+    # This prevents the agent from skipping diagnostic questions.
+    try:
+        from agent_context import is_diagnostic_incomplete
+    except ImportError:
+        from backend.agent_context import is_diagnostic_incomplete
+    if is_diagnostic_incomplete(initial_intent, initial_diagnostic):
+        return False
+
     combined_text = _collect_recent_inbound_text(user_message, recent_messages, limit=5)
     normalized_text = m.normalize_text_value(combined_text)
     inbound_turns = sum(1 for msg in recent_messages or [] if msg.get("direction") == "inbound" and (msg.get("contenido") or "").strip())

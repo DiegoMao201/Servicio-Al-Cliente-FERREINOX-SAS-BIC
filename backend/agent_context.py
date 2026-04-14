@@ -823,6 +823,7 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         "area_m2": None,
         "traffic": None,
         "humidity_source": None,
+        "substrate_type": None,
     }
 
     # Surface
@@ -927,6 +928,18 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
     ):
         data["surface"] = "interior húmedo"
 
+    # ── Substrate type (tipo de sustrato / material de la pared) ──
+    if any(w in combined for w in ["estuco", "estucado", "estucada", "pañete", "pañetado", "pañetada"]):
+        data["substrate_type"] = "estuco/pañete"
+    elif any(w in combined for w in ["ladrillo", "bloque", "mampostería", "mamposteria"]):
+        data["substrate_type"] = "ladrillo/bloque"
+    elif any(w in combined for w in ["drywall", "superboard", "fibrocemento", "eternit"]):
+        data["substrate_type"] = "drywall/fibrocemento"
+    elif any(w in combined for w in ["concreto", "cemento", "hormigón", "hormigon", "placa"]):
+        data["substrate_type"] = "concreto"
+    elif any(w in combined for w in ["revoque", "repello", "friso"]):
+        data["substrate_type"] = "revoque"
+
     return data
 
 
@@ -991,10 +1004,16 @@ def is_diagnostic_incomplete(intent: str, diagnostic: dict) -> bool:
     if surface in ("piso", "piso industrial", "piso vehicular", "piso deportivo"):
         if not diagnostic.get("traffic"):
             missing.append("traffic")
-    # Humedad interior: sin origen de la humedad no podemos definir el sistema base
+    # Humedad interior: sin origen de la humedad ni tipo de sustrato no podemos definir el sistema base
     if surface == "interior húmedo":
         if not diagnostic.get("humidity_source"):
             missing.append("humidity_source")
+        if not diagnostic.get("substrate_type"):
+            missing.append("substrate_type")
+    # Muros/paredes: tipo de sustrato cambia preparación y sistema
+    if surface == "muro":
+        if not diagnostic.get("substrate_type"):
+            missing.append("substrate_type")
 
     return bool(missing)
 
@@ -1179,7 +1198,10 @@ def build_turn_context(
                 missing.append("estado del metal (¿nuevo, oxidado, ya pintado con anticorrosivo?)")
         # Para humedad: la fuente es crítica para la solución
         if diagnostic.get("surface") == "interior húmedo" and not diagnostic.get("humidity_source"):
-            missing.append("origen de la humedad (¿viene del piso/base, de arriba, por temporada?)")
+            missing.append("origen de la humedad (¿viene del piso/base, de arriba, por temporada, o por vapor de ducha/cocina?)")
+        # Para humedad y muros: el tipo de sustrato cambia la preparación y el sistema
+        if diagnostic.get("surface") in ("interior húmedo", "muro") and not diagnostic.get("substrate_type"):
+            missing.append("tipo de pared/sustrato (¿estucada/pañetada, ladrillo, drywall, concreto?)")
         # Para madera: interior/exterior cambia el sistema completamente
         if diagnostic.get("surface") in ("madera", "madera exterior") and not diagnostic.get("condition"):
             if "condición" not in " ".join(missing):
@@ -1197,6 +1219,8 @@ def build_turn_context(
             lines.append(f"Condición: {diagnostic['condition']}")
         if diagnostic.get("humidity_source"):
             lines.append(f"Causa probable: {diagnostic['humidity_source']}")
+        if diagnostic.get("substrate_type"):
+            lines.append(f"Sustrato: {diagnostic['substrate_type']}")
         if diagnostic["area_m2"]:
             lines.append(f"Área: {diagnostic['area_m2']} m²")
         if diagnostic["traffic"]:
@@ -1242,11 +1266,19 @@ def build_turn_context(
             lines.append("TIENES ESTRICTAMENTE PROHIBIDO en este turno:")
             lines.append("  1. Llamar consultar_conocimiento_tecnico (el RAG no sirve sin diagnóstico completo).")
             lines.append("  2. Llamar consultar_inventario o consultar_inventario_lote.")
-            lines.append("  3. Mencionar CUALQUIER nombre de producto, marca o referencia.")
-            lines.append("  4. Sugerir imprimantes, acabados, selladores o cualquier componente de un sistema.")
-            lines.append("  5. Decir frases como 'podría ser X' o 'generalmente se usa Y'.")
+            lines.append("  3. Sugerir sistemas completos, cotizar precios o calcular cantidades.")
+            lines.append("  4. Decir frases como 'te recomiendo X' como recomendación final.")
             lines.append("")
-            lines.append("Tu ÚNICA acción permitida: Haz 1-2 preguntas conversacionales breves para completar los datos faltantes.")
+            lines.append("✅ LO QUE SÍ PUEDES HACER:")
+            lines.append("  1. Dar una SOSPECHA PRELIMINAR breve: 'Mi primera impresión es que podríamos necesitar un sistema para [tipo de problema]'")
+            lines.append("     (puedes mencionar una categoría general como 'antihumedad' o 'antihongos' pero SIN nombres de productos específicos)")
+            lines.append("  2. Hacer 1-3 preguntas diagnósticas CONVERSACIONALES para completar los datos faltantes.")
+            lines.append("  3. Mostrar empatía con el problema del cliente.")
+            lines.append("")
+            lines.append("FORMATO IDEAL de tu respuesta:")
+            lines.append("  1. Empatía breve ('¡Uy, qué fastidio con ese moho! Pero tranquilo que tiene solución.')")
+            lines.append("  2. Sospecha preliminar ('Por lo que me cuentas, seguramente necesitamos un tratamiento antihumedad...')")
+            lines.append("  3. Preguntas diagnósticas ('pero para darte la solución ideal necesito saber: ¿la pared es estucada o de ladrillo? ¿cuántos m² tiene el área afectada?')")
             lines.append("Adapta las preguntas al contexto del cliente. Ejemplos:")
             if diagnostic.get("surface"):
                 surface_name = diagnostic["surface"]
@@ -1255,7 +1287,7 @@ def build_turn_context(
                 elif surface_name in ("metal", "metal/inmersión"):
                     lines.append(f"  '¿El metal está oxidado, ya tiene anticorrosivo, o es nuevo? ¿Es interior o exterior?'")
                 elif surface_name == "interior húmedo":
-                    lines.append(f"  '¿La humedad viene del piso o de la base del muro, de arriba, o solo aparece en temporada de lluvia?'")
+                    lines.append(f"  '¿La pared es estucada, de ladrillo o de drywall? ¿La humedad viene del piso, de arriba, o es por vapor de ducha? ¿Cuántos m² tiene el área afectada?'")
                 elif surface_name in ("madera", "madera exterior"):
                     lines.append(f"  '¿La madera es nueva o ya tiene barniz/pintura? ¿Está en interior o exterior?'")
                 elif surface_name == "techo":
