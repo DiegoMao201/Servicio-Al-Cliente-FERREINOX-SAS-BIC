@@ -1,5 +1,25 @@
 BEGIN;
 
+-- Safety: drop existing views that will be recreated below to avoid
+-- "cannot change name of view column" errors when the columns/order
+-- of the SELECT changed. This is idempotent and safe because the
+-- script that follows recreates all these views.
+DROP VIEW IF EXISTS public.vw_agent_transfer_request_active CASCADE;
+DROP VIEW IF EXISTS public.vw_agent_order_dispatch_pending CASCADE;
+DROP VIEW IF EXISTS public.vw_agent_catalog_alias_active CASCADE;
+DROP VIEW IF EXISTS public.vw_agent_catalog_product_search CASCADE;
+DROP VIEW IF EXISTS public.vw_agente_producto_disponibilidad CASCADE;
+DROP VIEW IF EXISTS public.vw_agente_clientes_lookup CASCADE;
+DROP VIEW IF EXISTS public.productos CASCADE;
+DROP VIEW IF EXISTS public.vw_inventario_agente CASCADE;
+DROP VIEW IF EXISTS public.vw_cliente_contexto_agente CASCADE;
+DROP VIEW IF EXISTS public.vw_recaudos CASCADE;
+DROP VIEW IF EXISTS public.vw_cuentas_por_pagar CASCADE;
+DROP VIEW IF EXISTS public.vw_estado_cartera CASCADE;
+DROP VIEW IF EXISTS public.vw_albaranes_pendientes CASCADE;
+DROP VIEW IF EXISTS public.vw_ventas_netas CASCADE;
+
+
 CREATE EXTENSION IF NOT EXISTS unaccent;
 
 CREATE OR REPLACE FUNCTION public.fn_normalize_text(input_text text)
