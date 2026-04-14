@@ -1197,6 +1197,25 @@ def build_turn_context(
         lines.append("  5. La cantidad que el cliente cree necesitar (ej. '5 galones') NO reemplaza el metraje real.")
         lines.append("  6. NO inventes imprimantes: un acabado pedido por el cliente NO se convierte en imprimante por deducción.")
 
+    technical_cases = [entry for entry in (conversation_context.get("technical_cases") or []) if isinstance(entry, dict)]
+    active_case_id = conversation_context.get("active_technical_case_id")
+    if technical_cases:
+        active_case = next((entry for entry in technical_cases if entry.get("case_id") == active_case_id), None)
+        pending_cases = [entry for entry in technical_cases if entry.get("case_id") != active_case_id]
+        lines.append("")
+        lines.append("═══ MEMORIA DE CASOS TÉCNICOS ═══")
+        if active_case:
+            lines.append(
+                f"Caso activo: {active_case.get('case_id')} | {active_case.get('summary') or active_case.get('category') or 'caso técnico'}"
+            )
+        if pending_cases:
+            lines.append("Casos en memoria que SIGUEN ABIERTOS pero NO se deben mezclar con el activo:")
+            for case in pending_cases[:3]:
+                lines.append(
+                    f"  - {case.get('case_id')}: {case.get('summary') or case.get('category') or 'caso técnico'}"
+                )
+        lines.append("Regla obligatoria: cada diagnóstico, sistema, cotización y PDF pertenece SOLO al caso activo del turno.")
+
     # ─── Phase-specific instructions ────────────────────────────────────
     lines.append("")
     lines.append("═══ INSTRUCCIÓN PARA ESTE TURNO ═══")

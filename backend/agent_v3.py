@@ -291,6 +291,70 @@ def _build_preemptive_technical_lookup_args(
     return {"pregunta": search_query}
 
 
+def _infer_active_technical_category(conversation_context: dict, m) -> Optional[str]:
+    active_case = dict((conversation_context or {}).get("technical_advisory_case") or {})
+    active_category = (active_case.get("category") or "").strip().lower()
+    if active_category and active_category != "general":
+        return active_category
+
+    draft = dict((conversation_context or {}).get("commercial_draft") or {})
+    guidance = draft.get("technical_guidance") or (conversation_context or {}).get("latest_technical_guidance") or {}
+    if not isinstance(guidance, dict) or not guidance:
+        return None
+
+    diagnosis = dict(guidance.get("diagnostico_estructurado") or {})
+    problem_class = m.normalize_text_value(diagnosis.get("problem_class") or "")
+    if any(token in problem_class for token in ["metal", "oxid", "galvan", "interthane", "intergard", "interseal", "pintucoat"]):
+        return "metal"
+    if any(token in problem_class for token in ["madera", "barnex", "wood stain"]):
+        return "madera"
+    if any(token in problem_class for token in ["piso", "trafico", "cancha"]):
+        return "piso"
+    if any(token in problem_class for token in ["humedad", "fachada", "eternit", "fibrocemento", "ladrillo", "cubierta", "terraza"]):
+        return "humedad"
+
+    source_text = " ".join(
+        part for part in [
+            str(guidance.get("source_question") or ""),
+            str(guidance.get("source_product") or ""),
+        ]
+        if part
+    )
+    inferred = m.infer_technical_problem_category(source_text or None)
+    if inferred and inferred != "general":
+        return inferred
+    return None
+
+
+def _detect_new_technical_topic_switch(user_message: str, conversation_context: dict, m) -> Optional[dict]:
+    if not user_message:
+        return None
+    context = conversation_context or {}
+    if not (context.get("commercial_draft") or context.get("latest_technical_guidance") or context.get("technical_advisory_case")):
+        return None
+
+    try:
+        fresh_case = m.extract_technical_advisory_case(user_message, {})
+    except Exception:
+        return None
+
+    new_category = (fresh_case.get("category") or "").strip().lower()
+    if not new_category or new_category == "general":
+        return None
+
+    active_category = _infer_active_technical_category(context, m)
+    if not active_category or active_category == "general":
+        return None
+    if active_category == new_category:
+        return None
+
+    return {
+        "active_category": active_category,
+        "new_category": new_category,
+        "technical_case": fresh_case,
+    }
+
+
 def _preload_technical_guidance(args: dict, context: dict, conversation_context: dict, m) -> Optional[str]:
     if not args.get("pregunta"):
         return None
@@ -372,6 +436,72 @@ def generate_agent_reply_v3(
         return teaching_result
 
     initial_intent = classify_intent(user_message, conversation_context, recent_messages, internal_auth)
+
+    case_reference = m.resolve_referenced_technical_case(user_message, conversation_context)
+    if case_reference.get("status") == "ambiguous":
+        candidate_summaries = [candidate.get("summary") or candidate.get("case_id") for candidate in (case_reference.get("candidates") or [])]
+        if candidate_summaries:
+            if len(candidate_summaries) == 1:
+                options_text = candidate_summaries[0]
+            elif len(candidate_summaries) == 2:
+                options_text = f"{candidate_summaries[0]} o {candidate_summaries[1]}"
+            else:
+                options_text = ", ".join(candidate_summaries[:-1]) + f" o {candidate_summaries[-1]}"
+            response_text = (
+                "Tengo varios casos abiertos y no quiero cruzarte los sistemas. "
+                f"¿Te refieres a {options_text}?"
+            )
+            return {
+                "response_text": response_text,
+                "intent": "asesoria_tecnica",
+                "tool_calls": [],
+                "context_updates": {
+                    "pending_case_resolution_candidates": case_reference.get("candidates") or [],
+                },
+                "should_create_task": False,
+                "confidence": m.score_agent_confidence(response_text, [], "asesoria_tecnica"),
+                "is_farewell": False,
+            }
+
+    if case_reference.get("status") == "matched":
+        target_case_id = case_reference.get("case_id")
+        if target_case_id and target_case_id != conversation_context.get("active_technical_case_id"):
+            logger.info("V3 reactivating prior technical case: %s", target_case_id)
+            activated_case_updates = m.activate_technical_case(target_case_id, conversation_context)
+            if activated_case_updates:
+                conversation_context.update(activated_case_updates)
+                conversation_context["_advisory_diagnostic_turn_done"] = conversation_context.get("_advisory_diagnostic_turn_done", False)
+
+    conversation_context["pending_case_resolution_candidates"] = []
+
+    topic_switch = _detect_new_technical_topic_switch(user_message, conversation_context, m)
+    if topic_switch:
+        logger.info(
+            "V3 technical topic switch detected: %s -> %s; clearing stale draft/guidance",
+            topic_switch.get("active_category"),
+            topic_switch.get("new_category"),
+        )
+        current_case = dict((conversation_context or {}).get("technical_advisory_case") or {})
+        if current_case:
+            current_case_updates = m.sync_technical_case_registry(
+                conversation_context,
+                current_case,
+                commercial_draft=conversation_context.get("commercial_draft"),
+                technical_guidance=conversation_context.get("latest_technical_guidance") or (conversation_context.get("commercial_draft") or {}).get("technical_guidance"),
+            )
+            conversation_context.update(current_case_updates)
+
+        new_case_updates = m.sync_technical_case_registry(
+            conversation_context,
+            dict(topic_switch.get("technical_case") or {}),
+            force_new_case=True,
+        )
+        conversation_context.update(new_case_updates)
+        conversation_context["commercial_draft"] = {}
+        conversation_context["latest_technical_guidance"] = {}
+        conversation_context["_advisory_diagnostic_turn_done"] = False
+        initial_intent = "asesoria"
+
     if initial_intent == "saludo" and m.is_simple_greeting(user_message or ""):
         greeting_name = (profile_name or nombre_cliente or "").strip()
         if greeting_name:
@@ -481,6 +611,14 @@ def generate_agent_reply_v3(
     if hasattr(m, "extract_technical_advisory_case"):
         try:
             technical_case = m.extract_technical_advisory_case(user_message, conversation_context)
+            case_updates = m.sync_technical_case_registry(
+                conversation_context,
+                technical_case,
+                commercial_draft=conversation_context.get("commercial_draft"),
+                technical_guidance=conversation_context.get("latest_technical_guidance") or (conversation_context.get("commercial_draft") or {}).get("technical_guidance"),
+            )
+            conversation_context.update(case_updates)
+            technical_case = dict(conversation_context.get("technical_advisory_case") or technical_case)
         except Exception:
             technical_case = None
 
@@ -827,6 +965,11 @@ def generate_agent_reply_v3(
                 "last_product_context": conversation_context.get("last_product_context"),
                 "latest_technical_guidance": conversation_context.get("latest_technical_guidance"),
                 "commercial_draft": conversation_context.get("commercial_draft"),
+                "technical_advisory_case": conversation_context.get("technical_advisory_case"),
+                "technical_cases": conversation_context.get("technical_cases"),
+                "active_technical_case_id": conversation_context.get("active_technical_case_id"),
+                "technical_case_sequence": conversation_context.get("technical_case_sequence"),
+                "pending_case_resolution_candidates": conversation_context.get("pending_case_resolution_candidates"),
                 # Process gate: after first advisory turn, mark diagnostic exchange done
                 # so the NEXT turn allows tools and RAG preload.
                 "_advisory_diagnostic_turn_done": True if _first_advisory_turn else conversation_context.get("_advisory_diagnostic_turn_done"),

@@ -12803,6 +12803,297 @@ def _merge_unique_text_values(existing_values: Optional[list[str]], new_values: 
     return merged
 
 
+def _summarize_case_commercial_draft(draft: Optional[dict]) -> dict:
+    draft = dict(draft or {})
+    items = list(draft.get("items") or [])
+    matched = [item for item in items if item.get("status") == "matched"]
+    labels = []
+    for item in matched[:3]:
+        label = item.get("descripcion_comercial") or item.get("original_text") or item.get("referencia")
+        if label:
+            labels.append(str(label))
+    return {
+        "intent": draft.get("intent") or draft.get("tipo_documento"),
+        "item_count": len(items),
+        "matched_count": len(matched),
+        "labels": labels,
+    }
+
+
+def _build_technical_case_summary(case: Optional[dict], technical_guidance: Optional[dict] = None) -> str:
+    case = dict(case or {})
+    if not case:
+        return "Caso técnico"
+    category = normalize_text_value(case.get("category") or "")
+    normalized_text = normalize_text_value(" ".join(case.get("conversation_history") or []) or case.get("last_user_message") or "")
+
+    if category == "humedad":
+        if any(token in normalized_text for token in ["bano", "baño", "ducha", "vapor", "condensacion", "condensación"]):
+            return "Baño con moho/condensación"
+        if any(token in normalized_text for token in ["salitre", "capilaridad", "base del muro"]):
+            return "Muro con salitre/capilaridad"
+        return "Caso de humedad en muro"
+
+    if category == "metal":
+        if any(token in normalized_text for token in ["teja", "lamina", "lámina", "cubierta"]):
+            return "Teja o lámina metálica"
+        if "galvaniz" in normalized_text:
+            return "Metal galvanizado"
+        if any(token in normalized_text for token in ["ducto", "horno", "caliente", "altas temperaturas"]):
+            return "Metal expuesto a temperatura"
+        return "Caso de metal"
+
+    if category == "madera":
+        return "Caso de madera"
+    if category == "piso":
+        return "Caso de piso"
+
+    diagnosis = dict((technical_guidance or {}).get("diagnostico_estructurado") or {})
+    problem_class = diagnosis.get("problem_class") or ""
+    if problem_class:
+        return str(problem_class).replace("_", " ").strip().title()
+    return "Caso técnico"
+
+
+def _tokenize_case_reference_text(text_value: Optional[str]) -> set[str]:
+    normalized = normalize_text_value(text_value)
+    if not normalized:
+        return set()
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", normalized)
+        if len(token) >= 4 and token not in {"caso", "para", "como", "aplico", "necesito", "quiero", "pintura", "sistema"}
+    }
+
+
+def _build_technical_case_reference_text(case_entry: Optional[dict]) -> str:
+    entry = dict(case_entry or {})
+    parts = [
+        entry.get("summary"),
+        entry.get("last_user_message"),
+        entry.get("source_context"),
+        entry.get("surface_state"),
+        entry.get("problem_class"),
+    ]
+
+    draft_summary = dict(entry.get("commercial_draft") or {})
+    parts.extend(draft_summary.get("labels") or [])
+
+    draft_snapshot = dict(entry.get("commercial_draft_snapshot") or {})
+    for item in draft_snapshot.get("items") or []:
+        parts.extend([
+            item.get("descripcion_comercial"),
+            item.get("original_text"),
+            item.get("referencia"),
+            ((item.get("matched_product") or {}).get("descripcion") if isinstance(item.get("matched_product"), dict) else None),
+        ])
+
+    guidance_snapshot = dict(entry.get("technical_guidance_snapshot") or {})
+    parts.extend([
+        guidance_snapshot.get("source_question"),
+        guidance_snapshot.get("source_product"),
+    ])
+    parts.extend(guidance_snapshot.get("required_products") or [])
+    parts.extend(guidance_snapshot.get("productos_sistema_prioritarios") or [])
+
+    return " ".join(str(part) for part in parts if part)
+
+
+def resolve_referenced_technical_case(user_message: Optional[str], conversation_context: Optional[dict]) -> dict:
+    context = conversation_context or {}
+    technical_cases = [dict(entry) for entry in (context.get("technical_cases") or []) if isinstance(entry, dict)]
+    if len(technical_cases) < 2:
+        return {"status": "none"}
+
+    normalized_message = normalize_text_value(user_message)
+    if not normalized_message:
+        return {"status": "none"}
+
+    active_case_id = context.get("active_technical_case_id")
+
+    explicit_case_match = re.search(r"\bcaso\s*(\d+)\b", normalized_message)
+    if explicit_case_match:
+        explicit_case_id = f"caso_{explicit_case_match.group(1)}"
+        entry = next((case for case in technical_cases if case.get("case_id") == explicit_case_id), None)
+        if entry:
+            return {"status": "matched", "case_id": explicit_case_id, "confidence": "alta", "matched_by": "case_id"}
+
+    inferred_category = infer_technical_problem_category(user_message)
+    message_tokens = _tokenize_case_reference_text(user_message)
+    scored_cases = []
+
+    for entry in technical_cases:
+        case_id = entry.get("case_id")
+        if not case_id:
+            continue
+        score = 0
+        reason_hits = []
+        entry_category = normalize_text_value(entry.get("category") or "")
+        if inferred_category and inferred_category != "general" and inferred_category == entry_category:
+            score += 4
+            reason_hits.append("category")
+
+        reference_text = _build_technical_case_reference_text(entry)
+        reference_tokens = _tokenize_case_reference_text(reference_text)
+        overlap = len(message_tokens & reference_tokens)
+        if overlap:
+            score += min(overlap, 6)
+            reason_hits.append(f"overlap:{overlap}")
+
+        for label in (dict(entry.get("commercial_draft") or {}).get("labels") or []):
+            normalized_label = normalize_text_value(label)
+            if normalized_label and normalized_label in normalized_message:
+                score += 8
+                reason_hits.append("draft_label")
+                break
+
+        guidance_snapshot = dict(entry.get("technical_guidance_snapshot") or {})
+        for product in (guidance_snapshot.get("required_products") or []) + (guidance_snapshot.get("productos_sistema_prioritarios") or []):
+            normalized_product = normalize_text_value(product)
+            if normalized_product and normalized_product in normalized_message:
+                score += 7
+                reason_hits.append("required_product")
+                break
+
+        summary_text = normalize_text_value(entry.get("summary") or "")
+        if summary_text and summary_text in normalized_message:
+            score += 6
+            reason_hits.append("summary")
+
+        if score > 0:
+            scored_cases.append({
+                "case_id": case_id,
+                "score": score,
+                "reason_hits": reason_hits,
+                "is_active": case_id == active_case_id,
+                "summary": entry.get("summary") or entry.get("category") or case_id,
+            })
+
+    if not scored_cases:
+        return {"status": "none"}
+
+    scored_cases.sort(key=lambda item: (item["score"], 0 if item["is_active"] else 1), reverse=True)
+    best = scored_cases[0]
+    second = scored_cases[1] if len(scored_cases) > 1 else None
+
+    if best["is_active"]:
+        return {"status": "active", "case_id": best["case_id"], "confidence": "alta", "matched_by": best["reason_hits"]}
+
+    if best["score"] >= 6 and (not second or best["score"] >= second["score"] + 3):
+        return {"status": "matched", "case_id": best["case_id"], "confidence": "alta", "matched_by": best["reason_hits"]}
+
+    candidate_cases = [item for item in scored_cases if item["score"] >= max(best["score"] - 1, 4)]
+    if len(candidate_cases) >= 2:
+        return {
+            "status": "ambiguous",
+            "candidates": [
+                {"case_id": item["case_id"], "summary": item["summary"]}
+                for item in candidate_cases[:3]
+            ],
+        }
+
+    return {"status": "none"}
+
+
+def activate_technical_case(case_id: str, conversation_context: Optional[dict]) -> dict:
+    context = conversation_context or {}
+    technical_cases = [dict(entry) for entry in (context.get("technical_cases") or []) if isinstance(entry, dict)]
+    target = next((entry for entry in technical_cases if entry.get("case_id") == case_id), None)
+    if not target:
+        return {}
+
+    updated_cases = []
+    for entry in technical_cases:
+        entry_copy = dict(entry)
+        entry_copy["status"] = "activo" if entry_copy.get("case_id") == case_id else "pendiente"
+        updated_cases.append(entry_copy)
+
+    return {
+        "technical_cases": updated_cases,
+        "active_technical_case_id": case_id,
+        "technical_advisory_case": dict(target.get("technical_case_snapshot") or {}),
+        "latest_technical_guidance": dict(target.get("technical_guidance_snapshot") or {}),
+        "commercial_draft": dict(target.get("commercial_draft_snapshot") or {}),
+    }
+
+
+def sync_technical_case_registry(
+    conversation_context: Optional[dict],
+    technical_case: Optional[dict],
+    *,
+    commercial_draft: Optional[dict] = None,
+    technical_guidance: Optional[dict] = None,
+    force_new_case: bool = False,
+) -> dict:
+    context = conversation_context or {}
+    case = dict(technical_case or {})
+    if not case:
+        return {
+            "technical_cases": list(context.get("technical_cases") or []),
+            "active_technical_case_id": context.get("active_technical_case_id"),
+            "technical_case_sequence": context.get("technical_case_sequence") or 0,
+        }
+
+    cases = [dict(entry) for entry in (context.get("technical_cases") or []) if isinstance(entry, dict)]
+    active_case_id = context.get("active_technical_case_id")
+    sequence = int(context.get("technical_case_sequence") or len(cases) or 0)
+
+    incoming_category = normalize_text_value(case.get("category") or "")
+    case_id = case.get("case_id")
+
+    if not case_id and not force_new_case and active_case_id:
+        active_entry = next((entry for entry in cases if entry.get("case_id") == active_case_id), None)
+        active_category = normalize_text_value((active_entry or {}).get("category") or "")
+        if active_category and active_category == incoming_category:
+            case_id = active_case_id
+
+    if not case_id:
+        sequence += 1
+        case_id = f"caso_{sequence}"
+
+    case["case_id"] = case_id
+    summary = _build_technical_case_summary(case, technical_guidance)
+    draft_summary = _summarize_case_commercial_draft(commercial_draft)
+    entry = {
+        "case_id": case_id,
+        "category": case.get("category") or "general",
+        "summary": summary,
+        "status": "activo",
+        "last_user_message": case.get("last_user_message") or "",
+        "source_context": case.get("source_context"),
+        "surface_state": case.get("surface_state"),
+        "problem_class": dict((technical_guidance or {}).get("diagnostico_estructurado") or {}).get("problem_class"),
+        "commercial_draft": draft_summary if draft_summary.get("item_count") else None,
+        "technical_case_snapshot": case,
+        "technical_guidance_snapshot": dict(technical_guidance or {}),
+        "commercial_draft_snapshot": dict(commercial_draft or {}),
+    }
+
+    updated_cases = []
+    replaced = False
+    for existing in cases:
+        if existing.get("case_id") == case_id:
+            updated_cases.append({**existing, **entry})
+            replaced = True
+        else:
+            existing_copy = dict(existing)
+            if existing_copy.get("status") == "activo":
+                existing_copy["status"] = "pendiente"
+            updated_cases.append(existing_copy)
+    if not replaced:
+        for existing in updated_cases:
+            if existing.get("status") == "activo":
+                existing["status"] = "pendiente"
+        updated_cases.append(entry)
+
+    return {
+        "technical_advisory_case": case,
+        "technical_cases": updated_cases,
+        "active_technical_case_id": case_id,
+        "technical_case_sequence": sequence,
+    }
+
+
 def extract_technical_advisory_case(text_value: Optional[str], conversation_context: Optional[dict]):
     case = dict((conversation_context or {}).get("technical_advisory_case") or {})
     normalized = normalize_text_value(text_value)
@@ -13840,10 +14131,11 @@ def build_technical_advisory_flow_reply(profile_name: Optional[str], user_messag
         if questions:
             response_text += " " + " ".join(questions)
         technical_case["stage"] = "diagnosing"
+        case_updates = sync_technical_case_registry(conversation_context, technical_case)
         return {
             "response_text": response_text,
             "intent": "asesoria_tecnica",
-            "context_updates": {"technical_advisory_case": technical_case},
+            "context_updates": case_updates,
         }
 
     search_query = build_technical_search_query(technical_case, user_message)
@@ -13864,10 +14156,11 @@ def build_technical_advisory_flow_reply(profile_name: Optional[str], user_messag
             "En la base técnica no me salió un sistema suficientemente claro para este diagnóstico exacto, así que prefiero no alucinar ni improvisarte una recomendación. "
             "Si quieres, seguimos afinando el caso con el uso exacto y la línea que buscas para aterrizarlo bien dentro del portafolio."
         )
+        case_updates = sync_technical_case_registry(conversation_context, technical_case)
         return {
             "response_text": response_text,
             "intent": "asesoria_tecnica",
-            "context_updates": {"technical_advisory_case": technical_case},
+            "context_updates": case_updates,
         }
 
     candidate_products = extract_candidate_products_from_rag_context(rag_context, source_file)
@@ -13907,10 +14200,11 @@ def build_technical_advisory_flow_reply(profile_name: Optional[str], user_messag
         response_text = f"{response_text}\n\n{inventory_block}".strip()
 
     technical_case["stage"] = "recommended"
+    case_updates = sync_technical_case_registry(conversation_context, technical_case)
     return {
         "response_text": response_text,
         "intent": "asesoria_tecnica",
-        "context_updates": {"technical_advisory_case": technical_case},
+        "context_updates": case_updates,
         "technical_source_filename": source_file,
     }
 
@@ -22111,6 +22405,10 @@ async def receive_whatsapp_webhook(request: Request):
                                 "pending_document_options": None,
                                 "last_product_request": None,
                                 "technical_advisory_case": None,
+                                "technical_cases": None,
+                                "active_technical_case_id": None,
+                                "technical_case_sequence": None,
+                                "pending_case_resolution_candidates": None,
                                 "internal_auth": None,
                                 "internal_last_cliente_codigo": None,
                                 "awaiting_internal_auth_cedula": None,

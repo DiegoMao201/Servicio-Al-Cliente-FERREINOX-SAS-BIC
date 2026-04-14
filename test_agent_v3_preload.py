@@ -124,6 +124,49 @@ class AgentV3PreloadTests(unittest.TestCase):
         self.assertIn("condensacion", query)
         self.assertIn("bano", query)
 
+    def test_detect_new_technical_topic_switch_clears_humidity_context_for_metal_case(self):
+        conversation_context = {
+            "commercial_draft": {
+                "intent": "cotizacion",
+                "items": [{"status": "matched", "descripcion_comercial": "Viniltex Banos y Cocinas"}],
+                "technical_guidance": {
+                    "source_question": "humedad en muro condensacion o vapor en bano interior estucada",
+                    "diagnostico_estructurado": {"problem_class": "humedad_interior_general"},
+                },
+            },
+            "latest_technical_guidance": {
+                "source_question": "humedad en muro condensacion o vapor en bano interior estucada",
+                "diagnostico_estructurado": {"problem_class": "humedad_interior_general"},
+            },
+        }
+
+        topic_switch = agent_v3._detect_new_technical_topic_switch(
+            "Y necesito saber cuál es la pintura recomendada para la teja metálica con recubrimiento de 25 micras.",
+            conversation_context,
+            main,
+        )
+
+        self.assertIsNotNone(topic_switch)
+        self.assertEqual(topic_switch["active_category"], "humedad")
+        self.assertEqual(topic_switch["new_category"], "metal")
+
+    def test_detect_new_technical_topic_switch_does_not_reset_same_humidity_case(self):
+        conversation_context = {
+            "latest_technical_guidance": {
+                "source_question": "humedad en muro condensacion o vapor en bano interior estucada",
+                "diagnostico_estructurado": {"problem_class": "humedad_interior_general"},
+            },
+            "technical_advisory_case": {"category": "humedad"},
+        }
+
+        topic_switch = agent_v3._detect_new_technical_topic_switch(
+            "Y la humedad es por la ducha y además necesito estucar porque el estuco está muy feo.",
+            conversation_context,
+            main,
+        )
+
+        self.assertIsNone(topic_switch)
+
 
 if __name__ == "__main__":
     unittest.main()
