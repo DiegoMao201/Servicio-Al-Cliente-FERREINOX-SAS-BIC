@@ -21,13 +21,13 @@ class AgentV3PreloadTests(unittest.TestCase):
         )
         self.assertTrue(result)
 
-    def test_preload_triggers_on_second_advisory_turn_with_known_surface(self):
+    def test_preload_triggers_on_second_advisory_turn_with_complete_diagnostic(self):
         recent_messages = [
             {"direction": "inbound", "contenido": "Tengo una fachada de ladrillo a la vista y se puso negra por humo y agua."},
         ]
         diagnostic = {
             "surface": "fachada",
-            "condition": None,
+            "condition": "manchas/negreado",
             "interior_exterior": "exterior",
             "area_m2": None,
             "traffic": None,
@@ -47,11 +47,11 @@ class AgentV3PreloadTests(unittest.TestCase):
 
         self.assertTrue(should_preload)
 
-    def test_preload_triggers_for_potable_water_immersion_case(self):
+    def test_preload_triggers_for_potable_water_immersion_case_when_diagnostic_is_complete(self):
         diagnostic = {
             "surface": "metal/inmersión",
-            "condition": None,
-            "interior_exterior": None,
+            "condition": "contacto permanente con agua",
+            "interior_exterior": "interior",
             "area_m2": None,
             "traffic": None,
             "humidity_source": None,
@@ -109,6 +109,20 @@ class AgentV3PreloadTests(unittest.TestCase):
         )
 
         self.assertIn("sistema para madera", main.normalize_text_value(args.get("pregunta") or ""))
+
+    def test_humidity_case_captures_bath_condensation_context_for_search(self):
+        technical_case = main.extract_technical_advisory_case(
+            "Las paredes del baño están negras de moho por el vapor de la ducha y están estucadas.",
+            {},
+        )
+
+        self.assertEqual(technical_case.get("category"), "humedad")
+        self.assertEqual(technical_case.get("source_context"), "condensacion o vapor en baño/cocina")
+        self.assertEqual(technical_case.get("wall_location"), "interior")
+
+        query = main.normalize_text_value(main.build_technical_search_query(technical_case))
+        self.assertIn("condensacion", query)
+        self.assertIn("bano", query)
 
 
 if __name__ == "__main__":

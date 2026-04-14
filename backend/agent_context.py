@@ -127,7 +127,7 @@ _PROBLEM_PROTOCOLS: dict[str, dict] = {
             "Remover pintura suelta, salitre y base dañada hasta sustrato sano.",
             "Si el revoque está malo, reemplazarlo antes del sistema nuevo.",
             "Aplicar Aquablock Ultra en 2 manos.",
-            "Aplicar Estuco Profesional Exterior después del Aquablock.",
+            "Aplicar Estuco Acrílico para Exterior/Humedad después del Aquablock (en ERP suele resolverse como estuco prof ext).",
             "Cerrar con vinilo interior compatible; si el cliente pide economía, solo cambia el vinilo final.",
         ],
         "forbidden_shortcuts": [
@@ -147,7 +147,7 @@ _PROBLEM_PROTOCOLS: dict[str, dict] = {
         "required_system": [
             "Diagnosticar la causa.",
             "Definir si corresponde Aquablock/Sellamur como base técnica.",
-            "Nivelar con Estuco Profesional Exterior cuando aplique.",
+            "Nivelar con Estuco Acrílico para Exterior/Humedad cuando aplique (en ERP suele resolverse como estuco prof ext).",
             "Cerrar con vinilo interior compatible.",
         ],
         "forbidden_shortcuts": [
@@ -1256,7 +1256,7 @@ def build_turn_context(
                 lines.append("La humedad por vapor de ducha/cocción es DIFERENTE de la infiltración de agua líquida.")
                 lines.append("Consultá al RAG especificando: superficie='interior húmedo', condición='moho por condensación en baño'.")
                 lines.append("El RAG diferencia entre condensación (moho por vapor) e infiltración (agua que filtra).")
-                lines.append("La solución es distinta — no asumas que aplica el mismo sistema.")
+                lines.append("La solución es distinta — no asumas que aplica el mismo sistema ni metas Aquablock por inercia si no hay filtración/capilaridad.")
             else:
                 lines.append("🚨 CASO: HUMEDAD INTERIOR POR INFILTRACIÓN")
                 lines.append("Este tipo de humedad requiere un sistema de impermeabilización + nivelación + acabado.")

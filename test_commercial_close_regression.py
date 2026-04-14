@@ -1,6 +1,7 @@
 import sys
 import unittest
 from unittest import mock
+from types import SimpleNamespace
 
 sys.path.insert(0, "backend")
 
@@ -123,6 +124,79 @@ class CommercialCloseRegressionTests(unittest.TestCase):
             {},
         )
         self.assertIn("[SD1] - BARNIZ SD-1 INCOLORO CUARTO", context_text)
+
+    def test_registrar_cliente_nuevo_updates_related_rows_after_transaction_commit(self):
+        state = {"transaction_open": False, "contact_cliente_updates": 0, "conversation_updates": 0}
+
+        class FakeResult:
+            def __init__(self, row):
+                self.row = row
+
+            def scalar(self):
+                return self.row
+
+            def mappings(self):
+                return self
+
+            def first(self):
+                return self.row
+
+            def one(self):
+                return self.row
+
+            def one_or_none(self):
+                return self.row
+
+        class FakeConnection:
+            def execute(self, stmt, params=None):
+                sql = str(stmt)
+                if "SELECT COALESCE(MAX(codigo), 900000) FROM public.agent_clientes" in sql:
+                    return FakeResult(900000)
+                if "SELECT COALESCE(MAX(CASE WHEN codigo ~ '^[0-9]+$' THEN codigo::bigint END), 900000) FROM public.cliente" in sql:
+                    return FakeResult(900000)
+                if "SELECT id" in sql and "FROM public.agent_clientes" in sql:
+                    return FakeResult(None)
+                return FakeResult(None)
+
+        class FakeBegin:
+            def __enter__(self_inner):
+                state["transaction_open"] = True
+                return FakeConnection()
+
+            def __exit__(self_inner, exc_type, exc, tb):
+                state["transaction_open"] = False
+                return False
+
+        fake_engine = SimpleNamespace(begin=lambda: FakeBegin())
+
+        def fake_update_contact_cliente(contact_id, cliente_codigo):
+            self.assertFalse(state["transaction_open"])
+            state["contact_cliente_updates"] += 1
+            return 321
+
+        def fake_update_conversation_context(conversation_id, context_updates, summary=None):
+            self.assertFalse(state["transaction_open"])
+            state["conversation_updates"] += 1
+
+        with mock.patch.object(main, "find_cliente_contexto_by_document", return_value=None), \
+             mock.patch.object(main, "get_db_engine", return_value=fake_engine), \
+             mock.patch.object(main, "normalize_phone_e164", return_value="+573205046277"), \
+             mock.patch.object(main, "update_contact_cliente", side_effect=fake_update_contact_cliente), \
+             mock.patch.object(main, "update_conversation_context", side_effect=fake_update_conversation_context):
+            result_raw = main._handle_tool_registrar_cliente_nuevo(
+                {
+                    "modo_registro": "cotizacion",
+                    "nombre_completo": "Diego Mauricio Garcia Rengifo",
+                    "cedula_nit": "1088266407",
+                },
+                {"telefono_e164": "+573205046277", "contact_id": 55, "conversation_id": 118},
+                {},
+            )
+
+        result = main.json.loads(result_raw)
+        self.assertTrue(result["registrado"])
+        self.assertEqual(state["contact_cliente_updates"], 1)
+        self.assertEqual(state["conversation_updates"], 1)
 
 
 if __name__ == "__main__":

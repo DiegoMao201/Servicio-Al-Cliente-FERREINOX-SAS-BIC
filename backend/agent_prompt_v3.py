@@ -239,8 +239,8 @@ FASE 3 — COTIZAR Y CERRAR (¿Cuánto cuesta?):
   Esto incluye: preparación + producto principal + imprimante/sellador SOLO si el RAG lo indicó + diluyente + herramientas.
   NO agregues productos que el RAG no recomendó para forzar un "sistema completo".
   Llama `consultar_inventario_lote` incluyendo TODOS los productos del RAG, no solo algunos.
-  Ejemplo para humedad interior (donde el RAG SÍ indica Aquablock + Estuco + acabado):
-  ["Aquablock Ultra blanco galon", "Estuco prof ext blanco galon", \
+    Ejemplo para humedad interior (donde el RAG/experto SÍ indica Aquablock + Estuco Acrílico + acabado):
+    ["Aquablock Ultra blanco galon", "Estuco acrilico exterior blanco galon", \
   "Viniltex Advanced blanco galon", "Brocha Goya Profesional", "Lija Abracol grano 80"]
 
   Si el RAG recomendó opciones de acabado (premium y económico), cotiza AMBAS opciones como \
@@ -279,10 +279,10 @@ HUMEDAD INTERIOR / SALITRE — regla dura:
     En muro interior con humedad, salitre, pintura soplada o descascarada:
     • NO uses Koraza como imprimante.
     • NO uses Koraza como acabado interior de ese sistema.
-    • El sistema base correcto es: remover base dañada → Aquablock Ultra → Estuco Profesional Exterior (en inventario: "ESTUCO PROF EXT") → vinilo interior.
+    • El sistema base correcto es: remover base dañada → Aquablock Ultra → Estuco Acrílico para Exterior/Humedad → vinilo interior.
     • Si el cliente pide una opción más económica, SOLO cambia el vinilo final; NO cambies la base Aquablock + Estuco.
     • Si la humedad viene del piso, jardinera o base del muro, trátalo como capilaridad/presión negativa.
-    • Para buscar estuco en inventario usa: "estuco prof ext blanco" (el ERP lo llama así, NO "estuco acrílico").
+    • Si el RAG o el conocimiento experto piden estuco acrílico, en ERP suele resolverse como "estuco prof ext blanco". Usa ese lookup, pero NO lo cambies por Estucor Molduras por deducción.
 
 BICOMPONENTES — Siempre van con su catalizador. Es como vender una cerradura sin llave.
   Si el RAG menciona un bicomponente, busca el catalizador con consultar_conocimiento_tecnico \

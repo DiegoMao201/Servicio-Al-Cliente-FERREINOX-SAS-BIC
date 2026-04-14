@@ -2216,7 +2216,7 @@ def _build_structured_technical_guide(question: str, product: str, diagnosis: di
             "Si el revoque está quemado o meteorizado, reemplazarlo antes del sistema nuevo.",
         ]
         guide["base_or_primer"] = ["Aquablock Ultra - 2 manos con brocha para cargar producto."]
-        guide["intermediate_steps"] = ["Estuco Profesional Exterior (buscar: estuco prof ext blanco) después del Aquablock para nivelar. NUNCA antes."]
+        guide["intermediate_steps"] = ["Estuco Acrílico para Exterior/Humedad (en ERP suele resolverse como estuco prof ext blanco) después del Aquablock para nivelar. NUNCA antes."]
         guide["finish_options"] = [
             {"producto": "Viniltex Advanced", "rol": "acabado final", "nivel": "premium"},
             {"producto": "Intervinil", "rol": "acabado final", "nivel": "intermedio"},
@@ -2238,7 +2238,7 @@ def _build_structured_technical_guide(question: str, product: str, diagnosis: di
             "Remover base dañada y salitre donde aplique.",
         ]
         guide["base_or_primer"] = ["Aquablock / Aquablock Ultra según presión negativa y severidad."]
-        guide["intermediate_steps"] = ["Estuco Profesional Exterior (buscar: estuco prof ext blanco) si se requiere nivelación después del bloqueador de humedad."]
+        guide["intermediate_steps"] = ["Estuco Acrílico para Exterior/Humedad (en ERP suele resolverse como estuco prof ext blanco) si se requiere nivelación después del bloqueador de humedad."]
         guide["finish_options"] = [
             {"producto": "Viniltex Advanced", "rol": "acabado final", "nivel": "premium"},
             {"producto": "Intervinil", "rol": "acabado final", "nivel": "intermedio"},
@@ -12836,11 +12836,15 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
             case["source_context"] = "posible tuberia o fuga interna"
         elif any(token in normalized for token in ["fachada", "lluvia", "exterior", "afuera"]):
             case["source_context"] = "posible filtracion desde fachada o exterior"
+        elif any(token in normalized for token in ["vapor", "ducha", "baño", "bano", "condensacion", "condensación", "ventilacion", "ventilación"]):
+            case["source_context"] = "condensacion o vapor en baño/cocina"
 
         if any(token in normalized for token in ["interior", "adentro", "dentro de la casa", "casa"]):
             case["wall_location"] = "interior"
         elif any(token in normalized for token in ["exterior", "fachada", "afuera"]):
             case["wall_location"] = "exterior"
+        elif any(token in normalized for token in ["baño", "bano", "ducha", "cocina"]):
+            case["wall_location"] = "interior"
 
         if "obra negra" in normalized:
             case["surface_state"] = "obra negra"
@@ -17601,6 +17605,8 @@ def _handle_tool_registrar_cliente_nuevo(args, context, conversation_context):
         )
 
     try:
+        registration_result = None
+        registered_customer_code = None
         engine = get_db_engine()
         with engine.begin() as conn:
             existing_codigo = None
@@ -17729,31 +17735,7 @@ def _handle_tool_registrar_cliente_nuevo(args, context, conversation_context):
                 except Exception:
                     pass
 
-            try:
-                cliente_id = update_contact_cliente(contact_id, str(codigo_cliente)) if contact_id else None
-                if cliente_id:
-                    context["cliente_id"] = cliente_id
-            except Exception:
-                pass
-
-            update_conversation_context(
-                context["conversation_id"],
-                {
-                    "verified": True,
-                    "verified_document": cedula_clean,
-                    "verified_by": "registration",
-                    "verified_cliente_codigo": codigo_cliente,
-                    "client_registered_now": True,
-                },
-            )
-            conversation_context.update({
-                "verified": True,
-                "verified_document": cedula_clean,
-                "verified_by": "registration",
-                "verified_cliente_codigo": codigo_cliente,
-            })
-
-            result = {
+            registration_result = {
                 "registrado": True,
                 "codigo_cliente": codigo_cliente,
                 "nombre": nombre.upper(),
@@ -17770,10 +17752,37 @@ def _handle_tool_registrar_cliente_nuevo(args, context, conversation_context):
                 ),
             }
             if modo_registro == "cotizacion":
-                result["datos_pendientes_para_pedido"] = ["direccion_entrega", "ciudad"]
+                registration_result["datos_pendientes_para_pedido"] = ["direccion_entrega", "ciudad"]
             if nota_logistica:
-                result["nota_logistica"] = nota_logistica
-            return json.dumps(result, ensure_ascii=False)
+                registration_result["nota_logistica"] = nota_logistica
+            registered_customer_code = str(codigo_cliente)
+
+        try:
+            cliente_id = update_contact_cliente(contact_id, registered_customer_code) if contact_id and registered_customer_code else None
+            if cliente_id:
+                context["cliente_id"] = cliente_id
+        except Exception:
+            pass
+
+        verified_customer_code = int(registered_customer_code) if registered_customer_code and registered_customer_code.isdigit() else registered_customer_code
+        update_conversation_context(
+            context["conversation_id"],
+            {
+                "verified": True,
+                "verified_document": cedula_clean,
+                "verified_by": "registration",
+                "verified_cliente_codigo": verified_customer_code,
+                "client_registered_now": True,
+            },
+        )
+        conversation_context.update({
+            "verified": True,
+            "verified_document": cedula_clean,
+            "verified_by": "registration",
+            "verified_cliente_codigo": verified_customer_code,
+        })
+
+        return json.dumps(registration_result or {"registrado": False, "mensaje": "No fue posible completar el registro."}, ensure_ascii=False)
 
     except Exception as exc:
         logger.error("Error registrando cliente nuevo: %s", exc)

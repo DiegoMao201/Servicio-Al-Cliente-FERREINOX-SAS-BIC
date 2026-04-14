@@ -42,7 +42,7 @@
       ]
     },
     "sistema_recomendado": {
-      "resumen": "Preparación profunda → Aquablock Ultra (bloqueador de humedad) → Estuco Profesional Exterior (nivelador) → Viniltex Advanced (acabado). El ORDEN es crítico: NUNCA aplicar estuco antes del Aquablock.",
+      "resumen": "Preparación profunda → Aquablock Ultra (bloqueador de humedad) → Estuco Acrílico Exterior (nivelador; en ERP suele aparecer como 'estuco prof ext blanco') → Viniltex Advanced (acabado). El ORDEN es crítico: NUNCA aplicar estuco antes del Aquablock.",
       "pasos": [
         {
           "paso": 1,
@@ -89,13 +89,13 @@
         },
         {
           "paso": 5,
-          "accion": "NIVELACIÓN: Aplicar Estuco Profesional Exterior para nivelar y dejar la superficie lisa y uniforme.",
-          "producto": "Estuco Profesional Exterior",
+          "accion": "NIVELACIÓN: Aplicar Estuco Acrílico Exterior para nivelar y dejar la superficie lisa y uniforme.",
+          "producto": "Estuco Acrílico Exterior",
           "herramientas": [
             "Llana",
             "Espátula"
           ],
-          "nota_tecnica": "El estuco va DESPUÉS del Aquablock, NUNCA antes. Si se aplica estuco antes del bloqueador, la humedad lo destruye desde abajo. Usar Estuco Profesional Exterior — NO estuco interior tradicional, porque la humedad lo daña. Buscar en inventario: 'estuco prof ext blanco'. NOTA: El Estuco Acrílico Multiuso (presentación 1kg) es para retoques pequeños — para sistemas completos usar siempre Estuco Profesional Exterior en presentación galón."
+          "nota_tecnica": "El estuco va DESPUÉS del Aquablock, NUNCA antes. Si se aplica estuco antes del bloqueador, la humedad lo destruye desde abajo. Usar Estuco Acrílico Exterior — NO estuco interior tradicional, porque la humedad lo daña. En inventario ERP suele resolverse como 'estuco prof ext blanco'. NOTA: El Estuco Acrílico Multiuso (presentación 1kg) es para retoques pequeños; para sistemas completos usar Estuco Acrílico Exterior en galón o cuñete."
         },
         {
           "paso": 6,
@@ -110,7 +110,7 @@
           "rendimiento": "20-25 m² por galón (a dos manos)"
         }
       ],
-      "orden_critico": "Aquablock Ultra → Estuco Profesional Exterior → Pintura. NUNCA: Estuco → Aquablock.",
+      "orden_critico": "Aquablock Ultra → Estuco Acrílico Exterior → Pintura. NUNCA: Estuco → Aquablock.",
       "jerarquia_acabados": [
         {
           "producto": "Viniltex Ultralavable",
@@ -137,11 +137,11 @@
           "producto": "Pinturama",
           "nivel": "económico",
           "precio_relativo": "bajo",
-          "argumento_cliente": "Pinturama es la opción más económica. Cubre bien pero NO es lavable — si la manchas, no la puedes limpiar sin dañarla. En zonas de humedad tratada necesitarás repintar más seguido (2-3 años). La base Aquablock + Estuco sigue siendo la misma.",
+          "argumento_cliente": "Pinturama es la opción más económica. Cubre bien pero NO es lavable — si la manchas, no la puedes limpiar sin dañarla. En zonas de humedad tratada necesitarás repintar más seguido (2-3 años). La base Aquablock + Estuco Acrílico Exterior sigue siendo la misma.",
           "busqueda_inventario": "pinturama blanco galon"
         }
       ],
-      "regla_opciones": "SIEMPRE presenta las opciones como SISTEMAS COMPLETOS con precio total. La base técnica (Aquablock + Estuco) NO cambia entre opciones — solo cambia el acabado final. Presenta TODAS las opciones disponibles de mayor a menor prestación: Ultralavable → Advanced → Intervinil → Pinturama. NO rotules ninguna marca top como 'económica'."
+      "regla_opciones": "SIEMPRE presenta las opciones como SISTEMAS COMPLETOS con precio total. La base técnica (Aquablock + Estuco Acrílico Exterior) NO cambia entre opciones — solo cambia el acabado final. Presenta TODAS las opciones disponibles de mayor a menor prestación: Ultralavable → Advanced → Intervinil → Pinturama. NO rotules ninguna marca top como 'económica'."
     },
     "productos_prohibidos": [
       {
@@ -154,7 +154,7 @@
       },
       {
         "producto": "Estuco interior tradicional",
-        "razon": "El estuco interior tradicional se destruye con la humedad. Usar siempre Estuco Profesional Exterior."
+        "razon": "El estuco interior tradicional se destruye con la humedad. Usar siempre Estuco Acrílico Exterior."
       },
       {
         "producto": "Pintucoat",
@@ -167,12 +167,12 @@
     ],
     "rendimientos_referencia": {
       "Aquablock Ultra": "18-20 m² por galón (2 manos con brocha)",
-      "Estuco Profesional Exterior": "Depende del estado de la superficie — consultar ficha técnica",
+      "Estuco Acrílico Exterior": "Depende del estado de la superficie — consultar ficha técnica",
       "Viniltex Advanced": "20-25 m² por galón (2 manos)"
     },
     "ejemplo_cotizacion": {
       "area_ejemplo_m2": 20,
-      "calculo": "Aquablock Ultra: 20 m² ÷ 18 m²/gal = 1.11 → 2 galones (se cubren las 2 manos). Viniltex Advanced: 20 m² ÷ 20 m²/gal = 1 galón (2 manos). Más Estuco Profesional Exterior según estado de la pared."
+      "calculo": "Aquablock Ultra: 20 m² ÷ 18 m²/gal = 1.11 → 2 galones (se cubren las 2 manos). Viniltex Advanced: 20 m² ÷ 20 m²/gal = 1 galón (2 manos). Más Estuco Acrílico Exterior según estado de la pared."
     },
     "alerta_metraje": "SIEMPRE pedir los m² antes de cotizar. No aceptar que el cliente diga 'necesito 2 galones' — primero calcular cuánto realmente necesita según el área.",
     "frases_cliente_equivalentes": [
@@ -328,7 +328,7 @@
       "Tapar juntas móviles con materiales rígidos.",
       "Error común a bloquear: Koraza. Razón: Koraza es un acabado de FACHADA EXTERIOR (intemperie). No es sellador de humedad interior y no tiene la capacidad de bloquear capilaridad desde dentro del muro.",
       "Error común a bloquear: Pintuco Fill. Razón: Pintuco Fill es un impermeabilizante de CUBIERTAS y TECHOS para filtraciones de lluvia. No es para capilaridad interior desde la base del muro.",
-      "Error común a bloquear: Estuco interior tradicional. Razón: El estuco interior tradicional se destruye con la humedad. Usar siempre Estuco Profesional Exterior.",
+      "Error común a bloquear: Estuco interior tradicional. Razón: El estuco interior tradicional se destruye con la humedad. Usar siempre Estuco Acrílico Exterior.",
       "Error común a bloquear: Pintucoat. Razón: Pintucoat es un recubrimiento industrial epóxico, NO es para paredes residenciales con humedad.",
       "Error común a bloquear: Intergard / Interseal. Razón: Son recubrimientos industriales de alta especificación. No aplican para problemas de humedad residencial.",
       "Advertencia técnica de ficha: Viniltex® Ultralavable es una pintura base agua mate para interiores, de alto desempeño y durabilidad. Cuenta con la tecnología Ultra Protect Resist, que repele líquidos, es fácil de limpiar y tiene máxima resistencia al lavado, facilitando la remoción de manchas y manteniendo las paredes siempre limpias.",
@@ -350,7 +350,7 @@
       "Viniltex Ultralavable",
       "Pintuco Fill",
       "Revofast",
-      "Estuco Profesional Exterior",
+      "Estuco Acrílico Exterior",
       "Interseal 670HS",
       "Intergard 740",
       "Pintucoat"
@@ -586,7 +586,7 @@
       ]
     },
     "sistema_recomendado": {
-      "resumen": "Primero diagnosticar la causa. Si es capilaridad: sistema Aquablock Ultra (ver GS-HUM-001). Si es condensación/moho superficial: limpieza + pintura antihongos. Si es filtración: resolver la fuente antes de pintar.",
+      "resumen": "Primero diagnosticar la causa. Si es capilaridad: sistema Aquablock Ultra + Estuco Acrílico Exterior (ver GS-HUM-001). Si es condensación/moho superficial: limpieza + pintura antihongos, sin meter Aquablock por inercia. Si es filtración: resolver la fuente antes de pintar.",
       "pasos": [
         {
           "paso": 1,
@@ -616,9 +616,9 @@
         },
         {
           "paso": 4,
-          "accion": "NIVELACIÓN: Estuco Profesional Exterior si se requiere nivelar después del bloqueador.",
-          "producto": "Estuco Profesional Exterior",
-          "nota_tecnica": "Siempre DESPUÉS del bloqueador de humedad, nunca antes. Buscar en inventario: 'estuco prof ext blanco'. NOTA: El Estuco Acrílico Multiuso (presentación 1kg) es para retoques pequeños — para sistemas completos usar siempre Estuco Profesional Exterior en presentación galón."
+          "accion": "NIVELACIÓN: Estuco Acrílico Exterior si se requiere nivelar después del bloqueador.",
+          "producto": "Estuco Acrílico Exterior",
+          "nota_tecnica": "Siempre DESPUÉS del bloqueador de humedad, nunca antes. En inventario ERP suele aparecer como 'estuco prof ext blanco'. NOTA: El Estuco Acrílico Multiuso (presentación 1kg) es para retoques pequeños; para sistemas completos usar Estuco Acrílico Exterior en galón o cuñete."
         },
         {
           "paso": 5,
@@ -820,7 +820,7 @@
       "Intervinil",
       "Pinturama",
       "Viniltex Baños y Cocinas",
-      "Estuco Profesional Exterior",
+      "Estuco Acrílico Exterior",
       "Interseal 670HS",
       "Intergard 740",
       "Pintucoat"
