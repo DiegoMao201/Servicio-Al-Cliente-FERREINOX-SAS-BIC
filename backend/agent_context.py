@@ -1041,36 +1041,17 @@ def is_diagnostic_incomplete(intent: str, diagnostic: dict) -> bool:
         missing.append("condition")
 
     # ── Surface-specific critical fields (Python-level enforcement) ──
+    # ONLY broad, reliable checks. The LLM (IA) handles nuanced questions
+    # like substrate type, m², specific material — Python only enforces PROCESS.
+    #
     # Pisos: sin tipo de tráfico es imposible elegir el sistema correcto
     if surface in ("piso", "piso industrial", "piso vehicular", "piso deportivo"):
         if not diagnostic.get("traffic"):
             missing.append("traffic")
-    # Humedad interior: sin origen de la humedad ni tipo de sustrato no podemos definir el sistema base
+    # Humedad interior: sin origen de la humedad no podemos definir el sistema base
     if surface == "interior húmedo":
         if not diagnostic.get("humidity_source"):
             missing.append("humidity_source")
-        if not diagnostic.get("substrate_type"):
-            missing.append("substrate_type")
-    # Muros/paredes: tipo de sustrato cambia preparación y sistema
-    if surface == "muro":
-        if not diagnostic.get("substrate_type"):
-            missing.append("substrate_type")
-    # Fachada: el sustrato define la preparación y el sistema (ladrillo ≠ estuco ≠ concreto)
-    if surface == "fachada":
-        if not diagnostic.get("substrate_type"):
-            missing.append("substrate_type")
-    # Techo / Cubierta: el material define impermeabilización (eternit ≠ concreto ≠ teja ≠ metal)
-    if surface == "techo":
-        if not diagnostic.get("substrate_type"):
-            missing.append("substrate_type")
-    # Metal: si es galvanizado, el sistema es radicalmente distinto (promotor adherencia obligatorio)
-    if surface in ("metal", "metal/inmersión"):
-        if not diagnostic.get("substrate_type"):
-            missing.append("substrate_type")
-    # Madera: MDF ≠ madera natural, interior ≠ exterior
-    if surface in ("madera", "madera exterior", "madera/metal"):
-        if not diagnostic.get("condition"):
-            missing.append("condition")
 
     return bool(missing)
 
@@ -1243,37 +1224,13 @@ def build_turn_context(
             missing.append("condición (¿nuevo, pintado, con humedad, óxido, descascarado?)")
 
         # ── Preguntas específicas por tipo de superficie ──
-        # Para pisos: tráfico es CRÍTICO
+        # SOLO checks AMPLIOS. La IA decide qué preguntas de profundidad hacer.
+        # Para pisos: tráfico es CRÍTICO (define la línea de producto)
         if problem_class == "piso_industrial" and not diagnostic.get("traffic"):
             missing.append("tipo de tráfico (¿peatonal/liviano, vehicular, montacargas/pesado?)")
-        if problem_class == "piso_industrial" and not diagnostic.get("condition"):
-            if "estado" not in " ".join(missing).lower():
-                missing.append("estado del piso (¿nuevo, viejo, ya pintado?)")
-        # Para metal: tipo de metal y exposición importan
-        if diagnostic.get("surface") in ("metal", "metal/inmersión") and not diagnostic.get("condition"):
-            if "condición" not in " ".join(missing):
-                missing.append("estado del metal (¿nuevo, oxidado, ya pintado con anticorrosivo?)")
-        if diagnostic.get("surface") in ("metal", "metal/inmersión") and not diagnostic.get("substrate_type"):
-            missing.append("tipo de metal (¿hierro/acero, galvanizado, aluminio, inoxidable?)")
         # Para humedad: la fuente es crítica para la solución
         if diagnostic.get("surface") == "interior húmedo" and not diagnostic.get("humidity_source"):
             missing.append("origen de la humedad (¿viene del piso/base, de arriba, por temporada, o por vapor de ducha/cocina?)")
-        # Para humedad y muros: el tipo de sustrato cambia la preparación y el sistema
-        if diagnostic.get("surface") in ("interior húmedo", "muro") and not diagnostic.get("substrate_type"):
-            missing.append("tipo de pared/sustrato (¿estucada/pañetada, ladrillo, drywall, concreto?)")
-        # Fachada: el sustrato cambia TODO el sistema
-        if diagnostic.get("surface") == "fachada" and not diagnostic.get("substrate_type"):
-            missing.append("material de la fachada (¿estucada, ladrillo a la vista, bloque, concreto?)")
-        # Techo: el material define impermeabilización
-        if diagnostic.get("surface") == "techo" and not diagnostic.get("substrate_type"):
-            missing.append("material del techo (¿eternit/fibrocemento, concreto/placa, teja, lámina metálica?)")
-        if diagnostic.get("surface") == "techo" and not diagnostic.get("condition"):
-            if "condición" not in " ".join(missing):
-                missing.append("problema del techo (¿goteras, impermeabilizar, solo repintar?)")
-        # Para madera: interior/exterior cambia el sistema completamente
-        if diagnostic.get("surface") in ("madera", "madera exterior") and not diagnostic.get("condition"):
-            if "condición" not in " ".join(missing):
-                missing.append("estado de la madera (¿nueva, barnizada, deteriorada?)")
 
         if diagnostic["surface"]:
             lines.append(f"Superficie detectada: {diagnostic['surface']}")
@@ -1328,43 +1285,43 @@ def build_turn_context(
             lines.append("")
             lines.append("🚫 BLOQUEO DE DIAGNÓSTICO INCOMPLETO 🚫")
             lines.append("TIENES ESTRICTAMENTE PROHIBIDO en este turno:")
-            lines.append("  1. Llamar consultar_conocimiento_tecnico (el RAG no sirve sin diagnóstico completo).")
+            lines.append("  1. Llamar consultar_conocimiento_tecnico.")
             lines.append("  2. Llamar consultar_inventario o consultar_inventario_lote.")
             lines.append("  3. Sugerir sistemas completos, cotizar precios o calcular cantidades.")
-            lines.append("  4. Decir frases como 'te recomiendo X' como recomendación final.")
             lines.append("")
             lines.append("✅ LO QUE SÍ PUEDES HACER:")
-            lines.append("  1. Dar una SOSPECHA PRELIMINAR breve: 'Mi primera impresión es que podríamos necesitar un sistema para [tipo de problema]'")
-            lines.append("     (puedes mencionar una categoría general como 'antihumedad' o 'antihongos' pero SIN nombres de productos específicos)")
-            lines.append("  2. Hacer 1-3 preguntas diagnósticas CONVERSACIONALES para completar los datos faltantes.")
-            lines.append("  3. Mostrar empatía con el problema del cliente.")
+            lines.append("  1. Dar una SOSPECHA PRELIMINAR breve (categoría general, SIN nombres de productos)")
+            lines.append("  2. Hacer 1-3 preguntas diagnósticas CONVERSACIONALES")
+            lines.append("  3. Mostrar empatía con el problema del cliente")
             lines.append("")
-            lines.append("FORMATO IDEAL de tu respuesta:")
-            lines.append("  1. Empatía breve ('¡Uy, qué fastidio con ese moho! Pero tranquilo que tiene solución.')")
-            lines.append("  2. Sospecha preliminar ('Por lo que me cuentas, seguramente necesitamos un tratamiento antihumedad...')")
-            lines.append("  3. Preguntas diagnósticas ('pero para darte la solución ideal necesito saber: ¿la pared es estucada o de ladrillo? ¿cuántos m² tiene el área afectada?')")
-            lines.append("Adapta las preguntas al contexto del cliente. Ejemplos:")
-            if diagnostic.get("surface"):
-                surface_name = diagnostic["surface"]
-                if problem_class == "piso_industrial":
-                    lines.append(f"  '¿El piso es de concreto o de baldosa? ¿Qué tipo de tráfico tiene: peatonal, vehicular o montacargas? ¿Está nuevo o ya pintado?'")
-                elif surface_name in ("metal", "metal/inmersión"):
-                    lines.append(f"  '¿Qué tipo de metal es: hierro/acero, galvanizado o aluminio? ¿Está oxidado, nuevo o ya tiene anticorrosivo? ¿Es interior o exterior?'")
-                elif surface_name == "interior húmedo":
-                    lines.append(f"  '¿La pared es estucada, de ladrillo o de drywall? ¿La humedad viene del piso, de arriba, o es por vapor de ducha? ¿Cuántos m² tiene el área afectada?'")
-                elif surface_name == "muro":
-                    lines.append(f"  '¿La pared es estucada/pañetada, de ladrillo, drywall o concreto? ¿Está en buen estado o tiene algún daño?'")
-                elif surface_name == "fachada":
-                    lines.append(f"  '¿La fachada es de estuco, ladrillo a la vista, bloque o concreto? ¿Está descascarada, con humedad, o solo necesita repintura?'")
-                elif surface_name == "techo":
-                    lines.append(f"  '¿El techo es de eternit/fibrocemento, concreto, teja o lámina metálica? ¿Tiene goteras o solo quiere impermeabilizar?'")
-                elif surface_name in ("madera", "madera exterior", "madera/metal"):
-                    lines.append(f"  '¿La madera es nueva o ya tiene barniz/pintura? ¿Está en interior o exterior? ¿Qué tipo de madera es?'")
-                else:
-                    lines.append(f"  '¿Qué material es la superficie? ¿Está en buen estado o tiene algún problema (humedad, descascarado, óxido)?'")
-            else:
-                lines.append("  '¿Qué superficie necesita pintar o proteger? ¿Es interior o exterior? ¿De qué material está hecha?'")
-            lines.append("SOLO cuando tengas TODOS los datos podrás consultar el RAG y recomendar.")
+            lines.append("FORMATO IDEAL:")
+            lines.append("  1. Empatía + sospecha: 'Uy, qué fastidio con eso. Por lo que me cuentas parece un caso de [categoría]...'")
+            lines.append("  2. Preguntas: 'pero para darte la solución exacta necesito saber: [preguntas faltantes]'")
+            lines.append("Tú eres la IA — entiendes lo que el cliente necesita y sabes qué preguntar. Hazlo natural.")
+
+        elif not conversation_context.get("_advisory_diagnostic_turn_done") and not conversation_context.get("latest_technical_guidance"):
+            # ─── PROFUNDIZACIÓN DIAGNÓSTICA (first advisory turn) ───
+            # Broad checks passed but this is the FIRST advisory turn.
+            # The LLM (IA) must ask depth questions before consulting RAG.
+            lines.append("")
+            lines.append("📋 PROFUNDIZACIÓN DIAGNÓSTICA — PRIMER TURNO DE ASESORÍA")
+            lines.append("Tienes la información BÁSICA del caso. Pero como asesor experto,")
+            lines.append("SIEMPRE verificas los detalles antes de recomendar.")
+            lines.append("")
+            lines.append("Tú eres INTELIGENCIA ARTIFICIAL — entiendes lo que el cliente escribió")
+            lines.append("y sabes exactamente qué preguntas hacer para cada tipo de superficie.")
+            lines.append("NO dependes de palabras clave. Entiende el CONTEXTO del cliente.")
+            lines.append("")
+            lines.append("DEBES confirmar con el cliente ANTES de consultar herramientas:")
+            lines.append("  • ¿De qué MATERIAL es la superficie? (cada material cambia el sistema)")
+            lines.append("  • ¿Cuántos m² tiene el área?")
+            lines.append("  • Cualquier otro detalle que como asesor experto necesites para dar una recomendación precisa")
+            lines.append("")
+            lines.append("FORMATO:")
+            lines.append("  1. Empatía + sospecha preliminar (categoría general, SIN productos específicos)")
+            lines.append("  2. 2-3 preguntas naturales que un asesor experto haría para este caso")
+            lines.append("  3. En el PRÓXIMO turno, con la respuesta del cliente, SÍ podrás consultar el RAG")
+
         else:
             lines.append("Datos suficientes para recomendar.")
             lines.append("Acción: Llama consultar_conocimiento_tecnico con la superficie y condición EN ESTE MISMO TURNO.")

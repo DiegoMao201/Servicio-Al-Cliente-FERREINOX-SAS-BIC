@@ -486,12 +486,31 @@ def generate_agent_reply_v3(
 
     # ══════════════════════════════════════════════════════════════════════
     # PYTHON-LEVEL DIAGNOSTIC ENFORCEMENT
-    # When the diagnostic is incomplete for advisory intent, REMOVE tools
-    # so the LLM physically cannot skip the diagnostic phase.
+    # Two layers:
+    #   1. BROAD CHECK: surface + condition + location must be present
+    #      (keyword detection is reliable for broad categories)
+    #   2. PROCESS CHECK: first advisory turn always requires a diagnostic
+    #      exchange — the LLM (IA) asks the right depth questions
+    #      (material, m², specific conditions) without keyword matching.
     # ══════════════════════════════════════════════════════════════════════
     _diagnostic_blocked = is_diagnostic_incomplete("asesoria" if effective_advisory_flow else initial_intent, initial_diagnostic)
+
+    # Process gate: on the FIRST advisory turn (no prior RAG, no prior
+    # diagnostic exchange), block tools so the LLM must ask depth questions.
+    # The LLM is the AI — it understands what the client said and knows
+    # what to ask. Python only enforces the PROCESS (diagnose → RAG → recommend).
+    _first_advisory_turn = (
+        effective_advisory_flow
+        and not _diagnostic_blocked  # broad checks already passed
+        and not conversation_context.get("_advisory_diagnostic_turn_done")
+        and not conversation_context.get("latest_technical_guidance")
+    )
+    if _first_advisory_turn:
+        _diagnostic_blocked = True
+        logger.info("V3 FIRST ADVISORY TURN: broad diagnostic OK but forcing depth questions — LLM (IA) decides what to ask")
+
     if _diagnostic_blocked:
-        logger.info("V3 BLOQUEO ACTIVO: diagnostic incomplete — tools stripped, skipping preload")
+        logger.info("V3 BLOQUEO ACTIVO: tools stripped, skipping preload")
 
     if not _diagnostic_blocked and _should_preload_technical_guidance(
         "asesoria" if effective_advisory_flow else initial_intent,
@@ -808,6 +827,9 @@ def generate_agent_reply_v3(
                 "last_product_context": conversation_context.get("last_product_context"),
                 "latest_technical_guidance": conversation_context.get("latest_technical_guidance"),
                 "commercial_draft": conversation_context.get("commercial_draft"),
+                # Process gate: after first advisory turn, mark diagnostic exchange done
+                # so the NEXT turn allows tools and RAG preload.
+                "_advisory_diagnostic_turn_done": True if _first_advisory_turn else conversation_context.get("_advisory_diagnostic_turn_done"),
             }.items()
             if value is not None
         },
