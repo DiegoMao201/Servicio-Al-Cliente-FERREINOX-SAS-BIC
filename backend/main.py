@@ -5679,6 +5679,74 @@ def run_background_io(task_name: str, target, *args, **kwargs):
     return thread
 
 
+# ---------------- Admin migration endpoint helpers ---------------------------
+def _load_admin_key() -> Optional[str]:
+    env_key = os.getenv("FERREINOX_ADMIN_KEY")
+    if env_key:
+        return env_key
+    try:
+        if SECRETS_PATH.exists():
+            data = tomllib.loads(SECRETS_PATH.read_text(encoding="utf-8"))
+            if isinstance(data, dict):
+                # check common locations
+                admin_section = data.get("admin") or {}
+                if isinstance(admin_section, dict) and admin_section.get("key"):
+                    return admin_section.get("key")
+                if data.get("FERREINOX_ADMIN_KEY"):
+                    return data.get("FERREINOX_ADMIN_KEY")
+    except Exception:
+        pass
+    return None
+
+
+def _execute_sql_file_in_background(sql_path: Path, database_url: str):
+    try:
+        from sqlalchemy import create_engine
+
+        sql_text = sql_path.read_text(encoding="utf-8")
+        engine = create_engine(database_url)
+        with engine.begin() as connection:
+            raw_conn = connection.connection
+            cur = raw_conn.cursor()
+            cur.execute(sql_text)
+            cur.close()
+        logger.info("Applied SQL file %s", sql_path)
+    except Exception as exc:
+        logger.exception("Failed to apply SQL file %s: %s", sql_path, exc)
+
+
+@app.post("/admin/apply-postgrest-views")
+async def admin_apply_postgrest_views(background: BackgroundTasks, x_admin_key: Optional[str] = Header(None)):
+    """Secure endpoint that schedules application of backend/postgrest_views.sql.
+
+    Protect with FERREINOX_ADMIN_KEY environment variable or `admin.key` in secrets.toml.
+    The SQL is executed in background to avoid request timeouts.
+    """
+    admin_key = _load_admin_key()
+    if not admin_key:
+        raise HTTPException(status_code=500, detail="Server admin key not configured")
+    if not x_admin_key or not hmac.compare_digest(x_admin_key, admin_key):
+        raise HTTPException(status_code=403, detail="invalid admin key")
+
+    # Resolve database URL
+    database_url = (
+        os.getenv("DATABASE_URL")
+        or os.getenv("POSTGRES_DB_URI")
+        or _read_streamlit_secret_value("DATABASE_URL")
+        or _read_streamlit_secret_value("postgres", "db_uri")
+    )
+    if not database_url:
+        raise HTTPException(status_code=500, detail="DATABASE_URL not configured on server")
+
+    sql_file = Path(__file__).resolve().parent / "postgrest_views.sql"
+    if not sql_file.exists():
+        raise HTTPException(status_code=500, detail=f"sql file not found: {sql_file}")
+
+    # schedule background execution
+    background.add_task(_execute_sql_file_in_background, sql_file, database_url)
+    return {"status": "accepted", "detail": "postgrest_views execution scheduled"}
+
+
 _PROCESSING_WATCHDOGS: dict[str, dict] = {}
 _PROCESSING_WATCHDOG_LOCK = threading.Lock()
 PROCESSING_FOLLOWUP_SECONDS = int(os.getenv("WA_PROCESSING_FOLLOWUP_SECONDS", "90"))
