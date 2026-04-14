@@ -858,4 +858,40 @@ CREATE INDEX IF NOT EXISTS idx_mv_productos_search_blob_trgm ON mv_productos USI
 CREATE INDEX IF NOT EXISTS idx_mv_productos_search_compact_trgm ON mv_productos USING GIN (search_compact gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_mv_productos_referencia ON mv_productos (referencia);
 
+-- ═══════════════════════════════════════════════════════════════
+-- INVENTARIO ACTIVO: solo artículos con ventas en el último año
+-- Reduce el universo de búsqueda ~89% eliminando artículos muertos
+-- ═══════════════════════════════════════════════════════════════
+
+-- Tabla materializada de descripciones con ventas recientes.
+-- Se refresca en cada sync (TRUNCATE + INSERT).
+CREATE TABLE IF NOT EXISTS public.inventario_refs_activas (
+    descripcion_normalizada TEXT PRIMARY KEY,
+    ultima_venta DATE NOT NULL,
+    total_transacciones INT NOT NULL DEFAULT 0
+);
+
+-- Poblar desde raw_ventas_detalle cruzando por descripción normalizada
+DELETE FROM public.inventario_refs_activas;
+INSERT INTO public.inventario_refs_activas (descripcion_normalizada, ultima_venta, total_transacciones)
+SELECT
+    public.fn_normalize_text(nombre_articulo) AS descripcion_normalizada,
+    MAX(fecha_venta::date) AS ultima_venta,
+    COUNT(*) AS total_transacciones
+FROM public.raw_ventas_detalle
+WHERE NULLIF(TRIM(nombre_articulo), '') IS NOT NULL
+  AND codigo_articulo != '0'
+GROUP BY public.fn_normalize_text(nombre_articulo)
+HAVING MAX(fecha_venta::date) >= CURRENT_DATE - INTERVAL '1 year';
+
+-- Vista filtrada: mismas columnas que vw_inventario_agente, solo refs activas
+CREATE OR REPLACE VIEW public.vw_inventario_agente_activo AS
+SELECT inv.*
+FROM public.vw_inventario_agente inv
+WHERE EXISTS (
+    SELECT 1
+    FROM public.inventario_refs_activas act
+    WHERE act.descripcion_normalizada = inv.descripcion_normalizada
+);
+
 COMMIT;

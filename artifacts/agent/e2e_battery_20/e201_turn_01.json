@@ -1,0 +1,24 @@
+{
+  "case_id": "E201",
+  "case_name": "Bano Sin Ventana Condensado",
+  "turn_index": 1,
+  "elapsed_ms": 11364,
+  "user_message": "Hola, el bano del apartaestudio se me llena de vapor y se pone negro el cielo raso.",
+  "result": {
+    "response_text": "¡Qué fastidio con esa situación! 😟 Para poder ayudarte mejor, necesito un par de detalles más: \n\n1. ¿La humedad viene del piso, de la base del muro, de arriba, o solo aparece en temporada de lluvia?\n2. ¿El cielo raso está pintado o tiene algún tipo de revestimiento? \n\nCon esta información, podré darte la mejor solución.",
+    "intent": "consulta_general",
+    "tool_calls": [],
+    "context_updates": {},
+    "should_create_task": false,
+    "confidence": {
+      "score": 0.9,
+      "level": "alta",
+      "signals": [
+        "technical_without_tools"
+      ]
+    },
+    "is_farewell": false
+  },
+  "conversation_context_after_turn": {},
+  "parsed_tool_results": []
+}

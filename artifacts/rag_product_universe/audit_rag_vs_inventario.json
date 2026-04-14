@@ -1,0 +1,8 @@
+{
+  "total_familias_rag": 325,
+  "OK_COMPLETO": 86,
+  "CANON_SIN_INVENTARIO": 0,
+  "INVENTARIO_SIN_CANON": 203,
+  "SIN_MAPEO": 36,
+  "output_csv": "C:\\Users\\Diego Mauricio\\Desktop\\CRM_Ferreinox\\artifacts\\rag_product_universe\\audit_rag_vs_inventario.csv"
+}

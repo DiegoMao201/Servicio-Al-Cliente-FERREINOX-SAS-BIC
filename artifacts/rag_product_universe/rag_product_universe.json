@@ -1,0 +1,3089 @@
+[
+  {
+    "canonical_label": "ACCENT",
+    "preferred_lookup_text": "ACCENT",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "ACRILICA BASE AGUA UDA600 ES",
+    "preferred_lookup_text": "ACRILICA BASE AGUA UDA600 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "ACRILICA MANTENIMIENTO ES",
+    "preferred_lookup_text": "ACRILICA MANTENIMIENTO ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "AJUSTADOR ECONOMICO UNIVERSAL FT 21126",
+    "preferred_lookup_text": "AJUSTADOR ECONOMICO UNIVERSAL FT 21126",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "AJUSTADOR PARA EPOXICAS 21209",
+    "preferred_lookup_text": "AJUSTADOR PARA EPOXICAS 21209",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "AJUSTADOR PARA LIMPIEZA DE SUPERFICIES METALICAS 21242",
+    "preferred_lookup_text": "AJUSTADOR PARA LIMPIEZA DE SUPERFICIES METALICAS 21242",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "AJUSTADOR PARA POLIURETANO 21116",
+    "preferred_lookup_text": "AJUSTADOR PARA POLIURETANO 21116",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "AJUSTADOR XILOL 21204",
+    "preferred_lookup_text": "AJUSTADOR XILOL 21204",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "ARENA QUARZO G300N UFA850 ES",
+    "preferred_lookup_text": "ARENA QUARZO G300N UFA850 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Altas Temperaturas",
+    "preferred_lookup_text": "altas temperaturas",
+    "brand_filters": [
+      "pintuco"
+    ],
+    "aliases": [
+      "altas temperaturas",
+      "alta temperatura",
+      "pintura altas temperaturas"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Aquablock",
+    "preferred_lookup_text": "aquablock ultra",
+    "brand_filters": [
+      "aquablock",
+      "pintuco"
+    ],
+    "aliases": [
+      "aquablock",
+      "aquablock ultra",
+      "impermeabilizante cementicio",
+      "aquablock / aquablock ultra",
+      "bloqueador de humedad aquablock"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Arena de Cuarzo ref 5891610",
+    "preferred_lookup_text": "arena de cuarzo 5891610",
+    "brand_filters": [],
+    "aliases": [
+      "arena de cuarzo ref 5891610",
+      "arena de cuarzo 5891610",
+      "cuarzo 5891610",
+      "arena cuarzo"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "B 350",
+    "preferred_lookup_text": "B 350",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "B 352",
+    "preferred_lookup_text": "B 352",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "B 360",
+    "preferred_lookup_text": "B 360",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "B 362",
+    "preferred_lookup_text": "B 362",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "B 362 ULTRA",
+    "preferred_lookup_text": "B 362 ULTRA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "BALL",
+    "preferred_lookup_text": "BALL",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "BELL WOOD",
+    "preferred_lookup_text": "BELL WOOD",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "BISAGRAS DE PISO",
+    "preferred_lookup_text": "BISAGRAS DE PISO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "BROCHA PROFESIONAL PLASTICO BLANCA PINTUCO",
+    "preferred_lookup_text": "BROCHA PROFESIONAL PLASTICO BLANCA PINTUCO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Barnex",
+    "preferred_lookup_text": "barnex",
+    "brand_filters": [
+      "barnex",
+      "pintuco"
+    ],
+    "aliases": [
+      "barnex"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "C999",
+    "preferred_lookup_text": "C999",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "C999 ULTRA",
+    "preferred_lookup_text": "C999 ULTRA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "CENTURY",
+    "preferred_lookup_text": "CENTURY",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "CERRADURA A70PD",
+    "preferred_lookup_text": "CERRADURA A70PD",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "CERRADURAS DE MUEBLE",
+    "preferred_lookup_text": "CERRADURAS DE MUEBLE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "CINTA AUTOMOTRIZ PREMIER RED",
+    "preferred_lookup_text": "CINTA AUTOMOTRIZ PREMIER RED",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "CINTA AZUL PROFESIONAL PINTUCO 40 YDS",
+    "preferred_lookup_text": "CINTA AZUL PROFESIONAL PINTUCO 40 YDS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "COPA DOBLE HILERA 115MM CODIGO 70184607602",
+    "preferred_lookup_text": "COPA DOBLE HILERA 115MM CODIGO 70184607602",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "COPA T11 CLASSIC 127X51X14MM",
+    "preferred_lookup_text": "COPA T11 CLASSIC 127X51X14MM",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "COPA T11 CODIGO 66253141093",
+    "preferred_lookup_text": "COPA T11 CODIGO 66253141093",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Construcleaner",
+    "preferred_lookup_text": "construcleaner",
+    "brand_filters": [
+      "construcleaner",
+      "pintuco"
+    ],
+    "aliases": [
+      "construcleaner",
+      "construcleaner limpiador desengrasante",
+      "limpiador desengrasante construcleaner"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Corrotec",
+    "preferred_lookup_text": "corrotec",
+    "brand_filters": [
+      "corrotec",
+      "pintuco"
+    ],
+    "aliases": [
+      "corrotec",
+      "anticorrosivo corrotec"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "DISCO DE CORTE BNA12 115X1 6MM CODIGO 66252843680",
+    "preferred_lookup_text": "DISCO DE CORTE BNA12 115X1 6MM CODIGO 66252843680",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "DISCOS FLAP CLASSIC",
+    "preferred_lookup_text": "DISCOS FLAP CLASSIC",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "DISCOS VELCRO PREMIER RED 150MM",
+    "preferred_lookup_text": "DISCOS VELCRO PREMIER RED 150MM",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "ELEGANCE",
+    "preferred_lookup_text": "ELEGANCE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "EPOXI POLIAMIDA ES",
+    "preferred_lookup_text": "EPOXI POLIAMIDA ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "EPOXICA BASE AGUA PINTUCO",
+    "preferred_lookup_text": "EPOXICA BASE AGUA PINTUCO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "EPOXY COAL TAR FREE UDA800 UDA801 ES",
+    "preferred_lookup_text": "EPOXY COAL TAR FREE UDA800 UDA801 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "EPOXY ESTRUCTURAS UEA550 UEA551 UEA552 ES",
+    "preferred_lookup_text": "EPOXY ESTRUCTURAS UEA550 UEA551 UEA552 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "EPOXY HS 13200 UEA203 13233 UEA204 ES",
+    "preferred_lookup_text": "EPOXY HS 13200 UEA203 13233 UEA204 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "EPOXY PRIMER 10050 UEA301 UEA302 ES",
+    "preferred_lookup_text": "EPOXY PRIMER 10050 UEA301 UEA302 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "EPOXY PRIMER 10070 UEA351 13350 UEA352 ES",
+    "preferred_lookup_text": "EPOXY PRIMER 10070 UEA351 13350 UEA352 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "EPOXY PRIMER 50RS UEA400 UEA401 UEA402 ES",
+    "preferred_lookup_text": "EPOXY PRIMER 50RS UEA400 UEA401 UEA402 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "EPOXY PRIMER 70RS UEA500 UEA501 ES",
+    "preferred_lookup_text": "EPOXY PRIMER 70RS UEA500 UEA501 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "EPOXY ZINC PRIMER 10055 UEA650 10056 UEA651 13267 UEA652 ES",
+    "preferred_lookup_text": "EPOXY ZINC PRIMER 10055 UEA650 10056 UEA651 13267 UEA652 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "ESMALTE MAQUINARIA 11271 UFA102 ES",
+    "preferred_lookup_text": "ESMALTE MAQUINARIA 11271 UFA102 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "ESMALTE POLIURETANO 113XX 11351 ES",
+    "preferred_lookup_text": "ESMALTE POLIURETANO 113XX 11351 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Epoxy Primer 50RS",
+    "preferred_lookup_text": "Epoxy Primer 50RS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Esmaltes Top Quality",
+    "preferred_lookup_text": "top quality",
+    "brand_filters": [
+      "top quality",
+      "pintuco"
+    ],
+    "aliases": [
+      "esmaltes top quality",
+      "top quality",
+      "esmalte top quality"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Espuma de Poliuretano",
+    "preferred_lookup_text": "espuma de poliuretano",
+    "brand_filters": [],
+    "aliases": [
+      "espuma de poliuretano",
+      "espuma expansiva",
+      "espuma poliuretano"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "FALCON F 19",
+    "preferred_lookup_text": "FALCON F 19",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "FLAIR",
+    "preferred_lookup_text": "FLAIR",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "FT INTERLINE 399",
+    "preferred_lookup_text": "FT INTERLINE 399",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "GUIA SISTEMAS MANTENIMIENTO INDUSTRIA SEP2025",
+    "preferred_lookup_text": "GUIA SISTEMAS MANTENIMIENTO INDUSTRIA SEP2025",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "H ORBIT",
+    "preferred_lookup_text": "H ORBIT",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "H100 BALL",
+    "preferred_lookup_text": "H100 BALL",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "H100 JUPITER",
+    "preferred_lookup_text": "H100 JUPITER",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "HINGES 5PB1 5BB1",
+    "preferred_lookup_text": "HINGES 5PB1 5BB1",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "INHIBIDOR FLASH RUST 10076 UEA700 ES",
+    "preferred_lookup_text": "INHIBIDOR FLASH RUST 10076 UEA700 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "INTERLINE 850",
+    "preferred_lookup_text": "INTERLINE 850",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "INTERLINE 859",
+    "preferred_lookup_text": "INTERLINE 859",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "INTERLINE 975P",
+    "preferred_lookup_text": "INTERLINE 975P",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "INTERLINE 975P ES",
+    "preferred_lookup_text": "INTERLINE 975P ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "INTERNATIONAL 21204",
+    "preferred_lookup_text": "INTERNATIONAL 21204",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "INTERSHIED 6GV",
+    "preferred_lookup_text": "INTERSHIED 6GV",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "INTERSHIELD 300",
+    "preferred_lookup_text": "INTERSHIELD 300",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "INTERTHERM 3350",
+    "preferred_lookup_text": "INTERTHERM 3350",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "INTERTUF 262",
+    "preferred_lookup_text": "INTERTUF 262",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "INTERZONE 954",
+    "preferred_lookup_text": "INTERZONE 954",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "ISO 12944 ES",
+    "preferred_lookup_text": "ISO 12944 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Interchar",
+    "preferred_lookup_text": "interchar",
+    "brand_filters": [
+      "interchar",
+      "international"
+    ],
+    "aliases": [
+      "interchar",
+      "intumescente interchar"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Interfine",
+    "preferred_lookup_text": "interfine",
+    "brand_filters": [
+      "interfine",
+      "international"
+    ],
+    "aliases": [
+      "interfine"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Intergard",
+    "preferred_lookup_text": "intergard",
+    "brand_filters": [
+      "intergard",
+      "international"
+    ],
+    "aliases": [
+      "intergard",
+      "primer international"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Intergard 2002",
+    "preferred_lookup_text": "intergard 2002",
+    "brand_filters": [
+      "intergard",
+      "international"
+    ],
+    "aliases": [
+      "intergard 2002"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Intergard 740",
+    "preferred_lookup_text": "intergard 740",
+    "brand_filters": [
+      "intergard",
+      "international"
+    ],
+    "aliases": [
+      "intergard 740"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Interseal",
+    "preferred_lookup_text": "interseal",
+    "brand_filters": [
+      "interseal",
+      "international"
+    ],
+    "aliases": [
+      "interseal",
+      "epoxica international",
+      "epoxica akzonobel"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Interseal gris RAL 7038",
+    "preferred_lookup_text": "interseal gris ral 7038",
+    "brand_filters": [
+      "interseal",
+      "international"
+    ],
+    "aliases": [
+      "interseal gris ral 7038",
+      "interseal gris",
+      "interseal 7038"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Interthane 990 + Catalizador",
+    "preferred_lookup_text": "interthane 990",
+    "brand_filters": [
+      "interthane",
+      "international"
+    ],
+    "aliases": [
+      "interthane 990 + catalizador",
+      "interthane 990",
+      "interthane",
+      "poliuretano international"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Intervinil",
+    "preferred_lookup_text": "intervinil",
+    "brand_filters": [
+      "intervinil",
+      "pintuco"
+    ],
+    "aliases": [
+      "intervinil"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "JUPITER",
+    "preferred_lookup_text": "JUPITER",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Koraza",
+    "preferred_lookup_text": "koraza",
+    "brand_filters": [
+      "koraza",
+      "pintuco"
+    ],
+    "aliases": [
+      "koraza",
+      "impermeabilizante koraza",
+      "koraza elastomerica",
+      "koraza elastomerico"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Koraza Doble Vida",
+    "preferred_lookup_text": "koraza doble vida",
+    "brand_filters": [
+      "koraza",
+      "pintuco"
+    ],
+    "aliases": [
+      "koraza doble vida",
+      "doble vida",
+      "koraza 10 anos",
+      "koraza 10 años"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "LIJA PREMIER RED HOJAS",
+    "preferred_lookup_text": "LIJA PREMIER RED HOJAS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "MASTIC EPOXY ES",
+    "preferred_lookup_text": "MASTIC EPOXY ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "MEGA",
+    "preferred_lookup_text": "MEGA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "MEGA INSTA FACIL",
+    "preferred_lookup_text": "MEGA INSTA FACIL",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "OJOS MAGICOS",
+    "preferred_lookup_text": "OJOS MAGICOS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "ORBIT",
+    "preferred_lookup_text": "ORBIT",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "ORION",
+    "preferred_lookup_text": "ORION",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUBOAT 4118 UDA300 4119 UDA302 4120 UDA30 ES",
+    "preferred_lookup_text": "PINTUBOAT 4118 UDA300 4119 UDA302 4120 UDA30 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ACRILICA PARA MANTENIMIENTO",
+    "preferred_lookup_text": "PINTUCO ACRILICA PARA MANTENIMIENTO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ACRILTEX VINILTEX",
+    "preferred_lookup_text": "PINTUCO ACRILTEX VINILTEX",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ACUALUX",
+    "preferred_lookup_text": "PINTUCO ACUALUX",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO AEROCOLOR ELECTROGASODOMESTICOS",
+    "preferred_lookup_text": "PINTUCO AEROCOLOR ELECTROGASODOMESTICOS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO AEROCOLOR MULTISUPERFICIE",
+    "preferred_lookup_text": "PINTUCO AEROCOLOR MULTISUPERFICIE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO AEROCOLOR PARA RINES",
+    "preferred_lookup_text": "PINTUCO AEROCOLOR PARA RINES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO AEROSOL TEKBOND",
+    "preferred_lookup_text": "PINTUCO AEROSOL TEKBOND",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO AJUSTADOR ACRILICAS CAUCHO CLORADO 21121",
+    "preferred_lookup_text": "PINTUCO AJUSTADOR ACRILICAS CAUCHO CLORADO 21121",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO AJUSTADOR AROMATICO 21204",
+    "preferred_lookup_text": "PINTUCO AJUSTADOR AROMATICO 21204",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO AJUSTADOR AROMATICO INCOLORO 21134",
+    "preferred_lookup_text": "PINTUCO AJUSTADOR AROMATICO INCOLORO 21134",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO AJUSTADOR EPOXICO 21209",
+    "preferred_lookup_text": "PINTUCO AJUSTADOR EPOXICO 21209",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO AJUSTADOR XILOL 21204",
+    "preferred_lookup_text": "PINTUCO AJUSTADOR XILOL 21204",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ALUMINIO LIQUIDO ECP 100",
+    "preferred_lookup_text": "PINTUCO ALUMINIO LIQUIDO ECP 100",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ANTICORROSIVO AMARILLO 505",
+    "preferred_lookup_text": "PINTUCO ANTICORROSIVO AMARILLO 505",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ANTICORROSIVO INDUSTRIAL 210003",
+    "preferred_lookup_text": "PINTUCO ANTICORROSIVO INDUSTRIAL 210003",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ANTICORROSIVO ROJO 10050 545",
+    "preferred_lookup_text": "PINTUCO ANTICORROSIVO ROJO 10050 545",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ARENA DE QUARZO G300N",
+    "preferred_lookup_text": "PINTUCO ARENA DE QUARZO G300N",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ASEPSIA ULTRA",
+    "preferred_lookup_text": "PINTUCO ASEPSIA ULTRA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO BARNIZ CLEAR MATE 9450",
+    "preferred_lookup_text": "PINTUCO BARNIZ CLEAR MATE 9450",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO BARNIZ CRISTAL CLEAR 9400",
+    "preferred_lookup_text": "PINTUCO BARNIZ CRISTAL CLEAR 9400",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO BARNIZ SD1",
+    "preferred_lookup_text": "PINTUCO BARNIZ SD1",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO CATALIZADOR E 40",
+    "preferred_lookup_text": "PINTUCO CATALIZADOR E 40",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO CLEAR RFU 5500",
+    "preferred_lookup_text": "PINTUCO CLEAR RFU 5500",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO CONCENTRADOS",
+    "preferred_lookup_text": "PINTUCO CONCENTRADOS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO CONSTRUCRIL",
+    "preferred_lookup_text": "PINTUCO CONSTRUCRIL",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO DESMOLDANTE GLASS 3X1",
+    "preferred_lookup_text": "PINTUCO DESMOLDANTE GLASS 3X1",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO DESMOLDANTE GLASS PRIME",
+    "preferred_lookup_text": "PINTUCO DESMOLDANTE GLASS PRIME",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO DESMOLDANTE GLASS SUPREME",
+    "preferred_lookup_text": "PINTUCO DESMOLDANTE GLASS SUPREME",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO DESMOLDANTE GLASST PRIME",
+    "preferred_lookup_text": "PINTUCO DESMOLDANTE GLASST PRIME",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO DOMESTICO",
+    "preferred_lookup_text": "PINTUCO DOMESTICO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO DRYWALL TIPO 2",
+    "preferred_lookup_text": "PINTUCO DRYWALL TIPO 2",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO EPOXICA BASE AGUA",
+    "preferred_lookup_text": "PINTUCO EPOXICA BASE AGUA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO EPOXIPOLIAMIDA",
+    "preferred_lookup_text": "PINTUCO EPOXIPOLIAMIDA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO EQUIPOS GRACO",
+    "preferred_lookup_text": "PINTUCO EQUIPOS GRACO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESGRAFIADO PREMIUN GRANIPLAST",
+    "preferred_lookup_text": "PINTUCO ESGRAFIADO PREMIUN GRANIPLAST",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESGRAFIADO STANDARD GRANIPLAST",
+    "preferred_lookup_text": "PINTUCO ESGRAFIADO STANDARD GRANIPLAST",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESMALTE PARA PROTECCION MAQUINARIA",
+    "preferred_lookup_text": "PINTUCO ESMALTE PARA PROTECCION MAQUINARIA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESMALTE POLIURETANO MADERA",
+    "preferred_lookup_text": "PINTUCO ESMALTE POLIURETANO MADERA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESTABILIDAD DE PRODUCTOS",
+    "preferred_lookup_text": "PINTUCO ESTABILIDAD DE PRODUCTOS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESTABILIDAD DE PRODUCTOS2",
+    "preferred_lookup_text": "PINTUCO ESTABILIDAD DE PRODUCTOS2",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESTUCO ACRILICO EXTERIOR",
+    "preferred_lookup_text": "PINTUCO ESTUCO ACRILICO EXTERIOR",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESTUCO PROFESIONAL 2 EN 1",
+    "preferred_lookup_text": "PINTUCO ESTUCO PROFESIONAL 2 EN 1",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESTUCO PROFESIONAL OBRA",
+    "preferred_lookup_text": "PINTUCO ESTUCO PROFESIONAL OBRA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESTUCOMASTIC 2 EN 1",
+    "preferred_lookup_text": "PINTUCO ESTUCOMASTIC 2 EN 1",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESTUCOR LISTO",
+    "preferred_lookup_text": "PINTUCO ESTUCOR LISTO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO ESTUCOR MOLDURAS",
+    "preferred_lookup_text": "PINTUCO ESTUCOR MOLDURAS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO FDC ANTICORROSIVO VERDE OLIVA 513",
+    "preferred_lookup_text": "PINTUCO FDC ANTICORROSIVO VERDE OLIVA 513",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO FICHA TEC. THINNER DISTRI QUIMICOS",
+    "preferred_lookup_text": "PINTUCO FICHA TEC. THINNER DISTRI QUIMICOS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO FICHA TEC. VARSOL DISTRI QUIMICOS",
+    "preferred_lookup_text": "PINTUCO FICHA TEC. VARSOL DISTRI QUIMICOS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO FLASH PRIMER 2K",
+    "preferred_lookup_text": "PINTUCO FLASH PRIMER 2K",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO FLEX",
+    "preferred_lookup_text": "PINTUCO FLEX",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO FLEX PROFESIONAL",
+    "preferred_lookup_text": "PINTUCO FLEX PROFESIONAL",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO FT SELLADOR ACRILICO",
+    "preferred_lookup_text": "PINTUCO FT SELLADOR ACRILICO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO FTP INVECRYL 500 DOCX",
+    "preferred_lookup_text": "PINTUCO FTP INVECRYL 500 DOCX",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO GRANIACRYL PREMIUM GRANIPLAST",
+    "preferred_lookup_text": "PINTUCO GRANIACRYL PREMIUM GRANIPLAST",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO IMPADOC LISTO",
+    "preferred_lookup_text": "PINTUCO IMPADOC LISTO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO IMPRIMANTE ACRILICO TRAFICO",
+    "preferred_lookup_text": "PINTUCO IMPRIMANTE ACRILICO TRAFICO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO IMPRIMANTE PARA TRAFICO ACRILICO NEGRO 10255632",
+    "preferred_lookup_text": "PINTUCO IMPRIMANTE PARA TRAFICO ACRILICO NEGRO 10255632",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO IMPRIMAX",
+    "preferred_lookup_text": "PINTUCO IMPRIMAX",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO LACA MULTIUSOS AEROCOLOR GENERICA",
+    "preferred_lookup_text": "PINTUCO LACA MULTIUSOS AEROCOLOR GENERICA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO LACA NITRO MADETEC",
+    "preferred_lookup_text": "PINTUCO LACA NITRO MADETEC",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MADECTEC SELLADOR NITRO",
+    "preferred_lookup_text": "PINTUCO MADECTEC SELLADOR NITRO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MADETEC 2K BAJO OLOR",
+    "preferred_lookup_text": "PINTUCO MADETEC 2K BAJO OLOR",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MADETEC BASE AGUA",
+    "preferred_lookup_text": "PINTUCO MADETEC BASE AGUA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MADETEC VITRIFLEX PARTE A",
+    "preferred_lookup_text": "PINTUCO MADETEC VITRIFLEX PARTE A",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MADETEC VITRIFLEX PARTE B",
+    "preferred_lookup_text": "PINTUCO MADETEC VITRIFLEX PARTE B",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MASILLA DURETAN 19167",
+    "preferred_lookup_text": "PINTUCO MASILLA DURETAN 19167",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MASILLA P2500",
+    "preferred_lookup_text": "PINTUCO MASILLA P2500",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MASILLA POLIESTER P1500",
+    "preferred_lookup_text": "PINTUCO MASILLA POLIESTER P1500",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MICROESFERAS DE VIDRIO",
+    "preferred_lookup_text": "PINTUCO MICROESFERAS DE VIDRIO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MONTANA 94",
+    "preferred_lookup_text": "PINTUCO MONTANA 94",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MONTANA HARDCORE",
+    "preferred_lookup_text": "PINTUCO MONTANA HARDCORE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO MTN 94",
+    "preferred_lookup_text": "PINTUCO MTN 94",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PASTA PULIDORA 120025",
+    "preferred_lookup_text": "PINTUCO PASTA PULIDORA 120025",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PASTA PULIDORA CREMA 4040",
+    "preferred_lookup_text": "PINTUCO PASTA PULIDORA CREMA 4040",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PASTA PULIDORA RUBING COMPOUND ROJO 20017",
+    "preferred_lookup_text": "PINTUCO PASTA PULIDORA RUBING COMPOUND ROJO 20017",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PERMEX BASE AGUA 13421",
+    "preferred_lookup_text": "PINTUCO PERMEX BASE AGUA 13421",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTULAC NEGRO MATIZ 7589",
+    "preferred_lookup_text": "PINTUCO PINTULAC NEGRO MATIZ 7589",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTULACA",
+    "preferred_lookup_text": "PINTUCO PINTULACA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTURA ACRILICA ALTA ASEPSIA",
+    "preferred_lookup_text": "PINTUCO PINTURA ACRILICA ALTA ASEPSIA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTURA ACRILICA PARA MANTENIMIENTO",
+    "preferred_lookup_text": "PINTUCO PINTURA ACRILICA PARA MANTENIMIENTO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTURA ANTIGRAFITTI",
+    "preferred_lookup_text": "PINTUCO PINTURA ANTIGRAFITTI",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTURA ENTUMESENTE",
+    "preferred_lookup_text": "PINTUCO PINTURA ENTUMESENTE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTURA EPOXICA BASE SOLVENTE",
+    "preferred_lookup_text": "PINTUCO PINTURA EPOXICA BASE SOLVENTE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTURA EPOXICA PARA CONCRETO",
+    "preferred_lookup_text": "PINTUCO PINTURA EPOXICA PARA CONCRETO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTURA PARA TRAFICO ACRILICA TERTRAFICO 29205 BLANCA TERINSA",
+    "preferred_lookup_text": "PINTUCO PINTURA PARA TRAFICO ACRILICA TERTRAFICO 29205 BLANCA TERINSA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTUTRAFICO ACRILICA BASE AGUA",
+    "preferred_lookup_text": "PINTUCO PINTUTRAFICO ACRILICA BASE AGUA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTUTRAFICO ACRILICO BASE SOLVENTE",
+    "preferred_lookup_text": "PINTUCO PINTUTRAFICO ACRILICO BASE SOLVENTE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PINTUTRAFICO ACRILICO BASE SOLVENTE 13754 55 56",
+    "preferred_lookup_text": "PINTUCO PINTUTRAFICO ACRILICO BASE SOLVENTE 13754 55 56",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PLASTICO EN FRIO",
+    "preferred_lookup_text": "PINTUCO PLASTICO EN FRIO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PLASTICO EN FRIO EN LLANA",
+    "preferred_lookup_text": "PINTUCO PLASTICO EN FRIO EN LLANA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PLASTICO EN FRIO RODILLO",
+    "preferred_lookup_text": "PINTUCO PLASTICO EN FRIO RODILLO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO POLIASPARTICA RAPIDO SECADO",
+    "preferred_lookup_text": "PINTUCO POLIASPARTICA RAPIDO SECADO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO POLIURETANO MADERA P",
+    "preferred_lookup_text": "PINTUCO POLIURETANO MADERA P",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO POLIURETANO MADERAS P",
+    "preferred_lookup_text": "PINTUCO POLIURETANO MADERAS P",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO POLIURETANO RAPIDO SECADO",
+    "preferred_lookup_text": "PINTUCO POLIURETANO RAPIDO SECADO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO POLIURETANO SERIE 600 BRILLANTE",
+    "preferred_lookup_text": "PINTUCO POLIURETANO SERIE 600 BRILLANTE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PPF CALCULO Y ESPECIFICACION INTUMESCENTE",
+    "preferred_lookup_text": "PINTUCO PPF CALCULO Y ESPECIFICACION INTUMESCENTE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PRIMER 2K 5001",
+    "preferred_lookup_text": "PINTUCO PRIMER 2K 5001",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PRIMER ALQUIDICO 210003",
+    "preferred_lookup_text": "PINTUCO PRIMER ALQUIDICO 210003",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PRIMER EPOXI 70RS",
+    "preferred_lookup_text": "PINTUCO PRIMER EPOXI 70RS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PRIMER EPOXI RAPIDO SECADO 50RS",
+    "preferred_lookup_text": "PINTUCO PRIMER EPOXI RAPIDO SECADO 50RS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PRIMER EPOXI ZINC",
+    "preferred_lookup_text": "PINTUCO PRIMER EPOXI ZINC",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PRIMER EPOXICO 10046",
+    "preferred_lookup_text": "PINTUCO PRIMER EPOXICO 10046",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PRIMER EPOXICO DE RAPIDO SECADO GRIS",
+    "preferred_lookup_text": "PINTUCO PRIMER EPOXICO DE RAPIDO SECADO GRIS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PRIMER PARA PLASTICOS",
+    "preferred_lookup_text": "PINTUCO PRIMER PARA PLASTICOS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PRIMER PARA PLASTICOS 28600",
+    "preferred_lookup_text": "PINTUCO PRIMER PARA PLASTICOS 28600",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PROTECCION GRAFFITI",
+    "preferred_lookup_text": "PINTUCO PROTECCION GRAFFITI",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PU MATE SERIE 600 ACT",
+    "preferred_lookup_text": "PINTUCO PU MATE SERIE 600 ACT",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO PUFIX BLANCO",
+    "preferred_lookup_text": "PINTUCO PUFIX BLANCO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO QUARZ G300N",
+    "preferred_lookup_text": "PINTUCO QUARZ G300N",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO REMOVEDOR 1020",
+    "preferred_lookup_text": "PINTUCO REMOVEDOR 1020",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO REVOMASTIC",
+    "preferred_lookup_text": "PINTUCO REVOMASTIC",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO SEALER F100",
+    "preferred_lookup_text": "PINTUCO SEALER F100",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO SELLADOR ACRILICO",
+    "preferred_lookup_text": "PINTUCO SELLADOR ACRILICO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO SELLADOR DE CORROSION",
+    "preferred_lookup_text": "PINTUCO SELLADOR DE CORROSION",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO SILICONA NEUTRA",
+    "preferred_lookup_text": "PINTUCO SILICONA NEUTRA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO SILICONA ULTRA 3 EN 1",
+    "preferred_lookup_text": "PINTUCO SILICONA ULTRA 3 EN 1",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO SUPER GRIP",
+    "preferred_lookup_text": "PINTUCO SUPER GRIP",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO SUPER GRIP ANTIDESLIZANTE",
+    "preferred_lookup_text": "PINTUCO SUPER GRIP ANTIDESLIZANTE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO TELA DE REFUERZO",
+    "preferred_lookup_text": "PINTUCO TELA DE REFUERZO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO TEXACRYL ACROLATEX",
+    "preferred_lookup_text": "PINTUCO TEXACRYL ACROLATEX",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO THINNER CORRIENTE 21219",
+    "preferred_lookup_text": "PINTUCO THINNER CORRIENTE 21219",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO THINNER ESTRADA INDUSOL",
+    "preferred_lookup_text": "PINTUCO THINNER ESTRADA INDUSOL",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO THINNER INDUSOL",
+    "preferred_lookup_text": "PINTUCO THINNER INDUSOL",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO THINNER LIMPIADOR 21241",
+    "preferred_lookup_text": "PINTUCO THINNER LIMPIADOR 21241",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO THINNER P 502",
+    "preferred_lookup_text": "PINTUCO THINNER P 502",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO THINNER POLIURETANO 21050",
+    "preferred_lookup_text": "PINTUCO THINNER POLIURETANO 21050",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO TINTE PARA MADERA",
+    "preferred_lookup_text": "PINTUCO TINTE PARA MADERA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VARETA",
+    "preferred_lookup_text": "PINTUCO VARETA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VINIL LATEX TERINSA",
+    "preferred_lookup_text": "PINTUCO VINIL LATEX TERINSA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VINIL MAX TERINSA",
+    "preferred_lookup_text": "PINTUCO VINIL MAX TERINSA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VINIL PLUS TERINSA",
+    "preferred_lookup_text": "PINTUCO VINIL PLUS TERINSA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VINILICO TIPO 1",
+    "preferred_lookup_text": "PINTUCO VINILICO TIPO 1",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VINILO TIPO 1 CONSTRUCTOR",
+    "preferred_lookup_text": "PINTUCO VINILO TIPO 1 CONSTRUCTOR",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VINILTEX BIO CUIDADO",
+    "preferred_lookup_text": "PINTUCO VINILTEX BIO CUIDADO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VINILTEX PRO 450",
+    "preferred_lookup_text": "PINTUCO VINILTEX PRO 450",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VINILTEX PRO 650",
+    "preferred_lookup_text": "PINTUCO VINILTEX PRO 650",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VINILTEX VIDA",
+    "preferred_lookup_text": "PINTUCO VINILTEX VIDA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VINILUX 2 EN 1",
+    "preferred_lookup_text": "PINTUCO VINILUX 2 EN 1",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUCO VITRIFLEX BASE AGUA",
+    "preferred_lookup_text": "PINTUCO VITRIFLEX BASE AGUA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUNOV 1280 UFA250 UFA251 UFA252 ES",
+    "preferred_lookup_text": "PINTUNOV 1280 UFA250 UFA251 UFA252 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUNOV 13285 13286",
+    "preferred_lookup_text": "PINTUNOV 13285 13286",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PINTUNOV 51125 UFA350 UFA351 ES",
+    "preferred_lookup_text": "PINTUNOV 51125 UFA350 UFA351 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PLYMOUTH",
+    "preferred_lookup_text": "PLYMOUTH",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "POMO MADERA HC",
+    "preferred_lookup_text": "POMO MADERA HC",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PRESTIGE",
+    "preferred_lookup_text": "PRESTIGE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PRIMER EPOXY 10046",
+    "preferred_lookup_text": "PRIMER EPOXY 10046",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "PUERTAS CORTAFUEGO STEELCRAFT",
+    "preferred_lookup_text": "PUERTAS CORTAFUEGO STEELCRAFT",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Pintuco Fill",
+    "preferred_lookup_text": "pintuco fill",
+    "brand_filters": [
+      "pintuco fill",
+      "pintuco"
+    ],
+    "aliases": [
+      "pintuco fill",
+      "fill 7",
+      "fill 12",
+      "impermeabilizante pintuco fill"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Pintucoat",
+    "preferred_lookup_text": "pintucoat",
+    "brand_filters": [
+      "pintucoat",
+      "pintuco"
+    ],
+    "aliases": [
+      "pintucoat",
+      "epoxica pintuco",
+      "epoxi pintuco"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Pintulac",
+    "preferred_lookup_text": "Pintulac",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Pintulux 3 en 1",
+    "preferred_lookup_text": "pintulux 3 en 1",
+    "brand_filters": [
+      "pintulux",
+      "pintuco"
+    ],
+    "aliases": [
+      "pintulux 3 en 1",
+      "pintulux 3en1",
+      "pintulux"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Pintura Canchas",
+    "preferred_lookup_text": "pintura canchas",
+    "brand_filters": [
+      "pintura canchas",
+      "pintuco"
+    ],
+    "aliases": [
+      "pintura canchas",
+      "pintura para canchas",
+      "canchas"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Pinturama",
+    "preferred_lookup_text": "pinturama",
+    "brand_filters": [
+      "pinturama",
+      "pintuco"
+    ],
+    "aliases": [
+      "pinturama"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Pintóxido",
+    "preferred_lookup_text": "pintoxido",
+    "brand_filters": [
+      "pintoxido",
+      "pintuco"
+    ],
+    "aliases": [
+      "pintoxido",
+      "pintóxido",
+      "convertidor oxido",
+      "convertidor óxido"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Poliuretano Alto Trafico 1550/1551",
+    "preferred_lookup_text": "poliuretano alto trafico 1550",
+    "brand_filters": [
+      "pintuco"
+    ],
+    "aliases": [
+      "poliuretano alto trafico 1550/1551",
+      "poliuretano alto trafico",
+      "poliuretano 1550",
+      "poliuretano 1551"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Primer 50RS",
+    "preferred_lookup_text": "Primer 50RS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "REMOVEDOR PINTUCO 1020",
+    "preferred_lookup_text": "REMOVEDOR PINTUCO 1020",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "ROLLO LIJA R243 NORTON",
+    "preferred_lookup_text": "ROLLO LIJA R243 NORTON",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "SATURNO",
+    "preferred_lookup_text": "SATURNO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "SC61",
+    "preferred_lookup_text": "SC61",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "SEALER F100 UFA550 UFA551 ES",
+    "preferred_lookup_text": "SEALER F100 UFA550 UFA551 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "STEELCRAFT F SERIES FLUSH FRAMES",
+    "preferred_lookup_text": "STEELCRAFT F SERIES FLUSH FRAMES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "STEELCRAFT SWEETS",
+    "preferred_lookup_text": "STEELCRAFT SWEETS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "SUPRA INAFER",
+    "preferred_lookup_text": "SUPRA INAFER",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Sellamur",
+    "preferred_lookup_text": "sellamur",
+    "brand_filters": [
+      "sellamur",
+      "pintuco"
+    ],
+    "aliases": [
+      "sellamur"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Sellomax",
+    "preferred_lookup_text": "sellomax",
+    "brand_filters": [
+      "sellomax",
+      "pintuco"
+    ],
+    "aliases": [
+      "sellomax"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Siliconite 7",
+    "preferred_lookup_text": "siliconite 7",
+    "brand_filters": [
+      "siliconite",
+      "pintuco"
+    ],
+    "aliases": [
+      "siliconite 7",
+      "siliconite",
+      "hidrofugante siliconite"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "THINNER CENTRAL DE DISOLVENTES",
+    "preferred_lookup_text": "THINNER CENTRAL DE DISOLVENTES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "THINNER CORRIENTE 21219",
+    "preferred_lookup_text": "THINNER CORRIENTE 21219",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "THINNER PARA ACRILICAS 21018",
+    "preferred_lookup_text": "THINNER PARA ACRILICAS 21018",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "THINNER PARA POLIURETANO 21050",
+    "preferred_lookup_text": "THINNER PARA POLIURETANO 21050",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "TOPES DE PISO",
+    "preferred_lookup_text": "TOPES DE PISO",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "TOPES DE RESORTE",
+    "preferred_lookup_text": "TOPES DE RESORTE",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "TOPES FIJAPUERTA",
+    "preferred_lookup_text": "TOPES FIJAPUERTA",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "TOPES MAGNETICOS",
+    "preferred_lookup_text": "TOPES MAGNETICOS",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Viniltex",
+    "preferred_lookup_text": "Viniltex",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Viniltex Advanced",
+    "preferred_lookup_text": "viniltex advanced",
+    "brand_filters": [
+      "viniltex",
+      "pintuco"
+    ],
+    "aliases": [
+      "viniltex advanced",
+      "viniltex adv",
+      "viniltex premium"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Viniltex Baños y Cocinas",
+    "preferred_lookup_text": "viniltex baños y cocinas",
+    "brand_filters": [
+      "viniltex",
+      "pintuco"
+    ],
+    "aliases": [
+      "viniltex baños y cocinas",
+      "viniltex banos y cocinas",
+      "viniltex baños",
+      "viniltex banos",
+      "banos y cocinas",
+      "baños y cocinas"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Viniltex Ultralavable",
+    "preferred_lookup_text": "viniltex ultralavable",
+    "brand_filters": [
+      "viniltex",
+      "pintuco"
+    ],
+    "aliases": [
+      "viniltex ultralavable",
+      "viniltex ultralav",
+      "ultralavable"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Wash Primer",
+    "preferred_lookup_text": "wash primer",
+    "brand_filters": [
+      "wash primer",
+      "pintuco"
+    ],
+    "aliases": [
+      "wash primer",
+      "washprimer",
+      "primer de adherencia galvanizado"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "Wood Stain",
+    "preferred_lookup_text": "wood stain",
+    "brand_filters": [
+      "wood stain",
+      "pintuco"
+    ],
+    "aliases": [
+      "wood stain",
+      "tinte para madera exterior",
+      "protector wood stain"
+    ],
+    "sources": [
+      "canonical_rules",
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "ZINC PRIMER 10844 UDA850 10845 UDA851 ES",
+    "preferred_lookup_text": "ZINC PRIMER 10844 UDA850 10845 UDA851 ES",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "acido muriatico",
+    "preferred_lookup_text": "acido muriatico",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "barniz arquitectonico",
+    "preferred_lookup_text": "barniz arquitectonico",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "epoxy primer 50rs",
+    "preferred_lookup_text": "epoxy primer 50rs",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "primer 50rs",
+    "preferred_lookup_text": "primer 50rs",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "vinilos interiores",
+    "preferred_lookup_text": "vinilos interiores",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  },
+  {
+    "canonical_label": "viniltex",
+    "preferred_lookup_text": "viniltex",
+    "brand_filters": [],
+    "aliases": [],
+    "sources": [
+      "policies_or_rag"
+    ],
+    "erp_reference_placeholder": null
+  }
+]

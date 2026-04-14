@@ -1,0 +1,152 @@
+tipo_documento,archivo_actual,nombre_recomendado,accion,nota,lookup_inventario_sugerido,ejemplo_erp_encontrado,ref_erp_ejemplo,familia_canonica,marca,estado_validacion
+ficha_tecnica,AJUSTADOR XILOL 21204.pdf,AJUSTADOR XILOL 21204.pdf,mantener,Ya está suficientemente alineado con inventario,ajustador xilol 21204,AJUSTADOR XILOL 21204 GTA007/20L/AA7,5891066,AJUSTADOR XILOL 21204,,validado_inventario
+ficha_tecnica,VINILTEX PRO 450.pdf,VINILTEX PRO 450.pdf,revisar,El buscador no lo está resolviendo a una familia clara; revisar contra ERP antes de reingesta,viniltex pro 450,PQ VINILTEX ADV MAT BLANCO 1501 18.93L,5891101,VINILTEX PRO 450,PINTUCO,revisar_manual
+ficha_tecnica,ESTUCO PROFESIONAL OBRA.pdf,ESTUCO PROFESIONAL OBRA.pdf,mantener,Nombre útil como familia base si así vive realmente en tu portafolio,estuco profesional obra,,,ESTUCO PROFESIONAL OBRA,,pendiente
+ficha_tecnica,CORROTEC EPOXI ZINC 2K 10073.pdf,EPOXY ZINC PRIMER 10073.pdf,renombrar,Conviene alinear el nombre con cómo aparece la familia real en inventario,corrotec epoxi zinc 2k 10073,EPOXY ZINC PRIMER 10073P UEA603/20L/AA7,5893357,EPOXY ZINC PRIMER 10073,INTERNATIONAL,validado_inventario
+ficha_tecnica,EPOXIPOLIAMIDA.pdf,EPOXIPOLIAMIDA.pdf,revisar,Nombre demasiado genérico; confirmar si la ficha corresponde a una familia comercial concreta,epoxipoliamida,P7  PINTUCOAT 517 COMP A 3.44L,5890577,EPOXIPOLIAMIDA,,revisar_manual
+ficha_tecnica,DESMOLDANTE GLASST PRIME.pdf,DESMOLDANTE GLASST PRIME.pdf,mantener,Conservar si ese es el nombre comercial estable de la ficha,desmoldante glasst prime,,,DESMOLDANTE GLASST PRIME,,pendiente
+ficha_tecnica,DRYWALL TIPO 2.pdf,DRYWALL TIPO 2.pdf,revisar,Puede ser demasiado genérico si existen varias líneas drywall,drywall tipo 2,,,DRYWALL TIPO 2,,revisar_manual
+ficha_tecnica,CONSTRUCLEANER LIMPIADOR NO CORROSIVO.pdf,CONSTRUCLEANER LIMPIADOR NO CORROSIVO.pdf,mantener,Buen nombre de familia si esa línea se comercializa así,construcleaner limpiador no corrosivo,,,CONSTRUCLEANER LIMPIADOR NO CORROSIVO,CONSTRUCLEANER,pendiente
+ficha_tecnica,BARNEX EXTRA PROTECCIÓN.pdf,BARNEX EXTRA PROTECCION.pdf,renombrar,Uniformar ASCII y quitar tilde para que el corpus quede consistente,barnex extra proteccion,,,BARNEX EXTRA PROTECCION,BARNEX,pendiente
+ficha_tecnica,PINTUCOAT PLUS.pdf,PINTUCOAT PLUS.pdf,mantener,Familia clara y estable,pintucoat plus,,,PINTUCOAT PLUS,PINTUCO,pendiente
+ficha_tecnica,AJUSTADOR EPÓXICO 21209.pdf,AJUSTADOR EPOXICO 21209.pdf,renombrar,Uniformar ASCII y mantener el código técnico,ajustador epoxico 21209,,,AJUSTADOR EPOXICO 21209,,pendiente
+ficha_tecnica,CORROTEC.pdf,CORROTEC.pdf,revisar,Demasiado amplio si tienes variantes Premium/Epoxi Zinc/etc,corrotec,,,CORROTEC,,revisar_manual
+ficha_tecnica,SILICONITE 7W.pdf,SILICONITE 7W.pdf,mantener,Nombre corto pero diferenciador si es familia única,siliconite 7w,,,SILICONITE 7W,,pendiente
+ficha_tecnica,SILICONITE 10.pdf,SILICONITE 10.pdf,mantener,Nombre corto pero diferenciador si es familia única,siliconite 10,,,SILICONITE 10,,pendiente
+ficha_tecnica,SELLADOR DE CORROSIÓN.pdf,SELLADOR DE CORROSION.pdf,renombrar,Uniformar ASCII; revisar si falta marca o código,sellador de corrosion,,,SELLADOR DE CORROSION,,revisar_manual
+ficha_tecnica,ALTA TEMPERATURA GRIS 902.pdf,ALTA TEMPERATURA GRIS 902.pdf,mantener,Nombre suficientemente específico,alta temperatura gris 902,,,ALTA TEMPERATURA 902,,pendiente
+ficha_tecnica,CONSTRUCLEANER RINSE LADRILLO ROJO.pdf,CONSTRUCLEANER RINSE LADRILLO ROJO.pdf,mantener,Nombre específico y útil para RAG,construcleaner rinse ladrillo rojo,,,CONSTRUCLEANER RINSE LADRILLO ROJO,CONSTRUCLEANER,pendiente
+ficha_tecnica,MASILLA POLIESTER P1500.pdf,MASILLA POLIESTER P1500.pdf,mantener,Nombre técnico útil y estable,masilla poliester p1500,,,MASILLA POLIESTER P1500,,pendiente
+ficha_tecnica,ASEPSIA ULTRA.pdf,ASEPSIA ULTRA.pdf,mantener,Familia clara como ficha principal,asepsia ultra,,,ASEPSIA ULTRA,,pendiente
+ficha_tecnica,ESTUCO ACRILICO EXTERIOR FICHA TECNICA ACTUALIZADA.pdf,ESTUCO ACRILICO EXTERIOR.pdf,renombrar,Quitar ruido documental y dejar solo la familia,estuco acrilico exterior,,,ESTUCO ACRILICO EXTERIOR,,pendiente
+ficha_tecnica,KORAZA PROTECCION 3 EN 1.pdf,KORAZA PROTECCION 3 EN 1.pdf,mantener,Nombre de línea entendible para RAG y búsqueda,koraza proteccion 3 en 1,,,KORAZA PROTECCION 3 EN 1,KORAZA,pendiente
+ficha_tecnica,PINTUCOAT BASE AGUA.pdf,PINTUCOAT BASE AGUA.pdf,mantener,Familia estable y precisa,pintucoat base agua,,,PINTUCOAT BASE AGUA,PINTUCO,pendiente
+ficha_tecnica,LACA NITRO MADETEC.pdf,LACA NITRO MADETEC.pdf,mantener,Nombre correcto como familia,laca nitro madetec,,,LACA NITRO MADETEC,MADETEC,pendiente
+ficha_tecnica,MASILLA DURETAN 19167.pdf,MASILLA DURETAN 19167.pdf,mantener,Código diferenciador suficiente,masilla duretan 19167,,,MASILLA DURETAN 19167,,pendiente
+ficha_tecnica,ESTUCOMASTIC 2 EN 1.pdf,ESTUCOMASTIC 2 EN 1.pdf,mantener,Nombre claro y comercial,estucomastic 2 en 1,,,ESTUCOMASTIC 2 EN 1,,pendiente
+ficha_tecnica,PINTUTRAFICO ACRILICA BASE AGUA.pdf,PINTUTRAFICO ACRILICO BASE AGUA.pdf,renombrar,Uniformar a una forma consistente sin tilde y con genero único,pintutrafico acrilico base agua,,,PINTUTRAFICO ACRILICO BASE AGUA,PINTUCO,pendiente
+ficha_tecnica,POLIURETANO RÁPIDO SECADO.pdf,POLIURETANO RAPIDO SECADO.pdf,renombrar,Uniformar ASCII,poliuretano rapido secado,,,POLIURETANO RAPIDO SECADO,,pendiente
+ficha_tecnica,KORAZA ELASTOMÉRICA.pdf,KORAZA ELASTOMERICA.pdf,renombrar,Uniformar ASCII,koraza elastomerica,,,KORAZA ELASTOMERICA,KORAZA,pendiente
+ficha_tecnica,PASTA PULIDORA CREMA 4040.pdf,PASTA PULIDORA CREMA 4040.pdf,mantener,Nombre comercial concreto,pasta pulidora crema 4040,,,PASTA PULIDORA CREMA 4040,,pendiente
+ficha_tecnica,PINTULUX 3 EN 1 MATE.pdf,PINTULUX 3 EN 1 MATE.pdf,mantener,Familia útil y específica,pintulux 3 en 1 mate,,,PINTULUX 3 EN 1 MATE,PINTULUX,pendiente
+ficha_tecnica,PINTULUX 3 EN 1 BRILLANTE.pdf,PINTULUX 3 EN 1 BRILLANTE.pdf,mantener,Familia útil y específica; no amarrarla al color de un SKU,pintulux 3 en 1 brillante,PQ PINTULUX 3EN1 BR NEGRO 95 3.79L,5891951,PINTULUX 3 EN 1 BRILLANTE,PINTULUX,validado_inventario
+ficha_tecnica,PINTULUX MAXIMA PROTECCION.pdf,PINTULUX MAXIMA PROTECCION.pdf,mantener,Nombre comercial fuerte y estable,pintulux maxima proteccion,,,PINTULUX MAXIMA PROTECCION,PINTULUX,pendiente
+ficha_tecnica,PINTUCO SELLADOR ACRILICO.pdf,PINTUCO SELLADOR ACRILICO.pdf,mantener,Familia clara; el ERP luego baja a variantes de color/presentación,pintuco sellador acrilico,PINTUCO SELLADOR ACRIL BLANCO 3118 150ML,10339019,PINTUCO SELLADOR ACRILICO,PINTUCO,validado_inventario
+ficha_tecnica,WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES (1).pdf,WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES.pdf,renombrar,Quitar sufijo basura de duplicado `(1)`,wood stain protector para madera en exteriores,,,WOOD STAIN PROTECTOR PARA MADERA EN EXTERIORES,,pendiente
+ficha_tecnica,KORAZA 5.pdf,KORAZA 5.pdf,revisar,Validar si el nombre real de la familia es KORAZA 5 GARANTIA o una sublínea más precisa,koraza 5,,,KORAZA 5,KORAZA,revisar_manual
+ficha_tecnica,AEROCOLOR ALTAS TEMPERATURAS.pdf,AEROCOLOR ALTAS TEMPERATURAS.pdf,revisar,Si la ficha es de línea completa mantener; si es de color/código específico bajar a 901/902/904/905,aerocolor altas temperaturas,ALTAS TEMPERATURAS 901 UEA750/3.7L/AA7,5890596,AEROCOLOR ALTAS TEMPERATURAS,AEROCOLOR,revisar_manual
+ficha_tecnica,POLIASPARTICA RAPIDO SECADO.pdf,POLIASPARTICA RAPIDO SECADO.pdf,mantener,Nombre técnico útil y específico,poliaspartica rapido secado,,,POLIASPARTICA RAPIDO SECADO,,pendiente
+ficha_tecnica,PLASTICO EN FRIO RODILLO.pdf,PLASTICO EN FRIO RODILLO.pdf,mantener,Buen nombre si la ficha realmente es para aplicación con rodillo,plastico en frio rodillo,,,PLASTICO EN FRIO RODILLO,,pendiente
+ficha_tecnica,CONSTRUCLEANER RINSE LADRILLO CLARO.pdf,CONSTRUCLEANER RINSE LADRILLO CLARO.pdf,mantener,Familia específica y útil,construcleaner rinse ladrillo claro,,,CONSTRUCLEANER RINSE LADRILLO CLARO,CONSTRUCLEANER,pendiente
+ficha_tecnica,ESMALTES TOP QUALITY.pdf,ESMALTES TOP QUALITY.pdf,revisar,Nombre posiblemente amplio; validar si hay una sola familia o varias subfamilias,esmaltes top quality,,,ESMALTES TOP QUALITY,,revisar_manual
+ficha_tecnica,ANTICORROSIVO INDUSTRIAL 210003.pdf,ANTICORROSIVO INDUSTRIAL 210003.pdf,mantener,Código diferenciador útil,anticorrosivo industrial 210003,,,ANTICORROSIVO INDUSTRIAL 210003,,pendiente
+ficha_tecnica,SUPER GRIP ANTIDESLIZANTE.pdf,SUPER GRIP ANTIDESLIZANTE.pdf,mantener,Nombre comercial claro,super grip antideslizante,,,SUPER GRIP ANTIDESLIZANTE,,pendiente
+ficha_tecnica,ANTICORROSIVO AMARILLO 505.pdf,ANTICORROSIVO AMARILLO 505.pdf,mantener,Nombre suficientemente específico,anticorrosivo amarillo 505,,,ANTICORROSIVO AMARILLO 505,,pendiente
+ficha_tecnica,AJUSTADOR AROMATICO 21204.pdf,AJUSTADOR AROMATICO 21204.pdf,mantener,Nombre correcto si esa es la familia técnica,ajustador aromatico 21204,,,AJUSTADOR AROMATICO 21204,,pendiente
+ficha_tecnica,ESTUCO PROFESIONAL 2 EN 1.pdf,ESTUCO PROFESIONAL 2 EN 1.pdf,mantener,Familia comercial clara,estuco profesional 2 en 1,,,ESTUCO PROFESIONAL 2 EN 1,,pendiente
+ficha_tecnica,BARNIZ CLEAR MATE 9450.pdf,BARNIZ CLEAR MATE 9450.pdf,mantener,Conservar código técnico,barniz clear mate 9450,,,BARNIZ CLEAR MATE 9450,,pendiente
+ficha_tecnica,DESMOLDANTE GLASS 3x1.pdf,DESMOLDANTE GLASS 3X1.pdf,renombrar,Uniformar mayúsculas en la relación 3X1,desmoldante glass 3x1,,,DESMOLDANTE GLASS 3X1,,pendiente
+ficha_tecnica,DESMOLDANTE GLASS SUPREME.pdf,DESMOLDANTE GLASS SUPREME.pdf,mantener,Nombre comercial claro,desmoldante glass supreme,,,DESMOLDANTE GLASS SUPREME,,pendiente
+ficha_tecnica,EPOXICA BASE AGUA.pdf,EPOXICA BASE AGUA.pdf,revisar,Nombre demasiado genérico si existen varias marcas/segmentos,epoxica base agua,,,EPOXICA BASE AGUA,,revisar_manual
+ficha_tecnica,AEROCOLOR ELECTROGASODOMESTICOS.pdf,AEROCOLOR ELECTROGASODOMESTICOS.pdf,mantener,Nombre de sublínea clara,aerocolor electrogasodomesticos,,,AEROCOLOR ELECTROGASODOMESTICOS,AEROCOLOR,pendiente
+ficha_tecnica,ESMALTE POLIURETANO MADERA.pdf,ESMALTE POLIURETANO MADERA.pdf,mantener,Nombre claro si representa una sola familia,esmalte poliuretano madera,,,ESMALTE POLIURETANO MADERA,,pendiente
+ficha_tecnica,BARNIZ SD1.pdf,BARNIZ SD1.pdf,mantener,Nombre corto pero muy usado comercialmente,barniz sd1,,,BARNIZ SD1,,pendiente
+ficha_tecnica,MADETEC 2K BAJO OLOR.pdf,MADETEC 2K BAJO OLOR.pdf,mantener,Nombre preciso de familia,madetec 2k bajo olor,,,MADETEC 2K BAJO OLOR,MADETEC,pendiente
+ficha_tecnica,MADETEC BASE AGUA.pdf,MADETEC BASE AGUA.pdf,mantener,Familia estable,madetec base agua,,,MADETEC BASE AGUA,MADETEC,pendiente
+ficha_tecnica,MADETEC SELLADOR NITRO.pdf,MADETEC SELLADOR NITRO.pdf,mantener,Familia estable,madetec sellador nitro,,,MADETEC SELLADOR NITRO,MADETEC,pendiente
+ficha_tecnica,WASH PRIMER 509A-B.pdf,WASH PRIMER 509A-B.pdf,mantener,Usar el código y la pareja A-B porque define la familia,wash primer 509a-b,PQ PINTULUX WASH PRIMER 509A PT A 1 GL,5892199,WASH PRIMER 509A-B,PINTULUX,validado_inventario
+ficha_tecnica,VINILUX 2 EN 1.pdf,VINILUX 2 EN 1.pdf,mantener,Familia comercial clara,vinilux 2 en 1,IQ VINILUX MAT BLANCO 2022155 18.93L,5891158,VINILUX 2 EN 1,PINTUCO,validado_inventario
+ficha_tecnica,PRIMER 2K 5001.pdf,PRIMER 2K 5001.pdf,mantener,Código suficientemente específico,primer 2k 5001,MEG PRIMER 2K GRIS MEDIO 5001 AC 3.78L,5892054,PRIMER 2K 5001,MEG,validado_inventario
+ficha_tecnica,POLIURETANO MADERAS P.pdf,POLIURETANO MADERAS P.pdf,revisar,Nombre parece truncado; confirmar el nombre completo antes de reingesta,poliuretano maderas p,,,POLIURETANO MADERAS P,,revisar_manual
+ficha_tecnica,POLIURETANO MADERA P.pdf,POLIURETANO MADERA P.pdf,revisar,Nombre parece truncado; confirmar el nombre completo antes de reingesta,poliuretano madera p,,,POLIURETANO MADERA P,,revisar_manual
+ficha_tecnica,AEROCOLOR PARA RINES.pdf,AEROCOLOR PARA RINES.pdf,mantener,Subfamilia clara,aerocolor para rines,,,AEROCOLOR PARA RINES,AEROCOLOR,pendiente
+ficha_tecnica,PINTULACA.pdf,PINTULACA.pdf,mantener,Familia comercial reconocible,pintulaca,,,PINTULACA,PINTUCO,pendiente
+ficha_tecnica,primer-epoxi-zinc.pdf,EPOXY ZINC PRIMER.pdf,renombrar,Quitar slug de descarga y dejar familia limpia,primer epoxi zinc,,,EPOXY ZINC PRIMER,,pendiente
+ficha_tecnica,PINTUCO FLEX.pdf,PINTUCO FLEX.pdf,revisar,El buscador cae en herramienta/accesorio; confirmar si la ficha es de sellante o accesorio,pintuco flex,ESPATULA FLEXIBLE PROF INOX 3 P PINTUCO,6448865,PINTUCO FLEX,PINTUCO,revisar_manual
+ficha_tecnica,ALTA TEMPERATURA NEGRA 901.pdf,ALTA TEMPERATURA NEGRA 901.pdf,mantener,Nombre suficientemente específico,alta temperatura negra 901,,,ALTA TEMPERATURA 901,,pendiente
+ficha_tecnica,TINTE PARA MADERA.pdf,TINTE PARA MADERA.pdf,revisar,Puede ser demasiado genérico si hay varias marcas o bases,tinte para madera,,,TINTE PARA MADERA,,revisar_manual
+ficha_tecnica,THINNER LIMPIADOR 21241.pdf,THINNER LIMPIADOR 21241.pdf,mantener,Código técnico claro,thinner limpiador 21241,,,THINNER LIMPIADOR 21241,,pendiente
+ficha_tecnica,PINTURA ANTIGRAFFITI.pdf,PINTURA ANTIGRAFFITI.pdf,mantener,Nombre de familia técnico,pintura antigraffiti,,,PINTURA ANTIGRAFFITI,,pendiente
+ficha_tecnica,ANTICORROSIVO ROJO 10050 - 545.pdf,ANTICORROSIVO ROJO 10050.pdf,renombrar,Limpiar sufijo dudoso y dejar el código principal si ese es el real,anticorrosivo rojo 10050,,,ANTICORROSIVO ROJO 10050,,revisar_manual
+ficha_tecnica,ESMALTE PARA PROTECCION MAQUINARIA.pdf,ESMALTE PARA PROTECCION MAQUINARIA.pdf,mantener,Nombre comercial claro,esmalte para proteccion maquinaria,,,ESMALTE PARA PROTECCION MAQUINARIA,,pendiente
+ficha_tecnica,PINTUCOAT HOJA DE SEGURIDAD.pdf,PINTUCOAT PLUS.pdf,separar_tipo_documental,No mezclar hojas de seguridad con ficha técnica principal,pintucoat plus,,,PINTUCOAT PLUS,PINTUCO,no_reingestar_como_ficha
+ficha_tecnica,MONTANA HARDCORE.pdf,MONTANA HARDCORE.pdf,mantener,Familia reconocible,montana hardcore,,,MONTANA HARDCORE,MONTANA,pendiente
+ficha_tecnica,REMOVEDOR PINTUCO 1020.pdf,REMOVEDOR 1020.pdf,renombrar,Dejar la familia principal sin ruido extra si el ERP la usa así,removedor 1020,,,REMOVEDOR 1020,PINTUCO,pendiente
+ficha_tecnica,VINIL LATEX TERINSA.pdf,VINIL LATEX TERINSA.pdf,mantener,Familia clara,vinil latex terinsa,,,VINIL LATEX TERINSA,TERINSA,pendiente
+ficha_tecnica,VINIL PLUS TERINSA.pdf,VINIL PLUS TERINSA.pdf,mantener,Familia clara,vinil plus terinsa,,,VINIL PLUS TERINSA,TERINSA,pendiente
+ficha_tecnica,VINIL MAX TERINSA.pdf,VINIL MAX TERINSA.pdf,mantener,Familia clara,vinil max terinsa,,,VINIL MAX TERINSA,TERINSA,pendiente
+ficha_tecnica,PINTUCO SILICONA NEUTRA.pdf,PINTUCO SILICONA NEUTRA.pdf,mantener,Familia suficientemente clara,pintuco silicona neutra,,,PINTUCO SILICONA NEUTRA,PINTUCO,pendiente
+ficha_tecnica,GRANIACRYL PREMIUM GRANIPLAST.pdf,GRANIACRYL PREMIUM GRANIPLAST.pdf,mantener,Nombre correcto como familia,graniacryl premium graniplast,,,GRANIACRYL PREMIUM GRANIPLAST,GRANIPLAST,pendiente
+ficha_tecnica,FLASH PRIMER 2K.pdf,FLASH PRIMER 2K.pdf,mantener,Familia técnica clara,flash primer 2k,FLASH PRIMER 2K BLANCO 5021 1/4G,10399523,FLASH PRIMER 2K,,validado_inventario
+ficha_tecnica,ALTA TEMPERATURA ALUMINIO 905.pdf,ALTA TEMPERATURA ALUMINIO 905.pdf,mantener,Nombre suficientemente específico,alta temperatura aluminio 905,,,ALTA TEMPERATURA 905,,pendiente
+ficha_tecnica,CONSTRUCLEANER RESTAURADOR DE LADRILLO.pdf,CONSTRUCLEANER RESTAURADOR DE LADRILLO.pdf,mantener,Familia específica y útil,construcleaner restaurador de ladrillo,,,CONSTRUCLEANER RESTAURADOR DE LADRILLO,CONSTRUCLEANER,pendiente
+ficha_tecnica,PLASTICO EN FRIO EN LLANA.pdf,PLASTICO EN FRIO EN LLANA.pdf,mantener,Familia específica y útil,plastico en frio en llana,,,PLASTICO EN FRIO EN LLANA,,pendiente
+ficha_tecnica,WASH PRIMER BASE AGUA.pdf,WASH PRIMER BASE AGUA.pdf,mantener,Familia técnica clara,wash primer base agua,PQ PINTULUX WASH PRIMER 509A PT A 1 GL,5892199,WASH PRIMER BASE AGUA,PINTULUX,validado_inventario
+ficha_tecnica,ALUMINIO LIQUIDO ECP-100.pdf,ALUMINIO LIQUIDO ECP-100.pdf,mantener,Nombre específico con código,aluminio liquido ecp-100,,,ALUMINIO LIQUIDO ECP-100,,pendiente
+ficha_tecnica,EPOXICA BASE AGUA PINTUCO.pdf,EPOXICA BASE AGUA PINTUCO.pdf,mantener,Si la marca sí distingue esta ficha de otras epóxicas base agua, conservarla,epoxica base agua pintuco,,,EPOXICA BASE AGUA PINTUCO,PINTUCO,pendiente
+ficha_tecnica,PU Mate Serie 600 Act.pdf,PU MATE SERIE 600 ACT.pdf,renombrar,Uniformar mayúsculas y dejar la familia compacta,pu mate serie 600 act,,,PU MATE SERIE 600 ACT,,pendiente
+ficha_tecnica,THINNER CORRIENTE 21219.pdf,THINNER CORRIENTE 21219.pdf,mantener,Código técnico claro,thinner corriente 21219,,,THINNER CORRIENTE 21219,,pendiente
+ficha_tecnica,PINTURAMA.pdf,PINTURAMA.pdf,revisar,Validar si corresponde a una familia vendible o a documento comercial,pinturama,,,PINTURAMA,,revisar_manual
+ficha_tecnica,MICROESFERAS DE VIDRIO.pdf,MICROESFERAS DE VIDRIO.pdf,mantener,Nombre de insumo claro,microesferas de vidrio,,,MICROESFERAS DE VIDRIO,,pendiente
+ficha_tecnica,WOOD STAIN IMPREGNANTE PARA MADERAS.pdf,WOOD STAIN IMPREGNANTE PARA MADERAS.pdf,mantener,Nombre claro como familia,wood stain impregnante para maderas,,,WOOD STAIN IMPREGNANTE PARA MADERAS,,pendiente
+ficha_tecnica,PINTURA EPOXICA BASE SOLVENTE.pdf,PINTURA EPOXICA BASE SOLVENTE.pdf,revisar,Nombre genérico; idealmente bajar a marca/familia real,pintura epoxica base solvente,,,PINTURA EPOXICA BASE SOLVENTE,,revisar_manual
+ficha_tecnica,PRIMER EPOXICO DE RAPIDO SECADO GRIS.pdf,PRIMER EPOXICO RAPIDO SECADO GRIS.pdf,renombrar,Uniformar la frase de familia,primer epoxico rapido secado gris,,,PRIMER EPOXICO RAPIDO SECADO GRIS,,pendiente
+ficha_tecnica,AJUSTADOR ACRILICAS CAUCHO CLORADO 21121.pdf,AJUSTADOR ACRILICAS CAUCHO CLORADO 21121.pdf,mantener,Código técnico claro,ajustador acrilicas caucho clorado 21121,,,AJUSTADOR ACRILICAS CAUCHO CLORADO 21121,,pendiente
+ficha_tecnica,AJUSTADOR AROMÁTICO INCOLORO 21134.pdf,AJUSTADOR AROMATICO INCOLORO 21134.pdf,renombrar,Uniformar ASCII,ajustador aromatico incoloro 21134,,,AJUSTADOR AROMATICO INCOLORO 21134,,pendiente
+ficha_tecnica,MASILLA P2500.pdf,MASILLA P2500.pdf,mantener,Nombre técnico útil,masilla p2500,,,MASILLA P2500,,pendiente
+ficha_tecnica,ESGRAFIADO STANDARD GRANIPLAST.pdf,ESGRAFIADO STANDARD GRANIPLAST.pdf,mantener,Familia clara,esgrafiado standard graniplast,,,ESGRAFIADO STANDARD GRANIPLAST,GRANIPLAST,pendiente
+ficha_tecnica,IMPRIMAX.pdf,IMPRIMAX.pdf,mantener,Familia reconocible,imprimax,,,IMPRIMAX,,pendiente
+ficha_tecnica,CONSTRUCLEANER LIMPIADOR DESENGRASANTE.pdf,CONSTRUCLEANER LIMPIADOR DESENGRASANTE.pdf,mantener,Familia específica y útil,construcleaner limpiador desengrasante,,,CONSTRUCLEANER LIMPIADOR DESENGRASANTE,CONSTRUCLEANER,pendiente
+ficha_tecnica,ESGRAFIADO PREMIUM GRANIPLAST.pdf,ESGRAFIADO PREMIUM GRANIPLAST.pdf,mantener,Familia clara,esgrafiado premium graniplast,,,ESGRAFIADO PREMIUM GRANIPLAST,GRANIPLAST,pendiente
+ficha_tecnica,CLEAR FRU-5500.pdf,CLEAR FRU-5500.pdf,mantener,Código diferenciador útil,clear fru-5500,,,CLEAR FRU-5500,,pendiente
+ficha_tecnica,MEG PRIMER PARA PLASTICOS 28600 AC 0.94L.pdf,MEG PRIMER PARA PLASTICOS 28600 AC.pdf,renombrar,La ficha principal no debe amarrarse a una sola presentación salvo que el PDF sea exclusivo de 0.94L,meg primer para plasticos 28600 ac,,,MEG PRIMER PARA PLASTICOS 28600 AC,MEG,pendiente
+ficha_tecnica,ESTUCOR BULTO 25 KL LISTO.pdf,ESTUCOR BULTO 25 KL LISTO.pdf,revisar,Validar si el nombre real es KLS o KG y si la línea se llama así en ERP,estucor bulto 25 kl listo,,,ESTUCOR BULTO 25 KL LISTO,,revisar_manual
+ficha_tecnica,ESTUCOR BULTO 25 KLS MOLDURA.pdf,ESTUCOR BULTO 25 KLS MOLDURA.pdf,revisar,Validar unidad y nombre exacto en ERP,estucor bulto 25 kls moldura,,,ESTUCOR BULTO 25 KLS MOLDURA,,revisar_manual
+ficha_tecnica,PQ ACROLATEX 50.pdf,ACROLATEX 50.pdf,renombrar,Quitar prefijo si no hace parte del nombre maestro de la familia,acrolatex 50,,,ACROLATEX 50,,pendiente
+ficha_tecnica,PQ TELA DE REFUERZO.pdf,TELA DE REFUERZO.pdf,revisar,Puede ser accesorio más que ficha principal; validar si quieres reingestarlo como auxiliar,tela de refuerzo,,,TELA DE REFUERZO,,revisar_manual
+ficha_tecnica,PQ CANCHAS MAT.pdf,PINTURA CANCHAS.pdf,renombrar,El nombre actual es corto y poco claro; conviene llevarlo a una familia comercial entendible,pintura canchas,,,PINTURA CANCHAS,,pendiente
+ficha_tecnica,P7 PINTUTRAF BS.pdf,P7 PINTUTRAF BS.pdf,revisar,Validar si el prefijo P7 debe quedarse en el nombre maestro,p7 pintutraf bs,,,P7 PINTUTRAF BS,,revisar_manual
+ficha_tecnica,VITRIFLEX BASE AGUA.pdf,VITRIFLEX BASE AGUA.pdf,mantener,Familia clara,vitriflex base agua,,,VITRIFLEX BASE AGUA,,pendiente
+ficha_tecnica,ACUALUX.pdf,ACUALUX.pdf,mantener,Familia clara,acualux,,,ACUALUX,,pendiente
+ficha_tecnica,VINILTEX VIDA.pdf,VINILTEX VIDA.pdf,revisar,El buscador hoy no la resuelve bien; revisar si la familia ERP realmente existe con ese nombre,viniltex vida,PQ VINILTEX ADV MAT BLANCO 1501 18.93L,5891101,VINILTEX VIDA,PINTUCO,revisar_manual
+ficha_tecnica,VINILICO.pdf,VINILICO.pdf,revisar,Demasiado genérico si existen varias líneas vinílicas,vinilico,,,VINILICO,,revisar_manual
+ficha_tecnica,KORAZA 5 GARANTIA.pdf,KORAZA 5 GARANTIA.pdf,revisar,El buscador actual cae en una línea elastomérica genérica; validar familia exacta,koraza 5 garantia,P7 KORAZA ELASTOMERICA GEN DEEP 18.93L,5894180,KORAZA 5 GARANTIA,KORAZA,revisar_manual
+ficha_tecnica,KORAZA PRO 750 ELASTOMERICA.pdf,KORAZA PRO 750 ELASTOMERICA.pdf,mantener,Familia clara,koraza pro 750 elastomerica,,,KORAZA PRO 750 ELASTOMERICA,KORAZA,pendiente
+ficha_tecnica,QUARZ G300N.pdf,ARENA QUARZO G300N UFA850.pdf,renombrar,Alinear al nombre técnico con código de familia reconocido por inventario,quarz g300n,ARENA QUARZO G300N UFA850/25KG/AA7,5891610,ARENA QUARZO G300N UFA850,,validado_inventario
+ficha_tecnica,CONSTRUCLEANER RESTAURADOR FACHADAS.pdf,CONSTRUCLEANER RESTAURADOR FACHADAS.pdf,mantener,Familia clara,construcleaner restaurador fachadas,,,CONSTRUCLEANER RESTAURADOR FACHADAS,CONSTRUCLEANER,pendiente
+ficha_tecnica,CONSTRUCLEANER MANTENIMIENTO FACHADAS.pdf,CONSTRUCLEANER MANTENIMIENTO FACHADAS.pdf,mantener,Familia clara,construcleaner mantenimiento fachadas,,,CONSTRUCLEANER MANTENIMIENTO FACHADAS,CONSTRUCLEANER,pendiente
+ficha_tecnica,CONSTRUCLEANER LIMPIADOR ECOLOGICO LADRILLO.pdf,CONSTRUCLEANER LIMPIADOR ECOLOGICO LADRILLO.pdf,mantener,Familia clara,construcleaner limpiador ecologico ladrillo,,,CONSTRUCLEANER LIMPIADOR ECOLOGICO LADRILLO,CONSTRUCLEANER,pendiente
+ficha_tecnica,CONSTRUCLEANER LADRILLO ROJO.pdf,CONSTRUCLEANER LADRILLO ROJO.pdf,revisar,Validar si es producto o referencia al sustrato/resultado,construcleaner ladrillo rojo,,,CONSTRUCLEANER LADRILLO ROJO,CONSTRUCLEANER,revisar_manual
+ficha_tecnica,CONSTRUCLEANER LADRILLO CLARO.pdf,CONSTRUCLEANER LADRILLO CLARO.pdf,revisar,Validar si es producto o referencia al sustrato/resultado,construcleaner ladrillo claro,,,CONSTRUCLEANER LADRILLO CLARO,CONSTRUCLEANER,revisar_manual
+ficha_tecnica,COLORANTE VOC.pdf,COLORANTE VOC.pdf,mantener,Familia técnica corta y clara,colorante voc,,,COLORANTE VOC,,pendiente
+ficha_tecnica,INTERGARD 2002.pdf,INTERGARD 2002.pdf,mantener,Nombre comercial correcto; luego el ERP resolverá parte A/colores,intergard 2002,INTERSEAL670HS PA RAL7001 EGA130/1 0.85G,20024353,INTERGARD 2002,INTERNATIONAL,revisar_manual
+ficha_tecnica,INTERLINE 850.pdf,INTERLINE 850.pdf,mantener,Familia comercial clara,interline 850,INTERLINE 850 TLA850/20L/AA7,5863695,INTERLINE 850,INTERNATIONAL,validado_inventario
+ficha_tecnica,INTERLINE 859.pdf,INTERLINE 859.pdf,mantener,Familia comercial clara,interline 859,,,INTERLINE 859,INTERNATIONAL,pendiente
+ficha_tecnica,INTERLINE 975P.pdf,INTERLINE 975P.pdf,mantener,Familia comercial clara,interline 975p,,,INTERLINE 975P,INTERNATIONAL,pendiente
+ficha_tecnica,INTERSEAL 670HS.pdf,INTERSEAL 670 HS.pdf,renombrar,Uniformar el espacio de la familia,interseal 670 hs,,,INTERSEAL 670 HS,INTERNATIONAL,pendiente
+ficha_tecnica,INTERSHIELD 300.pdf,INTERSHIELD 300.pdf,mantener,Familia comercial clara,intershield 300,,,INTERSHIELD 300,INTERNATIONAL,pendiente
+ficha_tecnica,INTERTHANE 990.pdf,INTERTHANE 990.pdf,mantener,Familia principal correcta; catalizador se documenta aparte,interthane 990,INTERTHANE 990 PHA130/20L/AA7,5863716,INTERTHANE 990,INTERNATIONAL,validado_inventario
+ficha_tecnica,INTERTUF 262.pdf,INTERTUF 262.pdf,renombrar,Corregir el nombre comercial si la familia es Intertuf,intertuf 262,,,INTERTUF 262,INTERNATIONAL,pendiente
+ficha_tecnica,INTERZINC 52.pdf,INTERZINC 52.pdf,mantener,Familia clara,interzinc 52,,,INTERZINC 52,INTERNATIONAL,pendiente
+ficha_tecnica,INTERZONE 954.pdf,INTERZONE 954.pdf,mantener,Familia clara,interzone 954,,,INTERZONE 954,INTERNATIONAL,pendiente
+ficha_tecnica,MASTIC EPOXY [ES].pdf,MASTIC EPOXY.pdf,renombrar,Quitar etiqueta de idioma del nombre maestro,mastic epoxy,,,MASTIC EPOXY,,pendiente
+ficha_tecnica,THINNER PARA ACRILICAS 21018.pdf,THINNER PARA ACRILICAS 21018.pdf,mantener,Código técnico claro,thinner para acrilicas 21018,,,THINNER PARA ACRILICAS 21018,,pendiente
+ficha_tecnica,THINNER PARA POLIURETANO 21050.pdf,THINNER PARA POLIURETANO 21050.pdf,mantener,Código técnico claro,thinner para poliuretano 21050,,,THINNER PARA POLIURETANO 21050,,pendiente
+ficha_tecnica,ZINC PRIMER 10844 UDA850-10845 UDA851 [ES].pdf,ZINC PRIMER 10844-10845.pdf,renombrar,Dejar la familia legible y quitar etiqueta de idioma,zinc primer 10844 10845,,,ZINC PRIMER 10844-10845,,pendiente
+fds,FDS - ACROLATEX 50 TEXACRYL 3508.pdf,FDS - ACROLATEX 50 TEXACRYL 3508.pdf,separar_tipo_documental,Las FDS/HDS no deben entrar como ficha técnica principal,acrolatex 50 texacryl 3508,,,ACROLATEX 50,,no_reingestar_como_ficha
+fds,FDS - ALTAS TEMPERATURAS ROJO AEROCOLOR 300 ML.pdf,FDS - ALTAS TEMPERATURAS ROJO AEROCOLOR 300 ML.pdf,separar_tipo_documental,Es FDS; mantener separada del corpus principal,altas temperaturas rojo aerocolor 300 ml,,,ALTAS TEMPERATURAS AEROCOLOR,,no_reingestar_como_ficha
+fds,FDS - KORAZA BLANCO 2650.pdf,FDS - KORAZA BLANCO 2650.pdf,separar_tipo_documental,Es FDS color-específica; no usar como nombre maestro,koraza blanco 2650,,,KORAZA,,no_reingestar_como_ficha
+fds,FDS - AJUSTADOR AROMATICO 21204.pdf,FDS - AJUSTADOR AROMATICO 21204.pdf,separar_tipo_documental,Es FDS; dejarla en carpeta documental separada,ajustador aromatico 21204,,,AJUSTADOR AROMATICO 21204,,no_reingestar_como_ficha
+fds,FDS - INTERTHANE 990 CAT B.pdf,FDS - INTERTHANE 990 CAT B.pdf,separar_tipo_documental,Catalizador y FDS deben vivir aparte de la ficha maestra,interthane 990 cat b,,,INTERTHANE 990,INTERNATIONAL,no_reingestar_como_ficha
+fds,FDS - INTERSEAL 670 HS PARTE A BLANCO.pdf,FDS - INTERSEAL 670 HS PARTE A BLANCO.pdf,separar_tipo_documental,Documento de seguridad variante-específico; no es ficha principal,interseal 670 hs parte a blanco,,,INTERSEAL 670 HS,INTERNATIONAL,no_reingestar_como_ficha
+fds,FDS - PINTUCOAT PLUS GRIS.pdf,FDS - PINTUCOAT PLUS GRIS.pdf,separar_tipo_documental,Es FDS y además variante de color; no mezclar con ficha principal,pintucoat plus gris,,,PINTUCOAT PLUS,PINTUCO,no_reingestar_como_ficha
+fds,FDS - PINTULACA BLANCO 7519.pdf,FDS - PINTULACA BLANCO 7519.pdf,separar_tipo_documental,Documento de seguridad separado,pintulaca blanco 7519,,,PINTULACA,PINTUCO,no_reingestar_como_ficha
+fds,FDS - VINILTEX ADVANCED BASE DEEP BLANCO 117176.pdf,FDS - VINILTEX ADVANCED BASE DEEP BLANCO 117176.pdf,separar_tipo_documental,Es FDS variante-específica; la ficha principal debe quedar por familia,viniltex advanced base deep blanco 117176,,,VINILTEX ADVANCED,PINTUCO,no_reingestar_como_ficha
+fds,FDS - AQUABLOCK ULTRA 27070.pdf,FDS - AQUABLOCK ULTRA 27070.pdf,separar_tipo_documental,Es FDS; conservar separada,aquablock ultra 27070,,,AQUABLOCK ULTRA,PINTUCO,no_reingestar_como_ficha
+hds,HOJA DE SEGURIDAD PINTUCOAT PLUS.pdf,HOJA DE SEGURIDAD PINTUCOAT PLUS.pdf,separar_tipo_documental,Es hoja de seguridad; no reingestar como ficha principal,pintucoat plus,,,PINTUCOAT PLUS,PINTUCO,no_reingestar_como_ficha
+hds,HOJA DE SEGURIDAD REVOQUE PLASTICO PROFESIONAL BLANCO 17091.pdf,HOJA DE SEGURIDAD REVOQUE PLASTICO PROFESIONAL BLANCO 17091.pdf,separar_tipo_documental,Es hoja de seguridad color/variante-específica; mantener aparte,revoque plastico profesional blanco 17091,,,REVOQUE PLASTICO PROFESIONAL,,no_reingestar_como_ficha
+hds,HOJA DE SEGURIDAD VINILTEX PRO 450.pdf,HOJA DE SEGURIDAD VINILTEX PRO 450.pdf,separar_tipo_documental,Es hoja de seguridad; no usar como ficha principal,viniltex pro 450,,,VINILTEX PRO 450,PINTUCO,no_reingestar_como_ficha
+hds,HOJA DE SEGURIDAD THINNER DISTRI QUIMICOS.pdf,HOJA DE SEGURIDAD THINNER DISTRI QUIMICOS.pdf,separar_tipo_documental,Es hoja de seguridad; mantener fuera del corpus principal,thinner distri quimicos,,,THINNER DISTRI QUIMICOS,,no_reingestar_como_ficha
+certificado,CARTA GARANTIA GRANIACRYL.pdf,CARTA GARANTIA GRANIACRYL.pdf,separar_tipo_documental,Las garantías/certificados van aparte del corpus de fichas,graniacryl,,,GRANIACRYL,,no_reingestar_como_ficha
+certificado,CERTIFICADO ANÁLISIS C-THERM Boletin OC 144826 (2).pdf,CERTIFICADO ANALISIS C-THERM BOLETIN OC 144826.pdf,separar_tipo_documental,Es certificado y además trae ruido de duplicado; no es ficha principal,c-therm boletin oc 144826,,,C-THERM,,no_reingestar_como_ficha
+guia,GUIA-Sistemas Mantenimiento Industria_Sep2025 (2).pdf,GUIA SISTEMAS MANTENIMIENTO INDUSTRIA SEP2025.pdf,separar_tipo_documental,Es guía o material de apoyo, no ficha técnica primaria,sistemas mantenimiento industria sep2025,,,GUIA SISTEMAS MANTENIMIENTO INDUSTRIA,,no_reingestar_como_ficha

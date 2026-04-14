@@ -1,0 +1,15 @@
+{
+  "product_sitemaps": [
+    "https://www.pintuco.com.co/productos-sitemap.xml"
+  ],
+  "category_sitemaps": [
+    "https://www.pintuco.com.co/cat_productos-sitemap.xml"
+  ],
+  "total_product_urls_available": 375,
+  "total_product_urls": 375,
+  "total_category_urls": 639,
+  "with_ficha_tecnica": 320,
+  "with_inventory_match": 375,
+  "output_json": "C:\\Users\\Diego Mauricio\\Desktop\\CRM_Ferreinox\\artifacts\\pintuco_public_site\\pintuco_public_products.json",
+  "output_csv": "C:\\Users\\Diego Mauricio\\Desktop\\CRM_Ferreinox\\artifacts\\pintuco_public_site\\pintuco_public_products.csv"
+}

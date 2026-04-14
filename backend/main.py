@@ -41,6 +41,11 @@ try:
 except ImportError:
     from backend.agent_v3 import generate_agent_reply_v3
 
+try:
+    from technical_product_canonicalization import canonicalize_technical_product_list, canonicalize_technical_product_term
+except ImportError:
+    from backend.technical_product_canonicalization import canonicalize_technical_product_list, canonicalize_technical_product_term
+
 # ── Color formulas data (from LIBRO DE FORMULAS) ──
 _COLOR_FORMULAS: list[dict] = []
 _COLOR_FORMULAS_FILE = Path(__file__).resolve().parent.parent / "data" / "color_formulas.json"
@@ -3492,6 +3497,7 @@ def prepare_product_request_for_search(text_value: Optional[str], product_reques
     prepared_request.setdefault("color_filters", [])
     prepared_request.setdefault("finish_filters", [])
     prepared_request = apply_deterministic_product_alias_rules(text_value, prepared_request)
+    prepared_request = _apply_technical_product_request_hints(text_value, prepared_request)
 
     nlu_payload = extract_product_entities_with_llm(text_value, prepared_request)
     prepared_request["nlu_processed"] = True
@@ -3518,21 +3524,26 @@ def prepare_product_request_for_search(text_value: Optional[str], product_reques
     if canonical_finish:
         prepared_request["finish_filters"] = merge_unique_terms(prepared_request.get("finish_filters"), [canonical_finish], tokenize_search_phrase(canonical_finish))
 
-    merged_core_terms = merge_unique_terms(
-        prepared_request.get("core_terms"),
-        [canonical_product] if canonical_product else [],
-        tokenize_search_phrase(canonical_product),
-        prepared_request.get("color_filters"),
-        prepared_request.get("finish_filters"),
-    )
-    prepared_request["core_terms"] = merged_core_terms[:10]
+    if prepared_request.get("canonical_product_locked") and prepared_request.get("preferred_lookup_text"):
+        locked_lookup_text = str(prepared_request["preferred_lookup_text"]).strip()
+        prepared_request["core_terms"] = [locked_lookup_text]
+        prepared_request["search_terms"] = expand_product_terms([locked_lookup_text])[:14]
+    else:
+        merged_core_terms = merge_unique_terms(
+            prepared_request.get("core_terms"),
+            [canonical_product] if canonical_product else [],
+            tokenize_search_phrase(canonical_product),
+            prepared_request.get("color_filters"),
+            prepared_request.get("finish_filters"),
+        )
+        prepared_request["core_terms"] = merged_core_terms[:10]
 
-    merged_search_terms = merge_unique_terms(
-        prepared_request.get("search_terms"),
-        merged_core_terms,
-        [canonical_presentation] if canonical_presentation else [],
-    )
-    prepared_request["search_terms"] = expand_product_terms(merged_search_terms)[:14]
+        merged_search_terms = merge_unique_terms(
+            prepared_request.get("search_terms"),
+            merged_core_terms,
+            [canonical_presentation] if canonical_presentation else [],
+        )
+        prepared_request["search_terms"] = expand_product_terms(merged_search_terms)[:14]
 
     derived_brand_filters = extract_brand_filters(
         " ".join(
@@ -7350,7 +7361,7 @@ def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, s
                     MAX(cat_producto) AS cat_producto,
                     MAX(descripcion_ebs) AS descripcion_ebs,
                     MAX(tipo_articulo) AS tipo_articulo
-                FROM public.vw_inventario_agente
+                FROM public.vw_inventario_agente_activo
                 WHERE {inner_where}
                 GROUP BY referencia, descripcion, marca
             ) inventory
@@ -13110,6 +13121,11 @@ def _derive_policy_inventory_candidate_terms(
 
 
 def _text_matches_policy_product(text_value: Optional[str], policy_value: Optional[str]) -> bool:
+    text_canonical = canonicalize_technical_product_term(text_value)
+    policy_canonical = canonicalize_technical_product_term(policy_value)
+    if text_canonical and policy_canonical and normalize_text_value(text_canonical["canonical_label"]) == normalize_text_value(policy_canonical["canonical_label"]):
+        return True
+
     normalized_text = normalize_text_value(text_value)
     normalized_policy = normalize_text_value(policy_value)
     if not normalized_text or not normalized_policy:
@@ -13124,6 +13140,168 @@ def _text_matches_policy_product(text_value: Optional[str], policy_value: Option
     if len(policy_tokens) == 1:
         return matched_tokens == 1
     return matched_tokens >= max(2, min(len(policy_tokens), 3))
+
+
+# ── Surface-aware RAG filtering ──────────────────────────────────────────
+# Instead of thousands of specific policy rules, use the surface metadata
+# that ALREADY exists in each RAG profile (surface_targets, restricted_surfaces)
+# to filter out products that don't belong on the diagnosed surface.
+
+_SURFACE_KEYWORDS: dict[str, list[str]] = {
+    "metal": [
+        "metal", "metalic", "hierro", "acero", "galvanizado", "galvanizada",
+        "reja", "porton", "portón", "teja metalica", "teja metálica",
+        "cubierta metalica", "cubierta metálica", "techo metalico", "techo metálico",
+        "teja zinc", "lamina", "lámina", "tubo", "tuberia", "tubería",
+        "estructura metalica", "estructura metálica", "baranda",
+    ],
+    "concreto": [
+        "concreto", "cemento", "mamposteria", "mampostería", "ladrillo",
+        "pared", "muro", "fachada", "estuco", "drywall", "bloque",
+    ],
+    "madera": [
+        "madera", "mdf", "triplex", "puerta madera", "mueble", "closet",
+        "piso madera", "deck",
+    ],
+    "piso": [
+        "piso", "bodega", "garaje", "parqueadero", "anden", "andén",
+        "cancha", "montacargas",
+    ],
+    "cubierta": [
+        "techo", "terraza", "cubierta", "losa", "plancha", "gotera",
+        "impermeabilizar", "fibrocemento", "eternit", "teja",
+    ],
+    "interior": [
+        "interior", "habitacion", "habitación", "alcoba", "sala",
+        "comedor", "oficina",
+    ],
+    "exterior": [
+        "exterior", "fachada", "intemperie",
+    ],
+}
+
+
+def _infer_surface_types_from_query(question: str, product: str = "") -> list[str]:
+    """Detect which surface types the user is asking about from the query text.
+
+    Returns a list like ["metal", "exterior"] that can be used to filter
+    RAG profiles via their surface_targets / restricted_surfaces metadata.
+    """
+    normalized = normalize_text_value(f"{question} {product}")
+    surfaces: list[str] = []
+    for surface, keywords in _SURFACE_KEYWORDS.items():
+        # Check multi-word keywords first (longest match)
+        for kw in sorted(keywords, key=len, reverse=True):
+            if kw in normalized:
+                if surface not in surfaces:
+                    surfaces.append(surface)
+                break
+    return surfaces
+
+
+def _filter_profiles_by_surface_compatibility(
+    profiles: list[dict],
+    diagnosed_surfaces: list[str],
+    query_text: str = "",
+) -> list[str]:
+    """Check profiles against diagnosed surfaces and return list of
+    canonical_family names that are RESTRICTED for the diagnosed surface.
+
+    Also detects specialty-use-case mismatches: products designed for
+    extreme conditions (high temperature, immersion, etc.) when the
+    query doesn't mention those conditions.
+
+    These products should be demoted in recommendations.
+    """
+    restricted_families: list[str] = []
+    if not diagnosed_surfaces or not profiles:
+        return restricted_families
+
+    query_norm = normalize_text_value(query_text)
+
+    # Specialty condition keywords — if a profile mentions these but the
+    # query doesn't, the product is likely wrong for the use case
+    _SPECIALTY_CONDITIONS = {
+        "alta_temperatura": {
+            "profile_signals": ["232", "590", "900", "horno", "caldera", "chimenea", "tuberia de vapor", "alta temperatura", "altas temperaturas"],
+            "query_signals": ["temperatura", "horno", "caldera", "chimenea", "tuberia vapor", "escape", "motor", "silenciador"],
+        },
+        "inmersion": {
+            "profile_signals": ["inmersion", "sumergido", "tanque de agua"],
+            "query_signals": ["inmersion", "sumergido", "tanque", "piscina"],
+        },
+    }
+
+    for profile in profiles:
+        pj = profile.get("profile_json") or {}
+        restricted = pj.get("restricted_surfaces") or []
+        guidance_restricted = (pj.get("solution_guidance") or {}).get("restricted_surfaces") or []
+        all_restricted = set(normalize_text_value(s) for s in restricted + guidance_restricted if s)
+
+        family = profile.get("canonical_family") or ""
+        is_restricted = False
+
+        # Check 1: direct surface restriction
+        for surface in diagnosed_surfaces:
+            surf_norm = normalize_text_value(surface)
+            if surf_norm in all_restricted:
+                is_restricted = True
+                break
+
+        # Check 2: specialty use-case mismatch
+        if not is_restricted and query_norm:
+            uses = (pj.get("commercial_context") or {}).get("recommended_uses") or []
+            uses_text = normalize_text_value(" ".join(str(u) for u in uses))
+            for _condition, signals in _SPECIALTY_CONDITIONS.items():
+                profile_has_specialty = any(sig in uses_text for sig in signals["profile_signals"])
+                query_has_specialty = any(sig in query_norm for sig in signals["query_signals"])
+                if profile_has_specialty and not query_has_specialty:
+                    is_restricted = True
+                    break
+
+        if is_restricted and family not in restricted_families:
+            restricted_families.append(family)
+
+    return restricted_families
+
+
+def _filter_rag_candidates_by_surface_and_policy(
+    rag_candidate_names: list[str],
+    forbidden_products: list[str],
+    surface_restricted_families: list[str],
+) -> list[str]:
+    """Filter RAG-extracted candidate names against:
+    1. Policy forbidden_products (from GLOBAL_TECHNICAL_POLICY_RULES)
+    2. Surface-restricted products (from profile metadata)
+
+    This closes the 'fuga' where raw RAG text extraction re-injects
+    products that the policy or surface analysis already rejected.
+    """
+    filtered: list[str] = []
+    for name in rag_candidate_names:
+        name_norm = normalize_text_value(name)
+        if not name_norm:
+            continue
+        # Check against forbidden products
+        is_forbidden = False
+        for forbidden in forbidden_products:
+            forbidden_norm = normalize_text_value(forbidden)
+            if forbidden_norm and (forbidden_norm in name_norm or name_norm in forbidden_norm):
+                is_forbidden = True
+                break
+        if is_forbidden:
+            continue
+        # Check against surface-restricted families
+        is_restricted = False
+        for family in surface_restricted_families:
+            family_norm = normalize_text_value(family)
+            if family_norm and (family_norm in name_norm or name_norm in family_norm):
+                is_restricted = True
+                break
+        if is_restricted:
+            continue
+        filtered.append(name)
+    return filtered
 
 
 def _filter_inventory_candidates_by_policy(candidates: list[dict], hard_policies: Optional[dict]) -> list[dict]:
@@ -13195,9 +13373,27 @@ def _extract_policy_product_terms(hard_policies: Optional[dict], bucket: str) ->
         for item in _split_policy_items(value):
             if _is_tool_policy_item(item):
                 continue
-            if item not in results:
-                results.append(item)
+            resolved = canonicalize_technical_product_term(item)
+            candidate = (resolved or {}).get("canonical_label") or item
+            if candidate not in results:
+                results.append(candidate)
     return results
+
+
+def _apply_technical_product_request_hints(raw_text: Optional[str], request: Optional[dict]) -> dict:
+    prepared_request = dict(request or {})
+    resolved = canonicalize_technical_product_term(raw_text)
+    if not resolved:
+        return prepared_request
+    if not prepared_request.get("canonical_product"):
+        prepared_request["canonical_product"] = resolved["canonical_label"]
+    if not prepared_request.get("preferred_lookup_text"):
+        prepared_request["preferred_lookup_text"] = resolved["preferred_lookup_text"]
+    prepared_request["canonical_product_locked"] = True
+    prepared_request["brand_filters"] = merge_unique_terms(prepared_request.get("brand_filters"), resolved.get("brand_filters") or [])
+    prepared_request["core_terms"] = [resolved["preferred_lookup_text"]]
+    prepared_request["search_terms"] = expand_product_terms([resolved["preferred_lookup_text"], resolved["canonical_label"]])[:14]
+    return prepared_request
 
 
 def _build_latest_technical_guidance_snapshot(payload: dict, args: Optional[dict] = None) -> dict:
@@ -13210,7 +13406,7 @@ def _build_latest_technical_guidance_snapshot(payload: dict, args: Optional[dict
         "diagnostico_estructurado": payload.get("diagnostico_estructurado") or {},
         "guia_tecnica_estructurada": payload.get("guia_tecnica_estructurada") or {},
         "politicas_duras_contexto": hard_policies,
-        "productos_sistema_prioritarios": list(payload.get("productos_sistema_prioritarios") or []),
+        "productos_sistema_prioritarios": canonicalize_technical_product_list(list(payload.get("productos_sistema_prioritarios") or [])),
         "productos_inventario_relacionados": list(payload.get("productos_inventario_relacionados") or []),
         "required_products": _extract_policy_product_terms(hard_policies, "required_products"),
         "forbidden_products": _extract_policy_product_terms(hard_policies, "forbidden_products"),
@@ -13575,6 +13771,19 @@ def build_technical_advisory_flow_reply(profile_name: Optional[str], user_messag
         }
 
     candidate_products = extract_candidate_products_from_rag_context(rag_context, source_file)
+    # ── Surface filtering in advisory flow ──
+    # Use the diagnosed category + chunk profile metadata to filter candidates
+    diagnosed_surfaces = _infer_surface_types_from_query(user_message or "", technical_case.get("product") or "")
+    # Fetch profiles from chunks to check restricted_surfaces
+    chunk_families = list(dict.fromkeys(
+        (c.get("metadata") or {}).get("canonical_family") or c.get("familia_producto")
+        for c in chunks if c.get("similarity", 0) >= 0.25
+    ))
+    chunk_profiles = fetch_technical_profiles(chunk_families, [source_file] if source_file else None, limit=5)
+    surface_restricted = _filter_profiles_by_surface_compatibility(chunk_profiles, diagnosed_surfaces, query_text=user_message or "")
+    candidate_products = _filter_rag_candidates_by_surface_and_policy(
+        candidate_products, [], surface_restricted,
+    )
     inventory_products = lookup_inventory_candidates_from_terms(candidate_products, conversation_context)
     technical_case["candidate_products"] = candidate_products
     technical_case["inventory_products"] = inventory_products
@@ -15718,7 +15927,7 @@ def fetch_products_from_store_inventory(connection, where_clause: str, params: d
                     MAX(cat_producto) AS cat_producto,
                     MAX(descripcion_ebs) AS descripcion_ebs,
                     MAX(tipo_articulo) AS tipo_articulo
-                FROM public.vw_inventario_agente
+                FROM public.vw_inventario_agente_activo
                 WHERE {where_clause}
                 GROUP BY referencia, descripcion, marca
             ) inventory
@@ -16310,13 +16519,14 @@ def _merge_product_rows(primary: list[dict], secondary: list[dict]) -> list[dict
 
 def lookup_product_context(text_value: Optional[str], product_request: Optional[dict] = None):
     product_request = prepare_product_request_for_search(text_value, product_request)
+    search_query_text = _build_inventory_lookup_text(product_request, text_value)
     core_terms = product_request.get("core_terms") or []
     terms = product_request.get("search_terms") or []
     product_codes = product_request.get("product_codes") or []
     learned_references = fetch_learned_product_references(product_request)
     store_filters = product_request.get("store_filters") or []
     brand_filters = product_request.get("brand_filters") or []
-    normalized_query = normalize_text_value(text_value)
+    normalized_query = normalize_text_value(search_query_text)
 
     if not terms and not product_codes and not learned_references:
         return []
@@ -16367,7 +16577,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     break
 
             # ── Stage 3+4 combined: curated catalog + smart full-catalog search ──
-            curated_rows = fetch_curated_catalog_product_rows(connection, text_value, product_request, limit=100)
+            curated_rows = fetch_curated_catalog_product_rows(connection, search_query_text, product_request, limit=100)
             ranked_curated_rows: list[dict] = []
             if curated_rows:
                 ranked_curated_rows = hydrate_curated_rows_with_store_inventory(
@@ -16375,13 +16585,13 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                     [dict(row) for row in curated_rows],
                     store_filters,
                 )
-                ranked_curated_rows = rank_product_match_rows(ranked_curated_rows, product_request, normalized_query, rotation_cache, text_value)
+                ranked_curated_rows = rank_product_match_rows(ranked_curated_rows, product_request, normalized_query, rotation_cache, search_query_text)
 
             # Smart full-catalog search with trigram + phonetic + rotation
-            smart_rows = fetch_smart_product_rows(connection, text_value or "", query_terms, product_request, store_filters, limit=30)
+            smart_rows = fetch_smart_product_rows(connection, search_query_text or "", query_terms, product_request, store_filters, limit=30)
             ranked_term_rows: list[dict] = []
             if smart_rows:
-                ranked_term_rows = rank_product_match_rows(smart_rows, product_request, normalized_query, rotation_cache, text_value)
+                ranked_term_rows = rank_product_match_rows(smart_rows, product_request, normalized_query, rotation_cache, search_query_text)
 
             # Also run legacy term search as fallback ONLY if smart search has weak results
             # (skip it when smart search already found strong matches to save a DB roundtrip)
@@ -16389,7 +16599,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             if good_smart_count < 3:
                 legacy_rows = fetch_term_product_rows(connection, query_terms, store_filters)
                 if legacy_rows:
-                    legacy_ranked = rank_product_match_rows([dict(row) for row in legacy_rows], product_request, normalized_query, rotation_cache, text_value)
+                    legacy_ranked = rank_product_match_rows([dict(row) for row in legacy_rows], product_request, normalized_query, rotation_cache, search_query_text)
                     ranked_term_rows = _merge_product_rows(ranked_term_rows, legacy_ranked)
 
             # Merge curated + full-catalog, curated rows take priority, then re-sort by smart_score
@@ -16658,6 +16868,7 @@ def _handle_tool_consultar_inventario(args, conversation_context):
     producto = translate_customer_jargon(producto_raw)
     base_request = extract_product_request(producto_raw)
     base_request = apply_deterministic_product_alias_rules(producto_raw, base_request)
+    base_request = _apply_technical_product_request_hints(producto_raw, base_request)
     if not (
         base_request.get("preferred_lookup_text")
         or base_request.get("canonical_product")
@@ -17017,13 +17228,17 @@ def _handle_tool_consultar_inventario_lote(args, conversation_context):
             base_request = extract_product_request(producto_text)
             base_request["nlu_processed"] = True
             base_request = apply_deterministic_product_alias_rules(producto_text, base_request)
+            base_request = _apply_technical_product_request_hints(producto_text, base_request)
             product_request = build_followup_inventory_request(
                 producto_text,
                 base_request,
                 conversation_context,
             )
             product_request["nlu_processed"] = True  # Ensure it stays set
-            rows = lookup_product_context(producto_text, product_request)
+            lookup_text = _build_inventory_lookup_text(product_request, producto_text)
+            rows = lookup_product_context(lookup_text, product_request)
+            if not rows and lookup_text != producto_text:
+                rows = lookup_product_context(producto_text, product_request)
             # ── Fallback: retry with just the brand/core term if combined search failed ──
             if not rows:
                 core_terms = product_request.get("nlu_extraction", {}).get("marca") or product_request.get("brand") or ""
@@ -19715,6 +19930,16 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         expert_notes,
     )
 
+    # ── Surface-aware filtering ──────────────────────────────────────────
+    # Detect what surface the user is asking about, then use profile
+    # metadata (restricted_surfaces) to filter out incompatible products.
+    # This replaces thousands of specific rules with data-driven filtering.
+    diagnosed_surfaces = _infer_surface_types_from_query(pregunta, producto)
+    all_profiles = technical_profiles + guide_profiles
+    surface_restricted_families = _filter_profiles_by_surface_compatibility(
+        all_profiles, diagnosed_surfaces, query_text=f"{pregunta} {producto}",
+    )
+
     # Derive commercial candidates from the structured guide/policies first.
     # RAG-only extraction is kept as a fallback, but it must not override
     # products that the contextual policies already marked as required/prohibited.
@@ -19728,6 +19953,13 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         rag_context,
         source_files[0] if source_files else None,
         original_question=pregunta,
+    )
+    # ── CLOSE THE FUGA: filter RAG candidates against policies AND surface metadata ──
+    # Before: RAG candidates were appended unconditionally, re-injecting wrong products.
+    # Now: filter against forbidden_products AND surface-restricted families.
+    forbidden_list = hard_policies.get("forbidden_products") or []
+    rag_candidate_names = _filter_rag_candidates_by_surface_and_policy(
+        rag_candidate_names, forbidden_list, surface_restricted_families,
     )
     for candidate_name in rag_candidate_names:
         if candidate_name not in candidate_product_names:
@@ -20766,6 +20998,15 @@ def admin_rag_buscar(
         candidates = extract_candidate_products_from_rag_context(
             rag_ctx, original_question=query,
         )
+        # Apply surface filtering to admin search results too
+        admin_surfaces = _infer_surface_types_from_query(query)
+        admin_chunk_families = list(dict.fromkeys(
+            (c.get("metadata") or {}).get("canonical_family") or c.get("familia_producto")
+            for c in chunks if c.get("similarity", 0) >= 0.25
+        ))
+        admin_profiles = fetch_technical_profiles(admin_chunk_families, limit=5)
+        admin_restricted = _filter_profiles_by_surface_compatibility(admin_profiles, admin_surfaces, query_text=query)
+        candidates = _filter_rag_candidates_by_surface_and_policy(candidates, [], admin_restricted)
         return {
             "query": query,
             "resultados": results,

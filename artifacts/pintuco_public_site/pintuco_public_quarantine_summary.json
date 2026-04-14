@@ -1,0 +1,14 @@
+{
+  "total": 375,
+  "safe": 12,
+  "quarantine": 291,
+  "rejected": 72,
+  "safe_path": "C:\\Users\\Diego Mauricio\\Desktop\\CRM_Ferreinox\\artifacts\\pintuco_public_site\\pintuco_public_products_safe.csv",
+  "quarantine_path": "C:\\Users\\Diego Mauricio\\Desktop\\CRM_Ferreinox\\artifacts\\pintuco_public_site\\pintuco_public_products_quarantine.csv",
+  "reject_path": "C:\\Users\\Diego Mauricio\\Desktop\\CRM_Ferreinox\\artifacts\\pintuco_public_site\\pintuco_public_products_rejected.csv",
+  "decision_counts": {
+    "cuarentena": 291,
+    "rechazado": 72,
+    "seguro_para_enriquecimiento": 12
+  }
+}

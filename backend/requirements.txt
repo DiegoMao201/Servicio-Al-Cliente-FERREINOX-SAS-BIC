@@ -14,3 +14,5 @@ fpdf2
 pymupdf
 pgvector
 python-multipart
+rapidfuzz
+beautifulsoup4
