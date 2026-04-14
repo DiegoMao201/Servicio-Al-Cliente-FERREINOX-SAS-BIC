@@ -1,4 +1,6 @@
 import streamlit as st
+import requests
+import os
 
 from frontend.config import get_database_uri
 from frontend.crm_data import load_crm_hub_snapshot, load_data_readiness
@@ -68,3 +70,34 @@ def main():
             st.info("No hay eventos recientes en sync_run_log para mostrar.")
         else:
             st.dataframe(readiness["latest_runs_df"].head(8), width="stretch")
+
+        # Botón para actualizar PostgREST desde el frontend (requiere `ADMIN_API_KEY` en secrets o env)
+        try:
+            admin_key = st.secrets.get("ADMIN_API_KEY") if hasattr(st, "secrets") else None
+        except Exception:
+            admin_key = None
+        admin_key = admin_key or os.getenv("ADMIN_API_KEY")
+        backend_url = None
+        try:
+            backend_url = st.secrets.get("BACKEND_URL")
+        except Exception:
+            backend_url = None
+        backend_url = backend_url or os.getenv("BACKEND_URL") or "https://apicrm.datovatenexuspro.com"
+
+        if st.button("🔁 Actualizar PostgREST (admin)"):
+            if not admin_key:
+                st.error("No ADMIN_API_KEY configurada en Streamlit Secrets o en la variable de entorno ADMIN_API_KEY.")
+            else:
+                with st.spinner("Solicitando actualización de vistas a backend..."):
+                    try:
+                        resp = requests.post(f"{backend_url}/admin/apply-postgrest-views", headers={"x-admin-key": admin_key}, json={}, timeout=30)
+                        try:
+                            body = resp.json()
+                        except Exception:
+                            body = resp.text
+                        if resp.status_code in (200,202):
+                            st.success(f"Actualización solicitada: {body}")
+                        else:
+                            st.error(f"Error {resp.status_code}: {body}")
+                    except Exception as exc:
+                        st.error(f"Fallo al llamar al backend: {exc}")

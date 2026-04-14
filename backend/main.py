@@ -5715,13 +5715,41 @@ def _execute_sql_file_in_background(sql_path: Path, database_url: str):
         logger.exception("Failed to apply SQL file %s: %s", sql_path, exc)
 
 
+# ── Rate limiter for admin endpoints (in-memory, per-process) ─────────────
+_ADMIN_RATE_LIMIT: dict[str, list[float]] = {}
+_ADMIN_RATE_LOCK = threading.Lock()
+ADMIN_RATE_MAX = int(os.getenv("ADMIN_RATE_MAX", "5"))       # max requests
+ADMIN_RATE_WINDOW = int(os.getenv("ADMIN_RATE_WINDOW", "60"))  # seconds
+
+
+def _check_admin_rate_limit(client_ip: str) -> bool:
+    """Return True if request is allowed, False if rate-limited."""
+    import time as _time
+    now = _time.time()
+    with _ADMIN_RATE_LOCK:
+        hits = _ADMIN_RATE_LIMIT.setdefault(client_ip, [])
+        hits[:] = [t for t in hits if now - t < ADMIN_RATE_WINDOW]
+        if len(hits) >= ADMIN_RATE_MAX:
+            return False
+        hits.append(now)
+        return True
+
+
 @app.post("/admin/apply-postgrest-views")
-async def admin_apply_postgrest_views(background: BackgroundTasks, x_admin_key: Optional[str] = Header(None)):
+async def admin_apply_postgrest_views(
+    request: Request,
+    background: BackgroundTasks,
+    x_admin_key: Optional[str] = Header(None),
+):
     """Secure endpoint that schedules application of backend/postgrest_views.sql.
 
     Protect with FERREINOX_ADMIN_KEY environment variable or `admin.key` in secrets.toml.
-    The SQL is executed in background to avoid request timeouts.
+    Rate-limited to ADMIN_RATE_MAX requests per ADMIN_RATE_WINDOW seconds per IP.
     """
+    client_ip = request.client.host if request.client else "unknown"
+    if not _check_admin_rate_limit(client_ip):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded. Try again later.")
+
     admin_key = _load_admin_key()
     if not admin_key:
         raise HTTPException(status_code=500, detail="Server admin key not configured")
@@ -20061,8 +20089,13 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. "
             "DEBES SINTETIZARLOS como un ingeniero de aplicaciones: "
             "0) Si 'pricing_ready' es false o 'pricing_gate' es 'm2_required', primero diagnostica y pide los datos faltantes. NO cotices todavía. "
-            "1) LEE todos los fragmentos y UNIFICA la información en un SISTEMA COMPLETO (Preparación → Imprimante/Sellador → Producto → Acabado). "
-            "   Si un fragmento dice 'lleva cuarzo' y otro dice 'Intergard 2002', TÚ ARMAS: 'Sistema de Alta Resistencia: Escarificado → Interseal gris (imprimante) → Intergard 2002 + Arena Cuarzo (acabado antideslizante)'. "
+            "1) LEE todos los fragmentos y SINTETIZA la información para este caso específico. "
+            "   PREPARACIÓN DE SUPERFICIE es SIEMPRE obligatoria — describe los pasos de preparación que el RAG indica. "
+            "   IMPRIMANTE/SELLADOR solo si el RAG lo menciona EXPLÍCITAMENTE para este sustrato y condición. "
+            "   NO inventes capas intermedias que el RAG no recomienda. Las fichas técnicas ya son claras sobre qué sustrato y qué preparación necesita cada producto. "
+            "   Si la ficha dice 'aplicar directamente sobre superficie limpia', NO agregues imprimante. "
+            "   Si la ficha dice que necesita un primer específico, ENTONCES sí inclúyelo. "
+            "   Cada producto tiene su uso, aplicación y sustratos bien definidos — respeta esa información. "
             "2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. "
             "   ⛔ PROHIBIDO INVENTAR DATOS TÉCNICOS. Si el RAG dice rendimiento 12-16 m²/gal, usa ESE número. "
             "   Si el RAG NO tiene el dato, di 'según ficha técnica' y usa SOLO la tabla RENDIMIENTOS VERIFICADOS del prompt. "
@@ -20075,7 +20108,9 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "   Si 'politicas_duras_contexto.critical_policy_names' trae valores, DEBES abrir el primer párrafo con ese riesgo crítico y su advertencia principal antes de mezclarlo con rutas decorativas o secundarias. "
             "   Si 'politicas_duras_contexto.dominant_policy_names' trae valores, prioriza esas rutas como eje de la asesoría. "
             "4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. "
-            "5) NUNCA respondas con un solo producto suelto. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. "
+            "5) NUNCA respondas con un solo producto suelto sin contexto de aplicación. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. "
+            "   PERO tampoco inventes productos adicionales que el RAG no recomienda para forzar un 'sistema completo'. "
+            "   Si el RAG dice que para este caso basta preparación + producto acabado, presenta ESO. No le agregues capas. "
             "6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' "
             "7) CÁLCULOS: m² ÷ rendimiento_mínimo = galones (redondear ARRIBA). Ejemplo: 165 m² ÷ 12 m²/gal = 13.75 → 14 galones. NUNCA uses el rendimiento máximo. "
             "8) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'"

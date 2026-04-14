@@ -1269,7 +1269,8 @@ def build_turn_context(
             lines.append("Datos suficientes para recomendar.")
             lines.append("Acción: Llama consultar_conocimiento_tecnico con la superficie y condición EN ESTE MISMO TURNO.")
             lines.append("NO respondas 'voy a consultar' o 'un momento' sin haber usado realmente la herramienta.")
-            lines.append("Presenta el sistema completo (preparación → imprimante → acabado + diluyente + herramientas).")
+            lines.append("Presenta la recomendación basada en el RAG: preparación de superficie (SIEMPRE) → producto principal → imprimante/sellador SOLO si el RAG lo confirma → diluyente + herramientas.")
+            lines.append("NO agregues imprimante ni sellador que el RAG no indique para este caso. Los productos son claros en su uso y sustratos.")
             if not diagnostic["area_m2"]:
                 lines.append("Al final pregunta m² y color para calcular cantidades.")
 
