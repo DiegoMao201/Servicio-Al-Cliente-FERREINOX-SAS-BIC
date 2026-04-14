@@ -881,10 +881,21 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
     # Condition
     cond_signals = {
         "humedad": "humedad", "salitre": "salitre", "filtra": "filtración", "gotea": "goteras",
-        "moho": "moho/hongos", "óxido": "óxido", "oxido": "óxido",
-        "descascar": "pintura descascarando", "sopla": "pintura soplada",
-        "grieta": "grietas", "nuevo": "superficie nueva",
-        "sin pintar": "sin pintar", "pintado": "repintura",
+        "gotera": "goteras",
+        "moho": "moho/hongos", "hongo": "moho/hongos",
+        "óxido": "óxido", "oxido": "óxido", "oxidado": "óxido", "oxidada": "óxido",
+        "corrosión": "óxido", "corrosion": "óxido", "corrosi": "óxido",
+        "descascar": "pintura descascarando", "despega": "pintura descascarando",
+        "pelando": "pintura descascarando", "ampollado": "pintura descascarando",
+        "ampollada": "pintura descascarando", "levantando": "pintura descascarando",
+        "sopla": "pintura soplada", "soplado": "pintura soplada", "soplada": "pintura soplada",
+        "grieta": "grietas", "fisura": "grietas",
+        "nuevo": "superficie nueva", "nueva": "superficie nueva", "virgen": "superficie nueva",
+        "sin pintar": "sin pintar", "pintado": "repintura", "pintada": "repintura",
+        "repintar": "repintura", "repintura": "repintura",
+        "impermeabilizar": "impermeabilización", "impermea": "impermeabilización",
+        "podrido": "madera deteriorada", "podrida": "madera deteriorada",
+        "deteriorad": "deteriorada", "dañad": "deteriorada",
     }
     for kw, cond in cond_signals.items():
         if kw in combined:
@@ -928,17 +939,47 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
     ):
         data["surface"] = "interior húmedo"
 
-    # ── Substrate type (tipo de sustrato / material de la pared) ──
+    # ── Substrate type (tipo de sustrato / material) ──
+    # Muros / Fachadas
     if any(w in combined for w in ["estuco", "estucado", "estucada", "pañete", "pañetado", "pañetada"]):
         data["substrate_type"] = "estuco/pañete"
     elif any(w in combined for w in ["ladrillo", "bloque", "mampostería", "mamposteria"]):
         data["substrate_type"] = "ladrillo/bloque"
-    elif any(w in combined for w in ["drywall", "superboard", "fibrocemento", "eternit"]):
+    elif any(w in combined for w in ["drywall", "superboard"]):
         data["substrate_type"] = "drywall/fibrocemento"
-    elif any(w in combined for w in ["concreto", "cemento", "hormigón", "hormigon", "placa"]):
-        data["substrate_type"] = "concreto"
     elif any(w in combined for w in ["revoque", "repello", "friso"]):
         data["substrate_type"] = "revoque"
+    # Techos / Cubiertas
+    elif any(w in combined for w in ["eternit", "fibrocemento", "asbesto cemento"]):
+        data["substrate_type"] = "fibrocemento/eternit"
+    elif any(w in combined for w in ["teja", "tejas", "barro cocido"]):
+        data["substrate_type"] = "teja"
+    elif data.get("surface") == "techo" and any(w in combined for w in ["concreto", "placa", "plancha", "losa"]):
+        data["substrate_type"] = "concreto"
+    elif data.get("surface") == "techo" and any(w in combined for w in ["lámina", "lamina", "zinc", "metal"]):
+        data["substrate_type"] = "lámina metálica"
+    # Pisos
+    elif data.get("surface") in ("piso", "piso industrial", "piso vehicular", "piso deportivo") and any(w in combined for w in ["concreto", "cemento", "hormigón", "hormigon"]):
+        data["substrate_type"] = "concreto"
+    elif data.get("surface") in ("piso", "piso industrial", "piso vehicular") and any(w in combined for w in ["baldosa", "cerámica", "ceramica", "porcelanato"]):
+        data["substrate_type"] = "baldosa/cerámica"
+    # Metal
+    elif any(w in combined for w in ["galvanizado", "galvanizada", "galvanizad"]):
+        data["substrate_type"] = "galvanizado"
+    elif any(w in combined for w in ["hierro negro", "acero al carbono", "hierro", "acero"]):
+        data["substrate_type"] = "hierro/acero"
+    elif any(w in combined for w in ["aluminio"]):
+        data["substrate_type"] = "aluminio"
+    elif any(w in combined for w in ["inoxidable", "inox"]):
+        data["substrate_type"] = "acero inoxidable"
+    # Madera
+    elif any(w in combined for w in ["mdf", "triplex", "aglomerado", "tablex"]):
+        data["substrate_type"] = "MDF/aglomerado"
+    elif any(w in combined for w in ["cedro", "pino", "roble", "teca", "guayacán", "guayacan"]):
+        data["substrate_type"] = "madera natural"
+    # Genérico: concreto/cemento sin contexto de piso
+    elif any(w in combined for w in ["concreto", "cemento", "hormigón", "hormigon", "placa"]):
+        data["substrate_type"] = "concreto"
 
     return data
 
@@ -994,7 +1035,7 @@ def is_diagnostic_incomplete(intent: str, diagnostic: dict) -> bool:
     if not surface:
         missing.append("surface")
     if not diagnostic.get("interior_exterior"):
-        if surface not in ("fachada", "exterior", "madera exterior", "piso deportivo"):
+        if surface not in ("fachada", "exterior", "madera exterior", "piso deportivo", "techo"):
             missing.append("interior_exterior")
     if not diagnostic.get("condition"):
         missing.append("condition")
@@ -1014,6 +1055,22 @@ def is_diagnostic_incomplete(intent: str, diagnostic: dict) -> bool:
     if surface == "muro":
         if not diagnostic.get("substrate_type"):
             missing.append("substrate_type")
+    # Fachada: el sustrato define la preparación y el sistema (ladrillo ≠ estuco ≠ concreto)
+    if surface == "fachada":
+        if not diagnostic.get("substrate_type"):
+            missing.append("substrate_type")
+    # Techo / Cubierta: el material define impermeabilización (eternit ≠ concreto ≠ teja ≠ metal)
+    if surface == "techo":
+        if not diagnostic.get("substrate_type"):
+            missing.append("substrate_type")
+    # Metal: si es galvanizado, el sistema es radicalmente distinto (promotor adherencia obligatorio)
+    if surface in ("metal", "metal/inmersión"):
+        if not diagnostic.get("substrate_type"):
+            missing.append("substrate_type")
+    # Madera: MDF ≠ madera natural, interior ≠ exterior
+    if surface in ("madera", "madera exterior", "madera/metal"):
+        if not diagnostic.get("condition"):
+            missing.append("condition")
 
     return bool(missing)
 
@@ -1196,20 +1253,27 @@ def build_turn_context(
         if diagnostic.get("surface") in ("metal", "metal/inmersión") and not diagnostic.get("condition"):
             if "condición" not in " ".join(missing):
                 missing.append("estado del metal (¿nuevo, oxidado, ya pintado con anticorrosivo?)")
+        if diagnostic.get("surface") in ("metal", "metal/inmersión") and not diagnostic.get("substrate_type"):
+            missing.append("tipo de metal (¿hierro/acero, galvanizado, aluminio, inoxidable?)")
         # Para humedad: la fuente es crítica para la solución
         if diagnostic.get("surface") == "interior húmedo" and not diagnostic.get("humidity_source"):
             missing.append("origen de la humedad (¿viene del piso/base, de arriba, por temporada, o por vapor de ducha/cocina?)")
         # Para humedad y muros: el tipo de sustrato cambia la preparación y el sistema
         if diagnostic.get("surface") in ("interior húmedo", "muro") and not diagnostic.get("substrate_type"):
             missing.append("tipo de pared/sustrato (¿estucada/pañetada, ladrillo, drywall, concreto?)")
+        # Fachada: el sustrato cambia TODO el sistema
+        if diagnostic.get("surface") == "fachada" and not diagnostic.get("substrate_type"):
+            missing.append("material de la fachada (¿estucada, ladrillo a la vista, bloque, concreto?)")
+        # Techo: el material define impermeabilización
+        if diagnostic.get("surface") == "techo" and not diagnostic.get("substrate_type"):
+            missing.append("material del techo (¿eternit/fibrocemento, concreto/placa, teja, lámina metálica?)")
+        if diagnostic.get("surface") == "techo" and not diagnostic.get("condition"):
+            if "condición" not in " ".join(missing):
+                missing.append("problema del techo (¿goteras, impermeabilizar, solo repintar?)")
         # Para madera: interior/exterior cambia el sistema completamente
         if diagnostic.get("surface") in ("madera", "madera exterior") and not diagnostic.get("condition"):
             if "condición" not in " ".join(missing):
                 missing.append("estado de la madera (¿nueva, barnizada, deteriorada?)")
-        # Para techo: goteras vs impermeabilizar vs repintar son flujos distintos
-        if diagnostic.get("surface") == "techo" and not diagnostic.get("condition"):
-            if "condición" not in " ".join(missing):
-                missing.append("problema del techo (¿goteras, impermeabilizar, solo repintar?)")
 
         if diagnostic["surface"]:
             lines.append(f"Superficie detectada: {diagnostic['surface']}")
@@ -1283,19 +1347,23 @@ def build_turn_context(
             if diagnostic.get("surface"):
                 surface_name = diagnostic["surface"]
                 if problem_class == "piso_industrial":
-                    lines.append(f"  '¿El {surface_name} es interior o exterior? ¿Qué tipo de tráfico tiene: peatonal, vehicular o montacargas?'")
+                    lines.append(f"  '¿El piso es de concreto o de baldosa? ¿Qué tipo de tráfico tiene: peatonal, vehicular o montacargas? ¿Está nuevo o ya pintado?'")
                 elif surface_name in ("metal", "metal/inmersión"):
-                    lines.append(f"  '¿El metal está oxidado, ya tiene anticorrosivo, o es nuevo? ¿Es interior o exterior?'")
+                    lines.append(f"  '¿Qué tipo de metal es: hierro/acero, galvanizado o aluminio? ¿Está oxidado, nuevo o ya tiene anticorrosivo? ¿Es interior o exterior?'")
                 elif surface_name == "interior húmedo":
                     lines.append(f"  '¿La pared es estucada, de ladrillo o de drywall? ¿La humedad viene del piso, de arriba, o es por vapor de ducha? ¿Cuántos m² tiene el área afectada?'")
-                elif surface_name in ("madera", "madera exterior"):
-                    lines.append(f"  '¿La madera es nueva o ya tiene barniz/pintura? ¿Está en interior o exterior?'")
+                elif surface_name == "muro":
+                    lines.append(f"  '¿La pared es estucada/pañetada, de ladrillo, drywall o concreto? ¿Está en buen estado o tiene algún daño?'")
+                elif surface_name == "fachada":
+                    lines.append(f"  '¿La fachada es de estuco, ladrillo a la vista, bloque o concreto? ¿Está descascarada, con humedad, o solo necesita repintura?'")
                 elif surface_name == "techo":
-                    lines.append(f"  '¿El techo tiene goteras o solo quiere impermeabilizar/repintar? ¿Es terraza o cubierta?'")
+                    lines.append(f"  '¿El techo es de eternit/fibrocemento, concreto, teja o lámina metálica? ¿Tiene goteras o solo quiere impermeabilizar?'")
+                elif surface_name in ("madera", "madera exterior", "madera/metal"):
+                    lines.append(f"  '¿La madera es nueva o ya tiene barniz/pintura? ¿Está en interior o exterior? ¿Qué tipo de madera es?'")
                 else:
-                    lines.append(f"  '¿La superficie está en buen estado o tiene algún problema (humedad, descascarado, óxido)?'")
+                    lines.append(f"  '¿Qué material es la superficie? ¿Está en buen estado o tiene algún problema (humedad, descascarado, óxido)?'")
             else:
-                lines.append("  '¿Qué superficie necesita pintar o proteger? ¿Está en interior o exterior?'")
+                lines.append("  '¿Qué superficie necesita pintar o proteger? ¿Es interior o exterior? ¿De qué material está hecha?'")
             lines.append("SOLO cuando tengas TODOS los datos podrás consultar el RAG y recomendar.")
         else:
             lines.append("Datos suficientes para recomendar.")
