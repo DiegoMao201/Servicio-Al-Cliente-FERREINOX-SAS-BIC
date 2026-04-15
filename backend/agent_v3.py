@@ -899,6 +899,29 @@ def generate_agent_reply_v3(
     logger.info("V3 agent TOTAL: %dms | tools=%s | iters=%d", total_ms, tool_names, iteration)
 
     # ══════════════════════════════════════════════════════════════════════
+    # PIPELINE DETERMINÍSTICO — Intercepta cotizaciones antes de las guardias
+    # Si la respuesta es una cotización, el pipeline la reemplaza con datos
+    # 100% del backend. El LLM NO participa en precios/SKUs/cantidades.
+    # ══════════════════════════════════════════════════════════════════════
+    try:
+        from pipeline_deterministico.integracion import interceptar_cotizacion_si_aplica
+        _pipeline_result = interceptar_cotizacion_si_aplica(
+            main_module=m,
+            openai_client=client,
+            conversation_context=conversation_context,
+            user_message=user_message,
+            tool_calls_made=tool_calls_made,
+            context=context,
+            messages=messages,
+            assistant_message=assistant_message,
+        )
+        if _pipeline_result:
+            logger.info("V3: Pipeline determinístico interceptó la cotización")
+            return _pipeline_result
+    except Exception as _pipe_err:
+        logger.warning("V3: Pipeline determinístico falló, continuando con flujo normal: %s", _pipe_err)
+
+    # ══════════════════════════════════════════════════════════════════════
     # GUARDIAS CRÍTICAS DE SEGURIDAD (solo las que protegen al cliente)
     # ══════════════════════════════════════════════════════════════════════
 
