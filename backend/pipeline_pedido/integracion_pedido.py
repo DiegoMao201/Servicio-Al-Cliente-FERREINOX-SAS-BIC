@@ -459,6 +459,12 @@ def _ejecutar_pipeline(
     price_fn = getattr(main_module, "fetch_product_price", None)
     send_email_fn = getattr(main_module, "send_sendgrid_email", None)
     upload_dropbox_fn = getattr(main_module, "upload_bytes_to_dropbox", None)
+    logger.info(
+        "_ejecutar_pipeline: lookup_fn=%s, price_fn=%s, main_module=%s",
+        type(lookup_fn).__name__ if lookup_fn else "NONE",
+        type(price_fn).__name__ if price_fn else "NONE",
+        type(main_module).__name__ if main_module else "NONE",
+    )
 
     # ── Ejecutar pipeline ──
     try:

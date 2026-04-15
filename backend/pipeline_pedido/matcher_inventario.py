@@ -1015,10 +1015,21 @@ def match_pedido_completo(
             except TypeError:
                 # fallback si lookup_fn no acepta product_request
                 r = lookup_fn(q)
+            except Exception as exc:
+                logger.error("_lookup EXCEPCION para q=%r: %s", q, exc)
+                return []
+            logger.info(
+                "_lookup q=%r → %d rows (pre-filtro), prod_request=%s",
+                q[:60], len(r) if r else 0, prod_request,
+            )
             if not r:
                 return []
-            # Post-filtrar por presentación del lado del matcher
-            return _filtrar_por_presentacion(r, pres_canonica)
+            filtered = _filtrar_por_presentacion(r, pres_canonica)
+            logger.info(
+                "_lookup q=%r → %d rows (post-filtro pres=%s)",
+                q[:60], len(filtered), pres_canonica,
+            )
+            return filtered
 
         rows = _lookup(busqueda)
         if not rows:
