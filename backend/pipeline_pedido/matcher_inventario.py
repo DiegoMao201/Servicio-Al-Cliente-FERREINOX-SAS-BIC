@@ -275,6 +275,73 @@ def _norm(text: str | None) -> str:
 
 
 # ============================================================================
+# PRESENTACIÓN — inferir de descripción ERP y filtrar resultados
+# ============================================================================
+# Tamaños ERP → presentación canónica
+_ERP_SIZE_TO_PRES = {
+    "18.93l": "cunete", "18.93": "cunete", "20l": "cunete",
+    "5gl": "cunete", "5g": "cunete",
+    "9.46l": "balde", "9.46": "balde", "2.5gl": "balde",
+    "3.79l": "galon", "3.79": "galon", "3.78l": "galon",
+    "3.7l": "galon", "1gl": "galon", "1g": "galon",
+    "0.95l": "cuarto", "0.95": "cuarto", "0.9": "cuarto",
+    "1/4gl": "cuarto", "1/4": "cuarto",
+    "0.70l": "octavo", "0.5l": "octavo",
+    "1.2g": "galon",  # Presentación especial aerosol/pintulux
+}
+
+
+def _inferir_presentacion_de_row(row: dict) -> str:
+    """Infiere la presentación canónica de un producto desde su descripción ERP."""
+    desc = _norm(
+        row.get("descripcion_comercial")
+        or row.get("descripcion")
+        or row.get("nombre_articulo")
+        or ""
+    )
+    # Normalizar comas decimales (ERP usa "0,9" en vez de "0.9")
+    desc = desc.replace(",", ".")
+    # Mirar campo explícito primero
+    pres_expl = _norm(row.get("presentacion_canonica", ""))
+    if pres_expl:
+        canon = _canonizar_presentacion(pres_expl)
+        if canon in PRESENTATION_ALIASES:
+            return canon
+
+    # Buscar patrones de tamaño en la descripción
+    for size_tok, pres in _ERP_SIZE_TO_PRES.items():
+        if size_tok in desc:
+            return pres
+    # Fallback por keywords
+    for canon, aliases in PRESENTATION_ALIASES.items():
+        for alias in aliases:
+            if alias in desc:
+                return canon
+    return ""
+
+
+def _filtrar_por_presentacion(rows: list[dict], unidad_solicitada: str) -> list[dict]:
+    """Filtra resultados de lookup para que coincida la presentación solicitada.
+
+    Si no hay coincidencias exactas, retorna todos (soft filter).
+    Mapeo: galon también acepta 1.2G (pintulux); balde = medio cuñete.
+    """
+    if not unidad_solicitada or not rows:
+        return rows
+
+    target = _canonizar_presentacion(unidad_solicitada)
+    # Equivalencias: balde == medio cuñete, octavo == fracción
+    target_set = {target}
+    if target == "balde":
+        target_set.add("medio cunete")
+    if target == "octavo":
+        target_set.add("fraccion")
+
+    matching = [r for r in rows if _inferir_presentacion_de_row(r) in target_set]
+    return matching if matching else rows
+
+
+# ============================================================================
 # PRE-PROCESADOR DE LÍNEAS DE PEDIDO
 # ============================================================================
 
@@ -660,7 +727,7 @@ def _tiene_producto_en_lista(productos: list[str], senales: list[str]) -> bool:
 
 def match_pedido_completo(
     lineas_parseadas: list[dict],
-    lookup_fn: Callable[[str], list[dict]],
+    lookup_fn: Callable,
     price_fn: Callable[[str], dict],
     tienda_codigo: str = "",
     tienda_nombre: str = "",
@@ -679,7 +746,11 @@ def match_pedido_completo(
             - marca: str (marca detectada)
             - color: str (color detectado)
             - talla: str (tamaño para brochas/rodillos)
-        lookup_fn: Función que busca productos en inventario
+        lookup_fn: Función que busca productos en inventario.
+            Firma: lookup_fn(text, product_request=None) -> list[dict]
+            product_request puede incluir:
+              - requested_unit: str (galon, cuarto, cunete...)
+              - store_filters: list[str] (códigos de tienda)
         price_fn: Función que obtiene precio por código
         tienda_codigo: Código de la tienda de despacho
         tienda_nombre: Nombre de la tienda
@@ -904,9 +975,15 @@ def match_pedido_completo(
         # ── Paso 3: Lookup normal contra inventario ──
         # Construir query de búsqueda con toda la info disponible
         acabado = linea.get("acabado", "")
+
+        # IMPORTANTE: Construir busqueda incluyendo producto+color+acabado+marca
+        # pero SIN reemplazar producto por código solo (pierde contexto)
         busqueda = producto
         if codigos:
-            busqueda = codigos[0]
+            # Incluir código JUNTO con producto, no reemplazar
+            code_str = codigos[0]
+            if code_str not in busqueda:
+                busqueda = f"{busqueda} {code_str}"
         if color and color.lower() not in busqueda.lower():
             busqueda = f"{busqueda} {color}"
         if acabado and acabado.lower() not in busqueda.lower():
@@ -922,26 +999,47 @@ def match_pedido_completo(
             if base_info and base_info.lower() not in busqueda.lower():
                 busqueda = f"{busqueda} {base_info}"
 
-        rows = lookup_fn(busqueda)
+        # Construir product_request para que lookup_fn filtre por
+        # presentación y tienda del lado de la DB
+        pres_canonica = _canonizar_presentacion(unidad) if unidad else ""
+        prod_request = {
+            "requested_unit": pres_canonica,
+            "store_filters": [tienda_codigo] if tienda_codigo else [],
+            "nlu_processed": True,  # Evitar NLU redundante en lookup_fn
+        }
+
+        def _lookup(q: str) -> list[dict]:
+            """Wrapper que pasa product_request a lookup_fn y filtra presentación."""
+            try:
+                r = lookup_fn(q, prod_request)
+            except TypeError:
+                # fallback si lookup_fn no acepta product_request
+                r = lookup_fn(q)
+            if not r:
+                return []
+            # Post-filtrar por presentación del lado del matcher
+            return _filtrar_por_presentacion(r, pres_canonica)
+
+        rows = _lookup(busqueda)
         if not rows:
             # Retry sin color/acabado/marca (solo producto base)
-            rows = lookup_fn(producto)
+            rows = _lookup(producto)
         if not rows and color:
             # Retry: producto + color compuesto
-            rows = lookup_fn(f"{producto} {color}")
+            rows = _lookup(f"{producto} {color}")
         if not rows and codigos:
             for c in codigos:
-                rows = lookup_fn(c)
+                rows = _lookup(c)
                 if rows:
                     break
         # Retry: si hay color_formula, buscar por producto+nombre_color del JSON
         if not rows and color_formula:
             retry_q = f"{color_formula.get('producto', '')} {color_formula.get('nombre', '')}"
-            rows = lookup_fn(retry_q.strip())
+            rows = _lookup(retry_q.strip())
         # Último recurso: buscar solo con código + presentación
         if not rows and codigos and unidad:
             for c in codigos:
-                rows = lookup_fn(f"{c} {unidad}")
+                rows = _lookup(f"{c} {unidad}")
                 if rows:
                     break
 
