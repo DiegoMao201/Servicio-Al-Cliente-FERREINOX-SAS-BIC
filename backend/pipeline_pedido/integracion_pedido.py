@@ -455,15 +455,32 @@ def _ejecutar_pipeline(
     pedido_id = conversation_context.get("_pedido_id", 0)
 
     # ── Inyectar funciones reales desde main_module ──
-    lookup_fn = getattr(main_module, "lookup_product_context", None)
-    price_fn = getattr(main_module, "fetch_product_price", None)
-    send_email_fn = getattr(main_module, "send_sendgrid_email", None)
-    upload_dropbox_fn = getattr(main_module, "upload_bytes_to_dropbox", None)
+    # Intentar getattr primero; si falla, buscar en sys.modules["main"]
+    # (necesario cuando main.py se ejecuta como __main__ vía uvicorn)
+    import sys as _sys
+    _candidates = [main_module]
+    for _mod_name in ("main", "__main__", "backend.main"):
+        _m = _sys.modules.get(_mod_name)
+        if _m and _m is not main_module:
+            _candidates.append(_m)
+
+    def _resolve(fn_name):
+        for _mod in _candidates:
+            fn = getattr(_mod, fn_name, None)
+            if fn is not None:
+                return fn
+        return None
+
+    lookup_fn = _resolve("lookup_product_context")
+    price_fn = _resolve("fetch_product_price")
+    send_email_fn = _resolve("send_sendgrid_email")
+    upload_dropbox_fn = _resolve("upload_bytes_to_dropbox")
     logger.info(
-        "_ejecutar_pipeline: lookup_fn=%s, price_fn=%s, main_module=%s",
+        "_ejecutar_pipeline: lookup_fn=%s, price_fn=%s, main_module=%s, candidates=%s",
         type(lookup_fn).__name__ if lookup_fn else "NONE",
         type(price_fn).__name__ if price_fn else "NONE",
         type(main_module).__name__ if main_module else "NONE",
+        [type(c).__name__ for c in _candidates],
     )
 
     # ── Ejecutar pipeline ──
