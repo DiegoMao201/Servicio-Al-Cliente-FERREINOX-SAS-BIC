@@ -231,9 +231,9 @@ def _parsear_lineas_pedido(
 
     # Unidades reconocidas (para extraer cantidad + unidad)
     _UNIT_PAT = (
-        r'(?:gal(?:on(?:es?)?)?|gl|cuart(?:os?)?|cu(?:ñ|n)etes?|'
+        r'(?:gal(?:[oó]n(?:es?)?)?|gl|cuart(?:os?)?|cu(?:[ñn])etes?|'
         r'und(?:idades?)?|lt|litros?|kg|octav(?:os?)?|'
-        r'medio\s+cu(?:ñ|n)etes?|baldes?|1/[1245])'
+        r'medio\s+cu(?:[ñn])etes?|baldes?|1/[1245])'
     )
 
     for raw_line in re.split(r'[\n\r]+', user_msg):

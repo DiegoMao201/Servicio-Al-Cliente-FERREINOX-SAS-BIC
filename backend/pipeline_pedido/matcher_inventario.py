@@ -141,9 +141,10 @@ PRESENTATION_FRACTIONS = {
 PRESENTATION_ALIASES = {
     "cunete": ["cunete", "cunetes", "cuenete", "cuñete", "cuñetes",
               "caneca", "canecas", "cubeta", "cubetas", "18.93l", "5gl", "1/5"],
-    "galon": ["galon", "galones", "gal", "3.79l", "1gl", "1/1"],
+    "galon": ["galon", "galón", "galones", "gal", "3.79l", "1gl", "1/1"],
     "cuarto": ["cuarto", "cuartos", "0.95l", "1/4", "1/4gl"],
-    "balde": ["medio cuñete", "medio cunete", "9.46l", "1/2", "balde"],
+    "octavo": ["octavo", "octavos"],
+    "balde": ["medio cuñete", "medio cunete", "medio cuñete", "9.46l", "1/2", "balde"],
 }
 
 
@@ -403,6 +404,13 @@ def preprocesar_linea(linea: dict) -> dict:
         if re.search(rf'\b{re.escape(pcode)}\b', producto_norm):
             # Reemplazar el P-code por el nombre completo para mejor búsqueda
             producto_norm = re.sub(rf'\b{re.escape(pcode)}\b', domestico_name, producto_norm)
+            # Eliminar palabras duplicadas (ej: "domestico aluminio aluminio" → "domestico aluminio")
+            words = producto_norm.split()
+            seen = []
+            for w in words:
+                if w not in seen:
+                    seen.append(w)
+            producto_norm = " ".join(seen)
             producto = producto_norm
             logger.debug("P-CODE: '%s' → '%s'", pcode, domestico_name)
             break  # Solo un P-code por línea
