@@ -28,13 +28,28 @@ logger = logging.getLogger("pipeline_pedido.integracion")
 # DETECCIÓN DE INTENCIÓN DE PEDIDO
 # ============================================================================
 
-_KEYWORDS_PEDIDO = [
-    "pedido", "pedir", "pideme", "pídeme", "pide", "necesito",
-    "despacho", "despacha", "despachar", "envía", "envia",
-    "enviar", "manda", "mandar", "mándame",
+# ── Keywords FUERTES: solo palabras que inequívocamente significan "hacer un pedido" ──
+# Palabras genéricas como "necesito", "manda", "envía", "solicitar", "orden"
+# NO están aquí porque se usan en asesoría/consultas normales.
+# Ej: "necesito pintar mi fachada" ≠ pedido, "mándame info" ≠ pedido.
+_KEYWORDS_PEDIDO_FUERTE = [
+    "pedido", "pedir", "pideme", "pídeme",
+    "despacho", "despacha", "despachar",
     "trasladar", "traslado", "transferencia",
-    "solicitame", "solicítame", "solicitar",
-    "orden", "ordenar",
+]
+
+# ── Anti-patterns: si el mensaje contiene estos, es consulta/asesoría, NO pedido ──
+_ANTI_PEDIDO_PATTERNS = [
+    r'\b(?:pintar|pintando|pinto)\b',
+    r'\b(?:cómo|como)\s+(?:puedo|hago|aplico|uso|preparo)',
+    r'\b(?:qué|que)\s+(?:me\s+)?(?:recomienda|sirve|necesito|uso|aplico)',
+    r'\b(?:ayud(?:a|ame|en)|asesór(?:a|ame)|consejo|recomendaci[oó]n)',
+    r'\b(?:problema|humedad|moho|fisura|grieta|ampolla|descascar)',
+    r'\b(?:fachada|pared|muro|techo|piso|madera|metal)\b.*\b(?:pintar|proteger|sellar|impermeabilizar)',
+    r'\b(?:cuál|cual)\s+(?:es|pintura|producto)',
+    r'\b(?:sirve|funciona|aplica)\s+(?:para|en|sobre)',
+    r'\b(?:diferencia|comparar|mejor)\s+entre',
+    r'\b(?:ficha\s+t[eé]cnica|hoja\s+de\s+seguridad|rendimiento|cobertura)',
 ]
 
 _KEYWORDS_TIENDA = [
@@ -52,52 +67,103 @@ def _detectar_intencion_pedido(
     tool_calls_made: list[dict],
     conversation_context: dict,
 ) -> bool:
-    """Detecta si el mensaje actual es un pedido directo."""
+    """
+    Detecta si el mensaje actual es un pedido directo de productos.
+
+    PRINCIPIO CENTRAL: El LLM es el cerebro conversacional. Solo
+    interceptamos cuando hay EVIDENCIA CONCRETA de un pedido comercial
+    (líneas con productos+cantidades). Nunca por keywords genéricas
+    que podrían ser consultas de asesoría.
+
+    "Necesito pintar mi fachada"  →  NO es pedido (asesoría)
+    "Necesito 4 galones vinílico" →  SÍ es pedido (producto+cantidad)
+    "Pedido para Pereira"         →  SÍ es pedido (keyword fuerte)
+    """
     user_lower = (user_message or "").lower()
 
-    # 1. Contexto: hay pedido en progreso (usuario ya dijo "pedido" antes)
+    # ── ANTI-PATTERNS: Si el mensaje parece consulta/asesoría, NO interceptar ──
+    # Esto protege frases como "necesito pintar mi fachada", "qué me recomiendas
+    # para humedad", etc., incluso si tienen keywords de pedido.
+    for anti_pat in _ANTI_PEDIDO_PATTERNS:
+        if re.search(anti_pat, user_lower):
+            logger.debug("Detección pedido: anti-pattern '%s' detectado, NO interceptar", anti_pat)
+            return False
+
+    # ── 1. Pedido en progreso (continuación explícita) ──
+    # Solo si ya estamos en flujo de pedido activo y el user envía más líneas
     pedido_en_progreso = conversation_context.get("_pedido_en_progreso", False)
     if pedido_en_progreso:
-        return True
+        # Pero si es una sola línea sin productos, podría estar cambiando de tema
+        lineas_producto = _contar_lineas_producto(user_message)
+        if lineas_producto >= 1:
+            return True
+        # Si es frase corta tipo "listo", "ya", "eso es todo" → no nuevas líneas
+        # pero el pedido está en progreso → dejar al LLM manejar cierre
+        return False
 
-    # 2. Keywords explícitas de pedido
-    tiene_keyword = any(kw in user_lower for kw in _KEYWORDS_PEDIDO)
+    # ── 2. Keywords FUERTES de pedido (inequívocas) ──
+    tiene_keyword_fuerte = any(kw in user_lower for kw in _KEYWORDS_PEDIDO_FUERTE)
 
-    # 3. Herramientas de inventario usadas en este turno
+    # ── 3. Contar líneas que parecen producto+cantidad ──
+    lineas_producto = _contar_lineas_producto(user_message)
+
+    # ── 4. Herramientas de inventario usadas en este turno ──
     inventory_tools = {"consultar_inventario", "consultar_inventario_lote"}
     tools_used = {tc.get("name", "") for tc in tool_calls_made}
     uso_inventario = bool(tools_used & inventory_tools)
 
-    # 4. Contexto: empleado interno (los empleados suelen hacer pedidos directos)
-    es_interno = conversation_context.get("internal_auth", False)
+    # ══════════════════════════════════════════════════════════════
+    # REGLAS DE INTERCEPCIÓN (de más fuerte a más débil)
+    # ══════════════════════════════════════════════════════════════
 
-    # 5. Detección heurística: ¿el mensaje tiene múltiples líneas con patrones
-    #    de producto+cantidad? (lista de N líneas con números = pedido)
-    lineas_producto = _contar_lineas_producto(user_message)
-
-    # Regla compuesta
-    if tiene_keyword and (uso_inventario or es_interno):
-        return True
-    # Si tiene 3+ líneas que parecen productos, es un pedido aunque no diga "pedido"
-    if lineas_producto >= 3 and es_interno:
-        return True
-    # Si tiene keyword "pedido" alone (will ask for products later) — still intercept
-    if tiene_keyword and lineas_producto >= 1:
+    # R1: 3+ líneas con producto+cantidad → pedido claro, no necesita keyword
+    if lineas_producto >= 3:
         return True
 
+    # R2: Keyword fuerte ("pedido", "despacho") + al menos 1 línea de producto
+    if tiene_keyword_fuerte and lineas_producto >= 1:
+        return True
+
+    # R3: Keyword fuerte sola → intención de pedido sin productos aún
+    #     (el interceptor preguntará "¿qué productos necesitas?")
+    if tiene_keyword_fuerte:
+        return True
+
+    # R4: Herramientas de inventario ya usadas + líneas de producto
+    if uso_inventario and lineas_producto >= 1:
+        return True
+
+    # TODO ELSE: dejar que el LLM maneje la conversación
     return False
 
 
 def _contar_lineas_producto(user_message: str) -> int:
-    """Cuenta cuántas líneas del mensaje parecen tener productos+cantidades."""
+    """
+    Cuenta cuántas líneas del mensaje parecen tener productos + cantidades.
+
+    Una línea se considera "producto" si tiene:
+    - Al menos un número (cantidad o código)
+    - Algún texto alfabético (nombre de producto)
+    - NO es pura prosa conversacional
+
+    "4 galones vinílico blanco"  →  SÍ (número + texto + unidad)
+    "necesito pintar mi fachada" →  NO (sin números)
+    "hola buen día"              →  NO (sin números + es saludo)
+    """
     count = 0
     for raw_line in re.split(r'[\n\r]+', user_message or ""):
         line = raw_line.strip()
         if not line or len(line) < 4:
             continue
-        # Línea con al menos un número Y algún texto → probable producto
-        if re.search(r'\d', line) and re.search(r'[a-záéíóú]{3,}', line, re.IGNORECASE):
-            count += 1
+        # Debe tener al menos un dígito Y texto alfabético
+        if not re.search(r'\d', line):
+            continue
+        if not re.search(r'[a-záéíóú]{3,}', line, re.IGNORECASE):
+            continue
+        # Filtrar líneas que son claramente contexto/prosa
+        if _es_linea_contexto(line.lower()):
+            continue
+        count += 1
     return count
 
 
