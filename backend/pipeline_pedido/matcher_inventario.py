@@ -26,9 +26,27 @@ logger = logging.getLogger("pipeline_pedido.matcher")
 # ============================================================================
 # RUTAS DE DATOS
 # ============================================================================
-_DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
-_INTERNATIONAL_JSON = _DATA_DIR / "international_products.json"
-_COLOR_FORMULAS_JSON = _DATA_DIR / "color_formulas.json"
+# En Docker: __file__ = /app/pipeline_pedido/matcher_inventario.py
+#   parent = /app/pipeline_pedido/, parent.parent = /app/
+# En local: __file__ = .../backend/pipeline_pedido/matcher_inventario.py
+#   parent.parent = .../backend/
+_MODULE_DIR = Path(__file__).resolve().parent
+_BACKEND_DIR = _MODULE_DIR.parent          # /app/ en Docker, .../backend/ en local
+_DATA_DIR_CANDIDATES = [
+    _BACKEND_DIR / "data",                  # /app/data/ o .../backend/data/
+    _BACKEND_DIR.parent / "data",           # .../CRM_Ferreinox/data/ (local)
+    Path("/app/data"),                      # fallback absoluto Docker
+]
+
+def _find_data_file(name: str) -> Path:
+    for d in _DATA_DIR_CANDIDATES:
+        p = d / name
+        if p.exists():
+            return p
+    return _DATA_DIR_CANDIDATES[0] / name   # default (will fail gracefully)
+
+_INTERNATIONAL_JSON = _find_data_file("international_products.json")
+_COLOR_FORMULAS_JSON = _find_data_file("color_formulas.json")
 
 # ============================================================================
 # CATÁLOGOS EN MEMORIA (lazy-load)
@@ -732,7 +750,7 @@ def match_pedido_completo(
                 )
                 precio = 0
                 if codigo:
-                    precio_data = price_fn(codigo)
+                    precio_data = price_fn(codigo) or {}
                     precio = float(precio_data.get("precio_mejor", 0) or 0)
                 stock = float(best.get("stock_total", 0) or 0)
 
@@ -955,7 +973,7 @@ def match_pedido_completo(
         # Obtener precio
         precio = 0
         if codigo:
-            precio_data = price_fn(codigo)
+            precio_data = price_fn(codigo) or {}
             precio = float(precio_data.get("precio_mejor", 0) or 0)
         if not precio:
             precio = float(best.get("precio_venta", 0) or best.get("pvp_sap", 0) or 0)
@@ -1079,7 +1097,7 @@ def _buscar_e_inyectar(
         inyectado.stock_disponible = float(best.get("stock_total", 0) or 0)
         inyectado.disponible = inyectado.stock_disponible > 0
         if inyectado.codigo_encontrado:
-            precio_data = price_fn(inyectado.codigo_encontrado)
+            precio_data = price_fn(inyectado.codigo_encontrado) or {}
             inyectado.precio_unitario = float(
                 precio_data.get("precio_mejor", 0) or 0
             )
