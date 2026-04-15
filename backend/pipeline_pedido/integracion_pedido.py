@@ -475,6 +475,17 @@ def _ejecutar_pipeline(
     price_fn = _resolve("fetch_product_price")
     send_email_fn = _resolve("send_sendgrid_email")
     upload_dropbox_fn = _resolve("upload_bytes_to_dropbox")
+
+    # ── Último recurso: importar directamente ──
+    if lookup_fn is None:
+        try:
+            import main as _direct_main
+            lookup_fn = getattr(_direct_main, "lookup_product_context", None)
+            price_fn = price_fn or getattr(_direct_main, "fetch_product_price", None)
+            logger.warning("_ejecutar_pipeline: lookup_fn recuperado via import directo de main")
+        except Exception as exc:
+            logger.error("_ejecutar_pipeline: NO se pudo importar main directamente: %s", exc)
+
     logger.info(
         "_ejecutar_pipeline: lookup_fn=%s, price_fn=%s, main_module=%s, candidates=%s",
         type(lookup_fn).__name__ if lookup_fn else "NONE",
