@@ -3020,45 +3020,75 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "core_terms": ["domestico", "blanco"],
             "color_filters": ["blanco"],
         },
+        {
+            "pattern": r"\bdomestico\b.*\baluminio\b|\baluminio\b.*\bdomestico\b",
+            "canonical_product": "domestico aluminio p153",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico aluminio", "aluminio", "p153"],
+            "color_filters": ["aluminio"],
+        },
+        {
+            "pattern": r"\bdomestico\b.*\bvino\s+tinto\b|\bvino\s+tinto\b.*\bdomestico\b",
+            "canonical_product": "domestico vino tinto p90",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico vino tinto", "vino tinto", "p90"],
+            "color_filters": ["vino tinto"],
+        },
+        {
+            "pattern": r"\b(aerosol)\b.*\b(alta\s+temperatura|altas?\s+temp)\b.*\b(negro)\b.*\b(brillante|brill)\b|\b(alta\s+temperatura|altas?\s+temp)\b.*\b(negro)\b.*\b(brillante|brill)\b.*\b(aerosol)\b",
+            "canonical_product": "aerocolor altas temp negro brillante",
+            "preferred_lookup_text": "aerocolor altas temp br negro",
+            "brand_filters": ["aerocolor", "pintuco"],
+            "core_terms": ["aerocolor altas temp br negro", "aerosol", "alta temperatura", "negro", "brillante"],
+            "color_filters": ["negro"],
+            "finish_filters": ["brillante"],
+        },
         # ── Códigos P-XX de Esmalte Doméstico Pintuco ──
         {
-            "pattern": r"\b[Pp]-?18\b",
+            "pattern": r"\b[Pp]\s*-?\s*18\b",
             "canonical_product": "domestico amarillo p18",
             "brand_filters": ["domestico", "pintuco"],
             "core_terms": ["domestico", "amarillo", "P18"],
             "color_filters": ["amarillo"],
         },
         {
-            "pattern": r"\b[Pp]-?35\b",
+            "pattern": r"\b[Pp]\s*-?\s*35\b",
             "canonical_product": "domestico azul frances p35",
             "brand_filters": ["domestico", "pintuco"],
             "core_terms": ["domestico", "azul", "frances", "P35"],
             "color_filters": ["azul frances"],
         },
         {
-            "pattern": r"\b[Pp]-?40\b",
+            "pattern": r"\b[Pp]\s*-?\s*40\b",
             "canonical_product": "domestico azul espanol p40",
             "brand_filters": ["domestico", "pintuco"],
             "core_terms": ["domestico", "azul", "espanol", "P40"],
             "color_filters": ["azul espanol"],
         },
         {
-            "pattern": r"\b[Pp]-?50\b",
+            "pattern": r"\b[Pp]\s*-?\s*50\b",
             "canonical_product": "domestico azul verano p50",
             "brand_filters": ["domestico", "pintuco"],
             "core_terms": ["domestico", "azul", "verano", "P50"],
             "color_filters": ["azul verano"],
         },
         {
-            "pattern": r"\b[Pp]-?153\b",
+            "pattern": r"\b[Pp]\s*-?\s*153\b",
             "canonical_product": "domestico aluminio p153",
             "brand_filters": ["domestico", "pintuco"],
             "core_terms": ["domestico", "aluminio", "P153"],
             "color_filters": ["aluminio"],
         },
+        {
+            "pattern": r"\b[Pp]\s*-?\s*90\b",
+            "canonical_product": "domestico vino tinto p90",
+            "brand_filters": ["domestico", "pintuco"],
+            "core_terms": ["domestico", "vino tinto", "P90"],
+            "color_filters": ["vino tinto"],
+        },
         # Código genérico P-XX (sin match específico) → esmalte domestico
         {
-            "pattern": r"\b[Pp]-?\d{1,3}(?!\d)\b",
+            "pattern": r"\b[Pp]\s*-?\s*\d{1,3}(?!\d)\b",
             "brand_filters": ["domestico", "pintuco"],
             "core_terms": ["domestico", "esmalte"],
         },
@@ -3355,6 +3385,14 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "brand_filters": ["aquablock", "pintuco"],
             "core_terms": ["aquablock"],
         },
+        {
+            "pattern": r"\b(viniltex\s+banos?\s+y\s+cocinas|banos?\s+y\s+cocinas|byc)\b",
+            "canonical_product": "viniltex banos y cocinas",
+            "preferred_lookup_text": "viniltex byc blanco 2001",
+            "brand_filters": ["viniltex", "pintuco"],
+            "core_terms": ["byc", "banos y cocinas", "viniltex banos y cocinas", "viniltex"],
+            "color_filters": ["blanco"],
+        },
     ]
 
     for rule in alias_rules:
@@ -3489,15 +3527,123 @@ def extract_product_entities_with_llm(text_value: Optional[str], base_request: O
     return nlu_payload
 
 
+def _enrich_product_request_without_nlu(text_value: Optional[str], prepared_request: Optional[dict] = None):
+    request = dict(prepared_request or {})
+    base_request = extract_product_request(text_value)
+
+    request["requested_unit"] = canonicalize_presentation_value(
+        request.get("requested_unit") or base_request.get("requested_unit")
+    )
+    if request.get("requested_quantity") is None and base_request.get("requested_quantity") is not None:
+        request["requested_quantity"] = base_request.get("requested_quantity")
+    if not request.get("quantity_expression") and base_request.get("quantity_expression"):
+        request["quantity_expression"] = base_request.get("quantity_expression")
+
+    for field_name in [
+        "product_codes",
+        "brand_filters",
+        "direction_filters",
+        "size_filters",
+        "store_filters",
+        "core_terms",
+        "search_terms",
+        "color_filters",
+        "finish_filters",
+    ]:
+        request[field_name] = merge_unique_terms(request.get(field_name), base_request.get(field_name))
+
+    if not request.get("original_query"):
+        request["original_query"] = text_value or base_request.get("original_query") or ""
+
+    request.setdefault("color_filters", [])
+    request.setdefault("finish_filters", [])
+    request = apply_deterministic_product_alias_rules(text_value, request)
+    request = _apply_technical_product_request_hints(text_value, request)
+
+    if request.get("canonical_product") == "viniltex banos y cocinas":
+        requested_unit = request.get("requested_unit")
+        if requested_unit == "cuarto":
+            request["product_codes"] = merge_unique_terms(["5890434"], request.get("product_codes"))
+        elif requested_unit == "galon":
+            request["product_codes"] = merge_unique_terms(["5890339"], request.get("product_codes"))
+    elif request.get("canonical_product") == "domestico aluminio p153":
+        requested_unit = request.get("requested_unit")
+        if requested_unit == "cuarto":
+            request["product_codes"] = merge_unique_terms(["5890532"], request.get("product_codes"))
+        elif requested_unit == "galon":
+            request["product_codes"] = merge_unique_terms(["5890933"], request.get("product_codes"))
+    elif request.get("canonical_product") == "domestico vino tinto p90":
+        requested_unit = request.get("requested_unit")
+        if requested_unit == "cuarto":
+            request["product_codes"] = merge_unique_terms(["5890513"], request.get("product_codes"))
+
+    if request.get("canonical_product_locked") and request.get("preferred_lookup_text"):
+        locked_lookup_text = str(request["preferred_lookup_text"]).strip()
+        request["core_terms"] = [locked_lookup_text]
+        request["search_terms"] = expand_product_terms(
+            merge_unique_terms(
+                [locked_lookup_text],
+                request.get("color_filters"),
+                request.get("finish_filters"),
+                request.get("brand_filters"),
+                request.get("product_codes"),
+            )
+        )[:14]
+    else:
+        generic_terms = set()
+        for aliases in PRESENTATION_ALIASES.values():
+            generic_terms.update(normalize_text_value(alias) for alias in aliases)
+        merged_core_terms = merge_unique_terms(
+            request.get("product_codes"),
+            [request.get("canonical_product")] if request.get("canonical_product") else [],
+            tokenize_search_phrase(request.get("canonical_product")),
+            request.get("color_filters"),
+            request.get("finish_filters"),
+            request.get("core_terms"),
+        )
+        request["core_terms"] = [
+            term
+            for term in merged_core_terms
+            if normalize_text_value(term)
+            and normalize_text_value(term) not in PRODUCT_STOPWORDS
+            and not is_store_alias_term(term)
+            and (
+                normalize_reference_value(term) in {normalize_reference_value(code) for code in (request.get("product_codes") or [])}
+                or normalize_text_value(term) not in generic_terms
+            )
+        ][:10]
+        request["search_terms"] = expand_product_terms(
+            merge_unique_terms(
+                request.get("search_terms"),
+                request.get("core_terms"),
+                request.get("brand_filters"),
+                request.get("product_codes"),
+                [request.get("requested_unit")] if request.get("requested_unit") else [],
+            )
+        )[:14]
+
+    derived_brand_filters = extract_brand_filters(
+        " ".join(
+            value
+            for value in [
+                request.get("canonical_product"),
+                request.get("preferred_lookup_text"),
+                " ".join(request.get("core_terms") or []),
+                text_value or "",
+            ]
+            if value
+        )
+    )
+    request["brand_filters"] = merge_unique_terms(request.get("brand_filters"), derived_brand_filters)
+    return request
+
+
 def prepare_product_request_for_search(text_value: Optional[str], product_request: Optional[dict] = None):
     prepared_request = dict(product_request or extract_product_request(text_value))
     if prepared_request.get("nlu_processed"):
-        return prepared_request
+        return _enrich_product_request_without_nlu(text_value, prepared_request)
 
-    prepared_request.setdefault("color_filters", [])
-    prepared_request.setdefault("finish_filters", [])
-    prepared_request = apply_deterministic_product_alias_rules(text_value, prepared_request)
-    prepared_request = _apply_technical_product_request_hints(text_value, prepared_request)
+    prepared_request = _enrich_product_request_without_nlu(text_value, prepared_request)
 
     nlu_payload = extract_product_entities_with_llm(text_value, prepared_request)
     prepared_request["nlu_processed"] = True
@@ -9728,6 +9874,32 @@ def filter_rows_by_requested_size(product_rows: list[dict], product_request: Opt
     return exact_rows or product_rows
 
 
+def apply_requested_product_filters(product_rows: list[dict], product_request: Optional[dict]):
+    request = product_request or {}
+    filtered_rows = filter_rows_by_requested_presentation(product_rows, request)
+    filtered_rows = filter_rows_by_requested_size(filtered_rows, request)
+
+    requested_colors = request.get("color_filters") or []
+    if requested_colors:
+        exact_color_rows = [
+            row for row in filtered_rows
+            if infer_product_color_from_row(row) in requested_colors
+        ]
+        if exact_color_rows:
+            filtered_rows = exact_color_rows
+
+    requested_finishes = request.get("finish_filters") or []
+    if requested_finishes:
+        exact_finish_rows = [
+            row for row in filtered_rows
+            if infer_product_finish_from_row(row) in requested_finishes
+        ]
+        if exact_finish_rows:
+            filtered_rows = exact_finish_rows
+
+    return filtered_rows
+
+
 def resolve_product_clarification_choice(text_value: Optional[str], clarification_options: list[dict]):
     normalized = normalize_text_value(text_value)
     if not normalized or not clarification_options:
@@ -13773,6 +13945,13 @@ def _extract_policy_product_terms(hard_policies: Optional[dict], bucket: str) ->
 
 def _apply_technical_product_request_hints(raw_text: Optional[str], request: Optional[dict]) -> dict:
     prepared_request = dict(request or {})
+    if (
+        prepared_request.get("preferred_lookup_text")
+        or prepared_request.get("canonical_product_locked")
+        or prepared_request.get("canonical_product")
+        or prepared_request.get("product_codes")
+    ):
+        return prepared_request
     resolved = canonicalize_technical_product_term(raw_text)
     if not resolved:
         return prepared_request
@@ -16509,6 +16688,9 @@ def build_curated_catalog_search_terms(text_value: Optional[str], product_reques
         if normalized and normalized not in search_terms:
             search_terms.append(normalized)
 
+    add_term(request.get("preferred_lookup_text"))
+    for term in tokenize_search_phrase(request.get("preferred_lookup_text")):
+        add_term(term)
     add_term(request.get("canonical_product"))
     for term in get_specific_product_terms(request):
         add_term(term)
@@ -16566,6 +16748,8 @@ def fetch_curated_catalog_product_rows(connection, text_value: Optional[str], pr
             "finish_exact": finish_exact,
             "finish_like": f"%{finish_exact}%" if finish_exact else "",
             "presentation_exact": normalize_text_value(request.get("requested_unit")),
+            "preferred_lookup_exact": normalize_text_value(request.get("preferred_lookup_text")),
+            "preferred_lookup_like": f"%{normalize_text_value(request.get('preferred_lookup_text'))}%" if request.get("preferred_lookup_text") else "",
         }
     )
     where_clause = " OR ".join(search_filters)
@@ -16638,6 +16822,14 @@ def fetch_curated_catalog_product_rows(connection, text_value: Optional[str], pr
                     WHEN :presentation_exact <> '' AND public.fn_normalize_text(COALESCE(p.presentacion_canonica, '')) = :presentation_exact THEN 1 ELSE 0
                 END AS presentation_score,
                 CASE
+                    WHEN :preferred_lookup_exact <> '' AND (
+                        MAX(CASE WHEN p.search_blob ILIKE :preferred_lookup_like THEN 1 ELSE 0 END) = 1
+                        OR public.fn_normalize_text(COALESCE(p.producto_padre_busqueda_sugerido, '')) ILIKE :preferred_lookup_like
+                        OR public.fn_normalize_text(COALESCE(p.familia_consulta_sugerida, '')) ILIKE :preferred_lookup_like
+                        OR MAX(CASE WHEN a.alias_normalizado ILIKE :preferred_lookup_like THEN 1 ELSE 0 END) = 1
+                    ) THEN 2 ELSE 0
+                END AS preferred_lookup_score,
+                CASE
                     WHEN :color_exact <> '' AND (
                         public.fn_normalize_text(COALESCE(p.color_detectado, '')) = :color_exact
                         OR public.fn_normalize_text(COALESCE(p.color_raiz, '')) = :color_exact
@@ -16676,6 +16868,7 @@ def fetch_curated_catalog_product_rows(connection, text_value: Optional[str], pr
                 p.producto_padre_busqueda_sugerido
             ORDER BY
                 base_exact_score DESC,
+                preferred_lookup_score DESC,
                 presentation_score DESC,
                 color_score DESC,
                 finish_score DESC,
@@ -16805,6 +16998,7 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
         candidate["direction_score"] = 1 if (request.get("direction_filters") or []) and candidate_direction in (request.get("direction_filters") or []) else 0
         candidate["color_score"] = 1 if (request.get("color_filters") or []) and candidate_color in (request.get("color_filters") or []) else 0
         candidate["finish_score"] = 1 if (request.get("finish_filters") or []) and candidate_finish in (request.get("finish_filters") or []) else 0
+        candidate["preferred_lookup_score"] = candidate.get("preferred_lookup_score") or 0
         candidate["kit_promo_penalty"] = _kit_promo_penalty
         candidate["pe_variant_penalty"] = _pe_variant_penalty
         # ── Smart Score (unified 0-1 scoring) ──
@@ -16821,6 +17015,7 @@ def rank_product_match_rows(product_rows: list[dict], product_request: Optional[
             item.get("kit_promo_penalty") or 0,  # Negative for kits → sorts them to the bottom
             item.get("pe_variant_penalty") or 0,
             item.get("exact_code_score") or 0,
+            item.get("preferred_lookup_score") or 0,
             item.get("specific_score") or 0,       # Product-specific term matches (moved up for accuracy)
             item.get("match_score") or 0,
             item.get("smart_score") or 0,         # Unified 0-1 smart score
@@ -17005,6 +17200,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                         key=lambda item: (
                             item.get("kit_promo_penalty") or 0,
                             item.get("exact_code_score") or 0,
+                            item.get("preferred_lookup_score") or 0,
                             item.get("specific_score") or 0,
                             item.get("smart_score") or 0,
                             item.get("rotation_score") or 0,
@@ -17013,6 +17209,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                         ),
                         reverse=True,
                     )
+                    merged = apply_requested_product_filters(merged, product_request)
                     return merged[:10]
 
             sales_filters = []
