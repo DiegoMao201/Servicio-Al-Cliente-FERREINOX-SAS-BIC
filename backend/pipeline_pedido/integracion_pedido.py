@@ -20,7 +20,7 @@ import json
 import logging
 import re
 import time
-from typing import Optional
+from typing import Callable, Optional
 
 logger = logging.getLogger("pipeline_pedido.integracion")
 
@@ -368,6 +368,8 @@ def interceptar_pedido_si_aplica(
     user_message: str,
     tool_calls_made: list[dict],
     context: dict,
+    lookup_fn: Optional[Callable] = None,
+    price_fn: Optional[Callable] = None,
 ) -> Optional[dict]:
     """
     Evalúa si el mensaje actual es un pedido directo y, de ser así,
@@ -392,6 +394,7 @@ def interceptar_pedido_si_aplica(
             return _ejecutar_pipeline(
                 main_module, conversation_context, lineas_pendientes,
                 tienda_texto, tool_calls_made, context,
+                lookup_fn=lookup_fn, price_fn=price_fn,
             )
         # El usuario dijo algo pero no es tienda — quizá es un producto más o contexto
         # Dejar que caiga al flujo normal
@@ -433,6 +436,7 @@ def interceptar_pedido_si_aplica(
     return _ejecutar_pipeline(
         main_module, conversation_context, lineas,
         tienda_texto, tool_calls_made, context,
+        lookup_fn=lookup_fn, price_fn=price_fn,
     )
 
 
@@ -443,6 +447,8 @@ def _ejecutar_pipeline(
     tienda_texto: str,
     tool_calls_made: list[dict],
     context: dict,
+    lookup_fn: Optional[Callable] = None,
+    price_fn: Optional[Callable] = None,
 ) -> Optional[dict]:
     """Ejecuta el pipeline de pedido con las líneas y tienda dadas."""
     cliente_nombre = (
@@ -454,44 +460,46 @@ def _ejecutar_pipeline(
     descuentos = conversation_context.get("_pedido_descuentos")
     pedido_id = conversation_context.get("_pedido_id", 0)
 
-    # ── Inyectar funciones reales desde main_module ──
-    # Intentar getattr primero; si falla, buscar en sys.modules["main"]
-    # (necesario cuando main.py se ejecuta como __main__ vía uvicorn)
+    # ── Inyectar funciones reales ──
+    # Prioridad: funciones pasadas explícitamente > getattr > sys.modules > import directo
     import sys as _sys
-    _candidates = [main_module]
-    for _mod_name in ("main", "__main__", "backend.main"):
-        _m = _sys.modules.get(_mod_name)
-        if _m and _m is not main_module:
-            _candidates.append(_m)
 
-    def _resolve(fn_name):
-        for _mod in _candidates:
-            fn = getattr(_mod, fn_name, None)
-            if fn is not None:
-                return fn
-        return None
+    if not lookup_fn or not price_fn:
+        _candidates = [main_module]
+        for _mod_name in ("main", "__main__", "backend.main"):
+            _m = _sys.modules.get(_mod_name)
+            if _m and _m is not main_module:
+                _candidates.append(_m)
 
-    lookup_fn = _resolve("lookup_product_context")
-    price_fn = _resolve("fetch_product_price")
-    send_email_fn = _resolve("send_sendgrid_email")
-    upload_dropbox_fn = _resolve("upload_bytes_to_dropbox")
+        def _resolve(fn_name):
+            for _mod in _candidates:
+                fn = getattr(_mod, fn_name, None)
+                if fn is not None:
+                    return fn
+            return None
 
-    # ── Último recurso: importar directamente ──
-    if lookup_fn is None:
-        try:
-            import main as _direct_main
-            lookup_fn = getattr(_direct_main, "lookup_product_context", None)
-            price_fn = price_fn or getattr(_direct_main, "fetch_product_price", None)
-            logger.warning("_ejecutar_pipeline: lookup_fn recuperado via import directo de main")
-        except Exception as exc:
-            logger.error("_ejecutar_pipeline: NO se pudo importar main directamente: %s", exc)
+        lookup_fn = lookup_fn or _resolve("lookup_product_context")
+        price_fn = price_fn or _resolve("fetch_product_price")
+        send_email_fn = _resolve("send_sendgrid_email")
+        upload_dropbox_fn = _resolve("upload_bytes_to_dropbox")
+
+        # Último recurso: import directo
+        if lookup_fn is None:
+            try:
+                import main as _direct_main
+                lookup_fn = getattr(_direct_main, "lookup_product_context", None)
+                price_fn = price_fn or getattr(_direct_main, "fetch_product_price", None)
+                logger.warning("_ejecutar_pipeline: lookup_fn recuperado via import directo")
+            except Exception as exc:
+                logger.error("_ejecutar_pipeline: NO se pudo importar main: %s", exc)
+    else:
+        send_email_fn = getattr(main_module, "send_sendgrid_email", None)
+        upload_dropbox_fn = getattr(main_module, "upload_bytes_to_dropbox", None)
 
     logger.info(
-        "_ejecutar_pipeline: lookup_fn=%s, price_fn=%s, main_module=%s, candidates=%s",
+        "_ejecutar_pipeline: lookup_fn=%s, price_fn=%s",
         type(lookup_fn).__name__ if lookup_fn else "NONE",
         type(price_fn).__name__ if price_fn else "NONE",
-        type(main_module).__name__ if main_module else "NONE",
-        [type(c).__name__ for c in _candidates],
     )
 
     # ── Ejecutar pipeline ──

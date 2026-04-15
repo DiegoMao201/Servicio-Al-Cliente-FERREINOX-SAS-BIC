@@ -500,6 +500,8 @@ def generate_agent_reply_v3(
             user_message=user_message,
             tool_calls_made=[],
             context=context,
+            lookup_fn=getattr(m, "lookup_product_context", None),
+            price_fn=getattr(m, "fetch_product_price", None),
         )
         if intercepcion:
             logger.info(
