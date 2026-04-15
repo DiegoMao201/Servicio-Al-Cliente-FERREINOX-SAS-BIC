@@ -85,70 +85,6 @@ def _collect_recent_inbound_text(user_message: str, recent_messages: list[dict],
     return " ".join(combined).strip()
 
 
-def _should_route_to_commercial_flow(initial_intent: str, conversation_context: dict, user_message: str, m) -> bool:
-    draft = conversation_context.get("commercial_draft") or {}
-    if draft.get("items"):
-        return True
-
-    if initial_intent in {"pedido_directo", "cotizacion", "confirmacion", "correccion"}:
-        return True
-
-    request_lines = m.split_commercial_line_items(user_message)
-    matched_lines = 0
-    for line in request_lines[:12]:
-        request = m.extract_product_request(line)
-        if request.get("requested_quantity") is not None and (
-            request.get("product_codes")
-            or request.get("core_terms")
-            or request.get("requested_unit")
-        ):
-            matched_lines += 1
-    return matched_lines >= 2
-
-
-def _infer_commercial_intent(initial_intent: str, conversation_context: dict, user_message: str, m) -> str:
-    draft_intent = (conversation_context.get("commercial_draft") or {}).get("intent")
-    if draft_intent in {"pedido", "cotizacion"}:
-        return draft_intent
-
-    normalized_message = m.normalize_text_value(user_message)
-    if initial_intent == "confirmacion":
-        return "cotizacion"
-    if any(token in normalized_message for token in ["pedido", "despacho", "separ", "separar"]):
-        return "pedido"
-    return "cotizacion"
-
-
-def _build_commercial_flow_short_circuit(
-    profile_name: Optional[str],
-    conversation_context: dict,
-    user_message: str,
-    initial_intent: str,
-    m,
-):
-    commercial_intent = _infer_commercial_intent(initial_intent, conversation_context, user_message, m)
-    commercial_result = m.build_commercial_flow_reply(
-        commercial_intent,
-        profile_name,
-        user_message,
-        conversation_context,
-    )
-    response_text = (commercial_result or {}).get("response_text") or "Gracias por escribirnos. ¿En qué te puedo ayudar?"
-    context_updates = dict((commercial_result or {}).get("conversation_context_updates") or {})
-    if commercial_result and commercial_result.get("commercial_draft") and "commercial_draft" not in context_updates:
-        context_updates["commercial_draft"] = commercial_result.get("commercial_draft")
-
-    return {
-        "response_text": response_text,
-        "intent": (commercial_result or {}).get("intent") or commercial_intent,
-        "tool_calls": [],
-        "context_updates": context_updates,
-        "should_create_task": bool((commercial_result or {}).get("should_create_task")),
-        "confidence": m.score_agent_confidence(response_text, [], (commercial_result or {}).get("intent") or commercial_intent),
-        "is_farewell": False,
-    }
-
-
 def _should_route_to_inventory_lookup(initial_intent: str, conversation_context: dict, m) -> bool:
     if initial_intent != "consulta_productos":
         return False
@@ -538,6 +474,45 @@ def generate_agent_reply_v3(
     # ── Explicit inventory query with active draft → clear draft so LLM sees clean state ──
     if _is_explicit_inventory_query(user_message):
         conversation_context.pop("commercial_draft", None)
+
+    # ══════════════════════════════════════════════════════════════════════
+    # PIPELINE PEDIDO DETERMINÍSTICO — Intercepta pedidos directos antes
+    # del LLM. Resuelve productos, genera Excel, envía correos, todo sin IA.
+    # ══════════════════════════════════════════════════════════════════════
+    try:
+        from pipeline_pedido.integracion_pedido import (
+            interceptar_pedido_si_aplica,
+            interceptar_respuesta_ral_pedido,
+        )
+
+        # Primero: ¿está respondiendo un RAL pendiente?
+        ral_pendiente = interceptar_respuesta_ral_pedido(
+            conversation_context, user_message,
+        )
+        if ral_pendiente:
+            logger.info("V3 pipeline_pedido: RAL pendiente detectado → %s", ral_pendiente)
+            # TODO: re-run pipeline with RAL injected into pending product
+
+        # Segundo: ¿es un pedido directo nuevo?
+        intercepcion = interceptar_pedido_si_aplica(
+            main_module=m,
+            conversation_context=conversation_context,
+            user_message=user_message,
+            tool_calls_made=[],
+            context=context,
+        )
+        if intercepcion:
+            logger.info(
+                "V3 pipeline_pedido: INTERCEPTADO — %d resueltos, intent=%s",
+                len((intercepcion.get("context_updates", {}).get("_pedido_match_result") or {}).get("productos_resueltos", [])),
+                intercepcion.get("intent", "pedido"),
+            )
+            return intercepcion
+
+    except ImportError:
+        logger.debug("pipeline_pedido no disponible, continuando con LLM")
+    except Exception as e:
+        logger.error("pipeline_pedido error: %s", e, exc_info=True)
 
     # ══════════════════════════════════════════════════════════════════════
     # LLM AS CONVERSATIONAL BRAIN — no more short-circuits for inventory
