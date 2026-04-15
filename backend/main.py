@@ -3095,12 +3095,13 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*11\b",
             "canonical_product": "pintulux blanco 11",
-            "preferred_lookup_text": "pintulux blanco 11",
+            "preferred_lookup_text": "pintulux 3en1 br blanco 11",
             "lock_canonical_product": True,
             "clear_product_codes": True,
             "brand_filters": ["pintulux", "pintuco"],
             "core_terms": ["pintulux", "blanco 11", "3en1 br blanco 11", "t-11"],
             "color_filters": ["blanco"],
+            "finish_filters": ["brillante"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*95\b",
@@ -3111,6 +3112,7 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "brand_filters": ["pintulux", "pintuco"],
             "core_terms": ["pintulux", "negro 95", "3en1 br negro 95", "t-95"],
             "color_filters": ["negro"],
+            "finish_filters": ["brillante"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*10\b",
@@ -3143,6 +3145,51 @@ def apply_deterministic_product_alias_rules(text_value: Optional[str], prepared_
             "brand_filters": ["pintulux", "pintuco"],
             "core_terms": ["pintulux", "gris plata 84", "br gris", "t-84"],
             "color_filters": ["gris plata"],
+        },
+        {
+            "pattern": r"\bbrochas?\b.*\bprof(?:esional|e)?\b.*\bgoya\b.*\b(?:1\s*1/2|11/2)\b",
+            "canonical_product": "brocha goya profesional 1 1/2",
+            "preferred_lookup_text": "brocha goya prof 11/2",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
+            "brand_filters": ["goya"],
+            "core_terms": ["brocha goya profesional 1 1/2", "brocha goya prof 11/2", "11/2"],
+        },
+        {
+            "pattern": r"\bbrochas?\b.*\bprof(?:esional|e)?\b.*\bgoya\b.*\b(?:2\s*1/2|21/2)\b",
+            "canonical_product": "brocha goya profesional 2 1/2",
+            "preferred_lookup_text": "brocha goya prof 2 1/2",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
+            "brand_filters": ["goya"],
+            "core_terms": ["brocha goya profesional 2 1/2", "brocha goya prof 2 1/2", "21/2"],
+        },
+        {
+            "pattern": r"\bbrochas?\b.*\bprof(?:esional|e)?\b.*\bgoya\b.*\b2\b",
+            "canonical_product": "brocha goya profesional 2",
+            "preferred_lookup_text": "brocha goya prof 2",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
+            "brand_filters": ["goya"],
+            "core_terms": ["brocha goya profesional 2", "brocha goya prof 2"],
+        },
+        {
+            "pattern": r"\bbrochas?\b.*\bprof(?:esional|e)?\b.*\bgoya\b.*\b3\b",
+            "canonical_product": "brocha goya profesional 3",
+            "preferred_lookup_text": "brocha goya prof 3",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
+            "brand_filters": ["goya"],
+            "core_terms": ["brocha goya profesional 3", "brocha goya prof 3"],
+        },
+        {
+            "pattern": r"\bbrochas?\b.*\bprof(?:esional|e)?\b.*\bgoya\b.*\b4\b",
+            "canonical_product": "brocha goya profesional 4",
+            "preferred_lookup_text": "brocha goya prof 4",
+            "lock_canonical_product": True,
+            "clear_product_codes": True,
+            "brand_filters": ["goya"],
+            "core_terms": ["brocha goya profesional 4", "brocha goya prof 4"],
         },
         {
             "pattern": r"\b(?:t(?:eu?|u)?)-?\s*76\b",
@@ -3576,6 +3623,28 @@ def _enrich_product_request_without_nlu(text_value: Optional[str], prepared_requ
         requested_unit = request.get("requested_unit")
         if requested_unit == "cuarto":
             request["product_codes"] = merge_unique_terms(["5890513"], request.get("product_codes"))
+    elif request.get("canonical_product") == "pintulux blanco 11":
+        requested_unit = request.get("requested_unit")
+        if requested_unit == "cuarto":
+            request["product_codes"] = merge_unique_terms(["5891950"], request.get("product_codes"))
+        elif requested_unit == "galon":
+            request["product_codes"] = merge_unique_terms(["5891949"], request.get("product_codes"))
+    elif request.get("canonical_product") == "pintulux negro 95":
+        requested_unit = request.get("requested_unit")
+        if requested_unit == "cuarto":
+            request["product_codes"] = merge_unique_terms(["5891952"], request.get("product_codes"))
+        elif requested_unit == "galon":
+            request["product_codes"] = merge_unique_terms(["5891951"], request.get("product_codes"))
+    elif request.get("canonical_product") == "brocha goya profesional 1 1/2":
+        request["product_codes"] = merge_unique_terms(["F6514850"], request.get("product_codes"))
+    elif request.get("canonical_product") == "brocha goya profesional 2 1/2":
+        request["product_codes"] = merge_unique_terms(["F6514854"], request.get("product_codes"))
+    elif request.get("canonical_product") == "brocha goya profesional 2":
+        request["product_codes"] = merge_unique_terms(["F6514852"], request.get("product_codes"))
+    elif request.get("canonical_product") == "brocha goya profesional 3":
+        request["product_codes"] = merge_unique_terms(["F6514843"], request.get("product_codes"))
+    elif request.get("canonical_product") == "brocha goya profesional 4":
+        request["product_codes"] = merge_unique_terms(["F6514848"], request.get("product_codes"))
 
     if request.get("canonical_product_locked") and request.get("preferred_lookup_text"):
         locked_lookup_text = str(request["preferred_lookup_text"]).strip()

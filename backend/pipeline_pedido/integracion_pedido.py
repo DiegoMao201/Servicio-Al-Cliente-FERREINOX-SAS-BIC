@@ -20,6 +20,7 @@ import json
 import logging
 import re
 import time
+import unicodedata
 from typing import Callable, Optional
 
 logger = logging.getLogger("pipeline_pedido.integracion")
@@ -60,6 +61,193 @@ _KEYWORDS_TIENDA = [
 
 # Códigos de tienda solo se buscan como palabra completa (evitar que "1559" matchee "155")
 _TIENDA_CODES = {"189", "157", "158", "156", "463", "238", "439", "155"}
+
+_UNIT_PAT = (
+    r'(?:gal(?:[oó]n(?:es?)?)?|gl|cuart(?:os?)?|cu(?:[ñn])etes?|'
+    r'und(?:idades?)?|lt|litros?|kg|octav(?:os?)?|'
+    r'medio\s+cu(?:[ñn])etes?|baldes?|1/[1245])'
+)
+
+_STOCK_CONFIRMATION_HINTS = [
+    "esta bien",
+    "está bien",
+    "esta perfecto",
+    "está perfecto",
+    "dejalo asi",
+    "déjalo así",
+    "asi esta bien",
+    "así está bien",
+    "me sirve",
+    "sirve",
+    "dale asi",
+    "dale así",
+    "con eso esta bien",
+    "con eso está bien",
+]
+
+
+def _normalize_text(text_value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", str(text_value or ""))
+    normalized = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+    normalized = re.sub(r'[^a-z0-9]+', ' ', normalized.lower()).strip()
+    return normalized
+
+
+def _canonicalize_unit(value: str) -> str:
+    normalized = _normalize_text(value)
+    if not normalized:
+        return ""
+    if "medio cunete" in normalized or "medio cunete" in normalized:
+        return "balde"
+    if "cunete" in normalized:
+        return "cunete"
+    if "gal" in normalized or normalized == "gl":
+        return "galon"
+    if "cuart" in normalized:
+        return "cuarto"
+    if "octav" in normalized:
+        return "octavo"
+    if "balde" in normalized:
+        return "balde"
+    if normalized.startswith("und"):
+        return "und"
+    return normalized.split()[0]
+
+
+def _message_looks_like_stock_confirmation(user_message: str) -> bool:
+    normalized = _normalize_text(user_message)
+    if not normalized or not re.search(r'\b\d+(?:[.,]\d+)?\b', user_message or ""):
+        return False
+    return any(hint in normalized for hint in _STOCK_CONFIRMATION_HINTS)
+
+
+def _extract_stock_confirmation_mentions(user_message: str) -> list[dict]:
+    mentions = []
+    pattern = re.compile(
+        rf'(?:^|\b(?:y|,|;|\.))\s*(?:los?\s+)?(\d+(?:[.,]\d+)?)\s+({_UNIT_PAT})(.*?)(?=(?:\s+\b(?:y|,|;|\.)\b\s*(?:los?\s+)?\d+(?:[.,]\d+)?\s+{_UNIT_PAT})|$)',
+        re.IGNORECASE,
+    )
+    for match in pattern.finditer(user_message or ""):
+        qty = float(match.group(1).replace(",", "."))
+        unit = _canonicalize_unit(match.group(2))
+        tail_text = (match.group(3) or "").strip()
+        mentions.append(
+            {
+                "qty": qty,
+                "unit": unit,
+                "tail_text": tail_text,
+                "tail_tokens": set(_normalize_text(tail_text).split()),
+            }
+        )
+    return mentions
+
+
+def _build_stock_confirmation_candidates(match_result: dict) -> list[dict]:
+    candidates = []
+    for index, prod in enumerate((match_result or {}).get("productos_resueltos") or []):
+        requested_qty = float(prod.get("cantidad") or 0)
+        available_qty = float(prod.get("stock_disponible") or 0)
+        if available_qty <= 0 or requested_qty <= available_qty:
+            continue
+        token_source = " ".join(
+            str(value or "")
+            for value in [
+                prod.get("producto_solicitado"),
+                prod.get("descripcion_real"),
+                prod.get("original_text"),
+                prod.get("codigo_encontrado"),
+            ]
+        )
+        candidates.append(
+            {
+                "index": index,
+                "requested_qty": requested_qty,
+                "available_qty": available_qty,
+                "unit": _canonicalize_unit(prod.get("unidad") or prod.get("presentacion_real") or ""),
+                "tokens": {token for token in _normalize_text(token_source).split() if len(token) >= 2},
+            }
+        )
+    return candidates
+
+
+def _match_stock_confirmation_adjustments(match_result: dict, user_message: str) -> dict[int, float]:
+    if not _message_looks_like_stock_confirmation(user_message):
+        return {}
+    mentions = _extract_stock_confirmation_mentions(user_message)
+    if not mentions:
+        return {}
+
+    candidates = _build_stock_confirmation_candidates(match_result)
+    if not candidates:
+        return {}
+
+    adjustments: dict[int, float] = {}
+    available_by_signature = {}
+    for candidate in candidates:
+        signature = (candidate["available_qty"], candidate["unit"])
+        available_by_signature.setdefault(signature, []).append(candidate)
+
+    for mention in mentions:
+        signature = (mention["qty"], mention["unit"])
+        same_signature = [c for c in available_by_signature.get(signature, []) if c["index"] not in adjustments]
+        if not same_signature:
+            continue
+        if len(same_signature) == 1:
+            adjustments[same_signature[0]["index"]] = same_signature[0]["available_qty"]
+            continue
+
+        if mention["tail_tokens"]:
+            overlapped = [
+                candidate
+                for candidate in same_signature
+                if candidate["tokens"] & mention["tail_tokens"]
+            ]
+            if len(overlapped) == 1:
+                adjustments[overlapped[0]["index"]] = overlapped[0]["available_qty"]
+
+    return adjustments
+
+
+def _rebuild_lines_from_previous_match(match_result: dict, adjustments: dict[int, float]) -> list[dict]:
+    rebuilt_lines = []
+
+    for index, prod in enumerate((match_result or {}).get("productos_resueltos") or []):
+        quantity = adjustments.get(index, float(prod.get("cantidad") or 0) or 1)
+        unit = prod.get("unidad") or prod.get("presentacion_real") or "UND"
+        product_name = prod.get("producto_solicitado") or prod.get("descripcion_real") or prod.get("original_text") or ""
+        rebuilt_lines.append(
+            {
+                "texto": f"{int(quantity) if float(quantity).is_integer() else quantity} {unit} {product_name}".strip(),
+                "producto": product_name,
+                "cantidad": quantity,
+                "unidad": unit,
+                "codigos": [],
+            }
+        )
+
+    for pending in (match_result or {}).get("productos_pendientes") or []:
+        rebuilt_lines.append(
+            {
+                "texto": pending.get("original_text") or pending.get("producto_solicitado") or "",
+                "producto": pending.get("producto_solicitado") or "",
+                "cantidad": float(pending.get("cantidad") or 0) or 1,
+                "unidad": pending.get("unidad") or "UND",
+                "codigos": [],
+            }
+        )
+
+    for failed in (match_result or {}).get("productos_fallidos") or []:
+        rebuilt_lines.append(
+            {
+                "texto": failed.get("original_text") or failed.get("producto_solicitado") or "",
+                "producto": failed.get("producto_solicitado") or "",
+                "cantidad": float(failed.get("cantidad") or 0) or 1,
+                "unidad": failed.get("unidad") or "UND",
+                "codigos": [],
+            }
+        )
+
+    return [line for line in rebuilt_lines if line.get("producto")]
 
 
 def _detectar_intencion_pedido(
@@ -182,6 +370,43 @@ def _extraer_tienda_de_mensaje(user_message: str) -> str:
     return ""
 
 
+def _normalize_brush_size_token(raw_size: str) -> str:
+    cleaned = re.sub(r'["“”″]', '', str(raw_size or '')).strip().replace(' ', '')
+    if re.fullmatch(r'\d1/2', cleaned):
+        return f"{cleaned[0]} 1/2"
+    if re.fullmatch(r'\d+', cleaned):
+        return cleaned
+    return cleaned
+
+
+def _expand_brush_size_line(raw_line: str) -> list[dict]:
+    line = (raw_line or '').strip()
+    match = re.match(r'^\s*(\d+(?:[.,]\d+)?)\s+brochas?\s+(.+?)\s+de:\s*(.+)$', line, re.IGNORECASE)
+    if not match:
+        return []
+
+    quantity = _parse_num(match.group(1))
+    base_product = match.group(2).strip()
+    sizes_blob = match.group(3).strip()
+    size_tokens = re.findall(r'\d1/2|\d+(?=\s*["“”″]|\s|,|$)', sizes_blob)
+    normalized_sizes = []
+    for token in size_tokens:
+        normalized = _normalize_brush_size_token(token)
+        if normalized and normalized not in normalized_sizes:
+            normalized_sizes.append(normalized)
+
+    return [
+        {
+            "texto": raw_line.strip(),
+            "producto": f"brocha {base_product} {size}".strip(),
+            "cantidad": quantity,
+            "unidad": "UND",
+            "codigos": [],
+        }
+        for size in normalized_sizes
+    ]
+
+
 def _parsear_lineas_pedido(
     user_message: str,
     tool_calls_made: list[dict],
@@ -229,13 +454,6 @@ def _parsear_lineas_pedido(
     # 2. Parsear del mensaje libre — dividir por líneas y analizar cada una
     user_msg = user_message or ""
 
-    # Unidades reconocidas (para extraer cantidad + unidad)
-    _UNIT_PAT = (
-        r'(?:gal(?:[oó]n(?:es?)?)?|gl|cuart(?:os?)?|cu(?:[ñn])etes?|'
-        r'und(?:idades?)?|lt|litros?|kg|octav(?:os?)?|'
-        r'medio\s+cu(?:[ñn])etes?|baldes?|1/[1245])'
-    )
-
     for raw_line in re.split(r'[\n\r]+', user_msg):
         line = raw_line.strip()
         if not line:
@@ -243,6 +461,11 @@ def _parsear_lineas_pedido(
         # Ignorar líneas que son puro contexto conversacional (sin productos)
         line_lower = line.lower()
         if _es_linea_contexto(line_lower):
+            continue
+
+        expanded_brush_lines = _expand_brush_size_line(raw_line)
+        if expanded_brush_lines:
+            lineas.extend(expanded_brush_lines)
             continue
 
         # ── Intentar extraer cantidad y unidad del texto libre ──
@@ -351,6 +574,7 @@ def _es_linea_contexto(line_lower: str) -> bool:
         r'^\s*(?:muchas\s+)?gracias\s*[,.]?\s*$',
         r'^(?:por\s+favor)\s*[,.]?\s*$',
         r'^\s*muchas\s+gracias\s*[,.]?\s*gracias\s*[,.]?\s*$',
+        r'^\s*(?:necesito\s+)?(?:este\s+)?pedido\s*:??\s*$',
     ]
     for pat in _CONTEXT_PATTERNS:
         if re.search(pat, line_lower):
@@ -398,6 +622,30 @@ def interceptar_pedido_si_aplica(
             )
         # El usuario dijo algo pero no es tienda — quizá es un producto más o contexto
         # Dejar que caiga al flujo normal
+
+    # ── CASO 2: Confirmación de cantidades disponibles por advertencias de stock ──
+    stock_pending = conversation_context.get("_pedido_stock_por_confirmar") or []
+    previous_match = conversation_context.get("_pedido_match_result") or {}
+    if stock_pending and previous_match:
+        adjustments = _match_stock_confirmation_adjustments(previous_match, user_message)
+        if adjustments:
+            logger.info(
+                "INTERCEPCIÓN PEDIDO: confirmación de stock detectada, ajustando %d líneas | conv=%s",
+                len(adjustments), context.get("conversation_id", "?"),
+            )
+            rebuilt_lines = _rebuild_lines_from_previous_match(previous_match, adjustments)
+            conversation_context.pop("_pedido_stock_por_confirmar", None)
+            tienda_texto = conversation_context.get("_pedido_tienda") or previous_match.get("tienda_nombre") or previous_match.get("tienda_codigo") or ""
+            return _ejecutar_pipeline(
+                main_module,
+                conversation_context,
+                rebuilt_lines,
+                tienda_texto,
+                tool_calls_made,
+                context,
+                lookup_fn=lookup_fn,
+                price_fn=price_fn,
+            )
 
     # ── Guard: detectar intención ──
     if not _detectar_intencion_pedido(
@@ -531,6 +779,19 @@ def _ejecutar_pipeline(
         conversation_context["_pedido_en_progreso"] = not resultado.get("exito")
         if resultado.get("match_result"):
             conversation_context["_pedido_match_result"] = resultado["match_result"]
+            shortage_candidates = _build_stock_confirmation_candidates(resultado["match_result"])
+            if shortage_candidates:
+                conversation_context["_pedido_stock_por_confirmar"] = [
+                    {
+                        "index": candidate["index"],
+                        "requested_qty": candidate["requested_qty"],
+                        "available_qty": candidate["available_qty"],
+                        "unit": candidate["unit"],
+                    }
+                    for candidate in shortage_candidates
+                ]
+            else:
+                conversation_context.pop("_pedido_stock_por_confirmar", None)
 
         # Si el pipeline necesita tienda, guardar estado para siguiente turno
         if resultado.get("bloqueado"):
@@ -612,6 +873,7 @@ def _construir_return_agente(
         "_pedido_tienda",
         "_pedido_notas",
         "_pedido_descuentos",
+        "_pedido_stock_por_confirmar",
         "_pedido_pendiente_ral",
         "_ultimo_pipeline_pedido_trace",
     ]

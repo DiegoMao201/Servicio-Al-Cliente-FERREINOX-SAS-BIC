@@ -85,6 +85,7 @@ def _corporate_brand():
 def _brand_email_shell(title: str, body_html: str) -> str:
     """Envuelve contenido en template Ferreinox corporativo."""
     b = _corporate_brand()
+    footer_phone = b.get("phone") or b.get("phone_landline") or b.get("phone_mobile") or ""
     return (
         "<div style='margin:0;padding:24px;background:#f3f4f6;font-family:Segoe UI,Arial,sans-serif;color:#111827;'>"
         f"<div style='max-width:760px;margin:0 auto;background:#fff;border:1px solid {b['brand_border']};border-radius:18px;overflow:hidden;'>"
@@ -97,7 +98,7 @@ def _brand_email_shell(title: str, body_html: str) -> str:
         f"<div style='padding:22px 32px;background:#fff;border-top:1px solid {b['brand_border']};font-size:12px;color:#6b7280;'>"
         f"<strong style='color:#111827;'>{escape(b['company_name'])}</strong><br>"
         f"Sitio web: <a href='{escape(b['website'])}' style='color:{b['brand_accent']};'>{escape(b['website'])}</a><br>"
-        f"Correo: {escape(b['service_email'])} | Tel: {escape(b['phone'])}"
+        f"Correo: {escape(b['service_email'])} | Tel: {escape(footer_phone)}"
         "</div></div></div>"
     )
 
@@ -324,6 +325,7 @@ def notificar_pedido(
                 subject,
                 html,
                 text,
+                reply_to=None,
                 cc_emails=list(_cc_compras()),
                 attachments=[attachment],
             )
