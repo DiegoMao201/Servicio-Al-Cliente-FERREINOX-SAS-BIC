@@ -219,8 +219,39 @@ def ejecutar_pipeline_pedido(
     t_start = time.time()
     logger.info("PIPELINE_PEDIDO[%s] conv=%s inicio", trace_id, conversation_id)
 
-    # ── 1. Resolver tienda ──
+    # ── 1. Resolver tienda ── (ANTES de lookup para no gastar API sin tienda)
     tienda_codigo, tienda_nombre = resolver_tienda(tienda_texto)
+
+    if not tienda_codigo:
+        # Sin tienda → preguntar ANTES de hacer los lookups (evita 20+ API calls)
+        placeholder = ResultadoMatchPedido(
+            tienda_codigo="", tienda_nombre="",
+        )
+        validacion = ejecutar_validacion_pedido(placeholder)
+        respuesta = construir_respuesta_whatsapp(
+            placeholder, validacion, None, cliente_nombre,
+        )
+        elapsed = int((time.time() - t_start) * 1000)
+        logger.info(
+            "PIPELINE_PEDIDO[%s] bloqueado (sin tienda, sin lookup) | %dms",
+            trace_id, elapsed,
+        )
+        return {
+            "exito": False,
+            "bloqueado": True,
+            "respuesta_whatsapp": respuesta,
+            "match_result": placeholder.to_dict(),
+            "validacion": validacion.to_dict(),
+            "notificacion": None,
+            "excel_filename": "",
+            "feedbacks": [f.to_dict() for f in validacion.feedbacks],
+            "trace": {
+                "trace_id": trace_id,
+                "conversation_id": conversation_id,
+                "elapsed_ms": elapsed,
+                "stage": "validacion_tienda",
+            },
+        }
 
     # ── 2. Match contra inventario ──
     match_result = match_pedido_completo(
@@ -235,7 +266,7 @@ def ejecutar_pipeline_pedido(
     # ── 3. Validar ──
     validacion = ejecutar_validacion_pedido(match_result)
 
-    # ── 4. Si no puede continuar (sin tienda) → retorno inmediato ──
+    # ── 4. Si no puede continuar → retorno inmediato ──
     if not validacion.puede_continuar:
         respuesta = construir_respuesta_whatsapp(
             match_result, validacion, None, cliente_nombre,

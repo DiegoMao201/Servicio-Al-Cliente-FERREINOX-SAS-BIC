@@ -311,6 +311,25 @@ def interceptar_pedido_si_aplica(
         dict compatible con generate_agent_reply_v3() si interceptó,
         None si no aplica.
     """
+    # ── CASO 1: Respuesta a pregunta de tienda pendiente ──
+    lineas_pendientes = conversation_context.get("_pedido_pendiente_lineas")
+    if lineas_pendientes:
+        tienda_texto = _extraer_tienda_de_mensaje(user_message)
+        if tienda_texto:
+            logger.info(
+                "INTERCEPCIÓN PEDIDO: Tienda recibida '%s', re-ejecutando con %d líneas guardadas | conv=%s",
+                tienda_texto, len(lineas_pendientes), context.get("conversation_id", "?"),
+            )
+            conversation_context["_pedido_tienda"] = tienda_texto
+            # Limpiar líneas pendientes para no re-ejecutar
+            conversation_context.pop("_pedido_pendiente_lineas", None)
+            return _ejecutar_pipeline(
+                main_module, conversation_context, lineas_pendientes,
+                tienda_texto, tool_calls_made, context,
+            )
+        # El usuario dijo algo pero no es tienda — quizá es un producto más o contexto
+        # Dejar que caiga al flujo normal
+
     # ── Guard: detectar intención ──
     if not _detectar_intencion_pedido(
         user_message, tool_calls_made, conversation_context,
@@ -339,11 +358,27 @@ def interceptar_pedido_si_aplica(
         len(lineas), context.get("conversation_id", "?"),
     )
 
-    # ── Extraer contexto ──
+    # ── Extraer tienda del mensaje o del contexto ──
     tienda_texto = (
         conversation_context.get("_pedido_tienda")
         or _extraer_tienda_de_mensaje(user_message)
     )
+
+    return _ejecutar_pipeline(
+        main_module, conversation_context, lineas,
+        tienda_texto, tool_calls_made, context,
+    )
+
+
+def _ejecutar_pipeline(
+    main_module,
+    conversation_context: dict,
+    lineas: list[dict],
+    tienda_texto: str,
+    tool_calls_made: list[dict],
+    context: dict,
+) -> Optional[dict]:
+    """Ejecuta el pipeline de pedido con las líneas y tienda dadas."""
     cliente_nombre = (
         conversation_context.get("client_name")
         or conversation_context.get("nombre_cliente")
@@ -404,6 +439,7 @@ def interceptar_pedido_si_aplica(
         # ── Pipeline exitoso → retornar respuesta determinística ──
         if resultado.get("exito"):
             conversation_context["_pedido_en_progreso"] = False
+            conversation_context.pop("_pedido_pendiente_lineas", None)
             # Guardar excel por si necesita reenviarse
             if resultado.get("excel_bytes"):
                 conversation_context["_ultimo_pedido_excel"] = resultado["excel_bytes"]
@@ -459,20 +495,31 @@ def _construir_return_agente(
     if trace:
         conversation_context["_ultimo_pipeline_pedido_trace"] = trace
 
+    # Recopilar todas las keys de pedido del contexto para persistir
+    ctx_updates = {}
+    _PERSIST_KEYS = [
+        "_pedido_en_progreso",
+        "_pedido_match_result",
+        "_pedido_pendiente_lineas",
+        "_pedido_tienda",
+        "_pedido_notas",
+        "_pedido_descuentos",
+        "_pedido_pendiente_ral",
+        "_ultimo_pipeline_pedido_trace",
+    ]
+    for key in _PERSIST_KEYS:
+        val = conversation_context.get(key)
+        if val is not None:
+            ctx_updates[key] = val
+    if trace:
+        ctx_updates["_ultimo_pipeline_pedido_trace"] = trace
+
     return {
         "response_text": response_text,
         "intent": "pedido",
         "tool_calls": tool_calls_made,
-        "context_updates": {
-            key: value
-            for key, value in {
-                "_pedido_en_progreso": conversation_context.get("_pedido_en_progreso"),
-                "_pedido_match_result": conversation_context.get("_pedido_match_result"),
-                "_ultimo_pipeline_pedido_trace": trace,
-            }.items()
-            if value is not None
-        },
+        "context_updates": ctx_updates,
         "should_create_task": False,
-        "confidence": 0.95,
+        "confidence": {"level": "alta", "score": 0.95},
         "is_farewell": False,
     }
