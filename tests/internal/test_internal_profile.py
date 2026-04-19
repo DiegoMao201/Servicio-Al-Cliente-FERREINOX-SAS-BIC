@@ -13,6 +13,7 @@ os.environ.setdefault("DATABASE_URL", "postgresql://postgres:x@localhost:5432/te
 os.environ.setdefault("OPENAI_API_KEY", "sk-test")
 
 import agent_profiles
+import agent_context
 import main
 
 
@@ -52,6 +53,31 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertIsNotNone(response)
         self.assertEqual(response["intent"], "internal_scope_blocked")
         self.assertIn("No gestiona despachos, reclamos internos ni traslados", response["response_text"])
+
+    def test_internal_advisory_context_does_not_force_square_meters_by_default(self):
+        context_text = agent_context.build_turn_context(
+            conversation_context={},
+            recent_messages=[
+                {"direction": "inbound", "contenido": "como pinto una fachada"},
+            ],
+            user_message="tengo humedad y pintura vieja desgastada",
+            internal_auth={"role": "administrador"},
+            profile_name="Diego",
+        )
+
+        self.assertIn("PROFUNDIZACIÓN DIAGNÓSTICA", context_text)
+        self.assertNotIn("¿Cuántos m² tiene el área?", context_text)
+        self.assertNotIn("Al final pregunta m² y color para calcular cantidades.", context_text)
+
+    def test_internal_prompt_closes_with_technical_handoff_not_quote_push(self):
+        with mock.patch.dict(os.environ, {"AGENT_PROFILE": "internal"}, clear=False):
+            runtime_config = agent_profiles.get_agent_runtime_config()
+
+        system_prompt = runtime_config["system_prompt"]
+
+        self.assertIn("No crear cotizaciones.", system_prompt)
+        self.assertIn("No preguntes m² por defecto en este canal.", system_prompt)
+        self.assertIn("Si quieres, te conecto con un asesor comercial para cotizar los productos.", system_prompt)
 
 
 if __name__ == "__main__":

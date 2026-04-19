@@ -1282,7 +1282,10 @@ def build_turn_context(
                 lines.append("Consultá al RAG especificando: superficie='interior húmedo', condición='" + (diagnostic.get("condition") or "humedad") + "'.")
                 lines.append("El RAG te dará la secuencia correcta de impermeabilización, estuco y acabado.")
             lines.append("IMPORTANTE: NO prescribas productos hasta consultar al RAG. Cada caso de humedad tiene un sistema específico.")
-            lines.append("Acción: Consulta al RAG con el diagnóstico completo y luego pide m² para cotizar.")
+            if is_internal:
+                lines.append("Acción: Consulta al RAG con el diagnóstico completo y entrega una ruta técnica clara. No abras cotización ni pidas m² salvo que el colaborador los necesite explícitamente para cálculo interno.")
+            else:
+                lines.append("Acción: Consulta al RAG con el diagnóstico completo y luego pide m² para cotizar.")
 
         # ── Galvanizado: guía diagnóstica (sin prescribir productos) ──
         _conv_text_lower = (user_message or "").lower() + " " + " ".join(
@@ -1333,7 +1336,8 @@ def build_turn_context(
             lines.append("")
             lines.append("DEBES confirmar con el cliente ANTES de consultar herramientas:")
             lines.append("  • ¿De qué MATERIAL es la superficie? (cada material cambia el sistema)")
-            lines.append("  • ¿Cuántos m² tiene el área?")
+            if not is_internal:
+                lines.append("  • ¿Cuántos m² tiene el área?")
             lines.append("  • Cualquier otro detalle que como asesor experto necesites para dar una recomendación precisa")
             lines.append("")
             lines.append("FORMATO:")
@@ -1347,7 +1351,10 @@ def build_turn_context(
             lines.append("NO respondas 'voy a consultar' o 'un momento' sin haber usado realmente la herramienta.")
             lines.append("Presenta la recomendación basada en el RAG: preparación de superficie (SIEMPRE) → producto principal → imprimante/sellador SOLO si el RAG lo confirma → diluyente + herramientas.")
             lines.append("NO agregues imprimante ni sellador que el RAG no indique para este caso. Los productos son claros en su uso y sustratos.")
-            if not diagnostic["area_m2"]:
+            if is_internal:
+                lines.append("CIERRE INTERNO OBLIGATORIO: entrega recomendación técnica directa, rendimientos consultados y advertencias de aplicación. No ofrezcas cotización, pedido ni PDF.")
+                lines.append("Si el colaborador quiere cierre comercial, cierra así: 'Si quieres, te conecto con un asesor comercial para cotizar los productos.'")
+            elif not diagnostic["area_m2"]:
                 lines.append("Al final pregunta m² y color para calcular cantidades.")
 
     elif intent == "pedido_directo":

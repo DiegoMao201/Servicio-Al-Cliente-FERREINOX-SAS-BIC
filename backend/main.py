@@ -20742,7 +20742,11 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "   Si el RAG dice que para este caso basta preparación + producto acabado, presenta ESO. No le agregues capas. "
             "6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' "
             "7) CÁLCULOS: m² ÷ rendimiento_mínimo = galones (redondear ARRIBA). Ejemplo: 165 m² ÷ 12 m²/gal = 13.75 → 14 galones. NUNCA uses el rendimiento máximo. "
-            "8) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'"
+            + (
+                "8) CIERRE INTERNO: entrega la recomendación técnica final con preparación, sistema, rendimiento y advertencias. Si hace falta continuidad comercial, cierra solo con: 'Si quieres, te conecto con un asesor comercial para cotizar los productos.'"
+                if get_agent_profile_name() == "internal"
+                else "8) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'"
+            )
         ),
     }
 
