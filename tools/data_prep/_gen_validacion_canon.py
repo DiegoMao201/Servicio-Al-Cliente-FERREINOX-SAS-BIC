@@ -7,7 +7,7 @@ import csv, os, re, unicodedata
 from pathlib import Path
 from sqlalchemy import create_engine, text
 
-ROOT = Path(__file__).resolve().parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 engine = create_engine(os.environ["DATABASE_URL"])
 
 
@@ -20,7 +20,7 @@ def norm(val):
 
 
 # Load audit results
-audit_csv = ROOT / "artifacts" / "rag_product_universe" / "audit_rag_vs_inventario.csv"
+audit_csv = REPO_ROOT / "artifacts" / "rag_product_universe" / "audit_rag_vs_inventario.csv"
 with open(audit_csv, encoding="utf-8-sig") as f:
     reader = csv.DictReader(f)
     audit_rows = [r for r in reader if r["status"] == "INVENTARIO_SIN_CANON"]
@@ -124,7 +124,7 @@ quality_order = {"PROBABLE_OK": 0, "REVISAR": 1, "SOSPECHOSO": 2, "SIN_MATCH": 3
 results.sort(key=lambda r: (r["segmento"], quality_order.get(r["calidad_match"], 9), r["familia_rag"]))
 
 # Write
-out_csv = ROOT / "artifacts" / "rag_product_universe" / "validacion_canon_faltantes.csv"
+out_csv = REPO_ROOT / "artifacts" / "rag_product_universe" / "validacion_canon_faltantes.csv"
 with open(out_csv, "w", newline="", encoding="utf-8-sig") as f:
     w = csv.DictWriter(f, fieldnames=list(results[0].keys()))
     w.writeheader()

@@ -1,6 +1,10 @@
 """Test the universal product validation guard."""
 import sys, re
-sys.path.insert(0, 'backend')
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+BACKEND_DIR = REPO_ROOT / 'backend'
+sys.path.insert(0, str(BACKEND_DIR))
 from agent_v3 import _ALL_PRODUCT_BRANDS_RE
 
 # Test 1: Regex matches ALL known Ferreinox product brands

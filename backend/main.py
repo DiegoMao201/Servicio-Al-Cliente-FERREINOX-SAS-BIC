@@ -6355,6 +6355,9 @@ def build_inventory_lookup_reply(profile_name: Optional[str], user_message: Opti
             else:
                 response_text = f"{audit_label} aparece agotado en este momento."
 
+    if is_internal:
+        response_text += "\n\nSi quieres, reviso otra referencia o tienda. Aqui esta FERRO para ayudarte. :)"
+
     return {
         "tono": "informativo",
         "intent": "consulta_productos",

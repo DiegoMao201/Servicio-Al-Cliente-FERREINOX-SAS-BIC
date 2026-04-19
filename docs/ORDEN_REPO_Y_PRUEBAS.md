@@ -34,8 +34,12 @@ frontend/
 docs/
 tools/
 tools/diagnostics/
+tools/diagnostics/legacy/
 tools/audits/
 tools/exploration/
+tools/maintenance/
+tools/data_prep/
+tools/validation/
 tests/
 tests/internal/
 tests/customer/
@@ -103,7 +107,7 @@ Mover a `tests/regression/`:
 
 ### Scripts Temporales O Legacy
 
-Mover a `tools/diagnostics/legacy/`:
+Ubicados en `tools/diagnostics/legacy/`:
 
 - `_test_embudo_cierre.py`
 - `_test_new_fixes.py`
@@ -113,7 +117,7 @@ Mover a `tools/diagnostics/legacy/`:
 
 ### Auditorias
 
-Mover a `tools/audits/`:
+Ubicadas en `tools/audits/`:
 
 - `audit_expert_full.py`
 - `audit_expert_knowledge.py`
@@ -126,7 +130,7 @@ Mover a `tools/audits/`:
 
 ### Diagnosticos Y Exploracion
 
-Mover a `tools/diagnostics/` o `tools/exploration/`:
+Ubicadas en `tools/diagnostics/` o `tools/exploration/`:
 
 - `_diag_inventory_by_desc.py`
 - `_diag_inventory_movement.py`
@@ -142,13 +146,23 @@ Mover a `tools/diagnostics/` o `tools/exploration/`:
 - `explore_xlsx.py`
 - `_explore_abracol.py`
 
+### PostgREST
+
+Ubicado en `tools/postgrest/` y `docs/postgrest/`:
+
+- `tools/postgrest/sync_official_postgrest.py`
+- `docs/postgrest/POSTGRES_ESTRUCTURA_LIMPIA.txt`
+- `docs/postgrest/POSTGRES_EXPOSICION_Y_AUTOMATIZACION.txt`
+- `docs/postgrest/POSTGRES_RESET_Y_PRUEBA.txt`
+- `docs/postgrest/SETUP_PGVECTOR_COOLIFY.sql`
+
 ### Resultados Y Reportes
 
 Mover a `reports/`:
 
 - `_full_regression_results.txt`
 - `_rag_regression_results.txt`
-- `_audit_results.json`
+- `reports/audits/_audit_results.json`
 - `test_omega_results.json`
 - `RESULTADO_BATERIA_MATRIZ_GLOBAL_200.md`
 - `RESULTADO_BATERIA_MULTI_SUPERFICIE_Y_CONTRADICCIONES.md`
@@ -156,12 +170,44 @@ Mover a `reports/`:
 
 ### Parsers De Reportes
 
-Mover a `tools/diagnostics/`:
+Ubicados en `tools/maintenance/`:
 
 - `_parse_all_results.py`
 - `_parse_report.py`
 - `_read_results.py`
 - `parse_results.py`
+
+### Mantenimiento Y Chequeos Puntuales
+
+Ubicados en `tools/maintenance/`:
+
+- `_read_rules.py`
+- `_read_all_rules.py`
+- `_check_altas_temp_profile.py`
+- `_check_schema.py`
+- `_check_surface2.py`
+- `_check_surface_metadata.py`
+- `_inspect_ventas.py`
+
+### Preparacion De Datos
+
+Ubicados en `tools/data_prep/`:
+
+- `_analyze_abracol.py`
+- `_apply_all_fixes.py`
+- `_apply_canon_from_csv.py`
+- `_apply_inventario_activo.py`
+- `_enrich_guides.py`
+- `_gen_validacion_canon.py`
+- `_setup_abracol.py`
+
+### Validacion Ligera
+
+Ubicados en `tools/validation/`:
+
+- `_count_guides.py`
+- `_validate_guides.py`
+- `_rag_check.py`
 
 ## Orden De Ejecucion Recomendado
 

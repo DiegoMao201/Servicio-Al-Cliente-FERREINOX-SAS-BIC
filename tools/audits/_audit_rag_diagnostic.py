@@ -1,6 +1,10 @@
 """Quick RAG audit: check diagnostic completeness."""
 import os, sys, json
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = REPO_ROOT / "backend"
+sys.path.insert(0, str(BACKEND_DIR))
 
 from main import get_db_engine
 

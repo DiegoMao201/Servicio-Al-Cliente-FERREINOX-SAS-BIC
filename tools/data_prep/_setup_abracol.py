@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 from sqlalchemy import create_engine, text
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 # Get DB URI from secrets.toml
 try:

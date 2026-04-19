@@ -192,9 +192,10 @@ def main():
     print("=" * 90)
 
     # Save detailed results
-    with open("_audit_results.json", "w", encoding="utf-8") as f:
+    output_path = "reports/audits/_audit_results.json"
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(details_list, f, ensure_ascii=False, indent=2)
-    print("Resultados guardados en _audit_results.json")
+    print(f"Resultados guardados en {output_path}")
 
     # Print failure/warn summary
     problems = [d for d in details_list if d["status"] in ("FAIL", "WARN")]

@@ -1380,6 +1380,7 @@ def build_turn_context(
             lines.append("Si preguntan una tienda específica, responde con el stock exacto de esa tienda.")
             lines.append("Si no piden tienda específica, muestra el desglose por tienda con cantidades exactas.")
             lines.append("NO cotices. NO des IVA. NO mezcles esta consulta con pedido o cotización.")
+            lines.append("Cierra en tono interno y util: ofrece revisar otra referencia o tienda, pero NO ofrezcas pedidos, cotizaciones ni PDF.")
         else:
             lines.append("Consulta puntual de disponibilidad de producto.")
             lines.append("Acción: Llama consultar_inventario para validar referencia, presentación y disponibilidad.")

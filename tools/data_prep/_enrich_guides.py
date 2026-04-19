@@ -8,16 +8,17 @@ Script para enriquecer TODAS las guías de solución con:
 6. Mejores argumentos de sistema
 """
 import json, os, re, copy
+from pathlib import Path
 
-BASE = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 def load(fname):
-    fp = os.path.join(BASE, fname)
+    fp = REPO_ROOT / fname
     with open(fp, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 def save(fname, data):
-    fp = os.path.join(BASE, fname)
+    fp = REPO_ROOT / fname
     with open(fp, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
     print(f"  ✅ Saved: {fname}")

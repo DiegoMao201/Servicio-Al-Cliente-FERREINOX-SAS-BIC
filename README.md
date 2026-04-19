@@ -221,7 +221,7 @@ Ver guía detallada en [docs/DESPLIEGUE_INTERNO_OPERATIVO.md](docs/DESPLIEGUE_IN
 ## Flujo recomendado para empezar full conectado
 
 1. Desplegar PostgreSQL, backend y PostgREST en tu servidor.
-2. Ejecutar la sincronización oficial con `sync_official_postgrest.py`.
+2. Ejecutar la sincronización oficial con `python tools/postgrest/sync_official_postgrest.py`.
 3. Confirmar en la pantalla `Estado de Actualización` que los 5 CSV oficiales quedaron bien.
 4. Publicar el backend con HTTPS.
 5. Configurar el webhook de Meta apuntando a `/webhooks/whatsapp`.

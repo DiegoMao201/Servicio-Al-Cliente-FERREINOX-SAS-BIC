@@ -86,7 +86,7 @@ def main() -> None:
         time.sleep(POLL_SECONDS)
 
     run_command("export_rag_100_products_and_new_cases.py")
-    run_command("compare_rag_audits.py")
+    run_command("tools/audits/compare_rag_audits.py")
 
     final_payload = {
         "timestamp": datetime.now().isoformat(),

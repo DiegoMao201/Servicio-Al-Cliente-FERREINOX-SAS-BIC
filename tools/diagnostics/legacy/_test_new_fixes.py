@@ -1,5 +1,10 @@
 """Quick test of the new diagnostic fixes."""
-import sys; sys.path.insert(0, 'backend')
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+BACKEND_DIR = REPO_ROOT / 'backend'
+sys.path.insert(0, str(BACKEND_DIR))
 from agent_context import extract_diagnostic_data, classify_intent, is_diagnostic_incomplete
 
 # Test 1: Galvanized pipe - surface should be 'metal', not 'techo'

@@ -4,7 +4,7 @@ from pathlib import Path
 from sqlalchemy import create_engine, text
 
 engine = create_engine(os.environ["DATABASE_URL"])
-ROOT = Path(__file__).resolve().parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def norm(val: str) -> str:
@@ -117,7 +117,7 @@ with engine.connect() as c:
     print(f"QUEDARÍAN ACTIVOS:                  {active_1y} ({100*active_1y/len(inv_by_ref):.1f}%)")
 
     # Save detail
-    out_csv = ROOT / "artifacts" / "rag_product_universe" / "inventario_movimiento.csv"
+    out_csv = REPO_ROOT / "artifacts" / "rag_product_universe" / "inventario_movimiento.csv"
     out_csv.parent.mkdir(parents=True, exist_ok=True)
     with open(out_csv, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=list(results[0].keys()))

@@ -1,6 +1,9 @@
 """Test: verify surface-aware RAG filtering works for teja metalica case."""
 import sys
-sys.path.insert(0, ".")
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(REPO_ROOT))
 
 from backend.main import (
     _infer_surface_types_from_query,

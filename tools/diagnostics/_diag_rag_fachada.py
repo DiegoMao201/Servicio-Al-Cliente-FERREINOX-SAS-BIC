@@ -1,7 +1,11 @@
 """Diagnostic: what does RAG return for 'fachada con humedad'?"""
 import json, sys, os
-os.chdir(os.path.join(os.path.dirname(__file__), 'backend'))
-sys.path.insert(0, '.')
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = REPO_ROOT / "backend"
+os.chdir(REPO_ROOT)
+sys.path.insert(0, str(BACKEND_DIR))
 from main import (
     fetch_expert_knowledge,
     search_technical_chunks,

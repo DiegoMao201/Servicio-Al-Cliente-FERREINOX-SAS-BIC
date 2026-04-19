@@ -1,7 +1,11 @@
 """Trace expert scoring for fachada+humedad query"""
 import json, sys, os, re
-os.chdir(os.path.join(os.path.dirname(__file__), 'backend'))
-sys.path.insert(0, '.')
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = REPO_ROOT / "backend"
+os.chdir(REPO_ROOT)
+sys.path.insert(0, str(BACKEND_DIR))
 from main import normalize_text_value
 
 query = "fachada humedad pintar pintura en mal estado"
@@ -15,7 +19,7 @@ print(f"TERMS: {terms}")
 print(f"ANCHORS: {anchor_terms}")
 print()
 
-rules = json.load(open("../reglas_experto_ferreinox.json", "r", encoding="utf-8"))
+rules = json.loads((REPO_ROOT / "reglas_experto_ferreinox.json").read_text(encoding="utf-8"))
 target_ids = [6, 37, 52, 58, 63, 91, 92, 93, 94, 95, 97]
 results = []
 for r in rules:

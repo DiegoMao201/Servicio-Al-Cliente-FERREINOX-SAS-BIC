@@ -1,5 +1,9 @@
 import sys, json
-sys.path.insert(0, "backend")
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = REPO_ROOT / "backend"
+sys.path.insert(0, str(BACKEND_DIR))
 from main import get_db_engine
 e = get_db_engine()
 c = e.raw_connection()

@@ -1,6 +1,6 @@
 import json
 
-with open('_audit_results.json','r',encoding='utf-8') as f:
+with open('reports/audits/_audit_results.json','r',encoding='utf-8') as f:
     d = json.load(f)
 
 p=w=fl=0

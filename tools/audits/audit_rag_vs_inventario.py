@@ -14,10 +14,10 @@ import sys
 import unicodedata
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
-BACKEND = ROOT / "backend"
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BACKEND = REPO_ROOT / "backend"
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
 if str(BACKEND) not in sys.path:
     sys.path.insert(0, str(BACKEND))
 
@@ -35,7 +35,7 @@ if not DATABASE_URL:
 
 engine = create_engine(DATABASE_URL)
 
-OUTPUT_CSV = ROOT / "artifacts" / "rag_product_universe" / "audit_rag_vs_inventario.csv"
+OUTPUT_CSV = REPO_ROOT / "artifacts" / "rag_product_universe" / "audit_rag_vs_inventario.csv"
 OUTPUT_CSV.parent.mkdir(parents=True, exist_ok=True)
 
 

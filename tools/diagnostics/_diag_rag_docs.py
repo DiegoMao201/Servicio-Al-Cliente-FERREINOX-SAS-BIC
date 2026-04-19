@@ -1,7 +1,11 @@
 """Check what RAG documents exist for fachada/humedad products"""
 import sys, os
-os.chdir(os.path.join(os.path.dirname(__file__), 'backend'))
-sys.path.insert(0, '.')
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = REPO_ROOT / "backend"
+os.chdir(REPO_ROOT)
+sys.path.insert(0, str(BACKEND_DIR))
 from main import get_db_engine
 from sqlalchemy import text
 engine = get_db_engine()

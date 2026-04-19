@@ -1,7 +1,11 @@
 """Explora el archivo Abracol desde Dropbox (hoja Productos)."""
 import os, sys
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+BACKEND_DIR = REPO_ROOT / "backend"
+sys.path.insert(0, str(REPO_ROOT))
+sys.path.insert(0, str(BACKEND_DIR))
 
 import pandas as pd
 from io import BytesIO
@@ -74,5 +78,6 @@ for col in df.columns:
         print(f"  {col}: {nunique} únicos (top 10: {list(df[col].value_counts().head(10).index)})")
 
 # Guardar localmente para trabajo
-df.to_csv("data/abracol_productos.csv", index=False, encoding="utf-8")
-print(f"\nGuardado en data/abracol_productos.csv")
+output_path = REPO_ROOT / "data" / "abracol_productos.csv"
+df.to_csv(output_path, index=False, encoding="utf-8")
+print(f"\nGuardado en {output_path}")
