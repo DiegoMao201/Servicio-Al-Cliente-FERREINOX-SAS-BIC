@@ -4398,6 +4398,7 @@ def build_internal_auth_context(user_payload: dict, token: str, expires_at: Opti
         "token": token,
         "user_id": user_payload.get("id"),
         "username": user_payload.get("username"),
+        "email": user_payload.get("email"),
         "role": user_payload.get("role"),
         "expires_at": expires_at,
         "employee_context": {
@@ -18505,6 +18506,49 @@ def _handle_tool_consultar_compras(args, conversation_context):
     return json.dumps(summary, ensure_ascii=False, default=str)
 
 
+def _handle_tool_consultar_indicadores_internos(args: dict, conversation_context: dict) -> str:
+    try:
+        try:
+            from internal_agent_ops import handle_consultar_indicadores_internos
+        except ImportError:
+            from backend.internal_agent_ops import handle_consultar_indicadores_internos
+        return handle_consultar_indicadores_internos(get_db_engine(), args, conversation_context)
+    except Exception as exc:
+        logger.warning("consultar_indicadores_internos runtime error: %s", exc)
+        return "No pude consultar los indicadores internos en este momento."
+
+
+def _handle_tool_enviar_reporte_interno_correo(args: dict, conversation_context: dict) -> str:
+    try:
+        try:
+            from internal_agent_ops import handle_enviar_reporte_interno_correo
+        except ImportError:
+            from backend.internal_agent_ops import handle_enviar_reporte_interno_correo
+        return handle_enviar_reporte_interno_correo(
+            get_db_engine(),
+            args,
+            conversation_context,
+            build_brand_email_shell,
+            send_sendgrid_email,
+            _handle_tool_consultar_ventas_internas,
+        )
+    except Exception as exc:
+        logger.warning("enviar_reporte_interno_correo runtime error: %s", exc)
+        return "No pude enviar el reporte interno por correo en este momento."
+
+
+def _handle_tool_crear_recordatorio_interno(args: dict, conversation_context: dict) -> str:
+    return "Esta función interna quedó deshabilitada. Este agente está enfocado en consulta y reportes, no en crear recordatorios."
+
+
+def _handle_tool_generar_lista_pendientes(args: dict, conversation_context: dict) -> str:
+    return "Esta función interna quedó deshabilitada. Este agente está enfocado en consulta y reportes, no en pendientes."
+
+
+def _handle_tool_sugerir_reposicion_bodega(args: dict, conversation_context: dict) -> str:
+    return "Usa consultar_indicadores_internos o enviar_reporte_interno_correo para análisis de inventario. Esta ruta operativa quedó deshabilitada."
+
+
 # ── Traslados internos (v2 agent tool) ────────────────────────────────────────
 
 def _handle_tool_solicitar_traslado_interno(args: dict, context: dict, conversation_context: dict) -> str:
@@ -19166,7 +19210,6 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             "num_vendedores": num_vendedores,
         },
     }
-
     if ultima_sincronizacion:
         result["datos_db"] = {
             "ultima_sincronizacion": ultima_sincronizacion,
@@ -20009,14 +20052,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             if _tipo in ("contraindicacion", "correccion") or any(
                 kw in _nota.lower() for kw in ["sobre pedido", "prohibid", "obligatori", "nunca", "no usar", "no cotiz"]
             ):
-                _expert_warnings.append({
-                    "tipo": _tipo,
-                    "contexto": _en.get("contexto_tags"),
-                    "nota": _nota,
-                    "evitar": _en.get("producto_desestimado"),
-                })
-    if _expert_warnings:
-        commercial_draft["alertas_conocimiento_experto"] = _expert_warnings
+                _expert_warnings.append(_nota)
     commercial_draft["delivery_channel"] = "email" if canal_envio == "email" else "chat"
     commercial_draft["contact_email"] = correo_cliente or commercial_draft.get("contact_email")
     commercial_draft["items_confirmed"] = True
@@ -20783,14 +20819,10 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     if any(kw in _q_combined for kw in ["corrotec", "anticorrosivo"]) and any(
         kw in _q_combined for kw in ["prepar", "superficie", "superficie", "antes", "limpiar", "lijar", "como", "cómo"]
     ):
-        result_payload["nota_preparacion_metal"] = (
-            "NOTA OBLIGATORIA PREPARACIÓN METAL/CORROTEC: Tu respuesta DEBE mencionar: "
-            "1) 'limpiar' la superficie (o 'limpieza'), 2) 'óxido' (removerlo/convertirlo), "
-            "3) 'lija' o 'lijar' como método de preparación. "
-            "FRASE MODELO: 'Primero limpia la superficie removiendo el óxido con lija o disco flap. "
-            "El metal debe estar seco y libre de óxido antes de aplicar Corrotec.'"
+        result_payload["nota_preparacion_corrotec"] = (
+            "NOTA OBLIGATORIA CORROTEC: Tu respuesta DEBE incluir preparación de superficie antes de aplicar el anticorrosivo. "
+            "Menciona limpieza, retiro de óxido mal adherido, lijado o cepillado mecánico, y superficie seca antes de pintar."
         )
-
     # ── Inject mandatory keywords for Pintucoat drying time queries ──
     if any(kw in _q_combined for kw in ["pintucoat", "epoxic"]) and any(
         kw in _q_combined for kw in ["secado", "secar", "seca", "tiempo", "hora", "esperar", "entre manos", "repinte"]
@@ -21342,6 +21374,16 @@ def _execute_agent_tool(tool_call, context, conversation_context):
             result = _handle_tool_consultar_compras(fn_args, conversation_context)
         elif fn_name == "consultar_ventas_internas":
             result = _handle_tool_consultar_ventas_internas(fn_args, conversation_context)
+        elif fn_name == "consultar_indicadores_internos":
+            result = _handle_tool_consultar_indicadores_internos(fn_args, conversation_context)
+        elif fn_name == "enviar_reporte_interno_correo":
+            result = _handle_tool_enviar_reporte_interno_correo(fn_args, conversation_context)
+        elif fn_name == "crear_recordatorio_interno":
+            result = _handle_tool_crear_recordatorio_interno(fn_args, conversation_context)
+        elif fn_name == "generar_lista_pendientes":
+            result = _handle_tool_generar_lista_pendientes(fn_args, conversation_context)
+        elif fn_name == "sugerir_reposicion_bodega":
+            result = _handle_tool_sugerir_reposicion_bodega(fn_args, conversation_context)
         elif fn_name == "solicitar_traslado_interno":
             result = _handle_tool_solicitar_traslado_interno(fn_args, context, conversation_context)
         elif fn_name == "buscar_documento_tecnico":

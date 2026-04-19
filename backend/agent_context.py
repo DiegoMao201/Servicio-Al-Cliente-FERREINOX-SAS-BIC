@@ -554,7 +554,9 @@ _CLAIM_SIGNALS = [
 _BI_SIGNALS = [
     "ventas", "cuánto llevo", "cuanto llevo", "facturación", "facturacion",
     "cómo voy", "como voy", "vendí", "vendi", "cuánto vendí", "cuanto vendi",
-    "cartera de", "compras de", "compras acumuladas",
+    "cartera de", "compras de", "compras acumuladas", "proyeccion", "proyección",
+    "proyectamos", "baja rotacion", "baja rotación", "rotacion", "rotación",
+    "quiebre", "quiebres", "sobrestock", "vencidos", "vencidas", "quedados",
 ]
 
 _PRICE_SIGNALS = [
@@ -1094,6 +1096,24 @@ def build_turn_context(
         emp = internal_auth.get("employee_context") or {}
         rol = internal_auth.get("role", "empleado")
         lines.append(f"Empleado interno: {emp.get('full_name', '?')} ({rol}, sede {emp.get('sede', '?')})")
+        try:
+            try:
+                import main as main_module
+                from internal_agent_ops import build_internal_operational_context
+            except ImportError:
+                from backend import main as main_module
+                from backend.internal_agent_ops import build_internal_operational_context
+
+            operational_context = build_internal_operational_context(
+                main_module.get_db_engine(),
+                internal_auth,
+                user_message,
+                conversation_context,
+            )
+            if operational_context:
+                lines.append(operational_context)
+        except Exception as exc:
+            logger.debug("internal operational context skipped: %s", exc)
 
     # Active cart
     if commercial_draft and not topic_changed:
@@ -1419,7 +1439,9 @@ def build_turn_context(
 
     elif intent == "bi_interno":
         lines.append("Consulta de inteligencia de negocios (empleado interno).")
-        lines.append("Acción: Llama consultar_ventas_internas con los parámetros apropiados.")
+        lines.append("Si la pregunta es ventas puras, llama consultar_ventas_internas.")
+        lines.append("Si la pregunta es proyeccion, cartera vencida, baja rotacion, quiebres o sobrestock, llama consultar_indicadores_internos.")
+        lines.append("Si el detalle es demasiado largo para WhatsApp, resume los hallazgos y ofrece enviarlo por correo con Excel usando enviar_reporte_interno_correo.")
 
     elif intent == "documento":
         lines.append("Solicitud de ficha técnica o documento.")

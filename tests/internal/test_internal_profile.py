@@ -35,6 +35,8 @@ class InternalAgentProfileTests(unittest.TestCase):
                 "consultar_inventario",
                 "consultar_conocimiento_tecnico",
                 "consultar_ventas_internas",
+                "consultar_indicadores_internos",
+                "enviar_reporte_interno_correo",
                 "buscar_documento_tecnico",
             ],
         )
@@ -77,6 +79,8 @@ class InternalAgentProfileTests(unittest.TestCase):
 
         self.assertIn("No crear cotizaciones.", system_prompt)
         self.assertIn("No preguntes m² por defecto en este canal.", system_prompt)
+        self.assertIn("Consultar indicadores internos de ventas, proyeccion, cartera e inventario.", system_prompt)
+        self.assertIn("Exportar reportes internos por correo con Excel adjunto", system_prompt)
         self.assertIn("Si quieres, te conecto con un asesor comercial para cotizar los productos.", system_prompt)
 
 

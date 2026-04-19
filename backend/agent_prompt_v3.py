@@ -720,6 +720,137 @@ AGENT_TOOLS_V3 = [
     {
         "type": "function",
         "function": {
+            "name": "consultar_indicadores_internos",
+            "description": (
+                "Consulta indicadores ejecutivos internos mas alla de ventas: proyeccion del mes, cartera vencida, "
+                "productos de baja rotacion, quiebres de stock y sobrestock por sede. "
+                "Usa esta herramienta cuando la pregunta sea gerencial o administrativa y no baste con ventas puras."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "tipo_consulta": {
+                        "type": "string",
+                        "enum": [
+                            "proyeccion_ventas_mes",
+                            "inventario_baja_rotacion",
+                            "cartera_vencida_resumen",
+                            "quiebres_stock",
+                            "sobrestock"
+                        ],
+                        "description": "Indicador interno a consultar.",
+                    },
+                    "almacen": {
+                        "type": "string",
+                        "description": "Codigo ERP de sede o almacen. Ej: 189, 157, 156. Opcional.",
+                    },
+                    "periodo": {
+                        "type": "string",
+                        "description": "Periodo para proyeccion o ventas. Ej: 'este mes'. Opcional.",
+                    },
+                    "limite": {
+                        "type": "integer",
+                        "description": "Cantidad maxima de filas para resumen. Default: 5.",
+                    },
+                },
+                "required": ["tipo_consulta"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "enviar_reporte_interno_correo",
+            "description": (
+                "Envia por correo un reporte interno profesional con Excel adjunto. "
+                "Usa esta herramienta cuando el detalle de baja rotacion, clientes vencidos, quiebres, sobrestock o ventas estructuradas sea demasiado largo para WhatsApp."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "tipo_reporte": {
+                        "type": "string",
+                        "enum": [
+                            "inventario_baja_rotacion",
+                            "cartera_vencida",
+                            "quiebres_stock",
+                            "sobrestock",
+                            "ventas_detalladas",
+                            "ventas_por_tienda",
+                            "ventas_por_vendedor",
+                            "ventas_por_producto",
+                            "ventas_por_cliente",
+                            "ventas_por_dia",
+                            "ventas_por_canal"
+                        ],
+                        "description": "Tipo de reporte que se enviara por correo.",
+                    },
+                    "email_destino": {
+                        "type": "string",
+                        "description": "Correo destino. Si se omite, usa el correo del colaborador autenticado cuando exista.",
+                    },
+                    "almacen": {
+                        "type": "string",
+                        "description": "Codigo ERP de sede o almacen. Opcional.",
+                    },
+                    "periodo": {
+                        "type": "string",
+                        "description": "Periodo para reportes de ventas. Ej: 'este mes', 'mes pasado', 'enero 2026'. Opcional.",
+                    },
+                    "canal": {
+                        "type": "string",
+                        "enum": ["empresa", "mostradores", "comerciales"],
+                        "description": "Canal para reportes de ventas. Opcional.",
+                    },
+                    "tipo_venta": {
+                        "type": "string",
+                        "enum": ["todos", "credito", "contado"],
+                        "description": "Modalidad de venta para reportes de ventas. Opcional.",
+                    },
+                    "vendedor_codigo": {
+                        "type": "string",
+                        "description": "Codigo ERP del vendedor para filtrar reportes de ventas. Opcional.",
+                    },
+                    "limite": {
+                        "type": "integer",
+                        "description": "Cantidad maxima de filas a incluir. Entre 1 y 500. Default: 100.",
+                    },
+                },
+                "required": ["tipo_reporte"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "sugerir_reposicion_bodega",
+            "description": (
+                "Sugiere referencias para reposicion o priorizacion de inventario por almacen. "
+                "Usa la vista materializada de salud de inventario para responder rapido con quiebres, reposicion o sobrestock."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "almacen": {
+                        "type": "string",
+                        "description": "Codigo ERP del almacen. Si se omite, usa el almacen del colaborador autenticado cuando exista.",
+                    },
+                    "estado": {
+                        "type": "string",
+                        "enum": ["quiebre_critico", "reposicion_recomendada", "sobrestock", "sin_movimiento"],
+                        "description": "Tipo de hallazgo a priorizar. Default: reposicion_recomendada.",
+                    },
+                    "limite": {
+                        "type": "integer",
+                        "description": "Cantidad maxima de referencias. Entre 1 y 20. Default: 10.",
+                    },
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "solicitar_traslado_interno",
             "description": (
                 "Registra traslado de producto entre sedes Ferreinox y envía correo a tienda origen. "
