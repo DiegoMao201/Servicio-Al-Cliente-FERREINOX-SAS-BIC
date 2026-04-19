@@ -68,6 +68,42 @@ _MESES_NOMBRES = {
     "diciembre": 12,
 }
 
+_STORE_ALIAS_TO_CODE = {
+    "armenia": "156",
+    "san francisco": "156",
+    "manizales": "157",
+    "san antonio": "157",
+    "opalo": "158",
+    "ópalo": "158",
+    "dosquebradas": "158",
+    "pereira": "189",
+    "parque olaya": "189",
+    "olaya": "189",
+    "laureles": "238",
+    "laures": "238",
+    "ferrebox": "439",
+    "ferre box": "439",
+    "cerritos": "463",
+}
+
+_STORE_CODE_LABELS = {
+    "156": "Armenia",
+    "157": "Manizales",
+    "158": "Opalo",
+    "189": "Pereira",
+    "238": "Laureles",
+    "439": "FerreBOX",
+    "463": "Cerritos",
+}
+
+_UNIVERSAL_BI_DIMENSIONS = {
+    "tienda": ["tienda", "sede", "almacen", "almacén"],
+    "vendedor": ["vendedor", "asesor", "comercial"],
+    "cliente": ["cliente", "clientes"],
+    "producto": ["producto", "productos", "referencia", "referencias"],
+    "linea": ["linea", "línea", "categoria", "categoría", "familia"],
+}
+
 
 def _normalize_text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "").strip()).lower()
@@ -102,6 +138,18 @@ def _format_percent(value: Any) -> str:
 def _parse_bi_period(periodo_raw: Optional[str]) -> tuple[date, date, str]:
     normalized = _normalize_text(periodo_raw or "")
     today = date.today()
+    if "hoy" in normalized:
+        return today, today, "hoy"
+    if "ayer" in normalized:
+        yesterday = today - timedelta(days=1)
+        return yesterday, yesterday, "ayer"
+    if "esta semana" in normalized or "semana actual" in normalized:
+        start = today - timedelta(days=today.weekday())
+        return start, today, "esta semana"
+    if "semana pasada" in normalized:
+        end = today - timedelta(days=today.weekday() + 1)
+        start = end - timedelta(days=6)
+        return start, end, "semana pasada"
     if not normalized or "este ano" in normalized or "este año" in normalized or "ano actual" in normalized or "año actual" in normalized:
         return date(today.year, 1, 1), today, "este año"
     if "este mes" in normalized or "mes actual" in normalized:
@@ -481,6 +529,88 @@ def _resolve_vendor_code(raw_value: Any, internal_auth: Optional[dict]) -> Optio
         candidate = employee_context.get("codigo_vendedor") or raw_value
     normalized = re.sub(r"[^A-Za-z0-9]", "", str(candidate or "")).strip()
     return normalized or None
+
+
+def _extract_store_code_from_question(question: str) -> Optional[str]:
+    normalized = _normalize_text(question)
+    direct_code = re.search(r"\b(156|157|158|189|238|439|463)\b", normalized)
+    if direct_code:
+        return direct_code.group(1)
+    for alias, code in _STORE_ALIAS_TO_CODE.items():
+        if alias in normalized:
+            return code
+    return None
+
+
+def _extract_vendor_code_from_question(question: str) -> Optional[str]:
+    normalized = _normalize_text(question)
+    match = re.search(r"\b(\d{2,4}[\.\-]?\d{2,4})\b", normalized)
+    if not match:
+        return None
+    return re.sub(r"[^A-Za-z0-9]", "", match.group(1))
+
+
+def _extract_limit_from_question(question: str, default: int, minimum: int, maximum: int) -> int:
+    normalized = _normalize_text(question)
+    patterns = [
+        r"(?:top|primeros|primeras|ultimos|ultimas|listado de|dame|muestrame|muéstrame)\s+(\d{1,3})\b",
+        r"\b(\d{1,3})\s+(?:productos|clientes|vendedores|lineas|líneas|sedes|tiendas|referencias)\b",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, normalized)
+        if match:
+            return _clamp_limit(int(match.group(1)), default=default, minimum=minimum, maximum=maximum)
+    return default
+
+
+def _infer_sales_dimension(question: str) -> Optional[str]:
+    normalized = _normalize_text(question)
+    for dimension, aliases in _UNIVERSAL_BI_DIMENSIONS.items():
+        if any(alias in normalized for alias in aliases):
+            return dimension
+    return None
+
+
+def _infer_sort_direction(question: str) -> str:
+    normalized = _normalize_text(question)
+    if any(token in normalized for token in ["menor", "menores", "peor", "peores", "menos", "bajo", "bajos"]):
+        return "asc"
+    return "desc"
+
+
+def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], explicit_limit: Any) -> dict:
+    normalized = _normalize_text(question)
+    period_value = explicit_period or question or "este mes"
+    limit = _clamp_limit(explicit_limit, default=_extract_limit_from_question(question, default=10, minimum=3, maximum=50), minimum=3, maximum=50)
+
+    if any(token in normalized for token in ["reactivar", "visitar", "volver a comprar", "recuperar cliente"]):
+        return {"kind": "indicator", "tipo_consulta": "clientes_a_reactivar", "periodo": period_value, "limite": limit}
+    if any(token in normalized for token in ["no me han comprado", "no compraron", "sin compra", "no han comprado"]):
+        return {"kind": "indicator", "tipo_consulta": "clientes_sin_compra_periodo", "periodo": period_value, "limite": limit}
+    if any(token in normalized for token in ["no he vendido", "no se ha vendido", "sin venta", "dejaron de venderse"]):
+        return {"kind": "indicator", "tipo_consulta": "productos_no_vendidos_periodo", "periodo": period_value, "limite": limit}
+    if any(token in normalized for token in ["impulsar", "mover", "oportunidad", "reactivar producto"]):
+        return {"kind": "indicator", "tipo_consulta": "productos_a_impulsar", "periodo": period_value, "limite": limit}
+    if any(token in normalized for token in ["decrecimiento", "caida", "caída", "decrece"]):
+        return {"kind": "indicator", "tipo_consulta": "clientes_mayor_decrecimiento", "periodo": period_value, "limite": limit}
+    if any(token in normalized for token in ["cartera", "vencido", "vencida", "saldo"]):
+        return {"kind": "indicator", "tipo_consulta": "cartera_vencida_resumen", "periodo": period_value, "limite": limit}
+    if any(token in normalized for token in ["quiebre", "agotado", "sin stock"]):
+        return {"kind": "indicator", "tipo_consulta": "quiebres_stock", "periodo": period_value, "limite": limit}
+    if any(token in normalized for token in ["sobrestock", "sobre stock", "exceso inventario"]):
+        return {"kind": "indicator", "tipo_consulta": "sobrestock", "periodo": period_value, "limite": limit}
+    if any(token in normalized for token in ["baja rotacion", "baja rotación", "quedado", "sin movimiento"]):
+        return {"kind": "indicator", "tipo_consulta": "inventario_baja_rotacion", "periodo": period_value, "limite": limit}
+    if "proyeccion" in normalized or "proyección" in normalized:
+        return {"kind": "indicator", "tipo_consulta": "proyeccion_ventas_mes", "periodo": period_value, "limite": limit}
+
+    return {
+        "kind": "sales",
+        "periodo": period_value,
+        "dimension": _infer_sales_dimension(question),
+        "direction": _infer_sort_direction(question),
+        "limite": limit,
+    }
 
 
 def _is_valid_email(value: Optional[str]) -> bool:
@@ -1091,6 +1221,217 @@ def _build_products_to_push_summary(rows: list[dict], period_label: str, limit: 
     return "\n".join(lines)
 
 
+def _shift_year_safe(value: date, delta_years: int) -> date:
+    target_year = value.year + delta_years
+    target_day = min(value.day, calendar.monthrange(target_year, value.month)[1])
+    return date(target_year, value.month, target_day)
+
+
+def _build_sales_scope_filters(question: str, args: dict, internal_auth: Optional[dict]) -> tuple[Optional[str], Optional[str], Optional[str]]:
+    internal_auth = internal_auth or {}
+    employee_context = internal_auth.get("employee_context") or {}
+    role = _normalize_text(internal_auth.get("role") or "")
+
+    requested_store = _resolve_store_code(args.get("almacen")) or _extract_store_code_from_question(question)
+    employee_store = _resolve_store_code(employee_context.get("store_code"))
+    if role == "operador":
+        if requested_store and employee_store and requested_store != employee_store:
+            return None, None, f"Tu perfil solo tiene acceso a la sede {employee_store}."
+        store_code = employee_store
+    else:
+        store_code = requested_store or employee_store if role == "empleado" else requested_store
+
+    requested_vendor = _resolve_vendor_code(args.get("vendedor_codigo") or _extract_vendor_code_from_question(question), internal_auth)
+    employee_vendor = _resolve_vendor_code((employee_context or {}).get("codigo_vendedor"), internal_auth)
+    if role == "vendedor":
+        if requested_vendor and employee_vendor and requested_vendor != employee_vendor:
+            return None, None, "Solo puedes consultar tu propio código de vendedor."
+        vendor_code = employee_vendor or requested_vendor
+    else:
+        vendor_code = requested_vendor
+
+    return store_code, vendor_code, None
+
+
+def _fetch_sales_total_snapshot(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str]) -> dict:
+    current_start, current_end, period_label = _parse_bi_period(periodo_raw)
+    previous_start = _shift_year_safe(current_start, -1)
+    previous_end = _shift_year_safe(current_end, -1)
+    sql = text(
+        """
+        WITH current_period AS (
+            SELECT
+                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
+                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
+                COUNT(*) FILTER (WHERE public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%') AS lineas,
+                COUNT(DISTINCT public.fn_keep_alnum(cliente_id)) FILTER (WHERE public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%') AS clientes
+            FROM public.raw_ventas_detalle
+            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+              AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+        ),
+        previous_period AS (
+            SELECT
+                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
+                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones
+            FROM public.raw_ventas_detalle
+            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+              AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+        )
+        SELECT
+            cp.facturado,
+            cp.devoluciones,
+            cp.lineas,
+            cp.clientes,
+            pp.facturado AS facturado_prev,
+            pp.devoluciones AS devoluciones_prev
+        FROM current_period cp
+        CROSS JOIN previous_period pp
+        """
+    )
+    with engine.begin() as connection:
+        row = connection.execute(
+            sql,
+            {
+                "current_start": current_start,
+                "current_end": current_end,
+                "previous_start": previous_start,
+                "previous_end": previous_end,
+                "store_code": store_code,
+                "vendor_code": vendor_code,
+            },
+        ).mappings().one()
+    facturado = float(row.get("facturado") or 0)
+    devoluciones = float(row.get("devoluciones") or 0)
+    neto = facturado - devoluciones
+    prev_neto = float(row.get("facturado_prev") or 0) - float(row.get("devoluciones_prev") or 0)
+    variacion_pct = ((neto - prev_neto) / prev_neto * 100.0) if prev_neto > 0 else None
+    return {
+        "period_label": period_label,
+        "facturado": facturado,
+        "devoluciones": devoluciones,
+        "neto": neto,
+        "clientes": int(row.get("clientes") or 0),
+        "lineas": int(row.get("lineas") or 0),
+        "prev_neto": prev_neto,
+        "variacion_pct": round(variacion_pct, 1) if variacion_pct is not None else None,
+    }
+
+
+def _fetch_sales_dimension_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, direction: str) -> tuple[list[dict], str]:
+    current_start, current_end, period_label = _parse_bi_period(periodo_raw)
+    order_direction = "ASC" if direction == "asc" else "DESC"
+
+    if dimension == "tienda":
+        group_key = "LEFT(COALESCE(serie, ''), 3)"
+        label_expr = "CASE LEFT(COALESCE(serie, ''), 3) WHEN '156' THEN 'Armenia' WHEN '157' THEN 'Manizales' WHEN '158' THEN 'Opalo' WHEN '189' THEN 'Pereira' WHEN '238' THEN 'Laureles' WHEN '439' THEN 'FerreBOX' WHEN '463' THEN 'Cerritos' ELSE 'Otra sede' END"
+        extra_select = "NULL::text AS codigo_aux, NULL::text AS detalle_aux"
+    elif dimension == "vendedor":
+        group_key = "public.fn_keep_alnum(codigo_vendedor)"
+        label_expr = "INITCAP(MAX(public.fn_normalize_text(nom_vendedor)))"
+        extra_select = "public.fn_keep_alnum(codigo_vendedor) AS codigo_aux, NULL::text AS detalle_aux"
+    elif dimension == "cliente":
+        group_key = "public.fn_keep_alnum(cliente_id)"
+        label_expr = "INITCAP(MAX(public.fn_normalize_text(nombre_cliente)))"
+        extra_select = "public.fn_keep_alnum(cliente_id) AS codigo_aux, NULL::text AS detalle_aux"
+    elif dimension == "producto":
+        group_key = "public.fn_keep_alnum(codigo_articulo)"
+        label_expr = "INITCAP(MAX(public.fn_normalize_text(nombre_articulo)))"
+        extra_select = "public.fn_keep_alnum(codigo_articulo) AS codigo_aux, INITCAP(MAX(public.fn_normalize_text(linea_producto))) AS detalle_aux"
+    elif dimension == "linea":
+        group_key = "public.fn_normalize_text(linea_producto)"
+        label_expr = "INITCAP(MAX(public.fn_normalize_text(linea_producto)))"
+        extra_select = "NULL::text AS codigo_aux, NULL::text AS detalle_aux"
+    else:
+        raise ValueError("dimension de ventas no soportada")
+
+    sql = text(
+        f"""
+        SELECT
+            {group_key} AS group_key,
+            {label_expr} AS group_label,
+            {extra_select},
+            SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
+            SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
+            COUNT(*) FILTER (WHERE public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%') AS lineas,
+            COUNT(DISTINCT public.fn_keep_alnum(cliente_id)) FILTER (WHERE public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%') AS clientes,
+            SUM(COALESCE(public.fn_parse_numeric(unidades_vendidas), 0)) AS unidades
+        FROM public.raw_ventas_detalle
+        WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+          AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
+          AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+          AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+        GROUP BY 1
+        ORDER BY (SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+             - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END)) {order_direction}
+        LIMIT :limit
+        """
+    )
+    with engine.begin() as connection:
+        rows = connection.execute(
+            sql,
+            {
+                "current_start": current_start,
+                "current_end": current_end,
+                "store_code": store_code,
+                "vendor_code": vendor_code,
+                "limit": limit,
+            },
+        ).mappings().all()
+    mapped_rows = []
+    for row in rows:
+        neto = float(row.get("facturado") or 0) - float(row.get("devoluciones") or 0)
+        mapped_rows.append({
+            "label": row.get("group_label") or row.get("group_key") or "N/D",
+            "codigo": row.get("codigo_aux"),
+            "detalle": row.get("detalle_aux"),
+            "neto": neto,
+            "facturado": float(row.get("facturado") or 0),
+            "devoluciones": float(row.get("devoluciones") or 0),
+            "clientes": int(row.get("clientes") or 0),
+            "lineas": int(row.get("lineas") or 0),
+            "unidades": float(row.get("unidades") or 0),
+        })
+    return mapped_rows, period_label
+
+
+def _build_sales_total_summary(snapshot: dict, store_code: Optional[str], vendor_code: Optional[str]) -> str:
+    scope_parts = []
+    if store_code:
+        scope_parts.append(_STORE_CODE_LABELS.get(store_code, store_code))
+    if vendor_code:
+        scope_parts.append(f"vendedor {vendor_code}")
+    scope_text = " / ".join(scope_parts) if scope_parts else "toda la empresa"
+    summary = (
+        f"Ventas de {snapshot.get('period_label')} en {scope_text}: neto {_format_currency(snapshot.get('neto'))}, "
+        f"facturado {_format_currency(snapshot.get('facturado'))}, devoluciones {_format_currency(snapshot.get('devoluciones'))}, "
+        f"clientes {snapshot.get('clientes')} y líneas {snapshot.get('lineas')}."
+    )
+    if snapshot.get("variacion_pct") is not None:
+        summary += f" Variación vs mismo corte del año anterior: {_format_percent(snapshot.get('variacion_pct'))}."
+    return summary
+
+
+def _build_sales_dimension_summary(question: str, rows: list[dict], period_label: str, dimension: str, limit: int, direction: str) -> str:
+    if not rows:
+        return f"No encontré datos de ventas por {dimension} para {period_label}."
+    total_neto = sum(float(row.get("neto") or 0) for row in rows)
+    direction_text = "menor" if direction == "asc" else "mayor"
+    lines = [f"Ventas por {dimension} en {period_label}: top {min(limit, len(rows))} con {direction_text} desempeño dentro del corte, por {_format_currency(total_neto)} acumulados en esta vista."]
+    for row in rows[: min(limit, 5)]:
+        detail = f" | código {row.get('codigo')}" if row.get("codigo") and dimension in {"vendedor", "cliente", "producto"} else ""
+        extra = f" | línea {row.get('detalle')}" if row.get("detalle") else ""
+        units = f" | unidades {_format_number(row.get('unidades'))}" if dimension in {"producto", "linea"} else ""
+        lines.append(
+            f"- {row.get('label')}{detail}{extra} | neto {_format_currency(row.get('neto'))} | clientes {_format_number(row.get('clientes'))} | líneas {_format_number(row.get('lineas'))}{units}"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
 def _fetch_client_decline_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], limit: int) -> tuple[list[dict], str]:
     current_start, current_end, period_label = _parse_bi_period(periodo_raw)
     previous_start = date(current_start.year - 1, current_start.month, current_start.day)
@@ -1248,6 +1589,68 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
         return "No pude consultar los indicadores internos. Verifica que esté aplicado backend/internal_agent_ops.sql."
 
     return "No reconozco ese indicador interno. Usa proyección, baja rotación, cartera vencida, quiebres, sobrestock, clientes con decrecimiento, clientes a reactivar, clientes sin compra, productos no vendidos o productos a impulsar."
+
+
+def handle_consultar_bi_universal(engine, args: dict, conversation_context: Optional[dict]) -> str:
+    internal_auth = dict((conversation_context or {}).get("internal_auth") or {})
+    if not internal_auth.get("user_id"):
+        return "No hay sesión interna válida para consultar BI."
+
+    question = str(args.get("pregunta") or args.get("consulta") or "").strip()
+    if not question:
+        return "Falta la pregunta BI a analizar."
+
+    plan = _infer_universal_bi_plan(question, args.get("periodo"), args.get("limite"))
+    store_code, vendor_code, scope_error = _build_sales_scope_filters(question, args, internal_auth)
+    if scope_error:
+        return scope_error
+
+    if plan.get("kind") == "indicator":
+        indicator_args = dict(args or {})
+        indicator_args.update(
+            {
+                "tipo_consulta": plan.get("tipo_consulta"),
+                "periodo": args.get("periodo") or plan.get("periodo"),
+                "limite": args.get("limite") or plan.get("limite"),
+            }
+        )
+        if store_code:
+            indicator_args["almacen"] = store_code
+        if vendor_code:
+            indicator_args["vendedor_codigo"] = vendor_code
+        return handle_consultar_indicadores_internos(engine, indicator_args, conversation_context)
+
+    dimension = plan.get("dimension")
+    try:
+        if dimension:
+            rows, period_label = _fetch_sales_dimension_rows(
+                engine,
+                args.get("periodo") or plan.get("periodo"),
+                store_code,
+                vendor_code,
+                dimension,
+                int(plan.get("limite") or 10),
+                str(plan.get("direction") or "desc"),
+            )
+            return _build_sales_dimension_summary(
+                question,
+                rows,
+                period_label,
+                dimension,
+                int(plan.get("limite") or 10),
+                str(plan.get("direction") or "desc"),
+            )
+
+        snapshot = _fetch_sales_total_snapshot(
+            engine,
+            args.get("periodo") or plan.get("periodo"),
+            store_code,
+            vendor_code,
+        )
+        return _build_sales_total_summary(snapshot, store_code, vendor_code)
+    except SQLAlchemyError as exc:
+        logger.warning("consultar_bi_universal failed: %s", exc)
+        return "No pude consultar BI universal en este momento. Revisa la estructura de datos interna y vuelve a intentarlo."
 
 
 def _build_inventory_summary_metrics(rows: list[dict]) -> list[tuple[str, str]]:

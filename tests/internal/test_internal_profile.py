@@ -14,6 +14,7 @@ os.environ.setdefault("OPENAI_API_KEY", "sk-test")
 
 import agent_profiles
 import agent_context
+import internal_agent_ops
 import main
 
 
@@ -34,6 +35,7 @@ class InternalAgentProfileTests(unittest.TestCase):
             [
                 "consultar_inventario",
                 "consultar_conocimiento_tecnico",
+                "consultar_bi_universal",
                 "consultar_ventas_internas",
                 "consultar_indicadores_internos",
                 "enviar_reporte_interno_correo",
@@ -82,10 +84,22 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertIn("Consultar indicadores internos de ventas, proyeccion, cartera e inventario.", system_prompt)
         self.assertIn("Exportar reportes internos por correo con Excel adjunto", system_prompt)
         self.assertIn("interpreta que pide el consolidado de toda la empresa", system_prompt)
+        self.assertIn("consultar_bi_universal", system_prompt)
         self.assertIn("clientes con decrecimiento", system_prompt)
         self.assertIn("clientes para reactivar", system_prompt)
         self.assertIn("productos para impulsar", system_prompt)
         self.assertIn("Si quieres, te conecto con un asesor comercial para cotizar los productos.", system_prompt)
+
+    def test_universal_bi_plan_detects_open_analytics_intent(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "Cuales son los 10 productos que debo impulsar este mes y en que clientes",
+            None,
+            None,
+        )
+
+        self.assertEqual(plan["kind"], "indicator")
+        self.assertEqual(plan["tipo_consulta"], "productos_a_impulsar")
+        self.assertEqual(plan["limite"], 10)
 
 
 if __name__ == "__main__":

@@ -18518,6 +18518,18 @@ def _handle_tool_consultar_indicadores_internos(args: dict, conversation_context
         return "No pude consultar los indicadores internos en este momento."
 
 
+def _handle_tool_consultar_bi_universal(args: dict, conversation_context: dict) -> str:
+    try:
+        try:
+            from internal_agent_ops import handle_consultar_bi_universal
+        except ImportError:
+            from backend.internal_agent_ops import handle_consultar_bi_universal
+        return handle_consultar_bi_universal(get_db_engine(), args, conversation_context)
+    except Exception as exc:
+        logger.warning("consultar_bi_universal runtime error: %s", exc)
+        return "No pude consultar BI universal en este momento."
+
+
 def _handle_tool_enviar_reporte_interno_correo(args: dict, conversation_context: dict) -> str:
     try:
         try:
@@ -21386,6 +21398,8 @@ def _execute_agent_tool(tool_call, context, conversation_context):
             result = _handle_tool_consultar_compras(fn_args, conversation_context)
         elif fn_name == "consultar_ventas_internas":
             result = _handle_tool_consultar_ventas_internas(fn_args, conversation_context)
+        elif fn_name == "consultar_bi_universal":
+            result = _handle_tool_consultar_bi_universal(fn_args, conversation_context)
         elif fn_name == "consultar_indicadores_internos":
             result = _handle_tool_consultar_indicadores_internos(fn_args, conversation_context)
         elif fn_name == "enviar_reporte_interno_correo":

@@ -679,6 +679,43 @@ AGENT_TOOLS_V3 = [
     {
         "type": "function",
         "function": {
+            "name": "consultar_bi_universal",
+            "description": (
+                "Consulta BI interna en lenguaje casi natural usando datos reales del ERP y vistas internas. "
+                "Usa esta herramienta para preguntas gerenciales abiertas o analiticas sobre ventas, cartera, inventario, oportunidades, clientes, vendedores, sedes, lineas o productos. "
+                "El backend traduce la pregunta a consultas estructuradas y responde sin inventar datos."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "pregunta": {
+                        "type": "string",
+                        "description": "Pregunta BI completa del usuario en lenguaje natural. Ej: 'Cuales son los 10 productos que debo impulsar este mes y en que clientes'.",
+                    },
+                    "periodo": {
+                        "type": "string",
+                        "description": "Periodo opcional si quieres fijarlo explícitamente. Ej: 'este mes', 'hoy', 'esta semana', 'este año'.",
+                    },
+                    "almacen": {
+                        "type": "string",
+                        "description": "Codigo ERP de sede o almacen. Opcional. Si se omite, el backend intenta inferirlo desde la pregunta o usar consolidado segun el rol.",
+                    },
+                    "vendedor_codigo": {
+                        "type": "string",
+                        "description": "Codigo ERP del vendedor. Opcional. Si el usuario es vendedor, el backend restringe la consulta a su propio codigo cuando aplique.",
+                    },
+                    "limite": {
+                        "type": "integer",
+                        "description": "Maximo de filas o hallazgos a resumir. Default: 10.",
+                    },
+                },
+                "required": ["pregunta"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "consultar_ventas_internas",
             "description": (
                 "BI de ventas del ERP para empleados internos autenticados. "
