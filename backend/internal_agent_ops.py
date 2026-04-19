@@ -105,10 +105,12 @@ _UNIVERSAL_BI_DIMENSIONS = {
     "zona": ["zona", "regional", "region", "región"],
 }
 
-# ── Marca numérica → nombre legible (mismo mapping de main.py) ────────────
+# ── Marca numérica → nombre legible ────────────────────────────────────────
+# marca_producto=0 o vacío = complementarios → usar categoria_producto
+# categoria_producto con prefijo PN... → extraer nombre después del último '_'
 _MARCA_LABEL_SQL = """
 CASE
-  WHEN TRIM(COALESCE(marca_producto, '')) != '' THEN
+  WHEN COALESCE(TRIM(marca_producto), '0') NOT IN ('', '0') THEN
     CASE public.fn_parse_integer(marca_producto)
         WHEN 50 THEN 'ASC-MEGA'
         WHEN 54 THEN 'International'
@@ -130,7 +132,12 @@ CASE
         WHEN 91 THEN 'Sikkens'
         ELSE 'Marca ' || TRIM(marca_producto)
     END
-  ELSE COALESCE(NULLIF(TRIM(categoria_producto), ''), 'Complementario')
+  WHEN COALESCE(TRIM(categoria_producto), '') != '' THEN
+    CASE
+      WHEN categoria_producto ~ '^PN[0-9]' THEN INITCAP(REGEXP_REPLACE(REGEXP_REPLACE(categoria_producto, '^[^_]+_', ''), '^\d+\s*-\s*', ''))
+      ELSE INITCAP(categoria_producto)
+    END
+  ELSE 'Complementario'
 END
 """.strip()
 
