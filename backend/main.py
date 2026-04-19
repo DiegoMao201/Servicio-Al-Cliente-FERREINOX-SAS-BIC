@@ -21967,79 +21967,119 @@ def admin_bi_diagnostico(admin_key: str = Header(None, alias="x-admin-key")):
         raise HTTPException(status_code=403, detail="Admin key inválida")
     engine = get_db_engine()
     diag = {}
-    try:
-        with engine.begin() as conn:
-            # 1. Total rows in raw_ventas_detalle
-            r = conn.execute(text("SELECT COUNT(*) AS cnt FROM public.raw_ventas_detalle")).mappings().one()
-            diag["raw_ventas_detalle_total_rows"] = r["cnt"]
 
-            # 2. Date range via fn_parse_date
-            r = conn.execute(text("""
-                SELECT MIN(public.fn_parse_date(fecha_venta)) AS min_date,
-                       MAX(public.fn_parse_date(fecha_venta)) AS max_date,
-                       COUNT(DISTINCT EXTRACT(YEAR FROM public.fn_parse_date(fecha_venta))) AS distinct_years
-                FROM public.raw_ventas_detalle
-                WHERE public.fn_parse_date(fecha_venta) IS NOT NULL
-            """)).mappings().one()
-            diag["fecha_min"] = str(r["min_date"])
-            diag["fecha_max"] = str(r["max_date"])
-            diag["distinct_years"] = int(r["distinct_years"] or 0)
+    def _safe_query(label, fn):
+        try:
+            with engine.begin() as conn:
+                return fn(conn)
+        except Exception as e:
+            diag[f"{label}_error"] = str(e)[:300]
+            return None
 
-            # 3. Rows per year
-            rows = conn.execute(text("""
-                SELECT EXTRACT(YEAR FROM public.fn_parse_date(fecha_venta))::int AS yr,
-                       COUNT(*) AS cnt
-                FROM public.raw_ventas_detalle
-                WHERE public.fn_parse_date(fecha_venta) IS NOT NULL
-                GROUP BY 1 ORDER BY 1
-            """)).mappings().all()
-            diag["rows_per_year"] = {str(r["yr"]): r["cnt"] for r in rows}
+    # 1. Total rows
+    def q_total(conn):
+        r = conn.execute(text("SELECT COUNT(*) AS cnt FROM public.raw_ventas_detalle")).mappings().one()
+        diag["raw_ventas_detalle_total_rows"] = r["cnt"]
+    _safe_query("total_rows", q_total)
 
-            # 4. Sample factura rows for current month
-            r = conn.execute(text("""
-                SELECT COUNT(*) AS cnt
-                FROM public.raw_ventas_detalle
-                WHERE (public.fn_normalize_text(tipo_documento) LIKE '%%factura%%'
-                       OR public.fn_normalize_text(tipo_documento) LIKE '%%nota%%credito%%')
-                  AND public.fn_parse_date(fecha_venta) BETWEEN :start AND :end
-            """), {"start": date.today().replace(day=1), "end": date.today()}).mappings().one()
-            diag["facturas_este_mes"] = r["cnt"]
+    # 2. Date range
+    def q_dates(conn):
+        r = conn.execute(text("""
+            SELECT MIN(public.fn_parse_date(fecha_venta)) AS min_date,
+                   MAX(public.fn_parse_date(fecha_venta)) AS max_date,
+                   COUNT(DISTINCT EXTRACT(YEAR FROM public.fn_parse_date(fecha_venta))) AS distinct_years
+            FROM public.raw_ventas_detalle
+            WHERE public.fn_parse_date(fecha_venta) IS NOT NULL
+        """)).mappings().one()
+        diag["fecha_min"] = str(r["min_date"])
+        diag["fecha_max"] = str(r["max_date"])
+        diag["distinct_years"] = int(r["distinct_years"] or 0)
+    _safe_query("dates", q_dates)
 
-            # 5. Sample factura rows for this year
-            r = conn.execute(text("""
-                SELECT COUNT(*) AS cnt
-                FROM public.raw_ventas_detalle
-                WHERE (public.fn_normalize_text(tipo_documento) LIKE '%%factura%%'
-                       OR public.fn_normalize_text(tipo_documento) LIKE '%%nota%%credito%%')
-                  AND public.fn_parse_date(fecha_venta) BETWEEN :start AND :end
-            """), {"start": date(date.today().year, 1, 1), "end": date.today()}).mappings().one()
-            diag["facturas_este_ano"] = r["cnt"]
+    # 3. Rows per year
+    def q_yearly(conn):
+        rows = conn.execute(text("""
+            SELECT EXTRACT(YEAR FROM public.fn_parse_date(fecha_venta))::int AS yr, COUNT(*) AS cnt
+            FROM public.raw_ventas_detalle WHERE public.fn_parse_date(fecha_venta) IS NOT NULL
+            GROUP BY 1 ORDER BY 1
+        """)).mappings().all()
+        diag["rows_per_year"] = {str(r["yr"]): r["cnt"] for r in rows}
+    _safe_query("yearly", q_yearly)
 
-            # 6. Quick growth query test (linea, this year, limit 3)
-            try:
-                from internal_agent_ops import _fetch_sales_growth_rows
-                growth_rows, plabel, clabel = _fetch_sales_growth_rows(engine, "este año", None, None, "linea", 3, "desc", "vs_anio_anterior")
-                diag["growth_test"] = {"rows": len(growth_rows), "period": plabel, "comparison": clabel, "sample": growth_rows[:2]}
-            except Exception as e:
-                diag["growth_test_error"] = str(e)
+    # 4. RAW tipo_documento values (critical - no fn_normalize_text filter)
+    def q_tipo_raw(conn):
+        rows = conn.execute(text("""
+            SELECT tipo_documento, COUNT(*) AS cnt
+            FROM public.raw_ventas_detalle
+            GROUP BY 1 ORDER BY 2 DESC LIMIT 15
+        """)).mappings().all()
+        diag["tipo_documento_raw"] = {str(r["tipo_documento"]): r["cnt"] for r in rows}
+    _safe_query("tipo_raw", q_tipo_raw)
 
-            # 7. mv_internal_inventory_health exists and has data
-            try:
-                r = conn.execute(text("SELECT COUNT(*) AS cnt FROM public.mv_internal_inventory_health")).mappings().one()
-                diag["inventory_health_rows"] = r["cnt"]
-            except Exception as e:
-                diag["inventory_health_error"] = str(e)
+    # 5. NORMALIZED tipo_documento values
+    def q_tipo_norm(conn):
+        rows = conn.execute(text("""
+            SELECT public.fn_normalize_text(tipo_documento) AS tipo, COUNT(*) AS cnt
+            FROM public.raw_ventas_detalle
+            GROUP BY 1 ORDER BY 2 DESC LIMIT 15
+        """)).mappings().all()
+        diag["tipo_documento_normalized"] = {str(r["tipo"]): r["cnt"] for r in rows}
+    _safe_query("tipo_norm", q_tipo_norm)
 
-            # 8. Distinct tipo_documento values
-            rows = conn.execute(text("""
-                SELECT DISTINCT public.fn_normalize_text(tipo_documento) AS tipo, COUNT(*) AS cnt
-                FROM public.raw_ventas_detalle
-                GROUP BY 1 ORDER BY 2 DESC LIMIT 10
-            """)).mappings().all()
-            diag["tipo_documento_sample"] = {r["tipo"]: r["cnt"] for r in rows}
+    # 6. Sample column names
+    def q_columns(conn):
+        rows = conn.execute(text("""
+            SELECT column_name FROM information_schema.columns
+            WHERE table_schema = 'public' AND table_name = 'raw_ventas_detalle'
+            ORDER BY ordinal_position
+        """)).all()
+        diag["columns"] = [r[0] for r in rows]
+    _safe_query("columns", q_columns)
 
-    except Exception as exc:
-        diag["error"] = str(exc)
+    # 7. Factura filter test (uses actual tipo_documento pattern)
+    def q_facturas(conn):
+        r = conn.execute(text("""
+            SELECT COUNT(*) AS cnt
+            FROM public.raw_ventas_detalle
+            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%%factura%%'
+                   OR public.fn_normalize_text(tipo_documento) LIKE '%%nota%%credito%%')
+              AND public.fn_parse_date(fecha_venta) BETWEEN :start AND :end
+        """), {"start": date(date.today().year, 1, 1), "end": date.today()}).mappings().one()
+        diag["facturas_este_ano_filter"] = r["cnt"]
+    _safe_query("facturas", q_facturas)
+
+    # 8. Count WITHOUT tipo_documento filter (just date range)
+    def q_no_filter(conn):
+        r = conn.execute(text("""
+            SELECT COUNT(*) AS cnt
+            FROM public.raw_ventas_detalle
+            WHERE public.fn_parse_date(fecha_venta) BETWEEN :start AND :end
+        """), {"start": date(date.today().year, 1, 1), "end": date.today()}).mappings().one()
+        diag["rows_este_ano_sin_filtro"] = r["cnt"]
+    _safe_query("no_filter", q_no_filter)
+
+    # 9. Sample rows (5 rows, raw values)
+    def q_sample(conn):
+        rows = conn.execute(text("""
+            SELECT tipo_documento, fecha_venta, valor_venta, serie, codigo_articulo, nombre_articulo, linea_producto
+            FROM public.raw_ventas_detalle LIMIT 5
+        """)).mappings().all()
+        diag["sample_rows"] = [dict(r) for r in rows]
+    _safe_query("sample", q_sample)
+
+    # 10. Growth test
+    def q_growth(conn):
+        from internal_agent_ops import _fetch_sales_growth_rows
+        growth_rows, plabel, clabel = _fetch_sales_growth_rows(engine, "este año", None, None, "linea", 3, "desc", "vs_anio_anterior")
+        diag["growth_test"] = {"rows": len(growth_rows), "period": plabel, "comparison": clabel, "sample": growth_rows[:2]}
+    _safe_query("growth", q_growth)
+
+    # 11. Inventory health MV
+    def q_inv(conn):
+        r = conn.execute(text("SELECT COUNT(*) AS cnt FROM public.mv_internal_inventory_health")).mappings().one()
+        diag["inventory_health_rows"] = r["cnt"]
+    _safe_query("inventory", q_inv)
+
     return diag
 
 
