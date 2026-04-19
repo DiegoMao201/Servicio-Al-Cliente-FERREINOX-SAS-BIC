@@ -2074,8 +2074,8 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
         return "Falta la pregunta BI a analizar."
 
     plan = _infer_universal_bi_plan(question, args.get("periodo"), args.get("limite"))
-    logger.info("consultar_bi_universal: question=%r plan=%s store=%s vendor=%s", question[:120], json.dumps(plan, ensure_ascii=False, default=str)[:300], store_code, vendor_code)
     store_code, vendor_code, scope_error = _build_sales_scope_filters(question, args, internal_auth)
+    logger.info("consultar_bi_universal: question=%r plan=%s store=%s vendor=%s", question[:120], json.dumps(plan, ensure_ascii=False, default=str)[:300], store_code, vendor_code)
     if scope_error:
         return scope_error
 
