@@ -125,7 +125,7 @@ def _format_preview_value(key: str, value: Any) -> str:
         return ""
     lowered = str(key or "").lower()
     if isinstance(value, Number):
-        if any(token in lowered for token in ["valor", "saldo", "neto", "facturado", "devoluciones", "total", "precio", "ventas"]):
+        if any(token in lowered for token in ["valor", "saldo", "neto", "facturado", "devoluciones", "total", "precio", "ventas", "promedio", "brecha"]):
             return _format_currency(value)
         if any(token in lowered for token in ["variacion", "participacion"]):
             return _format_percent(value)
@@ -472,6 +472,17 @@ def _resolve_store_code(raw_value: Any) -> Optional[str]:
     return normalized or None
 
 
+def _resolve_vendor_code(raw_value: Any, internal_auth: Optional[dict]) -> Optional[str]:
+    internal_auth = internal_auth or {}
+    employee_context = internal_auth.get("employee_context") or {}
+    role = _normalize_text(internal_auth.get("role") or "")
+    candidate = raw_value
+    if role == "vendedor":
+        candidate = employee_context.get("codigo_vendedor") or raw_value
+    normalized = re.sub(r"[^A-Za-z0-9]", "", str(candidate or "")).strip()
+    return normalized or None
+
+
 def _is_valid_email(value: Optional[str]) -> bool:
     if not value:
         return False
@@ -735,6 +746,351 @@ def _build_cartera_indicator_summary(rows: list[dict], limit: int) -> str:
     return "\n".join(lines)
 
 
+def _fetch_clients_without_purchase_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], limit: int) -> tuple[list[dict], str]:
+    current_start, current_end, period_label = _parse_bi_period(periodo_raw)
+    history_end = current_start - timedelta(days=1)
+    history_start = history_end - timedelta(days=180)
+
+    sql = text(
+        """
+        WITH history AS (
+            SELECT
+                public.fn_keep_alnum(rv.cliente_id) AS cod_cliente,
+                INITCAP(MAX(public.fn_normalize_text(rv.nombre_cliente))) AS nombre_cliente,
+                INITCAP(MAX(public.fn_normalize_text(rv.nom_vendedor))) AS nom_vendedor,
+                COALESCE(SUM(COALESCE(public.fn_parse_numeric(rv.valor_venta), 0)), 0) AS ventas_historicas,
+                MAX(public.fn_parse_date(rv.fecha_venta)) AS ultima_compra,
+                COUNT(DISTINCT date_trunc('month', public.fn_parse_date(rv.fecha_venta))) AS meses_activos
+            FROM public.raw_ventas_detalle rv
+            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+              AND public.fn_parse_date(rv.fecha_venta) BETWEEN :history_start AND :history_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
+            GROUP BY public.fn_keep_alnum(rv.cliente_id)
+        ),
+        current_period AS (
+            SELECT DISTINCT public.fn_keep_alnum(rv.cliente_id) AS cod_cliente
+            FROM public.raw_ventas_detalle rv
+            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+              AND public.fn_parse_date(rv.fecha_venta) BETWEEN :current_start AND :current_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
+        )
+        SELECT
+            h.cod_cliente,
+            h.nombre_cliente,
+            h.nom_vendedor,
+            h.ventas_historicas,
+            h.ultima_compra,
+            h.meses_activos,
+            (CURRENT_DATE - h.ultima_compra) AS dias_sin_compra
+        FROM history h
+        LEFT JOIN current_period cp ON cp.cod_cliente = h.cod_cliente
+        WHERE cp.cod_cliente IS NULL
+          AND h.ventas_historicas > 0
+          AND h.meses_activos >= 2
+        ORDER BY h.ventas_historicas DESC, h.ultima_compra DESC
+        LIMIT :limit
+        """
+    )
+
+    with engine.begin() as connection:
+        rows = connection.execute(
+            sql,
+            {
+                "history_start": history_start,
+                "history_end": history_end,
+                "current_start": current_start,
+                "current_end": current_end,
+                "store_code": store_code,
+                "vendor_code": vendor_code,
+                "limit": limit,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows], period_label
+
+
+def _build_clients_without_purchase_summary(rows: list[dict], period_label: str, limit: int, title: str) -> str:
+    total_sales = sum(float(row.get("ventas_historicas") or 0) for row in rows)
+    lines = [f"{title} en {period_label}: {len(rows)} clientes activos dejaron de comprar y representan {_format_currency(total_sales)} en base histórica reciente."]
+    for row in rows[: min(limit, 5)]:
+        dias = row.get("dias_sin_compra")
+        dias_text = f"{int(dias)} días" if isinstance(dias, Number) else "sin fecha clara"
+        lines.append(
+            f"- {row.get('nombre_cliente') or row.get('cod_cliente')} | última compra {row.get('ultima_compra') or 'N/D'} | {dias_text} sin compra | histórico {_format_currency(row.get('ventas_historicas'))} | vendedor {row.get('nom_vendedor') or 'N/A'}"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
+def _fetch_products_without_sale_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], limit: int) -> tuple[list[dict], str]:
+    current_start, current_end, period_label = _parse_bi_period(periodo_raw)
+    history_end = current_start - timedelta(days=1)
+    history_start = history_end - timedelta(days=180)
+
+    sql = text(
+        """
+        WITH inventory AS (
+            SELECT
+                inv.referencia_normalizada,
+                CASE WHEN :store_code IS NULL THEN 'Consolidado' ELSE MAX(inv.almacen_nombre) END AS almacen_nombre,
+                MAX(inv.referencia) AS referencia,
+                MAX(inv.descripcion) AS descripcion,
+                COALESCE(SUM(inv.stock_disponible), 0) AS stock_total,
+                COALESCE(SUM(inv.stock_disponible * COALESCE(inv.costo_promedio_und, 0)), 0) AS inventory_value
+            FROM public.vw_inventario_agente inv
+            WHERE :store_code IS NULL OR inv.cod_almacen = :store_code
+            GROUP BY inv.referencia_normalizada
+        ),
+        history AS (
+            SELECT
+                am.referencia_normalizada,
+                INITCAP(MAX(public.fn_normalize_text(rv.nombre_articulo))) AS descripcion_venta,
+                INITCAP(MAX(public.fn_normalize_text(rv.linea_producto))) AS linea_producto,
+                COALESCE(SUM(COALESCE(public.fn_parse_numeric(rv.valor_venta), 0)), 0) AS ventas_historicas,
+                COALESCE(SUM(COALESCE(public.fn_parse_numeric(rv.unidades_vendidas), 0)), 0) AS unidades_historicas,
+                MAX(public.fn_parse_date(rv.fecha_venta)) AS ultima_venta,
+                COUNT(DISTINCT date_trunc('month', public.fn_parse_date(rv.fecha_venta))) AS meses_activos
+            FROM public.raw_ventas_detalle rv
+            JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+              AND public.fn_parse_date(rv.fecha_venta) BETWEEN :history_start AND :history_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
+            GROUP BY am.referencia_normalizada
+        ),
+        current_period AS (
+            SELECT
+                am.referencia_normalizada,
+                COALESCE(SUM(COALESCE(public.fn_parse_numeric(rv.valor_venta), 0)), 0) AS ventas_actuales
+            FROM public.raw_ventas_detalle rv
+            JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+              AND public.fn_parse_date(rv.fecha_venta) BETWEEN :current_start AND :current_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
+            GROUP BY am.referencia_normalizada
+        )
+        SELECT
+            COALESCE(inv.almacen_nombre, 'Consolidado') AS almacen_nombre,
+            COALESCE(inv.referencia, h.referencia_normalizada) AS referencia,
+            COALESCE(inv.descripcion, h.descripcion_venta) AS descripcion,
+            h.linea_producto,
+            COALESCE(inv.stock_total, 0) AS stock_total,
+            COALESCE(inv.inventory_value, 0) AS inventory_value,
+            h.ventas_historicas,
+            h.unidades_historicas,
+            h.ultima_venta AS fecha_ultima_venta,
+            (CURRENT_DATE - h.ultima_venta) AS dias_sin_venta,
+            h.meses_activos
+        FROM history h
+        LEFT JOIN current_period cp ON cp.referencia_normalizada = h.referencia_normalizada
+        LEFT JOIN inventory inv ON inv.referencia_normalizada = h.referencia_normalizada
+        WHERE COALESCE(cp.ventas_actuales, 0) <= 0
+          AND h.ventas_historicas > 0
+          AND h.meses_activos >= 2
+          AND COALESCE(inv.stock_total, 0) > 0
+        ORDER BY h.ventas_historicas DESC, COALESCE(inv.stock_total, 0) DESC, h.ultima_venta DESC
+        LIMIT :limit
+        """
+    )
+
+    with engine.begin() as connection:
+        rows = connection.execute(
+            sql,
+            {
+                "history_start": history_start,
+                "history_end": history_end,
+                "current_start": current_start,
+                "current_end": current_end,
+                "store_code": store_code,
+                "vendor_code": vendor_code,
+                "limit": limit,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows], period_label
+
+
+def _build_products_without_sale_summary(rows: list[dict], period_label: str, limit: int) -> str:
+    total_value = sum(float(row.get("ventas_historicas") or 0) for row in rows)
+    lines = [f"Productos que normalmente se venden y no salieron en {period_label}: {len(rows)} referencias con una base histórica de {_format_currency(total_value)} y stock disponible para mover."]
+    for row in rows[: min(limit, 5)]:
+        dias = row.get("dias_sin_venta")
+        dias_text = f"{int(dias)} días" if isinstance(dias, Number) else "sin dato"
+        lines.append(
+            f"- {row.get('referencia')} | {row.get('descripcion')} | stock {_format_number(row.get('stock_total'))} | histórico {_format_currency(row.get('ventas_historicas'))} | {dias_text} sin venta"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
+def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], limit: int) -> tuple[list[dict], str]:
+    current_start, current_end, period_label = _parse_bi_period(periodo_raw)
+    history_end = current_start - timedelta(days=1)
+    history_start = history_end - timedelta(days=180)
+
+    sql = text(
+        """
+        WITH inventory AS (
+            SELECT
+                inv.referencia_normalizada,
+                CASE WHEN :store_code IS NULL THEN 'Consolidado' ELSE MAX(inv.almacen_nombre) END AS almacen_nombre,
+                MAX(inv.referencia) AS referencia,
+                MAX(inv.descripcion) AS descripcion,
+                COALESCE(SUM(inv.stock_disponible), 0) AS stock_total,
+                COALESCE(SUM(inv.stock_disponible * COALESCE(inv.costo_promedio_und, 0)), 0) AS inventory_value
+            FROM public.vw_inventario_agente inv
+            WHERE :store_code IS NULL OR inv.cod_almacen = :store_code
+            GROUP BY inv.referencia_normalizada
+        ),
+        product_history AS (
+            SELECT
+                am.referencia_normalizada,
+                INITCAP(MAX(public.fn_normalize_text(rv.nombre_articulo))) AS descripcion_venta,
+                COALESCE(SUM(COALESCE(public.fn_parse_numeric(rv.valor_venta), 0)), 0) AS ventas_historicas,
+                MAX(public.fn_parse_date(rv.fecha_venta)) AS ultima_venta,
+                COUNT(DISTINCT date_trunc('month', public.fn_parse_date(rv.fecha_venta))) AS meses_activos
+            FROM public.raw_ventas_detalle rv
+            JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+              AND public.fn_parse_date(rv.fecha_venta) BETWEEN :history_start AND :history_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
+            GROUP BY am.referencia_normalizada
+        ),
+        product_current AS (
+            SELECT
+                am.referencia_normalizada,
+                COALESCE(SUM(COALESCE(public.fn_parse_numeric(rv.valor_venta), 0)), 0) AS ventas_actuales
+            FROM public.raw_ventas_detalle rv
+            JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+              AND public.fn_parse_date(rv.fecha_venta) BETWEEN :current_start AND :current_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
+            GROUP BY am.referencia_normalizada
+        ),
+        ranked_products AS (
+            SELECT
+                ph.referencia_normalizada,
+                COALESCE(inv.almacen_nombre, 'Consolidado') AS almacen_nombre,
+                COALESCE(inv.referencia, ph.referencia_normalizada) AS referencia,
+                COALESCE(inv.descripcion, ph.descripcion_venta) AS descripcion,
+                COALESCE(inv.stock_total, 0) AS stock_total,
+                COALESCE(inv.inventory_value, 0) AS inventory_value,
+                ph.ventas_historicas,
+                COALESCE(pc.ventas_actuales, 0) AS ventas_actuales,
+                ROUND(ph.ventas_historicas / GREATEST(ph.meses_activos, 1), 2) AS promedio_base,
+                GREATEST(ROUND(ph.ventas_historicas / GREATEST(ph.meses_activos, 1), 2) - COALESCE(pc.ventas_actuales, 0), 0) AS brecha_oportunidad,
+                ph.ultima_venta,
+                (CURRENT_DATE - ph.ultima_venta) AS dias_sin_venta
+            FROM product_history ph
+            LEFT JOIN product_current pc ON pc.referencia_normalizada = ph.referencia_normalizada
+            LEFT JOIN inventory inv ON inv.referencia_normalizada = ph.referencia_normalizada
+            WHERE ph.ventas_historicas > 0
+              AND ph.meses_activos >= 2
+              AND COALESCE(inv.stock_total, 0) > 0
+        ),
+        top_products AS (
+            SELECT *
+            FROM ranked_products
+            WHERE brecha_oportunidad > 0
+            ORDER BY brecha_oportunidad DESC, stock_total DESC, ventas_historicas DESC
+            LIMIT :limit
+        ),
+        client_history AS (
+            SELECT
+                am.referencia_normalizada,
+                public.fn_keep_alnum(rv.cliente_id) AS cod_cliente,
+                INITCAP(MAX(public.fn_normalize_text(rv.nombre_cliente))) AS nombre_cliente,
+                COALESCE(SUM(COALESCE(public.fn_parse_numeric(rv.valor_venta), 0)), 0) AS ventas_historicas_cliente
+            FROM public.raw_ventas_detalle rv
+            JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+              AND public.fn_parse_date(rv.fecha_venta) BETWEEN :history_start AND :history_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
+            GROUP BY am.referencia_normalizada, public.fn_keep_alnum(rv.cliente_id)
+        ),
+        client_current AS (
+            SELECT DISTINCT
+                am.referencia_normalizada,
+                public.fn_keep_alnum(rv.cliente_id) AS cod_cliente
+            FROM public.raw_ventas_detalle rv
+            JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+              AND public.fn_parse_date(rv.fecha_venta) BETWEEN :current_start AND :current_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
+        ),
+        target_ranked AS (
+            SELECT
+                ch.referencia_normalizada,
+                ch.nombre_cliente,
+                ch.ventas_historicas_cliente,
+                ROW_NUMBER() OVER (PARTITION BY ch.referencia_normalizada ORDER BY ch.ventas_historicas_cliente DESC) AS rn
+            FROM client_history ch
+            LEFT JOIN client_current cc
+              ON cc.referencia_normalizada = ch.referencia_normalizada
+             AND cc.cod_cliente = ch.cod_cliente
+            WHERE cc.cod_cliente IS NULL
+        ),
+        target_clients AS (
+            SELECT
+                referencia_normalizada,
+                string_agg(nombre_cliente, ', ' ORDER BY ventas_historicas_cliente DESC) AS clientes_objetivo
+            FROM target_ranked
+            WHERE rn <= 3
+            GROUP BY referencia_normalizada
+        )
+        SELECT
+            tp.almacen_nombre,
+            tp.referencia,
+            tp.descripcion,
+            tp.stock_total,
+            tp.inventory_value,
+            tp.ventas_historicas,
+            tp.ventas_actuales,
+            tp.promedio_base,
+            tp.brecha_oportunidad,
+            tp.ultima_venta AS fecha_ultima_venta,
+            tp.dias_sin_venta,
+            COALESCE(tc.clientes_objetivo, 'Sin clientes objetivo claros') AS clientes_objetivo
+        FROM top_products tp
+        LEFT JOIN target_clients tc ON tc.referencia_normalizada = tp.referencia_normalizada
+        ORDER BY tp.brecha_oportunidad DESC, tp.stock_total DESC, tp.ventas_historicas DESC
+        """
+    )
+
+    with engine.begin() as connection:
+        rows = connection.execute(
+            sql,
+            {
+                "history_start": history_start,
+                "history_end": history_end,
+                "current_start": current_start,
+                "current_end": current_end,
+                "store_code": store_code,
+                "vendor_code": vendor_code,
+                "limit": limit,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows], period_label
+
+
+def _build_products_to_push_summary(rows: list[dict], period_label: str, limit: int) -> str:
+    total_gap = sum(float(row.get("brecha_oportunidad") or 0) for row in rows)
+    lines = [f"Productos para impulsar en {period_label}: {len(rows)} referencias con brecha comercial estimada de {_format_currency(total_gap)} frente a su comportamiento reciente."]
+    for row in rows[: min(limit, 5)]:
+        dias = row.get("dias_sin_venta")
+        dias_text = f"{int(dias)} días" if isinstance(dias, Number) else "sin dato"
+        lines.append(
+            f"- {row.get('referencia')} | {row.get('descripcion')} | stock {_format_number(row.get('stock_total'))} | actual {_format_currency(row.get('ventas_actuales'))} vs base {_format_currency(row.get('promedio_base'))} | brecha {_format_currency(row.get('brecha_oportunidad'))} | clientes {row.get('clientes_objetivo')} | {dias_text} sin venta"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
 def _fetch_client_decline_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], limit: int) -> tuple[list[dict], str]:
     current_start, current_end, period_label = _parse_bi_period(periodo_raw)
     previous_start = date(current_start.year - 1, current_start.month, current_start.day)
@@ -825,6 +1181,7 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
 
     employee_context = internal_auth.get("employee_context") or {}
     store_code = _resolve_store_code(args.get("almacen") or employee_context.get("store_code"))
+    vendor_code = _resolve_vendor_code(args.get("vendedor_codigo"), internal_auth)
     query_type = _normalize_text(args.get("tipo_consulta") or "")
     limit = _clamp_limit(args.get("limite"), default=5, minimum=3, maximum=20)
 
@@ -862,11 +1219,35 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
             if not rows:
                 return f"No encontré clientes con decrecimiento para {period_label}."
             return _build_client_decline_summary(rows, period_label, limit)
+
+        if query_type == "clientes_a_reactivar":
+            rows, period_label = _fetch_clients_without_purchase_rows(engine, args.get("periodo") or "este mes", store_code, vendor_code, limit)
+            if not rows:
+                return f"No encontré clientes claros para reactivar en {period_label}."
+            return _build_clients_without_purchase_summary(rows, period_label, limit, "Clientes a reactivar")
+
+        if query_type == "clientes_sin_compra_periodo":
+            rows, period_label = _fetch_clients_without_purchase_rows(engine, args.get("periodo") or "este mes", store_code, vendor_code, limit)
+            if not rows:
+                return f"No encontré clientes sin compra para {period_label}."
+            return _build_clients_without_purchase_summary(rows, period_label, limit, "Clientes sin compra")
+
+        if query_type == "productos_no_vendidos_periodo":
+            rows, period_label = _fetch_products_without_sale_rows(engine, args.get("periodo") or "este mes", store_code, vendor_code, limit)
+            if not rows:
+                return f"No encontré productos con historial que hayan dejado de venderse en {period_label}."
+            return _build_products_without_sale_summary(rows, period_label, limit)
+
+        if query_type == "productos_a_impulsar":
+            rows, period_label = _fetch_products_to_push_rows(engine, args.get("periodo") or "este mes", store_code, vendor_code, limit)
+            if not rows:
+                return f"No encontré productos claros para impulsar en {period_label}."
+            return _build_products_to_push_summary(rows, period_label, limit)
     except SQLAlchemyError as exc:
         logger.warning("consultar_indicadores_internos failed: %s", exc)
         return "No pude consultar los indicadores internos. Verifica que esté aplicado backend/internal_agent_ops.sql."
 
-    return "No reconozco ese indicador interno. Usa proyección, baja rotación, cartera vencida, quiebres, sobrestock o clientes con decrecimiento."
+    return "No reconozco ese indicador interno. Usa proyección, baja rotación, cartera vencida, quiebres, sobrestock, clientes con decrecimiento, clientes a reactivar, clientes sin compra, productos no vendidos o productos a impulsar."
 
 
 def _build_inventory_summary_metrics(rows: list[dict]) -> list[tuple[str, str]]:
@@ -993,6 +1374,9 @@ def _build_sales_report_dataset(report_type: str, payload: dict) -> tuple[str, l
 
 
 def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str], limit: int, conversation_context: Optional[dict], sales_query_fn=None) -> tuple[str, list[tuple[str, str]], list[str], list[dict], list[str], str]:
+    pending_args = (conversation_context or {}).get("pending_tool_args") or {}
+    internal_auth = (conversation_context or {}).get("internal_auth") or {}
+    vendor_code = _resolve_vendor_code(pending_args.get("vendedor_codigo"), internal_auth)
     if report_type == "inventario_baja_rotacion":
         rows = _fetch_inventory_rows(engine, ["sin_movimiento", "sobrestock"], store_code, limit)
         headers = ["Almacen", "Referencia", "Descripcion", "Estado", "Stock", "Historial ventas", "Dias sin venta", "Valor inventario"]
@@ -1024,7 +1408,7 @@ def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str]
         metrics = _build_inventory_summary_metrics(rows)
         detail_sheet = "Detalle sobrestock"
     elif report_type == "clientes_mayor_decrecimiento":
-        rows, period_label = _fetch_client_decline_rows(engine, (conversation_context or {}).get("pending_tool_args", {}).get("periodo"), store_code, limit)
+        rows, period_label = _fetch_client_decline_rows(engine, pending_args.get("periodo"), store_code, limit)
         headers = ["Cliente", "Codigo", "Ventas actuales", "Ventas previas", "Caida absoluta", "Variacion %"]
         keys = ["nombre_cliente", "cod_cliente", "ventas_actuales", "ventas_previas", "variacion_absoluta", "variacion_pct"]
         title = "Reporte de Clientes con Mayor Decrecimiento"
@@ -1034,6 +1418,50 @@ def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str]
             ("Caída acumulada", _format_currency(sum(abs(float(row.get("variacion_absoluta") or 0)) for row in rows))),
         ]
         detail_sheet = "Detalle decrecimiento"
+    elif report_type == "clientes_a_reactivar":
+        rows, period_label = _fetch_clients_without_purchase_rows(engine, pending_args.get("periodo") or "este mes", store_code, vendor_code, limit)
+        headers = ["Cliente", "Codigo", "Vendedor", "Ultima compra", "Dias sin compra", "Ventas historicas", "Meses activos"]
+        keys = ["nombre_cliente", "cod_cliente", "nom_vendedor", "ultima_compra", "dias_sin_compra", "ventas_historicas", "meses_activos"]
+        title = "Reporte de Clientes a Reactivar"
+        metrics = [
+            ("Periodo analizado", period_label),
+            ("Clientes incluidos", _format_number(len(rows))),
+            ("Base histórica comprometida", _format_currency(sum(float(row.get("ventas_historicas") or 0) for row in rows))),
+        ]
+        detail_sheet = "Detalle reactivacion"
+    elif report_type == "clientes_sin_compra_periodo":
+        rows, period_label = _fetch_clients_without_purchase_rows(engine, pending_args.get("periodo") or "este mes", store_code, vendor_code, limit)
+        headers = ["Cliente", "Codigo", "Vendedor", "Ultima compra", "Dias sin compra", "Ventas historicas", "Meses activos"]
+        keys = ["nombre_cliente", "cod_cliente", "nom_vendedor", "ultima_compra", "dias_sin_compra", "ventas_historicas", "meses_activos"]
+        title = "Reporte de Clientes sin Compra"
+        metrics = [
+            ("Periodo analizado", period_label),
+            ("Clientes incluidos", _format_number(len(rows))),
+            ("Base histórica comprometida", _format_currency(sum(float(row.get("ventas_historicas") or 0) for row in rows))),
+        ]
+        detail_sheet = "Detalle sin compra"
+    elif report_type == "productos_no_vendidos_periodo":
+        rows, period_label = _fetch_products_without_sale_rows(engine, pending_args.get("periodo") or "este mes", store_code, vendor_code, limit)
+        headers = ["Almacen", "Referencia", "Descripcion", "Stock", "Dias sin venta", "Ventas historicas", "Valor inventario"]
+        keys = ["almacen_nombre", "referencia", "descripcion", "stock_total", "dias_sin_venta", "ventas_historicas", "inventory_value"]
+        title = "Reporte de Productos sin Venta en el Periodo"
+        metrics = [
+            ("Periodo analizado", period_label),
+            ("Referencias incluidas", _format_number(len(rows))),
+            ("Base histórica comprometida", _format_currency(sum(float(row.get("ventas_historicas") or 0) for row in rows))),
+        ]
+        detail_sheet = "Detalle productos"
+    elif report_type == "productos_a_impulsar":
+        rows, period_label = _fetch_products_to_push_rows(engine, pending_args.get("periodo") or "este mes", store_code, vendor_code, limit)
+        headers = ["Almacen", "Referencia", "Descripcion", "Stock", "Ventas actuales", "Promedio base", "Brecha oportunidad", "Clientes objetivo"]
+        keys = ["almacen_nombre", "referencia", "descripcion", "stock_total", "ventas_actuales", "promedio_base", "brecha_oportunidad", "clientes_objetivo"]
+        title = "Reporte de Productos a Impulsar"
+        metrics = [
+            ("Periodo analizado", period_label),
+            ("Referencias incluidas", _format_number(len(rows))),
+            ("Brecha comercial estimada", _format_currency(sum(float(row.get("brecha_oportunidad") or 0) for row in rows))),
+        ]
+        detail_sheet = "Detalle impulso"
     elif report_type in {
         "ventas_detalladas",
         "ventas_por_tienda",
@@ -1096,7 +1524,7 @@ def _style_summary_sheet(sheet, title: str, metrics: list[tuple[str, str]], subt
 
 def _infer_number_format(key: str) -> Optional[str]:
     lowered = str(key or "").lower()
-    if any(token in lowered for token in ["valor", "saldo", "neto", "facturado", "devoluciones", "total", "precio", "ventas"]):
+    if any(token in lowered for token in ["valor", "saldo", "neto", "facturado", "devoluciones", "total", "precio", "ventas", "promedio", "brecha"]):
         return '$#,##0'
     if "variacion" in lowered:
         return '0.0%'

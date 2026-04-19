@@ -558,6 +558,8 @@ _BI_SIGNALS = [
     "proyectamos", "baja rotacion", "baja rotación", "rotacion", "rotación",
     "quiebre", "quiebres", "sobrestock", "vencidos", "vencidas", "quedados",
     "decrecimiento", "decrece", "caida", "caída", "clientes que caen", "clientes con caida",
+    "impulsar", "reactivar", "visitar", "no me han comprado", "no compraron", "sin compra",
+    "no he vendido", "no se ha vendido", "productos sin venta", "productos a mover",
 ]
 
 _PRICE_SIGNALS = [
@@ -1441,7 +1443,7 @@ def build_turn_context(
     elif intent == "bi_interno":
         lines.append("Consulta de inteligencia de negocios (empleado interno).")
         lines.append("Si la pregunta es ventas puras, llama consultar_ventas_internas.")
-        lines.append("Si la pregunta es proyeccion, cartera vencida, baja rotacion, quiebres, sobrestock o decrecimiento de clientes, llama consultar_indicadores_internos.")
+        lines.append("Si la pregunta es proyeccion, cartera vencida, baja rotacion, quiebres, sobrestock, decrecimiento de clientes, reactivacion, clientes sin compra o productos a impulsar, llama consultar_indicadores_internos.")
         lines.append("Si el colaborador NO menciona sede, vendedor o canal, asume consulta consolidada de toda la empresa, especialmente para gerente o administrador.")
         lines.append("NO limites la consulta a la sede del colaborador salvo que lo pida explícitamente o el rol sea operador con restricción de acceso.")
         lines.append("Si el detalle es demasiado largo para WhatsApp, resume los hallazgos y ofrece enviarlo por correo con Excel usando enviar_reporte_interno_correo.")

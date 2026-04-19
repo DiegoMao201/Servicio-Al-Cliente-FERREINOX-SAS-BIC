@@ -723,7 +723,7 @@ AGENT_TOOLS_V3 = [
             "name": "consultar_indicadores_internos",
             "description": (
                 "Consulta indicadores ejecutivos internos mas alla de ventas: proyeccion del mes, cartera vencida, "
-                "productos de baja rotacion, quiebres de stock y sobrestock por sede. "
+                "productos de baja rotacion, quiebres de stock, sobrestock, clientes a reactivar, clientes sin compra, productos a impulsar y productos que dejaron de venderse. "
                 "Usa esta herramienta cuando la pregunta sea gerencial o administrativa y no baste con ventas puras."
             ),
             "parameters": {
@@ -737,7 +737,11 @@ AGENT_TOOLS_V3 = [
                             "cartera_vencida_resumen",
                             "quiebres_stock",
                             "sobrestock",
-                            "clientes_mayor_decrecimiento"
+                            "clientes_mayor_decrecimiento",
+                            "clientes_a_reactivar",
+                            "clientes_sin_compra_periodo",
+                            "productos_no_vendidos_periodo",
+                            "productos_a_impulsar"
                         ],
                         "description": "Indicador interno a consultar.",
                     },
@@ -748,6 +752,10 @@ AGENT_TOOLS_V3 = [
                     "periodo": {
                         "type": "string",
                         "description": "Periodo para proyeccion o ventas. Ej: 'este mes'. Opcional.",
+                    },
+                    "vendedor_codigo": {
+                        "type": "string",
+                        "description": "Codigo ERP del vendedor para filtrar la consulta. Opcional. Si el usuario es vendedor, se usa su propio codigo cuando exista.",
                     },
                     "limite": {
                         "type": "integer",
@@ -764,7 +772,7 @@ AGENT_TOOLS_V3 = [
             "name": "enviar_reporte_interno_correo",
             "description": (
                 "Envia por correo un reporte interno profesional con Excel adjunto. "
-                "Usa esta herramienta cuando el detalle de baja rotacion, clientes vencidos, quiebres, sobrestock o ventas estructuradas sea demasiado largo para WhatsApp."
+                "Usa esta herramienta cuando el detalle de baja rotacion, clientes vencidos, quiebres, sobrestock, reactivacion, clientes sin compra, productos a impulsar o ventas estructuradas sea demasiado largo para WhatsApp."
             ),
             "parameters": {
                 "type": "object",
@@ -777,6 +785,10 @@ AGENT_TOOLS_V3 = [
                             "quiebres_stock",
                             "sobrestock",
                             "clientes_mayor_decrecimiento",
+                            "clientes_a_reactivar",
+                            "clientes_sin_compra_periodo",
+                            "productos_no_vendidos_periodo",
+                            "productos_a_impulsar",
                             "ventas_detalladas",
                             "ventas_por_tienda",
                             "ventas_por_vendedor",
@@ -811,7 +823,7 @@ AGENT_TOOLS_V3 = [
                     },
                     "vendedor_codigo": {
                         "type": "string",
-                        "description": "Codigo ERP del vendedor para filtrar reportes de ventas. Opcional.",
+                        "description": "Codigo ERP del vendedor para filtrar reportes de ventas u oportunidades BI. Opcional.",
                     },
                     "limite": {
                         "type": "integer",
