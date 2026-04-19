@@ -1245,7 +1245,7 @@ def build_turn_context(
                 lines.append(
                     f"  - {case.get('case_id')}: {case.get('summary') or case.get('category') or 'caso técnico'}"
                 )
-        lines.append("Regla obligatoria: cada diagnóstico, sistema, cotización y PDF pertenece SOLO al caso activo del turno.")
+        lines.append("Regla obligatoria: cada diagnóstico y sistema pertenece SOLO al caso activo del turno.")
 
     # ─── Phase-specific instructions ────────────────────────────────────
     lines.append("")
@@ -1339,8 +1339,7 @@ def build_turn_context(
             lines.append("🚫 BLOQUEO DE DIAGNÓSTICO INCOMPLETO 🚫")
             lines.append("TIENES ESTRICTAMENTE PROHIBIDO en este turno:")
             lines.append("  1. Llamar consultar_conocimiento_tecnico.")
-            lines.append("  2. Llamar consultar_inventario o consultar_inventario_lote.")
-            lines.append("  3. Sugerir sistemas completos, cotizar precios o calcular cantidades.")
+            lines.append("  2. Sugerir sistemas completos o calcular cantidades.")
             lines.append("")
             lines.append("✅ LO QUE SÍ PUEDES HACER:")
             lines.append("  1. Dar una SOSPECHA PRELIMINAR breve (categoría general, SIN nombres de productos)")
@@ -1385,8 +1384,10 @@ def build_turn_context(
             if is_internal:
                 lines.append("CIERRE INTERNO OBLIGATORIO: entrega recomendación técnica directa, rendimientos consultados y advertencias de aplicación. No ofrezcas cotización, pedido ni PDF.")
                 lines.append("Si el colaborador quiere cierre comercial, cierra así: 'Si quieres, te conecto con un asesor comercial para cotizar los productos.'")
-            elif not diagnostic["area_m2"]:
-                lines.append("Al final pregunta m² y color para calcular cantidades.")
+            else:
+                lines.append("CIERRE TÉCNICO: Presenta la solución técnica completa. Al final ofrece: 'Si necesitas cotización formal con precios, te conecto con un vendedor especializado de Ferreinox.'")
+                if not diagnostic["area_m2"]:
+                    lines.append("Al final pregunta m² y color para completar la recomendación.")
 
     elif intent == "pedido_directo":
         if is_internal:
@@ -1395,14 +1396,19 @@ def build_turn_context(
             lines.append("Presenta cotización: producto + cant + precio unitario + subtotal. Al final: Subtotal + IVA 19% + Total.")
         else:
             lines.append("Cliente nombra producto específico.")
-            lines.append("Acción: Llama consultar_conocimiento_tecnico para validar que el producto es adecuado.")
-            lines.append("Luego consultar_inventario para disponibilidad y precios.")
-            lines.append("Si el producto es bicomponente, incluye obligatoriamente el catalizador.")
+            lines.append("Acción: Llama consultar_conocimiento_tecnico para validar que el producto es adecuado para su caso.")
+            lines.append("Si el producto es bicomponente, menciona que requiere catalizador.")
+            lines.append("Presenta la recomendación técnica SIN precios. Cierra con derivación a vendedor Ferreinox para cotización formal.")
 
     elif intent == "cotizacion":
-        lines.append("El cliente quiere precios de algo ya discutido.")
-        lines.append("Acción: Llama consultar_inventario_lote para todos los productos del sistema recomendado.")
-        lines.append("Presenta: sistema + cantidades + precios. Subtotal + IVA 19% + Total a Pagar.")
+        if is_internal:
+            lines.append("Empleado interno pide precios.")
+            lines.append("Acción: Llama consultar_inventario_lote para todos los productos del sistema recomendado.")
+            lines.append("Presenta: sistema + cantidades + precios. Subtotal + IVA 19% + Total a Pagar.")
+        else:
+            lines.append("El cliente pide precios o cotización.")
+            lines.append("Acción: NO tienes herramientas de inventario ni cotización. Responde con empatía:")
+            lines.append("'Para una cotización formal con precios y disponibilidad, te conecto con un vendedor especializado de Ferreinox que te contactará directamente. ¿Te parece?'")
 
     elif intent == "consulta_productos":
         if is_internal:
@@ -1413,30 +1419,27 @@ def build_turn_context(
             lines.append("NO cotices. NO des IVA. NO mezcles esta consulta con pedido o cotización.")
             lines.append("Cierra en tono interno y util: ofrece revisar otra referencia o tienda, pero NO ofrezcas pedidos, cotizaciones ni PDF.")
         else:
-            lines.append("Consulta puntual de disponibilidad de producto.")
-            lines.append("Acción: Llama consultar_inventario para validar referencia, presentación y disponibilidad.")
-            lines.append("Responde solo disponibilidad o pide aclaración si hay varias coincidencias.")
+            lines.append("Consulta puntual de producto.")
+            lines.append("Acción: Llama consultar_conocimiento_tecnico para dar información técnica del producto.")
+            lines.append("NO muestres precios ni disponibilidad de inventario. Si pide precio, redirige a vendedor Ferreinox.")
 
     elif intent == "confirmacion":
-        lines.append("El cliente aceptó la cotización.")
-        lines.append("Si el cliente solo envía cédula/NIT, nombre o dice que la quiere en PDF, NO vuelvas a cotizar ni a consultar inventario.")
-        draft_tipo = (commercial_draft or {}).get("tipo_documento")
-        if draft_tipo == "cotizacion":
-            lines.append("Acción: Si el cliente no está validado, para cotización pide nombre + cédula/NIT y usa registrar_cliente_nuevo en modo cotizacion.")
-            lines.append("NO bloquees la cotización por falta de dirección o ciudad.")
-        elif draft_tipo == "pedido":
-            lines.append("Acción: Para pedido reúne nombre + cédula/NIT + dirección + ciudad antes de cerrar.")
-            lines.append("Si no existe en base, usa registrar_cliente_nuevo en modo pedido y luego confirmar_pedido_y_generar_pdf.")
+        if is_internal:
+            lines.append("Empleado interno aceptó la cotización.")
+            lines.append("Acción: Recopila datos faltantes y cierra la operación interna.")
         else:
-            lines.append("Acción: Recopila datos faltantes según el tipo de cierre: cotización = nombre + cédula/NIT; pedido = nombre + cédula/NIT + dirección + ciudad.")
-        lines.append("Luego llama confirmar_pedido_y_generar_pdf.")
-        lines.append("NO repitas la cotización. Solo recoge lo que falta y cierra.")
+            lines.append("El cliente quiere cerrar o confirmar.")
+            lines.append("Acción: NO tienes herramientas de pedido ni PDF. Responde:")
+            lines.append("'Para formalizar tu pedido con precios actualizados, te conecto con un vendedor Ferreinox que te contactará. ¿Quieres que lo coordine?'")
 
     elif intent == "correccion":
-        lines.append("El cliente corrige un ítem de la cotización activa.")
-        lines.append("Acción: Llama consultar_inventario SOLO con el producto corregido.")
-        lines.append("Mantén todos los demás ítems intactos. Recalcula solo la línea y el total.")
-        lines.append("Muestra la cotización completa actualizada.")
+        if is_internal:
+            lines.append("Empleado interno corrige un ítem de la cotización activa.")
+            lines.append("Acción: Llama consultar_inventario SOLO con el producto corregido.")
+            lines.append("Mantén todos los demás ítems intactos. Recalcula solo la línea y el total.")
+        else:
+            lines.append("El cliente quiere corregir algo de la recomendación.")
+            lines.append("Acción: Llama consultar_conocimiento_tecnico para la corrección. Actualiza la recomendación técnica.")
 
     elif intent == "reclamo":
         if claim_case:

@@ -52,12 +52,22 @@ def get_agent_runtime_config() -> dict:
             "force_first_advisory_depth_turn": True,
         }
 
+    # Legacy = technical advisory (no commercial tools)
+    _LEGACY_ALLOWED_TOOL_NAMES = {
+        "consultar_conocimiento_tecnico",
+        "buscar_documento_tecnico",
+        "verificar_identidad",
+        "consultar_cartera",
+        "consultar_compras",
+        "radicar_reclamo",
+        "registrar_conocimiento_experto",
+    }
     return {
         "profile": "legacy",
         "system_prompt": AGENT_SYSTEM_PROMPT_V3,
-        "tools": AGENT_TOOLS_V3,
-        "enable_order_pipeline": True,
-        "enable_quote_pipeline": True,
-        "enable_iva_guard": True,
+        "tools": _filter_tools_by_name(AGENT_TOOLS_V3, _LEGACY_ALLOWED_TOOL_NAMES),
+        "enable_order_pipeline": False,
+        "enable_quote_pipeline": False,
+        "enable_iva_guard": False,
         "force_first_advisory_depth_turn": True,
     }
