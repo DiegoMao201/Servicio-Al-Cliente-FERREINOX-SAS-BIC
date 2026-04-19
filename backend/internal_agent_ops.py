@@ -102,6 +102,7 @@ _UNIVERSAL_BI_DIMENSIONS = {
     "cliente": ["cliente", "clientes"],
     "producto": ["producto", "productos", "referencia", "referencias"],
     "linea": ["linea", "línea", "categoria", "categoría", "familia"],
+    "zona": ["zona", "regional", "region", "región"],
 }
 
 
@@ -578,10 +579,70 @@ def _infer_sort_direction(question: str) -> str:
     return "desc"
 
 
+def _infer_comparison_mode(question: str) -> str:
+    normalized = _normalize_text(question)
+    if any(token in normalized for token in ["vs mes pasado", "versus mes pasado", "comparado con mes pasado", "contra mes pasado", "periodo anterior", "período anterior"]):
+        return "vs_periodo_anterior"
+    return "vs_anio_anterior"
+
+
+def _resolve_semantic_dimension(question: str, fallback: str) -> str:
+    return _infer_sales_dimension(question) or fallback
+
+
 def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], explicit_limit: Any) -> dict:
     normalized = _normalize_text(question)
     period_value = explicit_period or question or "este mes"
     limit = _clamp_limit(explicit_limit, default=_extract_limit_from_question(question, default=10, minimum=3, maximum=50), minimum=3, maximum=50)
+
+    if any(token in normalized for token in ["participacion", "participación", "mix", "% del total", "porcentaje del total"]):
+        return {
+            "kind": "semantic",
+            "analysis": "participacion",
+            "periodo": period_value,
+            "dimension": _resolve_semantic_dimension(question, "linea"),
+            "direction": _infer_sort_direction(question),
+            "limite": limit,
+        }
+    if any(token in normalized for token in ["crecimiento", "crecer", "creció", "crecio", "variacion por", "variación por"]):
+        return {
+            "kind": "semantic",
+            "analysis": "crecimiento",
+            "periodo": period_value,
+            "dimension": _resolve_semantic_dimension(question, "linea"),
+            "direction": _infer_sort_direction(question),
+            "comparison": _infer_comparison_mode(question),
+            "limite": limit,
+        }
+    if any(token in normalized for token in ["caida de frecuencia", "caída de frecuencia", "frecuencia", "menos frecuencia", "menos visitas", "menos compras"]):
+        return {
+            "kind": "semantic",
+            "analysis": "caida_frecuencia",
+            "periodo": period_value,
+            "direction": "asc",
+            "comparison": _infer_comparison_mode(question),
+            "limite": limit,
+        }
+    if any(token in normalized for token in ["concentracion de cartera", "concentración de cartera", "cartera concentrada", "concentracion cartera"]):
+        return {
+            "kind": "semantic",
+            "analysis": "concentracion_cartera",
+            "periodo": period_value,
+            "dimension": _resolve_semantic_dimension(question, "cliente"),
+            "direction": "desc",
+            "limite": limit,
+        }
+    if any(token in normalized for token in ["oportunidades por sede", "oportunidades por vendedor", "oportunidad por sede", "oportunidad por vendedor", "oportunidades"]):
+        fallback_dimension = "vendedor" if "vendedor" in normalized else "tienda"
+        return {
+            "kind": "semantic",
+            "analysis": "oportunidades_dimension",
+            "periodo": period_value,
+            "dimension": _resolve_semantic_dimension(question, fallback_dimension),
+            "direction": "desc",
+            "comparison": _infer_comparison_mode(question),
+            "limite": limit,
+        }
 
     if any(token in normalized for token in ["reactivar", "visitar", "volver a comprar", "recuperar cliente"]):
         return {"kind": "indicator", "tipo_consulta": "clientes_a_reactivar", "periodo": period_value, "limite": limit}
@@ -1227,6 +1288,58 @@ def _shift_year_safe(value: date, delta_years: int) -> date:
     return date(target_year, value.month, target_day)
 
 
+def _resolve_previous_period(periodo_raw: Optional[str], comparison_mode: str) -> tuple[date, date, str, str]:
+    current_start, current_end, current_label = _parse_bi_period(periodo_raw)
+    if comparison_mode == "vs_periodo_anterior":
+        span_days = max((current_end - current_start).days, 0) + 1
+        previous_end = current_start - timedelta(days=1)
+        previous_start = previous_end - timedelta(days=span_days - 1)
+        return previous_start, previous_end, current_label, "periodo anterior equivalente"
+    previous_start = _shift_year_safe(current_start, -1)
+    previous_end = _shift_year_safe(current_end, -1)
+    return previous_start, previous_end, current_label, "mismo corte del año anterior"
+
+
+def _get_sales_dimension_sql_parts(dimension: str) -> tuple[str, str, str]:
+    if dimension == "tienda":
+        return (
+            "LEFT(COALESCE(serie, ''), 3)",
+            "CASE LEFT(COALESCE(serie, ''), 3) WHEN '156' THEN 'Armenia' WHEN '157' THEN 'Manizales' WHEN '158' THEN 'Opalo' WHEN '189' THEN 'Pereira' WHEN '238' THEN 'Laureles' WHEN '439' THEN 'FerreBOX' WHEN '463' THEN 'Cerritos' ELSE 'Otra sede' END",
+            "NULL::text AS codigo_aux, NULL::text AS detalle_aux",
+        )
+    if dimension == "vendedor":
+        return (
+            "public.fn_keep_alnum(codigo_vendedor)",
+            "INITCAP(MAX(public.fn_normalize_text(nom_vendedor)))",
+            "public.fn_keep_alnum(codigo_vendedor) AS codigo_aux, NULL::text AS detalle_aux",
+        )
+    if dimension == "cliente":
+        return (
+            "public.fn_keep_alnum(cliente_id)",
+            "INITCAP(MAX(public.fn_normalize_text(nombre_cliente)))",
+            "public.fn_keep_alnum(cliente_id) AS codigo_aux, NULL::text AS detalle_aux",
+        )
+    if dimension == "producto":
+        return (
+            "public.fn_keep_alnum(codigo_articulo)",
+            "INITCAP(MAX(public.fn_normalize_text(nombre_articulo)))",
+            "public.fn_keep_alnum(codigo_articulo) AS codigo_aux, INITCAP(MAX(public.fn_normalize_text(linea_producto))) AS detalle_aux",
+        )
+    if dimension == "linea":
+        return (
+            "public.fn_normalize_text(linea_producto)",
+            "INITCAP(MAX(public.fn_normalize_text(linea_producto)))",
+            "NULL::text AS codigo_aux, NULL::text AS detalle_aux",
+        )
+    if dimension == "zona":
+        return (
+            "COALESCE(public.fn_normalize_text(zona), 'sin zona')",
+            "INITCAP(MAX(COALESCE(public.fn_normalize_text(zona), 'sin zona')))",
+            "NULL::text AS codigo_aux, NULL::text AS detalle_aux",
+        )
+    raise ValueError("dimension de ventas no soportada")
+
+
 def _build_sales_scope_filters(question: str, args: dict, internal_auth: Optional[dict]) -> tuple[Optional[str], Optional[str], Optional[str]]:
     internal_auth = internal_auth or {}
     employee_context = internal_auth.get("employee_context") or {}
@@ -1324,29 +1437,7 @@ def _fetch_sales_total_snapshot(engine, periodo_raw: Optional[str], store_code: 
 def _fetch_sales_dimension_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, direction: str) -> tuple[list[dict], str]:
     current_start, current_end, period_label = _parse_bi_period(periodo_raw)
     order_direction = "ASC" if direction == "asc" else "DESC"
-
-    if dimension == "tienda":
-        group_key = "LEFT(COALESCE(serie, ''), 3)"
-        label_expr = "CASE LEFT(COALESCE(serie, ''), 3) WHEN '156' THEN 'Armenia' WHEN '157' THEN 'Manizales' WHEN '158' THEN 'Opalo' WHEN '189' THEN 'Pereira' WHEN '238' THEN 'Laureles' WHEN '439' THEN 'FerreBOX' WHEN '463' THEN 'Cerritos' ELSE 'Otra sede' END"
-        extra_select = "NULL::text AS codigo_aux, NULL::text AS detalle_aux"
-    elif dimension == "vendedor":
-        group_key = "public.fn_keep_alnum(codigo_vendedor)"
-        label_expr = "INITCAP(MAX(public.fn_normalize_text(nom_vendedor)))"
-        extra_select = "public.fn_keep_alnum(codigo_vendedor) AS codigo_aux, NULL::text AS detalle_aux"
-    elif dimension == "cliente":
-        group_key = "public.fn_keep_alnum(cliente_id)"
-        label_expr = "INITCAP(MAX(public.fn_normalize_text(nombre_cliente)))"
-        extra_select = "public.fn_keep_alnum(cliente_id) AS codigo_aux, NULL::text AS detalle_aux"
-    elif dimension == "producto":
-        group_key = "public.fn_keep_alnum(codigo_articulo)"
-        label_expr = "INITCAP(MAX(public.fn_normalize_text(nombre_articulo)))"
-        extra_select = "public.fn_keep_alnum(codigo_articulo) AS codigo_aux, INITCAP(MAX(public.fn_normalize_text(linea_producto))) AS detalle_aux"
-    elif dimension == "linea":
-        group_key = "public.fn_normalize_text(linea_producto)"
-        label_expr = "INITCAP(MAX(public.fn_normalize_text(linea_producto)))"
-        extra_select = "NULL::text AS codigo_aux, NULL::text AS detalle_aux"
-    else:
-        raise ValueError("dimension de ventas no soportada")
+    group_key, label_expr, extra_select = _get_sales_dimension_sql_parts(dimension)
 
     sql = text(
         f"""
@@ -1427,6 +1518,385 @@ def _build_sales_dimension_summary(question: str, rows: list[dict], period_label
         units = f" | unidades {_format_number(row.get('unidades'))}" if dimension in {"producto", "linea"} else ""
         lines.append(
             f"- {row.get('label')}{detail}{extra} | neto {_format_currency(row.get('neto'))} | clientes {_format_number(row.get('clientes'))} | líneas {_format_number(row.get('lineas'))}{units}"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
+def _fetch_sales_share_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, direction: str) -> tuple[list[dict], str]:
+    current_start, current_end, period_label = _parse_bi_period(periodo_raw)
+    order_direction = "ASC" if direction == "asc" else "DESC"
+    group_key, label_expr, extra_select = _get_sales_dimension_sql_parts(dimension)
+    sql = text(
+        f"""
+        WITH grouped AS (
+            SELECT
+                {group_key} AS group_key,
+                {label_expr} AS group_label,
+                {extra_select},
+                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto
+            FROM public.raw_ventas_detalle
+            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+              AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+            GROUP BY 1
+        )
+        SELECT
+            group_label,
+            codigo_aux,
+            detalle_aux,
+            neto,
+            CASE WHEN SUM(neto) OVER () = 0 THEN NULL ELSE ROUND((neto / SUM(neto) OVER ()) * 100.0, 1) END AS participacion_pct
+        FROM grouped
+        ORDER BY neto {order_direction}
+        LIMIT :limit
+        """
+    )
+    with engine.begin() as connection:
+        rows = connection.execute(
+            sql,
+            {
+                "current_start": current_start,
+                "current_end": current_end,
+                "store_code": store_code,
+                "vendor_code": vendor_code,
+                "limit": limit,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows], period_label
+
+
+def _build_sales_share_summary(rows: list[dict], period_label: str, dimension: str, limit: int) -> str:
+    if not rows:
+        return f"No encontré participación por {dimension} para {period_label}."
+    total_neto = sum(float(row.get("neto") or 0) for row in rows)
+    lines = [f"Participación por {dimension} en {period_label}: las {min(limit, len(rows))} principales posiciones explican {_format_currency(total_neto)} dentro de esta vista analítica."]
+    for row in rows[: min(limit, 5)]:
+        extra = f" | código {row.get('codigo_aux')}" if row.get("codigo_aux") else ""
+        detail = f" | detalle {row.get('detalle_aux')}" if row.get("detalle_aux") else ""
+        lines.append(
+            f"- {row.get('group_label')}{extra}{detail} | neto {_format_currency(row.get('neto'))} | participación {_format_percent(row.get('participacion_pct'))}"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
+def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, direction: str, comparison_mode: str) -> tuple[list[dict], str, str]:
+    current_start, current_end, period_label = _parse_bi_period(periodo_raw)
+    previous_start, previous_end, _, comparison_label = _resolve_previous_period(periodo_raw, comparison_mode)
+    order_direction = "ASC" if direction == "asc" else "DESC"
+    group_key, label_expr, extra_select = _get_sales_dimension_sql_parts(dimension)
+    sql = text(
+        f"""
+        WITH current_period AS (
+            SELECT
+                {group_key} AS group_key,
+                {label_expr} AS group_label,
+                {extra_select},
+                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_actual
+            FROM public.raw_ventas_detalle
+            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+              AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+            GROUP BY 1
+        ),
+        previous_period AS (
+            SELECT
+                {group_key} AS group_key,
+                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_previo
+            FROM public.raw_ventas_detalle
+            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+              AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+            GROUP BY 1
+        )
+        SELECT
+            cp.group_label,
+            cp.codigo_aux,
+            cp.detalle_aux,
+            cp.neto_actual,
+            COALESCE(pp.neto_previo, 0) AS neto_previo,
+            cp.neto_actual - COALESCE(pp.neto_previo, 0) AS variacion_absoluta,
+            CASE WHEN COALESCE(pp.neto_previo, 0) = 0 THEN NULL ELSE ROUND(((cp.neto_actual - pp.neto_previo) / pp.neto_previo) * 100.0, 1) END AS variacion_pct
+        FROM current_period cp
+        LEFT JOIN previous_period pp ON pp.group_key = cp.group_key
+        ORDER BY COALESCE(CASE WHEN COALESCE(pp.neto_previo, 0) = 0 THEN NULL ELSE ((cp.neto_actual - pp.neto_previo) / pp.neto_previo) * 100.0 END, 0) {order_direction}, cp.neto_actual {order_direction}
+        LIMIT :limit
+        """
+    )
+    with engine.begin() as connection:
+        rows = connection.execute(
+            sql,
+            {
+                "current_start": current_start,
+                "current_end": current_end,
+                "previous_start": previous_start,
+                "previous_end": previous_end,
+                "store_code": store_code,
+                "vendor_code": vendor_code,
+                "limit": limit,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows], period_label, comparison_label
+
+
+def _build_sales_growth_summary(rows: list[dict], period_label: str, comparison_label: str, dimension: str, limit: int, direction: str) -> str:
+    if not rows:
+        return f"No encontré crecimiento por {dimension} para {period_label}."
+    focus = "mayor crecimiento" if direction == "desc" else "mayor caída"
+    lines = [f"Crecimiento por {dimension} en {period_label}: top {min(limit, len(rows))} con enfoque en {focus} frente a {comparison_label}."]
+    for row in rows[: min(limit, 5)]:
+        lines.append(
+            f"- {row.get('group_label')} | actual {_format_currency(row.get('neto_actual'))} | previo {_format_currency(row.get('neto_previo'))} | variación {_format_currency(row.get('variacion_absoluta'))} | crecimiento {_format_percent(row.get('variacion_pct'))}"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
+def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], limit: int, comparison_mode: str) -> tuple[list[dict], str, str]:
+    current_start, current_end, period_label = _parse_bi_period(periodo_raw)
+    previous_start, previous_end, _, comparison_label = _resolve_previous_period(periodo_raw, comparison_mode)
+    sql = text(
+        """
+        WITH current_period AS (
+            SELECT
+                public.fn_keep_alnum(cliente_id) AS cod_cliente,
+                INITCAP(MAX(public.fn_normalize_text(nombre_cliente))) AS nombre_cliente,
+                INITCAP(MAX(public.fn_normalize_text(nom_vendedor))) AS nom_vendedor,
+                COUNT(DISTINCT public.fn_parse_date(fecha_venta)) AS dias_compra_actual,
+                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_actual
+            FROM public.raw_ventas_detalle
+            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+              AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+            GROUP BY 1
+        ),
+        previous_period AS (
+            SELECT
+                public.fn_keep_alnum(cliente_id) AS cod_cliente,
+                COUNT(DISTINCT public.fn_parse_date(fecha_venta)) AS dias_compra_prev,
+                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_previo
+            FROM public.raw_ventas_detalle
+            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+              AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+            GROUP BY 1
+        )
+        SELECT
+            pp.cod_cliente,
+            COALESCE(cp.nombre_cliente, pp.cod_cliente) AS nombre_cliente,
+            cp.nom_vendedor,
+            COALESCE(cp.dias_compra_actual, 0) AS dias_compra_actual,
+            pp.dias_compra_prev,
+            COALESCE(cp.neto_actual, 0) AS neto_actual,
+            pp.neto_previo,
+            COALESCE(cp.dias_compra_actual, 0) - pp.dias_compra_prev AS delta_frecuencia,
+            COALESCE(cp.neto_actual, 0) - pp.neto_previo AS delta_neto
+        FROM previous_period pp
+        LEFT JOIN current_period cp ON cp.cod_cliente = pp.cod_cliente
+        WHERE pp.dias_compra_prev > COALESCE(cp.dias_compra_actual, 0)
+        ORDER BY delta_frecuencia ASC, delta_neto ASC
+        LIMIT :limit
+        """
+    )
+    with engine.begin() as connection:
+        rows = connection.execute(
+            sql,
+            {
+                "current_start": current_start,
+                "current_end": current_end,
+                "previous_start": previous_start,
+                "previous_end": previous_end,
+                "store_code": store_code,
+                "vendor_code": vendor_code,
+                "limit": limit,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows], period_label, comparison_label
+
+
+def _build_client_frequency_drop_summary(rows: list[dict], period_label: str, comparison_label: str, limit: int) -> str:
+    if not rows:
+        return f"No encontré caída de frecuencia para {period_label}."
+    lines = [f"Caída de frecuencia en {period_label}: {len(rows)} clientes compraron en menos días frente a {comparison_label}."]
+    for row in rows[: min(limit, 5)]:
+        lines.append(
+            f"- {row.get('nombre_cliente')} | días compra actual {_format_number(row.get('dias_compra_actual'))} vs previo {_format_number(row.get('dias_compra_prev'))} | neto actual {_format_currency(row.get('neto_actual'))} vs previo {_format_currency(row.get('neto_previo'))} | vendedor {row.get('nom_vendedor') or 'N/A'}"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
+def _fetch_cartera_concentration_rows(engine, dimension: str, limit: int) -> list[dict]:
+    if dimension == "vendedor":
+        group_expr = "COALESCE(public.fn_normalize_text(nom_vendedor), 'sin vendedor')"
+        label_expr = "INITCAP(COALESCE(public.fn_normalize_text(nom_vendedor), 'sin vendedor'))"
+        code_expr = "NULL::text"
+    elif dimension == "zona":
+        group_expr = "COALESCE(public.fn_normalize_text(zona), 'sin zona')"
+        label_expr = "INITCAP(COALESCE(public.fn_normalize_text(zona), 'sin zona'))"
+        code_expr = "NULL::text"
+    else:
+        group_expr = "COALESCE(cod_cliente, 'sin cliente')"
+        label_expr = "INITCAP(COALESCE(public.fn_normalize_text(nombre_cliente), cod_cliente, 'sin cliente'))"
+        code_expr = "COALESCE(cod_cliente, 'sin cliente')"
+
+    sql = text(
+        f"""
+        WITH grouped AS (
+            SELECT
+                {group_expr} AS group_key,
+                MAX({label_expr}) AS group_label,
+                MAX({code_expr}) AS codigo_aux,
+                SUM(COALESCE(balance_61_90, 0) + COALESCE(balance_91_plus, 0)) AS saldo_vencido,
+                SUM(COALESCE(balance_total, 0)) AS saldo_total,
+                MAX(COALESCE(max_dias_vencido, 0)) AS max_dias_vencido
+            FROM public.mv_internal_cartera_cliente
+            GROUP BY 1
+        )
+        SELECT
+            group_label,
+            codigo_aux,
+            saldo_vencido,
+            saldo_total,
+            max_dias_vencido,
+            CASE WHEN SUM(saldo_vencido) OVER () = 0 THEN NULL ELSE ROUND((saldo_vencido / SUM(saldo_vencido) OVER ()) * 100.0, 1) END AS participacion_pct
+        FROM grouped
+        WHERE saldo_vencido > 0
+        ORDER BY saldo_vencido DESC
+        LIMIT :limit
+        """
+    )
+    with engine.begin() as connection:
+        rows = connection.execute(sql, {"limit": limit}).mappings().all()
+    return [dict(row) for row in rows]
+
+
+def _build_cartera_concentration_summary(rows: list[dict], dimension: str, limit: int) -> str:
+    if not rows:
+        return "No encontré concentración de cartera para ese filtro."
+    total = sum(float(row.get("saldo_vencido") or 0) for row in rows)
+    lines = [f"Concentración de cartera por {dimension}: las {min(limit, len(rows))} principales posiciones acumulan {_format_currency(total)} en saldo vencido dentro de esta vista."]
+    for row in rows[: min(limit, 5)]:
+        code = f" | código {row.get('codigo_aux')}" if row.get("codigo_aux") else ""
+        lines.append(
+            f"- {row.get('group_label')}{code} | vencido {_format_currency(row.get('saldo_vencido'))} | participación {_format_percent(row.get('participacion_pct'))} | saldo total {_format_currency(row.get('saldo_total'))} | max {_format_number(row.get('max_dias_vencido'))} días"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
+def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimension: str, store_code: Optional[str], vendor_code: Optional[str], limit: int, comparison_mode: str) -> tuple[list[dict], str, str]:
+    current_start, current_end, period_label = _parse_bi_period(periodo_raw)
+    previous_start, previous_end, _, comparison_label = _resolve_previous_period(periodo_raw, comparison_mode)
+    if dimension not in {"tienda", "vendedor"}:
+        dimension = "tienda"
+    group_key, label_expr, extra_select = _get_sales_dimension_sql_parts(dimension)
+    sql = text(
+        f"""
+        WITH current_sales AS (
+            SELECT
+                {group_key} AS group_key,
+                {label_expr} AS group_label,
+                {extra_select},
+                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_actual
+            FROM public.raw_ventas_detalle
+            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+              AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+            GROUP BY 1
+        ),
+        previous_sales AS (
+            SELECT
+                {group_key} AS group_key,
+                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_previo
+            FROM public.raw_ventas_detalle
+            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+              AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+            GROUP BY 1
+        ),
+        previous_clients AS (
+            SELECT DISTINCT
+                {group_key} AS group_key,
+                public.fn_keep_alnum(cliente_id) AS cod_cliente
+            FROM public.raw_ventas_detalle
+            WHERE public.fn_normalize_text(tipo_documento) LIKE '%factura%'
+              AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+        ),
+        current_clients AS (
+            SELECT DISTINCT
+                {group_key} AS group_key,
+                public.fn_keep_alnum(cliente_id) AS cod_cliente
+            FROM public.raw_ventas_detalle
+            WHERE public.fn_normalize_text(tipo_documento) LIKE '%factura%'
+              AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+              AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+        ),
+        inactive_clients AS (
+            SELECT
+                pc.group_key,
+                COUNT(*) AS clientes_reactivables
+            FROM previous_clients pc
+            LEFT JOIN current_clients cc ON cc.group_key = pc.group_key AND cc.cod_cliente = pc.cod_cliente
+            WHERE cc.cod_cliente IS NULL
+            GROUP BY pc.group_key
+        )
+        SELECT
+            cs.group_label,
+            cs.codigo_aux,
+            COALESCE(cs.neto_actual, 0) AS neto_actual,
+            COALESCE(ps.neto_previo, 0) AS neto_previo,
+            GREATEST(COALESCE(ps.neto_previo, 0) - COALESCE(cs.neto_actual, 0), 0) AS brecha_oportunidad,
+            COALESCE(ic.clientes_reactivables, 0) AS clientes_reactivables
+        FROM current_sales cs
+        LEFT JOIN previous_sales ps ON ps.group_key = cs.group_key
+        LEFT JOIN inactive_clients ic ON ic.group_key = cs.group_key
+        ORDER BY brecha_oportunidad DESC, clientes_reactivables DESC, neto_actual DESC
+        LIMIT :limit
+        """
+    )
+    with engine.begin() as connection:
+        rows = connection.execute(
+            sql,
+            {
+                "current_start": current_start,
+                "current_end": current_end,
+                "previous_start": previous_start,
+                "previous_end": previous_end,
+                "store_code": store_code,
+                "vendor_code": vendor_code,
+                "limit": limit,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows], period_label, comparison_label
+
+
+def _build_opportunity_dimension_summary(rows: list[dict], period_label: str, comparison_label: str, dimension: str, limit: int) -> str:
+    if not rows:
+        return f"No encontré oportunidades por {dimension} para {period_label}."
+    total_gap = sum(float(row.get("brecha_oportunidad") or 0) for row in rows)
+    lines = [f"Oportunidades por {dimension} en {period_label}: la brecha acumulada frente a {comparison_label} es de {_format_currency(total_gap)} en esta vista, con foco en recuperación comercial y clientes reactivables."]
+    for row in rows[: min(limit, 5)]:
+        lines.append(
+            f"- {row.get('group_label')} | actual {_format_currency(row.get('neto_actual'))} | previo {_format_currency(row.get('neto_previo'))} | brecha {_format_currency(row.get('brecha_oportunidad'))} | clientes reactivables {_format_number(row.get('clientes_reactivables'))}"
         )
     lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
     return "\n".join(lines)
@@ -1619,6 +2089,68 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
         if vendor_code:
             indicator_args["vendedor_codigo"] = vendor_code
         return handle_consultar_indicadores_internos(engine, indicator_args, conversation_context)
+
+    if plan.get("kind") == "semantic":
+        analysis = str(plan.get("analysis") or "")
+        try:
+            if analysis == "participacion":
+                rows, period_label = _fetch_sales_share_rows(
+                    engine,
+                    args.get("periodo") or plan.get("periodo"),
+                    store_code,
+                    vendor_code,
+                    str(plan.get("dimension") or "linea"),
+                    int(plan.get("limite") or 10),
+                    str(plan.get("direction") or "desc"),
+                )
+                return _build_sales_share_summary(rows, period_label, str(plan.get("dimension") or "linea"), int(plan.get("limite") or 10))
+
+            if analysis == "crecimiento":
+                rows, period_label, comparison_label = _fetch_sales_growth_rows(
+                    engine,
+                    args.get("periodo") or plan.get("periodo"),
+                    store_code,
+                    vendor_code,
+                    str(plan.get("dimension") or "linea"),
+                    int(plan.get("limite") or 10),
+                    str(plan.get("direction") or "desc"),
+                    str(plan.get("comparison") or "vs_anio_anterior"),
+                )
+                return _build_sales_growth_summary(rows, period_label, comparison_label, str(plan.get("dimension") or "linea"), int(plan.get("limite") or 10), str(plan.get("direction") or "desc"))
+
+            if analysis == "caida_frecuencia":
+                rows, period_label, comparison_label = _fetch_client_frequency_drop_rows(
+                    engine,
+                    args.get("periodo") or plan.get("periodo"),
+                    store_code,
+                    vendor_code,
+                    int(plan.get("limite") or 10),
+                    str(plan.get("comparison") or "vs_anio_anterior"),
+                )
+                return _build_client_frequency_drop_summary(rows, period_label, comparison_label, int(plan.get("limite") or 10))
+
+            if analysis == "concentracion_cartera":
+                rows = _fetch_cartera_concentration_rows(
+                    engine,
+                    str(plan.get("dimension") or "cliente"),
+                    int(plan.get("limite") or 10),
+                )
+                return _build_cartera_concentration_summary(rows, str(plan.get("dimension") or "cliente"), int(plan.get("limite") or 10))
+
+            if analysis == "oportunidades_dimension":
+                rows, period_label, comparison_label = _fetch_opportunity_dimension_rows(
+                    engine,
+                    args.get("periodo") or plan.get("periodo"),
+                    str(plan.get("dimension") or "tienda"),
+                    store_code,
+                    vendor_code,
+                    int(plan.get("limite") or 10),
+                    str(plan.get("comparison") or "vs_anio_anterior"),
+                )
+                return _build_opportunity_dimension_summary(rows, period_label, comparison_label, str(plan.get("dimension") or "tienda"), int(plan.get("limite") or 10))
+        except SQLAlchemyError as exc:
+            logger.warning("consultar_bi_universal semantic analysis failed: %s", exc)
+            return "No pude resolver ese análisis semántico BI en este momento."
 
     dimension = plan.get("dimension")
     try:

@@ -101,6 +101,28 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertEqual(plan["tipo_consulta"], "productos_a_impulsar")
         self.assertEqual(plan["limite"], 10)
 
+    def test_universal_bi_plan_detects_semantic_growth_analysis(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "Dime el crecimiento por linea este mes vs año anterior",
+            None,
+            None,
+        )
+
+        self.assertEqual(plan["kind"], "semantic")
+        self.assertEqual(plan["analysis"], "crecimiento")
+        self.assertEqual(plan["dimension"], "linea")
+
+    def test_universal_bi_plan_detects_cartera_concentration(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "Cual es la concentracion de cartera por cliente",
+            None,
+            None,
+        )
+
+        self.assertEqual(plan["kind"], "semantic")
+        self.assertEqual(plan["analysis"], "concentracion_cartera")
+        self.assertEqual(plan["dimension"], "cliente")
+
 
 if __name__ == "__main__":
     unittest.main()

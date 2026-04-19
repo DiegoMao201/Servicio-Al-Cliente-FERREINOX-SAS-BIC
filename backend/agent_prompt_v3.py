@@ -683,6 +683,7 @@ AGENT_TOOLS_V3 = [
             "description": (
                 "Consulta BI interna en lenguaje casi natural usando datos reales del ERP y vistas internas. "
                 "Usa esta herramienta para preguntas gerenciales abiertas o analiticas sobre ventas, cartera, inventario, oportunidades, clientes, vendedores, sedes, lineas o productos. "
+                "Tambien soporta analisis semanticos como participacion, mix, crecimiento, caida de frecuencia, concentracion de cartera y oportunidades por sede o vendedor. "
                 "El backend traduce la pregunta a consultas estructuradas y responde sin inventar datos."
             ),
             "parameters": {
