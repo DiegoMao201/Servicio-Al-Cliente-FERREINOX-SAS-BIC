@@ -194,6 +194,37 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertEqual(plan["analysis"], "participacion")
         self.assertEqual(plan["dimension"], "marca")
 
+    def test_whatsapp_mostradores_creciendo_decreciendo(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "los mostradores vienen creciendo o decreciendo",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "semantic")
+        self.assertEqual(plan["analysis"], "crecimiento")
+        self.assertEqual(plan["dimension"], "vendedor")
+        self.assertEqual(plan["channel"], "mostrador")
+
+    def test_whatsapp_mostradores_ventas(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "cómo van las ventas de mostrador este mes",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "sales")
+        self.assertEqual(plan["dimension"], "vendedor")
+        self.assertEqual(plan["channel"], "mostrador")
+
+    def test_whatsapp_vendedores_no_channel(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "top 5 vendedores este mes",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "sales")
+        self.assertEqual(plan["dimension"], "vendedor")
+        self.assertIsNone(plan.get("channel"))
+
 
 if __name__ == "__main__":
     unittest.main()

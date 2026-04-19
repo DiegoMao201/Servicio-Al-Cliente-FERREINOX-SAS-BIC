@@ -98,11 +98,23 @@ _STORE_CODE_LABELS = {
 
 _UNIVERSAL_BI_DIMENSIONS = {
     "tienda": ["tienda", "sede", "almacen", "almacén"],
-    "vendedor": ["vendedor", "asesor", "comercial", "mostrador", "mostradores"],
+    "vendedor": ["vendedor", "asesor", "comercial"],
     "cliente": ["cliente", "clientes"],
     "producto": ["producto", "productos", "referencia", "referencias"],
     "marca": ["marca", "marcas", "linea", "línea", "lineas", "líneas", "categoria", "categoría", "familia"],
     "zona": ["zona", "regional", "region", "región"],
+}
+
+# ── Canal de venta (filtro por sufijo de serie) ────────────────────────────
+# Mostradores = documentos con serie terminada en W (facturas) o X (NC)
+# Los vendedores también venden por mostrador, así que mostrador es un
+# FILTRO DE CANAL, no una dimensión.  Al filtrar por mostrador se agrupan
+# las ventas de ese canal por vendedor.
+_CHANNEL_FILTERS = {
+    "mostrador": "AND RIGHT(COALESCE(serie, ''), 1) IN ('W', 'X')",
+}
+_CHANNEL_KEYWORDS = {
+    "mostrador": ["mostrador", "mostradores", "contado", "venta de contado"],
 }
 
 # ── Marca numérica → nombre legible ────────────────────────────────────────
@@ -715,15 +727,19 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
     normalized = _normalize_text(question)
     period_value = explicit_period or question or "este mes"
     limit = _clamp_limit(explicit_limit, default=_extract_limit_from_question(question, default=10, minimum=3, maximum=50), minimum=3, maximum=50)
+    channel = _detect_channel(question)
+    # When channel is "mostrador", default dimension to "vendedor" (who sells at the counter)
+    channel_default_dim = "vendedor" if channel == "mostrador" else "marca"
 
     if any(token in normalized for token in ["participacion", "participación", "mix", "% del total", "porcentaje del total"]):
         return {
             "kind": "semantic",
             "analysis": "participacion",
             "periodo": period_value,
-            "dimension": _resolve_semantic_dimension(question, "marca"),
+            "dimension": _resolve_semantic_dimension(question, channel_default_dim),
             "direction": _infer_sort_direction(question),
             "limite": limit,
+            "channel": channel,
         }
     if any(token in normalized for token in ["caida de frecuencia", "caída de frecuencia", "frecuencia de compra", "menos frecuencia", "menos visitas", "menos compras", "frecuencia"]):
         freq_dim = "vendedor" if any(w in normalized for w in ["vendedor", "vendedores", "asesor", "asesores", "mostrador", "mostradores"]) else "cliente"
@@ -735,6 +751,7 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
             "direction": "asc",
             "comparison": _infer_comparison_mode(question),
             "limite": limit,
+            "channel": channel,
         }
     if any(token in normalized for token in ["crecimiento", "crecer", "creció", "crecio", "creciendo", "crecen", "crecieron", "variacion por", "variación por", "cayendo", "cayeron", "vienen creciendo", "vienen cayendo", "caida", "caída", "decrecimiento", "decreciendo", "decrece", "rendimiento"]):
         detected_direction = _infer_sort_direction(question)
@@ -744,10 +761,11 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
             "kind": "semantic",
             "analysis": "crecimiento",
             "periodo": period_value,
-            "dimension": _resolve_semantic_dimension(question, "marca"),
+            "dimension": _resolve_semantic_dimension(question, channel_default_dim),
             "direction": detected_direction,
             "comparison": _infer_comparison_mode(question),
             "limite": limit,
+            "channel": channel,
         }
     if any(token in normalized for token in ["concentracion de cartera", "concentración de cartera", "cartera concentrada", "concentracion cartera", "concentración cartera", "concentracion de la cartera", "concentración de la cartera"]):
         return {
@@ -794,9 +812,10 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
     return {
         "kind": "sales",
         "periodo": period_value,
-        "dimension": _infer_sales_dimension(question),
+        "dimension": _infer_sales_dimension(question) or channel_default_dim,
         "direction": _infer_sort_direction(question),
         "limite": limit,
+        "channel": channel,
     }
 
 
@@ -1476,6 +1495,22 @@ def _get_dimension_null_filter(dimension: str) -> str:
     return ""
 
 
+def _detect_channel(question: str) -> Optional[str]:
+    """Detect a sales-channel keyword in the question (e.g. mostrador)."""
+    normalized = _normalize_text(question)
+    for channel, keywords in _CHANNEL_KEYWORDS.items():
+        if any(kw in normalized for kw in keywords):
+            return channel
+    return None
+
+
+def _get_channel_sql_filter(channel: Optional[str]) -> str:
+    """Returns an extra SQL AND clause for the given channel, or empty string."""
+    if channel and channel in _CHANNEL_FILTERS:
+        return _CHANNEL_FILTERS[channel]
+    return ""
+
+
 def _build_sales_scope_filters(question: str, args: dict, internal_auth: Optional[dict]) -> tuple[Optional[str], Optional[str], Optional[str]]:
     internal_auth = internal_auth or {}
     employee_context = internal_auth.get("employee_context") or {}
@@ -1570,7 +1605,7 @@ def _fetch_sales_total_snapshot(engine, periodo_raw: Optional[str], store_code: 
     }
 
 
-def _fetch_sales_dimension_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, direction: str) -> tuple[list[dict], str]:
+def _fetch_sales_dimension_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, direction: str, channel_filter: str = "") -> tuple[list[dict], str]:
     current_start, current_end, period_label = _parse_bi_period(periodo_raw)
     order_direction = "ASC" if direction == "asc" else "DESC"
     group_key, label_expr, extra_select = _get_sales_dimension_sql_parts(dimension)
@@ -1593,6 +1628,7 @@ def _fetch_sales_dimension_rows(engine, periodo_raw: Optional[str], store_code: 
           AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
           AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
           {null_filter}
+          {channel_filter}
         GROUP BY 1
         ORDER BY (SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
              - SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END)) {order_direction}
@@ -1644,12 +1680,13 @@ def _build_sales_total_summary(snapshot: dict, store_code: Optional[str], vendor
     return summary
 
 
-def _build_sales_dimension_summary(question: str, rows: list[dict], period_label: str, dimension: str, limit: int, direction: str) -> str:
+def _build_sales_dimension_summary(question: str, rows: list[dict], period_label: str, dimension: str, limit: int, direction: str, channel_label: str = "") -> str:
+    channel_prefix = f" de {channel_label}" if channel_label else ""
     if not rows:
-        return f"No encontré datos de ventas por {dimension} para {period_label}."
+        return f"No encontré datos de ventas{channel_prefix} por {dimension} para {period_label}."
     total_neto = sum(float(row.get("neto") or 0) for row in rows)
     direction_text = "menor" if direction == "asc" else "mayor"
-    lines = [f"Ventas por {dimension} en {period_label}: top {min(limit, len(rows))} con {direction_text} desempeño dentro del corte, por {_format_currency(total_neto)} acumulados en esta vista."]
+    lines = [f"Ventas{channel_prefix} por {dimension} en {period_label}: top {min(limit, len(rows))} con {direction_text} desempeño dentro del corte, por {_format_currency(total_neto)} acumulados en esta vista."]
     for row in rows[: min(limit, 5)]:
         detail = f" | código {row.get('codigo')}" if row.get("codigo") and dimension in {"vendedor", "cliente", "producto"} else ""
         extra = f" | marca {row.get('detalle')}" if row.get("detalle") else ""
@@ -1661,7 +1698,7 @@ def _build_sales_dimension_summary(question: str, rows: list[dict], period_label
     return "\n".join(lines)
 
 
-def _fetch_sales_share_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, direction: str) -> tuple[list[dict], str]:
+def _fetch_sales_share_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, direction: str, channel_filter: str = "") -> tuple[list[dict], str]:
     current_start, current_end, period_label = _parse_bi_period(periodo_raw)
     order_direction = "ASC" if direction == "asc" else "DESC"
     group_key, label_expr, extra_select = _get_sales_dimension_sql_parts(dimension)
@@ -1681,6 +1718,7 @@ def _fetch_sales_share_rows(engine, periodo_raw: Optional[str], store_code: Opti
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
               {null_filter}
+              {channel_filter}
             GROUP BY 1
         )
         SELECT
@@ -1723,7 +1761,7 @@ def _build_sales_share_summary(rows: list[dict], period_label: str, dimension: s
     return "\n".join(lines)
 
 
-def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, direction: str, comparison_mode: str) -> tuple[list[dict], str, str]:
+def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, direction: str, comparison_mode: str, channel_filter: str = "") -> tuple[list[dict], str, str]:
     current_start, current_end, period_label = _parse_bi_period(periodo_raw)
     previous_start, previous_end, _, comparison_label = _resolve_previous_period(periodo_raw, comparison_mode)
     order_direction = "ASC" if direction == "asc" else "DESC"
@@ -1744,6 +1782,7 @@ def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Opt
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
               {null_filter}
+              {channel_filter}
             GROUP BY 1
         ),
         previous_period AS (
@@ -1757,6 +1796,7 @@ def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Opt
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
               {null_filter}
+              {channel_filter}
             GROUP BY 1
         )
         SELECT
@@ -1789,18 +1829,19 @@ def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Opt
     return [dict(row) for row in rows], period_label, comparison_label
 
 
-def _build_sales_growth_summary(rows: list[dict], period_label: str, comparison_label: str, dimension: str, limit: int, direction: str) -> str:
+def _build_sales_growth_summary(rows: list[dict], period_label: str, comparison_label: str, dimension: str, limit: int, direction: str, channel_label: str = "") -> str:
+    channel_prefix = f" de {channel_label}" if channel_label else ""
     if not rows:
-        return f"No encontré datos de ventas por {dimension} para {period_label}."
+        return f"No encontré datos de ventas{channel_prefix} por {dimension} para {period_label}."
     has_comparison = any(float(row.get("neto_previo") or 0) > 0 for row in rows)
     if not has_comparison:
-        lines = [f"No hay datos del período anterior ({comparison_label}) para comparar crecimiento. Estos son los top {min(limit, len(rows))} por ventas actuales ({period_label}) por {dimension}:"]
+        lines = [f"No hay datos del período anterior ({comparison_label}) para comparar crecimiento. Estos son los top {min(limit, len(rows))} por ventas actuales ({period_label}) por {dimension}{channel_prefix}:"]
         for row in rows[: min(limit, 10)]:
             lines.append(f"- {row.get('group_label')} | ventas {_format_currency(row.get('neto_actual'))}")
         lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
         return "\n".join(lines)
     focus = "mayor crecimiento" if direction == "desc" else "mayor caída"
-    lines = [f"Crecimiento por {dimension} en {period_label}: top {min(limit, len(rows))} con enfoque en {focus} frente a {comparison_label}."]
+    lines = [f"Crecimiento{channel_prefix} por {dimension} en {period_label}: top {min(limit, len(rows))} con enfoque en {focus} frente a {comparison_label}."]
     for row in rows[: min(limit, 10)]:
         lines.append(
             f"- {row.get('group_label')} | actual {_format_currency(row.get('neto_actual'))} | previo {_format_currency(row.get('neto_previo'))} | variación {_format_currency(row.get('variacion_absoluta'))} | crecimiento {_format_percent(row.get('variacion_pct'))}"
@@ -1809,7 +1850,7 @@ def _build_sales_growth_summary(rows: list[dict], period_label: str, comparison_
     return "\n".join(lines)
 
 
-def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, comparison_mode: str) -> tuple[list[dict], str, str]:
+def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, comparison_mode: str, channel_filter: str = "") -> tuple[list[dict], str, str]:
     current_start, current_end, period_label = _parse_bi_period(periodo_raw)
     previous_start, previous_end, _, comparison_label = _resolve_previous_period(periodo_raw, comparison_mode)
 
@@ -1837,6 +1878,7 @@ def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
               {null_filter}
+              {channel_filter}
             GROUP BY 1
         ),
         previous_period AS (
@@ -1851,6 +1893,7 @@ def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
               {null_filter}
+              {channel_filter}
             GROUP BY 1
         )
         SELECT
@@ -1970,7 +2013,7 @@ def _build_cartera_concentration_summary(rows: list[dict], dimension: str, limit
     return "\n".join(lines)
 
 
-def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimension: str, store_code: Optional[str], vendor_code: Optional[str], limit: int, comparison_mode: str) -> tuple[list[dict], str, str]:
+def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimension: str, store_code: Optional[str], vendor_code: Optional[str], limit: int, comparison_mode: str, channel_filter: str = "") -> tuple[list[dict], str, str]:
     current_start, current_end, period_label = _parse_bi_period(periodo_raw)
     previous_start, previous_end, _, comparison_label = _resolve_previous_period(periodo_raw, comparison_mode)
     if dimension not in {"tienda", "vendedor"}:
@@ -1992,6 +2035,7 @@ def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimens
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
               {null_filter}
+              {channel_filter}
             GROUP BY 1
         ),
         previous_sales AS (
@@ -2005,6 +2049,7 @@ def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimens
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
               {null_filter}
+              {channel_filter}
             GROUP BY 1
         ),
         previous_clients AS (
@@ -2016,6 +2061,7 @@ def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimens
               AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+              {channel_filter}
         ),
         current_clients AS (
             SELECT DISTINCT
@@ -2026,6 +2072,7 @@ def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimens
               AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+              {channel_filter}
         ),
         inactive_clients AS (
             SELECT
@@ -2256,6 +2303,9 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
     if scope_error:
         return scope_error
 
+    channel_filter = _get_channel_sql_filter(plan.get("channel"))
+    channel_label = str(plan.get("channel") or "")  # e.g. "mostrador"
+
     if plan.get("kind") == "indicator":
         indicator_args = dict(args or {})
         indicator_args.update(
@@ -2284,6 +2334,7 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
                     str(plan.get("dimension") or "marca"),
                     int(plan.get("limite") or 10),
                     str(plan.get("direction") or "desc"),
+                    channel_filter=channel_filter,
                 )
                 return _build_sales_share_summary(rows, period_label, str(plan.get("dimension") or "marca"), int(plan.get("limite") or 10))
 
@@ -2297,8 +2348,9 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
                     int(plan.get("limite") or 10),
                     str(plan.get("direction") or "desc"),
                     str(plan.get("comparison") or "vs_anio_anterior"),
+                    channel_filter=channel_filter,
                 )
-                return _build_sales_growth_summary(rows, period_label, comparison_label, str(plan.get("dimension") or "marca"), int(plan.get("limite") or 10), str(plan.get("direction") or "desc"))
+                return _build_sales_growth_summary(rows, period_label, comparison_label, str(plan.get("dimension") or "marca"), int(plan.get("limite") or 10), str(plan.get("direction") or "desc"), channel_label=channel_label)
 
             if analysis == "caida_frecuencia":
                 freq_dim = str(plan.get("dimension") or "cliente")
@@ -2310,6 +2362,7 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
                     freq_dim,
                     int(plan.get("limite") or 10),
                     str(plan.get("comparison") or "vs_anio_anterior"),
+                    channel_filter=channel_filter,
                 )
                 return _build_client_frequency_drop_summary(rows, period_label, comparison_label, freq_dim, int(plan.get("limite") or 10))
 
@@ -2330,6 +2383,7 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
                     vendor_code,
                     int(plan.get("limite") or 10),
                     str(plan.get("comparison") or "vs_anio_anterior"),
+                    channel_filter=channel_filter,
                 )
                 return _build_opportunity_dimension_summary(rows, period_label, comparison_label, str(plan.get("dimension") or "tienda"), int(plan.get("limite") or 10))
         except SQLAlchemyError as exc:
@@ -2347,6 +2401,7 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
                 dimension,
                 int(plan.get("limite") or 10),
                 str(plan.get("direction") or "desc"),
+                channel_filter=channel_filter,
             )
             return _build_sales_dimension_summary(
                 question,
@@ -2355,6 +2410,7 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
                 dimension,
                 int(plan.get("limite") or 10),
                 str(plan.get("direction") or "desc"),
+                channel_label=channel_label,
             )
 
         snapshot = _fetch_sales_total_snapshot(
