@@ -18990,7 +18990,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
     # ── Build WHERE clause — now queries raw_ventas_detalle directly ──────────
     # Always filter to FACTURA + NOTA_CREDITO (exclude ALBARAN_PENDIENTE)
     conditions = [
-        "(fn_normalize_text(tipo_documento) LIKE '%FACTURA%' OR fn_normalize_text(tipo_documento) LIKE '%NOTA%CREDITO%')"
+        "(LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')"
     ]
     params: dict = {}
 
@@ -19179,11 +19179,11 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             total_row = conn.execute(
                 text(f"""
                     SELECT
-                        COUNT(*) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS num_lineas,
-                        COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS num_clientes,
-                        SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                        COUNT(*) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%%nota%%') AS num_lineas,
+                        COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%%nota%%') AS num_clientes,
+                        SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%%nota%%'
                                  THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturas_bruto,
-                        SUM(CASE WHEN fn_normalize_text(tipo_documento) LIKE '%%NOTA%%'
+                        SUM(CASE WHEN LOWER(tipo_documento) LIKE '%%nota%%'
                                  THEN ABS(COALESCE(fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
                         SUM(COALESCE(fn_parse_numeric(valor_venta), 0)) AS ventas_netas_directas,
                         COUNT(DISTINCT fn_normalize_text(nom_vendedor)) AS num_vendedores
@@ -19264,9 +19264,9 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             prev_row = conn.execute(
                 text(f"""
                     SELECT
-                        SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                        SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%%nota%%'
                                 THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturas_bruto,
-                        SUM(CASE WHEN fn_normalize_text(tipo_documento) LIKE '%%NOTA%%'
+                        SUM(CASE WHEN LOWER(tipo_documento) LIKE '%%nota%%'
                                 THEN ABS(COALESCE(fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones
                     FROM {_RAW}
                     WHERE {where_clause}
@@ -19295,12 +19295,12 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                         SELECT fn_normalize_text(nom_vendedor) AS vendedor_label,
                                fn_keep_alnum(codigo_vendedor) AS codigo,
                                {_CANAL_CASE} AS canal_vendedor,
-                               SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                               SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%%nota%%'
                                         THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
-                               SUM(CASE WHEN fn_normalize_text(tipo_documento) LIKE '%%NOTA%%'
+                               SUM(CASE WHEN LOWER(tipo_documento) LIKE '%%nota%%'
                                         THEN ABS(COALESCE(fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
-                               COUNT(*) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS lineas,
-                               COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS clientes
+                               COUNT(*) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%%nota%%') AS lineas,
+                               COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%%nota%%') AS clientes
                         FROM {_RAW}
                         WHERE {where_clause}
                         GROUP BY vendedor_label, codigo, canal_vendedor
@@ -19333,12 +19333,12 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                     text(f"""
                         SELECT {_TIENDA_CASE} AS tienda_label,
                                LEFT(serie, 3) AS serie_prefix,
-                               SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                               SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%%nota%%'
                                         THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
-                               SUM(CASE WHEN fn_normalize_text(tipo_documento) LIKE '%%NOTA%%'
+                               SUM(CASE WHEN LOWER(tipo_documento) LIKE '%%nota%%'
                                         THEN ABS(COALESCE(fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
-                               COUNT(*) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS lineas,
-                               COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS clientes,
+                               COUNT(*) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%%nota%%') AS lineas,
+                               COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%%nota%%') AS clientes,
                                COUNT(DISTINCT fn_normalize_text(nom_vendedor)) AS vendedores
                         FROM {_RAW}
                         WHERE {where_clause}
@@ -19369,12 +19369,12 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 rows = conn.execute(
                     text(f"""
                         SELECT {_CANAL_CASE} AS canal_label,
-                               SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                               SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%%nota%%'
                                         THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
-                               SUM(CASE WHEN fn_normalize_text(tipo_documento) LIKE '%%NOTA%%'
+                               SUM(CASE WHEN LOWER(tipo_documento) LIKE '%%nota%%'
                                         THEN ABS(COALESCE(fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
-                               COUNT(*) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS lineas,
-                               COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS clientes,
+                               COUNT(*) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%%nota%%') AS lineas,
+                               COUNT(DISTINCT fn_keep_alnum(cliente_id)) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%%nota%%') AS clientes,
                                COUNT(DISTINCT fn_normalize_text(nom_vendedor)) AS vendedores
                         FROM {_RAW}
                         WHERE {where_clause}
@@ -19411,7 +19411,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                                SUM(COALESCE(fn_parse_numeric(unidades_vendidas), 0)) AS unidades
                         FROM {_RAW}
                         WHERE {where_clause}
-                          AND fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                          AND LOWER(tipo_documento) NOT LIKE '%%nota%%'
                         GROUP BY 1, 2, 3
                         ORDER BY total DESC
                         LIMIT 15
@@ -19442,7 +19442,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                                SUM(COALESCE(fn_parse_numeric(valor_venta), 0)) AS total
                         FROM {_RAW}
                         WHERE {where_clause}
-                          AND fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                          AND LOWER(tipo_documento) NOT LIKE '%%nota%%'
                         GROUP BY 1, 2
                         ORDER BY total DESC
                         LIMIT 20
@@ -19463,9 +19463,9 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
                 rows = conn.execute(
                     text(f"""
                         SELECT fn_parse_date(fecha_venta) AS fecha,
-                               SUM(CASE WHEN fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%'
+                               SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%%nota%%'
                                         THEN COALESCE(fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
-                               COUNT(*) FILTER (WHERE fn_normalize_text(tipo_documento) NOT LIKE '%%NOTA%%') AS lineas
+                               COUNT(*) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%%nota%%') AS lineas
                         FROM {_RAW}
                         WHERE {where_clause}
                         GROUP BY fecha
@@ -22019,7 +22019,7 @@ def admin_bi_diagnostico(admin_key: str = Header(None, alias="x-admin-key")):
     # 5. NORMALIZED tipo_documento values
     def q_tipo_norm(conn):
         rows = conn.execute(text("""
-            SELECT public.fn_normalize_text(tipo_documento) AS tipo, COUNT(*) AS cnt
+            SELECT LOWER(tipo_documento) AS tipo, COUNT(*) AS cnt
             FROM public.raw_ventas_detalle
             GROUP BY 1 ORDER BY 2 DESC LIMIT 15
         """)).mappings().all()
@@ -22041,8 +22041,8 @@ def admin_bi_diagnostico(admin_key: str = Header(None, alias="x-admin-key")):
         r = conn.execute(text("""
             SELECT COUNT(*) AS cnt
             FROM public.raw_ventas_detalle
-            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%%factura%%'
-                   OR public.fn_normalize_text(tipo_documento) LIKE '%%nota%%credito%%')
+            WHERE (LOWER(tipo_documento) LIKE '%%factura%%'
+                   OR LOWER(tipo_documento) LIKE '%%nota%%credito%%')
               AND public.fn_parse_date(fecha_venta) BETWEEN :start AND :end
         """), {"start": date(date.today().year, 1, 1), "end": date.today()}).mappings().one()
         diag["facturas_este_ano_filter"] = r["cnt"]

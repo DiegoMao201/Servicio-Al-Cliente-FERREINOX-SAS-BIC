@@ -750,7 +750,7 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
                 MAX(public.fn_parse_date(rv.fecha_venta)) AS last_sale_date
             FROM public.raw_ventas_detalle rv
             JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
-            WHERE UPPER(COALESCE(rv.tipo_documento, '')) LIKE '%FACTURA%'
+            WHERE LOWER(COALESCE(rv.tipo_documento, '')) LIKE '%factura%'
             GROUP BY am.referencia_normalizada, LEFT(COALESCE(rv.serie, ''), 3)
         )
         SELECT
@@ -789,7 +789,7 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
                 MAX(public.fn_parse_date(rv.fecha_venta)) AS last_sale_date
             FROM public.raw_ventas_detalle rv
             JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
-            WHERE UPPER(COALESCE(rv.tipo_documento, '')) LIKE '%FACTURA%'
+            WHERE LOWER(COALESCE(rv.tipo_documento, '')) LIKE '%factura%'
             GROUP BY am.referencia_normalizada, LEFT(COALESCE(rv.serie, ''), 3)
         ),
         base AS (
@@ -961,7 +961,7 @@ def _fetch_clients_without_purchase_rows(engine, periodo_raw: Optional[str], sto
                 MAX(public.fn_parse_date(rv.fecha_venta)) AS ultima_compra,
                 COUNT(DISTINCT date_trunc('month', public.fn_parse_date(rv.fecha_venta))) AS meses_activos
             FROM public.raw_ventas_detalle rv
-            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+            WHERE LOWER(rv.tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(rv.fecha_venta) BETWEEN :history_start AND :history_end
               AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
@@ -970,7 +970,7 @@ def _fetch_clients_without_purchase_rows(engine, periodo_raw: Optional[str], sto
         current_period AS (
             SELECT DISTINCT public.fn_keep_alnum(rv.cliente_id) AS cod_cliente
             FROM public.raw_ventas_detalle rv
-            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+            WHERE LOWER(rv.tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(rv.fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
@@ -1052,7 +1052,7 @@ def _fetch_products_without_sale_rows(engine, periodo_raw: Optional[str], store_
                 COUNT(DISTINCT date_trunc('month', public.fn_parse_date(rv.fecha_venta))) AS meses_activos
             FROM public.raw_ventas_detalle rv
             JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
-            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+            WHERE LOWER(rv.tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(rv.fecha_venta) BETWEEN :history_start AND :history_end
               AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
@@ -1064,7 +1064,7 @@ def _fetch_products_without_sale_rows(engine, periodo_raw: Optional[str], store_
                 COALESCE(SUM(COALESCE(public.fn_parse_numeric(rv.valor_venta), 0)), 0) AS ventas_actuales
             FROM public.raw_ventas_detalle rv
             JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
-            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+            WHERE LOWER(rv.tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(rv.fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
@@ -1151,7 +1151,7 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 COUNT(DISTINCT date_trunc('month', public.fn_parse_date(rv.fecha_venta))) AS meses_activos
             FROM public.raw_ventas_detalle rv
             JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
-            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+            WHERE LOWER(rv.tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(rv.fecha_venta) BETWEEN :history_start AND :history_end
               AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
@@ -1163,7 +1163,7 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 COALESCE(SUM(COALESCE(public.fn_parse_numeric(rv.valor_venta), 0)), 0) AS ventas_actuales
             FROM public.raw_ventas_detalle rv
             JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
-            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+            WHERE LOWER(rv.tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(rv.fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
@@ -1205,7 +1205,7 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 COALESCE(SUM(COALESCE(public.fn_parse_numeric(rv.valor_venta), 0)), 0) AS ventas_historicas_cliente
             FROM public.raw_ventas_detalle rv
             JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
-            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+            WHERE LOWER(rv.tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(rv.fecha_venta) BETWEEN :history_start AND :history_end
               AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
@@ -1217,7 +1217,7 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 public.fn_keep_alnum(rv.cliente_id) AS cod_cliente
             FROM public.raw_ventas_detalle rv
             JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
-            WHERE public.fn_normalize_text(rv.tipo_documento) LIKE '%factura%'
+            WHERE LOWER(rv.tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(rv.fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(rv.codigo_vendedor) = :vendor_code)
@@ -1382,22 +1382,22 @@ def _fetch_sales_total_snapshot(engine, periodo_raw: Optional[str], store_code: 
         """
         WITH current_period AS (
             SELECT
-                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
-                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
-                COUNT(*) FILTER (WHERE public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%') AS lineas,
-                COUNT(DISTINCT public.fn_keep_alnum(cliente_id)) FILTER (WHERE public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%') AS clientes
+                SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
+                SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
+                COUNT(*) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%nota%') AS lineas,
+                COUNT(DISTINCT public.fn_keep_alnum(cliente_id)) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%nota%') AS clientes
             FROM public.raw_ventas_detalle
-            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+            WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
         ),
         previous_period AS (
             SELECT
-                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
-                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones
+                SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
+                SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones
             FROM public.raw_ventas_detalle
-            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+            WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
@@ -1453,19 +1453,19 @@ def _fetch_sales_dimension_rows(engine, periodo_raw: Optional[str], store_code: 
             {group_key} AS group_key,
             {label_expr} AS group_label,
             {extra_select},
-            SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
-            SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
-            COUNT(*) FILTER (WHERE public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%') AS lineas,
-            COUNT(DISTINCT public.fn_keep_alnum(cliente_id)) FILTER (WHERE public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%') AS clientes,
+            SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END) AS facturado,
+            SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS devoluciones,
+            COUNT(*) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%nota%') AS lineas,
+            COUNT(DISTINCT public.fn_keep_alnum(cliente_id)) FILTER (WHERE LOWER(tipo_documento) NOT LIKE '%nota%') AS clientes,
             SUM(COALESCE(public.fn_parse_numeric(unidades_vendidas), 0)) AS unidades
         FROM public.raw_ventas_detalle
-        WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+        WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
           AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
           AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
           AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
         GROUP BY 1
-        ORDER BY (SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
-             - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END)) {order_direction}
+        ORDER BY (SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+             - SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END)) {order_direction}
         LIMIT :limit
         """
     )
@@ -1542,10 +1542,10 @@ def _fetch_sales_share_rows(engine, periodo_raw: Optional[str], store_code: Opti
                 {group_key} AS group_key,
                 {label_expr} AS group_label,
                 {extra_select},
-                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
-                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto
+                SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto
             FROM public.raw_ventas_detalle
-            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+            WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
@@ -1603,10 +1603,10 @@ def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Opt
                 {group_key} AS group_key,
                 {label_expr} AS group_label,
                 {extra_select},
-                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
-                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_actual
+                SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_actual
             FROM public.raw_ventas_detalle
-            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+            WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
@@ -1615,10 +1615,10 @@ def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Opt
         previous_period AS (
             SELECT
                 {group_key} AS group_key,
-                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
-                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_previo
+                SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_previo
             FROM public.raw_ventas_detalle
-            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+            WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
@@ -1692,10 +1692,10 @@ def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_
                 {group_key} AS group_key,
                 {label_expr} AS group_label,
                 COUNT(DISTINCT public.fn_parse_date(fecha_venta)) AS freq_actual,
-                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
-                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_actual
+                SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_actual
             FROM public.raw_ventas_detalle
-            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+            WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
@@ -1705,10 +1705,10 @@ def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_
             SELECT
                 {group_key} AS group_key,
                 COUNT(DISTINCT public.fn_parse_date(fecha_venta)) AS freq_prev,
-                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
-                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_previo
+                SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_previo
             FROM public.raw_ventas_detalle
-            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+            WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
@@ -1844,10 +1844,10 @@ def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimens
                 {group_key} AS group_key,
                 {label_expr} AS group_label,
                 {extra_select},
-                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
-                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_actual
+                SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_actual
             FROM public.raw_ventas_detalle
-            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+            WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
@@ -1856,10 +1856,10 @@ def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimens
         previous_sales AS (
             SELECT
                 {group_key} AS group_key,
-                SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
-                  - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_previo
+                SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
+                  - SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_previo
             FROM public.raw_ventas_detalle
-            WHERE (public.fn_normalize_text(tipo_documento) LIKE '%factura%' OR public.fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+            WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
@@ -1870,7 +1870,7 @@ def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimens
                 {group_key} AS group_key,
                 public.fn_keep_alnum(cliente_id) AS cod_cliente
             FROM public.raw_ventas_detalle
-            WHERE public.fn_normalize_text(tipo_documento) LIKE '%factura%'
+            WHERE LOWER(tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
@@ -1880,7 +1880,7 @@ def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimens
                 {group_key} AS group_key,
                 public.fn_keep_alnum(cliente_id) AS cod_cliente
             FROM public.raw_ventas_detalle
-            WHERE public.fn_normalize_text(tipo_documento) LIKE '%factura%'
+            WHERE LOWER(tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
@@ -1951,7 +1951,7 @@ def _fetch_client_decline_rows(engine, periodo_raw: Optional[str], store_code: O
                 MAX(fn_normalize_text(nombre_cliente)) AS nombre_cliente,
                 COALESCE(SUM(COALESCE(fn_parse_numeric(valor_venta), 0)), 0) AS ventas_actuales
             FROM public.raw_ventas_detalle
-            WHERE (fn_normalize_text(tipo_documento) LIKE '%factura%' OR fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+            WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
             GROUP BY fn_keep_alnum(cliente_id)
@@ -1961,7 +1961,7 @@ def _fetch_client_decline_rows(engine, periodo_raw: Optional[str], store_code: O
                 fn_keep_alnum(cliente_id) AS cod_cliente,
                 COALESCE(SUM(COALESCE(fn_parse_numeric(valor_venta), 0)), 0) AS ventas_previas
             FROM public.raw_ventas_detalle
-            WHERE (fn_normalize_text(tipo_documento) LIKE '%factura%' OR fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+            WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
             GROUP BY fn_keep_alnum(cliente_id)
