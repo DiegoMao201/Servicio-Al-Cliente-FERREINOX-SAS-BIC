@@ -566,6 +566,9 @@ def _extract_limit_from_question(question: str, default: int, minimum: int, maxi
 
 def _infer_sales_dimension(question: str) -> Optional[str]:
     normalized = _normalize_text(question)
+    # Compound phrases: "líneas de producto(s)" → linea, not producto
+    if re.search(r"l[ií]neas?\s+de\s+producto", normalized):
+        return "linea"
     for dimension, aliases in _UNIVERSAL_BI_DIMENSIONS.items():
         if any(alias in normalized for alias in aliases):
             return dimension
@@ -618,10 +621,12 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
             "limite": limit,
         }
     if any(token in normalized for token in ["caida de frecuencia", "caída de frecuencia", "frecuencia de compra", "menos frecuencia", "menos visitas", "menos compras", "frecuencia"]):
+        freq_dim = "vendedor" if any(w in normalized for w in ["vendedor", "vendedores", "asesor", "asesores"]) else "cliente"
         return {
             "kind": "semantic",
             "analysis": "caida_frecuencia",
             "periodo": period_value,
+            "dimension": freq_dim,
             "direction": "asc",
             "comparison": _infer_comparison_mode(question),
             "limite": limit,
@@ -764,7 +769,7 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
                 WHEN ls.last_sale_date IS NULL THEN NULL
                 ELSE (CURRENT_DATE - ls.last_sale_date)
             END AS dias_sin_venta
-        FROM public.mv_internal_inventory_health
+        FROM public.mv_internal_inventory_health inv
         LEFT JOIN last_sales ls
           ON ls.referencia_normalizada = inv.referencia_normalizada
          AND ls.store_prefix = inv.cod_almacen
@@ -1651,10 +1656,17 @@ def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Opt
 
 def _build_sales_growth_summary(rows: list[dict], period_label: str, comparison_label: str, dimension: str, limit: int, direction: str) -> str:
     if not rows:
-        return f"No encontré crecimiento por {dimension} para {period_label}."
+        return f"No encontré datos de ventas por {dimension} para {period_label}."
+    has_comparison = any(float(row.get("neto_previo") or 0) > 0 for row in rows)
+    if not has_comparison:
+        lines = [f"No hay datos del período anterior ({comparison_label}) para comparar crecimiento. Estos son los top {min(limit, len(rows))} por ventas actuales ({period_label}) por {dimension}:"]
+        for row in rows[: min(limit, 10)]:
+            lines.append(f"- {row.get('group_label')} | ventas {_format_currency(row.get('neto_actual'))}")
+        lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+        return "\n".join(lines)
     focus = "mayor crecimiento" if direction == "desc" else "mayor caída"
     lines = [f"Crecimiento por {dimension} en {period_label}: top {min(limit, len(rows))} con enfoque en {focus} frente a {comparison_label}."]
-    for row in rows[: min(limit, 5)]:
+    for row in rows[: min(limit, 10)]:
         lines.append(
             f"- {row.get('group_label')} | actual {_format_currency(row.get('neto_actual'))} | previo {_format_currency(row.get('neto_previo'))} | variación {_format_currency(row.get('variacion_absoluta'))} | crecimiento {_format_percent(row.get('variacion_pct'))}"
         )
@@ -1662,17 +1674,24 @@ def _build_sales_growth_summary(rows: list[dict], period_label: str, comparison_
     return "\n".join(lines)
 
 
-def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], limit: int, comparison_mode: str) -> tuple[list[dict], str, str]:
+def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], vendor_code: Optional[str], dimension: str, limit: int, comparison_mode: str) -> tuple[list[dict], str, str]:
     current_start, current_end, period_label = _parse_bi_period(periodo_raw)
     previous_start, previous_end, _, comparison_label = _resolve_previous_period(periodo_raw, comparison_mode)
+
+    if dimension == "vendedor":
+        group_key = "public.fn_keep_alnum(codigo_vendedor)"
+        label_expr = "INITCAP(MAX(public.fn_normalize_text(nom_vendedor)))"
+    else:
+        group_key = "public.fn_keep_alnum(cliente_id)"
+        label_expr = "INITCAP(MAX(public.fn_normalize_text(nombre_cliente)))"
+
     sql = text(
-        """
+        f"""
         WITH current_period AS (
             SELECT
-                public.fn_keep_alnum(cliente_id) AS cod_cliente,
-                INITCAP(MAX(public.fn_normalize_text(nombre_cliente))) AS nombre_cliente,
-                INITCAP(MAX(public.fn_normalize_text(nom_vendedor))) AS nom_vendedor,
-                COUNT(DISTINCT public.fn_parse_date(fecha_venta)) AS dias_compra_actual,
+                {group_key} AS group_key,
+                {label_expr} AS group_label,
+                COUNT(DISTINCT public.fn_parse_date(fecha_venta)) AS freq_actual,
                 SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
                   - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_actual
             FROM public.raw_ventas_detalle
@@ -1684,8 +1703,8 @@ def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_
         ),
         previous_period AS (
             SELECT
-                public.fn_keep_alnum(cliente_id) AS cod_cliente,
-                COUNT(DISTINCT public.fn_parse_date(fecha_venta)) AS dias_compra_prev,
+                {group_key} AS group_key,
+                COUNT(DISTINCT public.fn_parse_date(fecha_venta)) AS freq_prev,
                 SUM(CASE WHEN public.fn_normalize_text(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
                   - SUM(CASE WHEN public.fn_normalize_text(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END) AS neto_previo
             FROM public.raw_ventas_detalle
@@ -1696,18 +1715,16 @@ def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_
             GROUP BY 1
         )
         SELECT
-            pp.cod_cliente,
-            COALESCE(cp.nombre_cliente, pp.cod_cliente) AS nombre_cliente,
-            cp.nom_vendedor,
-            COALESCE(cp.dias_compra_actual, 0) AS dias_compra_actual,
-            pp.dias_compra_prev,
+            COALESCE(cp.group_key, pp.group_key) AS group_key,
+            COALESCE(cp.group_label, pp.group_key) AS group_label,
+            COALESCE(cp.freq_actual, 0) AS freq_actual,
+            COALESCE(pp.freq_prev, 0) AS freq_prev,
             COALESCE(cp.neto_actual, 0) AS neto_actual,
-            pp.neto_previo,
-            COALESCE(cp.dias_compra_actual, 0) - pp.dias_compra_prev AS delta_frecuencia,
-            COALESCE(cp.neto_actual, 0) - pp.neto_previo AS delta_neto
-        FROM previous_period pp
-        LEFT JOIN current_period cp ON cp.cod_cliente = pp.cod_cliente
-        WHERE pp.dias_compra_prev > COALESCE(cp.dias_compra_actual, 0)
+            COALESCE(pp.neto_previo, 0) AS neto_previo,
+            COALESCE(cp.freq_actual, 0) - COALESCE(pp.freq_prev, 0) AS delta_frecuencia,
+            COALESCE(cp.neto_actual, 0) - COALESCE(pp.neto_previo, 0) AS delta_neto
+        FROM current_period cp
+        FULL OUTER JOIN previous_period pp ON pp.group_key = cp.group_key
         ORDER BY delta_frecuencia ASC, delta_neto ASC
         LIMIT :limit
         """
@@ -1728,13 +1745,28 @@ def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_
     return [dict(row) for row in rows], period_label, comparison_label
 
 
-def _build_client_frequency_drop_summary(rows: list[dict], period_label: str, comparison_label: str, limit: int) -> str:
+def _build_client_frequency_drop_summary(rows: list[dict], period_label: str, comparison_label: str, dimension: str, limit: int) -> str:
     if not rows:
-        return f"No encontré caída de frecuencia para {period_label}."
-    lines = [f"Caída de frecuencia en {period_label}: {len(rows)} clientes compraron en menos días frente a {comparison_label}."]
-    for row in rows[: min(limit, 5)]:
+        return f"No encontré datos de frecuencia por {dimension} para {period_label}."
+    has_comparison = any(float(row.get("freq_prev") or 0) > 0 for row in rows)
+    if not has_comparison:
+        lines = [f"No hay datos del período anterior ({comparison_label}) para comparar frecuencia. Ranking actual de frecuencia por {dimension} ({period_label}):"]
+        for row in rows[: min(limit, 10)]:
+            lines.append(f"- {row.get('group_label')} | {_format_number(row.get('freq_actual'))} días con venta | neto {_format_currency(row.get('neto_actual'))}")
+        lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+        return "\n".join(lines)
+    drops = [r for r in rows if int(r.get("delta_frecuencia") or 0) < 0]
+    if not drops:
+        lines = [f"Ningún {dimension} muestra caída de frecuencia en {period_label} vs {comparison_label}. Top por frecuencia actual:"]
+        for row in rows[: min(limit, 10)]:
+            lines.append(f"- {row.get('group_label')} | actual {_format_number(row.get('freq_actual'))} días vs previo {_format_number(row.get('freq_prev'))} días | neto {_format_currency(row.get('neto_actual'))}")
+        lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+        return "\n".join(lines)
+    dim_label = "vendedores" if dimension == "vendedor" else "clientes"
+    lines = [f"Caída de frecuencia en {period_label}: {len(drops)} {dim_label} con menos días de venta frente a {comparison_label}."]
+    for row in drops[: min(limit, 10)]:
         lines.append(
-            f"- {row.get('nombre_cliente')} | días compra actual {_format_number(row.get('dias_compra_actual'))} vs previo {_format_number(row.get('dias_compra_prev'))} | neto actual {_format_currency(row.get('neto_actual'))} vs previo {_format_currency(row.get('neto_previo'))} | vendedor {row.get('nom_vendedor') or 'N/A'}"
+            f"- {row.get('group_label')} | días actual {_format_number(row.get('freq_actual'))} vs previo {_format_number(row.get('freq_prev'))} (Δ {row.get('delta_frecuencia')}) | neto actual {_format_currency(row.get('neto_actual'))} vs previo {_format_currency(row.get('neto_previo'))}"
         )
     lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
     return "\n".join(lines)
@@ -2124,15 +2156,17 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
                 return _build_sales_growth_summary(rows, period_label, comparison_label, str(plan.get("dimension") or "linea"), int(plan.get("limite") or 10), str(plan.get("direction") or "desc"))
 
             if analysis == "caida_frecuencia":
+                freq_dim = str(plan.get("dimension") or "cliente")
                 rows, period_label, comparison_label = _fetch_client_frequency_drop_rows(
                     engine,
                     args.get("periodo") or plan.get("periodo"),
                     store_code,
                     vendor_code,
+                    freq_dim,
                     int(plan.get("limite") or 10),
                     str(plan.get("comparison") or "vs_anio_anterior"),
                 )
-                return _build_client_frequency_drop_summary(rows, period_label, comparison_label, int(plan.get("limite") or 10))
+                return _build_client_frequency_drop_summary(rows, period_label, comparison_label, freq_dim, int(plan.get("limite") or 10))
 
             if analysis == "concentracion_cartera":
                 rows = _fetch_cartera_concentration_rows(
