@@ -22141,6 +22141,32 @@ def admin_bi_diagnostico(admin_key: str = Header(None, alias="x-admin-key")):
         diag["growth_test"] = {"rows": len(growth_rows), "period": plabel, "comparison": clabel, "sample": growth_rows[:2]}
     _safe_query("growth", q_growth)
 
+    # 10b. Serie suffix distribution (last char of serie)
+    def q_serie_suffix(conn):
+        rows = conn.execute(text("""
+            SELECT RIGHT(COALESCE(serie, ''), 1) AS suffix, COUNT(*) AS cnt
+            FROM public.raw_ventas_detalle
+            WHERE serie IS NOT NULL AND LENGTH(serie) >= 4
+            GROUP BY 1 ORDER BY 2 DESC LIMIT 15
+        """)).mappings().all()
+        diag["serie_suffix_dist"] = {str(r["suffix"]): r["cnt"] for r in rows}
+    _safe_query("serie_suffix", q_serie_suffix)
+
+    # 10c. Serie suffix x tipo_documento cross-tab
+    def q_serie_tipo(conn):
+        rows = conn.execute(text("""
+            SELECT RIGHT(COALESCE(serie, ''), 1) AS suffix, tipo_documento, COUNT(*) AS cnt
+            FROM public.raw_ventas_detalle
+            WHERE serie IS NOT NULL AND LENGTH(serie) >= 4
+            GROUP BY 1, 2 ORDER BY 1, 3 DESC
+        """)).mappings().all()
+        cross = {}
+        for r in rows:
+            key = f"{r['suffix']}|{r['tipo_documento']}"
+            cross[key] = r["cnt"]
+        diag["serie_suffix_x_tipo"] = cross
+    _safe_query("serie_tipo", q_serie_tipo)
+
     # 11. Inventory health MV
     def q_inv(conn):
         r = conn.execute(text("SELECT COUNT(*) AS cnt FROM public.mv_internal_inventory_health")).mappings().one()
