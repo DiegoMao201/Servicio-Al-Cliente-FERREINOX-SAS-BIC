@@ -479,30 +479,110 @@ def _fetch_sales_projection(engine, store_code: Optional[str]) -> dict:
 
 
 def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Optional[str], limit: int) -> list[dict]:
-    with engine.begin() as connection:
-        rows = connection.execute(
-            text(
-                """
-                SELECT
-                    cod_almacen,
-                    almacen_nombre,
-                    referencia,
-                    descripcion,
-                    stock_total,
-                    historial_ventas_metric,
-                    reorder_point,
-                    reorder_qty_recommended,
-                    inventory_value,
-                    health_status
-                FROM public.mv_internal_inventory_health
-                WHERE health_status = ANY(:statuses)
-                  AND (:store_code IS NULL OR cod_almacen = :store_code)
-                ORDER BY inventory_value DESC, reorder_qty_recommended DESC, historial_ventas_metric ASC
-                LIMIT :limit
-                """
-            ),
-            {"statuses": health_statuses, "store_code": store_code, "limit": limit},
-        ).mappings().all()
+    query_params = {"statuses": health_statuses, "store_code": store_code, "limit": limit}
+
+    primary_sql = text(
+        """
+        SELECT
+            cod_almacen,
+            almacen_nombre,
+            referencia,
+            descripcion,
+            stock_total,
+            historial_ventas_metric,
+            reorder_point,
+            reorder_qty_recommended,
+            inventory_value,
+            health_status
+        FROM public.mv_internal_inventory_health
+        WHERE health_status = ANY(:statuses)
+          AND (:store_code IS NULL OR cod_almacen = :store_code)
+        ORDER BY inventory_value DESC, reorder_qty_recommended DESC, historial_ventas_metric ASC
+        LIMIT :limit
+        """
+    )
+
+    fallback_sql = text(
+        """
+        WITH base AS (
+            SELECT
+                cod_almacen,
+                almacen_nombre,
+                referencia_normalizada,
+                MAX(referencia) AS referencia,
+                MAX(descripcion) AS descripcion,
+                COALESCE(SUM(stock_disponible), 0) AS stock_total,
+                COALESCE(AVG(costo_promedio_und), 0) AS costo_promedio_und,
+                COALESCE(SUM(unidades_vendidas), 0) AS unidades_vendidas_total,
+                COALESCE(MAX(historial_ventas), 0) AS historial_ventas_metric,
+                COALESCE(MAX(lead_time_proveedor), 0) AS lead_time_proveedor_dias
+            FROM public.vw_inventario_agente
+            GROUP BY cod_almacen, almacen_nombre, referencia_normalizada
+        ),
+        health AS (
+            SELECT
+                cod_almacen,
+                almacen_nombre,
+                referencia,
+                descripcion,
+                stock_total,
+                historial_ventas_metric,
+                stock_total * costo_promedio_und AS inventory_value,
+                GREATEST(
+                    CEIL(
+                        ((GREATEST(historial_ventas_metric, 0) / 30.0) * GREATEST(NULLIF(lead_time_proveedor_dias, 0), 7))
+                        + GREATEST(historial_ventas_metric * 0.25, 1)
+                    ),
+                    1
+                )::numeric(18,2) AS reorder_point,
+                GREATEST(
+                    CEIL(
+                        (((GREATEST(historial_ventas_metric, 0) / 30.0) * GREATEST(NULLIF(lead_time_proveedor_dias, 0), 7))
+                        + GREATEST(historial_ventas_metric * 0.25, 1)) - stock_total
+                    ),
+                    0
+                )::numeric(18,2) AS reorder_qty_recommended,
+                CASE
+                    WHEN stock_total <= 0 AND GREATEST(historial_ventas_metric, 0) > 0 THEN 'quiebre_critico'
+                    WHEN stock_total < GREATEST(
+                        CEIL(
+                            ((GREATEST(historial_ventas_metric, 0) / 30.0) * GREATEST(NULLIF(lead_time_proveedor_dias, 0), 7))
+                            + GREATEST(historial_ventas_metric * 0.25, 1)
+                        ),
+                        1
+                    ) THEN 'reposicion_recomendada'
+                    WHEN stock_total > GREATEST(historial_ventas_metric * 4, 12) AND GREATEST(historial_ventas_metric, 0) > 0 THEN 'sobrestock'
+                    WHEN stock_total > 0 AND GREATEST(historial_ventas_metric, 0) = 0 AND GREATEST(unidades_vendidas_total, 0) = 0 THEN 'sin_movimiento'
+                    ELSE 'saludable'
+                END AS health_status
+            FROM base
+        )
+        SELECT
+            cod_almacen,
+            almacen_nombre,
+            referencia,
+            descripcion,
+            stock_total,
+            historial_ventas_metric,
+            reorder_point,
+            reorder_qty_recommended,
+            inventory_value,
+            health_status
+        FROM health
+        WHERE health_status = ANY(:statuses)
+          AND (:store_code IS NULL OR cod_almacen = :store_code)
+        ORDER BY inventory_value DESC, reorder_qty_recommended DESC, historial_ventas_metric ASC
+        LIMIT :limit
+        """
+    )
+
+    try:
+        with engine.begin() as connection:
+            rows = connection.execute(primary_sql, query_params).mappings().all()
+    except SQLAlchemyError as exc:
+        logger.warning("inventory health MV unavailable, using direct fallback query: %s", exc)
+        with engine.begin() as connection:
+            rows = connection.execute(fallback_sql, query_params).mappings().all()
     return [dict(row) for row in rows]
 
 
@@ -543,6 +623,30 @@ def _build_sales_projection_summary(projection: dict, store_code: Optional[str])
     )
 
 
+def _build_inventory_indicator_summary(title: str, rows: list[dict], limit: int, include_suggested: bool = False) -> str:
+    metrics = _build_inventory_summary_metrics(rows)
+    lines = [f"{title}: {metrics[0][1]} referencias y {metrics[2][1]} comprometidos en inventario."]
+    for row in rows[: min(limit, 5)]:
+        suffix = f" | sugerido {_format_number(row.get('reorder_qty_recommended'))}" if include_suggested else ""
+        lines.append(
+            f"- {row.get('referencia')} | {row.get('descripcion')} | {row.get('almacen_nombre')} | stock {_format_number(row.get('stock_total'))} | valor {_format_currency(row.get('inventory_value'))}{suffix}"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
+def _build_cartera_indicator_summary(rows: list[dict], limit: int) -> str:
+    metrics = _build_cartera_summary_metrics(rows)
+    lines = [f"Cartera vencida: {metrics[0][1]} clientes con {metrics[1][1]} en saldo total y {metrics[2][1]} en >90 días."]
+    for row in rows[: min(limit, 5)]:
+        vencido = float(row.get("balance_31_60") or 0) + float(row.get("balance_61_90") or 0) + float(row.get("balance_91_plus") or 0)
+        lines.append(
+            f"- {row.get('nombre_cliente')} | vencido {_format_currency(vencido)} | >90 {_format_currency(row.get('balance_91_plus'))} | vendedor {row.get('nom_vendedor') or 'N/A'}"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
 def _humanize_health_status(status: Any) -> str:
     mapping = {
         "sin_movimiento": "Sin movimiento",
@@ -572,50 +676,25 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
             rows = _fetch_inventory_rows(engine, ["sin_movimiento", "sobrestock"], store_code, limit)
             if not rows:
                 return "No encontré referencias quedadas o de baja rotación para ese filtro."
-            lines = ["Resumen de baja rotación:"]
-            for row in rows[: min(limit, 5)]:
-                lines.append(
-                    f"- {row.get('referencia')} | {row.get('descripcion')} | {row.get('almacen_nombre')} | stock {_format_number(row.get('stock_total'))} | valor {_format_currency(row.get('inventory_value'))}"
-                )
-            lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
-            return "\n".join(lines)
+            return _build_inventory_indicator_summary("Baja rotación", rows, limit)
 
         if query_type == "cartera_vencida_resumen":
             rows = _fetch_cartera_rows(engine, limit)
             if not rows:
                 return "No encontré clientes vencidos para ese corte."
-            lines = ["Resumen de cartera vencida:"]
-            for row in rows[: min(limit, 5)]:
-                vencido = float(row.get("balance_31_60") or 0) + float(row.get("balance_61_90") or 0) + float(row.get("balance_91_plus") or 0)
-                lines.append(
-                    f"- {row.get('nombre_cliente')} | vencido {_format_currency(vencido)} | >90 {_format_currency(row.get('balance_91_plus'))} | vendedor {row.get('nom_vendedor') or 'N/A'}"
-                )
-            lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
-            return "\n".join(lines)
+            return _build_cartera_indicator_summary(rows, limit)
 
         if query_type == "quiebres_stock":
             rows = _fetch_inventory_rows(engine, ["quiebre_critico"], store_code, limit)
             if not rows:
                 return "No encontré quiebres críticos para ese filtro."
-            lines = ["Quiebres críticos detectados:"]
-            for row in rows[: min(limit, 5)]:
-                lines.append(
-                    f"- {row.get('referencia')} | {row.get('descripcion')} | {row.get('almacen_nombre')} | stock {_format_number(row.get('stock_total'))} | sugerido {_format_number(row.get('reorder_qty_recommended'))}"
-                )
-            lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
-            return "\n".join(lines)
+            return _build_inventory_indicator_summary("Quiebres críticos", rows, limit, include_suggested=True)
 
         if query_type == "sobrestock":
             rows = _fetch_inventory_rows(engine, ["sobrestock"], store_code, limit)
             if not rows:
                 return "No encontré referencias en sobrestock para ese filtro."
-            lines = ["Sobrestock detectado:"]
-            for row in rows[: min(limit, 5)]:
-                lines.append(
-                    f"- {row.get('referencia')} | {row.get('descripcion')} | {row.get('almacen_nombre')} | stock {_format_number(row.get('stock_total'))} | valor {_format_currency(row.get('inventory_value'))}"
-                )
-            lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
-            return "\n".join(lines)
+            return _build_inventory_indicator_summary("Sobrestock", rows, limit)
     except SQLAlchemyError as exc:
         logger.warning("consultar_indicadores_internos failed: %s", exc)
         return "No pude consultar los indicadores internos. Verifica que esté aplicado backend/internal_agent_ops.sql."

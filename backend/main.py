@@ -19199,6 +19199,7 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
         "tienda": tienda_final or "todas las tiendas",
         "canal": canal_label,
         "vendedor_consultado": vendedor_filter_label or ("todos" if role in {"administrador", "gerente", "operador"} else full_name),
+        "alcance_consulta": "empresa_consolidada" if not tienda_final and not vendedor_filter_label else "filtrada",
         "tipo_venta": tipo_venta,
         "ventas": {
             "facturas_bruto": round(facturas_bruto, 2),
@@ -19461,6 +19462,17 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
             ]
         except Exception as exc:
             logger.warning("consultar_ventas_internas por_dia error: %s", exc)
+
+    alcance_texto = "toda la empresa" if result.get("alcance_consulta") == "empresa_consolidada" else str(result.get("tienda") or "el filtro solicitado")
+    resumen = (
+        f"Ventas netas de {period_label} en {alcance_texto}: {format_currency(neto)}. "
+        f"Facturación bruta {format_currency(facturas_bruto)} y devoluciones {format_currency(devoluciones)}."
+    )
+    if result.get("vs_anio_anterior", {}).get("variacion_pct") is not None:
+        resumen += f" Variación vs año anterior: {result['vs_anio_anterior']['variacion_pct']}%."
+    if alerta_datos_desactualizados:
+        resumen += " Ojo: la base puede estar desactualizada y conviene sincronizar antes de tomar decisiones finas."
+    result["resumen_ejecutivo"] = resumen
 
     return json.dumps(result, ensure_ascii=False, default=str)
 

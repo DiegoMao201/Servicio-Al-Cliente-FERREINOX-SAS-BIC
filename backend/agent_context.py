@@ -1441,6 +1441,8 @@ def build_turn_context(
         lines.append("Consulta de inteligencia de negocios (empleado interno).")
         lines.append("Si la pregunta es ventas puras, llama consultar_ventas_internas.")
         lines.append("Si la pregunta es proyeccion, cartera vencida, baja rotacion, quiebres o sobrestock, llama consultar_indicadores_internos.")
+        lines.append("Si el colaborador NO menciona sede, vendedor o canal, asume consulta consolidada de toda la empresa, especialmente para gerente o administrador.")
+        lines.append("NO limites la consulta a la sede del colaborador salvo que lo pida explícitamente o el rol sea operador con restricción de acceso.")
         lines.append("Si el detalle es demasiado largo para WhatsApp, resume los hallazgos y ofrece enviarlo por correo con Excel usando enviar_reporte_interno_correo.")
 
     elif intent == "documento":
