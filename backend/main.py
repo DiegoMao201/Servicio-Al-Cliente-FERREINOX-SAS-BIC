@@ -19106,26 +19106,63 @@ def _handle_tool_consultar_ventas_internas(args: dict, conversation_context: dic
 
     # ── Nombre de marca mapping (inline CASE) ─────────────────────────────────
     _MARCA_CASE = """
-        CASE fn_parse_integer(marca_producto)
-            WHEN 50 THEN 'P8-ASC-MEGA'
-            WHEN 54 THEN 'MPY-International'
-            WHEN 55 THEN 'DPP-AN COLORANTS LATAM'
-            WHEN 56 THEN 'DPP-Pintuco Profesional'
-            WHEN 57 THEN 'ASC-Mega'
-            WHEN 58 THEN 'DPP-Pintuco'
-            WHEN 59 THEN 'DPP-Madetec'
-            WHEN 60 THEN 'POW-Interpon'
-            WHEN 61 THEN 'various'
-            WHEN 62 THEN 'DPP-ICO'
-            WHEN 63 THEN 'DPP-Terinsa'
-            WHEN 64 THEN 'MPY-Pintuco'
-            WHEN 65 THEN 'non-AN Third Party'
-            WHEN 66 THEN 'ICO-AN Packaging'
-            WHEN 67 THEN 'ASC-Automotive OEM'
-            WHEN 68 THEN 'POW-Resicoat'
-            WHEN 73 THEN 'DPP-Coral'
-            WHEN 91 THEN 'DPP-Sikkens'
-            ELSE 'No Especificada'
+        CASE
+          WHEN COALESCE(TRIM(marca_producto), '0') NOT IN ('', '0', '1', '3', '35', '61') THEN
+            CASE fn_parse_integer(marca_producto)
+                WHEN 10  THEN 'Corona'
+                WHEN 13  THEN 'Durespo'
+                WHEN 15  THEN 'Goya'
+                WHEN 24  THEN 'Pintuco'
+                WHEN 27  THEN 'Recol'
+                WHEN 30  THEN 'Su Drywall'
+                WHEN 33  THEN 'Oceanic Paints'
+                WHEN 34  THEN 'Protecto'
+                WHEN 37  THEN 'International Paint'
+                WHEN 40  THEN 'ICO'
+                WHEN 41  THEN 'Terinsa'
+                WHEN 50  THEN 'Mega (P8)'
+                WHEN 54  THEN 'International'
+                WHEN 55  THEN 'AN Colorants'
+                WHEN 56  THEN 'Pintuco Profesional'
+                WHEN 57  THEN 'Mega'
+                WHEN 58  THEN 'Pintuco'
+                WHEN 59  THEN 'Madetec'
+                WHEN 60  THEN 'Interpon'
+                WHEN 62  THEN 'ICO'
+                WHEN 63  THEN 'Terinsa'
+                WHEN 64  THEN 'Pintuco (MPY)'
+                WHEN 65  THEN 'Terceros'
+                WHEN 66  THEN 'ICO Packaging'
+                WHEN 67  THEN 'Automotive OEM'
+                WHEN 68  THEN 'Resicoat'
+                WHEN 73  THEN 'Coral'
+                WHEN 87  THEN 'Sikkens'
+                WHEN 89  THEN 'Wanda'
+                WHEN 90  THEN 'Sikkens Autocoat BT'
+                WHEN 91  THEN 'Sikkens'
+                WHEN 94  THEN 'Protecto Profesional'
+                WHEN 106 THEN 'Non-Paints'
+                WHEN 107 THEN 'Delta'
+                WHEN 108 THEN 'Yale'
+                WHEN 109 THEN 'Segurex'
+                WHEN 110 THEN 'Abracol'
+                WHEN 111 THEN 'Solventes'
+                WHEN 112 THEN 'Polvos'
+                WHEN 113 THEN 'Protecto'
+                WHEN 114 THEN 'Saint Gobain'
+                WHEN 115 THEN 'International (MPY)'
+                WHEN 874 THEN 'Private Label (VR)'
+                WHEN 981 THEN 'Madetec Profesional'
+                WHEN 1250 THEN 'Flexa'
+                WHEN 1273 THEN 'Madetec Professional'
+                ELSE 'Marca ' || TRIM(marca_producto)
+            END
+          WHEN COALESCE(TRIM(categoria_producto), '') NOT IN ('', 'SIN ASIGNAR') THEN
+            CASE
+              WHEN categoria_producto ~ '^PN[0-9]' THEN INITCAP(REGEXP_REPLACE(REGEXP_REPLACE(categoria_producto, '^[^_]+_', ''), '^\d+\s*-\s*', ''))
+              ELSE INITCAP(categoria_producto)
+            END
+          ELSE 'Complementario'
         END
     """
 
