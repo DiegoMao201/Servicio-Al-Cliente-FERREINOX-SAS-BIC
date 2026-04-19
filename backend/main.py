@@ -5088,7 +5088,16 @@ def detect_internal_query_intent(text_value: Optional[str]):
         return "consulta_traslados"
     if _has_store_context and any(fragment in normalized for fragment in ["que hay en", "qué hay en", "que tiene", "qué tiene", "no tenga", "no tiene"]):
         return "consulta_traslados"
-    if any(fragment in normalized for fragment in ["cartera", "saldo", "vencid"]):
+    # ── Cartera: solo interceptar como lookup de cliente si NO es pregunta analítica BI ──
+    _cartera_bi_signals = [
+        "concentracion", "concentración", "distribucion", "distribución",
+        "analisis", "análisis", "indicador", "indicadores", "cartera vencida",
+        "cuanto", "cuánto", "total", "resumen", "proyeccion", "proyección",
+        "por cliente", "por vendedor", "por sede", "por zona",
+        "mayor", "mayores", "top", "listado",
+    ]
+    _is_cartera_bi = any(signal in normalized for signal in _cartera_bi_signals)
+    if any(fragment in normalized for fragment in ["cartera", "saldo", "vencid"]) and not _is_cartera_bi:
         return "consulta_cartera"
     _internal_purchase_signals = [
         "compras de", "historial de compras", "ultima compra", "última compra",

@@ -123,6 +123,77 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertEqual(plan["analysis"], "concentracion_cartera")
         self.assertEqual(plan["dimension"], "cliente")
 
+    # ── Regresiones exactas de preguntas fallidas en WhatsApp 2026-04-19 ──
+
+    def test_whatsapp_mix_por_producto_pereira(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "Muéstrame el mix por producto en Pereira",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "semantic")
+        self.assertEqual(plan["analysis"], "participacion")
+        self.assertEqual(plan["dimension"], "producto")
+
+    def test_whatsapp_crecimiento_por_linea_vs_anio(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "Dime el crecimiento por línea este mes vs año anterior",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "semantic")
+        self.assertEqual(plan["analysis"], "crecimiento")
+        self.assertEqual(plan["dimension"], "linea")
+
+    def test_whatsapp_caida_frecuencia_vendedores(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "Qué vendedores muestran mayor caída de frecuencia",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "semantic")
+        self.assertEqual(plan["analysis"], "caida_frecuencia")
+
+    def test_whatsapp_concentracion_cartera_por_cliente(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "Cuál es la concentración de cartera por cliente",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "semantic")
+        self.assertEqual(plan["analysis"], "concentracion_cartera")
+        self.assertEqual(plan["dimension"], "cliente")
+
+    def test_whatsapp_oportunidades_por_sede(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "Dónde están las mayores oportunidades por sede",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "semantic")
+        self.assertEqual(plan["analysis"], "oportunidades_dimension")
+        self.assertEqual(plan["dimension"], "tienda")
+
+    def test_whatsapp_lineas_creciendo_cayendo(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "Qué líneas vienen creciendo y cuáles cayendo",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "semantic")
+        self.assertEqual(plan["analysis"], "crecimiento")
+        self.assertEqual(plan["dimension"], "linea")
+
+    def test_whatsapp_participacion_por_linea(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "Cuál es la participación por línea este mes",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "semantic")
+        self.assertEqual(plan["analysis"], "participacion")
+        self.assertEqual(plan["dimension"], "linea")
+
 
 if __name__ == "__main__":
     unittest.main()

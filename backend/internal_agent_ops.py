@@ -604,17 +604,20 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
             "direction": _infer_sort_direction(question),
             "limite": limit,
         }
-    if any(token in normalized for token in ["crecimiento", "crecer", "creció", "crecio", "variacion por", "variación por"]):
+    if any(token in normalized for token in ["crecimiento", "crecer", "creció", "crecio", "creciendo", "crecen", "crecieron", "variacion por", "variación por", "cayendo", "cayeron", "vienen creciendo", "vienen cayendo"]):
+        detected_direction = _infer_sort_direction(question)
+        if any(w in normalized for w in ["cayendo", "cayeron", "caen"]):
+            detected_direction = "asc"
         return {
             "kind": "semantic",
             "analysis": "crecimiento",
             "periodo": period_value,
             "dimension": _resolve_semantic_dimension(question, "linea"),
-            "direction": _infer_sort_direction(question),
+            "direction": detected_direction,
             "comparison": _infer_comparison_mode(question),
             "limite": limit,
         }
-    if any(token in normalized for token in ["caida de frecuencia", "caída de frecuencia", "frecuencia", "menos frecuencia", "menos visitas", "menos compras"]):
+    if any(token in normalized for token in ["caida de frecuencia", "caída de frecuencia", "frecuencia de compra", "menos frecuencia", "menos visitas", "menos compras", "frecuencia"]):
         return {
             "kind": "semantic",
             "analysis": "caida_frecuencia",
@@ -623,7 +626,7 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
             "comparison": _infer_comparison_mode(question),
             "limite": limit,
         }
-    if any(token in normalized for token in ["concentracion de cartera", "concentración de cartera", "cartera concentrada", "concentracion cartera"]):
+    if any(token in normalized for token in ["concentracion de cartera", "concentración de cartera", "cartera concentrada", "concentracion cartera", "concentración cartera", "concentracion de la cartera", "concentración de la cartera"]):
         return {
             "kind": "semantic",
             "analysis": "concentracion_cartera",
@@ -632,7 +635,7 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
             "direction": "desc",
             "limite": limit,
         }
-    if any(token in normalized for token in ["oportunidades por sede", "oportunidades por vendedor", "oportunidad por sede", "oportunidad por vendedor", "oportunidades"]):
+    if any(token in normalized for token in ["oportunidades por sede", "oportunidades por vendedor", "oportunidad por sede", "oportunidad por vendedor", "oportunidades", "donde estan las oportunidades", "dónde están las oportunidades"]):
         fallback_dimension = "vendedor" if "vendedor" in normalized else "tienda"
         return {
             "kind": "semantic",
@@ -2071,6 +2074,7 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
         return "Falta la pregunta BI a analizar."
 
     plan = _infer_universal_bi_plan(question, args.get("periodo"), args.get("limite"))
+    logger.info("consultar_bi_universal: question=%r plan=%s store=%s vendor=%s", question[:120], json.dumps(plan, ensure_ascii=False, default=str)[:300], store_code, vendor_code)
     store_code, vendor_code, scope_error = _build_sales_scope_filters(question, args, internal_auth)
     if scope_error:
         return scope_error
@@ -2092,6 +2096,7 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
 
     if plan.get("kind") == "semantic":
         analysis = str(plan.get("analysis") or "")
+        logger.info("consultar_bi_universal semantic plan: analysis=%s dimension=%s period=%s", analysis, plan.get("dimension"), plan.get("periodo"))
         try:
             if analysis == "participacion":
                 rows, period_label = _fetch_sales_share_rows(
@@ -2149,8 +2154,8 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
                 )
                 return _build_opportunity_dimension_summary(rows, period_label, comparison_label, str(plan.get("dimension") or "tienda"), int(plan.get("limite") or 10))
         except SQLAlchemyError as exc:
-            logger.warning("consultar_bi_universal semantic analysis failed: %s", exc)
-            return "No pude resolver ese análisis semántico BI en este momento."
+            logger.error("consultar_bi_universal semantic analysis=%s FAILED: %s", analysis, exc, exc_info=True)
+            return f"No pude resolver el análisis '{analysis}' en este momento. Error de consulta a base de datos."
 
     dimension = plan.get("dimension")
     try:
