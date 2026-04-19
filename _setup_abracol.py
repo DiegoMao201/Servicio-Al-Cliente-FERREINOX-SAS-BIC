@@ -12,7 +12,10 @@ from sqlalchemy import create_engine, text
 PROJECT_ROOT = Path(__file__).resolve().parent
 
 # Get DB URI from secrets.toml
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 secrets_path = PROJECT_ROOT / "frontend" / ".streamlit" / "secrets.toml"
 secrets = tomllib.loads(secrets_path.read_text(encoding="utf-8"))
 db_uri = secrets["postgres"]["db_uri"]

@@ -3,7 +3,10 @@ import json
 import re
 import time
 import base64
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 import unicodedata
 import io
 import uuid
@@ -40,6 +43,11 @@ try:
     from agent_v3 import generate_agent_reply_v3
 except ImportError:
     from backend.agent_v3 import generate_agent_reply_v3
+
+try:
+    from agent_profiles import get_agent_profile_name
+except ImportError:
+    from backend.agent_profiles import get_agent_profile_name
 
 try:
     from technical_product_canonicalization import canonicalize_technical_product_list, canonicalize_technical_product_term
@@ -4569,6 +4577,15 @@ def resolve_internal_session(raw_token: Optional[str]):
         return None
     ensure_internal_auth_tables()
     token_hash = hash_session_token(raw_token)
+    cache_now = time.time()
+    cached_entry = _INTERNAL_SESSION_CACHE.get(token_hash)
+    if cached_entry:
+        expires_at_ts = float(cached_entry.get("expires_at_ts") or 0)
+        loaded_at = float(cached_entry.get("loaded_at") or 0)
+        if expires_at_ts > cache_now and (cache_now - loaded_at) < INTERNAL_SESSION_CACHE_TTL_SECONDS:
+            return dict(cached_entry["user_payload"])
+        _INTERNAL_SESSION_CACHE.pop(token_hash, None)
+
     engine = get_db_engine()
     with engine.begin() as connection:
         row = connection.execute(
@@ -4587,6 +4604,7 @@ def resolve_internal_session(raw_token: Optional[str]):
             {"token_hash": token_hash},
         ).mappings().one_or_none()
         if not row or not row["is_active"]:
+            _INTERNAL_SESSION_CACHE.pop(token_hash, None)
             return None
         connection.execute(
             text(
@@ -4610,6 +4628,12 @@ def resolve_internal_session(raw_token: Optional[str]):
         "session_expires_at": row["expires_at"].isoformat() if row.get("expires_at") else None,
         "scopes": fetch_internal_user_scopes(row["user_id"]),
     }
+    expires_at_value = row.get("expires_at")
+    _INTERNAL_SESSION_CACHE[token_hash] = {
+        "user_payload": dict(user_payload),
+        "loaded_at": cache_now,
+        "expires_at_ts": expires_at_value.timestamp() if expires_at_value else 0,
+    }
     return user_payload
 
 
@@ -4617,6 +4641,8 @@ def revoke_internal_session(raw_token: Optional[str]):
     if not raw_token:
         return
     ensure_internal_auth_tables()
+    token_hash = hash_session_token(raw_token)
+    _INTERNAL_SESSION_CACHE.pop(token_hash, None)
     engine = get_db_engine()
     with engine.begin() as connection:
         connection.execute(
@@ -4629,7 +4655,7 @@ def revoke_internal_session(raw_token: Optional[str]):
                   AND revoked_at IS NULL
                 """
             ),
-            {"token_hash": hash_session_token(raw_token)},
+                        {"token_hash": token_hash},
         )
 
 
@@ -5445,6 +5471,10 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
     if not content:
         return None
 
+    agent_profile = get_agent_profile_name()
+    if agent_profile == "customer":
+        return None
+
     internal_auth = dict((conversation_context or {}).get("internal_auth") or {})
     active_internal_user = resolve_internal_session(internal_auth.get("token")) if internal_auth.get("token") else None
 
@@ -5500,9 +5530,13 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
 
     internal_user = active_internal_user
 
-    pending_transfer_flow_reply = handle_pending_internal_transfer_flow(content, context, conversation_context, internal_user, internal_auth)
-    if pending_transfer_flow_reply:
-        return pending_transfer_flow_reply
+    if agent_profile == "internal" and isinstance(conversation_context, dict):
+        conversation_context["internal_transfer_flow"] = None
+
+    if agent_profile != "internal":
+        pending_transfer_flow_reply = handle_pending_internal_transfer_flow(content, context, conversation_context, internal_user, internal_auth)
+        if pending_transfer_flow_reply:
+            return pending_transfer_flow_reply
 
     # ── Si hay un reclamo activo en contexto o el mensaje es de reclamo, dejar que el LLM lo maneje ──
     _claim_case = (conversation_context or {}).get("claim_case") or {}
@@ -5557,6 +5591,22 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
     intent = detect_internal_query_intent(content)
     if not intent:
         return None
+
+    if agent_profile == "internal" and intent in {
+        "consulta_despachos",
+        "consulta_ruta_mercancia",
+        "consulta_reclamos_pendientes",
+        "consulta_traslados",
+        "crear_traslado",
+    }:
+        return {
+            "response_text": "Este WhatsApp interno quedó limitado a inventario, disponibilidad por tienda, precios, BI comercial, RAG técnico y fichas técnicas. No gestiona despachos, reclamos internos ni traslados.",
+            "intent": "internal_scope_blocked",
+            "context_updates": {
+                "internal_auth": build_internal_auth_context(internal_user, internal_auth.get("token"), internal_user.get("session_expires_at")),
+                "internal_transfer_flow": None,
+            },
+        }
 
     if intent == "consulta_despachos":
         if not internal_user_has_advanced_access(internal_user):
@@ -5993,6 +6043,15 @@ async def admin_apply_postgrest_views(
 _PROCESSING_WATCHDOGS: dict[str, dict] = {}
 _PROCESSING_WATCHDOG_LOCK = threading.Lock()
 PROCESSING_FOLLOWUP_SECONDS = int(os.getenv("WA_PROCESSING_FOLLOWUP_SECONDS", "90"))
+INTERNAL_SESSION_CACHE_TTL_SECONDS = int(os.getenv("INTERNAL_SESSION_CACHE_SECONDS", "20"))
+_INTERNAL_SESSION_CACHE: dict[str, dict] = {}
+
+
+def get_effective_whatsapp_debounce_seconds() -> float:
+    profile = get_agent_profile_name()
+    if profile == "internal":
+        return float(os.getenv("WA_DEBOUNCE_SECONDS_INTERNAL", os.getenv("WA_DEBOUNCE_SECONDS", "0.8")))
+    return float(os.getenv("WA_DEBOUNCE_SECONDS", "4.0"))
 
 
 def _send_processing_status_message(context: dict, body: str, status_tag: str):
@@ -21587,6 +21646,7 @@ def read_root():
     return {
         "estado": "Sistema CRM Ferreinox Activo",
         "version": "2026.3.1",
+        "agent_profile": get_agent_profile_name(),
         "postgrest_url": get_postgrest_url(),
         "endpoints": [
             "/health",
@@ -21605,9 +21665,9 @@ def health_check():
     try:
         response = requests.get(f"{postgrest_url}/", timeout=5)
         response.raise_for_status()
-        return {"backend": "ok", "postgrest": "ok", "postgrest_url": postgrest_url}
+        return {"backend": "ok", "postgrest": "ok", "postgrest_url": postgrest_url, "agent_profile": get_agent_profile_name()}
     except Exception as exc:
-        return {"backend": "ok", "postgrest": "error", "postgrest_url": postgrest_url, "detail": str(exc)}
+        return {"backend": "ok", "postgrest": "error", "postgrest_url": postgrest_url, "detail": str(exc), "agent_profile": get_agent_profile_name()}
 
 
 @app.get("/admin/rag-buscar")
@@ -22360,7 +22420,7 @@ def admin_cleanup_phone(request: Request, payload: dict = Body(...)):
 # acumula durante DEBOUNCE_WINDOW_SECONDS y los concatena en un solo mensaje
 # antes de enviarlo al LLM. Evita "choques de trenes" y saludos falsos.
 # ══════════════════════════════════════════════════════════════════════════════
-DEBOUNCE_WINDOW_SECONDS = float(os.getenv("WA_DEBOUNCE_SECONDS", "4.0"))
+DEBOUNCE_WINDOW_SECONDS = get_effective_whatsapp_debounce_seconds()
 
 # In-memory buffer: {phone_number: {"messages": [...], "timer_task": asyncio.Task, "context": ..., "meta": [...]}}
 _wa_message_buffer: dict[str, dict] = {}
@@ -22370,7 +22430,7 @@ _wa_buffer_lock = asyncio.Lock()
 async def _flush_debounce_buffer(phone_number: str):
     """Called after the debounce window expires. Concatenates buffered messages
     and processes them as a single unified message."""
-    await asyncio.sleep(DEBOUNCE_WINDOW_SECONDS)
+    await asyncio.sleep(get_effective_whatsapp_debounce_seconds())
 
     async with _wa_buffer_lock:
         buf = _wa_message_buffer.pop(phone_number, None)

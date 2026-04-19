@@ -1,23 +1,4 @@
-"""Test de las funciones de calidad del agente: despedida, confianza, alertas."""
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
-os.environ.setdefault("DATABASE_URL", "postgresql://postgres:x@localhost:5432/test")
-os.environ.setdefault("OPENAI_API_KEY", "sk-test")
-
-from main import detect_farewell, score_agent_confidence
-
-# ═══ Test detección de despedida ═══
-tests_farewell = [
-    ("gracias", True),
-    ("Muchas gracias!", True),
-    ("chao", True),
-    ("bueno gracias", True),
-    ("hasta luego", True),
-    ("no más por ahora", True),
-    ("listo gracias", True),
-    ("ok gracias", True),
-    ("eso es todo", True),
+from tests.regression.test_quality_system import *
     ("ya no más", True),
     ("ya es todo", True),
     ("buena noche", True),

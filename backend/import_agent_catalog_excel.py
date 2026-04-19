@@ -3,7 +3,10 @@ import os
 from pathlib import Path
 import re
 import sys
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 import pandas as pd
 from sqlalchemy import create_engine, text

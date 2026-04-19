@@ -1,4 +1,6 @@
-# Resultado bateria matriz global 200 casos
+# Resultado Reubicado
+
+El reporte fue movido a [reports/regressions/RESULTADO_BATERIA_MATRIZ_GLOBAL_200.md](reports/regressions/RESULTADO_BATERIA_MATRIZ_GLOBAL_200.md).
 
 ## Estado final
 

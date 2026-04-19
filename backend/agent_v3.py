@@ -15,6 +15,18 @@ import time
 import logging
 from typing import Optional
 
+
+def _load_agent_runtime_config() -> dict:
+    try:
+        from agent_profiles import get_agent_runtime_config
+    except ImportError:
+        from backend.agent_profiles import get_agent_runtime_config
+    return get_agent_runtime_config()
+
+
+def _get_active_agent_tools() -> list[dict]:
+    return _load_agent_runtime_config()["tools"]
+
 _TECHNICAL_PRODUCT_GUARD_SIGNALS = [
     "koraza", "intervinil", "pinturama", "viniltex", "aquablock", "sellomax",
     "pintucoat", "intergard", "interseal", "interthane", "corrotec", "pintulux",
@@ -321,10 +333,14 @@ def generate_agent_reply_v3(
     """
     try:
         from agent_context import build_turn_context, classify_intent, extract_diagnostic_data, is_diagnostic_incomplete
-        from agent_prompt_v3 import AGENT_SYSTEM_PROMPT_V3, AGENT_TOOLS_V3
     except ImportError:
         from backend.agent_context import build_turn_context, classify_intent, extract_diagnostic_data, is_diagnostic_incomplete
-        from backend.agent_prompt_v3 import AGENT_SYSTEM_PROMPT_V3, AGENT_TOOLS_V3
+
+    agent_runtime = _load_agent_runtime_config()
+    active_tools = agent_runtime["tools"]
+    system_prompt_template = agent_runtime["system_prompt"]
+    agent_profile = agent_runtime["profile"]
+    force_first_advisory_depth_turn = agent_runtime.get("force_first_advisory_depth_turn", True)
 
     m = _get_main()
     client = m.get_openai_client()
@@ -479,42 +495,44 @@ def generate_agent_reply_v3(
     # PIPELINE PEDIDO DETERMINÍSTICO — Intercepta pedidos directos antes
     # del LLM. Resuelve productos, genera Excel, envía correos, todo sin IA.
     # ══════════════════════════════════════════════════════════════════════
-    try:
-        from pipeline_pedido.integracion_pedido import (
-            interceptar_pedido_si_aplica,
-            interceptar_respuesta_ral_pedido,
-        )
-
-        # Primero: ¿está respondiendo un RAL pendiente?
-        ral_pendiente = interceptar_respuesta_ral_pedido(
-            conversation_context, user_message,
-        )
-        if ral_pendiente:
-            logger.info("V3 pipeline_pedido: RAL pendiente detectado → %s", ral_pendiente)
-            # TODO: re-run pipeline with RAL injected into pending product
-
-        # Segundo: ¿es un pedido directo nuevo?
-        intercepcion = interceptar_pedido_si_aplica(
-            main_module=m,
-            conversation_context=conversation_context,
-            user_message=user_message,
-            tool_calls_made=[],
-            context=context,
-            lookup_fn=getattr(m, "lookup_product_context", None),
-            price_fn=getattr(m, "fetch_product_price", None),
-        )
-        if intercepcion:
-            logger.info(
-                "V3 pipeline_pedido: INTERCEPTADO — %d resueltos, intent=%s",
-                len((intercepcion.get("context_updates", {}).get("_pedido_match_result") or {}).get("productos_resueltos", [])),
-                intercepcion.get("intent", "pedido"),
+    if agent_runtime.get("enable_order_pipeline", True):
+        try:
+            from pipeline_pedido.integracion_pedido import (
+                interceptar_pedido_si_aplica,
+                interceptar_respuesta_ral_pedido,
             )
-            return intercepcion
 
-    except ImportError:
-        logger.debug("pipeline_pedido no disponible, continuando con LLM")
-    except Exception as e:
-        logger.error("pipeline_pedido error: %s", e, exc_info=True)
+            # Primero: ¿está respondiendo un RAL pendiente?
+            ral_pendiente = interceptar_respuesta_ral_pedido(
+                conversation_context, user_message,
+            )
+            if ral_pendiente:
+                logger.info("V3 pipeline_pedido: RAL pendiente detectado → %s", ral_pendiente)
+
+            # Segundo: ¿es un pedido directo nuevo?
+            intercepcion = interceptar_pedido_si_aplica(
+                main_module=m,
+                conversation_context=conversation_context,
+                user_message=user_message,
+                tool_calls_made=[],
+                context=context,
+                lookup_fn=getattr(m, "lookup_product_context", None),
+                price_fn=getattr(m, "fetch_product_price", None),
+            )
+            if intercepcion:
+                logger.info(
+                    "V3 pipeline_pedido: INTERCEPTADO — %d resueltos, intent=%s",
+                    len((intercepcion.get("context_updates", {}).get("_pedido_match_result") or {}).get("productos_resueltos", [])),
+                    intercepcion.get("intent", "pedido"),
+                )
+                return intercepcion
+
+        except ImportError:
+            logger.debug("pipeline_pedido no disponible, continuando con LLM")
+        except Exception as e:
+            logger.error("pipeline_pedido error: %s", e, exc_info=True)
+    else:
+        logger.info("V3 order pipeline disabled for profile=%s", agent_profile)
 
     # ══════════════════════════════════════════════════════════════════════
     # LLM AS CONVERSATIONAL BRAIN — no more short-circuits for inventory
@@ -531,7 +549,7 @@ def generate_agent_reply_v3(
     )
 
     # ── Formatear prompt V3 ──────────────────────────────────────────────
-    system_content = AGENT_SYSTEM_PROMPT_V3.format(
+    system_content = system_prompt_template.format(
         contexto_turno=contexto_turno,
         verificado="SÍ" if verified else "NO",
         cliente_codigo=verified_cliente or "No identificado",
@@ -620,7 +638,7 @@ def generate_agent_reply_v3(
         and not conversation_context.get("_advisory_diagnostic_turn_done")
         and not conversation_context.get("latest_technical_guidance")
     )
-    if _first_advisory_turn:
+    if _first_advisory_turn and force_first_advisory_depth_turn:
         _diagnostic_blocked = True
         logger.info("V3 FIRST ADVISORY TURN: broad diagnostic OK but forcing depth questions — LLM (IA) decides what to ask")
 
@@ -713,7 +731,7 @@ def generate_agent_reply_v3(
         # Omit tools AND tool_choice entirely — OpenAI rejects tool_choice without tools
         pass
     else:
-        _llm_extra_kwargs["tools"] = AGENT_TOOLS_V3
+        _llm_extra_kwargs["tools"] = active_tools
         # For advisory with complete diagnosis, FORCE at least one tool call
         # so the LLM cannot skip RAG and hallucinate product recommendations.
         _advisory_complete = (
@@ -758,7 +776,7 @@ def generate_agent_reply_v3(
         response = client.chat.completions.create(
             model=m.get_openai_model(),
             messages=messages,
-            tools=AGENT_TOOLS_V3,
+            tools=active_tools,
             tool_choice="auto",
             parallel_tool_calls=True,
             temperature=0.2,
@@ -836,7 +854,7 @@ def generate_agent_reply_v3(
         response = client.chat.completions.create(
             model=m.get_openai_model(),
             messages=messages,
-            tools=AGENT_TOOLS_V3,
+            tools=active_tools,
             tool_choice="none" if _pdf_succeeded else "auto",
             parallel_tool_calls=True,
             temperature=0.2,
@@ -864,7 +882,7 @@ def generate_agent_reply_v3(
         resp_force = client.chat.completions.create(
             model=m.get_openai_model(),
             messages=messages,
-            tools=AGENT_TOOLS_V3,
+            tools=active_tools,
             tool_choice="none",
             temperature=0.3,
         )
@@ -880,23 +898,26 @@ def generate_agent_reply_v3(
     # Si la respuesta es una cotización, el pipeline la reemplaza con datos
     # 100% del backend. El LLM NO participa en precios/SKUs/cantidades.
     # ══════════════════════════════════════════════════════════════════════
-    try:
-        from pipeline_deterministico.integracion import interceptar_cotizacion_si_aplica
-        _pipeline_result = interceptar_cotizacion_si_aplica(
-            main_module=m,
-            openai_client=client,
-            conversation_context=conversation_context,
-            user_message=user_message,
-            tool_calls_made=tool_calls_made,
-            context=context,
-            messages=messages,
-            assistant_message=assistant_message,
-        )
-        if _pipeline_result:
-            logger.info("V3: Pipeline determinístico interceptó la cotización")
-            return _pipeline_result
-    except Exception as _pipe_err:
-        logger.warning("V3: Pipeline determinístico falló, continuando con flujo normal: %s", _pipe_err)
+    if agent_runtime.get("enable_quote_pipeline", True):
+        try:
+            from pipeline_deterministico.integracion import interceptar_cotizacion_si_aplica
+            _pipeline_result = interceptar_cotizacion_si_aplica(
+                main_module=m,
+                openai_client=client,
+                conversation_context=conversation_context,
+                user_message=user_message,
+                tool_calls_made=tool_calls_made,
+                context=context,
+                messages=messages,
+                assistant_message=assistant_message,
+            )
+            if _pipeline_result:
+                logger.info("V3: Pipeline determinístico interceptó la cotización")
+                return _pipeline_result
+        except Exception as _pipe_err:
+            logger.warning("V3: Pipeline determinístico falló, continuando con flujo normal: %s", _pipe_err)
+    else:
+        logger.info("V3 quote pipeline disabled for profile=%s", agent_profile)
 
     # ══════════════════════════════════════════════════════════════════════
     # GUARDIAS CRÍTICAS DE SEGURIDAD (solo las que protegen al cliente)
@@ -919,7 +940,7 @@ def generate_agent_reply_v3(
         )
 
     # ── GUARDIA IVA: desglose obligatorio en cotizaciones ────────────────
-    if not is_greeting:
+    if agent_runtime.get("enable_iva_guard", True) and not is_greeting:
         assistant_message = _guardia_iva(assistant_message, messages, m)
 
     # ── GUARDIA CONSISTENCIA TÉCNICA: expert rules / RAG duro vs respuesta final ─────
@@ -1194,10 +1215,6 @@ def _guardia_quimica(assistant_message, messages, tool_calls_made, context, conv
                 "⛔ V3 GUARDIA QUÍMICA: %s (%s) + %s (%s)",
                 fam_a, products_a, fam_b, products_b,
             )
-            try:
-                from agent_prompt_v3 import AGENT_TOOLS_V3
-            except ImportError:
-                from backend.agent_prompt_v3 import AGENT_TOOLS_V3
             messages.append(assistant_message)
             messages.append({
                 "role": "system",
@@ -1213,7 +1230,7 @@ def _guardia_quimica(assistant_message, messages, tool_calls_made, context, conv
             t = time.time()
             resp = m.get_openai_client().chat.completions.create(
                 model=m.get_openai_model(), messages=messages,
-                tools=AGENT_TOOLS_V3, tool_choice="auto", temperature=0.3,
+                tools=_get_active_agent_tools(), tool_choice="auto", temperature=0.3,
             )
             assistant_message = resp.choices[0].message
             retries = 3
@@ -1225,7 +1242,7 @@ def _guardia_quimica(assistant_message, messages, tool_calls_made, context, conv
                     messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
                 resp = m.get_openai_client().chat.completions.create(
                     model=m.get_openai_model(), messages=messages,
-                    tools=AGENT_TOOLS_V3, tool_choice="auto", temperature=0.3,
+                    tools=_get_active_agent_tools(), tool_choice="auto", temperature=0.3,
                 )
                 assistant_message = resp.choices[0].message
                 retries -= 1
@@ -1237,10 +1254,6 @@ def _guardia_quimica(assistant_message, messages, tool_calls_made, context, conv
 
 def _guardia_bicomponente(assistant_message, messages, tool_calls_made, context, conversation_context, m):
     """Detecta bicomponentes sin catalizador y fuerza corrección."""
-    try:
-        from agent_prompt_v3 import AGENT_TOOLS_V3
-    except ImportError:
-        from backend.agent_prompt_v3 import AGENT_TOOLS_V3
     response_text = (assistant_message.content or "").lower()
 
     # Also scan tool results — if inventory returned a bicomponent product,
@@ -1270,7 +1283,7 @@ def _guardia_bicomponente(assistant_message, messages, tool_calls_made, context,
             t = time.time()
             resp = m.get_openai_client().chat.completions.create(
                 model=m.get_openai_model(), messages=messages,
-                tools=AGENT_TOOLS_V3, tool_choice="auto", temperature=0.3,
+                tools=_get_active_agent_tools(), tool_choice="auto", temperature=0.3,
             )
             assistant_message = resp.choices[0].message
             retries = 3
@@ -1282,7 +1295,7 @@ def _guardia_bicomponente(assistant_message, messages, tool_calls_made, context,
                     messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
                 resp = m.get_openai_client().chat.completions.create(
                     model=m.get_openai_model(), messages=messages,
-                    tools=AGENT_TOOLS_V3, tool_choice="auto", temperature=0.3,
+                    tools=_get_active_agent_tools(), tool_choice="auto", temperature=0.3,
                 )
                 assistant_message = resp.choices[0].message
                 retries -= 1
@@ -1455,11 +1468,6 @@ def _guardia_consistencia_tecnica(assistant_message, messages, tool_calls_made, 
     if not forbidden_hits and not unsupported_products and not missing_required_items and not missing_mandatory_steps:
         return assistant_message
 
-    try:
-        from agent_prompt_v3 import AGENT_TOOLS_V3
-    except ImportError:
-        from backend.agent_prompt_v3 import AGENT_TOOLS_V3
-
     correction_lines = [
         "⛔ INCONSISTENCIA TÉCNICA DETECTADA.",
         "Tu respuesta final contradice reglas duras o está ofreciendo productos no respaldados por las herramientas de este turno.",
@@ -1523,7 +1531,7 @@ def _guardia_consistencia_tecnica(assistant_message, messages, tool_calls_made, 
     t = time.time()
     resp = m.get_openai_client().chat.completions.create(
         model=m.get_openai_model(), messages=messages,
-        tools=AGENT_TOOLS_V3, tool_choice="none", temperature=0.2,
+        tools=_get_active_agent_tools(), tool_choice="none", temperature=0.2,
     )
     assistant_message = resp.choices[0].message
     logger.info("V3 GUARDIA CONSISTENCIA TÉCNICA completed: %dms", int((time.time() - t) * 1000))
@@ -1532,10 +1540,6 @@ def _guardia_consistencia_tecnica(assistant_message, messages, tool_calls_made, 
 
 def _guardia_iva(assistant_message, messages, m):
     """Si la cotización no tiene desglose de IVA, fuerza corrección."""
-    try:
-        from agent_prompt_v3 import AGENT_TOOLS_V3
-    except ImportError:
-        from backend.agent_prompt_v3 import AGENT_TOOLS_V3
     text = assistant_message.content or ""
     has_prices = "$" in text and any(
         kw in text.lower() for kw in ["total", "precio", "cotización", "cotizacion", "pedido"]
@@ -1559,7 +1563,7 @@ def _guardia_iva(assistant_message, messages, m):
             t = time.time()
             resp = m.get_openai_client().chat.completions.create(
                 model=m.get_openai_model(), messages=messages,
-                tools=AGENT_TOOLS_V3, tool_choice="none", temperature=0.3,
+                tools=_get_active_agent_tools(), tool_choice="none", temperature=0.3,
             )
             assistant_message = resp.choices[0].message
             logger.info("V3 GUARDIA IVA completed: %dms", int((time.time() - t) * 1000))
@@ -1758,10 +1762,7 @@ def _guardia_universal_producto(
             ),
         })
 
-        try:
-            from agent_prompt_v3 import AGENT_TOOLS_V3 as _GUARD_TOOLS
-        except ImportError:
-            from backend.agent_prompt_v3 import AGENT_TOOLS_V3 as _GUARD_TOOLS
+        _GUARD_TOOLS = _get_active_agent_tools()
 
         try:
             t_fix = time.time()
@@ -1833,10 +1834,7 @@ def _guardia_universal_producto(
         ),
     })
 
-    try:
-        from agent_prompt_v3 import AGENT_TOOLS_V3 as _GUARD_TOOLS
-    except ImportError:
-        from backend.agent_prompt_v3 import AGENT_TOOLS_V3 as _GUARD_TOOLS
+    _GUARD_TOOLS = _get_active_agent_tools()
 
     try:
         t_clean = time.time()

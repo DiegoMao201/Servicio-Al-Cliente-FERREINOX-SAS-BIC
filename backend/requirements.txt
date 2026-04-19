@@ -16,3 +16,4 @@ pgvector
 python-multipart
 rapidfuzz
 beautifulsoup4
+tomli

@@ -1,38 +1,10 @@
-import json
-import os
-import sys
-import unittest
-from unittest import mock
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
-os.environ.setdefault("DATABASE_URL", "postgresql://postgres:x@localhost:5432/test")
-os.environ.setdefault("OPENAI_API_KEY", "sk-test")
-
-import agent_v3
-import main
-from agent_context import classify_intent
+from tests.internal.test_inventory_flow_regression import *
 
 
-class InventoryFlowRegressionTests(unittest.TestCase):
-    def test_internal_inventory_query_classifies_as_product_lookup(self):
-        intent = classify_intent(
-            "Inventario de sd1 en galón tenemos ?",
-            {},
-            [],
-            {"role": "administrador"},
-        )
-        self.assertEqual(intent, "consulta_productos")
+if __name__ == "__main__":
+    import unittest
 
-    def test_inventory_handler_uses_canonical_lookup_and_omits_price_in_inventory_mode(self):
-        captured = {}
-
-        def fake_lookup(query_text, request):
-            captured["query_text"] = query_text
-            captured["request"] = dict(request)
-            return [
-                {
-                    "referencia": "5890919",
-                    "descripcion": "MH BARNIZ BR INCOLORO SD-1 3.79L",
+    unittest.main()
                     "stock_total": "0.0",
                     "stock_por_tienda": "TIENDA PEREIRA: 4.0; TIENDA ARMENIA: 1.0",
                 }

@@ -1,23 +1,10 @@
-"""
-Tests: Diagnostic-first flow — el agente NO debe mencionar productos antes de diagnosticar.
-Valida que build_turn_context bloquee herramientas y productos cuando faltan datos.
-"""
-import sys, os, unittest
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
-
-from agent_context import build_turn_context, extract_diagnostic_data, _infer_problem_class
+from tests.regression.test_diagnostic_first import *
 
 
-class DiagnosticFirstTests(unittest.TestCase):
-    """Verifica que el bloqueo de diagnóstico incompleto funcione correctamente."""
+if __name__ == "__main__":
+    import unittest
 
-    def _build_ctx(self, user_msg, recent=None, conv_ctx=None):
-        return build_turn_context(
-            conversation_context=conv_ctx or {},
-            recent_messages=recent or [],
-            user_message=user_msg,
-            internal_auth={},
-            profile_name="Cliente Test",
+    unittest.main()
         )
 
     # ── Test 1: "pintar un piso" sin más datos → BLOQUEO ──

@@ -1,38 +1,10 @@
-import os
-import sys
-import unittest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "backend"))
-os.environ.setdefault("DATABASE_URL", "postgresql://postgres:x@localhost:5432/test")
-os.environ.setdefault("OPENAI_API_KEY", "sk-test")
-
-import agent_v3
-import main
+from tests.internal.test_agent_v3_preload import *
 
 
-class AgentV3PreloadTests(unittest.TestCase):
-    def test_commercial_batch_detected_by_routing_function(self):
-        """_should_route_to_commercial_flow still detects multi-product batch messages,
-        even though we no longer short-circuit on it (the LLM handles it via tools)."""
-        conversation_context = {}
-        user_message = "8 galones 1501\n9 cuartos sd1\n2 galones tu11\n2 galones teu95"
-        result = agent_v3._should_route_to_commercial_flow(
-            "pedido_directo", conversation_context, user_message, main,
-        )
-        self.assertTrue(result)
+if __name__ == "__main__":
+    import unittest
 
-    def test_preload_triggers_on_second_advisory_turn_with_complete_diagnostic(self):
-        recent_messages = [
-            {"direction": "inbound", "contenido": "Tengo una fachada de ladrillo a la vista y se puso negra por humo y agua."},
-        ]
-        diagnostic = {
-            "surface": "fachada",
-            "condition": "manchas/negreado",
-            "interior_exterior": "exterior",
-            "area_m2": None,
-            "traffic": None,
-            "humidity_source": None,
-        }
+    unittest.main()
         technical_case = {"category": "general", "ready": False}
 
         should_preload = agent_v3._should_preload_technical_guidance(

@@ -1,23 +1,8 @@
-"""
-Test completo del sistema de conocimiento experto consolidado.
-Valida que las reglas del prompt + RAG cubren todos los escenarios.
-NO usa API externa.
-"""
-import os, re, json, sys
-from collections import defaultdict
+from tests.regression.test_behavioral_rules import *
 
-# ── Simulated prompt rules (extracted from REGLAS MAESTRAS) ──
-PROMPT_RULES = {
-    "DIAG_PISOS_4_PREGUNTAS": "concreto nuevo vs viejo, 28 dias curado, trafico montacargas vs peatonal, interior o exterior",
-    "DIAG_MADERA_PRIMER_TURNO": "prohibido nombrar productos en primer turno madera, preguntar exterior interior transparente color solido",
-    "DIAG_FACHADAS_M2": "preguntar m2 en primer mensaje, estado descascarada grietas repintar",
-    "DIAG_GENERAL_M2": "siempre preguntar m2 antes de cotizar pisos fachadas techos",
-    "COT_CALCULAR_CANTIDADES": "m2 dividido rendimiento = galones, redondear arriba",
-    "COT_SUBTOTAL_IVA_TOTAL": "subtotal iva total final, prohibido dejar pendiente",
-    "COT_ANTI_SATURACION": "no mostrar multiples presentaciones, decidir galon o cunete segun metraje",
-    "COT_COLOR_BLANCO_DEFAULT": "color blanco por defecto, solo cambiar si cliente pidio",
-    "COT_PREGUNTAR_COLOR": "esmaltes acabados color: siempre preguntar color antes de cotizar",
-    "COT_BICOMPONENTE_KIT": "presentar precio como kit a+b, no separar componentes",
+
+if __name__ == "__main__":
+    run_behavioral_tests()
     "TEC_28_DIAS": "nunca recomendar pintar concreto menos 28 dias curado",
     "TEC_PREP_PISOS_MECANICA": "preparacion pisos industriales mecanica escarificado granallado copas diamante, nunca lija agua",
     "TEC_PRIMER_50RS_METAL": "primer 50rs exclusivo metal, nunca concreto, para concreto interseal gris ral 7038",

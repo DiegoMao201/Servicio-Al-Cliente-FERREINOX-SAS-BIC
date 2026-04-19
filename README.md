@@ -192,6 +192,32 @@ Qué debes poner en tu servidor para comenzar completo:
 3. `WHATSAPP_VERIFY_TOKEN`
 4. Si luego vas a responder mensajes automáticamente: `WHATSAPP_ACCESS_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID`
 
+## Arquitectura Recomendada De Dos Backends
+
+La arquitectura recomendada ahora es operar con dos despliegues del mismo backend:
+
+1. `internal`: WhatsApp interno para inventario, precios, disponibilidad por tienda, BI comercial, RAG técnico y fichas técnicas.
+2. `customer`: WhatsApp de clientes para asesoría técnica, fichas, cartera, compras y reclamos, sin inventar stock ni precios.
+
+Ambos comparten base de datos, RAG y utilidades, pero cada despliegue usa:
+
+- su propio número de WhatsApp
+- su propio `WHATSAPP_PHONE_NUMBER_ID`
+- su propio `WHATSAPP_VERIFY_TOKEN`
+- su propio `AGENT_PROFILE`
+
+### Perfil interno
+
+Para el backend interno define:
+
+```text
+AGENT_PROFILE=internal
+```
+
+Con ese perfil el runtime desactiva pedidos, cotizaciones, PDFs y traslados, y deja activo solo el alcance operativo interno.
+
+Ver guía detallada en [docs/DESPLIEGUE_INTERNO_OPERATIVO.md](docs/DESPLIEGUE_INTERNO_OPERATIVO.md).
+
 ## Flujo recomendado para empezar full conectado
 
 1. Desplegar PostgreSQL, backend y PostgREST en tu servidor.

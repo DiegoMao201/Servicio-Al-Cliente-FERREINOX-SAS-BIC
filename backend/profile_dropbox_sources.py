@@ -4,7 +4,10 @@ from collections import Counter
 from io import BytesIO, StringIO
 from pathlib import Path
 from statistics import mean
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
 import dropbox
 import pandas as pd

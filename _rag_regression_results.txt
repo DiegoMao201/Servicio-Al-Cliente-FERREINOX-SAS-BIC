@@ -1,11 +1,4 @@
-﻿==========================================================================================
-  SUPER TEST AGENTE CRM FERREINOX V2 ÔÇö Bater├¡a Exhaustiva
-  Diagn├│stico ÔÇó RAG ÔÇó Inventario ÔÇó Pedidos ÔÇó Abrasivos ÔÇó Gaps
-  Query Expansion ÔÇó Bicomponentes ÔÇó Anti-Rendici├│n ÔÇó Precios
-==========================================================================================
-
-==========================================================================================
-PARTE 1: RAG PURO ÔÇö Validar fichas t├®cnicas y candidatos del portafolio
+﻿Resultado reubicado en reports/regressions/_rag_regression_results.txt.
   Tests: 94
 ==========================================================================================
 
