@@ -110,7 +110,7 @@ class InternalAgentProfileTests(unittest.TestCase):
 
         self.assertEqual(plan["kind"], "semantic")
         self.assertEqual(plan["analysis"], "crecimiento")
-        self.assertEqual(plan["dimension"], "linea")
+        self.assertEqual(plan["dimension"], "marca")
 
     def test_universal_bi_plan_detects_cartera_concentration(self):
         plan = internal_agent_ops._infer_universal_bi_plan(
@@ -143,7 +143,7 @@ class InternalAgentProfileTests(unittest.TestCase):
         )
         self.assertEqual(plan["kind"], "semantic")
         self.assertEqual(plan["analysis"], "crecimiento")
-        self.assertEqual(plan["dimension"], "linea")
+        self.assertEqual(plan["dimension"], "marca")
 
     def test_whatsapp_caida_frecuencia_vendedores(self):
         plan = internal_agent_ops._infer_universal_bi_plan(
@@ -182,7 +182,7 @@ class InternalAgentProfileTests(unittest.TestCase):
         )
         self.assertEqual(plan["kind"], "semantic")
         self.assertEqual(plan["analysis"], "crecimiento")
-        self.assertEqual(plan["dimension"], "linea")
+        self.assertEqual(plan["dimension"], "marca")
 
     def test_whatsapp_participacion_por_linea(self):
         plan = internal_agent_ops._infer_universal_bi_plan(
@@ -192,7 +192,7 @@ class InternalAgentProfileTests(unittest.TestCase):
         )
         self.assertEqual(plan["kind"], "semantic")
         self.assertEqual(plan["analysis"], "participacion")
-        self.assertEqual(plan["dimension"], "linea")
+        self.assertEqual(plan["dimension"], "marca")
 
 
 if __name__ == "__main__":

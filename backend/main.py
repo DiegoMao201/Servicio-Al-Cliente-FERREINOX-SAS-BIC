@@ -22061,16 +22061,46 @@ def admin_bi_diagnostico(admin_key: str = Header(None, alias="x-admin-key")):
     # 9. Sample rows (5 rows, raw values)
     def q_sample(conn):
         rows = conn.execute(text("""
-            SELECT tipo_documento, fecha_venta, valor_venta, serie, codigo_articulo, nombre_articulo, linea_producto
+            SELECT tipo_documento, fecha_venta, valor_venta, serie, codigo_articulo, nombre_articulo,
+                   linea_producto, marca_producto, categoria_producto
             FROM public.raw_ventas_detalle LIMIT 5
         """)).mappings().all()
         diag["sample_rows"] = [dict(r) for r in rows]
     _safe_query("sample", q_sample)
 
+    # 9b. marca_producto distribution
+    def q_marca(conn):
+        rows = conn.execute(text("""
+            SELECT COALESCE(NULLIF(TRIM(marca_producto), ''), '(vacío)') AS marca, COUNT(*) AS cnt
+            FROM public.raw_ventas_detalle GROUP BY 1 ORDER BY 2 DESC LIMIT 20
+        """)).mappings().all()
+        diag["marca_producto_dist"] = {str(r["marca"]): r["cnt"] for r in rows}
+    _safe_query("marca", q_marca)
+
+    # 9c. categoria_producto distribution
+    def q_cat(conn):
+        rows = conn.execute(text("""
+            SELECT COALESCE(NULLIF(TRIM(categoria_producto), ''), '(vacío)') AS cat, COUNT(*) AS cnt
+            FROM public.raw_ventas_detalle GROUP BY 1 ORDER BY 2 DESC LIMIT 20
+        """)).mappings().all()
+        diag["categoria_producto_dist"] = {str(r["cat"]): r["cnt"] for r in rows}
+    _safe_query("cat", q_cat)
+
+    # 9d. marca vacía → what's in categoria_producto
+    def q_marca_empty(conn):
+        rows = conn.execute(text("""
+            SELECT COALESCE(NULLIF(TRIM(categoria_producto), ''), '(vacío)') AS cat, COUNT(*) AS cnt
+            FROM public.raw_ventas_detalle
+            WHERE marca_producto IS NULL OR TRIM(marca_producto) = ''
+            GROUP BY 1 ORDER BY 2 DESC LIMIT 15
+        """)).mappings().all()
+        diag["complementarios_sin_marca"] = {str(r["cat"]): r["cnt"] for r in rows}
+    _safe_query("marca_empty", q_marca_empty)
+
     # 10. Growth test
     def q_growth(conn):
         from internal_agent_ops import _fetch_sales_growth_rows
-        growth_rows, plabel, clabel = _fetch_sales_growth_rows(engine, "este año", None, None, "linea", 3, "desc", "vs_anio_anterior")
+        growth_rows, plabel, clabel = _fetch_sales_growth_rows(engine, "este año", None, None, "marca", 3, "desc", "vs_anio_anterior")
         diag["growth_test"] = {"rows": len(growth_rows), "period": plabel, "comparison": clabel, "sample": growth_rows[:2]}
     _safe_query("growth", q_growth)
 

@@ -101,9 +101,38 @@ _UNIVERSAL_BI_DIMENSIONS = {
     "vendedor": ["vendedor", "asesor", "comercial"],
     "cliente": ["cliente", "clientes"],
     "producto": ["producto", "productos", "referencia", "referencias"],
-    "linea": ["linea", "línea", "categoria", "categoría", "familia"],
+    "marca": ["marca", "marcas", "linea", "línea", "lineas", "líneas", "categoria", "categoría", "familia"],
     "zona": ["zona", "regional", "region", "región"],
 }
+
+# ── Marca numérica → nombre legible (mismo mapping de main.py) ────────────
+_MARCA_LABEL_SQL = """
+CASE
+  WHEN TRIM(COALESCE(marca_producto, '')) != '' THEN
+    CASE public.fn_parse_integer(marca_producto)
+        WHEN 50 THEN 'ASC-MEGA'
+        WHEN 54 THEN 'International'
+        WHEN 55 THEN 'AN Colorants'
+        WHEN 56 THEN 'Pintuco Profesional'
+        WHEN 57 THEN 'Mega'
+        WHEN 58 THEN 'Pintuco'
+        WHEN 59 THEN 'Madetec'
+        WHEN 60 THEN 'Interpon'
+        WHEN 61 THEN 'Varios'
+        WHEN 62 THEN 'ICO'
+        WHEN 63 THEN 'Terinsa'
+        WHEN 64 THEN 'Pintuco MPY'
+        WHEN 65 THEN 'Terceros'
+        WHEN 66 THEN 'ICO Packaging'
+        WHEN 67 THEN 'Automotive OEM'
+        WHEN 68 THEN 'Resicoat'
+        WHEN 73 THEN 'Coral'
+        WHEN 91 THEN 'Sikkens'
+        ELSE 'Marca ' || TRIM(marca_producto)
+    END
+  ELSE COALESCE(NULLIF(TRIM(categoria_producto), ''), 'Complementario')
+END
+""".strip()
 
 
 def _normalize_text(value: Any) -> str:
@@ -566,9 +595,9 @@ def _extract_limit_from_question(question: str, default: int, minimum: int, maxi
 
 def _infer_sales_dimension(question: str) -> Optional[str]:
     normalized = _normalize_text(question)
-    # Compound phrases: "líneas de producto(s)" → linea, not producto
-    if re.search(r"l[ií]neas?\s+de\s+producto", normalized):
-        return "linea"
+    # Compound phrases: "líneas de producto(s)" / "marcas de ..." → marca, not producto
+    if re.search(r"l[ií]neas?\s+de\s+producto|marcas?\s+de", normalized):
+        return "marca"
     for dimension, aliases in _UNIVERSAL_BI_DIMENSIONS.items():
         if any(alias in normalized for alias in aliases):
             return dimension
@@ -603,7 +632,7 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
             "kind": "semantic",
             "analysis": "participacion",
             "periodo": period_value,
-            "dimension": _resolve_semantic_dimension(question, "linea"),
+            "dimension": _resolve_semantic_dimension(question, "marca"),
             "direction": _infer_sort_direction(question),
             "limite": limit,
         }
@@ -615,7 +644,7 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
             "kind": "semantic",
             "analysis": "crecimiento",
             "periodo": period_value,
-            "dimension": _resolve_semantic_dimension(question, "linea"),
+            "dimension": _resolve_semantic_dimension(question, "marca"),
             "direction": detected_direction,
             "comparison": _infer_comparison_mode(question),
             "limite": limit,
@@ -1331,12 +1360,12 @@ def _get_sales_dimension_sql_parts(dimension: str) -> tuple[str, str, str]:
         return (
             "public.fn_keep_alnum(codigo_articulo)",
             "INITCAP(MAX(public.fn_normalize_text(nombre_articulo)))",
-            "public.fn_keep_alnum(codigo_articulo) AS codigo_aux, INITCAP(MAX(public.fn_normalize_text(linea_producto))) AS detalle_aux",
+            f"public.fn_keep_alnum(codigo_articulo) AS codigo_aux, MAX({_MARCA_LABEL_SQL}) AS detalle_aux",
         )
-    if dimension == "linea":
+    if dimension == "marca":
         return (
-            "public.fn_normalize_text(linea_producto)",
-            "INITCAP(MAX(public.fn_normalize_text(linea_producto)))",
+            f"({_MARCA_LABEL_SQL})",
+            f"MAX({_MARCA_LABEL_SQL})",
             "NULL::text AS codigo_aux, NULL::text AS detalle_aux",
         )
     if dimension == "zona":
@@ -1522,8 +1551,8 @@ def _build_sales_dimension_summary(question: str, rows: list[dict], period_label
     lines = [f"Ventas por {dimension} en {period_label}: top {min(limit, len(rows))} con {direction_text} desempeño dentro del corte, por {_format_currency(total_neto)} acumulados en esta vista."]
     for row in rows[: min(limit, 5)]:
         detail = f" | código {row.get('codigo')}" if row.get("codigo") and dimension in {"vendedor", "cliente", "producto"} else ""
-        extra = f" | línea {row.get('detalle')}" if row.get("detalle") else ""
-        units = f" | unidades {_format_number(row.get('unidades'))}" if dimension in {"producto", "linea"} else ""
+        extra = f" | marca {row.get('detalle')}" if row.get("detalle") else ""
+        units = f" | unidades {_format_number(row.get('unidades'))}" if dimension in {"producto", "marca"} else ""
         lines.append(
             f"- {row.get('label')}{detail}{extra} | neto {_format_currency(row.get('neto'))} | clientes {_format_number(row.get('clientes'))} | líneas {_format_number(row.get('lineas'))}{units}"
         )
@@ -2136,11 +2165,11 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
                     args.get("periodo") or plan.get("periodo"),
                     store_code,
                     vendor_code,
-                    str(plan.get("dimension") or "linea"),
+                    str(plan.get("dimension") or "marca"),
                     int(plan.get("limite") or 10),
                     str(plan.get("direction") or "desc"),
                 )
-                return _build_sales_share_summary(rows, period_label, str(plan.get("dimension") or "linea"), int(plan.get("limite") or 10))
+                return _build_sales_share_summary(rows, period_label, str(plan.get("dimension") or "marca"), int(plan.get("limite") or 10))
 
             if analysis == "crecimiento":
                 rows, period_label, comparison_label = _fetch_sales_growth_rows(
@@ -2148,12 +2177,12 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
                     args.get("periodo") or plan.get("periodo"),
                     store_code,
                     vendor_code,
-                    str(plan.get("dimension") or "linea"),
+                    str(plan.get("dimension") or "marca"),
                     int(plan.get("limite") or 10),
                     str(plan.get("direction") or "desc"),
                     str(plan.get("comparison") or "vs_anio_anterior"),
                 )
-                return _build_sales_growth_summary(rows, period_label, comparison_label, str(plan.get("dimension") or "linea"), int(plan.get("limite") or 10), str(plan.get("direction") or "desc"))
+                return _build_sales_growth_summary(rows, period_label, comparison_label, str(plan.get("dimension") or "marca"), int(plan.get("limite") or 10), str(plan.get("direction") or "desc"))
 
             if analysis == "caida_frecuencia":
                 freq_dim = str(plan.get("dimension") or "cliente")
