@@ -82,6 +82,7 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertIn("Consultar indicadores internos de ventas, proyeccion, cartera e inventario.", system_prompt)
         self.assertIn("Exportar reportes internos por correo con Excel adjunto", system_prompt)
         self.assertIn("interpreta que pide el consolidado de toda la empresa", system_prompt)
+        self.assertIn("clientes con decrecimiento", system_prompt)
         self.assertIn("Si quieres, te conecto con un asesor comercial para cotizar los productos.", system_prompt)
 
 

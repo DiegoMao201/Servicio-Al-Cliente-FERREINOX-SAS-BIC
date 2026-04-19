@@ -3,8 +3,9 @@ import calendar
 import io
 import json
 import logging
+from numbers import Number
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from html import escape
 from typing import Any, Optional
 
@@ -52,6 +53,21 @@ _ROLE_FALLBACKS = {
     "empleado": ("empleado_operativo", "Empleado Operativo", "soporte"),
 }
 
+_MESES_NOMBRES = {
+    "enero": 1,
+    "febrero": 2,
+    "marzo": 3,
+    "abril": 4,
+    "mayo": 5,
+    "junio": 6,
+    "julio": 7,
+    "agosto": 8,
+    "septiembre": 9,
+    "octubre": 10,
+    "noviembre": 11,
+    "diciembre": 12,
+}
+
 
 def _normalize_text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "").strip()).lower()
@@ -81,6 +97,40 @@ def _format_percent(value: Any) -> str:
     except (TypeError, ValueError):
         return "N/D"
     return f"{numeric:,.1f}%"
+
+
+def _parse_bi_period(periodo_raw: Optional[str]) -> tuple[date, date, str]:
+    normalized = _normalize_text(periodo_raw or "")
+    today = date.today()
+    if not normalized or "este ano" in normalized or "este año" in normalized or "ano actual" in normalized or "año actual" in normalized:
+        return date(today.year, 1, 1), today, "este año"
+    if "este mes" in normalized or "mes actual" in normalized:
+        return date(today.year, today.month, 1), today, "este mes"
+    if "mes pasado" in normalized:
+        ref = date(today.year - 1, 12, 1) if today.month == 1 else date(today.year, today.month - 1, 1)
+        end = date(ref.year, ref.month, calendar.monthrange(ref.year, ref.month)[1])
+        return ref, min(end, today), f"{list(_MESES_NOMBRES.keys())[ref.month - 1]} {ref.year}"
+    for month_name, month_num in _MESES_NOMBRES.items():
+        if month_name in normalized:
+            year_match = re.search(r"\b(20\d{2})\b", normalized)
+            year_value = int(year_match.group(1)) if year_match else today.year
+            start = date(year_value, month_num, 1)
+            end = date(year_value, month_num, calendar.monthrange(year_value, month_num)[1])
+            return start, min(end, today), f"{month_name} {year_value}"
+    return date(today.year, 1, 1), today, "este año"
+
+
+def _format_preview_value(key: str, value: Any) -> str:
+    if value is None:
+        return ""
+    lowered = str(key or "").lower()
+    if isinstance(value, Number):
+        if any(token in lowered for token in ["valor", "saldo", "neto", "facturado", "devoluciones", "total", "precio", "ventas"]):
+            return _format_currency(value)
+        if any(token in lowered for token in ["variacion", "participacion"]):
+            return _format_percent(value)
+        return _format_number(value)
+    return str(value)
 
 
 def detect_requested_routine(user_message: Optional[str]) -> Optional[str]:
@@ -483,28 +533,56 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
 
     primary_sql = text(
         """
+        WITH last_sales AS (
+            SELECT
+                am.referencia_normalizada,
+                LEFT(COALESCE(rv.serie, ''), 3) AS store_prefix,
+                MAX(public.fn_parse_date(rv.fecha_venta)) AS last_sale_date
+            FROM public.raw_ventas_detalle rv
+            JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+            WHERE UPPER(COALESCE(rv.tipo_documento, '')) LIKE '%FACTURA%'
+            GROUP BY am.referencia_normalizada, LEFT(COALESCE(rv.serie, ''), 3)
+        )
         SELECT
-            cod_almacen,
-            almacen_nombre,
-            referencia,
-            descripcion,
-            stock_total,
-            historial_ventas_metric,
-            reorder_point,
-            reorder_qty_recommended,
-            inventory_value,
-            health_status
+            inv.cod_almacen,
+            inv.almacen_nombre,
+            inv.referencia,
+            inv.descripcion,
+            inv.stock_total,
+            inv.historial_ventas_metric,
+            inv.reorder_point,
+            inv.reorder_qty_recommended,
+            inv.inventory_value,
+            inv.health_status,
+            ls.last_sale_date AS fecha_ultima_venta,
+            CASE
+                WHEN ls.last_sale_date IS NULL THEN NULL
+                ELSE (CURRENT_DATE - ls.last_sale_date)
+            END AS dias_sin_venta
         FROM public.mv_internal_inventory_health
-        WHERE health_status = ANY(:statuses)
-          AND (:store_code IS NULL OR cod_almacen = :store_code)
-        ORDER BY inventory_value DESC, reorder_qty_recommended DESC, historial_ventas_metric ASC
+        LEFT JOIN last_sales ls
+          ON ls.referencia_normalizada = inv.referencia_normalizada
+         AND ls.store_prefix = inv.cod_almacen
+        WHERE inv.health_status = ANY(:statuses)
+          AND (:store_code IS NULL OR inv.cod_almacen = :store_code)
+        ORDER BY inv.inventory_value DESC, inv.reorder_qty_recommended DESC, inv.historial_ventas_metric ASC
         LIMIT :limit
         """
     )
 
     fallback_sql = text(
         """
-        WITH base AS (
+        WITH last_sales AS (
+            SELECT
+                am.referencia_normalizada,
+                LEFT(COALESCE(rv.serie, ''), 3) AS store_prefix,
+                MAX(public.fn_parse_date(rv.fecha_venta)) AS last_sale_date
+            FROM public.raw_ventas_detalle rv
+            JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+            WHERE UPPER(COALESCE(rv.tipo_documento, '')) LIKE '%FACTURA%'
+            GROUP BY am.referencia_normalizada, LEFT(COALESCE(rv.serie, ''), 3)
+        ),
+        base AS (
             SELECT
                 cod_almacen,
                 almacen_nombre,
@@ -558,20 +636,28 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
             FROM base
         )
         SELECT
-            cod_almacen,
-            almacen_nombre,
-            referencia,
-            descripcion,
-            stock_total,
-            historial_ventas_metric,
-            reorder_point,
-            reorder_qty_recommended,
-            inventory_value,
-            health_status
-        FROM health
-        WHERE health_status = ANY(:statuses)
-          AND (:store_code IS NULL OR cod_almacen = :store_code)
-        ORDER BY inventory_value DESC, reorder_qty_recommended DESC, historial_ventas_metric ASC
+                        h.cod_almacen,
+                        h.almacen_nombre,
+                        h.referencia,
+                        h.descripcion,
+                        h.stock_total,
+                        h.historial_ventas_metric,
+                        h.reorder_point,
+                        h.reorder_qty_recommended,
+                        h.inventory_value,
+                        h.health_status,
+                        ls.last_sale_date AS fecha_ultima_venta,
+                        CASE
+                                WHEN ls.last_sale_date IS NULL THEN NULL
+                                ELSE (CURRENT_DATE - ls.last_sale_date)
+                        END AS dias_sin_venta
+                FROM health h
+                LEFT JOIN last_sales ls
+                    ON ls.referencia_normalizada = public.fn_keep_alnum(h.referencia)
+                 AND ls.store_prefix = h.cod_almacen
+                WHERE h.health_status = ANY(:statuses)
+                    AND (:store_code IS NULL OR h.cod_almacen = :store_code)
+                ORDER BY h.inventory_value DESC, h.reorder_qty_recommended DESC, h.historial_ventas_metric ASC
         LIMIT :limit
         """
     )
@@ -628,8 +714,10 @@ def _build_inventory_indicator_summary(title: str, rows: list[dict], limit: int,
     lines = [f"{title}: {metrics[0][1]} referencias y {metrics[2][1]} comprometidos en inventario."]
     for row in rows[: min(limit, 5)]:
         suffix = f" | sugerido {_format_number(row.get('reorder_qty_recommended'))}" if include_suggested else ""
+        dias = row.get("dias_sin_venta")
+        dias_text = f" | {int(dias)} días sin venta" if isinstance(dias, Number) else " | sin venta reciente registrada"
         lines.append(
-            f"- {row.get('referencia')} | {row.get('descripcion')} | {row.get('almacen_nombre')} | stock {_format_number(row.get('stock_total'))} | valor {_format_currency(row.get('inventory_value'))}{suffix}"
+            f"- {row.get('referencia')} | {row.get('descripcion')} | {row.get('almacen_nombre')} | stock {_format_number(row.get('stock_total'))} | valor {_format_currency(row.get('inventory_value'))}{dias_text}{suffix}"
         )
     lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
     return "\n".join(lines)
@@ -642,6 +730,79 @@ def _build_cartera_indicator_summary(rows: list[dict], limit: int) -> str:
         vencido = float(row.get("balance_31_60") or 0) + float(row.get("balance_61_90") or 0) + float(row.get("balance_91_plus") or 0)
         lines.append(
             f"- {row.get('nombre_cliente')} | vencido {_format_currency(vencido)} | >90 {_format_currency(row.get('balance_91_plus'))} | vendedor {row.get('nom_vendedor') or 'N/A'}"
+        )
+    lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
+def _fetch_client_decline_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], limit: int) -> tuple[list[dict], str]:
+    current_start, current_end, period_label = _parse_bi_period(periodo_raw)
+    previous_start = date(current_start.year - 1, current_start.month, current_start.day)
+    previous_end_candidate = current_end - timedelta(days=365)
+    previous_end = date(previous_start.year, previous_end_candidate.month, min(previous_end_candidate.day, calendar.monthrange(previous_end_candidate.year, previous_end_candidate.month)[1]))
+
+    sql = text(
+        """
+        WITH current_period AS (
+            SELECT
+                fn_keep_alnum(cliente_id) AS cod_cliente,
+                MAX(fn_normalize_text(nombre_cliente)) AS nombre_cliente,
+                COALESCE(SUM(COALESCE(fn_parse_numeric(valor_venta), 0)), 0) AS ventas_actuales
+            FROM public.raw_ventas_detalle
+            WHERE (fn_normalize_text(tipo_documento) LIKE '%factura%' OR fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+              AND fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+            GROUP BY fn_keep_alnum(cliente_id)
+        ),
+        previous_period AS (
+            SELECT
+                fn_keep_alnum(cliente_id) AS cod_cliente,
+                COALESCE(SUM(COALESCE(fn_parse_numeric(valor_venta), 0)), 0) AS ventas_previas
+            FROM public.raw_ventas_detalle
+            WHERE (fn_normalize_text(tipo_documento) LIKE '%factura%' OR fn_normalize_text(tipo_documento) LIKE '%nota%credito%')
+              AND fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
+              AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+            GROUP BY fn_keep_alnum(cliente_id)
+        )
+        SELECT
+            c.cod_cliente,
+            c.nombre_cliente,
+            c.ventas_actuales,
+            COALESCE(p.ventas_previas, 0) AS ventas_previas,
+            COALESCE(c.ventas_actuales, 0) - COALESCE(p.ventas_previas, 0) AS variacion_absoluta,
+            CASE
+                WHEN COALESCE(p.ventas_previas, 0) <= 0 THEN NULL
+                ELSE ROUND(((COALESCE(c.ventas_actuales, 0) - COALESCE(p.ventas_previas, 0)) / p.ventas_previas) * 100.0, 1)
+            END AS variacion_pct
+        FROM current_period c
+        JOIN previous_period p ON p.cod_cliente = c.cod_cliente
+        WHERE COALESCE(c.ventas_actuales, 0) < COALESCE(p.ventas_previas, 0)
+        ORDER BY variacion_absoluta ASC, variacion_pct ASC NULLS LAST
+        LIMIT :limit
+        """
+    )
+
+    with engine.begin() as connection:
+        rows = connection.execute(
+            sql,
+            {
+                "current_start": current_start,
+                "current_end": current_end,
+                "previous_start": previous_start,
+                "previous_end": previous_end,
+                "store_code": store_code,
+                "limit": limit,
+            },
+        ).mappings().all()
+    return [dict(row) for row in rows], period_label
+
+
+def _build_client_decline_summary(rows: list[dict], period_label: str, limit: int) -> str:
+    total_drop = sum(abs(float(row.get("variacion_absoluta") or 0)) for row in rows)
+    lines = [f"Mayor decrecimiento de clientes en {period_label}: {len(rows)} clientes concentran una caída acumulada de {_format_currency(total_drop)} frente al mismo corte del año anterior."]
+    for row in rows[: min(limit, 5)]:
+        lines.append(
+            f"- {str(row.get('nombre_cliente') or row.get('cod_cliente') or 'Cliente').title()} | actual {_format_currency(row.get('ventas_actuales'))} | previo {_format_currency(row.get('ventas_previas'))} | caída {_format_currency(abs(float(row.get('variacion_absoluta') or 0)))} | variación {_format_percent(row.get('variacion_pct'))}"
         )
     lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
     return "\n".join(lines)
@@ -695,11 +856,17 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
             if not rows:
                 return "No encontré referencias en sobrestock para ese filtro."
             return _build_inventory_indicator_summary("Sobrestock", rows, limit)
+
+        if query_type == "clientes_mayor_decrecimiento":
+            rows, period_label = _fetch_client_decline_rows(engine, args.get("periodo"), store_code, limit)
+            if not rows:
+                return f"No encontré clientes con decrecimiento para {period_label}."
+            return _build_client_decline_summary(rows, period_label, limit)
     except SQLAlchemyError as exc:
         logger.warning("consultar_indicadores_internos failed: %s", exc)
         return "No pude consultar los indicadores internos. Verifica que esté aplicado backend/internal_agent_ops.sql."
 
-    return "No reconozco ese indicador interno. Usa proyección, baja rotación, cartera vencida, quiebres o sobrestock."
+    return "No reconozco ese indicador interno. Usa proyección, baja rotación, cartera vencida, quiebres, sobrestock o clientes con decrecimiento."
 
 
 def _build_inventory_summary_metrics(rows: list[dict]) -> list[tuple[str, str]]:
@@ -828,8 +995,8 @@ def _build_sales_report_dataset(report_type: str, payload: dict) -> tuple[str, l
 def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str], limit: int, conversation_context: Optional[dict], sales_query_fn=None) -> tuple[str, list[tuple[str, str]], list[str], list[dict], list[str], str]:
     if report_type == "inventario_baja_rotacion":
         rows = _fetch_inventory_rows(engine, ["sin_movimiento", "sobrestock"], store_code, limit)
-        headers = ["Almacen", "Referencia", "Descripcion", "Estado", "Stock", "Historial ventas", "Valor inventario"]
-        keys = ["almacen_nombre", "referencia", "descripcion", "health_status", "stock_total", "historial_ventas_metric", "inventory_value"]
+        headers = ["Almacen", "Referencia", "Descripcion", "Estado", "Stock", "Historial ventas", "Dias sin venta", "Valor inventario"]
+        keys = ["almacen_nombre", "referencia", "descripcion", "health_status", "stock_total", "historial_ventas_metric", "dias_sin_venta", "inventory_value"]
         title = "Reporte de Baja Rotación y Sobrestock"
         for row in rows:
             row["health_status"] = _humanize_health_status(row.get("health_status"))
@@ -851,11 +1018,22 @@ def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str]
         detail_sheet = "Detalle quiebres"
     elif report_type == "sobrestock":
         rows = _fetch_inventory_rows(engine, ["sobrestock"], store_code, limit)
-        headers = ["Almacen", "Referencia", "Descripcion", "Stock", "Historial ventas", "Valor inventario"]
-        keys = ["almacen_nombre", "referencia", "descripcion", "stock_total", "historial_ventas_metric", "inventory_value"]
+        headers = ["Almacen", "Referencia", "Descripcion", "Stock", "Historial ventas", "Dias sin venta", "Valor inventario"]
+        keys = ["almacen_nombre", "referencia", "descripcion", "stock_total", "historial_ventas_metric", "dias_sin_venta", "inventory_value"]
         title = "Reporte de Sobrestock"
         metrics = _build_inventory_summary_metrics(rows)
         detail_sheet = "Detalle sobrestock"
+    elif report_type == "clientes_mayor_decrecimiento":
+        rows, period_label = _fetch_client_decline_rows(engine, (conversation_context or {}).get("pending_tool_args", {}).get("periodo"), store_code, limit)
+        headers = ["Cliente", "Codigo", "Ventas actuales", "Ventas previas", "Caida absoluta", "Variacion %"]
+        keys = ["nombre_cliente", "cod_cliente", "ventas_actuales", "ventas_previas", "variacion_absoluta", "variacion_pct"]
+        title = "Reporte de Clientes con Mayor Decrecimiento"
+        metrics = [
+            ("Periodo analizado", period_label),
+            ("Clientes incluidos", _format_number(len(rows))),
+            ("Caída acumulada", _format_currency(sum(abs(float(row.get("variacion_absoluta") or 0)) for row in rows))),
+        ]
+        detail_sheet = "Detalle decrecimiento"
     elif report_type in {
         "ventas_detalladas",
         "ventas_por_tienda",
@@ -945,7 +1123,7 @@ def _style_detail_sheet(sheet, headers: list[str], keys: list[str], rows: list[d
             if fill:
                 cell.fill = fill
             number_format = _infer_number_format(key)
-            if number_format and isinstance(cell.value, (int, float)):
+            if number_format and isinstance(cell.value, Number):
                 if number_format == '0.0%' and abs(float(cell.value or 0)) > 1:
                     cell.value = float(cell.value) / 100.0
                 cell.number_format = number_format
@@ -983,9 +1161,8 @@ def _build_html_preview_rows(headers: list[str], rows: list[dict], keys: list[st
         cols = []
         for key in keys:
             value = row.get(key)
-            if isinstance(value, float):
-                value = round(value, 2)
-            cols.append(f"<td style='padding:10px 12px;border-bottom:1px solid #f3f4f6;'>{escape(str(value if value is not None else ''))}</td>")
+            value_text = _format_preview_value(key, value)
+            cols.append(f"<td style='padding:10px 12px;border-bottom:1px solid #f3f4f6;'>{escape(value_text)}</td>")
         body_html.append(f"<tr>{''.join(cols)}</tr>")
     return (
         "<table style='width:100%;border-collapse:collapse;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;'>"

@@ -736,7 +736,8 @@ AGENT_TOOLS_V3 = [
                             "inventario_baja_rotacion",
                             "cartera_vencida_resumen",
                             "quiebres_stock",
-                            "sobrestock"
+                            "sobrestock",
+                            "clientes_mayor_decrecimiento"
                         ],
                         "description": "Indicador interno a consultar.",
                     },
@@ -775,6 +776,7 @@ AGENT_TOOLS_V3 = [
                             "cartera_vencida",
                             "quiebres_stock",
                             "sobrestock",
+                            "clientes_mayor_decrecimiento",
                             "ventas_detalladas",
                             "ventas_por_tienda",
                             "ventas_por_vendedor",
