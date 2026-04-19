@@ -4,6 +4,7 @@ import pandas as pd
 from frontend.config import get_database_uri, get_dropbox_sources
 from frontend.data_catalog import CATALOG_SPECS, get_canonical_spec, get_official_file_names_for_source, get_specs_for_source
 from frontend.dropbox_sync_service import (
+    DropboxServiceError,
     build_target_table_name,
     ensure_postgrest_access,
     execute_sql_script,
@@ -171,7 +172,11 @@ def sync_canonical_base(db_uri, dropbox_sources):
             preflight_results.append((False, f"No hay configuración Dropbox para {spec['source_label']}"))
             continue
         dropbox_conf, dbx = source_clients[spec["source_label"]]
-        preflight_results.append(preflight_catalog_entry(spec, dropbox_conf, dbx))
+        try:
+            preflight_results.append(preflight_catalog_entry(spec, dropbox_conf, dbx))
+        except DropboxServiceError as exc:
+            preflight_results.append((False, str(exc)))
+            return [], preflight_results
 
     if not all(success for success, _ in preflight_results):
         return [], preflight_results
@@ -183,7 +188,10 @@ def sync_canonical_base(db_uri, dropbox_sources):
 
         dropbox_conf, dbx = source_clients[spec["source_label"]]
         write_mode = "append" if spec["target_table"] in initialized_tables else "truncate_append"
-        success, message = sync_catalog_entry(db_uri, spec, dropbox_conf, dbx, write_mode)
+        try:
+            success, message = sync_catalog_entry(db_uri, spec, dropbox_conf, dbx, write_mode)
+        except DropboxServiceError as exc:
+            success, message = False, str(exc)
         if success:
             initialized_tables.add(spec["target_table"])
         results.append((success, message))
@@ -192,7 +200,10 @@ def sync_canonical_base(db_uri, dropbox_sources):
 
 
 def refresh_official_base_and_postgrest(db_uri, dropbox_sources):
-    results, preflight_results = sync_canonical_base(db_uri, dropbox_sources)
+    try:
+        results, preflight_results = sync_canonical_base(db_uri, dropbox_sources)
+    except DropboxServiceError as exc:
+        return [], [(False, str(exc))], None
     if not results:
         return results, preflight_results, None
 

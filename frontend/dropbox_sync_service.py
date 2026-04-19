@@ -7,6 +7,7 @@ from pathlib import Path
 
 import dropbox
 import pandas as pd
+from requests import exceptions as requests_exceptions
 from sqlalchemy import create_engine, inspect, text
 
 from frontend.data_catalog import get_canonical_spec
@@ -15,6 +16,20 @@ from frontend.data_catalog import get_canonical_spec
 ENCODINGS = ["utf-8", "latin1", "cp1252"]
 DELIMITERS = [",", "|", ";", "\t", "{"]
 SUPPORTED_EXTENSIONS = (".csv", ".xlsx", ".xls")
+
+
+class DropboxServiceError(RuntimeError):
+    """Error operacional controlado para fallos de red/API contra Dropbox."""
+
+
+def _raise_dropbox_service_error(action, location, exc):
+    location_label = location or "/"
+    message = (
+        f"No fue posible {action} en Dropbox para '{location_label}'. "
+        "La conexión con Dropbox se interrumpió o el servicio no respondió. "
+        "Vuelve a intentarlo en unos segundos."
+    )
+    raise DropboxServiceError(message) from exc
 
 
 def slugify_identifier(value):
@@ -57,7 +72,10 @@ def get_dropbox_client(config):
 
 def list_csv_files(dbx, folder):
     """Lista archivos tabulares soportados dentro de una carpeta de Dropbox."""
-    entries = dbx.files_list_folder(folder).entries
+    try:
+        entries = dbx.files_list_folder(folder).entries
+    except (dropbox.exceptions.DropboxException, requests_exceptions.RequestException, ConnectionError) as exc:
+        _raise_dropbox_service_error("listar archivos", folder, exc)
     return [
         entry
         for entry in entries
@@ -194,7 +212,10 @@ def parse_excel_content(content, has_header):
 
 def parse_dropbox_csv(dbx, file_path, has_header, source_label=None, file_name=None):
     """Descarga y parsea un archivo tabular de Dropbox con soporte CSV y Excel."""
-    _, response = dbx.files_download(file_path)
+    try:
+        _, response = dbx.files_download(file_path)
+    except (dropbox.exceptions.DropboxException, requests_exceptions.RequestException, ConnectionError) as exc:
+        _raise_dropbox_service_error("descargar el archivo", file_path, exc)
     content = response.content
     lower_path = file_path.lower()
     resolved_file_name = file_name or Path(lower_path).name
