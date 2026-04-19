@@ -98,7 +98,7 @@ _STORE_CODE_LABELS = {
 
 _UNIVERSAL_BI_DIMENSIONS = {
     "tienda": ["tienda", "sede", "almacen", "almacén"],
-    "vendedor": ["vendedor", "asesor", "comercial"],
+    "vendedor": ["vendedor", "asesor", "comercial", "mostrador", "mostradores"],
     "cliente": ["cliente", "clientes"],
     "producto": ["producto", "productos", "referencia", "referencias"],
     "marca": ["marca", "marcas", "linea", "línea", "lineas", "líneas", "categoria", "categoría", "familia"],
@@ -616,6 +616,59 @@ def _extract_vendor_code_from_question(question: str) -> Optional[str]:
     return re.sub(r"[^A-Za-z0-9]", "", match.group(1))
 
 
+def _resolve_vendor_by_name(engine, question: str) -> Optional[str]:
+    """Try to find a vendor code by partial name match from the question.
+
+    Extracts candidate proper-name tokens (capitalized words not matching
+    known BI keywords) and searches nom_vendedor for a match.
+    """
+    _BI_STOPWORDS = {
+        "como", "cómo", "que", "qué", "cual", "cuál", "cuales", "cuáles",
+        "va", "van", "esta", "están", "estan", "fue", "son", "hay",
+        "el", "la", "los", "las", "de", "del", "en", "por", "para", "con", "al", "un", "una",
+        "me", "mi", "mis", "se", "le", "les", "su", "sus", "nos", "nuestro",
+        "ventas", "venta", "vendedor", "vendedores", "mostrador", "mostradores",
+        "asesor", "asesores", "cliente", "clientes", "producto", "productos",
+        "marca", "marcas", "linea", "línea", "lineas", "líneas", "sede", "sedes",
+        "tienda", "tiendas", "almacen", "almacén", "pereira", "bogota", "bogotá",
+        "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
+        "septiembre", "octubre", "noviembre", "diciembre",
+        "mes", "año", "anio", "trimestre", "semestre", "semana",
+        "hoy", "ayer", "este", "esta", "ese", "esa", "último", "ultima",
+        "top", "primeros", "primeras", "mayor", "menor", "mejor", "peor",
+        "crecimiento", "caida", "caída", "frecuencia", "participacion", "participación",
+        "facturado", "facturacion", "facturación", "devoluciones", "neto",
+        "total", "acumulado", "general", "todos", "todas",
+    }
+    # Extract words that look like proper names (2+ letters, not all-numeric, not a BI keyword)
+    words = re.findall(r"[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}", question)
+    candidate_tokens = [w for w in words if w.lower() not in _BI_STOPWORDS and not w.isdigit()]
+    if not candidate_tokens:
+        return None
+    # Build ILIKE pattern from consecutive candidate tokens
+    name_pattern = "%" + "%".join(candidate_tokens) + "%"
+    try:
+        sql = text(
+            """
+            SELECT public.fn_keep_alnum(codigo_vendedor) AS cod
+            FROM public.raw_ventas_detalle
+            WHERE TRIM(COALESCE(nom_vendedor, '')) != ''
+              AND nom_vendedor ILIKE :pattern
+            GROUP BY 1
+            ORDER BY COUNT(*) DESC
+            LIMIT 1
+            """
+        )
+        with engine.begin() as conn:
+            row = conn.execute(sql, {"pattern": name_pattern}).mappings().first()
+        if row and row["cod"]:
+            logger.info("_resolve_vendor_by_name: pattern=%r → vendor_code=%s", name_pattern, row["cod"])
+            return str(row["cod"])
+    except Exception:
+        logger.debug("_resolve_vendor_by_name: query failed for pattern=%r", name_pattern, exc_info=True)
+    return None
+
+
 def _extract_limit_from_question(question: str, default: int, minimum: int, maximum: int) -> int:
     normalized = _normalize_text(question)
     patterns = [
@@ -672,9 +725,20 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
             "direction": _infer_sort_direction(question),
             "limite": limit,
         }
-    if any(token in normalized for token in ["crecimiento", "crecer", "creció", "crecio", "creciendo", "crecen", "crecieron", "variacion por", "variación por", "cayendo", "cayeron", "vienen creciendo", "vienen cayendo"]):
+    if any(token in normalized for token in ["caida de frecuencia", "caída de frecuencia", "frecuencia de compra", "menos frecuencia", "menos visitas", "menos compras", "frecuencia"]):
+        freq_dim = "vendedor" if any(w in normalized for w in ["vendedor", "vendedores", "asesor", "asesores", "mostrador", "mostradores"]) else "cliente"
+        return {
+            "kind": "semantic",
+            "analysis": "caida_frecuencia",
+            "periodo": period_value,
+            "dimension": freq_dim,
+            "direction": "asc",
+            "comparison": _infer_comparison_mode(question),
+            "limite": limit,
+        }
+    if any(token in normalized for token in ["crecimiento", "crecer", "creció", "crecio", "creciendo", "crecen", "crecieron", "variacion por", "variación por", "cayendo", "cayeron", "vienen creciendo", "vienen cayendo", "caida", "caída", "decrecimiento", "decreciendo", "decrece", "rendimiento"]):
         detected_direction = _infer_sort_direction(question)
-        if any(w in normalized for w in ["cayendo", "cayeron", "caen"]):
+        if any(w in normalized for w in ["cayendo", "cayeron", "caen", "caida", "caída", "decrecimiento", "decreciendo", "decrece"]):
             detected_direction = "asc"
         return {
             "kind": "semantic",
@@ -682,17 +746,6 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
             "periodo": period_value,
             "dimension": _resolve_semantic_dimension(question, "marca"),
             "direction": detected_direction,
-            "comparison": _infer_comparison_mode(question),
-            "limite": limit,
-        }
-    if any(token in normalized for token in ["caida de frecuencia", "caída de frecuencia", "frecuencia de compra", "menos frecuencia", "menos visitas", "menos compras", "frecuencia"]):
-        freq_dim = "vendedor" if any(w in normalized for w in ["vendedor", "vendedores", "asesor", "asesores"]) else "cliente"
-        return {
-            "kind": "semantic",
-            "analysis": "caida_frecuencia",
-            "periodo": period_value,
-            "dimension": freq_dim,
-            "direction": "asc",
             "comparison": _infer_comparison_mode(question),
             "limite": limit,
         }
@@ -725,7 +778,7 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
         return {"kind": "indicator", "tipo_consulta": "productos_no_vendidos_periodo", "periodo": period_value, "limite": limit}
     if any(token in normalized for token in ["impulsar", "mover", "oportunidad", "reactivar producto"]):
         return {"kind": "indicator", "tipo_consulta": "productos_a_impulsar", "periodo": period_value, "limite": limit}
-    if any(token in normalized for token in ["decrecimiento", "caida", "caída", "decrece"]):
+    if any(token in normalized for token in ["decrecimiento", "caida", "caída", "decrece"]) and not _infer_sales_dimension(question):
         return {"kind": "indicator", "tipo_consulta": "clientes_mayor_decrecimiento", "periodo": period_value, "limite": limit}
     if any(token in normalized for token in ["cartera", "vencido", "vencida", "saldo"]):
         return {"kind": "indicator", "tipo_consulta": "cartera_vencida_resumen", "periodo": period_value, "limite": limit}
@@ -1374,6 +1427,7 @@ def _resolve_previous_period(periodo_raw: Optional[str], comparison_mode: str) -
 
 
 def _get_sales_dimension_sql_parts(dimension: str) -> tuple[str, str, str]:
+    """Returns (group_key, label_expr, extra_select) for the given dimension."""
     if dimension == "tienda":
         return (
             "LEFT(COALESCE(serie, ''), 3)",
@@ -1411,6 +1465,15 @@ def _get_sales_dimension_sql_parts(dimension: str) -> tuple[str, str, str]:
             "NULL::text AS codigo_aux, NULL::text AS detalle_aux",
         )
     raise ValueError("dimension de ventas no soportada")
+
+
+def _get_dimension_null_filter(dimension: str) -> str:
+    """Returns extra SQL AND clause to exclude NULL/empty groups for the dimension."""
+    if dimension == "vendedor":
+        return "AND TRIM(COALESCE(nom_vendedor, '')) != '' AND TRIM(COALESCE(codigo_vendedor, '')) != ''"
+    if dimension == "cliente":
+        return "AND TRIM(COALESCE(nombre_cliente, '')) != '' AND TRIM(COALESCE(cliente_id, '')) != ''"
+    return ""
 
 
 def _build_sales_scope_filters(question: str, args: dict, internal_auth: Optional[dict]) -> tuple[Optional[str], Optional[str], Optional[str]]:
@@ -1512,6 +1575,7 @@ def _fetch_sales_dimension_rows(engine, periodo_raw: Optional[str], store_code: 
     order_direction = "ASC" if direction == "asc" else "DESC"
     group_key, label_expr, extra_select = _get_sales_dimension_sql_parts(dimension)
 
+    null_filter = _get_dimension_null_filter(dimension)
     sql = text(
         f"""
         SELECT
@@ -1528,6 +1592,7 @@ def _fetch_sales_dimension_rows(engine, periodo_raw: Optional[str], store_code: 
           AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
           AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
           AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+          {null_filter}
         GROUP BY 1
         ORDER BY (SUM(CASE WHEN LOWER(tipo_documento) NOT LIKE '%nota%' THEN COALESCE(public.fn_parse_numeric(valor_venta), 0) ELSE 0 END)
              - SUM(CASE WHEN LOWER(tipo_documento) LIKE '%nota%' THEN ABS(COALESCE(public.fn_parse_numeric(valor_venta), 0)) ELSE 0 END)) {order_direction}
@@ -1600,6 +1665,7 @@ def _fetch_sales_share_rows(engine, periodo_raw: Optional[str], store_code: Opti
     current_start, current_end, period_label = _parse_bi_period(periodo_raw)
     order_direction = "ASC" if direction == "asc" else "DESC"
     group_key, label_expr, extra_select = _get_sales_dimension_sql_parts(dimension)
+    null_filter = _get_dimension_null_filter(dimension)
     sql = text(
         f"""
         WITH grouped AS (
@@ -1614,6 +1680,7 @@ def _fetch_sales_share_rows(engine, periodo_raw: Optional[str], store_code: Opti
               AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+              {null_filter}
             GROUP BY 1
         )
         SELECT
@@ -1661,6 +1728,7 @@ def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Opt
     previous_start, previous_end, _, comparison_label = _resolve_previous_period(periodo_raw, comparison_mode)
     order_direction = "ASC" if direction == "asc" else "DESC"
     group_key, label_expr, extra_select = _get_sales_dimension_sql_parts(dimension)
+    null_filter = _get_dimension_null_filter(dimension)
     sql = text(
         f"""
         WITH current_period AS (
@@ -1675,6 +1743,7 @@ def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Opt
               AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+              {null_filter}
             GROUP BY 1
         ),
         previous_period AS (
@@ -1687,6 +1756,7 @@ def _fetch_sales_growth_rows(engine, periodo_raw: Optional[str], store_code: Opt
               AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+              {null_filter}
             GROUP BY 1
         )
         SELECT
@@ -1746,9 +1816,11 @@ def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_
     if dimension == "vendedor":
         group_key = "public.fn_keep_alnum(codigo_vendedor)"
         label_expr = "INITCAP(MAX(public.fn_normalize_text(nom_vendedor)))"
+        null_filter = "AND TRIM(COALESCE(nom_vendedor, '')) != '' AND TRIM(COALESCE(codigo_vendedor, '')) != ''"
     else:
         group_key = "public.fn_keep_alnum(cliente_id)"
         label_expr = "INITCAP(MAX(public.fn_normalize_text(nombre_cliente)))"
+        null_filter = "AND TRIM(COALESCE(nombre_cliente, '')) != '' AND TRIM(COALESCE(cliente_id, '')) != ''"
 
     sql = text(
         f"""
@@ -1764,6 +1836,7 @@ def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_
               AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+              {null_filter}
             GROUP BY 1
         ),
         previous_period AS (
@@ -1777,6 +1850,7 @@ def _fetch_client_frequency_drop_rows(engine, periodo_raw: Optional[str], store_
               AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+              {null_filter}
             GROUP BY 1
         )
         SELECT
@@ -1902,6 +1976,7 @@ def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimens
     if dimension not in {"tienda", "vendedor"}:
         dimension = "tienda"
     group_key, label_expr, extra_select = _get_sales_dimension_sql_parts(dimension)
+    null_filter = _get_dimension_null_filter(dimension)
     sql = text(
         f"""
         WITH current_sales AS (
@@ -1916,6 +1991,7 @@ def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimens
               AND public.fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+              {null_filter}
             GROUP BY 1
         ),
         previous_sales AS (
@@ -1928,6 +2004,7 @@ def _fetch_opportunity_dimension_rows(engine, periodo_raw: Optional[str], dimens
               AND public.fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
               AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
+              {null_filter}
             GROUP BY 1
         ),
         previous_clients AS (
@@ -2172,6 +2249,9 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
 
     plan = _infer_universal_bi_plan(question, args.get("periodo"), args.get("limite"))
     store_code, vendor_code, scope_error = _build_sales_scope_filters(question, args, internal_auth)
+    # If no vendor code was resolved numerically, try matching by name
+    if not vendor_code:
+        vendor_code = _resolve_vendor_by_name(engine, question)
     logger.info("consultar_bi_universal: question=%r plan=%s store=%s vendor=%s", question[:120], json.dumps(plan, ensure_ascii=False, default=str)[:300], store_code, vendor_code)
     if scope_error:
         return scope_error
