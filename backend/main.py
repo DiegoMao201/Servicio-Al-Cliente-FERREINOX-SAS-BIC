@@ -2794,7 +2794,8 @@ def get_openai_api_key():
 
 
 def get_openai_model():
-    return os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    configured_model = (os.getenv("OPENAI_MODEL") or "").strip()
+    return configured_model or "gpt-4o-mini"
 
 
 def get_whatsapp_access_token():
