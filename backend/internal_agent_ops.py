@@ -712,6 +712,29 @@ def _resolve_vendor_by_name(engine, text_value: str) -> Optional[str]:
     return None
 
 
+def _resolve_indicator_scope(args: dict, internal_auth: Optional[dict]) -> tuple[Optional[str], Optional[str]]:
+    internal_auth = internal_auth or {}
+    employee_context = internal_auth.get("employee_context") or {}
+    role = _normalize_text(internal_auth.get("role") or "")
+
+    requested_store = _resolve_store_code(args.get("almacen"))
+    employee_store = _resolve_store_code(employee_context.get("store_code"))
+
+    vendor_code = _resolve_vendor_code(args.get("vendedor_codigo"), internal_auth)
+    if not vendor_code:
+        vendor_name = str(args.get("vendedor_nombre") or args.get("vendedor_codigo") or "").strip()
+        if vendor_name:
+            vendor_code = None
+
+    if role == "vendedor":
+        return requested_store, _resolve_vendor_code(employee_context.get("codigo_vendedor"), internal_auth) or vendor_code
+    if role == "operador":
+        return employee_store or requested_store, vendor_code
+    if role == "empleado":
+        return requested_store or employee_store, vendor_code
+    return requested_store, vendor_code
+
+
 def _extract_limit_from_question(question: str, default: int, minimum: int, maximum: int) -> int:
     normalized = _normalize_text(question)
     patterns = [
@@ -869,10 +892,10 @@ def _is_valid_email(value: Optional[str]) -> bool:
     return bool(re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", value.strip()))
 
 
-def _fetch_sales_projection(engine, store_code: Optional[str]) -> dict:
+def _fetch_sales_projection(engine, store_code: Optional[str], vendor_code: Optional[str]) -> dict:
     today = date.today()
     days_in_month = calendar.monthrange(today.year, today.month)[1]
-    params = {"start_month": today.replace(day=1), "today": today, "store_code": store_code}
+    params = {"start_month": today.replace(day=1), "today": today, "store_code": store_code, "vendor_code": vendor_code}
     with engine.begin() as connection:
         row = connection.execute(
             text(
@@ -884,6 +907,7 @@ def _fetch_sales_projection(engine, store_code: Optional[str]) -> dict:
                 FROM public.mv_internal_sales_daily
                 WHERE sales_date BETWEEN :start_month AND :today
                   AND (:store_code IS NULL OR regexp_replace(COALESCE(serie, ''), '[^0-9]', '', 'g') = :store_code)
+                                    AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
                 """
             ),
             params,
@@ -898,9 +922,10 @@ def _fetch_sales_projection(engine, store_code: Optional[str]) -> dict:
                 FROM public.mv_internal_sales_daily
                 WHERE sales_date BETWEEN :prev_start AND :prev_end
                   AND (:store_code IS NULL OR regexp_replace(COALESCE(serie, ''), '[^0-9]', '', 'g') = :store_code)
+                                    AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
                 """
             ),
-            {"prev_start": prev_start, "prev_end": prev_end, "store_code": store_code},
+                        {"prev_start": prev_start, "prev_end": prev_end, "store_code": store_code, "vendor_code": vendor_code},
         ).mappings().one()
 
     ventas_mes = float(row.get("ventas_mes_actual") or 0)
@@ -1063,7 +1088,7 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
     return [dict(row) for row in rows]
 
 
-def _fetch_cartera_rows(engine, limit: int) -> list[dict]:
+def _fetch_cartera_rows(engine, limit: int, vendor_code: Optional[str] = None) -> list[dict]:
     with engine.begin() as connection:
         rows = connection.execute(
             text(
@@ -1080,17 +1105,19 @@ def _fetch_cartera_rows(engine, limit: int) -> list[dict]:
                     max_dias_vencido
                 FROM public.mv_internal_cartera_cliente
                 WHERE (balance_31_60 + balance_61_90 + balance_91_plus) > 0
+                  AND (:vendor_code IS NULL OR public.fn_keep_alnum(vendedor_codigo) = :vendor_code)
                 ORDER BY balance_91_plus DESC, balance_61_90 DESC, balance_31_60 DESC
                 LIMIT :limit
                 """
             ),
-            {"limit": limit},
+            {"limit": limit, "vendor_code": vendor_code},
         ).mappings().all()
     return [dict(row) for row in rows]
 
 
-def _build_sales_projection_summary(projection: dict, store_code: Optional[str]) -> str:
-    scope = f" para sede {store_code}" if store_code else ""
+def _build_sales_projection_summary(projection: dict, store_code: Optional[str], vendor_code: Optional[str]) -> str:
+    scope_text = _describe_commercial_scope(store_code, vendor_code)
+    scope = f" para {scope_text}" if scope_text != "toda la operación comercial" else ""
     variation_line = ""
     if projection.get("variacion_pct") is not None:
         variation_line = f" | variación vs corte mes anterior {projection['variacion_pct']}%"
@@ -2471,9 +2498,7 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
     if not internal_auth.get("user_id"):
         return "No hay sesión interna válida para consultar indicadores."
 
-    employee_context = internal_auth.get("employee_context") or {}
-    store_code = _resolve_store_code(args.get("almacen") or employee_context.get("store_code"))
-    vendor_code = _resolve_vendor_code(args.get("vendedor_codigo"), internal_auth)
+    store_code, vendor_code = _resolve_indicator_scope(args, internal_auth)
     if not vendor_code:
         vendor_name = str(args.get("vendedor_nombre") or args.get("vendedor_codigo") or "").strip()
         if vendor_name:
@@ -2483,8 +2508,8 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
 
     try:
         if query_type == "proyeccion_ventas_mes":
-            projection = _fetch_sales_projection(engine, store_code)
-            return _build_sales_projection_summary(projection, store_code)
+            projection = _fetch_sales_projection(engine, store_code, vendor_code)
+            return _build_sales_projection_summary(projection, store_code, vendor_code)
 
         if query_type == "inventario_baja_rotacion":
             rows = _fetch_inventory_rows(engine, ["sin_movimiento", "sobrestock"], store_code, limit)
@@ -2493,7 +2518,7 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
             return _build_inventory_indicator_summary("Baja rotación", rows, limit)
 
         if query_type == "cartera_vencida_resumen":
-            rows = _fetch_cartera_rows(engine, limit)
+            rows = _fetch_cartera_rows(engine, limit, vendor_code)
             if not rows:
                 return "No encontré clientes vencidos para ese corte."
             return _build_cartera_indicator_summary(rows, limit)
@@ -2822,7 +2847,8 @@ def _build_sales_report_dataset(report_type: str, payload: dict) -> tuple[str, l
 def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str], limit: int, conversation_context: Optional[dict], sales_query_fn=None) -> tuple[str, list[tuple[str, str]], list[str], list[dict], list[str], str, Optional[dict]]:
     pending_args = (conversation_context or {}).get("pending_tool_args") or {}
     internal_auth = (conversation_context or {}).get("internal_auth") or {}
-    vendor_code = _resolve_vendor_code(pending_args.get("vendedor_codigo"), internal_auth)
+    resolved_store_code, vendor_code = _resolve_indicator_scope(pending_args, internal_auth)
+    store_code = store_code or resolved_store_code
     report_context = None
     if report_type == "inventario_baja_rotacion":
         rows = _fetch_inventory_rows(engine, ["sin_movimiento", "sobrestock"], store_code, limit)
@@ -2834,7 +2860,7 @@ def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str]
         metrics = _build_inventory_summary_metrics(rows)
         detail_sheet = "Detalle inventario"
     elif report_type == "cartera_vencida":
-        rows = _fetch_cartera_rows(engine, limit)
+        rows = _fetch_cartera_rows(engine, limit, vendor_code)
         headers = ["Cliente", "Codigo", "Vendedor", "Zona", "31-60", "61-90", ">90", "Saldo total", "Max días vencido"]
         keys = ["nombre_cliente", "cod_cliente", "nom_vendedor", "zona", "balance_31_60", "balance_61_90", "balance_91_plus", "balance_total", "max_dias_vencido"]
         title = "Reporte de Cartera Vencida"
@@ -3182,7 +3208,7 @@ def handle_enviar_reporte_interno_correo(engine, args: dict, conversation_contex
     destination_email = str(args.get("email_destino") or internal_auth.get("email") or "").strip().lower()
     if not _is_valid_email(destination_email):
         return "No tengo un correo destino válido. Pídele al colaborador el correo y luego reintenta el envío."
-    store_code = _resolve_store_code(args.get("almacen") or employee_context.get("store_code"))
+    store_code, _ = _resolve_indicator_scope(args, internal_auth)
     limit = _clamp_limit(args.get("limite"), default=100, minimum=10, maximum=500)
     context_with_args = dict(conversation_context or {})
     context_with_args["pending_tool_args"] = dict(args or {})

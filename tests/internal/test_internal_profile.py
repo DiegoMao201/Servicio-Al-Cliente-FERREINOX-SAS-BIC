@@ -93,6 +93,7 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertIn("clientes con decrecimiento", system_prompt)
         self.assertIn("clientes para reactivar", system_prompt)
         self.assertIn("productos para impulsar", system_prompt)
+        self.assertIn("SU propia cartera y SU propio código de vendedor", system_prompt)
         self.assertIn("Si quieres, te conecto con un asesor comercial para cotizar los productos.", system_prompt)
 
     def test_universal_bi_plan_detects_open_analytics_intent(self):
@@ -449,6 +450,92 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertIn("Pinturas Acme", response)
         self.assertIn("Ferrecliente SAS", response)
         self.assertIn("VINILTEX 1501", response)
+
+    def test_handle_consultar_indicadores_internos_vendedor_defaults_to_own_vendor_scope(self):
+        rows = [
+            {
+                "cod_cliente": "C001",
+                "nombre_cliente": "Pinturas Acme",
+                "nom_vendedor": "Jerson Atehortua Olarte",
+                "ventas_historicas": 1800000,
+                "ultima_compra": "2026-03-01",
+                "meses_activos": 4,
+                "dias_sin_compra": 50,
+            }
+        ]
+        with mock.patch.object(internal_agent_ops, "_fetch_clients_without_purchase_rows", return_value=(rows, "este mes")) as fetch_rows:
+            response = internal_agent_ops.handle_consultar_indicadores_internos(
+                mock.Mock(),
+                {
+                    "tipo_consulta": "clientes_a_reactivar",
+                    "periodo": "este mes",
+                    "limite": 10,
+                },
+                {
+                    "internal_auth": {
+                        "user_id": 1,
+                        "role": "vendedor",
+                        "employee_context": {"codigo_vendedor": "154011", "store_code": "189"},
+                    }
+                },
+            )
+
+        fetch_rows.assert_called_once_with(mock.ANY, "este mes", None, "154011", 10)
+        self.assertIn("Clientes a reactivar en este mes", response)
+        self.assertIn("Pinturas Acme", response)
+
+    def test_handle_consultar_indicadores_internos_vendedor_projection_uses_vendor_scope(self):
+        projection = {
+            "ventas_mes_actual": 2500000,
+            "dias_transcurridos": 20,
+            "proyeccion_cierre_mes": 3750000,
+            "variacion_pct": 12.5,
+        }
+        with mock.patch.object(internal_agent_ops, "_fetch_sales_projection", return_value=projection) as fetch_projection:
+            response = internal_agent_ops.handle_consultar_indicadores_internos(
+                mock.Mock(),
+                {"tipo_consulta": "proyeccion_ventas_mes", "periodo": "este mes"},
+                {
+                    "internal_auth": {
+                        "user_id": 1,
+                        "role": "vendedor",
+                        "employee_context": {"codigo_vendedor": "154011", "store_code": "189"},
+                    }
+                },
+            )
+
+        fetch_projection.assert_called_once_with(mock.ANY, None, "154011")
+        self.assertIn("vendedor 154011", response)
+
+    def test_handle_consultar_indicadores_internos_vendedor_cartera_uses_vendor_scope(self):
+        rows = [
+            {
+                "cod_cliente": "C001",
+                "nombre_cliente": "Pinturas Acme",
+                "nom_vendedor": "Jerson Atehortua Olarte",
+                "balance_total": 900000,
+                "balance_31_60": 100000,
+                "balance_61_90": 200000,
+                "balance_91_plus": 300000,
+                "max_dias_vencido": 95,
+                "zona": "Pereira",
+            }
+        ]
+        with mock.patch.object(internal_agent_ops, "_fetch_cartera_rows", return_value=rows) as fetch_cartera:
+            response = internal_agent_ops.handle_consultar_indicadores_internos(
+                mock.Mock(),
+                {"tipo_consulta": "cartera_vencida_resumen", "limite": 10},
+                {
+                    "internal_auth": {
+                        "user_id": 1,
+                        "role": "vendedor",
+                        "employee_context": {"codigo_vendedor": "154011", "store_code": "189"},
+                    }
+                },
+            )
+
+        fetch_cartera.assert_called_once_with(mock.ANY, 10, "154011")
+        self.assertIn("Pinturas Acme", response)
 
     def test_handle_enviar_reporte_interno_correo_builds_executive_monthly_plan_excel(self):
         snapshot = {
