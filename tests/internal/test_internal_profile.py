@@ -14,6 +14,7 @@ os.environ.setdefault("OPENAI_API_KEY", "sk-test")
 
 import agent_profiles
 import agent_context
+import agent_v3
 import internal_agent_ops
 import main
 
@@ -271,6 +272,30 @@ class InternalAgentProfileTests(unittest.TestCase):
                         )
 
         self.assertIsNone(response)
+
+    def test_bicomponent_guard_skips_internal_indicator_turns(self):
+        assistant_message = mock.Mock()
+        assistant_message.content = (
+            "Baja rotación: 20 referencias. - INTERGARD 740 stock 2 en Manizales."
+        )
+        tool_calls_made = [
+            {
+                "name": "consultar_indicadores_internos",
+                "args": {"tipo_consulta": "inventario_baja_rotacion", "almacen": "157", "limite": 20},
+                "result": "Baja rotación: 20 referencias y $49,676,072 comprometidos en inventario.",
+            }
+        ]
+
+        guarded = agent_v3._guardia_bicomponente(
+            assistant_message,
+            messages=[],
+            tool_calls_made=tool_calls_made,
+            context={"conversation_id": 148},
+            conversation_context={"internal_auth": {"role": "administrador"}},
+            m=mock.Mock(),
+        )
+
+        self.assertIs(guarded, assistant_message)
 
 
 if __name__ == "__main__":

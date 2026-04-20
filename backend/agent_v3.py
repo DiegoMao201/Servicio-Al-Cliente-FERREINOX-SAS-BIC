@@ -1254,6 +1254,26 @@ def _guardia_quimica(assistant_message, messages, tool_calls_made, context, conv
 
 def _guardia_bicomponente(assistant_message, messages, tool_calls_made, context, conversation_context, m):
     """Detecta bicomponentes sin catalizador y fuerza corrección."""
+    tools_used = {tc.get("name") for tc in (tool_calls_made or [])}
+    knowledge_or_inventory_tools = {
+        "consultar_conocimiento_tecnico",
+        "consultar_inventario",
+        "consultar_inventario_lote",
+    }
+    bi_tools = {
+        "consultar_indicadores_internos",
+        "consultar_bi_universal",
+        "consultar_ventas_internas",
+        "enviar_reporte_interno_correo",
+    }
+
+    # Never let product-completeness guards contaminate BI/indicator/report turns.
+    # For bicomponent enforcement, stay strictly inside product/inventory/technical flows.
+    if tools_used & bi_tools and not (tools_used & knowledge_or_inventory_tools):
+        return assistant_message
+    if not (tools_used & knowledge_or_inventory_tools):
+        return assistant_message
+
     response_text = (assistant_message.content or "").lower()
 
     # Also scan tool results — if inventory returned a bicomponent product,
