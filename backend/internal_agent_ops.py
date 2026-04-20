@@ -599,17 +599,36 @@ def _resolve_store_code(raw_value: Any) -> Optional[str]:
     return normalized or None
 
 
-def _resolve_vendor_code(raw_value: Any, internal_auth: Optional[dict]) -> Optional[str]:
+def _is_seller_scoped_user(internal_auth: Optional[dict]) -> bool:
     internal_auth = internal_auth or {}
     employee_context = internal_auth.get("employee_context") or {}
     role = _normalize_text(internal_auth.get("role") or "")
-    candidate = raw_value
+    cargo = _normalize_text(employee_context.get("cargo") or "")
+
     if role == "vendedor":
+        return True
+    seller_cargo_signals = (
+        "asesor comercial",
+        "comercial externo",
+        "comercial interno",
+        "vendedor",
+        "ejecutivo comercial",
+        "asesor externo",
+    )
+    return any(signal in cargo for signal in seller_cargo_signals)
+
+
+def _resolve_vendor_code(raw_value: Any, internal_auth: Optional[dict]) -> Optional[str]:
+    internal_auth = internal_auth or {}
+    employee_context = internal_auth.get("employee_context") or {}
+    is_seller_scoped = _is_seller_scoped_user(internal_auth)
+    candidate = raw_value
+    if is_seller_scoped:
         candidate = employee_context.get("codigo_vendedor") or raw_value
     normalized = re.sub(r"[^A-Za-z0-9]", "", str(candidate or "")).strip()
     if not normalized:
         return None
-    if role == "vendedor" and employee_context.get("codigo_vendedor"):
+    if is_seller_scoped and employee_context.get("codigo_vendedor"):
         return normalized
     return normalized if re.search(r"\d", normalized) else None
 
@@ -716,6 +735,7 @@ def _resolve_indicator_scope(args: dict, internal_auth: Optional[dict]) -> tuple
     internal_auth = internal_auth or {}
     employee_context = internal_auth.get("employee_context") or {}
     role = _normalize_text(internal_auth.get("role") or "")
+    is_seller_scoped = _is_seller_scoped_user(internal_auth)
 
     requested_store = _resolve_store_code(args.get("almacen"))
     employee_store = _resolve_store_code(employee_context.get("store_code"))
@@ -726,7 +746,7 @@ def _resolve_indicator_scope(args: dict, internal_auth: Optional[dict]) -> tuple
         if vendor_name:
             vendor_code = None
 
-    if role == "vendedor":
+    if is_seller_scoped:
         return requested_store, _resolve_vendor_code(employee_context.get("codigo_vendedor"), internal_auth) or vendor_code
     if role == "operador":
         return employee_store or requested_store, vendor_code
@@ -1586,6 +1606,7 @@ def _build_sales_scope_filters(question: str, args: dict, internal_auth: Optiona
     internal_auth = internal_auth or {}
     employee_context = internal_auth.get("employee_context") or {}
     role = _normalize_text(internal_auth.get("role") or "")
+    is_seller_scoped = _is_seller_scoped_user(internal_auth)
 
     requested_store = _resolve_store_code(args.get("almacen")) or _extract_store_code_from_question(question)
     employee_store = _resolve_store_code(employee_context.get("store_code"))
@@ -1598,7 +1619,7 @@ def _build_sales_scope_filters(question: str, args: dict, internal_auth: Optiona
 
     requested_vendor = _resolve_vendor_code(args.get("vendedor_codigo") or _extract_vendor_code_from_question(question), internal_auth)
     employee_vendor = _resolve_vendor_code((employee_context or {}).get("codigo_vendedor"), internal_auth)
-    if role == "vendedor":
+    if is_seller_scoped:
         if requested_vendor and employee_vendor and requested_vendor != employee_vendor:
             return None, None, "Solo puedes consultar tu propio código de vendedor."
         vendor_code = employee_vendor or requested_vendor

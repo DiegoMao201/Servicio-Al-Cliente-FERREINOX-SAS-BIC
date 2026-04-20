@@ -537,6 +537,73 @@ class InternalAgentProfileTests(unittest.TestCase):
         fetch_cartera.assert_called_once_with(mock.ANY, 10, "154011")
         self.assertIn("Pinturas Acme", response)
 
+    def test_handle_consultar_indicadores_internos_commercial_cargo_ignores_cedula_as_vendor_code(self):
+        rows = [
+            {
+                "cod_cliente": "C001",
+                "nombre_cliente": "Pinturas Acme",
+                "nom_vendedor": "Jerson Atehortua Olarte",
+                "ventas_historicas": 1800000,
+                "ultima_compra": "2026-03-01",
+                "meses_activos": 4,
+                "dias_sin_compra": 50,
+            }
+        ]
+        with mock.patch.object(internal_agent_ops, "_fetch_clients_without_purchase_rows", return_value=(rows, "este mes")) as fetch_rows:
+            response = internal_agent_ops.handle_consultar_indicadores_internos(
+                mock.Mock(),
+                {
+                    "tipo_consulta": "clientes_sin_compra_periodo",
+                    "vendedor_codigo": "1193084625",
+                    "periodo": "este mes",
+                    "limite": 10,
+                },
+                {
+                    "internal_auth": {
+                        "user_id": 1,
+                        "role": "empleado",
+                        "employee_context": {
+                            "cargo": "Asesor Comercial Externo",
+                            "cedula": "1193084625",
+                            "codigo_vendedor": "154011",
+                            "store_code": "189",
+                        },
+                    }
+                },
+            )
+
+        fetch_rows.assert_called_once_with(mock.ANY, "este mes", None, "154011", 10)
+        self.assertIn("Clientes sin compra en este mes", response)
+        self.assertIn("Pinturas Acme", response)
+
+    def test_handle_consultar_bi_universal_commercial_cargo_uses_own_vendor_scope(self):
+        with mock.patch.object(internal_agent_ops, "handle_consultar_indicadores_internos", return_value="ok") as indicator_handler:
+            response = internal_agent_ops.handle_consultar_bi_universal(
+                mock.Mock(),
+                {
+                    "pregunta": "Que clientes tengo que visitar este mes ?",
+                    "vendedor_codigo": "1193084625",
+                },
+                {
+                    "internal_auth": {
+                        "user_id": 1,
+                        "role": "empleado",
+                        "employee_context": {
+                            "cargo": "Asesor Comercial Externo",
+                            "cedula": "1193084625",
+                            "codigo_vendedor": "154011",
+                            "store_code": "189",
+                        },
+                    }
+                },
+            )
+
+        indicator_handler.assert_called_once()
+        forwarded_args = indicator_handler.call_args.args[1]
+        self.assertEqual(forwarded_args["tipo_consulta"], "clientes_a_reactivar")
+        self.assertEqual(forwarded_args["vendedor_codigo"], "154011")
+        self.assertEqual(response, "ok")
+
     def test_handle_enviar_reporte_interno_correo_builds_executive_monthly_plan_excel(self):
         snapshot = {
             "period_label": "abril 2026",
