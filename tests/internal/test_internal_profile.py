@@ -349,6 +349,56 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertIn("Clientes a reactivar en este mes", response)
         self.assertIn("Pinturas Acme", response)
 
+    def test_handle_consultar_indicadores_internos_resolves_vendedor_name_from_vendedor_codigo_field(self):
+        rows = [
+            {
+                "cod_cliente": "C001",
+                "nombre_cliente": "Pinturas Acme",
+                "nom_vendedor": "Jerson Ramirez",
+                "ventas_historicas": 1800000,
+                "ultima_compra": "2026-03-01",
+                "meses_activos": 4,
+                "dias_sin_compra": 50,
+            }
+        ]
+        with mock.patch.object(internal_agent_ops, "_resolve_vendor_by_name", return_value="154011") as resolver:
+            with mock.patch.object(internal_agent_ops, "_fetch_clients_without_purchase_rows", return_value=(rows, "abril 2026")) as fetch_rows:
+                response = internal_agent_ops.handle_consultar_indicadores_internos(
+                    mock.Mock(),
+                    {
+                        "tipo_consulta": "clientes_a_reactivar",
+                        "vendedor_codigo": "Jerson",
+                        "periodo": "abril",
+                        "limite": 10,
+                    },
+                    {"internal_auth": {"user_id": 1, "role": "administrador", "employee_context": {}}},
+                )
+
+        resolver.assert_called_once_with(mock.ANY, "Jerson")
+        fetch_rows.assert_called_once_with(mock.ANY, "abril", None, "154011", 10)
+        self.assertIn("Clientes a reactivar en abril 2026", response)
+        self.assertIn("Pinturas Acme", response)
+
+    def test_handle_consultar_bi_universal_resolves_vendor_name_from_args_before_query(self):
+        with mock.patch.object(internal_agent_ops, "_resolve_vendor_by_name", return_value="154011") as resolver:
+            with mock.patch.object(internal_agent_ops, "handle_consultar_indicadores_internos", return_value="ok") as indicator_handler:
+                response = internal_agent_ops.handle_consultar_bi_universal(
+                    mock.Mock(),
+                    {
+                        "pregunta": "que clientes debe activar jerson este mes de abril",
+                        "periodo": "abril",
+                        "vendedor_codigo": "Jerson",
+                    },
+                    {"internal_auth": {"user_id": 1, "role": "administrador", "employee_context": {}}},
+                )
+
+        resolver.assert_called_once_with(mock.ANY, "Jerson")
+        indicator_handler.assert_called_once()
+        forwarded_args = indicator_handler.call_args.args[1]
+        self.assertEqual(forwarded_args["tipo_consulta"], "clientes_a_reactivar")
+        self.assertEqual(forwarded_args["vendedor_codigo"], "154011")
+        self.assertEqual(response, "ok")
+
     def test_handle_consultar_indicadores_internos_builds_monthly_commercial_plan(self):
         snapshot = {
             "period_label": "este mes",

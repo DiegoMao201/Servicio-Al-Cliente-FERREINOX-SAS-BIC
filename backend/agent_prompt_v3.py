@@ -590,7 +590,11 @@ AGENT_TOOLS_V3 = [
                     },
                     "vendedor_codigo": {
                         "type": "string",
-                        "description": "Codigo ERP del vendedor. Opcional. Si el usuario es vendedor, el backend restringe la consulta a su propio codigo cuando aplique.",
+                        "description": "Codigo ERP del vendedor. Opcional. Si no conoces el codigo, tambien puede venir aqui el nombre del vendedor y el backend intentara resolverlo. Si el usuario es vendedor, el backend restringe la consulta a su propio codigo cuando aplique.",
+                    },
+                    "vendedor_nombre": {
+                        "type": "string",
+                        "description": "Nombre parcial o completo del vendedor cuando el usuario pregunte por una persona especifica. Opcional.",
                     },
                     "limite": {
                         "type": "integer",

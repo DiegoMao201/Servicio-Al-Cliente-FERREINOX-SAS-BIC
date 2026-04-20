@@ -607,7 +607,11 @@ def _resolve_vendor_code(raw_value: Any, internal_auth: Optional[dict]) -> Optio
     if role == "vendedor":
         candidate = employee_context.get("codigo_vendedor") or raw_value
     normalized = re.sub(r"[^A-Za-z0-9]", "", str(candidate or "")).strip()
-    return normalized or None
+    if not normalized:
+        return None
+    if role == "vendedor" and employee_context.get("codigo_vendedor"):
+        return normalized
+    return normalized if re.search(r"\d", normalized) else None
 
 
 def _extract_store_code_from_question(question: str) -> Optional[str]:
@@ -629,8 +633,8 @@ def _extract_vendor_code_from_question(question: str) -> Optional[str]:
     return re.sub(r"[^A-Za-z0-9]", "", match.group(1))
 
 
-def _resolve_vendor_by_name(engine, question: str) -> Optional[str]:
-    """Try to find a vendor code by partial name match from the question.
+def _resolve_vendor_by_name(engine, text_value: str) -> Optional[str]:
+    """Try to find a vendor code by partial name match from free text.
 
     Extracts candidate proper-name tokens (capitalized words not matching
     known BI keywords) and searches nom_vendedor for a match.
@@ -654,7 +658,7 @@ def _resolve_vendor_by_name(engine, question: str) -> Optional[str]:
         "total", "acumulado", "general", "todos", "todas",
     }
     # Extract words that look like proper names (2+ letters, not all-numeric, not a BI keyword)
-    words = re.findall(r"[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}", question)
+    words = re.findall(r"[A-ZÁÉÍÓÚÑa-záéíóúñ]{2,}", text_value)
     candidate_tokens = [w for w in words if w.lower() not in _BI_STOPWORDS and not w.isdigit()]
     if not candidate_tokens:
         return None
@@ -2471,7 +2475,7 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
     store_code = _resolve_store_code(args.get("almacen") or employee_context.get("store_code"))
     vendor_code = _resolve_vendor_code(args.get("vendedor_codigo"), internal_auth)
     if not vendor_code:
-        vendor_name = str(args.get("vendedor_nombre") or "").strip()
+        vendor_name = str(args.get("vendedor_nombre") or args.get("vendedor_codigo") or "").strip()
         if vendor_name:
             vendor_code = _resolve_vendor_by_name(engine, vendor_name)
     query_type = _normalize_text(args.get("tipo_consulta") or "")
@@ -2562,9 +2566,10 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
 
     plan = _infer_universal_bi_plan(question, args.get("periodo"), args.get("limite"))
     store_code, vendor_code, scope_error = _build_sales_scope_filters(question, args, internal_auth)
-    # If no vendor code was resolved numerically, try matching by name
     if not vendor_code:
-        vendor_code = _resolve_vendor_by_name(engine, question)
+        vendor_lookup_text = str(args.get("vendedor_nombre") or args.get("vendedor_codigo") or question).strip()
+        if vendor_lookup_text:
+            vendor_code = _resolve_vendor_by_name(engine, vendor_lookup_text)
     logger.info("consultar_bi_universal: question=%r plan=%s store=%s vendor=%s", question[:120], json.dumps(plan, ensure_ascii=False, default=str)[:300], store_code, vendor_code)
     if scope_error:
         return scope_error
