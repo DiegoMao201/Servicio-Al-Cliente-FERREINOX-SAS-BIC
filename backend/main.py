@@ -5062,6 +5062,29 @@ def _is_clear_customer_product_message(normalized: str) -> bool:
     return sum(1 for signal in _CUSTOMER_PRODUCT_SIGNALS if signal in normalized) >= 2
 
 
+def _looks_like_internal_bi_sales_query(normalized: str) -> bool:
+    sales_signals = [
+        "ventas", "venta", "facturacion", "facturación", "proyeccion", "proyección",
+        "cierre", "cumplimiento", "meta", "presupuesto",
+    ]
+    metric_signals = [
+        "cuanto", "cuánto", "como van", "cómo van", "cuáles son", "cuales son",
+        "cuanto lleva", "cuánto lleva", "total", "acumulado", "acumulada",
+        "acumuladas", "va", "van", "lleva", "llevamos",
+    ]
+    scope_signals = [
+        "empresa", "sede", "tienda", "almacen", "almacén", "canal",
+        "mostrador", "mostradores", "vendedor", "vendedores", "asesor", "asesores",
+        "pereira", "olaya", "parque olaya", "manizales", "armenia", "dosquebradas",
+        "opalo", "ópalo", "laureles", "cerritos", "ferrebox",
+        "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre",
+        "noviembre", "diciembre", "enero", "febrero", "marzo", "mes",
+    ]
+    if not any(signal in normalized for signal in sales_signals):
+        return False
+    return any(signal in normalized for signal in metric_signals) or any(signal in normalized for signal in scope_signals)
+
+
 def detect_internal_query_intent(text_value: Optional[str]):
     normalized = normalize_text_value(text_value)
     if not normalized:
@@ -5069,6 +5092,8 @@ def detect_internal_query_intent(text_value: Optional[str]):
     # ── Escape temprano: si el mensaje es claramente una consulta de cliente → no es intent interno ──
     if _is_clear_customer_product_message(normalized):
         return None
+    if _looks_like_internal_bi_sales_query(normalized):
+        return "consulta_bi"
     if any(fragment in normalized for fragment in ["reclamos pendientes", "pendientes de reclamos", "crm pendientes de reclamos", "reclamos crm", "garantias pendientes", "garantías pendientes", "casos pendientes de reclamo"]):
         return "consulta_reclamos_pendientes"
     if any(fragment in normalized for fragment in ["carro va", "carro para", "van para", "va para", "traemos algo", "traemos mercancia", "traemos mercancía", "mercancia para", "mercancía para", "en ruta"]):
@@ -5618,6 +5643,9 @@ def handle_internal_whatsapp_message(content: Optional[str], context: dict, conv
                 "internal_transfer_flow": None,
             },
         }
+
+    if intent == "consulta_bi":
+        return None
 
     if intent == "consulta_despachos":
         if not internal_user_has_advanced_access(internal_user):

@@ -225,6 +225,53 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertEqual(plan["dimension"], "vendedor")
         self.assertIsNone(plan.get("channel"))
 
+    def test_detect_internal_query_intent_flags_sales_and_projection_questions(self):
+        self.assertEqual(
+            main.detect_internal_query_intent("Las ventas de Pereira cuáles son y qué proyección tiene para cierre de abril"),
+            "consulta_bi",
+        )
+        self.assertEqual(
+            main.detect_internal_query_intent("Cuánto lleva en ventas OLAYA"),
+            "consulta_bi",
+        )
+        self.assertEqual(
+            main.detect_internal_query_intent("La empresa cuanto lleva en ventas en abril"),
+            "consulta_bi",
+        )
+
+    def test_detect_internal_query_intent_does_not_hijack_customer_price_question(self):
+        self.assertIsNone(main.detect_internal_query_intent("Cuánto vale el viniltex en Pereira"))
+
+    def test_handle_internal_whatsapp_message_requests_internal_login_for_sales_bi_without_session(self):
+        with mock.patch.dict(os.environ, {"AGENT_PROFILE": "internal"}, clear=False):
+            with mock.patch.object(main, "find_employee_record_by_phone", return_value=None):
+                response = main.handle_internal_whatsapp_message(
+                    "La empresa cuanto lleva en ventas en abril",
+                    {"telefono_e164": "+573001112233"},
+                    {},
+                )
+
+        self.assertIsNotNone(response)
+        self.assertEqual(response["intent"], "internal_auth_required")
+        self.assertIn("Para consultas internas primero debes iniciar sesión", response["response_text"])
+
+    def test_handle_internal_whatsapp_message_keeps_bi_queries_for_internal_llm_after_auth(self):
+        with mock.patch.dict(os.environ, {"AGENT_PROFILE": "internal"}, clear=False):
+            with mock.patch.object(
+                main,
+                "resolve_internal_session",
+                return_value={"id": 7, "role": "administrador", "session_expires_at": "2099-01-01T00:00:00Z"},
+            ):
+                with mock.patch.object(main, "build_internal_auth_context", return_value={"token": "abc", "role": "administrador"}):
+                    with mock.patch.object(main, "find_employee_record_by_phone", return_value=None):
+                        response = main.handle_internal_whatsapp_message(
+                            "Cuánto lleva en ventas Pereira",
+                            {"telefono_e164": "+573001112233"},
+                            {"internal_auth": {"token": "abc"}},
+                        )
+
+        self.assertIsNone(response)
+
 
 if __name__ == "__main__":
     unittest.main()
