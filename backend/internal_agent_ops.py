@@ -10,6 +10,7 @@ from html import escape
 from typing import Any, Optional
 
 from openpyxl import Workbook
+from openpyxl.chart import BarChart, PieChart, Reference
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from sqlalchemy import text
@@ -813,6 +814,14 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
             "comparison": _infer_comparison_mode(question),
             "limite": limit,
         }
+
+    if any(token in normalized for token in [
+        "plan comercial", "plan de accion", "plan de acción", "que hacer este mes",
+        "qué hacer este mes", "vender mas", "vender más", "prioridades comerciales",
+        "acciones comerciales", "donde tenemos oportunidad", "dónde tenemos oportunidad",
+        "como vender mas", "cómo vender más", "en que enfocarnos", "en qué enfocarnos",
+    ]):
+        return {"kind": "indicator", "tipo_consulta": "plan_comercial_mensual", "periodo": period_value, "limite": limit}
 
     if any(token in normalized for token in ["reactivar", "visitar", "volver a comprar", "recuperar cliente"]):
         return {"kind": "indicator", "tipo_consulta": "clientes_a_reactivar", "periodo": period_value, "limite": limit}
@@ -2157,7 +2166,7 @@ def _build_opportunity_dimension_summary(rows: list[dict], period_label: str, co
     return "\n".join(lines)
 
 
-def _fetch_client_decline_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], limit: int) -> tuple[list[dict], str]:
+def _fetch_client_decline_rows(engine, periodo_raw: Optional[str], store_code: Optional[str], limit: int, vendor_code: Optional[str] = None) -> tuple[list[dict], str]:
     current_start, current_end, period_label = _parse_bi_period(periodo_raw)
     previous_start = date(current_start.year - 1, current_start.month, current_start.day)
     previous_end_candidate = current_end - timedelta(days=365)
@@ -2174,6 +2183,7 @@ def _fetch_client_decline_rows(engine, periodo_raw: Optional[str], store_code: O
             WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND fn_parse_date(fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+                            AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
             GROUP BY fn_keep_alnum(cliente_id)
         ),
         previous_period AS (
@@ -2184,6 +2194,7 @@ def _fetch_client_decline_rows(engine, periodo_raw: Optional[str], store_code: O
             WHERE (LOWER(tipo_documento) LIKE '%factura%' OR LOWER(tipo_documento) LIKE '%nota%credito%')
               AND fn_parse_date(fecha_venta) BETWEEN :previous_start AND :previous_end
               AND (:store_code IS NULL OR LEFT(COALESCE(serie, ''), 3) = :store_code)
+                            AND (:vendor_code IS NULL OR public.fn_keep_alnum(codigo_vendedor) = :vendor_code)
             GROUP BY fn_keep_alnum(cliente_id)
         )
         SELECT
@@ -2213,6 +2224,7 @@ def _fetch_client_decline_rows(engine, periodo_raw: Optional[str], store_code: O
                 "previous_start": previous_start,
                 "previous_end": previous_end,
                 "store_code": store_code,
+                "vendor_code": vendor_code,
                 "limit": limit,
             },
         ).mappings().all()
@@ -2227,6 +2239,216 @@ def _build_client_decline_summary(rows: list[dict], period_label: str, limit: in
             f"- {str(row.get('nombre_cliente') or row.get('cod_cliente') or 'Cliente').title()} | actual {_format_currency(row.get('ventas_actuales'))} | previo {_format_currency(row.get('ventas_previas'))} | caída {_format_currency(abs(float(row.get('variacion_absoluta') or 0)))} | variación {_format_percent(row.get('variacion_pct'))}"
         )
     lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
+    return "\n".join(lines)
+
+
+def _describe_commercial_scope(store_code: Optional[str], vendor_code: Optional[str]) -> str:
+    scope_parts = []
+    if store_code:
+        scope_parts.append(_STORE_CODE_LABELS.get(store_code, store_code))
+    if vendor_code:
+        scope_parts.append(f"vendedor {vendor_code}")
+    return " / ".join(scope_parts) if scope_parts else "toda la operación comercial"
+
+
+def _build_monthly_commercial_plan_report_payload(
+    engine,
+    period_value: str,
+    store_code: Optional[str],
+    vendor_code: Optional[str],
+    limit: int,
+) -> dict:
+    snapshot = _fetch_sales_total_snapshot(engine, period_value, store_code, vendor_code)
+    reactivation_rows, period_label = _fetch_clients_without_purchase_rows(engine, period_value, store_code, vendor_code, min(limit, 10))
+    decline_rows, _ = _fetch_client_decline_rows(engine, period_value, store_code, min(limit, 10), vendor_code)
+    push_rows, _ = _fetch_products_to_push_rows(engine, period_value, store_code, vendor_code, min(limit, 10))
+    return {
+        "snapshot": snapshot,
+        "period_label": period_label or snapshot.get("period_label") or period_value,
+        "reactivation_rows": reactivation_rows,
+        "decline_rows": decline_rows,
+        "push_rows": push_rows,
+    }
+
+
+def _build_monthly_commercial_plan_report_bundle(payload: dict, store_code: Optional[str], vendor_code: Optional[str], limit: int) -> dict:
+    snapshot = payload["snapshot"]
+    reactivation_rows = payload["reactivation_rows"]
+    decline_rows = payload["decline_rows"]
+    push_rows = payload["push_rows"]
+    scope_text = _describe_commercial_scope(store_code, vendor_code)
+
+    neto = float(snapshot.get("neto") or 0)
+    prev_neto = float(snapshot.get("prev_neto") or 0)
+    gap_vs_prev = max(prev_neto - neto, 0)
+    total_reactivation = sum(float(row.get("ventas_historicas") or 0) for row in reactivation_rows)
+    total_decline = sum(abs(float(row.get("variacion_absoluta") or 0)) for row in decline_rows)
+    total_push_gap = sum(float(row.get("brecha_oportunidad") or 0) for row in push_rows)
+
+    headers = ["Palanca", "Prioridad", "Foco", "Codigo", "Oportunidad", "Accion sugerida", "Soporte analitico"]
+    keys = ["palanca", "prioridad", "foco", "codigo", "oportunidad_valor", "accion_sugerida", "soporte"]
+    rows: list[dict] = []
+
+    for idx, row in enumerate(reactivation_rows[: min(limit, 5)], start=1):
+        rows.append(
+            {
+                "palanca": "Reactivación",
+                "prioridad": idx,
+                "foco": row.get("nombre_cliente") or row.get("cod_cliente"),
+                "codigo": row.get("cod_cliente"),
+                "oportunidad_valor": float(row.get("ventas_historicas") or 0),
+                "accion_sugerida": "Contactar y agendar visita con portafolio base y recuperación de ticket.",
+                "soporte": f"{int(row.get('dias_sin_compra') or 0)} días sin compra | histórico {_format_currency(row.get('ventas_historicas'))}",
+            }
+        )
+
+    for idx, row in enumerate(decline_rows[: min(limit, 5)], start=1):
+        rows.append(
+            {
+                "palanca": "Recuperación",
+                "prioridad": idx,
+                "foco": row.get("nombre_cliente") or row.get("cod_cliente"),
+                "codigo": row.get("cod_cliente"),
+                "oportunidad_valor": abs(float(row.get("variacion_absoluta") or 0)),
+                "accion_sugerida": "Revisar mezcla, frecuencia y objeciones; proponer recompra de categorías perdidas.",
+                "soporte": f"actual {_format_currency(row.get('ventas_actuales'))} vs previo {_format_currency(row.get('ventas_previas'))}",
+            }
+        )
+
+    for idx, row in enumerate(push_rows[: min(limit, 5)], start=1):
+        rows.append(
+            {
+                "palanca": "Impulso de portafolio",
+                "prioridad": idx,
+                "foco": row.get("descripcion") or row.get("referencia"),
+                "codigo": row.get("referencia"),
+                "oportunidad_valor": float(row.get("brecha_oportunidad") or 0),
+                "accion_sugerida": "Cruzar esta referencia en visitas activas y ofertas del mes con los clientes objetivo.",
+                "soporte": f"clientes objetivo: {row.get('clientes_objetivo') or 'sin detalle'}",
+            }
+        )
+
+    metrics = [
+        ("Periodo analizado", payload.get("period_label") or snapshot.get("period_label") or "este mes"),
+        ("Cobertura analizada", scope_text),
+        ("Ventas netas", _format_currency(neto)),
+        ("Brecha vs mismo corte anterior", _format_currency(gap_vs_prev)),
+        ("Potencial por reactivación", _format_currency(total_reactivation)),
+        ("Potencial por recuperación", _format_currency(total_decline)),
+        ("Potencial por impulso", _format_currency(total_push_gap)),
+        ("Acciones priorizadas", _format_number(len(rows))),
+    ]
+
+    executive_lines = [
+        f"El plan mensual se arma para {scope_text} con foco en cerrar una brecha de {_format_currency(gap_vs_prev)} frente al mismo corte del año anterior.",
+        f"La mayor bolsa está en reactivación y recuperación de clientes, con {_format_currency(total_reactivation + total_decline)} potencial combinado.",
+        f"El portafolio a impulsar suma {_format_currency(total_push_gap)} y debe cruzarse en cada visita priorizada del mes.",
+    ]
+    recommendations = [
+        "Semana 1: contactar clientes inactivos de mayor valor histórico y confirmar causa de pausa.",
+        "Semana 2: recuperar clientes en caída con propuesta de mezcla y recompra sobre categorías perdidas.",
+        "Semana 3: empujar referencias priorizadas en visitas activas y campañas del mes.",
+        "Semana 4: revisar avance contra brecha comercial y redistribuir foco por vendedor o sede.",
+    ]
+    chart_rows = [
+        {"categoria": "Reactivación", "valor": total_reactivation},
+        {"categoria": "Recuperación", "valor": total_decline},
+        {"categoria": "Impulso", "valor": total_push_gap},
+    ]
+
+    return {
+        "title": "Plan Comercial Mensual Ejecutivo",
+        "metrics": metrics,
+        "headers": headers,
+        "rows": rows,
+        "keys": keys,
+        "detail_sheet": "Acciones mes",
+        "report_context": {
+            "executive_sheet_title": "Tablero Ejecutivo",
+            "executive_lines": executive_lines,
+            "recommendations": recommendations,
+            "chart_rows": chart_rows,
+            "detail_sheets": [
+                {
+                    "name": "Acciones mes",
+                    "headers": headers,
+                    "keys": keys,
+                    "rows": rows,
+                },
+                {
+                    "name": "Clientes reactivar",
+                    "headers": ["Cliente", "Codigo", "Vendedor", "Ultima compra", "Dias sin compra", "Ventas historicas", "Meses activos"],
+                    "keys": ["nombre_cliente", "cod_cliente", "nom_vendedor", "ultima_compra", "dias_sin_compra", "ventas_historicas", "meses_activos"],
+                    "rows": reactivation_rows,
+                },
+                {
+                    "name": "Clientes caida",
+                    "headers": ["Cliente", "Codigo", "Ventas actuales", "Ventas previas", "Caida absoluta", "Variacion %"],
+                    "keys": ["nombre_cliente", "cod_cliente", "ventas_actuales", "ventas_previas", "variacion_absoluta", "variacion_pct"],
+                    "rows": decline_rows,
+                },
+                {
+                    "name": "Productos impulso",
+                    "headers": ["Almacen", "Referencia", "Descripcion", "Stock", "Ventas actuales", "Promedio base", "Brecha oportunidad", "Clientes objetivo"],
+                    "keys": ["almacen_nombre", "referencia", "descripcion", "stock_total", "ventas_actuales", "promedio_base", "brecha_oportunidad", "clientes_objetivo"],
+                    "rows": push_rows,
+                },
+            ],
+        },
+    }
+
+
+def _build_monthly_commercial_plan_summary(
+    snapshot: dict,
+    reactivation_rows: list[dict],
+    decline_rows: list[dict],
+    push_rows: list[dict],
+    store_code: Optional[str],
+    vendor_code: Optional[str],
+    limit: int,
+) -> str:
+    scope_text = _describe_commercial_scope(store_code, vendor_code)
+
+    neto = float(snapshot.get("neto") or 0)
+    prev_neto = float(snapshot.get("prev_neto") or 0)
+    gap_vs_prev = max(prev_neto - neto, 0)
+    total_reactivation = sum(float(row.get("ventas_historicas") or 0) for row in reactivation_rows)
+    total_decline = sum(abs(float(row.get("variacion_absoluta") or 0)) for row in decline_rows)
+    total_push_gap = sum(float(row.get("brecha_oportunidad") or 0) for row in push_rows)
+
+    lines = [
+        f"Plan comercial de {snapshot.get('period_label')} para {scope_text}: ventas netas {_format_currency(neto)}. Brecha frente al mismo corte anterior: {_format_currency(gap_vs_prev)}.",
+        f"Palancas priorizadas este mes: reactivación {_format_currency(total_reactivation)}, recuperación de clientes en caída {_format_currency(total_decline)} y productos para impulsar {_format_currency(total_push_gap)}.",
+    ]
+
+    if reactivation_rows:
+        top = reactivation_rows[: min(limit, 3)]
+        lines.append("1. Reactiva estos clientes primero:")
+        for row in top:
+            dias = row.get("dias_sin_compra")
+            dias_text = f"{int(dias)} días" if isinstance(dias, Number) else "sin dato"
+            lines.append(
+                f"- {row.get('nombre_cliente') or row.get('cod_cliente')} | histórico {_format_currency(row.get('ventas_historicas'))} | {dias_text} sin compra"
+            )
+
+    if decline_rows:
+        top = decline_rows[: min(limit, 3)]
+        lines.append("2. Recupera clientes en caída:")
+        for row in top:
+            lines.append(
+                f"- {row.get('nombre_cliente') or row.get('cod_cliente')} | caída {_format_currency(abs(float(row.get('variacion_absoluta') or 0)))} | actual {_format_currency(row.get('ventas_actuales'))} vs previo {_format_currency(row.get('ventas_previas'))}"
+            )
+
+    if push_rows:
+        top = push_rows[: min(limit, 3)]
+        lines.append("3. Empuja estas referencias con clientes objetivo:")
+        for row in top:
+            lines.append(
+                f"- {row.get('referencia')} | {row.get('descripcion')} | brecha {_format_currency(row.get('brecha_oportunidad'))} | clientes {row.get('clientes_objetivo')}"
+            )
+
+    lines.append("Acción sugerida: prioriza llamadas y visitas sobre esos clientes, cruza las referencias a impulsar en cada contacto y mide avance contra la brecha comercial del mes.")
+    lines.append("Si quieres, te lo convierto en tablero ejecutivo por vendedor, sede o empresa y también te lo puedo enviar por correo con Excel.")
     return "\n".join(lines)
 
 
@@ -2285,10 +2507,19 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
             return _build_inventory_indicator_summary("Sobrestock", rows, limit)
 
         if query_type == "clientes_mayor_decrecimiento":
-            rows, period_label = _fetch_client_decline_rows(engine, args.get("periodo"), store_code, limit)
+            rows, period_label = _fetch_client_decline_rows(engine, args.get("periodo"), store_code, limit, vendor_code)
             if not rows:
                 return f"No encontré clientes con decrecimiento para {period_label}."
             return _build_client_decline_summary(rows, period_label, limit)
+
+        if query_type == "plan_comercial_mensual":
+            period_value = args.get("periodo") or "este mes"
+            plan_payload = _build_monthly_commercial_plan_report_payload(engine, period_value, store_code, vendor_code, limit)
+            snapshot = plan_payload["snapshot"]
+            reactivation_rows = plan_payload["reactivation_rows"]
+            decline_rows = plan_payload["decline_rows"]
+            push_rows = plan_payload["push_rows"]
+            return _build_monthly_commercial_plan_summary(snapshot, reactivation_rows, decline_rows, push_rows, store_code, vendor_code, limit)
 
         if query_type == "clientes_a_reactivar":
             rows, period_label = _fetch_clients_without_purchase_rows(engine, args.get("periodo") or "este mes", store_code, vendor_code, limit)
@@ -2583,10 +2814,11 @@ def _build_sales_report_dataset(report_type: str, payload: dict) -> tuple[str, l
     return title, metrics, headers, list(rows), keys, detail_sheet
 
 
-def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str], limit: int, conversation_context: Optional[dict], sales_query_fn=None) -> tuple[str, list[tuple[str, str]], list[str], list[dict], list[str], str]:
+def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str], limit: int, conversation_context: Optional[dict], sales_query_fn=None) -> tuple[str, list[tuple[str, str]], list[str], list[dict], list[str], str, Optional[dict]]:
     pending_args = (conversation_context or {}).get("pending_tool_args") or {}
     internal_auth = (conversation_context or {}).get("internal_auth") or {}
     vendor_code = _resolve_vendor_code(pending_args.get("vendedor_codigo"), internal_auth)
+    report_context = None
     if report_type == "inventario_baja_rotacion":
         rows = _fetch_inventory_rows(engine, ["sin_movimiento", "sobrestock"], store_code, limit)
         headers = ["Almacen", "Referencia", "Descripcion", "Estado", "Stock", "Historial ventas", "Dias sin venta", "Valor inventario"]
@@ -2618,7 +2850,7 @@ def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str]
         metrics = _build_inventory_summary_metrics(rows)
         detail_sheet = "Detalle sobrestock"
     elif report_type == "clientes_mayor_decrecimiento":
-        rows, period_label = _fetch_client_decline_rows(engine, pending_args.get("periodo"), store_code, limit)
+        rows, period_label = _fetch_client_decline_rows(engine, pending_args.get("periodo"), store_code, limit, vendor_code)
         headers = ["Cliente", "Codigo", "Ventas actuales", "Ventas previas", "Caida absoluta", "Variacion %"]
         keys = ["nombre_cliente", "cod_cliente", "ventas_actuales", "ventas_previas", "variacion_absoluta", "variacion_pct"]
         title = "Reporte de Clientes con Mayor Decrecimiento"
@@ -2672,6 +2904,16 @@ def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str]
             ("Brecha comercial estimada", _format_currency(sum(float(row.get("brecha_oportunidad") or 0) for row in rows))),
         ]
         detail_sheet = "Detalle impulso"
+    elif report_type == "plan_comercial_mensual":
+        plan_payload = _build_monthly_commercial_plan_report_payload(engine, pending_args.get("periodo") or "este mes", store_code, vendor_code, limit)
+        report_bundle = _build_monthly_commercial_plan_report_bundle(plan_payload, store_code, vendor_code, limit)
+        title = report_bundle["title"]
+        metrics = report_bundle["metrics"]
+        headers = report_bundle["headers"]
+        rows = report_bundle["rows"]
+        keys = report_bundle["keys"]
+        detail_sheet = report_bundle["detail_sheet"]
+        report_context = report_bundle["report_context"]
     elif report_type in {
         "ventas_detalladas",
         "ventas_por_tienda",
@@ -2685,7 +2927,7 @@ def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str]
         title, metrics, headers, rows, keys, detail_sheet = _build_sales_report_dataset(report_type, sales_payload)
     else:
         raise ValueError("tipo de reporte no soportado")
-    return title, metrics, headers, rows, keys, detail_sheet
+    return title, metrics, headers, rows, keys, detail_sheet, report_context
 
 
 def _autosize_sheet_columns(sheet):
@@ -2770,18 +3012,134 @@ def _style_detail_sheet(sheet, headers: list[str], keys: list[str], rows: list[d
     _autosize_sheet_columns(sheet)
 
 
-def _build_excel_attachment(title: str, metrics: list[tuple[str, str]], headers: list[str], rows: list[dict], keys: list[str], detail_sheet_name: str, subtitle_lines: list[str]) -> tuple[str, bytes]:
+def _style_monthly_plan_executive_sheet(sheet, title: str, metrics: list[tuple[str, str]], subtitle_lines: list[str], report_context: dict):
+    sheet.sheet_view.showGridLines = False
+    sheet.merge_cells("A1:F2")
+    hero = sheet["A1"]
+    hero.value = title
+    hero.fill = _XL_DARK_FILL
+    hero.font = Font(color="FFFFFF", size=20, bold=True)
+    hero.alignment = Alignment(horizontal="left", vertical="center")
+    sheet.row_dimensions[1].height = 26
+    sheet.row_dimensions[2].height = 26
+
+    row_idx = 4
+    for line in subtitle_lines:
+        sheet.merge_cells(start_row=row_idx, start_column=1, end_row=row_idx, end_column=6)
+        cell = sheet.cell(row=row_idx, column=1, value=line)
+        cell.font = Font(color="374151", size=10)
+        cell.alignment = Alignment(wrap_text=True)
+        row_idx += 1
+
+    row_idx += 1
+    sheet.merge_cells(start_row=row_idx, start_column=1, end_row=row_idx, end_column=3)
+    label_cell = sheet.cell(row=row_idx, column=1, value="Lectura gerencial")
+    label_cell.fill = _XL_ACCENT_FILL
+    label_cell.font = Font(color="111827", bold=True)
+    row_idx += 1
+    for line in report_context.get("executive_lines") or []:
+        sheet.merge_cells(start_row=row_idx, start_column=1, end_row=row_idx, end_column=6)
+        cell = sheet.cell(row=row_idx, column=1, value=f"• {line}")
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+        cell.font = Font(color="111827", size=11)
+        row_idx += 1
+
+    row_idx += 1
+    metric_start = row_idx
+    for idx, (label, value) in enumerate(metrics[:8]):
+        left_col = 1 if idx % 2 == 0 else 4
+        current_row = metric_start + (idx // 2) * 2
+        header_cell = sheet.cell(row=current_row, column=left_col, value=label)
+        header_cell.font = Font(bold=True, color="111827")
+        header_cell.fill = _XL_LIGHT_FILL
+        header_cell.border = _XL_BORDER
+        value_cell = sheet.cell(row=current_row + 1, column=left_col, value=value)
+        value_cell.fill = _XL_LIGHT_FILL
+        value_cell.border = _XL_BORDER
+        value_cell.font = Font(color="111827", size=12, bold=True)
+        sheet.merge_cells(start_row=current_row, start_column=left_col, end_row=current_row, end_column=left_col + 1)
+        sheet.merge_cells(start_row=current_row + 1, start_column=left_col, end_row=current_row + 1, end_column=left_col + 1)
+
+    recommendations_row = metric_start + 10
+    sheet.merge_cells(start_row=recommendations_row, start_column=1, end_row=recommendations_row, end_column=3)
+    rec_header = sheet.cell(row=recommendations_row, column=1, value="Agenda sugerida del mes")
+    rec_header.fill = _XL_ACCENT_FILL
+    rec_header.font = Font(color="111827", bold=True)
+    for offset, line in enumerate(report_context.get("recommendations") or [], start=1):
+        sheet.merge_cells(start_row=recommendations_row + offset, start_column=1, end_row=recommendations_row + offset, end_column=6)
+        cell = sheet.cell(row=recommendations_row + offset, column=1, value=f"• {line}")
+        cell.alignment = Alignment(wrap_text=True, vertical="top")
+        cell.font = Font(color="111827", size=11)
+
+    chart_rows = report_context.get("chart_rows") or []
+    chart_anchor_row = 4
+    sheet.cell(row=chart_anchor_row, column=8, value="Palanca")
+    sheet.cell(row=chart_anchor_row, column=9, value="Valor")
+    for idx, item in enumerate(chart_rows, start=1):
+        sheet.cell(row=chart_anchor_row + idx, column=8, value=item.get("categoria"))
+        value_cell = sheet.cell(row=chart_anchor_row + idx, column=9, value=float(item.get("valor") or 0))
+        value_cell.number_format = '$#,##0'
+
+    if chart_rows:
+        data = Reference(sheet, min_col=9, min_row=chart_anchor_row, max_row=chart_anchor_row + len(chart_rows))
+        cats = Reference(sheet, min_col=8, min_row=chart_anchor_row + 1, max_row=chart_anchor_row + len(chart_rows))
+
+        bar_chart = BarChart()
+        bar_chart.title = "Potencial por palanca"
+        bar_chart.y_axis.title = "Valor"
+        bar_chart.x_axis.title = "Frente"
+        bar_chart.height = 7
+        bar_chart.width = 11
+        bar_chart.add_data(data, titles_from_data=True)
+        bar_chart.set_categories(cats)
+        bar_chart.legend = None
+        sheet.add_chart(bar_chart, "H2")
+
+        pie_chart = PieChart()
+        pie_chart.title = "Distribución de oportunidad"
+        pie_chart.height = 7
+        pie_chart.width = 9
+        pie_chart.add_data(data, titles_from_data=True)
+        pie_chart.set_categories(cats)
+        sheet.add_chart(pie_chart, "H18")
+
+    sheet.freeze_panes = "A4"
+    _autosize_sheet_columns(sheet)
+
+
+def _build_excel_attachment(
+    title: str,
+    metrics: list[tuple[str, str]],
+    headers: list[str],
+    rows: list[dict],
+    keys: list[str],
+    detail_sheet_name: str,
+    subtitle_lines: list[str],
+    report_context: Optional[dict] = None,
+) -> tuple[str, bytes]:
     workbook = Workbook()
     summary_sheet = workbook.active
     summary_sheet.title = "Resumen"
     _style_summary_sheet(summary_sheet, title, metrics, subtitle_lines)
 
-    sheet = workbook.create_sheet(detail_sheet_name[:31])
-    sheet.append(headers)
-    for row in rows:
-        values = [row.get(key) for key in keys]
-        sheet.append(values)
-    _style_detail_sheet(sheet, headers, keys, rows)
+    if report_context and report_context.get("executive_sheet_title"):
+        executive_sheet = workbook.create_sheet(report_context["executive_sheet_title"][:31])
+        _style_monthly_plan_executive_sheet(executive_sheet, title, metrics, subtitle_lines, report_context)
+
+    detail_sheets = (report_context or {}).get("detail_sheets") or [
+        {"name": detail_sheet_name, "headers": headers, "keys": keys, "rows": rows}
+    ]
+    for sheet_config in detail_sheets:
+        sheet = workbook.create_sheet((sheet_config.get("name") or detail_sheet_name)[:31])
+        sheet_headers = sheet_config.get("headers") or headers
+        sheet_keys = sheet_config.get("keys") or keys
+        sheet_rows = sheet_config.get("rows") or rows
+        sheet.append(sheet_headers)
+        for row in sheet_rows:
+            values = [row.get(key) for key in sheet_keys]
+            sheet.append(values)
+        _style_detail_sheet(sheet, sheet_headers, sheet_keys, sheet_rows)
+
     buffer = io.BytesIO()
     workbook.save(buffer)
     buffer.seek(0)
@@ -2825,7 +3183,7 @@ def handle_enviar_reporte_interno_correo(engine, args: dict, conversation_contex
     context_with_args["pending_tool_args"] = dict(args or {})
 
     try:
-        title, metrics, headers, rows, keys, detail_sheet_name = _report_rows_and_headers(
+        title, metrics, headers, rows, keys, detail_sheet_name, report_context = _report_rows_and_headers(
             report_type,
             engine,
             store_code,
@@ -2847,7 +3205,7 @@ def handle_enviar_reporte_interno_correo(engine, args: dict, conversation_contex
         f"Sede consultada: {requested_by.get('sede') if (requested_by := internal_auth.get('employee_context') or {}).get('sede') else store_code or 'Consolidado'}",
         f"Filas incluidas en detalle: {len(rows)}",
     ]
-    attachment_name, attachment_bytes = _build_excel_attachment(title, metrics, headers, rows, keys, detail_sheet_name, subtitle_lines)
+    attachment_name, attachment_bytes = _build_excel_attachment(title, metrics, headers, rows, keys, detail_sheet_name, subtitle_lines, report_context)
     requested_by = internal_auth.get("employee_context") or {}
     preview_table = _build_html_preview_rows(headers, rows, keys)
     metrics_html = "".join(

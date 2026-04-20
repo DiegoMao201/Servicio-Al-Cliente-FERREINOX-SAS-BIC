@@ -666,7 +666,8 @@ AGENT_TOOLS_V3 = [
                             "clientes_a_reactivar",
                             "clientes_sin_compra_periodo",
                             "productos_no_vendidos_periodo",
-                            "productos_a_impulsar"
+                            "productos_a_impulsar",
+                            "plan_comercial_mensual"
                         ],
                         "description": "Indicador interno a consultar.",
                     },
@@ -718,6 +719,7 @@ AGENT_TOOLS_V3 = [
                             "clientes_sin_compra_periodo",
                             "productos_no_vendidos_periodo",
                             "productos_a_impulsar",
+                            "plan_comercial_mensual",
                             "ventas_detalladas",
                             "ventas_por_tienda",
                             "ventas_por_vendedor",

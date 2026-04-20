@@ -1,7 +1,11 @@
+import base64
+import io
 import os
 import sys
 import unittest
 from unittest import mock
+
+from openpyxl import load_workbook
 
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
@@ -235,6 +239,15 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertEqual(plan["kind"], "indicator")
         self.assertEqual(plan["tipo_consulta"], "clientes_a_reactivar")
 
+    def test_universal_bi_plan_detects_monthly_commercial_plan(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "donde tenemos oportunidad y que hacer este mes para vender mas",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "indicator")
+        self.assertEqual(plan["tipo_consulta"], "plan_comercial_mensual")
+
     def test_detect_internal_query_intent_flags_sales_and_projection_questions(self):
         self.assertEqual(
             main.detect_internal_query_intent("Las ventas de Pereira cuáles son y qué proyección tiene para cierre de abril"),
@@ -335,6 +348,141 @@ class InternalAgentProfileTests(unittest.TestCase):
         fetch_rows.assert_called_once_with(mock.ANY, "este mes", None, "154011", 10)
         self.assertIn("Clientes a reactivar en este mes", response)
         self.assertIn("Pinturas Acme", response)
+
+    def test_handle_consultar_indicadores_internos_builds_monthly_commercial_plan(self):
+        snapshot = {
+            "period_label": "este mes",
+            "neto": 12000000,
+            "prev_neto": 15000000,
+        }
+        reactivation_rows = [
+            {
+                "cod_cliente": "C001",
+                "nombre_cliente": "Pinturas Acme",
+                "ventas_historicas": 1800000,
+                "dias_sin_compra": 50,
+            }
+        ]
+        decline_rows = [
+            {
+                "cod_cliente": "C002",
+                "nombre_cliente": "Ferrecliente SAS",
+                "ventas_actuales": 500000,
+                "ventas_previas": 1800000,
+                "variacion_absoluta": -1300000,
+            }
+        ]
+        push_rows = [
+            {
+                "referencia": "1001",
+                "descripcion": "VINILTEX 1501",
+                "brecha_oportunidad": 900000,
+                "clientes_objetivo": "Pinturas Acme, Ferrecliente SAS",
+            }
+        ]
+
+        with mock.patch.object(internal_agent_ops, "_fetch_sales_total_snapshot", return_value=snapshot):
+            with mock.patch.object(internal_agent_ops, "_fetch_clients_without_purchase_rows", return_value=(reactivation_rows, "este mes")):
+                with mock.patch.object(internal_agent_ops, "_fetch_client_decline_rows", return_value=(decline_rows, "este mes")):
+                    with mock.patch.object(internal_agent_ops, "_fetch_products_to_push_rows", return_value=(push_rows, "este mes")):
+                        response = internal_agent_ops.handle_consultar_indicadores_internos(
+                            mock.Mock(),
+                            {
+                                "tipo_consulta": "plan_comercial_mensual",
+                                "periodo": "este mes",
+                                "limite": 10,
+                            },
+                            {"internal_auth": {"user_id": 1, "role": "administrador", "employee_context": {}}},
+                        )
+
+        self.assertIn("Plan comercial de este mes", response)
+        self.assertIn("Pinturas Acme", response)
+        self.assertIn("Ferrecliente SAS", response)
+        self.assertIn("VINILTEX 1501", response)
+
+    def test_handle_enviar_reporte_interno_correo_builds_executive_monthly_plan_excel(self):
+        snapshot = {
+            "period_label": "abril 2026",
+            "neto": 12000000,
+            "prev_neto": 15000000,
+        }
+        reactivation_rows = [
+            {
+                "cod_cliente": "C001",
+                "nombre_cliente": "Pinturas Acme",
+                "nom_vendedor": "Hugo Nelson Zapata",
+                "ventas_historicas": 1800000,
+                "ultima_compra": "2026-03-01",
+                "meses_activos": 4,
+                "dias_sin_compra": 50,
+            }
+        ]
+        decline_rows = [
+            {
+                "cod_cliente": "C002",
+                "nombre_cliente": "Ferrecliente SAS",
+                "ventas_actuales": 500000,
+                "ventas_previas": 1800000,
+                "variacion_absoluta": -1300000,
+                "variacion_pct": -0.72,
+            }
+        ]
+        push_rows = [
+            {
+                "almacen_nombre": "Pereira",
+                "referencia": "1001",
+                "descripcion": "VINILTEX 1501",
+                "stock_total": 20,
+                "ventas_actuales": 100000,
+                "promedio_base": 1000000,
+                "brecha_oportunidad": 900000,
+                "clientes_objetivo": "Pinturas Acme, Ferrecliente SAS",
+            }
+        ]
+        send_email = mock.Mock()
+
+        with mock.patch.object(internal_agent_ops, "_fetch_sales_total_snapshot", return_value=snapshot):
+            with mock.patch.object(internal_agent_ops, "_fetch_clients_without_purchase_rows", return_value=(reactivation_rows, "abril 2026")):
+                with mock.patch.object(internal_agent_ops, "_fetch_client_decline_rows", return_value=(decline_rows, "abril 2026")):
+                    with mock.patch.object(internal_agent_ops, "_fetch_products_to_push_rows", return_value=(push_rows, "abril 2026")):
+                        response = internal_agent_ops.handle_enviar_reporte_interno_correo(
+                            mock.Mock(),
+                            {
+                                "tipo_reporte": "plan_comercial_mensual",
+                                "periodo": "abril 2026",
+                                "email_destino": "gerencia@ferreinox.com",
+                                "limite": 10,
+                            },
+                            {
+                                "internal_auth": {
+                                    "user_id": 1,
+                                    "role": "administrador",
+                                    "email": "gerencia@ferreinox.com",
+                                    "username": "Diego",
+                                    "employee_context": {
+                                        "full_name": "Diego Garcia",
+                                        "cargo": "Gerencia Comercial",
+                                        "sede": "Pereira",
+                                    },
+                                }
+                            },
+                            lambda title, body: body,
+                            send_email,
+                        )
+
+        self.assertIn("Reporte enviado a gerencia@ferreinox.com", response)
+        attachments = send_email.call_args.kwargs["attachments"]
+        workbook_bytes = base64.b64decode(attachments[0]["content"])
+        workbook = load_workbook(io.BytesIO(workbook_bytes))
+
+        self.assertIn("Resumen", workbook.sheetnames)
+        self.assertIn("Tablero Ejecutivo", workbook.sheetnames)
+        self.assertIn("Acciones mes", workbook.sheetnames)
+        self.assertIn("Clientes reactivar", workbook.sheetnames)
+        self.assertIn("Clientes caida", workbook.sheetnames)
+        self.assertIn("Productos impulso", workbook.sheetnames)
+        self.assertGreaterEqual(len(workbook["Tablero Ejecutivo"]._charts), 2)
+        self.assertEqual(workbook["Acciones mes"]["A2"].value, "Reactivación")
 
 
 if __name__ == "__main__":
