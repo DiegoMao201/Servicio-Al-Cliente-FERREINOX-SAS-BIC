@@ -657,7 +657,33 @@ def _resolve_vendor_by_name(engine, question: str) -> Optional[str]:
     candidate_tokens = [w for w in words if w.lower() not in _BI_STOPWORDS and not w.isdigit()]
     if not candidate_tokens:
         return None
-    # Build ILIKE pattern from consecutive candidate tokens
+    try:
+        token_filters = []
+        params: dict[str, str] = {}
+        for index, token in enumerate(candidate_tokens[:4]):
+            key = f"token_{index}"
+            token_filters.append(f"LOWER(COALESCE(nom_vendedor, '')) LIKE :{key}")
+            params[key] = f"%{token.lower()}%"
+
+        sql = text(
+            f"""
+            SELECT public.fn_keep_alnum(codigo_vendedor) AS cod
+            FROM public.raw_ventas_detalle
+            WHERE TRIM(COALESCE(nom_vendedor, '')) != ''
+              AND {' AND '.join(token_filters)}
+            GROUP BY 1
+            ORDER BY COUNT(*) DESC
+            LIMIT 1
+            """
+        )
+        with engine.begin() as conn:
+            row = conn.execute(sql, params).mappings().first()
+        if row and row["cod"]:
+            logger.info("_resolve_vendor_by_name: tokens=%s → vendor_code=%s", candidate_tokens[:4], row["cod"])
+            return str(row["cod"])
+    except Exception:
+        logger.debug("_resolve_vendor_by_name: token query failed for tokens=%s", candidate_tokens[:4], exc_info=True)
+
     name_pattern = "%" + "%".join(candidate_tokens) + "%"
     try:
         sql = text(
@@ -674,10 +700,10 @@ def _resolve_vendor_by_name(engine, question: str) -> Optional[str]:
         with engine.begin() as conn:
             row = conn.execute(sql, {"pattern": name_pattern}).mappings().first()
         if row and row["cod"]:
-            logger.info("_resolve_vendor_by_name: pattern=%r → vendor_code=%s", name_pattern, row["cod"])
+            logger.info("_resolve_vendor_by_name fallback: pattern=%r → vendor_code=%s", name_pattern, row["cod"])
             return str(row["cod"])
     except Exception:
-        logger.debug("_resolve_vendor_by_name: query failed for pattern=%r", name_pattern, exc_info=True)
+        logger.debug("_resolve_vendor_by_name: fallback query failed for pattern=%r", name_pattern, exc_info=True)
     return None
 
 
@@ -789,6 +815,11 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
         }
 
     if any(token in normalized for token in ["reactivar", "visitar", "volver a comprar", "recuperar cliente"]):
+        return {"kind": "indicator", "tipo_consulta": "clientes_a_reactivar", "periodo": period_value, "limite": limit}
+    if (
+        ("cliente" in normalized or "clientes" in normalized)
+        and any(token in normalized for token in ["activar", "recuperar", "retomar", "trabajar"])
+    ):
         return {"kind": "indicator", "tipo_consulta": "clientes_a_reactivar", "periodo": period_value, "limite": limit}
     if any(token in normalized for token in ["no me han comprado", "no compraron", "sin compra", "no han comprado"]):
         return {"kind": "indicator", "tipo_consulta": "clientes_sin_compra_periodo", "periodo": period_value, "limite": limit}
@@ -2217,6 +2248,10 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
     employee_context = internal_auth.get("employee_context") or {}
     store_code = _resolve_store_code(args.get("almacen") or employee_context.get("store_code"))
     vendor_code = _resolve_vendor_code(args.get("vendedor_codigo"), internal_auth)
+    if not vendor_code:
+        vendor_name = str(args.get("vendedor_nombre") or "").strip()
+        if vendor_name:
+            vendor_code = _resolve_vendor_by_name(engine, vendor_name)
     query_type = _normalize_text(args.get("tipo_consulta") or "")
     limit = _clamp_limit(args.get("limite"), default=5, minimum=3, maximum=20)
 

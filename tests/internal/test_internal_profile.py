@@ -226,6 +226,15 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertEqual(plan["dimension"], "vendedor")
         self.assertIsNone(plan.get("channel"))
 
+    def test_universal_bi_plan_detects_activate_clients_as_reactivation(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "que clientes debe activar el vendedor hugo nelson",
+            None,
+            None,
+        )
+        self.assertEqual(plan["kind"], "indicator")
+        self.assertEqual(plan["tipo_consulta"], "clientes_a_reactivar")
+
     def test_detect_internal_query_intent_flags_sales_and_projection_questions(self):
         self.assertEqual(
             main.detect_internal_query_intent("Las ventas de Pereira cuáles son y qué proyección tiene para cierre de abril"),
@@ -296,6 +305,36 @@ class InternalAgentProfileTests(unittest.TestCase):
         )
 
         self.assertIs(guarded, assistant_message)
+
+    def test_handle_consultar_indicadores_internos_supports_vendedor_nombre(self):
+        rows = [
+            {
+                "cod_cliente": "C001",
+                "nombre_cliente": "Pinturas Acme",
+                "nom_vendedor": "Hugo Nelson Zapata",
+                "ventas_historicas": 1800000,
+                "ultima_compra": "2026-03-01",
+                "meses_activos": 4,
+                "dias_sin_compra": 50,
+            }
+        ]
+        with mock.patch.object(internal_agent_ops, "_resolve_vendor_by_name", return_value="154011") as resolver:
+            with mock.patch.object(internal_agent_ops, "_fetch_clients_without_purchase_rows", return_value=(rows, "este mes")) as fetch_rows:
+                response = internal_agent_ops.handle_consultar_indicadores_internos(
+                    mock.Mock(),
+                    {
+                        "tipo_consulta": "clientes_a_reactivar",
+                        "vendedor_nombre": "Hugo Nelson Zapata",
+                        "periodo": "este mes",
+                        "limite": 10,
+                    },
+                    {"internal_auth": {"user_id": 1, "role": "administrador", "employee_context": {}}},
+                )
+
+        resolver.assert_called_once()
+        fetch_rows.assert_called_once_with(mock.ANY, "este mes", None, "154011", 10)
+        self.assertIn("Clientes a reactivar en este mes", response)
+        self.assertIn("Pinturas Acme", response)
 
 
 if __name__ == "__main__":

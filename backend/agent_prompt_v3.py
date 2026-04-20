@@ -682,6 +682,10 @@ AGENT_TOOLS_V3 = [
                         "type": "string",
                         "description": "Codigo ERP del vendedor para filtrar la consulta. Opcional. Si el usuario es vendedor, se usa su propio codigo cuando exista.",
                     },
+                    "vendedor_nombre": {
+                        "type": "string",
+                        "description": "Nombre parcial o completo del vendedor cuando el usuario no conoce el codigo ERP. Ej: 'Hugo Nelson Zapata'. Opcional.",
+                    },
                     "limite": {
                         "type": "integer",
                         "description": "Cantidad maxima de filas para resumen. Default: 5.",
