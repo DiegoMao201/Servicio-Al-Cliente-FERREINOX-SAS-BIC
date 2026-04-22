@@ -93,6 +93,55 @@ def _safe_round(value: float | None, digits: int = 4) -> float | None:
     return round(value, digits)
 
 
+def _distribution_summary(values: list[float]) -> dict:
+    if not values:
+        return {
+            "count": 0,
+            "avg": None,
+            "median": None,
+            "min": None,
+            "p05": None,
+            "p10": None,
+            "p25": None,
+            "p50": None,
+            "p75": None,
+            "p90": None,
+            "p95": None,
+            "max": None,
+        }
+    return {
+        "count": len(values),
+        "avg": _safe_round(statistics.fmean(values)),
+        "median": _safe_round(statistics.median(values)),
+        "min": _safe_round(min(values)),
+        "p05": _safe_round(_percentile(values, 0.05)),
+        "p10": _safe_round(_percentile(values, 0.10)),
+        "p25": _safe_round(_percentile(values, 0.25)),
+        "p50": _safe_round(_percentile(values, 0.50)),
+        "p75": _safe_round(_percentile(values, 0.75)),
+        "p90": _safe_round(_percentile(values, 0.90)),
+        "p95": _safe_round(_percentile(values, 0.95)),
+        "max": _safe_round(max(values)),
+    }
+
+
+def _cohort_metrics(hits: list[SearchHit]) -> dict:
+    positive_similarities = [hit.similarity for hit in hits if hit.matched_expected]
+    negative_similarities = [hit.similarity for hit in hits if not hit.matched_expected]
+    positive_distances = [hit.distance for hit in hits if hit.matched_expected]
+    negative_distances = [hit.distance for hit in hits if not hit.matched_expected]
+    return {
+        "positives": {
+            "similarity": _distribution_summary(positive_similarities),
+            "distance": _distribution_summary(positive_distances),
+        },
+        "negatives": {
+            "similarity": _distribution_summary(negative_similarities),
+            "distance": _distribution_summary(negative_distances),
+        },
+    }
+
+
 def _score_hit(source: str, rank: int, row: dict, expected_terms: tuple[str, ...]) -> SearchHit:
     label = row.get("label") or row.get("familia_producto") or row.get("canonical_family") or row.get("doc_filename") or row.get("source_doc_filename") or "?"
     preview = row.get("preview") or row.get("chunk_text") or row.get("summary_text") or ""
@@ -290,10 +339,12 @@ def main():
     report["thresholds"] = {
         "technical_chunks": {
             **_global_summary(all_technical_hits),
+            "cohorts": _cohort_metrics(all_technical_hits),
             **_suggest_threshold(all_technical_hits),
         },
         "product_multimodal": {
             **_global_summary(all_multimodal_hits),
+            "cohorts": _cohort_metrics(all_multimodal_hits),
             **_suggest_threshold(all_multimodal_hits),
         },
         "global_recommended_threshold": max(
@@ -320,6 +371,30 @@ def main():
         print(
             f"{index_name}: suggested={summary['suggested_threshold']} avg={summary['avg_similarity']} "
             f"median={summary['median_similarity']} pos={summary['positives']} neg={summary['negatives']}"
+        )
+        positive_similarity = summary["cohorts"]["positives"]["similarity"]
+        negative_similarity = summary["cohorts"]["negatives"]["similarity"]
+        positive_distance = summary["cohorts"]["positives"]["distance"]
+        negative_distance = summary["cohorts"]["negatives"]["distance"]
+        print(
+            "  positives_similarity: "
+            f"avg={positive_similarity['avg']} p10={positive_similarity['p10']} p25={positive_similarity['p25']} "
+            f"p50={positive_similarity['p50']} p75={positive_similarity['p75']} p90={positive_similarity['p90']}"
+        )
+        print(
+            "  negatives_similarity: "
+            f"avg={negative_similarity['avg']} p10={negative_similarity['p10']} p25={negative_similarity['p25']} "
+            f"p50={negative_similarity['p50']} p75={negative_similarity['p75']} p90={negative_similarity['p90']}"
+        )
+        print(
+            "  positives_distance: "
+            f"avg={positive_distance['avg']} p10={positive_distance['p10']} p25={positive_distance['p25']} "
+            f"p50={positive_distance['p50']} p75={positive_distance['p75']} p90={positive_distance['p90']}"
+        )
+        print(
+            "  negatives_distance: "
+            f"avg={negative_distance['avg']} p10={negative_distance['p10']} p25={negative_distance['p25']} "
+            f"p50={negative_distance['p50']} p75={negative_distance['p75']} p90={negative_distance['p90']}"
         )
         print(f"  rationale: {summary['rationale']}")
     print(f"global_recommended_threshold: {report['thresholds']['global_recommended_threshold']}")
