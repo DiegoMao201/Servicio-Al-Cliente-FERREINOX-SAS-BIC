@@ -140,8 +140,23 @@ class SearchHit:
     matched_expected: bool
     bicomponent_signal_detected: bool
     strict_match: bool
+    net_score: float
+    safety_status: str
+    safety_rationale: str
     preview: str
     filename: str
+
+
+@dataclass(frozen=True)
+class SafetyScore:
+    net_score: float
+    base_similarity: float
+    expected_coverage: float
+    forbidden_penalty_applied: bool
+    bicomponent_penalty_applied: bool
+    strict_match_bonus_applied: bool
+    safety_status: str
+    rationale: str
 
 
 def _normalize(text_value: str) -> str:
@@ -209,14 +224,18 @@ def _cohort_metrics(hits: list[SearchHit]) -> dict:
     negative_similarities = [hit.similarity for hit in hits if not hit.strict_match]
     positive_distances = [hit.distance for hit in hits if hit.strict_match]
     negative_distances = [hit.distance for hit in hits if not hit.strict_match]
+    positive_net_scores = [hit.net_score for hit in hits if hit.strict_match]
+    negative_net_scores = [hit.net_score for hit in hits if not hit.strict_match]
     return {
         "positives": {
             "similarity": _distribution_summary(positive_similarities),
             "distance": _distribution_summary(positive_distances),
+            "net_score": _distribution_summary(positive_net_scores),
         },
         "negatives": {
             "similarity": _distribution_summary(negative_similarities),
             "distance": _distribution_summary(negative_distances),
+            "net_score": _distribution_summary(negative_net_scores),
         },
     }
 
@@ -240,6 +259,85 @@ def _detect_bicomponent_signal(haystack: str) -> bool:
     return any(marker in haystack for marker in bicomponent_markers)
 
 
+def evaluate_chunk_safety_score(hit: SearchHit, stress_query: StressQuery) -> SafetyScore:
+    base_similarity = max(0.0, min(hit.similarity, 1.0))
+    expected_total = len(stress_query.expected_terms)
+    matched_total = len(hit.matched_terms)
+    expected_coverage = (
+        matched_total / expected_total
+        if expected_total > 0
+        else (1.0 if hit.strict_match else 0.0)
+    )
+
+    if hit.forbidden_terms_found:
+        return SafetyScore(
+            net_score=0.0,
+            base_similarity=_safe_round(base_similarity) or 0.0,
+            expected_coverage=_safe_round(expected_coverage) or 0.0,
+            forbidden_penalty_applied=True,
+            bicomponent_penalty_applied=False,
+            strict_match_bonus_applied=False,
+            safety_status="rejected_forbidden_noise",
+            rationale=(
+                "Se detectaron terminos prohibidos incompatibles con la consulta. "
+                "El resultado queda invalidado por riesgo tecnico."
+            ),
+        )
+
+    net_score = base_similarity
+    if expected_total > 0:
+        if expected_coverage >= 0.8:
+            net_score += 0.10
+        elif expected_coverage >= 0.5:
+            net_score += 0.04
+        elif expected_coverage < 0.3:
+            net_score -= 0.12
+
+    bicomponent_penalty_applied = False
+    if stress_query.must_include_bicomponent_signal and not hit.bicomponent_signal_detected:
+        bicomponent_penalty_applied = True
+        net_score *= 0.35
+        net_score -= 0.10
+
+    strict_match_bonus_applied = False
+    if hit.strict_match:
+        strict_match_bonus_applied = True
+        net_score += 0.18
+
+    if not hit.matched_expected:
+        net_score *= 0.55
+        net_score -= 0.05
+
+    net_score = max(0.0, min(net_score, 1.0))
+    if net_score == 0.0:
+        safety_status = "rejected"
+    elif net_score < 0.45:
+        safety_status = "unsafe_low_confidence"
+    elif net_score < 0.70:
+        safety_status = "borderline"
+    else:
+        safety_status = "safe_candidate"
+
+    rationale_parts = [f"base={base_similarity:.4f}", f"coverage={expected_coverage:.2f}"]
+    if bicomponent_penalty_applied:
+        rationale_parts.append("penalty=missing_bicomponent_signal")
+    if strict_match_bonus_applied:
+        rationale_parts.append("bonus=strict_match")
+    if not hit.matched_expected:
+        rationale_parts.append("penalty=no_expected_match")
+
+    return SafetyScore(
+        net_score=_safe_round(net_score) or 0.0,
+        base_similarity=_safe_round(base_similarity) or 0.0,
+        expected_coverage=_safe_round(expected_coverage) or 0.0,
+        forbidden_penalty_applied=False,
+        bicomponent_penalty_applied=bicomponent_penalty_applied,
+        strict_match_bonus_applied=strict_match_bonus_applied,
+        safety_status=safety_status,
+        rationale="; ".join(rationale_parts),
+    )
+
+
 def _score_hit(source: str, rank: int, row: dict, stress_query: StressQuery) -> SearchHit:
     label = row.get("label") or row.get("familia_producto") or row.get("canonical_family") or row.get("doc_filename") or row.get("source_doc_filename") or "?"
     preview = row.get("preview") or row.get("chunk_text") or row.get("summary_text") or ""
@@ -256,7 +354,7 @@ def _score_hit(source: str, rank: int, row: dict, stress_query: StressQuery) -> 
         not stress_query.must_include_bicomponent_signal or bicomponent_signal_detected
     )
     similarity = float(row.get("similarity") or 0.0)
-    return SearchHit(
+    provisional_hit = SearchHit(
         source=source,
         rank=rank,
         label=label,
@@ -267,8 +365,29 @@ def _score_hit(source: str, rank: int, row: dict, stress_query: StressQuery) -> 
         matched_expected=bool(matched_terms),
         bicomponent_signal_detected=bicomponent_signal_detected,
         strict_match=strict_match,
+        net_score=0.0,
+        safety_status="unchecked",
+        safety_rationale="",
         preview=(preview or "")[:220].replace("\n", " "),
         filename=row.get("doc_filename") or row.get("source_doc_filename") or "",
+    )
+    safety = evaluate_chunk_safety_score(provisional_hit, stress_query)
+    return SearchHit(
+        source=provisional_hit.source,
+        rank=provisional_hit.rank,
+        label=provisional_hit.label,
+        similarity=provisional_hit.similarity,
+        distance=provisional_hit.distance,
+        matched_terms=provisional_hit.matched_terms,
+        forbidden_terms_found=provisional_hit.forbidden_terms_found,
+        matched_expected=provisional_hit.matched_expected,
+        bicomponent_signal_detected=provisional_hit.bicomponent_signal_detected,
+        strict_match=provisional_hit.strict_match,
+        net_score=safety.net_score,
+        safety_status=safety.safety_status,
+        safety_rationale=safety.rationale,
+        preview=provisional_hit.preview,
+        filename=provisional_hit.filename,
     )
 
 
@@ -312,8 +431,8 @@ def _fetch_multimodal_hits(engine, embedding_literal: str, top_k: int) -> list[d
 
 
 def _suggest_threshold(hits: list[SearchHit]) -> dict:
-    positives = [hit.similarity for hit in hits if hit.strict_match]
-    negatives = [hit.similarity for hit in hits if not hit.strict_match]
+    positives = [hit.net_score for hit in hits if hit.strict_match]
+    negatives = [hit.net_score for hit in hits if not hit.strict_match]
     p10_positive = _percentile(positives, 0.10)
     p25_positive = _percentile(positives, 0.25)
     p90_negative = _percentile(negatives, 0.90)
@@ -349,12 +468,17 @@ def _suggest_threshold(hits: list[SearchHit]) -> dict:
 
 def _global_summary(hits: list[SearchHit]) -> dict:
     similarities = [hit.similarity for hit in hits]
+    net_scores = [hit.net_score for hit in hits]
     return {
         "count": len(hits),
         "avg_similarity": _safe_round(statistics.fmean(similarities)) if similarities else None,
         "median_similarity": _safe_round(statistics.median(similarities)) if similarities else None,
         "best_similarity": _safe_round(max(similarities)) if similarities else None,
         "worst_similarity": _safe_round(min(similarities)) if similarities else None,
+        "avg_net_score": _safe_round(statistics.fmean(net_scores)) if net_scores else None,
+        "median_net_score": _safe_round(statistics.median(net_scores)) if net_scores else None,
+        "best_net_score": _safe_round(max(net_scores)) if net_scores else None,
+        "worst_net_score": _safe_round(min(net_scores)) if net_scores else None,
     }
 
 
@@ -362,12 +486,14 @@ def _print_hit(hit: SearchHit):
     matched = ", ".join(hit.matched_terms) if hit.matched_terms else "sin match esperado"
     forbidden = ", ".join(hit.forbidden_terms_found) if hit.forbidden_terms_found else "sin ruido prohibido"
     print(
-        f"  {hit.rank}. sim={hit.similarity:.4f} dist={hit.distance:.4f} expected={str(hit.matched_expected).lower()} "
+        f"  {hit.rank}. sim={hit.similarity:.4f} dist={hit.distance:.4f} net={hit.net_score:.4f} expected={str(hit.matched_expected).lower()} "
         f"strict={str(hit.strict_match).lower()} bicomp={str(hit.bicomponent_signal_detected).lower()} "
-        f"label={hit.label} file={hit.filename} terms=[{matched}] forbidden=[{forbidden}]"
+        f"status={hit.safety_status} label={hit.label} file={hit.filename} terms=[{matched}] forbidden=[{forbidden}]"
     )
     if hit.preview:
         print(f"     preview: {hit.preview}")
+    if hit.safety_rationale:
+        print(f"     rationale: {hit.safety_rationale}")
 
 
 def _build_queries(extra_queries: list[str]) -> list[StressQuery]:
@@ -487,13 +613,16 @@ def main():
     for index_name in ("technical_chunks", "product_multimodal"):
         summary = report["thresholds"][index_name]
         print(
-            f"{index_name}: suggested={summary['suggested_threshold']} avg={summary['avg_similarity']} "
-            f"median={summary['median_similarity']} pos={summary['positives']} neg={summary['negatives']}"
+            f"{index_name}: suggested={summary['suggested_threshold']} avg_sim={summary['avg_similarity']} "
+            f"avg_net={summary['avg_net_score']} median_net={summary['median_net_score']} "
+            f"pos={summary['positives']} neg={summary['negatives']}"
         )
         positive_similarity = summary["cohorts"]["positives"]["similarity"]
         negative_similarity = summary["cohorts"]["negatives"]["similarity"]
         positive_distance = summary["cohorts"]["positives"]["distance"]
         negative_distance = summary["cohorts"]["negatives"]["distance"]
+        positive_net = summary["cohorts"]["positives"]["net_score"]
+        negative_net = summary["cohorts"]["negatives"]["net_score"]
         print(
             "  positives_similarity: "
             f"avg={positive_similarity['avg']} p10={positive_similarity['p10']} p25={positive_similarity['p25']} "
@@ -513,6 +642,16 @@ def main():
             "  negatives_distance: "
             f"avg={negative_distance['avg']} p10={negative_distance['p10']} p25={negative_distance['p25']} "
             f"p50={negative_distance['p50']} p75={negative_distance['p75']} p90={negative_distance['p90']}"
+        )
+        print(
+            "  positives_net_score: "
+            f"avg={positive_net['avg']} p10={positive_net['p10']} p25={positive_net['p25']} "
+            f"p50={positive_net['p50']} p75={positive_net['p75']} p90={positive_net['p90']}"
+        )
+        print(
+            "  negatives_net_score: "
+            f"avg={negative_net['avg']} p10={negative_net['p10']} p25={negative_net['p25']} "
+            f"p50={negative_net['p50']} p75={negative_net['p75']} p90={negative_net['p90']}"
         )
         print(f"  rationale: {summary['rationale']}")
     print(f"global_recommended_threshold: {report['thresholds']['global_recommended_threshold']}")
