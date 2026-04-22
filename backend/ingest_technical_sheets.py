@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Ingestión de fichas técnicas: Dropbox → PyMuPDF → OpenAI Embeddings → PostgreSQL pgvector.
+Ingestión de fichas técnicas: Dropbox → PyMuPDF → Gemini Embedding 2 → PostgreSQL pgvector.
 
 Uso:
     python backend/ingest_technical_sheets.py               # Ingesta incremental (solo PDFs nuevos)
@@ -38,6 +38,21 @@ from openai import OpenAI
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 from sqlalchemy import create_engine, text
 
+try:
+    from gemini_embeddings import (
+        EMBEDDING_DIMENSIONS,
+        EMBEDDING_MODEL,
+        generate_document_embeddings,
+        generate_multimodal_product_embedding,
+    )
+except ImportError:
+    from backend.gemini_embeddings import (
+        EMBEDDING_DIMENSIONS,
+        EMBEDDING_MODEL,
+        generate_document_embeddings,
+        generate_multimodal_product_embedding,
+    )
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
@@ -45,11 +60,9 @@ logger = logging.getLogger(__name__)
 # Config
 # ---------------------------------------------------------------------------
 TECHNICAL_DOC_FOLDER = os.getenv("DROPBOX_TECHNICAL_DOC_FOLDER") or "/data/FICHAS TÉCNICAS Y HOJAS DE SEGURIDAD"
-EMBEDDING_MODEL = "text-embedding-3-small"
-EMBEDDING_DIMENSIONS = 1536
 CHUNK_MAX_CHARS = 2000       # ~500 tokens
 CHUNK_OVERLAP_CHARS = 300    # ~75 tokens overlap
-BATCH_EMBED_SIZE = 50        # OpenAI batch limit per call
+BATCH_EMBED_SIZE = 1         # Gemini Embedding 2 aggregates multi-item inputs; embed one document per call.
 PROFILE_EXTRACTION_MODEL = os.getenv("OPENAI_EXTRACTION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
 VISION_EXTRACTION_MODEL = os.getenv("OPENAI_VISION_MODEL") or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
 PDF_MIN_TEXT_CHARS = 50
@@ -387,6 +400,18 @@ def get_openai_client():
     return OpenAI(api_key=key)
 
 
+def render_pdf_preview_image(pdf_bytes: bytes) -> bytes | None:
+    try:
+        with fitz.open(stream=pdf_bytes, filetype="pdf") as pdf_doc:
+            if pdf_doc.page_count == 0:
+                return None
+            page = pdf_doc.load_page(0)
+            pix = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5), alpha=False)
+            return pix.tobytes("png")
+    except Exception:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Table bootstrap
 # ---------------------------------------------------------------------------
@@ -411,12 +436,38 @@ def ensure_chunk_table(engine):
             )
         """))
         conn.execute(text("""
-            CREATE INDEX IF NOT EXISTS idx_agent_doc_chunk_embedding
+            CREATE INDEX IF NOT EXISTS idx_technical_chunks
                 ON public.agent_technical_doc_chunk
                 USING hnsw (embedding vector_cosine_ops)
                 WITH (m = 16, ef_construction = 64)
         """))
     logger.info("Tabla agent_technical_doc_chunk verificada/creada.")
+
+
+def ensure_product_multimodal_table(engine):
+    with engine.begin() as conn:
+        conn.execute(text("""
+            CREATE TABLE IF NOT EXISTS public.agent_product_multimodal_index (
+                id bigserial PRIMARY KEY,
+                canonical_family text NOT NULL,
+                source_doc_filename text NOT NULL,
+                source_doc_path_lower text NOT NULL,
+                marca text,
+                summary_text text,
+                metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+                embedding vector(1536) NOT NULL,
+                generated_at timestamptz NOT NULL DEFAULT now(),
+                updated_at timestamptz NOT NULL DEFAULT now(),
+                CONSTRAINT uq_agent_product_multimodal_family UNIQUE (canonical_family)
+            )
+        """))
+        conn.execute(text("""
+            CREATE INDEX IF NOT EXISTS idx_product_multimodal
+                ON public.agent_product_multimodal_index
+                USING hnsw (embedding vector_cosine_ops)
+                WITH (m = 16, ef_construction = 64)
+        """))
+    logger.info("Tabla agent_product_multimodal_index verificada/creada.")
 
 
 def ensure_profile_table(engine):
@@ -1236,13 +1287,19 @@ class TechnicalProfile(BaseModel):
     application_methods: list[str] = Field(default_factory=list)
     alerts: list[str] = Field(default_factory=list)
     diagnostic_questions: list[str] = Field(default_factory=list)
+    chemical_family: str | None = None
+    component_count: int | None = None
+    requires_component_b: bool = False
+    component_b_name: str | None = None
+    mix_ratio_text: str | None = None
+    incompatible_previous_families: list[str] = Field(default_factory=list)
 
     @field_validator("technical_specs", mode="before")
     @classmethod
     def _normalize_specs(cls, value):
         return normalize_key_value_specs(value)
 
-    @field_validator("surface_targets", "restricted_surfaces", "application_methods", "alerts", "diagnostic_questions", mode="before")
+    @field_validator("surface_targets", "restricted_surfaces", "application_methods", "alerts", "diagnostic_questions", "incompatible_previous_families", mode="before")
     @classmethod
     def _normalize_canonical_lists(cls, value):
         return normalize_string_list(value, max_items=20)
@@ -1317,7 +1374,82 @@ def validate_and_normalize_profile(profile: dict) -> dict:
     normalized["restricted_surfaces"] = normalized.get("restricted_surfaces") or []
     normalized["application_methods"] = normalized.get("application_methods") or []
     normalized["diagnostic_questions"] = normalized.get("diagnostic_questions") or []
+    normalized["incompatible_previous_families"] = normalized.get("incompatible_previous_families") or []
     return normalized
+
+
+_CHEMICAL_FAMILY_RULES = [
+    {
+        "family": "poliuretano",
+        "signals": ["interthane", "poliuret", "polyurethane", "interfine", "interlac"],
+        "component_count": 2,
+        "component_b_name": "PHA046 catalizador",
+        "incompatible_previous_families": ["alquidica"],
+    },
+    {
+        "family": "epoxica",
+        "signals": ["pintucoat", "intergard", "interseal", "epox", "epóx", "epoxy"],
+        "component_count": 2,
+        "component_b_name": "Catalizador epoxico Parte B",
+        "incompatible_previous_families": ["alquidica"],
+    },
+    {
+        "family": "alquidica",
+        "signals": ["corrotec", "pintulux", "pintoxido", "alquid", "esmalte sintet"],
+        "component_count": 1,
+        "component_b_name": None,
+        "incompatible_previous_families": [],
+    },
+    {
+        "family": "acrilica",
+        "signals": ["viniltex", "koraza", "intervinil", "acril", "vinilo"],
+        "component_count": 1,
+        "component_b_name": None,
+        "incompatible_previous_families": [],
+    },
+]
+
+
+def infer_technical_compatibility_metadata(display_name: str, clean_text: str, mix_text: str | None = None) -> dict:
+    normalized = normalize_text(f"{display_name} {clean_text}")
+    family_rule = next(
+        (rule for rule in _CHEMICAL_FAMILY_RULES if any(signal in normalized for signal in rule["signals"])),
+        None,
+    )
+
+    component_count = family_rule["component_count"] if family_rule else None
+    component_b_name = family_rule["component_b_name"] if family_rule else None
+    chemical_family = family_rule["family"] if family_rule else None
+    incompatible_previous_families = list(family_rule["incompatible_previous_families"]) if family_rule else []
+
+    if "pha046" in normalized:
+        component_count = 2
+        component_b_name = "PHA046 catalizador"
+    elif any(token in normalized for token in ["parte b", "componente b", "catalizador"]):
+        component_count = max(component_count or 0, 2)
+        component_b_name = component_b_name or "Componente B catalizador"
+
+    if mix_text and not component_b_name and component_count and component_count > 1:
+        component_b_name = "Componente B catalizador"
+
+    normalized_mix_text = (mix_text or "").strip() or None
+    if not normalized_mix_text:
+        mix_match = re.search(
+            r"((?:relacion|relación)\s+de\s+mezcla\s*[:]?\s*\d+\s*[:x]\s*\d+)",
+            clean_text,
+            flags=re.IGNORECASE,
+        )
+        if mix_match:
+            normalized_mix_text = mix_match.group(1).strip().rstrip(".")
+
+    return {
+        "chemical_family": chemical_family,
+        "component_count": component_count,
+        "requires_component_b": bool(component_count and component_count > 1),
+        "component_b_name": component_b_name,
+        "mix_ratio_text": normalized_mix_text,
+        "incompatible_previous_families": incompatible_previous_families,
+    }
 
 
 def parse_decimal(value: str | None) -> float | None:
@@ -1685,6 +1817,8 @@ def compute_profile_completeness(profile: dict) -> float:
     checks.append(bool(alerts))
     checks.append(bool(profile.get("diagnostic_questions") or solution_guidance.get("diagnostic_questions")))
     checks.append(bool(profile.get("source_excerpts")))
+    checks.append(bool(profile.get("chemical_family")))
+    checks.append(bool(profile.get("component_count") or profile.get("component_count") == 1))
     return round(sum(1 for check in checks if check) / max(len(checks), 1), 4)
 
 
@@ -1780,6 +1914,7 @@ def build_heuristic_technical_profile(filename: str, path_lower: str, marca: str
         (solution_guidance.get("common_failures") or []) + alert_lines + not_recommended,
         max_items=10,
     )
+    compatibility_metadata = infer_technical_compatibility_metadata(display_name, clean_text, mix_text)
 
     profile = {
         "schema_version": "2026-04-12.profile.v3",
@@ -1866,6 +2001,12 @@ def build_heuristic_technical_profile(filename: str, path_lower: str, marca: str
         "application_methods": detect_application_methods(app_text or clean_text),
         "alerts": alert_lines,
         "diagnostic_questions": dedupe_list((solution_guidance.get("diagnostic_questions") or []) + diagnostic_questions, max_items=8),
+        "chemical_family": compatibility_metadata["chemical_family"],
+        "component_count": compatibility_metadata["component_count"],
+        "requires_component_b": compatibility_metadata["requires_component_b"],
+        "component_b_name": compatibility_metadata["component_b_name"],
+        "mix_ratio_text": compatibility_metadata["mix_ratio_text"],
+        "incompatible_previous_families": compatibility_metadata["incompatible_previous_families"],
         "source_excerpts": source_excerpts,
         "extraction": {
             "strategy": "heuristic",
@@ -2176,19 +2317,8 @@ def infer_family(filename: str) -> str | None:
 # Embeddings
 # ---------------------------------------------------------------------------
 def generate_embeddings(client: OpenAI, texts: list[str]) -> list[list[float]]:
-    all_embeddings = []
-    for i in range(0, len(texts), BATCH_EMBED_SIZE):
-        batch = texts[i:i + BATCH_EMBED_SIZE]
-        response = client.embeddings.create(
-            model=EMBEDDING_MODEL,
-            input=batch,
-            dimensions=EMBEDDING_DIMENSIONS,
-        )
-        batch_embeddings = [item.embedding for item in sorted(response.data, key=lambda x: x.index)]
-        all_embeddings.extend(batch_embeddings)
-        if i + BATCH_EMBED_SIZE < len(texts):
-            time.sleep(0.25)
-    return all_embeddings
+    documents = [{"title": None, "text": text} for text in texts]
+    return generate_document_embeddings(documents, sleep_seconds=0.05)
 
 
 # ---------------------------------------------------------------------------
@@ -2329,6 +2459,49 @@ def upsert_technical_profile(engine, profile_record: dict):
             "extraction_status": profile_record.get("extraction_status") or "ready",
             "content_hash": profile_record.get("content_hash"),
             "text_fingerprint": profile_record.get("text_fingerprint"),
+        })
+
+
+def upsert_product_multimodal_index(engine, product_record: dict):
+    with engine.begin() as conn:
+        conn.execute(text("""
+            INSERT INTO public.agent_product_multimodal_index (
+                canonical_family,
+                source_doc_filename,
+                source_doc_path_lower,
+                marca,
+                summary_text,
+                metadata,
+                embedding,
+                generated_at,
+                updated_at
+            ) VALUES (
+                :canonical_family,
+                :source_doc_filename,
+                :source_doc_path_lower,
+                :marca,
+                :summary_text,
+                CAST(:metadata AS jsonb),
+                CAST(:embedding AS vector),
+                now(),
+                now()
+            )
+            ON CONFLICT (canonical_family) DO UPDATE SET
+                source_doc_filename = EXCLUDED.source_doc_filename,
+                source_doc_path_lower = EXCLUDED.source_doc_path_lower,
+                marca = EXCLUDED.marca,
+                summary_text = EXCLUDED.summary_text,
+                metadata = EXCLUDED.metadata,
+                embedding = EXCLUDED.embedding,
+                updated_at = now()
+        """), {
+            "canonical_family": product_record["canonical_family"],
+            "source_doc_filename": product_record["source_doc_filename"],
+            "source_doc_path_lower": product_record["source_doc_path_lower"],
+            "marca": product_record.get("marca"),
+            "summary_text": product_record.get("summary_text"),
+            "metadata": json.dumps(product_record.get("metadata") or {}, ensure_ascii=False),
+            "embedding": "[" + ",".join(str(v) for v in (product_record.get("embedding") or [])) + "]",
         })
 
 
@@ -2492,6 +2665,37 @@ def ingest_pdf(dbx, openai_client, engine, pdf_entry: dict, profiles_only: bool 
         "text_fingerprint": text_fingerprint,
     })
 
+    multimodal_summary = " ".join(filter(None, [
+        technical_profile.get("product_identity", {}).get("display_name"),
+        technical_profile.get("commercial_context", {}).get("summary"),
+        " | ".join(technical_profile.get("commercial_context", {}).get("recommended_uses") or []),
+        " | ".join(technical_profile.get("application", {}).get("surface_preparation") or []),
+    ])).strip()
+    if multimodal_summary:
+        preview_image_bytes = render_pdf_preview_image(pdf_bytes)
+        multimodal_embedding = generate_multimodal_product_embedding(
+            title=technical_profile.get("product_identity", {}).get("display_name") or familia or filename,
+            summary_text=multimodal_summary,
+            pdf_bytes=pdf_bytes,
+            image_bytes=preview_image_bytes,
+        )
+        upsert_product_multimodal_index(engine, {
+            "canonical_family": familia,
+            "source_doc_filename": filename,
+            "source_doc_path_lower": path_lower,
+            "marca": marca,
+            "summary_text": multimodal_summary,
+            "metadata": {
+                "embedding_model": EMBEDDING_MODEL,
+                "embedding_dimensions": EMBEDDING_DIMENSIONS,
+                "portfolio_segment": portfolio_segment,
+                "portfolio_subsegment": portfolio_subsegment,
+                "has_pdf": True,
+                "has_preview_image": bool(preview_image_bytes),
+            },
+            "embedding": multimodal_embedding,
+        })
+
     if profiles_only:
         logger.info(f"  ✅ {filename}: perfil técnico actualizado (modo profiles-only)")
         return 0
@@ -2559,6 +2763,7 @@ def run_ingestion(full_mode: bool = False, dry_run: bool = False, profiles_only:
     engine = get_db_engine()
     ensure_chunk_table(engine)
     ensure_profile_table(engine)
+    ensure_product_multimodal_table(engine)
     openai_client = get_openai_client()
 
     if rebuild_profiles_from_db:

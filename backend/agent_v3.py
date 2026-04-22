@@ -97,6 +97,40 @@ def _collect_recent_inbound_text(user_message: str, recent_messages: list[dict],
     return " ".join(combined).strip()
 
 
+_TECHNICAL_RESPONSE_SECTIONS = [
+    "**Diagnóstico:**",
+    "**Sistema Recomendado:**",
+    "**Preparación de Superficie:**",
+    "**Cantidades y Mezcla:**",
+    "**Restricciones Técnicas:**",
+    "**Cierre Comercial:**",
+]
+
+
+def _build_consultive_block_message(technical_case: Optional[dict]) -> str:
+    profile = dict((technical_case or {}).get("project_profile") or {})
+    missing_fields = profile.get("missing_fields") or []
+    missing_labels = [item.get("description") or item.get("field") for item in missing_fields if isinstance(item, dict)]
+    if not missing_labels:
+        missing_labels = [
+            "tipo de sustrato",
+            "estado actual de la superficie",
+            "ambiente de exposición",
+        ]
+    return (
+        "BLOQUEO CONSULTIVO OBLIGATORIO: el perfil del proyecto sigue incompleto. "
+        "Tienes PROHIBIDO recomendar productos, sistemas, rendimientos o inventario en este turno. "
+        "Solo puedes hacer preguntas diagnósticas para cerrar estos puntos: "
+        + ", ".join(missing_labels[:4])
+        + ". Cuando el cliente aclare esos datos, recién ahí podrás activar consultar_conocimiento_tecnico."
+    )
+
+
+def _technical_response_has_required_sections(response_text: str) -> bool:
+    normalized = response_text or ""
+    return all(section in normalized for section in _TECHNICAL_RESPONSE_SECTIONS)
+
+
 def _should_route_to_inventory_lookup(initial_intent: str, conversation_context: dict, m) -> bool:
     if initial_intent != "consulta_productos":
         return False
@@ -151,6 +185,8 @@ def _should_preload_technical_guidance(
     if initial_intent != "asesoria":
         return False
     if conversation_context.get("latest_technical_guidance"):
+        return False
+    if technical_case and not (technical_case.get("ready") and (technical_case.get("project_profile") or {}).get("complete")):
         return False
 
     # ── CRITICAL: never preload if diagnostic is still incomplete ──
@@ -617,6 +653,9 @@ def generate_agent_reply_v3(
         except Exception:
             technical_case = None
 
+    project_profile = dict((technical_case or {}).get("project_profile") or {})
+    project_profile_complete = bool((technical_case or {}).get("ready") and project_profile.get("complete"))
+
     # ══════════════════════════════════════════════════════════════════════
     # PYTHON-LEVEL DIAGNOSTIC ENFORCEMENT
     # Two layers:
@@ -627,6 +666,8 @@ def generate_agent_reply_v3(
     #      (material, m², specific conditions) without keyword matching.
     # ══════════════════════════════════════════════════════════════════════
     _diagnostic_blocked = is_diagnostic_incomplete("asesoria" if effective_advisory_flow else initial_intent, initial_diagnostic)
+    if effective_advisory_flow and not project_profile_complete:
+        _diagnostic_blocked = True
 
     # Process gate: on the FIRST advisory turn (no prior RAG, no prior
     # diagnostic exchange), block tools so the LLM must ask depth questions.
@@ -644,6 +685,11 @@ def generate_agent_reply_v3(
 
     if _diagnostic_blocked:
         logger.info("V3 BLOQUEO ACTIVO: tools stripped, skipping preload")
+        if effective_advisory_flow:
+            messages.append({
+                "role": "system",
+                "content": _build_consultive_block_message(technical_case),
+            })
 
     if not _diagnostic_blocked and _should_preload_technical_guidance(
         "asesoria" if effective_advisory_flow else initial_intent,
@@ -701,6 +747,8 @@ def generate_agent_reply_v3(
             return False
         if not effective_advisory_flow:
             return False
+        if not project_profile_complete:
+            return False
         high_risk_tokens = [
             "humedad", "salitre", "capilaridad", "eternit", "fibrocemento", "asbesto", "ladrillo",
             "metal", "reja", "porton", "interseal", "interthane", "intergard", "pintucoat",
@@ -737,8 +785,7 @@ def generate_agent_reply_v3(
         _advisory_complete = (
             effective_advisory_flow
             and not _diagnostic_blocked
-            and initial_diagnostic.get("surface")
-            and initial_diagnostic.get("condition")
+            and project_profile_complete
         )
         if _advisory_complete and not tool_calls_made:
             _llm_extra_kwargs["tool_choice"] = "required"
@@ -946,6 +993,11 @@ def generate_agent_reply_v3(
     # ── GUARDIA CONSISTENCIA TÉCNICA: expert rules / RAG duro vs respuesta final ─────
     assistant_message = _guardia_consistencia_tecnica(
         assistant_message, messages, tool_calls_made, context, conversation_context, m
+    )
+
+    # ── GUARDIA DE FORMATO TÉCNICO: estructura final obligatoria ─────
+    assistant_message = _guardia_formato_tecnico(
+        assistant_message, messages, tool_calls_made, conversation_context, m
     )
 
     # ── GUARDIA UNIVERSAL DE PRODUCTO: todo producto debe venir de herramientas ──
@@ -1556,6 +1608,43 @@ def _guardia_consistencia_tecnica(assistant_message, messages, tool_calls_made, 
     assistant_message = resp.choices[0].message
     logger.info("V3 GUARDIA CONSISTENCIA TÉCNICA completed: %dms", int((time.time() - t) * 1000))
     return assistant_message
+
+
+def _guardia_formato_tecnico(assistant_message, messages, tool_calls_made, conversation_context, m):
+    technical_payload = _extract_latest_technical_payload(tool_calls_made)
+    if not technical_payload:
+        return assistant_message
+
+    response_text = assistant_message.content or ""
+    if not response_text.strip() or _technical_response_has_required_sections(response_text):
+        return assistant_message
+
+    project_profile = dict((conversation_context or {}).get("technical_advisory_case") or {}).get("project_profile") or {}
+    missing_fields = ", ".join(
+        item.get("description") or item.get("field")
+        for item in (project_profile.get("missing_fields") or [])
+        if isinstance(item, dict)
+    )
+
+    messages.append(assistant_message)
+    messages.append({
+        "role": "system",
+        "content": (
+            "CORRECCIÓN DE FORMATO TÉCNICO OBLIGATORIA: reescribe la respuesta FINAL usando exactamente estos encabezados Markdown, en este orden: "
+            + ", ".join(_TECHNICAL_RESPONSE_SECTIONS)
+            + ". Si falta evidencia para cantidades o mezcla, dilo explícitamente dentro de '**Cantidades y Mezcla:**'. "
+            + (f"Si el perfil del proyecto aún está incompleto, menciona los faltantes ({missing_fields}) dentro de '**Diagnóstico:**' y no cierres con recomendación final. " if missing_fields else "")
+            + "No llames más herramientas y no cambies los productos respaldados."
+        ),
+    })
+    resp = m.get_openai_client().chat.completions.create(
+        model=m.get_openai_model(),
+        messages=messages,
+        tools=_get_active_agent_tools(),
+        tool_choice="none",
+        temperature=0.2,
+    )
+    return resp.choices[0].message
 
 
 def _guardia_iva(assistant_message, messages, m):

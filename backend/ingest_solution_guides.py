@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Ingestión de guías de solución JSON locales → OpenAI Embeddings → PostgreSQL pgvector.
+Ingestión de guías de solución JSON locales → Gemini Embedding 2 → PostgreSQL pgvector.
 
 Uso:
     python backend/ingest_solution_guides.py              # Ingesta incremental (solo guías nuevas/modificadas)
@@ -8,7 +8,7 @@ Uso:
     python backend/ingest_solution_guides.py --dry-run     # Solo muestra qué haría sin escribir en BD
 
 Cada guía JSON se serializa a texto rico optimizado para búsqueda semántica,
-se embebe con text-embedding-3-small y se inserta en agent_technical_doc_chunk
+se embebe con gemini-embedding-2 y se inserta en agent_technical_doc_chunk
 con tipo_documento='guia_solucion' y document_scope='guide'.
 """
 
@@ -27,17 +27,20 @@ from ingest_technical_sheets import (
     EMBEDDING_DIMENSIONS,
     EMBEDDING_MODEL,
     get_database_url,
-    get_openai_api_key,
     insert_chunks,
 )
 
-from openai import OpenAI
+try:
+    from gemini_embeddings import generate_document_embeddings
+except ImportError:
+    from backend.gemini_embeddings import generate_document_embeddings
+
 from sqlalchemy import create_engine, text
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-BATCH_EMBED_SIZE = 50
+BATCH_EMBED_SIZE = 1
 MAX_EMBED_BATCH_ESTIMATED_TOKENS = 180000
 GUIDE_FILES_PATTERN = "guias_solucion_seccion_*.json"
 SERIALIZED_STANDARD_KEYS = {
@@ -292,40 +295,15 @@ def prepare_chunks(guides: list[dict]) -> list[dict]:
     return chunks
 
 
-def generate_embeddings_batch(client: OpenAI, texts: list[str]) -> list[list[float]]:
-    """Genera embeddings en lotes."""
-    all_embeddings = []
-    batches: list[list[str]] = []
-    current_batch: list[str] = []
-    current_estimated_tokens = 0
-
-    for text_value in texts:
-        # Aproximación suficiente para evitar superar 300k tokens/request.
-        estimated_tokens = max(1, int(len(text_value.split()) * 1.35))
-        if current_batch and (
-            len(current_batch) >= BATCH_EMBED_SIZE
-            or current_estimated_tokens + estimated_tokens > MAX_EMBED_BATCH_ESTIMATED_TOKENS
-        ):
-            batches.append(current_batch)
-            current_batch = []
-            current_estimated_tokens = 0
-        current_batch.append(text_value)
-        current_estimated_tokens += estimated_tokens
-    if current_batch:
-        batches.append(current_batch)
-
-    for i, batch in enumerate(batches, start=1):
-        logger.info(f"  Embedding batch {i} ({len(batch)} textos)...")
-        response = client.embeddings.create(
-            model=EMBEDDING_MODEL,
-            input=batch,
-            dimensions=EMBEDDING_DIMENSIONS,
-        )
-        batch_embeddings = [item.embedding for item in sorted(response.data, key=lambda x: x.index)]
-        all_embeddings.extend(batch_embeddings)
-        if i + BATCH_EMBED_SIZE < len(texts):
-            time.sleep(0.25)
-    return all_embeddings
+def generate_embeddings_batch(texts: list[str], titles: list[str] | None = None) -> list[list[float]]:
+    """Genera embeddings documento por documento con Gemini para evitar agregación multi-input."""
+    documents = []
+    for index, text_value in enumerate(texts):
+        documents.append({
+            "title": titles[index] if titles and index < len(titles) else None,
+            "text": text_value,
+        })
+    return generate_document_embeddings(documents, sleep_seconds=0.05)
 
 
 def delete_existing_guide_chunks(engine):
@@ -355,69 +333,55 @@ def get_existing_guide_hashes(engine) -> dict[str, str]:
 
 def main():
     parser = argparse.ArgumentParser(description="Ingestar guías de solución JSON al RAG")
-    parser.add_argument("--full", action="store_true", help="Re-ingesta completa (borra guías previas)")
-    parser.add_argument("--dry-run", action="store_true", help="Solo muestra qué haría")
+    parser.add_argument("--full", action="store_true", help="Borra guías previas y recarga todo")
+    parser.add_argument("--dry-run", action="store_true", help="Solo muestra qué haría sin escribir en BD")
     args = parser.parse_args()
 
     workspace_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    logger.info(f"Workspace: {workspace_root}")
+    database_url = get_database_url()
+    if not database_url:
+        raise RuntimeError("DATABASE_URL no configurado")
+    engine = create_engine(database_url)
 
-    # 1. Cargar guías
     guides = load_all_guides(workspace_root)
-    if not guides:
-        logger.error("No se encontraron guías. Abortando.")
-        return
-
-    # 2. Preparar chunks
     chunks = prepare_chunks(guides)
-    logger.info(f"Chunks preparados: {len(chunks)}")
 
-    if args.dry_run:
-        logger.info("=== DRY RUN — No se escribirá en BD ===")
-        for c in chunks:
-            logger.info(f"  {c['doc_path_lower']} — {c['token_count']} tokens — {c['familia_producto']}")
-        return
-
-    # 3. Conexión a BD
-    engine = create_engine(get_database_url())
-    logger.info("Conexión a BD establecida")
-
-    # 4. Determinar qué ingestar
     if args.full:
-        delete_existing_guide_chunks(engine)
+        logger.info("Modo full: se reemplazarán todas las guías existentes")
+        if not args.dry_run:
+            delete_existing_guide_chunks(engine)
         to_ingest = chunks
     else:
         existing = get_existing_guide_hashes(engine)
         to_ingest = []
-        for c in chunks:
-            path = c["doc_path_lower"]
-            new_hash = c["metadata"]["content_hash"]
+        for chunk in chunks:
+            path = chunk["doc_path_lower"]
+            new_hash = chunk["metadata"]["content_hash"]
             if path not in existing or existing[path] != new_hash:
-                to_ingest.append(c)
+                to_ingest.append(chunk)
             else:
-                logger.info(f"  Skip (sin cambios): {c['doc_filename']}")
+                logger.info(f"  Skip (sin cambios): {chunk['doc_filename']}")
         if not to_ingest:
             logger.info("Todas las guías están actualizadas. Nada que ingestar.")
             return
 
     logger.info(f"Guías a ingestar: {len(to_ingest)}")
+    if args.dry_run:
+        logger.info("Dry-run activo: no se generarán embeddings ni se escribirá en BD")
+        return
 
-    # 5. Generar embeddings
-    api_key = get_openai_api_key()
-    client = OpenAI(api_key=api_key)
-    texts = [c.pop("_text_for_embedding") for c in to_ingest]
-    logger.info("Generando embeddings...")
-    embeddings = generate_embeddings_batch(client, texts)
-    for chunk, emb in zip(to_ingest, embeddings):
-        chunk["embedding"] = emb
+    texts = [chunk.pop("_text_for_embedding") for chunk in to_ingest]
+    titles = [chunk["doc_filename"] for chunk in to_ingest]
+    logger.info("Generando embeddings Gemini...")
+    embeddings = generate_embeddings_batch(texts, titles)
+    for chunk, embedding in zip(to_ingest, embeddings):
+        chunk["embedding"] = embedding
     logger.info(f"Embeddings generados: {len(embeddings)}")
 
-    # 6. Insertar en BD
     logger.info("Insertando chunks en BD...")
     insert_chunks(engine, to_ingest)
     logger.info(f"✅ {len(to_ingest)} guías de solución ingeridas exitosamente")
 
-    # 7. Resumen
     with engine.connect() as conn:
         count = conn.execute(text(
             "SELECT COUNT(*) FROM public.agent_technical_doc_chunk "

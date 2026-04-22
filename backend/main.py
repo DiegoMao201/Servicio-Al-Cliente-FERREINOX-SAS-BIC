@@ -32,6 +32,21 @@ from openpyxl import Workbook
 from pydantic import BaseModel, Field
 from sqlalchemy import create_engine, text
 
+try:
+    from gemini_embeddings import (
+        EMBEDDING_DIMENSIONS,
+        EMBEDDING_MODEL,
+        generate_document_embedding,
+        generate_query_embedding as generate_gemini_query_embedding,
+    )
+except ImportError:
+    from backend.gemini_embeddings import (
+        EMBEDDING_DIMENSIONS,
+        EMBEDDING_MODEL,
+        generate_document_embedding,
+        generate_query_embedding as generate_gemini_query_embedding,
+    )
+
 
 logger = logging.getLogger("ferreinox_agent")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
@@ -8460,17 +8475,7 @@ def ingest_expert_document_to_rag(
 
     # Generate embeddings
     try:
-        client = get_openai_client()
-        all_embeddings = []
-        for i in range(0, len(chunks), 50):
-            batch = chunks[i:i + 50]
-            resp = client.embeddings.create(
-                model="text-embedding-3-small",
-                input=batch,
-                dimensions=1536,
-            )
-            batch_emb = [item.embedding for item in sorted(resp.data, key=lambda x: x.index)]
-            all_embeddings.extend(batch_emb)
+        all_embeddings = [generate_document_embedding(chunk, title=filename) for chunk in chunks]
     except Exception as exc:
         return {"ingested": False, "reason": f"Error generando embeddings: {exc}"}
 
@@ -8782,7 +8787,6 @@ def _backfill_expert_knowledge_embeddings():
         if not rows:
             return
         
-        client = get_openai_client()
         logger.info("Backfilling %d expert knowledge embeddings...", len(rows))
         
         for row in rows:
@@ -8796,12 +8800,7 @@ def _backfill_expert_knowledge_embeddings():
             if not embed_text.strip():
                 continue
             try:
-                resp = client.embeddings.create(
-                    model="text-embedding-3-small",
-                    input=embed_text.strip()[:500],
-                    dimensions=1536,
-                )
-                embedding = resp.data[0].embedding
+                embedding = generate_document_embedding(embed_text.strip()[:500], title="conocimiento_experto")
                 embedding_literal = "[" + ",".join(str(v) for v in embedding) + "]"
                 
                 with engine.begin() as conn:
@@ -9237,15 +9236,9 @@ def fetch_product_companions(referencia: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def _generate_query_embedding(query_text: str) -> list[float] | None:
-    """Generate embedding vector for a search query using OpenAI."""
+    """Generate embedding vector for a search query using Gemini Embedding 2."""
     try:
-        client = get_openai_client()
-        response = client.embeddings.create(
-            model="text-embedding-3-small",
-            input=query_text.strip(),
-            dimensions=1536,
-        )
-        return response.data[0].embedding
+        return generate_gemini_query_embedding(query_text.strip())
     except Exception:
         return None
 
@@ -9403,6 +9396,44 @@ def search_supporting_technical_guides(query: str, top_k: int = 3, marca_filter:
                                     WHERE {' AND '.join(where_clauses)}
                 ORDER BY embedding <=> %s::vector
                 LIMIT %s
+                """,
+                params,
+            )
+            columns = [desc[0] for desc in cur.description]
+            return [dict(zip(columns, row)) for row in cur.fetchall()]
+        finally:
+            raw_conn.close()
+    except Exception:
+        return []
+
+
+def search_multimodal_product_index(query: str, top_k: int = 3, marca_filter: str | None = None) -> list[dict]:
+    embedding = _generate_query_embedding(query)
+    if not embedding:
+        return []
+
+    embedding_literal = "[" + ",".join(str(v) for v in embedding) + "]"
+    params: list = [embedding_literal]
+    where_clauses = ["1=1"]
+    if marca_filter:
+        where_clauses.append("LOWER(marca) = LOWER(%s)")
+        params.append(marca_filter)
+    params.extend([embedding_literal, top_k])
+
+    try:
+        engine = get_db_engine()
+        raw_conn = engine.raw_connection()
+        try:
+            cur = raw_conn.cursor()
+            cur.execute(
+                f"""
+                    SELECT canonical_family, source_doc_filename, source_doc_path_lower,
+                           marca, summary_text, metadata,
+                           1 - (embedding <=> %s::vector) AS similarity
+                    FROM public.agent_product_multimodal_index
+                    WHERE {' AND '.join(where_clauses)}
+                    ORDER BY embedding <=> %s::vector
+                    LIMIT %s
                 """,
                 params,
             )
@@ -13436,6 +13467,68 @@ def sync_technical_case_registry(
     }
 
 
+_TECHNICAL_PROJECT_PROFILE_FIELDS: dict[str, list[tuple[str, str]]] = {
+    "humedad": [
+        ("source_context", "origen de la humedad o fuente probable"),
+        ("surface_state", "estado actual de la base o recubrimiento"),
+        ("symptoms", "sintomas visibles de falla"),
+        ("wall_location", "si el caso ocurre en cara interior o exterior"),
+    ],
+    "piso": [
+        ("floor_location", "si el piso es interior o exterior"),
+        ("floor_material", "material del piso"),
+        ("traffic_level", "nivel de trafico"),
+        ("previous_coating", "recubrimiento anterior o estado actual del piso"),
+    ],
+    "madera": [
+        ("exposure", "nivel de exposicion"),
+        ("previous_coating", "recubrimiento anterior o estado de la madera"),
+    ],
+    "metal": [
+        ("metal_type", "tipo de metal o sustrato"),
+        ("environment", "ambiente de exposicion"),
+        ("previous_coating", "recubrimiento anterior o estado actual del metal"),
+    ],
+}
+
+_TECHNICAL_UNIVERSAL_PROFILE_FIELDS: list[tuple[str, str]] = [
+    ("substrate_type", "tipo de sustrato o superficie real"),
+    ("current_state", "estado actual de la superficie"),
+    ("exposure_environment", "ambiente o exposicion de trabajo"),
+]
+
+
+def _technical_case_has_value(value) -> bool:
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (list, tuple, set, dict)):
+        return bool(value)
+    return True
+
+
+def _build_technical_project_profile(case: dict) -> dict:
+    category = normalize_text_value(case.get("category") or "")
+    required_specs = list(_TECHNICAL_UNIVERSAL_PROFILE_FIELDS) + _TECHNICAL_PROJECT_PROFILE_FIELDS.get(category, [])
+
+    completed_fields: list[str] = []
+    missing_fields: list[dict] = []
+    for field_name, description in required_specs:
+        if _technical_case_has_value(case.get(field_name)):
+            completed_fields.append(field_name)
+        else:
+            missing_fields.append({"field": field_name, "description": description})
+
+    return {
+        "category": category or "general",
+        "required_fields": [field for field, _ in required_specs],
+        "completed_fields": completed_fields,
+        "missing_fields": missing_fields,
+        "complete": bool(required_specs) and not missing_fields,
+    }
+
+
 def extract_technical_advisory_case(text_value: Optional[str], conversation_context: Optional[dict]):
     case = dict((conversation_context or {}).get("technical_advisory_case") or {})
     normalized = normalize_text_value(text_value)
@@ -13459,6 +13552,33 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         "conversation_history": history,
         "diagnostic_turns": diagnostic_turns,
     })
+
+    if any(token in normalized for token in ["metal", "reja", "baranda", "porton", "portón", "acero", "hierro", "galvanizado", "aluminio"]):
+        case["substrate_type"] = "metal"
+    elif any(token in normalized for token in ["concreto", "cemento", "mortero", "placa", "muro", "pared", "ladrillo", "estuco", "drywall"]):
+        case["substrate_type"] = "concreto o mamposteria"
+    elif any(token in normalized for token in ["madera", "deck", "tabl", "mdf", "triplex"]):
+        case["substrate_type"] = "madera"
+    elif any(token in normalized for token in ["ceramica", "cerámica", "porcelanato", "baldosa"]):
+        case["substrate_type"] = "ceramica o baldosa"
+
+    if any(token in normalized for token in ["pintura vieja", "repint", "ya pint", "barniz", "laca", "anticorrosivo", "esmalte", "base vieja"]):
+        case["current_state"] = "con recubrimiento previo"
+    elif any(token in normalized for token in ["oxido", "óxido", "corrosion", "corrosión"]):
+        case["current_state"] = "con oxido o corrosion"
+    elif any(token in normalized for token in ["grasa", "aceite", "contaminada", "sucia"]):
+        case["current_state"] = "con contaminacion superficial"
+    elif any(token in normalized for token in ["obra gris", "sin pintar", "virgen", "metal desnudo", "nuevo", "nueva"]):
+        case["current_state"] = "sin recubrimiento previo"
+
+    if any(token in normalized for token in ["marino", "mar", "costa", "playa"]):
+        case["exposure_environment"] = "marino"
+    elif any(token in normalized for token in ["industrial", "quimico", "químico", "planta", "gasolina", "solvente"]):
+        case["exposure_environment"] = "industrial o quimico"
+    elif any(token in normalized for token in ["interior", "adentro", "bajo techo", "baño", "bano", "cocina"]):
+        case["exposure_environment"] = "interior"
+    elif any(token in normalized for token in ["exterior", "intemperie", "sol", "lluvia", "fachada", "terraza"]):
+        case["exposure_environment"] = "exterior"
 
     # --- Category-specific field extraction (enriches RAG search) ---
     if category == "humedad":
@@ -13515,6 +13635,11 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         elif any(token in normalized for token in ["peatonal", "residencial", "casa", "habitacion", "habitación"]):
             case["traffic_level"] = "trafico peatonal o residencial"
 
+        if any(token in normalized for token in ["epox", "epóx", "alquid", "esmalte", "barniz", "ya pint", "repint", "pintura vieja"]):
+            case["previous_coating"] = "con recubrimiento previo"
+        elif any(token in normalized for token in ["obra gris", "sin pintar", "concreto nuevo", "recien fundido", "recién fundido", "nuevo"]):
+            case["previous_coating"] = "sin recubrimiento previo"
+
     elif category == "madera":
         if any(token in normalized for token in ["intemperie", "exterior", "sol", "lluvia"]):
             case["exposure"] = "intemperie"
@@ -13541,20 +13666,15 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         elif any(token in normalized for token in ["urbano", "ciudad", "residencial"]):
             case["environment"] = "urbano"
 
-    # --- Universal readiness check ---
-    # Known categories: ready when key fields are filled
-    category_fields_ready = False
-    if category == "humedad":
-        category_fields_ready = bool(case.get("source_context") and case.get("surface_state") and case.get("symptoms"))
-    elif category == "piso":
-        category_fields_ready = bool(case.get("floor_location") and case.get("floor_material"))
-    elif category == "madera":
-        category_fields_ready = bool(case.get("exposure") and case.get("previous_coating"))
-    elif category == "metal":
-        category_fields_ready = bool(case.get("metal_type") and case.get("environment"))
+        if any(token in normalized for token in ["ya pint", "repint", "esmalte", "anticorrosivo", "alquid", "epox", "epóx", "primer", "base vieja"]):
+            case["previous_coating"] = "con recubrimiento previo"
+        elif any(token in normalized for token in ["metal desnudo", "sin pintar", "nuevo", "nueva"]):
+            case["previous_coating"] = "sin recubrimiento previo"
 
-    # Ready if category fields are complete OR at least 1 diagnostic exchange done
-    case["ready"] = category_fields_ready or diagnostic_turns >= 1
+    # --- Universal readiness check ---
+    project_profile = _build_technical_project_profile(case)
+    case["project_profile"] = project_profile
+    case["ready"] = bool(project_profile.get("complete"))
 
     return case
 
@@ -13562,34 +13682,49 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
 def build_technical_diagnostic_questions(technical_case: dict) -> list[str]:
     category = technical_case.get("category")
     questions: list[str] = []
+    project_profile = technical_case.get("project_profile") or _build_technical_project_profile(technical_case)
+    missing_fields = [item.get("field") for item in (project_profile.get("missing_fields") or [])]
+
+    if "substrate_type" in missing_fields:
+        questions.append("¿La superficie real es metal, concreto, madera, fibrocemento, drywall o cerámica?")
+    if "current_state" in missing_fields:
+        questions.append("¿Cómo está hoy esa base: virgen, con pintura vieja, con óxido, humedad, grasa o recubrimiento anterior?")
+    if "exposure_environment" in missing_fields:
+        questions.append("¿Eso va a trabajar en interior, exterior, ambiente marino o con exposición química/industrial?")
+    if len(questions) >= 2:
+        return questions[:2]
 
     # Fast path for known categories
     if category == "humedad":
-        if not technical_case.get("source_context"):
+        if "source_context" in missing_fields:
             questions.append("¿Esa pared te da contra terreno, barranco, fachada o crees que viene de una tubería?")
-        if not technical_case.get("surface_state"):
+        if "surface_state" in missing_fields:
             questions.append("¿La pared está pintada, estucada o en obra negra?")
-        if not technical_case.get("symptoms"):
+        if "symptoms" in missing_fields:
             questions.append("¿Qué síntoma ves más claro: se descascara, sale moho, blanquea o solo se siente húmeda?")
-        if not technical_case.get("wall_location"):
+        if "wall_location" in missing_fields:
             questions.append("¿Eso te está pasando por la cara interior del muro o por la exterior?")
     elif category == "piso":
-        if not technical_case.get("floor_location"):
+        if "floor_location" in missing_fields:
             questions.append("¿Ese piso es interior o exterior?")
-        if not technical_case.get("floor_material"):
+        if "floor_material" in missing_fields:
             questions.append("¿El piso es de cemento, concreto, cerámica o madera?")
-        if technical_case.get("floor_location") and technical_case.get("floor_material") and not technical_case.get("traffic_level"):
+        if "traffic_level" in missing_fields and technical_case.get("floor_location") and technical_case.get("floor_material"):
             questions.append("¿Ese piso va a tener tráfico peatonal residencial o un uso más pesado?")
+        if "previous_coating" in missing_fields:
+            questions.append("¿Ese piso está en obra gris, ya tiene pintura anterior o lo vas a repintar sobre un recubrimiento existente?")
     elif category == "madera":
-        if not technical_case.get("exposure"):
+        if "exposure" in missing_fields:
             questions.append("¿Esa madera va a quedar a la intemperie o bajo techo?")
-        if not technical_case.get("previous_coating"):
+        if "previous_coating" in missing_fields:
             questions.append("¿La madera ya tiene barniz/laca encima o está virgen?")
     elif category == "metal":
-        if not technical_case.get("metal_type"):
+        if "metal_type" in missing_fields:
             questions.append("¿Ese metal es hierro/acero, galvanizado o aluminio?")
-        if not technical_case.get("environment"):
+        if "environment" in missing_fields:
             questions.append("¿Va a trabajar en ambiente urbano, industrial o marino?")
+        if "previous_coating" in missing_fields:
+            questions.append("¿Ese metal está desnudo o ya tiene anticorrosivo, esmalte o algún sistema anterior?")
 
     if questions:
         return questions[:2]
@@ -13711,36 +13846,32 @@ def is_coverage_followup_question(text_value: Optional[str]) -> bool:
 
 
 def _derive_portfolio_candidates_from_question(question: str) -> list[str]:
-    """Derive product candidates from a question using PORTFOLIO_CATEGORY_MAP.
+    """Return only commercial names that the user explicitly wrote.
 
-    This ensures the right products are ALWAYS suggested as candidates even
-    when RAG returns irrelevant chunks (e.g. safety data sheets instead of
-    technical sheets).  The products come from the curated portfolio map.
+    This helper must never infer product names from generic category words.
+    Commercial candidates can only come from tool evidence or explicit user
+    mentions, not from heuristic category-to-brand expansion.
     """
     if not question:
         return []
     q_norm = normalize_text_value(question)
     candidates: list[str] = []
     seen: set[str] = set()
-    # Full-phrase matching against category keys
-    for category_key, brand_terms in PORTFOLIO_CATEGORY_MAP.items():
-        if category_key in q_norm or q_norm in category_key:
-            for bt in brand_terms:
-                if bt != "__SIN_PRODUCTO_FERREINOX__" and bt not in seen:
-                    seen.add(bt)
-                    candidates.append(bt)
-    # Word-level matching
-    _SKIP_WORDS = {"para", "como", "esto", "esta", "esos", "esas", "unos", "unas",
-                   "tiene", "cada", "todo", "toda", "estos", "estas", "necesito",
-                   "quiero", "pintar", "casa", "esta"}
-    for word in q_norm.split():
-        if len(word) < 4 or word in _SKIP_WORDS:
-            continue
-        if word in PORTFOLIO_CATEGORY_MAP:
-            for bt in PORTFOLIO_CATEGORY_MAP[word]:
-                if bt != "__SIN_PRODUCTO_FERREINOX__" and bt not in seen:
-                    seen.add(bt)
-                    candidates.append(bt)
+
+    explicit_terms = []
+    for brand_terms in PORTFOLIO_CATEGORY_MAP.values():
+        for brand_term in brand_terms:
+            if brand_term == "__SIN_PRODUCTO_FERREINOX__":
+                continue
+            if brand_term not in explicit_terms:
+                explicit_terms.append(brand_term)
+
+    for brand_term in sorted(explicit_terms, key=len, reverse=True):
+        normalized_term = normalize_text_value(brand_term)
+        if normalized_term and normalized_term in q_norm and brand_term not in seen:
+            seen.add(brand_term)
+            candidates.append(brand_term)
+
     return candidates
 
 
@@ -13783,8 +13914,8 @@ def extract_candidate_products_from_rag_context(
         for product_name in _KNOWN_PRODUCT_NAMES:
             if product_name in rag_lower and product_name not in candidates:
                 candidates.append(product_name)
-    # C) Inject portfolio-derived candidates from the original question
-    # This ensures correct products appear even when RAG returns wrong chunks
+    # C) Preserve only explicit commercial names already present in the question.
+    # Never infer brand candidates from generic category words.
     if original_question:
         portfolio_candidates = _derive_portfolio_candidates_from_question(original_question)
         for pc in portfolio_candidates:
@@ -14271,7 +14402,12 @@ def _expand_terms_with_portfolio_knowledge(terms: list[str]) -> list[str]:
     return expanded
 
 
-def lookup_inventory_candidates_from_terms(terms: list[str], conversation_context: Optional[dict]) -> list[dict]:
+def lookup_inventory_candidates_from_terms(
+    terms: list[str],
+    conversation_context: Optional[dict],
+    *,
+    allow_portfolio_expansion: bool = True,
+) -> list[dict]:
     seen_codes = set()
     resolved: list[dict] = []
     local_context = dict(conversation_context or {})
@@ -14310,8 +14446,10 @@ def lookup_inventory_candidates_from_terms(terms: list[str], conversation_contex
         if len(resolved) >= 4:
             break
 
-    # Second pass: if first pass found nothing, expand terms using portfolio knowledge
-    if not resolved:
+    # Second pass: if first pass found nothing, expand terms using portfolio knowledge.
+    # This must stay disabled for technical advisory flows, otherwise generic
+    # portfolio heuristics can re-inject unsupported commercial names.
+    if not resolved and allow_portfolio_expansion:
         expanded_terms = _expand_terms_with_portfolio_knowledge(terms)
         # Remove terms already tried in first pass
         original_normalized = {normalize_text_value(t) for t in terms if t}
@@ -14393,13 +14531,17 @@ def generate_grounded_technical_sales_reply(
                     "construcción y mantenimiento de superficies. "
                     "Responde SOLO con base en el contexto recuperado de fichas técnicas y el inventario suministrado. "
                     "Objetivo: recomendar el sistema o producto adecuado según el diagnóstico del cliente y cerrar la venta con productos reales del portafolio. "
+                    "FORMATO OBLIGATORIO E INQUEBRANTABLE: usa exactamente estos encabezados Markdown, en este orden: "
+                    "'**Diagnóstico:**', '**Sistema Recomendado:**', '**Preparación de Superficie:**', '**Cantidades y Mezcla:**', '**Restricciones Técnicas:**', '**Cierre Comercial:**'. "
                     "REGLAS: "
                     "1) No inventes rendimientos, número de galones, pasos, manos, catalizadores o productos que no estén en el contexto recuperado. "
                     "2) Si el rendimiento exacto no aparece, dilo de frente y NO calcules cantidades. "
-                    "3) Si sí hay respaldo suficiente, explica el sistema o solución en lenguaje claro y luego termina con una sección final que empiece EXACTAMENTE con: 'Vea, los productos que necesitas son estos:'. "
-                    "4) En esa sección final solo puedes listar productos del inventario suministrado. "
-                    "5) PROHIBIDO mandar al cliente a otra parte, sugerir buscar fuera del portafolio, o decir que no tienes el producto sin verificar el inventario. "
-                    "6) Usa tono colombiano, directo, útil y comercial. Máximo 8 líneas antes de la lista de productos."
+                    "3) En '**Sistema Recomendado:**' solo puedes usar nombres comerciales respaldados por el RAG o por el inventario suministrado. CERO genéricos. "
+                    "4) En '**Preparación de Superficie:**' describe solo pasos críticos respaldados por metadata o ficha. "
+                    "5) En '**Cantidades y Mezcla:**' incluye rendimientos, dilución y componente A/B solo si aparecen en el contexto; si faltan, dilo explícitamente. "
+                    "6) En '**Restricciones Técnicas:**' resume advertencias y compuertas duras activas. "
+                    "7) En '**Cierre Comercial:**' cierra con un llamado a la acción y, si hay inventario real, agrega al final la frase exacta 'Vea, los productos que necesitas son estos:' seguida de la lista del inventario suministrado. "
+                    "8) PROHIBIDO mandar al cliente a otra parte, sugerir buscar fuera del portafolio, o decir que no tienes el producto sin verificar el inventario."
                 ),
             },
             {
@@ -14526,7 +14668,11 @@ def build_technical_advisory_flow_reply(profile_name: Optional[str], user_messag
     candidate_products = _filter_rag_candidates_by_surface_and_policy(
         candidate_products, [], surface_restricted,
     )
-    inventory_products = lookup_inventory_candidates_from_terms(candidate_products, conversation_context)
+    inventory_products = lookup_inventory_candidates_from_terms(
+        candidate_products,
+        conversation_context,
+        allow_portfolio_expansion=False,
+    )
     technical_case["candidate_products"] = candidate_products
     technical_case["inventory_products"] = inventory_products
 
@@ -20774,6 +20920,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     ))
     guide_source_files = list(dict.fromkeys(c.get("doc_filename", "") for c in guide_chunks if c.get("similarity", 0) >= 0.2))
     guide_profiles = fetch_technical_profiles(guide_canonical_families, guide_source_files, limit=3, segment_filters=segment_filters or None)
+    multimodal_products = search_multimodal_product_index(search_query, top_k=3, marca_filter=marca_filter)
 
     expert_notes = fetch_expert_knowledge(f"{producto} {pregunta}", limit=8)
     structured_diagnosis = _build_structured_diagnosis(pregunta, producto, best_similarity)
@@ -20826,10 +20973,18 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     for candidate_name in rag_candidate_names:
         if candidate_name not in candidate_product_names:
             candidate_product_names.append(candidate_name)
+    for multimodal_entry in multimodal_products:
+        multimodal_family = (multimodal_entry.get("canonical_family") or "").strip()
+        if multimodal_family and multimodal_family not in candidate_product_names:
+            candidate_product_names.append(multimodal_family)
 
     inventory_candidates = []
     if candidate_product_names:
-        inventory_candidates = lookup_inventory_candidates_from_terms(candidate_product_names, conversation_context)
+        inventory_candidates = lookup_inventory_candidates_from_terms(
+            candidate_product_names,
+            conversation_context,
+            allow_portfolio_expansion=False,
+        )
         inventory_candidates = _filter_inventory_candidates_by_policy(inventory_candidates, hard_policies)
 
     result_payload = {
@@ -20844,6 +20999,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         "guia_tecnica_estructurada": structured_guide,
         "politicas_duras_contexto": hard_policies,
         "productos_sistema_prioritarios": candidate_product_names[:8],
+        "productos_multimodales_relacionados": multimodal_products,
         "preguntas_pendientes": structured_diagnosis.get("required_validations") or [],
         "mensaje": (
             "⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): "
@@ -21189,13 +21345,7 @@ def _handle_tool_registrar_conocimiento_experto(args, conversation_context):
         try:
             embed_text = " ".join(filter(None, [contexto_tags, nota_comercial, producto_recomendado, producto_desestimado]))
             if embed_text.strip() and kid != "?":
-                _client = get_openai_client()
-                _resp = _client.embeddings.create(
-                    model="text-embedding-3-small",
-                    input=embed_text.strip()[:500],
-                    dimensions=1536,
-                )
-                _emb = _resp.data[0].embedding
+                _emb = generate_document_embedding(embed_text.strip()[:500], title="conocimiento_experto")
                 _emb_literal = "[" + ",".join(str(v) for v in _emb) + "]"
                 with engine.begin() as conn2:
                     conn2.execute(

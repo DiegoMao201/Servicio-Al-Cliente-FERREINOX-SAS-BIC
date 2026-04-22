@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 
 from backend import main as m
 
@@ -23,6 +24,29 @@ class GlobalPolicyMatrixTests(unittest.TestCase):
             any(expected_fragment.lower() in str(value).lower() for value in values),
             f"Expected fragment '{expected_fragment}' in {values}",
         )
+
+    def test_question_category_does_not_inject_commercial_names_without_evidence(self):
+        candidates = m.extract_candidate_products_from_rag_context(
+            "",
+            None,
+            original_question="Tengo un techo de eternit exterior repintado y envejecido",
+        )
+        self.assertEqual(candidates, [])
+
+    def test_technical_inventory_lookup_does_not_expand_portfolio_when_disabled(self):
+        with mock.patch.object(m, "lookup_product_context", return_value=[]), mock.patch.object(
+            m,
+            "_expand_terms_with_portfolio_knowledge",
+            return_value=["Sellomax", "Koraza"],
+        ) as expand_mock:
+            candidates = m.lookup_inventory_candidates_from_terms(
+                ["impermeabilizante techo"],
+                {},
+                allow_portfolio_expansion=False,
+            )
+
+        self.assertEqual(candidates, [])
+        expand_mock.assert_not_called()
 
     def test_humedad_capilaridad_blocks_fachada_products(self):
         snapshot = _build_policy_snapshot("Muro interior con salitre y humedad que sube desde la base del muro")

@@ -3,19 +3,27 @@ validador_pedido.py — Gates de validación para pedidos directos
 ===============================================================
 
 Gates:
-  1. validar_tienda      — Tienda especificada y válida
-  2. validar_stock        — Stock suficiente para cantidades solicitadas
-  3. validar_ral          — Productos International con RAL completo
-  4. validar_bicomponentes — Catalizador/Ajustador incluidos
-  5. validar_completitud  — No hay líneas fallidas sin resolver
+    1. validar_tienda               — Tienda especificada y válida
+    2. validar_stock                — Stock suficiente para cantidades solicitadas
+    3. validar_ral                  — Productos International con RAL completo
+    4. validar_bicomponentes        — Catalizador/Ajustador incluidos
+    5. validar_compatibilidad_tecnica — Mezclas químicas válidas y sistema completo
+    6. validar_completitud          — No hay líneas fallidas sin resolver
 """
 from __future__ import annotations
 
+import json
 import logging
+import os
+import re
 from dataclasses import dataclass, field, asdict
+from functools import lru_cache
+from pathlib import Path
 from typing import Optional
 
 from .matcher_inventario import ResultadoMatchPedido
+
+from sqlalchemy import create_engine, text
 
 logger = logging.getLogger("pipeline_pedido.validador")
 
@@ -43,6 +51,90 @@ TIENDA_ALIASES = {
     "ferrebox": "439", "ferre box": "439",
     "cerritos": "463",
 }
+
+
+CHEMICAL_INCOMPATIBILITIES = [
+    ("alquidica", "poliuretano", "Un sistema alquídico no puede rematarse con poliuretano porque compromete la adherencia y la reticulación."),
+    ("alquidica", "epoxica", "Un epóxico o imprimante epóxico sobre base alquídica existente exige remoción total del sistema anterior antes de aplicar."),
+]
+
+
+def _read_streamlit_secret_value(*keys: str) -> str | None:
+    secrets_path = Path(__file__).resolve().parents[2] / ".streamlit" / "secrets.toml"
+    if not secrets_path.exists() or not keys:
+        return None
+    try:
+        raw_text = secrets_path.read_text(encoding="utf-8")
+    except Exception:
+        return None
+    for key in reversed(keys):
+        match = re.search(rf'(?mi)^\s*{re.escape(key)}\s*=\s*"([^"]+)"\s*$', raw_text)
+        if match:
+            return match.group(1).strip()
+    return None
+
+
+def _get_database_url() -> str | None:
+    return (
+        os.getenv("DATABASE_URL")
+        or os.getenv("POSTGRES_DB_URI")
+        or _read_streamlit_secret_value("DATABASE_URL")
+        or _read_streamlit_secret_value("postgres", "db_uri")
+    )
+
+
+@lru_cache(maxsize=1)
+def _load_structured_product_profiles() -> list[dict]:
+    database_url = _get_database_url()
+    if not database_url:
+        return []
+    try:
+        engine = create_engine(database_url)
+        with engine.connect() as conn:
+            rows = conn.execute(text("""
+                SELECT canonical_family, profile_json
+                FROM public.agent_technical_profile
+                WHERE extraction_status = 'ready'
+            """)).mappings().all()
+        profiles = []
+        for row in rows:
+            profile_json = row.get("profile_json")
+            if isinstance(profile_json, str):
+                try:
+                    profile_json = json.loads(profile_json)
+                except Exception:
+                    profile_json = {}
+            profiles.append({
+                "canonical_family": row.get("canonical_family") or "",
+                "profile_json": profile_json or {},
+            })
+        return profiles
+    except Exception:
+        return []
+
+
+def _resolve_structured_product_metadata(product_text: str) -> dict:
+    normalized_product = (product_text or "").lower()
+    if not normalized_product:
+        return {}
+
+    for entry in _load_structured_product_profiles():
+        profile_json = entry.get("profile_json") or {}
+        identity = profile_json.get("product_identity") or {}
+        aliases = identity.get("aliases") or []
+        candidates = [
+            entry.get("canonical_family") or "",
+            identity.get("display_name") or "",
+            *aliases,
+        ]
+        if any(candidate and candidate.lower() in normalized_product for candidate in candidates):
+            return {
+                "chemical_family": profile_json.get("chemical_family"),
+                "requires_component_b": bool(profile_json.get("requires_component_b")),
+                "component_b_name": profile_json.get("component_b_name"),
+                "incompatible_previous_families": profile_json.get("incompatible_previous_families") or [],
+            }
+    return {}
 
 
 def resolver_tienda(texto: str) -> tuple[str, str]:
@@ -220,22 +312,55 @@ def validar_bicomponentes(match_result: ResultadoMatchPedido) -> list[FeedbackPe
             ))
         else:
             feedbacks.append(FeedbackPedido(
-                status="warning",
+                status="action_required",
                 gate="bicomponentes",
                 reason="companion_not_found",
                 mensaje_usuario=(
                     f"El producto *{bico.para_producto}* necesita "
-                    f"*{bico.tipo}: {bico.nombre}* pero no lo encontre "
-                    f"en inventario. Verifica disponibilidad."
+                    f"*{bico.tipo}: {bico.nombre}* y no lo encontre "
+                    f"en inventario. No debo cerrar el pedido incompleto porque el sistema quedaria mal armado."
                 ),
                 productos_afectados=[bico.nombre],
-                sugerencia=f"Verificar {bico.tipo} manualmente",
+                sugerencia=f"Resolver {bico.tipo} obligatorio antes de confirmar",
             ))
     return feedbacks
 
 
+def validar_compatibilidad_tecnica(match_result: ResultadoMatchPedido) -> list[FeedbackPedido]:
+    feedbacks: list[FeedbackPedido] = []
+    family_to_products: dict[str, list[str]] = {}
+
+    for prod in match_result.productos_resueltos:
+        text_blob = " ".join(
+            value for value in [prod.descripcion_real, prod.producto_solicitado, prod.linea_international] if value
+        )
+        profile_metadata = _resolve_structured_product_metadata(text_blob)
+        family = profile_metadata.get("chemical_family")
+        if not family:
+            continue
+        family_to_products.setdefault(family, []).append(prod.descripcion_real or prod.producto_solicitado)
+
+    present_families = set(family_to_products)
+    for family_a, family_b, reason in CHEMICAL_INCOMPATIBILITIES:
+        if family_a in present_families and family_b in present_families:
+            affected = family_to_products[family_a] + family_to_products[family_b]
+            feedbacks.append(FeedbackPedido(
+                status="action_required",
+                gate="compatibilidad_tecnica",
+                reason="chemical_incompatibility",
+                mensaje_usuario=(
+                    "Detecté un sistema químicamente incompatible en el pedido. "
+                    f"{reason} Necesito corregir la combinación antes de confirmarlo."
+                ),
+                productos_afectados=affected,
+                sugerencia="Reemplazar el sistema por una ruta técnicamente compatible",
+            ))
+
+    return feedbacks
+
+
 # ============================================================================
-# GATE 5: VALIDAR COMPLETITUD
+# GATE 6: VALIDAR COMPLETITUD
 # ============================================================================
 
 def validar_completitud(match_result: ResultadoMatchPedido) -> list[FeedbackPedido]:
@@ -292,17 +417,33 @@ def ejecutar_validacion_pedido(
     # Gate 4: Bicomponentes
     for fb in validar_bicomponentes(match_result):
         resultado.feedbacks.append(fb)
-        if fb.status == "warning":
+        if fb.status == "action_required":
+            resultado.valido = False
+            resultado.puede_continuar = False
+            resultado.acciones_requeridas.append(fb.reason)
+            resultado.errores.append(f"[bicomponentes] {fb.mensaje_usuario}")
+        elif fb.status == "warning":
             resultado.advertencias.append(f"[bicomponentes] {fb.mensaje_usuario}")
 
-    # Gate 5: Completitud
+    # Gate 5: Compatibilidad tecnica
+    for fb in validar_compatibilidad_tecnica(match_result):
+        resultado.feedbacks.append(fb)
+        if fb.status == "action_required":
+            resultado.valido = False
+            resultado.puede_continuar = False
+            resultado.acciones_requeridas.append(fb.reason)
+            resultado.errores.append(f"[compatibilidad_tecnica] {fb.mensaje_usuario}")
+
+    # Gate 6: Completitud
     for fb in validar_completitud(match_result):
         resultado.feedbacks.append(fb)
         resultado.advertencias.append(f"[completitud] {fb.mensaje_usuario}")
 
-    # Si hay acciones requeridas (RAL), marcar como no completamente válido
+    # Si hay acciones requeridas pero el flujo nunca fue bloqueado por gates
+    # duros, puede continuar de forma parcial (ej. falta RAL).
     if resultado.acciones_requeridas:
         resultado.valido = False
-        resultado.puede_continuar = True  # Puede mostrar lo que ya resolvió
+        if resultado.puede_continuar:
+            resultado.puede_continuar = True  # Puede mostrar lo que ya resolvió
 
     return resultado
