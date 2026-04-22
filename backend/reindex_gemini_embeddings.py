@@ -5,10 +5,17 @@ from __future__ import annotations
 import argparse
 import logging
 
+from gemini_embeddings import generate_document_embedding
 from ingest_technical_sheets import run_ingestion
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
+
+
+def _validate_gemini_embedding_stack():
+    logger.info("Validando stack Gemini antes de reindexar...")
+    generate_document_embedding("healthcheck ferreinox", title="preflight")
+    logger.info("Stack Gemini validado correctamente")
 
 
 def main():
@@ -18,6 +25,7 @@ def main():
     args = parser.parse_args()
 
     logger.info("Iniciando reindexación Gemini (1536 dims, chunk index + multimodal product index)")
+    _validate_gemini_embedding_stack()
     run_ingestion(
         full_mode=not args.dry_run,
         dry_run=args.dry_run,
