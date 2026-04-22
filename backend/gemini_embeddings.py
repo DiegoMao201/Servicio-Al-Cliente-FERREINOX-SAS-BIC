@@ -2,12 +2,20 @@ from __future__ import annotations
 
 import os
 import time
+from threading import Lock
 from pathlib import Path
 from typing import Optional
+
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 
 EMBEDDING_MODEL = os.getenv("GEMINI_EMBEDDING_MODEL", "gemini-embedding-2")
 EMBEDDING_DIMENSIONS = int(os.getenv("GEMINI_EMBEDDING_DIMENSIONS", "1536"))
+EMBEDDING_MIN_INTERVAL_SECONDS = float(os.getenv("GEMINI_EMBEDDING_MIN_INTERVAL_SECONDS", "0.6"))
+EMBEDDING_MAX_RETRIES = int(os.getenv("GEMINI_EMBEDDING_MAX_RETRIES", "6"))
+
+_EMBED_CALL_LOCK = Lock()
+_LAST_EMBED_CALL_AT = 0.0
 
 
 def _read_streamlit_secret_value(*keys: str) -> str | None:
@@ -50,6 +58,51 @@ def _extract_embedding_values(result) -> list[float]:
     return list(values)
 
 
+def _sleep_for_rate_limit_floor():
+    global _LAST_EMBED_CALL_AT
+    if EMBEDDING_MIN_INTERVAL_SECONDS <= 0:
+        return
+    with _EMBED_CALL_LOCK:
+        now = time.monotonic()
+        wait_time = EMBEDDING_MIN_INTERVAL_SECONDS - (now - _LAST_EMBED_CALL_AT)
+        if wait_time > 0:
+            time.sleep(wait_time)
+        _LAST_EMBED_CALL_AT = time.monotonic()
+
+
+def _is_retryable_gemini_error(exc: Exception) -> bool:
+    status_code = getattr(exc, "status_code", None)
+    if status_code in {429, 500, 502, 503, 504}:
+        return True
+    message = str(exc).lower()
+    retryable_markers = [
+        "resource_exhausted",
+        "rate limit",
+        "quota",
+        "too many requests",
+        "temporarily unavailable",
+        "service unavailable",
+        "deadline exceeded",
+    ]
+    return any(marker in message for marker in retryable_markers)
+
+
+@retry(
+    retry=retry_if_exception(_is_retryable_gemini_error),
+    wait=wait_exponential(multiplier=1, min=2, max=30),
+    stop=stop_after_attempt(EMBEDDING_MAX_RETRIES),
+    reraise=True,
+)
+def _embed_content_with_retry(*, model: str, contents, config):
+    _sleep_for_rate_limit_floor()
+    client, _ = get_gemini_client()
+    return client.models.embed_content(
+        model=model,
+        contents=contents,
+        config=config,
+    )
+
+
 def get_gemini_client():
     api_key = get_gemini_api_key()
     if not api_key:
@@ -73,8 +126,8 @@ def prepare_retrieval_document(text: str, title: str | None = None) -> str:
 
 
 def generate_query_embedding(query_text: str) -> list[float]:
-    client, types = get_gemini_client()
-    result = client.models.embed_content(
+    _, types = get_gemini_client()
+    result = _embed_content_with_retry(
         model=EMBEDDING_MODEL,
         contents=prepare_retrieval_query(query_text),
         config=types.EmbedContentConfig(output_dimensionality=EMBEDDING_DIMENSIONS),
@@ -83,8 +136,8 @@ def generate_query_embedding(query_text: str) -> list[float]:
 
 
 def generate_document_embedding(document_text: str, *, title: str | None = None) -> list[float]:
-    client, types = get_gemini_client()
-    result = client.models.embed_content(
+    _, types = get_gemini_client()
+    result = _embed_content_with_retry(
         model=EMBEDDING_MODEL,
         contents=prepare_retrieval_document(document_text, title=title),
         config=types.EmbedContentConfig(output_dimensionality=EMBEDDING_DIMENSIONS),
@@ -114,14 +167,14 @@ def generate_multimodal_product_embedding(
     image_bytes: bytes | None = None,
     image_mime_type: str = "image/png",
 ) -> list[float]:
-    client, types = get_gemini_client()
+    _, types = get_gemini_client()
     contents = [prepare_retrieval_document(summary_text, title=title)]
     if pdf_bytes:
         contents.append(types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf"))
     if image_bytes:
         contents.append(types.Part.from_bytes(data=image_bytes, mime_type=image_mime_type))
 
-    result = client.models.embed_content(
+    result = _embed_content_with_retry(
         model=EMBEDDING_MODEL,
         contents=contents,
         config=types.EmbedContentConfig(output_dimensionality=EMBEDDING_DIMENSIONS),
