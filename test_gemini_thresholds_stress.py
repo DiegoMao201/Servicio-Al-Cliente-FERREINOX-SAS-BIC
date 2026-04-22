@@ -20,34 +20,110 @@ from backend.ingest_technical_sheets import get_database_url
 class StressQuery:
     query: str
     expected_terms: tuple[str, ...]
+    forbidden_terms: tuple[str, ...] = ()
+    must_include_bicomponent_signal: bool = False
     notes: str = ""
 
 
 DEFAULT_STRESS_QUERIES: list[StressQuery] = [
     StressQuery(
-        query="epoxico para tanque de agua potable",
-        expected_terms=("epox", "tanque", "agua potable"),
-        notes="Debe privilegiar sistemas epóxicos con mención de inmersión o agua potable.",
+        query="sistema epoxico para tanque de agua potable en inmersion permanente con catalizador obligatorio",
+        expected_terms=("epox", "agua potable", "inmersion", "catalizador", "dos componentes"),
+        forbidden_terms=("acril", "vinil", "decor", "mantenimiento"),
+        must_include_bicomponent_signal=True,
+        notes="Debe privilegiar sistemas epóxicos de inmersión; ruido decorativo o acrílico debe quedar abajo.",
     ),
     StressQuery(
-        query="poliuretano para estructura metalica expuesta al sol",
-        expected_terms=("poliuret", "metal", "sol", "estructura"),
-        notes="Debe arrastrar acabados poliuretano para intemperie o UV.",
+        query="acabado poliuretano bicomponente para estructura metalica exterior con alta radiacion solar y ambiente industrial",
+        expected_terms=("poliuret", "estructura", "metal", "exterior", "uv", "dos componentes"),
+        forbidden_terms=("alquid", "acril", "mantenimiento"),
+        must_include_bicomponent_signal=True,
+        notes="Debe atraer acabados poliuretano para intemperie/UV y no confundir con esmaltes alquídicos simples.",
     ),
     StressQuery(
-        query="pintura para piso de concreto con trafico pesado",
-        expected_terms=("piso", "concreto", "trafico", "pesado"),
-        notes="Debe favorecer sistemas para pisos industriales o alto tráfico.",
+        query="recubrimiento para piso de concreto de bodega con trafico pesado abrasion y derrame quimico",
+        expected_terms=("piso", "concreto", "trafico pesado", "abras", "epox", "quimic"),
+        forbidden_terms=("decor", "vinil", "fachada", "mantenimiento"),
+        notes="Caso crítico para pisos industriales; debe desplazar pinturas de mantenimiento genéricas.",
     ),
     StressQuery(
-        query="anticorrosivo para reja galvanizada en ambiente marino",
-        expected_terms=("anticorros", "galvan", "marino", "reja"),
-        notes="Debe filtrar soluciones compatibles con galvanizado y alta corrosión.",
+        query="primer y acabado para acero galvanizado expuesto a ambiente marino con alta corrosion",
+        expected_terms=("galvan", "marino", "anticorros", "primer", "adherencia"),
+        forbidden_terms=("madera", "interior", "decor", "vinil"),
+        notes="Debe recuperar soluciones compatibles con galvanizado y exposición severa; castigar sistemas no compatibles.",
     ),
     StressQuery(
-        query="impermeabilizante para muro con humedad por capilaridad",
-        expected_terms=("humedad", "capilar", "muro", "imperme"),
-        notes="Debe traer sistemas de humedad interior/capilaridad, no pintura decorativa genérica.",
+        query="epoxico novolac o sistema de alta resistencia quimica para tanque con soda caustica y acidos diluidos",
+        expected_terms=("epox", "resistencia quim", "tanque", "inmersion", "dos componentes"),
+        forbidden_terms=("acril", "mantenimiento", "decor"),
+        must_include_bicomponent_signal=True,
+        notes="Debe empujar sistemas de alta resistencia química y no anticorrosivos genéricos.",
+    ),
+    StressQuery(
+        query="sistema para tuberia y equipo metalico que trabaja a alta temperatura continua hasta 200 grados",
+        expected_terms=("altas temperaturas", "metal", "temperatura", "equipo", "tuber"),
+        forbidden_terms=("poliuret", "decor", "vinil"),
+        notes="Debe separar recubrimientos de alta temperatura de poliuretanos o epóxicos convencionales.",
+    ),
+    StressQuery(
+        query="recubrimiento epoxico para cuarto frio y area de proceso con limpieza frecuente y humedad constante",
+        expected_terms=("epox", "humedad", "lavado", "piso", "concreto", "dos componentes"),
+        forbidden_terms=("fachada", "decor", "vinil", "mantenimiento"),
+        must_include_bicomponent_signal=True,
+        notes="Debe arrastrar sistemas epóxicos lavables y resistentes a humedad; castigar decorativos base agua.",
+    ),
+    StressQuery(
+        query="mantenimiento de estructura metalica con anticorrosivo epoxico y acabado poliuretano obligando parte a y parte b",
+        expected_terms=("epox", "poliuret", "parte a", "parte b", "catalizador", "mezcla"),
+        forbidden_terms=("monocomponente", "alquid", "acril"),
+        must_include_bicomponent_signal=True,
+        notes="Debe recuperar fichas donde la lógica bicomponente sea explícita y evitar sistemas monocomponentes.",
+    ),
+    StressQuery(
+        query="reparacion de concreto industrial contaminado con aceite antes de aplicar recubrimiento de alto desempeño",
+        expected_terms=("concreto", "preparacion", "aceite", "piso", "epox"),
+        forbidden_terms=("fachada", "madera", "decor"),
+        notes="Debe favorecer sistemas que hablen de preparación rigurosa y no solo del acabado final.",
+    ),
+    StressQuery(
+        query="acabado poliuretano alifatico para puente o estructura expuesta a sol lluvia y niebla salina",
+        expected_terms=("poliuret", "alif", "estructura", "sol", "lluvia", "marino"),
+        forbidden_terms=("interior", "vinil", "decor"),
+        must_include_bicomponent_signal=True,
+        notes="Debe premiar poliuretanos de intemperie severa y castigar epóxicos como acabado final exterior.",
+    ),
+    StressQuery(
+        query="sistema para immersion en agua residual o efluente industrial con primer epoxico y capa de barrera",
+        expected_terms=("epox", "inmersion", "agua", "residual", "barrera", "dos componentes"),
+        forbidden_terms=("mantenimiento", "decor", "vinil"),
+        must_include_bicomponent_signal=True,
+        notes="Debe atraer recubrimientos de inmersión y barrera, no productos para mantenimiento liviano.",
+    ),
+    StressQuery(
+        query="recubrimiento para tanque de combustible diesel o hidrocarburo con resistencia a inmersion y mezcla controlada",
+        expected_terms=("tanque", "combustible", "hidrocarb", "inmersion", "epox", "mezcla"),
+        forbidden_terms=("acril", "decor", "fachada"),
+        must_include_bicomponent_signal=True,
+        notes="Debe premiar fichas con resistencia a hidrocarburos y penalizar sistemas incompatibles con inmersión.",
+    ),
+    StressQuery(
+        query="repinte sobre superficie previamente pintada con alquidico donde se quiere montar un poliuretano bicomponente",
+        expected_terms=("alquid", "poliuret", "incompat", "remocion", "dos componentes"),
+        forbidden_terms=("compatible total", "sin preparacion"),
+        must_include_bicomponent_signal=True,
+        notes="Debe traer fichas o perfiles que expliciten incompatibilidad con alquídicos previos sin preparación completa.",
+    ),
+    StressQuery(
+        query="primer rico en zinc y acabado de alto desempeño para acero nuevo en atmosfera c5 marina",
+        expected_terms=("zinc", "primer", "acero", "marino", "anticorros"),
+        forbidden_terms=("decor", "madera", "interior"),
+        notes="Debe acercarse a esquemas anticorrosivos severos y no a esmaltes industriales genéricos.",
+    ),
+    StressQuery(
+        query="epoxico base agua para area interior de bajo olor pero con exigencia de resistencia mecanica y quimica moderada",
+        expected_terms=("epoxica base agua", "base agua", "interior", "resistencia", "quimic"),
+        forbidden_terms=("vinil", "decor", "fachada"),
+        notes="Debe distinguir epóxicos base agua de acrílicos convencionales y de epóxicos solventados de inmersión.",
     ),
 ]
 
@@ -60,7 +136,10 @@ class SearchHit:
     similarity: float
     distance: float
     matched_terms: list[str]
+    forbidden_terms_found: list[str]
     matched_expected: bool
+    bicomponent_signal_detected: bool
+    strict_match: bool
     preview: str
     filename: str
 
@@ -126,10 +205,10 @@ def _distribution_summary(values: list[float]) -> dict:
 
 
 def _cohort_metrics(hits: list[SearchHit]) -> dict:
-    positive_similarities = [hit.similarity for hit in hits if hit.matched_expected]
-    negative_similarities = [hit.similarity for hit in hits if not hit.matched_expected]
-    positive_distances = [hit.distance for hit in hits if hit.matched_expected]
-    negative_distances = [hit.distance for hit in hits if not hit.matched_expected]
+    positive_similarities = [hit.similarity for hit in hits if hit.strict_match]
+    negative_similarities = [hit.similarity for hit in hits if not hit.strict_match]
+    positive_distances = [hit.distance for hit in hits if hit.strict_match]
+    negative_distances = [hit.distance for hit in hits if not hit.strict_match]
     return {
         "positives": {
             "similarity": _distribution_summary(positive_similarities),
@@ -142,7 +221,26 @@ def _cohort_metrics(hits: list[SearchHit]) -> dict:
     }
 
 
-def _score_hit(source: str, rank: int, row: dict, expected_terms: tuple[str, ...]) -> SearchHit:
+def _detect_bicomponent_signal(haystack: str) -> bool:
+    bicomponent_markers = (
+        "dos componentes",
+        "2 componentes",
+        "bicomponente",
+        "parte a",
+        "parte b",
+        "componente a",
+        "componente b",
+        "catalizador",
+        "endurecedor",
+        "activador",
+        "relacion de mezcla",
+        "proporcion de mezcla",
+        "mezcla ",
+    )
+    return any(marker in haystack for marker in bicomponent_markers)
+
+
+def _score_hit(source: str, rank: int, row: dict, stress_query: StressQuery) -> SearchHit:
     label = row.get("label") or row.get("familia_producto") or row.get("canonical_family") or row.get("doc_filename") or row.get("source_doc_filename") or "?"
     preview = row.get("preview") or row.get("chunk_text") or row.get("summary_text") or ""
     haystack = _normalize(" ".join([
@@ -151,7 +249,12 @@ def _score_hit(source: str, rank: int, row: dict, expected_terms: tuple[str, ...
         row.get("doc_filename") or "",
         row.get("source_doc_filename") or "",
     ]))
-    matched_terms = [term for term in expected_terms if _normalize(term) in haystack]
+    matched_terms = [term for term in stress_query.expected_terms if _normalize(term) in haystack]
+    forbidden_terms_found = [term for term in stress_query.forbidden_terms if _normalize(term) in haystack]
+    bicomponent_signal_detected = _detect_bicomponent_signal(haystack)
+    strict_match = bool(matched_terms) and not forbidden_terms_found and (
+        not stress_query.must_include_bicomponent_signal or bicomponent_signal_detected
+    )
     similarity = float(row.get("similarity") or 0.0)
     return SearchHit(
         source=source,
@@ -160,7 +263,10 @@ def _score_hit(source: str, rank: int, row: dict, expected_terms: tuple[str, ...
         similarity=similarity,
         distance=float(row.get("distance") or (1 - similarity)),
         matched_terms=matched_terms,
+        forbidden_terms_found=forbidden_terms_found,
         matched_expected=bool(matched_terms),
+        bicomponent_signal_detected=bicomponent_signal_detected,
+        strict_match=strict_match,
         preview=(preview or "")[:220].replace("\n", " "),
         filename=row.get("doc_filename") or row.get("source_doc_filename") or "",
     )
@@ -206,8 +312,8 @@ def _fetch_multimodal_hits(engine, embedding_literal: str, top_k: int) -> list[d
 
 
 def _suggest_threshold(hits: list[SearchHit]) -> dict:
-    positives = [hit.similarity for hit in hits if hit.matched_expected]
-    negatives = [hit.similarity for hit in hits if not hit.matched_expected]
+    positives = [hit.similarity for hit in hits if hit.strict_match]
+    negatives = [hit.similarity for hit in hits if not hit.strict_match]
     p10_positive = _percentile(positives, 0.10)
     p25_positive = _percentile(positives, 0.25)
     p90_negative = _percentile(negatives, 0.90)
@@ -254,9 +360,11 @@ def _global_summary(hits: list[SearchHit]) -> dict:
 
 def _print_hit(hit: SearchHit):
     matched = ", ".join(hit.matched_terms) if hit.matched_terms else "sin match esperado"
+    forbidden = ", ".join(hit.forbidden_terms_found) if hit.forbidden_terms_found else "sin ruido prohibido"
     print(
         f"  {hit.rank}. sim={hit.similarity:.4f} dist={hit.distance:.4f} expected={str(hit.matched_expected).lower()} "
-        f"label={hit.label} file={hit.filename} terms=[{matched}]"
+        f"strict={str(hit.strict_match).lower()} bicomp={str(hit.bicomponent_signal_detected).lower()} "
+        f"label={hit.label} file={hit.filename} terms=[{matched}] forbidden=[{forbidden}]"
     )
     if hit.preview:
         print(f"     preview: {hit.preview}")
@@ -265,7 +373,15 @@ def _print_hit(hit: SearchHit):
 def _build_queries(extra_queries: list[str]) -> list[StressQuery]:
     queries = list(DEFAULT_STRESS_QUERIES)
     for item in extra_queries:
-        queries.append(StressQuery(query=item, expected_terms=tuple(), notes="Consulta ad-hoc sin términos esperados."))
+        queries.append(
+            StressQuery(
+                query=item,
+                expected_terms=tuple(),
+                forbidden_terms=tuple(),
+                must_include_bicomponent_signal=False,
+                notes="Consulta ad-hoc sin términos esperados.",
+            )
+        )
     return queries
 
 
@@ -305,11 +421,11 @@ def main():
         multimodal_rows = _fetch_multimodal_hits(engine, embedding_literal, args.top_k)
 
         technical_hits = [
-            _score_hit("technical_chunks", rank, row, stress_query.expected_terms)
+            _score_hit("technical_chunks", rank, row, stress_query)
             for rank, row in enumerate(technical_rows, start=1)
         ]
         multimodal_hits = [
-            _score_hit("product_multimodal", rank, row, stress_query.expected_terms)
+            _score_hit("product_multimodal", rank, row, stress_query)
             for rank, row in enumerate(multimodal_rows, start=1)
         ]
 
@@ -331,6 +447,8 @@ def main():
         report["queries"].append({
             "query": stress_query.query,
             "expected_terms": list(stress_query.expected_terms),
+            "forbidden_terms": list(stress_query.forbidden_terms),
+            "must_include_bicomponent_signal": stress_query.must_include_bicomponent_signal,
             "notes": stress_query.notes,
             "technical_hits": [asdict(hit) for hit in technical_hits],
             "multimodal_hits": [asdict(hit) for hit in multimodal_hits],
