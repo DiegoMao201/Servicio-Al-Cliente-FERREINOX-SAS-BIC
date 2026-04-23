@@ -1,5 +1,6 @@
 import base64
 import io
+import json
 import os
 import sys
 import unittest
@@ -381,6 +382,7 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertIn("Pinturas Acme", response)
 
     def test_handle_consultar_bi_universal_resolves_vendor_name_from_args_before_query(self):
+        conversation_context = {"internal_auth": {"user_id": 1, "role": "administrador", "employee_context": {}}}
         with mock.patch.object(internal_agent_ops, "_resolve_vendor_by_name", return_value="154011") as resolver:
             with mock.patch.object(internal_agent_ops, "handle_consultar_indicadores_internos", return_value="ok") as indicator_handler:
                 response = internal_agent_ops.handle_consultar_bi_universal(
@@ -390,7 +392,7 @@ class InternalAgentProfileTests(unittest.TestCase):
                         "periodo": "abril",
                         "vendedor_codigo": "Jerson",
                     },
-                    {"internal_auth": {"user_id": 1, "role": "administrador", "employee_context": {}}},
+                    conversation_context,
                 )
 
         resolver.assert_called_once_with(mock.ANY, "Jerson")
@@ -398,7 +400,71 @@ class InternalAgentProfileTests(unittest.TestCase):
         forwarded_args = indicator_handler.call_args.args[1]
         self.assertEqual(forwarded_args["tipo_consulta"], "clientes_a_reactivar")
         self.assertEqual(forwarded_args["vendedor_codigo"], "154011")
+        self.assertEqual(conversation_context["last_internal_report_request"]["vendedor_codigo"], "154011")
         self.assertEqual(response, "ok")
+
+    def test_handle_enviar_reporte_interno_correo_reuses_last_vendor_scope_for_follow_up_email(self):
+        sales_query = mock.Mock(
+            return_value=json.dumps(
+                {
+                    "periodo": "abril 2026",
+                    "tienda": "Todas",
+                    "canal": "empresa",
+                    "ventas": {
+                        "ventas_netas": 1250000,
+                        "facturas_bruto": 1400000,
+                        "devoluciones_notas_credito": 150000,
+                        "num_clientes_distintos": 3,
+                        "num_vendedores": 1,
+                    },
+                    "top_clientes": [
+                        {"cliente": "Pinturas Acme", "total": 800000},
+                        {"cliente": "Ferrecliente SAS", "total": 450000},
+                    ],
+                },
+                ensure_ascii=False,
+            )
+        )
+        send_email = mock.Mock()
+        conversation_context = {
+            "internal_auth": {
+                "user_id": 1,
+                "role": "administrador",
+                "email": "gerencia@ferreinox.com",
+                "username": "Diego",
+                "employee_context": {
+                    "full_name": "Diego Garcia",
+                    "cargo": "Gerencia Comercial",
+                    "sede": "Pereira",
+                },
+            },
+            "last_internal_report_request": {
+                "source_tool": "consultar_bi_universal",
+                "periodo": "abril 2026",
+                "vendedor_codigo": "154011",
+                "vendedor_nombre": "Hugo Nelson Zapata",
+                "canal": "empresa",
+            },
+        }
+
+        response = internal_agent_ops.handle_enviar_reporte_interno_correo(
+            mock.Mock(),
+            {
+                "tipo_reporte": "ventas_por_cliente",
+                "email_destino": "compras@ferreinox.co",
+            },
+            conversation_context,
+            lambda title, body: body,
+            send_email,
+            sales_query,
+        )
+
+        sales_args = sales_query.call_args.args[0]
+        self.assertEqual(sales_args["vendedor_codigo"], "154011")
+        self.assertEqual(sales_args["vendedor_nombre"], "Hugo Nelson Zapata")
+        self.assertEqual(sales_args["periodo"], "abril 2026")
+        self.assertIn("Reporte enviado a compras@ferreinox.co", response)
+        self.assertEqual(conversation_context["last_internal_report_request"]["vendedor_codigo"], "154011")
 
     def test_handle_consultar_indicadores_internos_builds_monthly_commercial_plan(self):
         snapshot = {

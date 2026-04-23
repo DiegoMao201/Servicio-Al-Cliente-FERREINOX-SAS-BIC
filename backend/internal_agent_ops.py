@@ -19,6 +19,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 logger = logging.getLogger("internal_agent_ops")
 
+_LAST_INTERNAL_REPORT_REQUEST_KEY = "last_internal_report_request"
+
 _XL_DARK_FILL = PatternFill("solid", fgColor="111827")
 _XL_ACCENT_FILL = PatternFill("solid", fgColor="F59E0B")
 _XL_LIGHT_FILL = PatternFill("solid", fgColor="F9FAFB")
@@ -753,6 +755,67 @@ def _resolve_indicator_scope(args: dict, internal_auth: Optional[dict]) -> tuple
     if role == "empleado":
         return requested_store or employee_store, vendor_code
     return requested_store, vendor_code
+
+
+def _remember_internal_report_request(
+    conversation_context: Optional[dict],
+    source_tool: str,
+    args: dict,
+    *,
+    store_code: Optional[str] = None,
+    vendor_code: Optional[str] = None,
+) -> None:
+    if not isinstance(conversation_context, dict):
+        return
+
+    remembered: dict[str, Any] = {"source_tool": source_tool}
+    for key in (
+        "tipo_reporte",
+        "tipo_consulta",
+        "periodo",
+        "limite",
+        "canal",
+        "tipo_venta",
+        "desglose",
+        "pregunta",
+        "consulta",
+        "vendedor_nombre",
+        "vendedor_codigo",
+        "almacen",
+        "tienda",
+    ):
+        value = args.get(key)
+        if isinstance(value, str):
+            value = value.strip()
+        if value not in (None, "", [], {}):
+            remembered[key] = value
+
+    resolved_store = store_code or remembered.get("almacen") or remembered.get("tienda")
+    if resolved_store:
+        remembered["almacen"] = resolved_store
+        remembered["tienda"] = resolved_store
+    if vendor_code:
+        remembered["vendedor_codigo"] = vendor_code
+
+    if len(remembered) > 1:
+        conversation_context[_LAST_INTERNAL_REPORT_REQUEST_KEY] = remembered
+
+
+def _merge_report_args_with_context(args: dict, conversation_context: Optional[dict]) -> dict:
+    merged = dict((conversation_context or {}).get(_LAST_INTERNAL_REPORT_REQUEST_KEY) or {})
+    for key, value in dict(args or {}).items():
+        if isinstance(value, str):
+            if value.strip():
+                merged[key] = value.strip()
+            continue
+        if value is not None:
+            merged[key] = value
+
+    if merged.get("tienda") and not merged.get("almacen"):
+        merged["almacen"] = merged["tienda"]
+    elif merged.get("almacen") and not merged.get("tienda"):
+        merged["tienda"] = merged["almacen"]
+    return merged
 
 
 def _extract_limit_from_question(question: str, default: int, minimum: int, maximum: int) -> int:
@@ -2526,6 +2589,18 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
             vendor_code = _resolve_vendor_by_name(engine, vendor_name)
     query_type = _normalize_text(args.get("tipo_consulta") or "")
     limit = _clamp_limit(args.get("limite"), default=5, minimum=3, maximum=20)
+    remembered_args = dict(args or {})
+    if store_code:
+        remembered_args["almacen"] = store_code
+    if vendor_code:
+        remembered_args["vendedor_codigo"] = vendor_code
+    _remember_internal_report_request(
+        conversation_context,
+        "consultar_indicadores_internos",
+        remembered_args,
+        store_code=store_code,
+        vendor_code=vendor_code,
+    )
 
     try:
         if query_type == "proyeccion_ventas_mes":
@@ -2619,6 +2694,21 @@ def handle_consultar_bi_universal(engine, args: dict, conversation_context: Opti
     logger.info("consultar_bi_universal: question=%r plan=%s store=%s vendor=%s", question[:120], json.dumps(plan, ensure_ascii=False, default=str)[:300], store_code, vendor_code)
     if scope_error:
         return scope_error
+
+    remembered_args = dict(args or {})
+    remembered_args.setdefault("periodo", args.get("periodo") or plan.get("periodo"))
+    remembered_args.setdefault("limite", args.get("limite") or plan.get("limite"))
+    if store_code:
+        remembered_args["almacen"] = store_code
+    if vendor_code:
+        remembered_args["vendedor_codigo"] = vendor_code
+    _remember_internal_report_request(
+        conversation_context,
+        "consultar_bi_universal",
+        remembered_args,
+        store_code=store_code,
+        vendor_code=vendor_code,
+    )
 
     channel_filter = _get_channel_sql_filter(plan.get("channel"))
     channel_label = str(plan.get("channel") or "")  # e.g. "mostrador"
@@ -2788,6 +2878,7 @@ def _extract_sales_report_payload(report_type: str, args: dict, conversation_con
             "canal": args.get("canal") or "empresa",
             "tipo_venta": args.get("tipo_venta") or "todos",
             "vendedor_codigo": args.get("vendedor_codigo"),
+            "vendedor_nombre": args.get("vendedor_nombre"),
         },
         dict(conversation_context or {}),
     )
@@ -3229,10 +3320,18 @@ def handle_enviar_reporte_interno_correo(engine, args: dict, conversation_contex
     destination_email = str(args.get("email_destino") or internal_auth.get("email") or "").strip().lower()
     if not _is_valid_email(destination_email):
         return "No tengo un correo destino válido. Pídele al colaborador el correo y luego reintenta el envío."
-    store_code, _ = _resolve_indicator_scope(args, internal_auth)
+    resolved_args = _merge_report_args_with_context(args, conversation_context)
+    store_code, vendor_code = _resolve_indicator_scope(resolved_args, internal_auth)
     limit = _clamp_limit(args.get("limite"), default=100, minimum=10, maximum=500)
     context_with_args = dict(conversation_context or {})
-    context_with_args["pending_tool_args"] = dict(args or {})
+    context_with_args["pending_tool_args"] = resolved_args
+    _remember_internal_report_request(
+        conversation_context,
+        "enviar_reporte_interno_correo",
+        resolved_args,
+        store_code=store_code,
+        vendor_code=vendor_code,
+    )
 
     try:
         title, metrics, headers, rows, keys, detail_sheet_name, report_context = _report_rows_and_headers(
