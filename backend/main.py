@@ -13157,6 +13157,8 @@ def infer_technical_problem_category(text_value: Optional[str], existing_categor
     normalized = normalize_text_value(text_value)
     if not normalized:
         return existing_category or "general"
+    if any(token in normalized for token in ["fachada", "fachadas", "muro exterior", "culata", "frente", "graniplast", "silcoplast"]):
+        return "fachada"
     if any(token in normalized for token in ["piso", "pisos", "cemento", "concreto", "pintura para piso", "epoxica", "epóxica"]):
         return "piso"
     if any(token in normalized for token in ["humedad", "gotera", "goteras", "filtracion", "filtración", "capilaridad", "moho", "salitre", "descascar", "manchas negras", "barranco"]):
@@ -13218,6 +13220,8 @@ def _build_technical_case_summary(case: Optional[dict], technical_guidance: Opti
 
     if category == "madera":
         return "Caso de madera"
+    if category == "fachada":
+        return "Caso de fachada"
     if category == "piso":
         return "Caso de piso"
 
@@ -13474,6 +13478,7 @@ _TECHNICAL_PROJECT_PROFILE_FIELDS: dict[str, list[tuple[str, str]]] = {
         ("symptoms", "sintomas visibles de falla"),
         ("wall_location", "si el caso ocurre en cara interior o exterior"),
     ],
+    "fachada": [],
     "piso": [
         ("floor_location", "si el piso es interior o exterior"),
         ("floor_material", "material del piso"),
@@ -13640,6 +13645,13 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         elif any(token in normalized for token in ["obra gris", "sin pintar", "concreto nuevo", "recien fundido", "recién fundido", "nuevo"]):
             case["previous_coating"] = "sin recubrimiento previo"
 
+    elif category == "fachada":
+        case["exposure_environment"] = "exterior"
+        if any(token in normalized for token in ["pintura vieja", "repint", "ya pint", "graniplast", "silcoplast", "textura", "recubrimiento"]):
+            case["current_state"] = "con recubrimiento previo"
+        elif any(token in normalized for token in ["obra gris", "sin pintar", "virgen", "nueva", "nuevo"]):
+            case["current_state"] = "sin recubrimiento previo"
+
     elif category == "madera":
         if any(token in normalized for token in ["intemperie", "exterior", "sol", "lluvia"]):
             case["exposure"] = "intemperie"
@@ -13704,6 +13716,13 @@ def build_technical_diagnostic_questions(technical_case: dict) -> list[str]:
             questions.append("¿Qué síntoma ves más claro: se descascara, sale moho, blanquea o solo se siente húmeda?")
         if "wall_location" in missing_fields:
             questions.append("¿Eso te está pasando por la cara interior del muro o por la exterior?")
+    elif category == "fachada":
+        if "substrate_type" in missing_fields:
+            questions.append("¿Esa fachada está sobre concreto, estuco, ladrillo o alguna textura tipo graniplast?")
+        if "current_state" in missing_fields:
+            questions.append("¿La base está en obra nueva o tiene recubrimiento/textura anterior que esté soplada o desprendida?")
+        if "exposure_environment" in missing_fields:
+            questions.append("¿Esa fachada está totalmente a la intemperie o tiene alguna protección parcial?")
     elif category == "piso":
         if "floor_location" in missing_fields:
             questions.append("¿Ese piso es interior o exterior?")
@@ -13782,6 +13801,13 @@ def build_technical_search_query(technical_case: dict, user_message: Optional[st
             technical_case.get("wall_location") or "",
             technical_case.get("surface_state") or "",
             " ".join(technical_case.get("symptoms") or []),
+        ])
+    elif category == "fachada":
+        parts.extend([
+            "sistema para fachada exterior",
+            technical_case.get("substrate_type") or "",
+            technical_case.get("current_state") or "",
+            technical_case.get("exposure_environment") or "",
         ])
     elif category == "piso":
         parts.extend([

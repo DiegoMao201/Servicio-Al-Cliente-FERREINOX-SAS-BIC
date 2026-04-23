@@ -822,6 +822,12 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         combined,
         flags=re.IGNORECASE,
     )
+    combined_without_negated_humidity = re.sub(
+        r"\b(?:no\s+(?:hay|tiene|presenta|veo|se\s+ve)|sin)\b[^.\n]{0,80}\b(?:humedad|salitre|goteras?|filtraci[oó]n|moho|hongo)s?\b",
+        " ",
+        combined,
+        flags=re.IGNORECASE,
+    )
     for level_phrase in [
         "primer piso", "segundo piso", "tercer piso", "cuarto piso", "quinto piso",
         "sexto piso", "septimo piso", "séptimo piso", "octavo piso", "noveno piso",
@@ -861,7 +867,7 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         "pérgola": "madera exterior",
     }
     _has_wall_context = any(kw in combined for kw in ["pared", "muro", "cielo raso"])
-    _has_humidity_context = any(kw in combined for kw in ["humedad", "salitre", "moho", "hongo", "filtra", "gotea", "descascar", "sopla", "vapor", "condensación", "condensacion"])
+    _has_humidity_context = any(kw in combined_without_negated_humidity for kw in ["humedad", "salitre", "moho", "hongo", "filtra", "gotea", "descascar", "sopla", "vapor", "condensación", "condensacion"])
     _has_exterior_wall_context = any(kw in combined for kw in ["fachada", "exterior", "intemperie", "culata"])
 
     if _forced_metal:
@@ -893,9 +899,6 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
 
     # Condition
     cond_signals = {
-        "humedad": "humedad", "salitre": "salitre", "filtra": "filtración", "gotea": "goteras",
-        "gotera": "goteras",
-        "moho": "moho/hongos", "hongo": "moho/hongos",
         "óxido": "óxido", "oxido": "óxido", "oxidado": "óxido", "oxidada": "óxido",
         "corrosión": "óxido", "corrosion": "óxido", "corrosi": "óxido",
         "descascar": "pintura descascarando", "despega": "pintura descascarando",
@@ -903,6 +906,9 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         "ampollada": "pintura descascarando", "levantando": "pintura descascarando",
         "sopla": "pintura soplada", "soplado": "pintura soplada", "soplada": "pintura soplada",
         "grieta": "grietas", "fisura": "grietas",
+        "humedad": "humedad", "salitre": "salitre", "filtra": "filtración", "gotea": "goteras",
+        "gotera": "goteras",
+        "moho": "moho/hongos", "hongo": "moho/hongos",
         "nuevo": "superficie nueva", "nueva": "superficie nueva", "virgen": "superficie nueva",
         "sin pintar": "sin pintar", "pintado": "repintura", "pintada": "repintura",
         "repintar": "repintura", "repintura": "repintura",
@@ -911,7 +917,7 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         "deteriorad": "deteriorada", "dañad": "deteriorada",
     }
     for kw, cond in cond_signals.items():
-        if kw in combined:
+        if kw in combined_without_negated_humidity:
             data["condition"] = cond
             break
 
@@ -928,13 +934,13 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
     elif any(w in combined for w in ["vehicular", "parqueadero", "garaje"]):
         data["traffic"] = "vehicular"
 
-    if any(w in combined for w in ["viene del piso", "sube del piso", "base del muro", "capilaridad", "jardinera", "jardiner", "presion negativa", "presión negativa", "permanente", "pegado al piso", "desde abajo", "arranca pegado al piso"]):
+    if any(w in combined_without_negated_humidity for w in ["viene del piso", "sube del piso", "base del muro", "capilaridad", "jardinera", "jardiner", "presion negativa", "presión negativa", "permanente", "pegado al piso", "desde abajo", "arranca pegado al piso"]):
         data["humidity_source"] = "capilaridad/presión negativa"
     elif any(w in combined_without_negated_exterior for w in ["de arriba", "techo", "cubierta", "canal", "lluvia", "filtracion exterior", "filtración exterior"]):
         data["humidity_source"] = "filtración superior/exterior"
-    elif any(w in combined for w in ["temporada", "cuando llueve", "invierno", "solo en lluvia"]):
+    elif any(w in combined_without_negated_humidity for w in ["temporada", "cuando llueve", "invierno", "solo en lluvia"]):
         data["humidity_source"] = "humedad por temporada"
-    elif any(w in combined for w in ["vapor", "ducha", "condensación", "condensacion", "baño", "ventilación", "ventilacion"]):
+    elif any(w in combined_without_negated_humidity for w in ["vapor", "ducha", "condensación", "condensacion", "baño", "ventilación", "ventilacion"]):
         data["humidity_source"] = "condensación/vapor (baño o cocina)"
 
     if (
