@@ -13228,6 +13228,7 @@ def infer_technical_problem_category(text_value: Optional[str], existing_categor
         "humedad", "gotera", "goteras", "filtracion", "filtración", "capilaridad", "moho", "salitre",
         "descascar", "manchas negras", "barranco", "talud", "moja", "mojando", "llueve", "filtra", "gotea",
         "vapor", "condensacion", "condensación", "humedo", "húmedo", "humeda", "húmeda", "blanquea", "blanqueando",
+        "suda", "sudando", "sudor", "negra",
     ]
     metal_exact_tokens = [token for token in metal_surface_tokens if " " not in token]
     metal_phrase_tokens = [token for token in metal_surface_tokens if " " in token]
@@ -13248,7 +13249,7 @@ def infer_technical_problem_category(text_value: Optional[str], existing_categor
         return "humedad"
     if any(token in normalized for token in ["muro", "pared", "culata", "sotano", "sótano", "baño", "bano", "cocina"]) and any(token in normalized for token in humidity_context_tokens):
         return "humedad"
-    if any(token in normalized for token in ["fachada", "fachadas", "muro exterior", "culata", "graniplast", "silcoplast"]):
+    if any(token in normalized for token in ["fachada", "fachadas", "muro exterior", "culata", "graniplast", "silcoplast", "fibrocemento", "eternit", "panel cementicio"]):
         return "fachada"
     if any(token in normalized for token in [
         "piso", "pisos", "cemento", "concreto", "pintura para piso", "epoxica", "epóxica",
@@ -13267,7 +13268,7 @@ def _contains_any_normalized(normalized: str, tokens: list[str]) -> bool:
 
 
 def _infer_technical_current_state(normalized: str) -> Optional[str]:
-    if _contains_any_normalized(normalized, ["descascar", "pelad", "soplad", "soplo", "cuartead", "ampollad"]):
+    if _contains_any_normalized(normalized, ["descascar", "pelad", "soplad", "soplo", "cuartead", "ampollad", "cascari"]):
         return "con recubrimiento deteriorado"
     if _contains_any_normalized(normalized, ["pintura vieja", "repint", "ya pint", "barniz", "laca", "anticorrosivo", "esmalte", "base vieja"]):
         return "con recubrimiento previo"
@@ -13738,9 +13739,9 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         case["exposure_environment"] = "marino"
     elif any(token in normalized for token in ["industrial", "quimico", "químico", "planta", "gasolina", "solvente"]):
         case["exposure_environment"] = "industrial o quimico"
-    elif any(token in normalized for token in ["interior", "adentro", "bajo techo", "baño", "bano", "cocina"]):
+    elif any(token in normalized for token in ["interior", "adentro", "por dentro", "bajo techo", "baño", "bano", "cocina"]):
         case["exposure_environment"] = "interior"
-    elif any(token in normalized for token in ["exterior", "intemperie", "sol", "lluvia", "fachada", "terraza", "jardin", "jardín"]):
+    elif any(token in normalized for token in ["exterior", "intemperie", "sol", "lluvia", "fachada", "terraza", "jardin", "jardín", "techo", "rooftop", "pergola", "pérgola", "lago"]):
         case["exposure_environment"] = "exterior"
 
     # --- Category-specific field extraction (enriches RAG search) ---
@@ -13756,7 +13757,7 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
             case["probable_pressure"] = "presion_negativa"
         elif any(token in normalized for token in ["tuberia", "tubería", "tubo", "fuga"]):
             case["source_context"] = "posible tuberia o fuga interna"
-        elif any(token in normalized for token in ["fachada", "lluvia", "exterior", "afuera"]):
+        elif any(token in normalized for token in ["fachada", "lluvia", "exterior", "afuera", "por fuera", "jardin", "jardín"]):
             case["source_context"] = "posible filtracion desde fachada o exterior"
         elif any(token in normalized for token in ["vapor", "ducha", "baño", "bano", "condensacion", "condensación", "ventilacion", "ventilación"]):
             case["source_context"] = "condensacion o vapor en baño/cocina"
@@ -13807,13 +13808,13 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         elif any(token in normalized for token in ["madera"]):
             case["floor_material"] = "madera"
 
-        if any(token in normalized for token in ["alto trafico", "alto tráfico", "montacarga", "vehiculo", "vehículo", "carro", "llantas", "todos los dias", "todos los días"]):
+        if any(token in normalized for token in ["alto trafico", "alto tráfico", "montacarga", "vehiculo", "vehículo", "carro", "llanta", "llantas", "todo el tiempo", "todos los dias", "todos los días"]):
             case["traffic_level"] = "alto trafico"
         elif any(token in normalized for token in ["taller", "motos"]):
             case["traffic_level"] = "alto trafico"
         elif any(token in normalized for token in ["garaje", "parqueadero"]):
             case["traffic_level"] = "trafico vehicular"
-        elif any(token in normalized for token in ["peatonal", "peatones", "residencial", "casa", "habitacion", "habitación"]):
+        elif any(token in normalized for token in ["peatonal", "peaton", "peatones", "residencial", "casa", "habitacion", "habitación"]):
             case["traffic_level"] = "trafico peatonal o residencial"
 
         if any(token in normalized for token in ["epox", "epóx", "alquid", "esmalte", "barniz", "ya pint", "repint", "pintura vieja"]):
@@ -13830,7 +13831,9 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
 
     elif category == "fachada":
         case["exposure_environment"] = "exterior"
-        if any(token in normalized for token in ["pintura vieja", "repint", "ya pint", "graniplast", "silcoplast", "textura", "recubrimiento", "descascar", "soplad"]):
+        if case.get("current_state") == "con recubrimiento deteriorado":
+            pass
+        elif any(token in normalized for token in ["pintura vieja", "repint", "ya pint", "graniplast", "silcoplast", "textura", "recubrimiento", "descascar", "soplad"]):
             case["current_state"] = "con recubrimiento previo"
         elif any(token in normalized for token in ["obra gris", "sin pintar", "virgen", "nueva", "nuevo"]):
             case["current_state"] = "sin recubrimiento previo"
@@ -13838,7 +13841,7 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
             case["substrate_type"] = "concreto o mamposteria"
 
     elif category == "madera":
-        if any(token in normalized for token in ["intemperie", "exterior", "sol", "lluvia"]):
+        if any(token in normalized for token in ["intemperie", "exterior", "sol", "lluvia", "rooftop", "pergola", "pérgola", "lago", "piscina"]):
             case["exposure"] = "intemperie"
         elif any(token in normalized for token in ["interior", "bajo techo", "adentro"]):
             case["exposure"] = "bajo techo"
@@ -13871,14 +13874,14 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         elif any(token in normalized for token in ["jardin", "jardín", "local", "bodega"]):
             case["environment"] = "urbano"
 
-        if any(token in normalized for token in ["ya pint", "repint", "esmalte", "anticorrosivo", "alquid", "epox", "epóx", "primer", "base vieja"]):
+        if any(token in normalized for token in ["ya pint", "repint", "esmalte", "anticorrosivo", "alquid", "epox", "epóx", "primer", "base vieja", "tuvo pintura", "ya tuvo pintura"]):
             case["previous_coating"] = "con recubrimiento previo"
         elif any(token in normalized for token in ["metal desnudo", "sin pintar", "nuevo", "nueva"]):
             case["previous_coating"] = "sin recubrimiento previo"
 
-        if not case.get("exposure_environment") and any(token in normalized for token in ["sol", "lluvia", "intemperie", "jardin", "jardín", "exterior"]):
+        if not case.get("exposure_environment") and any(token in normalized for token in ["sol", "lluvia", "intemperie", "jardin", "jardín", "exterior", "techo", "playa"]):
             case["exposure_environment"] = "exterior"
-        elif not case.get("exposure_environment") and any(token in normalized for token in ["interior", "adentro", "bajo techo", "local", "bodega"]):
+        elif not case.get("exposure_environment") and any(token in normalized for token in ["interior", "adentro", "por dentro", "bajo techo", "local", "bodega", "apto", "apartamento", "locker"]):
             case["exposure_environment"] = "interior"
 
     # --- Universal readiness check ---

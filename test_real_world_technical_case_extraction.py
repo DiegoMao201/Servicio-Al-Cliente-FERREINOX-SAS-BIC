@@ -24,7 +24,7 @@ class RealWorldTechnicalCaseExtractionTests(unittest.TestCase):
 
         self.assertEqual(technical_case["category"], "fachada")
         self.assertEqual(technical_case["substrate_type"], "concreto o mamposteria")
-        self.assertEqual(technical_case["current_state"], "con recubrimiento previo")
+        self.assertEqual(technical_case["current_state"], "con recubrimiento deteriorado")
         self.assertEqual(technical_case["exposure_environment"], "exterior")
 
     def test_floor_cases_infer_concrete_context_from_everyday_language(self):
