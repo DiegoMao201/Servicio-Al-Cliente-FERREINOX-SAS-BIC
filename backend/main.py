@@ -2804,13 +2804,50 @@ def get_whatsapp_verify_token():
     return os.getenv("WHATSAPP_VERIFY_TOKEN", "ferreinox-verify-token")
 
 
+def _first_configured_value(*values):
+    for value in values:
+        if value is None:
+            continue
+        stripped = value.strip() if isinstance(value, str) else value
+        if stripped:
+            return stripped
+    return None
+
+
 def get_openai_api_key():
-    return os.getenv("OPENAI_API_KEY") or _read_streamlit_secret_value("openai", "api_key")
+    return _first_configured_value(
+        os.getenv("OPENAI_API_KEY"),
+        os.getenv("DEEPSEEK_API_KEY"),
+        _read_streamlit_secret_value("openai", "api_key"),
+        _read_streamlit_secret_value("deepseek", "api_key"),
+    )
+
+
+def get_openai_base_url():
+    configured_base_url = _first_configured_value(
+        os.getenv("OPENAI_BASE_URL"),
+        os.getenv("LLM_BASE_URL"),
+        os.getenv("DEEPSEEK_BASE_URL"),
+    )
+    if configured_base_url:
+        return configured_base_url
+    if os.getenv("DEEPSEEK_API_KEY") and not os.getenv("OPENAI_API_KEY"):
+        return "https://api.deepseek.com"
+    return None
 
 
 def get_openai_model():
-    configured_model = (os.getenv("OPENAI_MODEL") or "").strip()
-    return configured_model or "gpt-4o-mini"
+    configured_model = _first_configured_value(
+        os.getenv("OPENAI_MODEL"),
+        os.getenv("LLM_MODEL"),
+        os.getenv("DEEPSEEK_MODEL"),
+    )
+    if configured_model:
+        return configured_model
+    base_url = get_openai_base_url()
+    if base_url and "deepseek" in base_url.lower():
+        return "deepseek-chat"
+    return "gpt-4o-mini"
 
 
 def get_whatsapp_access_token():
@@ -2830,8 +2867,12 @@ def get_whatsapp_phone_number_id():
 def get_openai_client():
     api_key = get_openai_api_key()
     if not api_key:
-        raise RuntimeError("No se encontró OPENAI_API_KEY para generar respuestas del agente.")
-    return OpenAI(api_key=api_key)
+        raise RuntimeError("No se encontró OPENAI_API_KEY ni DEEPSEEK_API_KEY para generar respuestas del agente.")
+    client_kwargs = {"api_key": api_key}
+    base_url = get_openai_base_url()
+    if base_url:
+        client_kwargs["base_url"] = base_url
+    return OpenAI(**client_kwargs)
 
 
 def get_product_nlu_system_prompt():
@@ -3569,16 +3610,17 @@ def extract_product_entities_with_llm(text_value: Optional[str], base_request: O
         return dict(PRODUCT_NLU_CACHE[normalized])
 
     try:
-        response = get_openai_client().responses.create(
+        response = get_openai_client().chat.completions.create(
             model=get_openai_model(),
-            input=[
+            messages=[
                 {"role": "system", "content": get_product_nlu_system_prompt()},
                 {"role": "user", "content": text_value or ""},
             ],
             temperature=0,
-            text={"format": {"type": "json_object"}},
+            response_format={"type": "json_object"},
         )
-        parsed = extract_json_object(response.output_text)
+        raw_content = response.choices[0].message.content or ""
+        parsed = extract_json_object(raw_content)
     except Exception:
         return {}
 
