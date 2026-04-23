@@ -5,7 +5,7 @@ import unittest
 sys.path.insert(0, "backend")
 
 from agent_context import classify_intent, extract_diagnostic_data, is_diagnostic_incomplete
-from agent_v3 import _guardia_universal_producto
+from agent_v3 import _enforce_verified_technical_guidance, _guardia_universal_producto
 
 
 class AdvisoryEnforcementTests(unittest.TestCase):
@@ -65,6 +65,44 @@ class AdvisoryEnforcementTests(unittest.TestCase):
 
         self.assertIs(guarded, assistant_message)
         self.assertIn("Aquablock", guarded.content)
+
+    def test_blocks_unverified_recommendation_without_rag_guidance(self):
+        class _M:
+            @staticmethod
+            def normalize_text_value(text):
+                return (text or "").lower()
+
+        response = _enforce_verified_technical_guidance(
+            "**Sistema Recomendado:** Usa Koraza y Sellomax con dos manos.",
+            effective_advisory_flow=True,
+            recommendation_ready=True,
+            best_effort_ready=True,
+            conversation_context={},
+            technical_case={"category": "fachada"},
+            m=_M(),
+        )
+
+        self.assertIn("no te voy a cerrar un sistema", response.lower())
+        self.assertIn("sin respaldo técnico verificable del rag", response.lower())
+
+    def test_keeps_recommendation_when_verified_guidance_exists(self):
+        class _M:
+            @staticmethod
+            def normalize_text_value(text):
+                return (text or "").lower()
+
+        original = "**Sistema Recomendado:** Usa Koraza y Sellomax con dos manos."
+        response = _enforce_verified_technical_guidance(
+            original,
+            effective_advisory_flow=True,
+            recommendation_ready=True,
+            best_effort_ready=True,
+            conversation_context={"latest_technical_guidance": {"problem_class": "fachada_exterior"}},
+            technical_case={"category": "fachada"},
+            m=_M(),
+        )
+
+        self.assertEqual(original, response)
 
 
 if __name__ == "__main__":

@@ -107,6 +107,50 @@ _TECHNICAL_RESPONSE_SECTIONS = [
 ]
 
 
+def _response_looks_like_technical_recommendation(response_text: str, m) -> bool:
+    normalized = m.normalize_text_value(response_text or "")
+    if not normalized:
+        return False
+    if any(section.lower() in (response_text or "").lower() for section in _TECHNICAL_RESPONSE_SECTIONS):
+        return True
+    recommendation_markers = [
+        "recomiendo", "sistema recomendado", "aplica", "aplicar", "usa ", "usar ",
+        "producto", "productos", "primer", "acabado", "sellador", "diluyente",
+        "manos", "rendimiento", "mezcla", "catalizador",
+    ]
+    if any(marker in normalized for marker in recommendation_markers):
+        return True
+    return any(signal in normalized for signal in _TECHNICAL_PRODUCT_GUARD_SIGNALS)
+
+
+def _enforce_verified_technical_guidance(
+    response_text: str,
+    *,
+    effective_advisory_flow: bool,
+    recommendation_ready: bool,
+    best_effort_ready: bool,
+    conversation_context: dict,
+    technical_case: Optional[dict],
+    m,
+) -> str:
+    if not effective_advisory_flow:
+        return response_text
+    if not (recommendation_ready or best_effort_ready):
+        return response_text
+    if conversation_context.get("latest_technical_guidance"):
+        return response_text
+    if not _response_looks_like_technical_recommendation(response_text, m):
+        return response_text
+
+    category = ((technical_case or {}).get("category") or "caso técnico").strip()
+    return (
+        "Tengo un diagnóstico base del caso, pero no te voy a cerrar un sistema ni productos sin respaldo técnico verificable del RAG. "
+        f"En este momento no quedó una guía técnica confiable para {category}. "
+        "Si me indicas el producto o la marca exacta que quieres validar, busco la ficha puntual; "
+        "si no, mantengo la asesoría en diagnóstico y ruta técnica sin inventar recomendación."
+    )
+
+
 def _build_consultive_block_message(technical_case: Optional[dict]) -> str:
     profile = dict((technical_case or {}).get("recommendation_profile") or (technical_case or {}).get("project_profile") or {})
     missing_fields = profile.get("missing_fields") or []
@@ -1062,6 +1106,15 @@ def generate_agent_reply_v3(
     # Strip <thinking> and <analisis> tags (hidden chain-of-thought)
     response_text = re.sub(r'<thinking>.*?</thinking>\s*', '', response_text, flags=re.DOTALL).strip()
     response_text = re.sub(r'<analisis>.*?</analisis>\s*', '', response_text, flags=re.DOTALL).strip()
+    response_text = _enforce_verified_technical_guidance(
+        response_text,
+        effective_advisory_flow=effective_advisory_flow,
+        recommendation_ready=recommendation_ready,
+        best_effort_ready=best_effort_ready,
+        conversation_context=conversation_context,
+        technical_case=technical_case,
+        m=m,
+    )
     if not response_text:
         response_text = "Gracias por escribirnos. ¿En qué te puedo ayudar?"
 
