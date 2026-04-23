@@ -9342,6 +9342,28 @@ PORTFOLIO_SEGMENT_QUERY_HINTS = {
     ],
 }
 
+RAG_METADATA_CANONICAL_HINTS = {
+    "eternit_fibrocemento": ["%sellomax%", "%koraza%"],
+    "ladrillo_vista": ["%siliconite%", "%construcleaner%"],
+    "metal_pintado_alquidico": ["%wash primer%", "%corrotec%", "%pintoxido%", "%intergard%"],
+    "humedad_interior_capilaridad": ["%aquablock%"],
+    "humedad_interior_general": ["%aquablock%"],
+    "fachada_exterior": ["%koraza%"],
+    "metal_oxidado": ["%corrotec%", "%pintoxido%", "%wash primer%"],
+    "piso_industrial": ["%pintucoat%", "%intergard 740%", "%intergard 2002%"],
+    "madera": ["%barnex%", "%wood stain%", "%barniz%"],
+}
+
+RAG_METADATA_CHEMICAL_HINTS = {
+    "metal_pintado_alquidico": ["epoxico", "epoxi", "anticorrosivo"],
+    "humedad_interior_capilaridad": ["impermeabilizante"],
+    "humedad_interior_general": ["impermeabilizante"],
+    "fachada_exterior": ["elastomerico", "impermeabilizante"],
+    "metal_oxidado": ["anticorrosivo", "wash_primer"],
+    "piso_industrial": ["epoxico", "poliuretano"],
+    "madera": ["barniz", "protector_madera"],
+}
+
 
 def _normalize_portfolio_segment(value: str | None) -> str | None:
     normalized = normalize_text_value(value or "")
@@ -9372,8 +9394,61 @@ def _infer_portfolio_segments_for_query(pregunta: str, producto: str = "", expli
     return detected
 
 
+def _dedupe_preserve_order(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    ordered: list[str] = []
+    for value in values or []:
+        normalized = (value or "").strip().lower()
+        if not normalized or normalized in seen:
+            continue
+        seen.add(normalized)
+        ordered.append(value)
+    return ordered
+
+
+def _infer_technical_metadata_prefilters(question: str, product: str = "", diagnosis: dict | None = None) -> dict:
+    normalized = normalize_text_value(f"{product} {question}")
+    problem_class = (diagnosis or {}).get("problem_class") or _infer_problem_class_from_rag_query(question, product)
+    confidence = (diagnosis or {}).get("confidence") or _estimate_problem_class_confidence(problem_class, question, product, 0.0)
+
+    canonical_family_patterns: list[str] = []
+    chemical_family_terms: list[str] = []
+
+    explicit_product = normalize_text_value(product)
+    if explicit_product and len(explicit_product) >= 4:
+        canonical_family_patterns.append(f"%{explicit_product}%")
+
+    if problem_class and confidence != "baja":
+        canonical_family_patterns.extend(RAG_METADATA_CANONICAL_HINTS.get(problem_class, []))
+        chemical_family_terms.extend(RAG_METADATA_CHEMICAL_HINTS.get(problem_class, []))
+
+    has_galvanized_signal = any(
+        token in normalized
+        for token in ["galvanizado", "galvanizada", "lamina zinc", "lámina zinc", "teja zinc", "teja galvanizada", "zinc"]
+    )
+    has_oxidation_signal = any(token in normalized for token in ["oxido", "óxido", "oxidado", "oxidada", "corrosion", "corrosión"])
+    if has_galvanized_signal and not has_oxidation_signal:
+        canonical_family_patterns.append("%wash primer%")
+        chemical_family_terms.append("wash_primer")
+    elif has_galvanized_signal and has_oxidation_signal:
+        canonical_family_patterns.extend(["%wash primer%", "%corrotec%", "%pintoxido%"])
+        chemical_family_terms.extend(["wash_primer", "anticorrosivo"])
+
+    has_facade_signal = any(token in normalized for token in ["fachada", "muro exterior", "exterior", "intemperie"])
+    if has_facade_signal:
+        canonical_family_patterns.append("%koraza%")
+
+    return {
+        "problem_class": problem_class,
+        "confidence": confidence,
+        "canonical_family_patterns": _dedupe_preserve_order(canonical_family_patterns),
+        "chemical_family_terms": _dedupe_preserve_order(chemical_family_terms),
+    }
+
+
 def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None = None,
-                            segment_filters: list[str] | None = None) -> list[dict]:
+                            segment_filters: list[str] | None = None,
+                            metadata_prefilters: dict | None = None) -> list[dict]:
     """Semantic search over vectorized technical sheet chunks using pgvector cosine distance."""
     embedding = _generate_query_embedding(query)
     if not embedding:
@@ -9393,6 +9468,21 @@ def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None
     if segment_filters:
         where_clauses.append("COALESCE(metadata ->> 'portfolio_segment', 'portafolio_general') = ANY(%s)")
         params.append(segment_filters)
+    canonical_family_patterns = list((metadata_prefilters or {}).get("canonical_family_patterns") or [])
+    chemical_family_terms = [term.lower() for term in ((metadata_prefilters or {}).get("chemical_family_terms") or []) if term]
+    if canonical_family_patterns and chemical_family_terms:
+        where_clauses.append(
+            "(LOWER(COALESCE(metadata ->> 'canonical_family', familia_producto)) LIKE ANY(%s) "
+            "OR LOWER(COALESCE(metadata ->> 'chemical_family', '')) = ANY(%s))"
+        )
+        params.append([pattern.lower() for pattern in canonical_family_patterns])
+        params.append(chemical_family_terms)
+    elif canonical_family_patterns:
+        where_clauses.append("LOWER(COALESCE(metadata ->> 'canonical_family', familia_producto)) LIKE ANY(%s)")
+        params.append([pattern.lower() for pattern in canonical_family_patterns])
+    elif chemical_family_terms:
+        where_clauses.append("LOWER(COALESCE(metadata ->> 'chemical_family', '')) = ANY(%s)")
+        params.append(chemical_family_terms)
     params.extend([embedding_literal, top_k])
 
     try:
@@ -21078,9 +21168,22 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     if not marca_filter and any(kw in _q_lower for kw in _INDUSTRIAL_MPY_KEYWORDS):
         marca_filter = "international"
     segment_filters = _infer_portfolio_segments_for_query(pregunta, producto, explicit_segment)
+    prefilter_diagnosis = _build_structured_diagnosis(pregunta, producto, 0.0)
+    metadata_prefilters = _infer_technical_metadata_prefilters(pregunta, producto, prefilter_diagnosis)
+    metadata_prefilter_active = bool(metadata_prefilters.get("canonical_family_patterns") or metadata_prefilters.get("chemical_family_terms"))
+    metadata_prefilter_fallback = False
 
-    chunks = search_technical_chunks(search_query, top_k=6, marca_filter=marca_filter, segment_filters=segment_filters or None)
+    chunks = search_technical_chunks(
+        search_query,
+        top_k=6,
+        marca_filter=marca_filter,
+        segment_filters=segment_filters or None,
+        metadata_prefilters=metadata_prefilters if metadata_prefilter_active else None,
+    )
     guide_chunks = search_supporting_technical_guides(search_query, top_k=3, marca_filter=marca_filter, segment_filters=segment_filters or None)
+    if not chunks and metadata_prefilter_active:
+        metadata_prefilter_fallback = True
+        chunks = search_technical_chunks(search_query, top_k=6, marca_filter=marca_filter, segment_filters=segment_filters or None)
     segment_fallback_used = False
     if not chunks and not guide_chunks and segment_filters:
         chunks = search_technical_chunks(search_query, top_k=6, marca_filter=marca_filter)
@@ -21119,6 +21222,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
                     top_k=3,
                     marca_filter=marca_filter,
                     segment_filters=segment_filters or None,
+                    metadata_prefilters=metadata_prefilters if metadata_prefilter_active else None,
                 )
                 extra_chunks.extend(pp_chunks)
             # Merge: keep best chunks from both searches, deduplicate by text
@@ -21239,6 +21343,8 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         "archivos_fuente": source_files,
         "segmentos_portafolio_detectados": segment_filters,
         "segmento_fallback_sin_filtro": segment_fallback_used,
+        "metadata_prefiltros_rag": metadata_prefilters if metadata_prefilter_active else {},
+        "metadata_prefiltro_fallback": metadata_prefilter_fallback,
         "mejor_similitud": round(best_similarity, 4),
         "diagnostico_estructurado": structured_diagnosis,
         "guia_tecnica_estructurada": structured_guide,
@@ -22232,7 +22338,18 @@ def admin_rag_buscar(
     try:
         query = q.strip()
         search_q = f"{producto.strip()}: {query}" if producto.strip() else query
-        chunks = search_technical_chunks(search_q, top_k=top_k)
+        prefilter_diagnosis = _build_structured_diagnosis(query, producto.strip(), 0.0)
+        metadata_prefilters = _infer_technical_metadata_prefilters(query, producto.strip(), prefilter_diagnosis)
+        metadata_prefilter_active = bool(metadata_prefilters.get("canonical_family_patterns") or metadata_prefilters.get("chemical_family_terms"))
+        metadata_prefilter_fallback = False
+        chunks = search_technical_chunks(
+            search_q,
+            top_k=top_k,
+            metadata_prefilters=metadata_prefilters if metadata_prefilter_active else None,
+        )
+        if not chunks and metadata_prefilter_active:
+            metadata_prefilter_fallback = True
+            chunks = search_technical_chunks(search_q, top_k=top_k)
 
         # Portfolio-aware expansion (same logic as the real agent handler)
         best_sim = max((c.get("similarity", 0) for c in chunks), default=0)
@@ -22254,7 +22371,13 @@ def admin_rag_buscar(
             if portfolio_prods:
                 extra: list[dict] = []
                 for pp in portfolio_prods[:3]:
-                    extra.extend(search_technical_chunks(f"{pp}: {query}", top_k=3))
+                    extra.extend(
+                        search_technical_chunks(
+                            f"{pp}: {query}",
+                            top_k=3,
+                            metadata_prefilters=metadata_prefilters if metadata_prefilter_active else None,
+                        )
+                    )
                 seen_t: set[str] = set()
                 merged: list[dict] = []
                 for ch in sorted(chunks + extra, key=lambda c: c.get("similarity", 0), reverse=True):
@@ -22289,6 +22412,8 @@ def admin_rag_buscar(
             "query": query,
             "resultados": results,
             "productos_candidatos": candidates,
+            "metadata_prefiltros_rag": metadata_prefilters if metadata_prefilter_active else {},
+            "metadata_prefiltro_fallback": metadata_prefilter_fallback,
         }
     except Exception as exc:
         return {"error": str(exc)}

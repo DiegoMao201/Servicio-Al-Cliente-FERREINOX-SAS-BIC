@@ -13,6 +13,24 @@ import main
 
 
 class AgentV3PreloadTests(unittest.TestCase):
+    def test_metadata_prefilter_for_facade_maps_to_koraza(self):
+        filters = main._infer_technical_metadata_prefilters(
+            "Necesito pintar una fachada exterior muy castigada por lluvia y sol.",
+            "",
+            {"problem_class": "fachada_exterior", "confidence": "alta"},
+        )
+
+        self.assertIn("%koraza%", filters["canonical_family_patterns"])
+
+    def test_metadata_prefilter_for_galvanized_roof_prioritizes_wash_primer(self):
+        filters = main._infer_technical_metadata_prefilters(
+            "Quiero pintar una teja de zinc galvanizada nueva.",
+            "",
+            {"problem_class": "metal_oxidado", "confidence": "alta"},
+        )
+
+        self.assertIn("%wash primer%", filters["canonical_family_patterns"])
+
     def test_commercial_batch_detected_by_intent_classifier(self):
         """Multi-product batch messages should still classify as direct order intent,
         even though the old helper no longer exists."""
@@ -171,6 +189,28 @@ class AgentV3PreloadTests(unittest.TestCase):
         )
 
         self.assertIsNone(topic_switch)
+
+    def test_consultive_block_message_for_galvanized_roof_forces_disambiguation(self):
+        technical_case = {
+            "category": "metal",
+            "last_user_message": "Necesito pintar una teja de zinc galvanizada.",
+            "conversation_history": ["La cubierta es metálica y está a la intemperie."],
+        }
+
+        message = agent_v3._build_consultive_block_message(technical_case, main)
+
+        self.assertIn("¿La teja es nueva (galvanizada) o ya presenta oxidación?", message)
+
+    def test_classifier_system_directive_blocks_architectural_water_based_metal_shortcut(self):
+        technical_case = {
+            "category": "metal",
+            "last_user_message": "Voy a pintar una teja galvanizada y quiero saber qué sistema usar.",
+        }
+
+        directive = agent_v3._build_classifier_system_directives(technical_case, main)
+
+        self.assertIsNotNone(directive)
+        self.assertIn("PROHIBIDO recomendar sistemas base agua arquitectónicos sin anticorrosivo", directive)
 
 
 if __name__ == "__main__":

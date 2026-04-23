@@ -151,7 +151,39 @@ def _enforce_verified_technical_guidance(
     )
 
 
-def _build_consultive_block_message(technical_case: Optional[dict]) -> str:
+def _build_dynamic_consultive_questions(technical_case: Optional[dict], m) -> list[str]:
+    case = dict(technical_case or {})
+    category = (case.get("category") or "").strip().lower()
+    conversation_history = case.get("conversation_history") or []
+    normalized_context = m.normalize_text_value(
+        " ".join([str(case.get("last_user_message") or "")] + [str(item) for item in conversation_history[-4:]])
+    )
+
+    questions: list[str] = []
+    if hasattr(m, "build_technical_diagnostic_questions") and category in {"humedad", "fachada", "piso", "madera", "metal"}:
+        try:
+            questions.extend(m.build_technical_diagnostic_questions(case) or [])
+        except Exception:
+            pass
+
+    if category == "metal" and any(token in normalized_context for token in ["teja", "zinc", "galvaniz", "cubierta metalica", "cubierta metálica"]):
+        questions.insert(0, "¿La teja es nueva (galvanizada) o ya presenta oxidación?")
+
+    if category in {"fachada", "humedad"} and any(token in normalized_context for token in ["fachada", "muro exterior", "exterior", "intemperie"]):
+        questions.insert(0, "¿Presenta fisuras o humedad activa?")
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for question in questions:
+        normalized_question = (question or "").strip().lower()
+        if not normalized_question or normalized_question in seen:
+            continue
+        seen.add(normalized_question)
+        deduped.append(question.strip())
+    return deduped[:2]
+
+
+def _build_consultive_block_message(technical_case: Optional[dict], m=None) -> str:
     profile = dict((technical_case or {}).get("recommendation_profile") or (technical_case or {}).get("project_profile") or {})
     missing_fields = profile.get("missing_fields") or []
     missing_labels = [item.get("description") or item.get("field") for item in missing_fields if isinstance(item, dict)]
@@ -161,6 +193,16 @@ def _build_consultive_block_message(technical_case: Optional[dict]) -> str:
             "estado actual de la superficie",
             "ambiente de exposición",
         ]
+    dynamic_questions = _build_dynamic_consultive_questions(technical_case, m) if m is not None else []
+    if dynamic_questions:
+        return (
+            "BLOQUEO CONSULTIVO OBLIGATORIO: el perfil del proyecto sigue incompleto. "
+            "Tienes PROHIBIDO recomendar productos, sistemas, rendimientos o inventario en este turno. "
+            "Solo puedes hacer preguntas diagnósticas para destrabar el caso. "
+            "Prioriza exactamente estas preguntas antes de cualquier recomendación: "
+            + " ".join(dynamic_questions)
+            + " Cuando el cliente las aclare, recién ahí podrás activar consultar_conocimiento_tecnico."
+        )
     return (
         "BLOQUEO CONSULTIVO OBLIGATORIO: el perfil del proyecto sigue incompleto. "
         "Tienes PROHIBIDO recomendar productos, sistemas, rendimientos o inventario en este turno. "
@@ -168,6 +210,39 @@ def _build_consultive_block_message(technical_case: Optional[dict]) -> str:
         + ", ".join(missing_labels[:4])
         + ". Cuando el cliente aclare esos datos, recién ahí podrás activar consultar_conocimiento_tecnico."
     )
+
+
+def _build_classifier_system_directives(technical_case: Optional[dict], m) -> Optional[str]:
+    case = dict(technical_case or {})
+    category = (case.get("category") or "").strip().lower()
+    if not category:
+        return None
+
+    conversation_history = case.get("conversation_history") or []
+    normalized_context = m.normalize_text_value(
+        " ".join([str(case.get("last_user_message") or "")] + [str(item) for item in conversation_history[-4:]])
+    )
+
+    lines = [
+        "INSTRUCCION TEMPORAL DEL CLASIFICADOR: usa esta categoría como marco operativo del turno.",
+        f"categoria_dominante={category}",
+    ]
+
+    if category == "metal":
+        lines.append("Trata el caso como sistema metálico y no como ruta arquitectónica decorativa.")
+        lines.append("PROHIBIDO recomendar sistemas base agua arquitectónicos sin anticorrosivo o promotor de adherencia cuando el caso sea metálico.")
+        if any(token in normalized_context for token in ["teja", "zinc", "galvaniz", "cubierta metalica", "cubierta metálica"]):
+            lines.append("Antes de recomendar, valida si la teja es galvanizada nueva o si ya presenta oxidación.")
+    elif category in {"fachada", "humedad"}:
+        lines.append("No cierres la ruta como acabado decorativo mientras sigan abiertas fisuras o humedad activa.")
+        if any(token in normalized_context for token in ["fachada", "muro exterior", "exterior", "intemperie"]):
+            lines.append("Antes del sistema final, valida si hay fisuras o humedad activa en la fachada.")
+    elif category == "piso":
+        lines.append("Antes de recomendar, valida curado, tráfico e interior/exterior del piso.")
+    elif category == "madera":
+        lines.append("Antes de recomendar, valida si la madera es interior/exterior y si el cliente quiere veta natural o cubrimiento.")
+
+    return " ".join(lines)
 
 
 _MAX_DIAGNOSTIC_TURNS_BEFORE_BEST_EFFORT = 2
@@ -739,6 +814,9 @@ def generate_agent_reply_v3(
     recommendation_profile = dict((technical_case or {}).get("recommendation_profile") or {})
     recommendation_ready = _recommendation_ready_for_rag(technical_case)
     best_effort_ready = _best_effort_ready_for_rag(effective_advisory_flow, initial_diagnostic, technical_case)
+    classifier_system_directive = _build_classifier_system_directives(technical_case, m)
+    if classifier_system_directive:
+        messages.append({"role": "system", "content": classifier_system_directive})
 
     # ══════════════════════════════════════════════════════════════════════
     # PYTHON-LEVEL DIAGNOSTIC ENFORCEMENT
@@ -774,7 +852,7 @@ def generate_agent_reply_v3(
         if effective_advisory_flow:
             messages.append({
                 "role": "system",
-                "content": _build_consultive_block_message(technical_case),
+                "content": _build_consultive_block_message(technical_case, m),
             })
     elif conversation_context.get("technical_advisory_case"):
         conversation_context["technical_advisory_case"]["stage"] = "advising"
