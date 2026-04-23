@@ -108,7 +108,7 @@ _TECHNICAL_RESPONSE_SECTIONS = [
 
 
 def _build_consultive_block_message(technical_case: Optional[dict]) -> str:
-    profile = dict((technical_case or {}).get("project_profile") or {})
+    profile = dict((technical_case or {}).get("recommendation_profile") or (technical_case or {}).get("project_profile") or {})
     missing_fields = profile.get("missing_fields") or []
     missing_labels = [item.get("description") or item.get("field") for item in missing_fields if isinstance(item, dict)]
     if not missing_labels:
@@ -124,6 +124,43 @@ def _build_consultive_block_message(technical_case: Optional[dict]) -> str:
         + ", ".join(missing_labels[:4])
         + ". Cuando el cliente aclare esos datos, recién ahí podrás activar consultar_conocimiento_tecnico."
     )
+
+
+_MAX_DIAGNOSTIC_TURNS_BEFORE_BEST_EFFORT = 2
+
+
+def _recommendation_ready_for_rag(technical_case: Optional[dict]) -> bool:
+    case = dict(technical_case or {})
+    if case.get("recommendation_ready"):
+        return True
+    profile = dict(case.get("recommendation_profile") or {})
+    return bool(profile.get("complete"))
+
+
+def _best_effort_ready_for_rag(
+    effective_advisory_flow: bool,
+    initial_diagnostic: dict,
+    technical_case: Optional[dict],
+) -> bool:
+    if not effective_advisory_flow:
+        return False
+    if _recommendation_ready_for_rag(technical_case):
+        return True
+
+    case = dict(technical_case or {})
+    diagnostic_turns = int(case.get("diagnostic_turns") or 0)
+    if diagnostic_turns < _MAX_DIAGNOSTIC_TURNS_BEFORE_BEST_EFFORT:
+        return False
+
+    surface = initial_diagnostic.get("surface") or case.get("category")
+    condition = initial_diagnostic.get("condition") or case.get("current_state")
+    location = (
+        initial_diagnostic.get("interior_exterior")
+        or case.get("exposure_environment")
+        or case.get("floor_location")
+        or case.get("wall_location")
+    )
+    return bool(surface and condition and location)
 
 
 def _technical_response_has_required_sections(response_text: str) -> bool:
@@ -186,7 +223,7 @@ def _should_preload_technical_guidance(
         return False
     if conversation_context.get("latest_technical_guidance"):
         return False
-    if technical_case and not (technical_case.get("ready") and (technical_case.get("project_profile") or {}).get("complete")):
+    if technical_case and not _best_effort_ready_for_rag(True, initial_diagnostic, technical_case):
         return False
 
     # ── CRITICAL: never preload if diagnostic is still incomplete ──
@@ -655,6 +692,9 @@ def generate_agent_reply_v3(
 
     project_profile = dict((technical_case or {}).get("project_profile") or {})
     project_profile_complete = bool((technical_case or {}).get("ready") and project_profile.get("complete"))
+    recommendation_profile = dict((technical_case or {}).get("recommendation_profile") or {})
+    recommendation_ready = _recommendation_ready_for_rag(technical_case)
+    best_effort_ready = _best_effort_ready_for_rag(effective_advisory_flow, initial_diagnostic, technical_case)
 
     # ══════════════════════════════════════════════════════════════════════
     # PYTHON-LEVEL DIAGNOSTIC ENFORCEMENT
@@ -666,7 +706,7 @@ def generate_agent_reply_v3(
     #      (material, m², specific conditions) without keyword matching.
     # ══════════════════════════════════════════════════════════════════════
     _diagnostic_blocked = is_diagnostic_incomplete("asesoria" if effective_advisory_flow else initial_intent, initial_diagnostic)
-    if effective_advisory_flow and not project_profile_complete:
+    if effective_advisory_flow and not best_effort_ready:
         _diagnostic_blocked = True
 
     # Process gate: on the FIRST advisory turn (no prior RAG, no prior
@@ -685,11 +725,15 @@ def generate_agent_reply_v3(
 
     if _diagnostic_blocked:
         logger.info("V3 BLOQUEO ACTIVO: tools stripped, skipping preload")
+        if conversation_context.get("technical_advisory_case"):
+            conversation_context["technical_advisory_case"]["stage"] = "diagnosing"
         if effective_advisory_flow:
             messages.append({
                 "role": "system",
                 "content": _build_consultive_block_message(technical_case),
             })
+    elif conversation_context.get("technical_advisory_case"):
+        conversation_context["technical_advisory_case"]["stage"] = "advising"
 
     if not _diagnostic_blocked and _should_preload_technical_guidance(
         "asesoria" if effective_advisory_flow else initial_intent,
@@ -747,7 +791,7 @@ def generate_agent_reply_v3(
             return False
         if not effective_advisory_flow:
             return False
-        if not project_profile_complete:
+        if not best_effort_ready:
             return False
         high_risk_tokens = [
             "humedad", "salitre", "capilaridad", "eternit", "fibrocemento", "asbesto", "ladrillo",
@@ -785,7 +829,7 @@ def generate_agent_reply_v3(
         _advisory_complete = (
             effective_advisory_flow
             and not _diagnostic_blocked
-            and project_profile_complete
+            and (recommendation_ready or best_effort_ready)
         )
         if _advisory_complete and not tool_calls_made:
             _llm_extra_kwargs["tool_choice"] = "required"

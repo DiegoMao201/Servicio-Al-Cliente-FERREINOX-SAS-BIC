@@ -13496,6 +13496,26 @@ _TECHNICAL_PROJECT_PROFILE_FIELDS: dict[str, list[tuple[str, str]]] = {
     ],
 }
 
+_TECHNICAL_RECOMMENDATION_FIELDS: dict[str, list[tuple[str, str]]] = {
+    "humedad": [
+        ("source_context", "origen de la humedad o fuente probable"),
+        ("wall_location", "si el caso ocurre en cara interior o exterior"),
+    ],
+    "fachada": [],
+    "piso": [
+        ("floor_location", "si el piso es interior o exterior"),
+        ("floor_material", "material del piso"),
+        ("traffic_level", "nivel de trafico"),
+    ],
+    "madera": [
+        ("exposure", "nivel de exposicion"),
+    ],
+    "metal": [
+        ("metal_type", "tipo de metal o sustrato"),
+        ("environment", "ambiente de exposicion"),
+    ],
+}
+
 _TECHNICAL_UNIVERSAL_PROFILE_FIELDS: list[tuple[str, str]] = [
     ("substrate_type", "tipo de sustrato o superficie real"),
     ("current_state", "estado actual de la superficie"),
@@ -13516,6 +13536,27 @@ def _technical_case_has_value(value) -> bool:
 def _build_technical_project_profile(case: dict) -> dict:
     category = normalize_text_value(case.get("category") or "")
     required_specs = list(_TECHNICAL_UNIVERSAL_PROFILE_FIELDS) + _TECHNICAL_PROJECT_PROFILE_FIELDS.get(category, [])
+
+    completed_fields: list[str] = []
+    missing_fields: list[dict] = []
+    for field_name, description in required_specs:
+        if _technical_case_has_value(case.get(field_name)):
+            completed_fields.append(field_name)
+        else:
+            missing_fields.append({"field": field_name, "description": description})
+
+    return {
+        "category": category or "general",
+        "required_fields": [field for field, _ in required_specs],
+        "completed_fields": completed_fields,
+        "missing_fields": missing_fields,
+        "complete": bool(required_specs) and not missing_fields,
+    }
+
+
+def _build_technical_recommendation_profile(case: dict) -> dict:
+    category = normalize_text_value(case.get("category") or "")
+    required_specs = list(_TECHNICAL_UNIVERSAL_PROFILE_FIELDS) + _TECHNICAL_RECOMMENDATION_FIELDS.get(category, [])
 
     completed_fields: list[str] = []
     missing_fields: list[dict] = []
@@ -13685,7 +13726,10 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
 
     # --- Universal readiness check ---
     project_profile = _build_technical_project_profile(case)
+    recommendation_profile = _build_technical_recommendation_profile(case)
     case["project_profile"] = project_profile
+    case["recommendation_profile"] = recommendation_profile
+    case["recommendation_ready"] = bool(recommendation_profile.get("complete"))
     case["ready"] = bool(project_profile.get("complete"))
 
     return case
@@ -14635,7 +14679,7 @@ def build_technical_advisory_flow_reply(profile_name: Optional[str], user_messag
     area_m2 = extract_area_square_meters(user_message)
     if area_m2:
         technical_case["area_m2"] = area_m2
-    if not technical_case.get("ready"):
+    if not technical_case.get("recommendation_ready"):
         questions = build_technical_diagnostic_questions(technical_case)
         category = technical_case.get("category")
         intro_map = {
@@ -14643,6 +14687,7 @@ def build_technical_advisory_flow_reply(profile_name: Optional[str], user_messag
             "madera": "Claro. Para recomendarte el sistema correcto para esa madera, primero cierro dos datos clave.",
             "metal": "Claro. Para llevarte al sistema anticorrosivo correcto, primero necesito ubicar bien el metal y el ambiente.",
             "piso": "Claro. Para recomendarte el sistema correcto para ese piso, necesito cerrar un par de datos.",
+            "fachada": "Claro. Para recomendarte el sistema correcto para esa fachada, primero necesito cerrar un par de datos técnicos.",
         }
         response_text = intro_map.get(category, "Claro, te asesoro. Para recomendarte el producto correcto y no adivinar, necesito cerrar un par de datos clave.")
         if questions:
