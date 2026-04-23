@@ -95,6 +95,28 @@ SCENARIOS = [
     {"q": "cubierta policarbonato alveolar amarillenta por uv", "ok": ["__gap__"], "bad": ["koraza", "viniltex", "pintucoat"], "cat": "combo_real"},
     {"q": "domos acrilicos viejos craquelados por sol en cubierta", "ok": ["__gap__"], "bad": ["koraza", "viniltex", "pintucoat"], "cat": "combo_real"},
 
+    # ═══ WHATSAPP REALISTA: mensajes torcidos, usos mezclados, superficies menos obvias ═══
+    {"q": "me escriben por un anden de conjunto, concreto, full lluvia, solo pasa gente y domiciliarios", "ok": ["pintucoat"], "bad": ["pintura canchas", "viniltex", "koraza"], "cat": "whatsapp_real"},
+    {"q": "porton enrollable de local, galvanizado, ya pintado hace años, esta opaco no podrido", "ok": ["wash primer", "corrotec"], "bad": ["viniltex", "koraza", "pintucoat"], "cat": "whatsapp_real"},
+    {"q": "mueble de recepcion en madera mdf blanco, interior, ya tiene acabado y quieren renovarlo", "ok": ["pintulac", "laca", "pintulux"], "bad": ["barnex", "koraza", "corrotec"], "cat": "whatsapp_real"},
+    {"q": "cielo raso drywall de consultorio con mancha por filtracion vieja ya reparada", "ok": ["viniltex", "acriltex"], "bad": ["koraza", "pintucoat", "corrotec"], "cat": "whatsapp_real"},
+    {"q": "baranda de balcon en apartamento cerca al mar, color negro, cero mantenimiento hace rato", "ok": ["interthane", "intergard", "corrotec"], "bad": ["viniltex", "koraza", "barnex"], "cat": "whatsapp_real"},
+    {"q": "piso de laboratorio pequeno, concreto, derrames leves de quimicos y lavado seguido", "ok": ["intergard", "pintucoat", "epoxica"], "bad": ["pintura canchas", "viniltex", "koraza"], "cat": "whatsapp_real"},
+    {"q": "marco de ventana aluminio exterior que perdio color, no quiero mandar algo de hierro", "ok": ["wash primer", "pintulux"], "bad": ["pintoxido", "corrotec", "viniltex"], "cat": "whatsapp_real"},
+    {"q": "muro de cocina de restaurante con vapor, grasa y trapero diario, algo mas tecnico", "ok": ["epoxica", "pintucoat", "intergard"], "bad": ["viniltex", "koraza", "barnex"], "cat": "whatsapp_real"},
+    {"q": "deck de cabaña al lado de lago, sol durisimo y humedad, quieren conservar veta", "ok": ["barnex", "wood stain"], "bad": ["pintulac", "viniltex", "koraza"], "cat": "whatsapp_real"},
+    {"q": "pared interna de cuarto util pegada al talud, polvillo blanco y pintura inflada", "ok": ["aquablock"], "bad": ["koraza", "viniltex", "pintucoat"], "cat": "whatsapp_real"},
+    {"q": "teja eternit viejita de finca, tizosa, la idea es mejorar vista y proteger", "ok": ["pintuco fill", "koraza", "sellomax"], "bad": ["viniltex", "aquablock", "wash primer"], "cat": "whatsapp_real"},
+    {"q": "escalera metalica exterior de colegio, mucha mano encima, lluvia lateral, ya estuvo pintada", "ok": ["corrotec", "pintulux", "anticorrosivo"], "bad": ["viniltex", "koraza", "barnex"], "cat": "whatsapp_real"},
+    {"q": "terraza sobre habitacion, no veo charco siempre pero en aguacero sale gotera abajo", "ok": ["pintuco fill", "impercoat"], "bad": ["aquablock", "viniltex", "pintucoat"], "cat": "whatsapp_real"},
+    {"q": "fachada de local en panel cementicio nueva, sin pintar, le da duro sol y lluvia", "ok": ["sellomax", "koraza"], "bad": ["aquablock", "viniltex", "pintucoat"], "cat": "whatsapp_real"},
+    {"q": "quiero demarcar zona de cargue en bodega sobre piso de concreto no una cancha", "ok": ["pintutraf", "pintura trafico"], "bad": ["pintura canchas", "viniltex", "koraza"], "cat": "whatsapp_real"},
+    {"q": "tanque metalico exterior con agua lluvia y sol, no es potable, es de proceso", "ok": ["intergard", "corrotec", "anticorrosivo"], "bad": ["viniltex", "aquablock", "pintucoat"], "cat": "whatsapp_real"},
+    {"q": "locker metalico de colegio interior, maltratado pero sin oxido grave, presupuesto medio", "ok": ["pintulux", "corrotec"], "bad": ["intergard", "koraza", "viniltex"], "cat": "whatsapp_real"},
+    {"q": "puerta de bano en madera ya pelada por vapor, quieren blanco otra vez", "ok": ["pintulux", "esmalte"], "bad": ["barnex", "corrotec", "koraza"], "cat": "whatsapp_real"},
+    {"q": "muro exterior del patio se me blanquea por dentro abajo donde pega el jardin", "ok": ["aquablock"], "bad": ["koraza", "viniltex", "pintucoat"], "cat": "whatsapp_real"},
+    {"q": "piso de parqueadero residencial ya pintado y con llanta encima todo el tiempo", "ok": ["pintucoat"], "bad": ["pintura canchas", "viniltex", "koraza"], "cat": "whatsapp_real"},
+
     # ═══ GAPS / PRODUCTOS QUE NO VENDEMOS ═══
     {"q": "pintura especial para piscina de concreto", "ok": ["__gap__"], "bad": ["pintucoat", "aquablock", "pintuco fill"], "cat": "gap"},
     {"q": "pintura para tanque de agua potable inmersión", "ok": ["__gap__"], "bad": ["pintucoat", "aquablock"], "cat": "gap"},

@@ -17,7 +17,13 @@ STATIC_TARGETS = [
     ROOT / "reports/audits/full_rag_real_world_combo_audit.md",
 ]
 
-GLOB_TARGETS = [
+DEFAULT_GLOB_TARGETS = [
+    "artifacts/agent/*combo*battery*",
+    "reports/audits/full_rag_*_audit.json",
+    "reports/audits/full_rag_*_audit.md",
+]
+
+OPTIONAL_GLOB_TARGETS = [
     "artifacts/agent/conv_*_turn_*.json",
 ]
 
@@ -29,8 +35,14 @@ def iter_targets(include_conversation_turns: bool):
             seen.add(path)
             yield path
 
+    for pattern in DEFAULT_GLOB_TARGETS:
+        for path in ROOT.glob(pattern):
+            if path.exists() and path not in seen:
+                seen.add(path)
+                yield path
+
     if include_conversation_turns:
-        for pattern in GLOB_TARGETS:
+        for pattern in OPTIONAL_GLOB_TARGETS:
             for path in ROOT.glob(pattern):
                 if path.exists() and path not in seen:
                     seen.add(path)
