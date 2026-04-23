@@ -14338,6 +14338,8 @@ def _filter_profiles_by_surface_compatibility(
         restricted = pj.get("restricted_surfaces") or []
         guidance_restricted = (pj.get("solution_guidance") or {}).get("restricted_surfaces") or []
         all_restricted = set(normalize_text_value(s) for s in restricted + guidance_restricted if s)
+        surface_targets = set(normalize_text_value(s) for s in (pj.get("surface_targets") or []) if s)
+        compatible_surfaces = {normalize_text_value(surface) for surface in diagnosed_surfaces if normalize_text_value(surface) in surface_targets}
 
         family = profile.get("canonical_family") or ""
         is_restricted = False
@@ -14345,12 +14347,17 @@ def _filter_profiles_by_surface_compatibility(
         # Check 1: direct surface restriction
         for surface in diagnosed_surfaces:
             surf_norm = normalize_text_value(surface)
+            # Some extracted profiles incorrectly mirror compatible targets into
+            # restricted_surfaces. If the surface is explicitly supported by the
+            # profile, support wins and the restriction must be ignored.
+            if surf_norm in surface_targets:
+                continue
             if surf_norm in all_restricted:
                 is_restricted = True
                 break
 
         # Check 2: specialty use-case mismatch
-        if not is_restricted and query_norm:
+        if not is_restricted and query_norm and not compatible_surfaces:
             uses = (pj.get("commercial_context") or {}).get("recommended_uses") or []
             uses_text = normalize_text_value(" ".join(str(u) for u in uses))
             for _condition, signals in _SPECIALTY_CONDITIONS.items():
