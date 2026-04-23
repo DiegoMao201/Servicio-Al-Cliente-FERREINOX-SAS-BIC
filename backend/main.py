@@ -13218,17 +13218,49 @@ def infer_technical_problem_category(text_value: Optional[str], existing_categor
     normalized = normalize_text_value(text_value)
     if not normalized:
         return existing_category or "general"
+    metal_surface_tokens = [
+        "metal", "metalico", "metalica", "hierro", "acero", "galvanizado", "aluminio",
+        "reja", "rejas", "baranda", "barandas", "porton", "porton", "portón", "tanque",
+        "lamina", "lámina", "cubierta metalica", "cubierta metálica", "teja de zinc", "teja zinc",
+        "techo metalico", "techo metálico", "puerta metalica", "puerta metálica",
+    ]
+    if any(token in normalized for token in [
+        "teja de zinc", "teja zinc", "lamina galvanizada", "lámina galvanizada",
+        "cubierta metalica", "cubierta metálica", "techo metalico", "techo metálico",
+    ]):
+        return "metal"
     if any(token in normalized for token in ["fachada", "fachadas", "muro exterior", "culata", "frente", "graniplast", "silcoplast"]):
         return "fachada"
-    if any(token in normalized for token in ["piso", "pisos", "cemento", "concreto", "pintura para piso", "epoxica", "epóxica"]):
+    if any(token in normalized for token in [
+        "piso", "pisos", "cemento", "concreto", "pintura para piso", "epoxica", "epóxica",
+        "garaje", "parqueadero", "bodega", "montacargas", "trafico pesado", "tráfico pesado",
+    ]):
         return "piso"
     if any(token in normalized for token in ["humedad", "gotera", "goteras", "filtracion", "filtración", "capilaridad", "moho", "salitre", "descascar", "manchas negras", "barranco"]):
         return "humedad"
     if any(token in normalized for token in ["madera", "barniz", "laca", "lasur", "protector madera"]):
         return "madera"
-    if any(token in normalized for token in ["metal", "hierro", "galvanizado", "aluminio", "corrosion", "corrosión", "oxido", "óxido", "anticorrosivo"]):
+    if any(token in normalized for token in metal_surface_tokens + ["corrosion", "corrosión", "oxido", "óxido", "oxidado", "oxidada", "anticorrosivo"]):
         return "metal"
     return existing_category or "general"
+
+
+def _contains_any_normalized(normalized: str, tokens: list[str]) -> bool:
+    return any(token in normalized for token in tokens)
+
+
+def _infer_technical_current_state(normalized: str) -> Optional[str]:
+    if _contains_any_normalized(normalized, ["descascar", "pelad", "soplad", "cuartead", "ampollad"]):
+        return "con recubrimiento deteriorado"
+    if _contains_any_normalized(normalized, ["pintura vieja", "repint", "ya pint", "barniz", "laca", "anticorrosivo", "esmalte", "base vieja"]):
+        return "con recubrimiento previo"
+    if _contains_any_normalized(normalized, ["oxido", "óxido", "corrosion", "corrosión", "oxidado", "oxidada", "oxidad"]):
+        return "con oxido o corrosion"
+    if _contains_any_normalized(normalized, ["grasa", "aceite", "contaminada", "sucia"]):
+        return "con contaminacion superficial"
+    if _contains_any_normalized(normalized, ["obra gris", "sin pintar", "virgen", "metal desnudo", "nuevo", "nueva"]):
+        return "sin recubrimiento previo"
+    return None
 
 
 def _merge_unique_text_values(existing_values: Optional[list[str]], new_values: list[str]) -> list[str]:
@@ -13660,7 +13692,11 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         "diagnostic_turns": diagnostic_turns,
     })
 
-    if any(token in normalized for token in ["metal", "reja", "baranda", "porton", "portón", "acero", "hierro", "galvanizado", "aluminio"]):
+    if any(token in normalized for token in [
+        "metal", "metalico", "metalica", "reja", "rejas", "baranda", "porton", "portón", "acero",
+        "hierro", "galvanizado", "aluminio", "tanque", "lamina", "lámina", "teja de zinc",
+        "teja zinc", "techo metalico", "techo metálico", "puerta metalica", "puerta metálica",
+    ]):
         case["substrate_type"] = "metal"
     elif any(token in normalized for token in ["concreto", "cemento", "mortero", "placa", "muro", "pared", "ladrillo", "estuco", "drywall"]):
         case["substrate_type"] = "concreto o mamposteria"
@@ -13669,14 +13705,9 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
     elif any(token in normalized for token in ["ceramica", "cerámica", "porcelanato", "baldosa"]):
         case["substrate_type"] = "ceramica o baldosa"
 
-    if any(token in normalized for token in ["pintura vieja", "repint", "ya pint", "barniz", "laca", "anticorrosivo", "esmalte", "base vieja"]):
-        case["current_state"] = "con recubrimiento previo"
-    elif any(token in normalized for token in ["oxido", "óxido", "corrosion", "corrosión"]):
-        case["current_state"] = "con oxido o corrosion"
-    elif any(token in normalized for token in ["grasa", "aceite", "contaminada", "sucia"]):
-        case["current_state"] = "con contaminacion superficial"
-    elif any(token in normalized for token in ["obra gris", "sin pintar", "virgen", "metal desnudo", "nuevo", "nueva"]):
-        case["current_state"] = "sin recubrimiento previo"
+    inferred_current_state = _infer_technical_current_state(normalized)
+    if inferred_current_state:
+        case["current_state"] = inferred_current_state
 
     if any(token in normalized for token in ["marino", "mar", "costa", "playa"]):
         case["exposure_environment"] = "marino"
@@ -13684,13 +13715,16 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         case["exposure_environment"] = "industrial o quimico"
     elif any(token in normalized for token in ["interior", "adentro", "bajo techo", "baño", "bano", "cocina"]):
         case["exposure_environment"] = "interior"
-    elif any(token in normalized for token in ["exterior", "intemperie", "sol", "lluvia", "fachada", "terraza"]):
+    elif any(token in normalized for token in ["exterior", "intemperie", "sol", "lluvia", "fachada", "terraza", "jardin", "jardín"]):
         case["exposure_environment"] = "exterior"
 
     # --- Category-specific field extraction (enriches RAG search) ---
     if category == "humedad":
         if any(token in normalized for token in ["barranco", "terreno", "talud", "contencion", "contención"]):
             case["source_context"] = "muro contra terreno o barranco"
+            case["probable_pressure"] = "presion_negativa"
+        elif any(token in normalized for token in ["base del muro", "desde abajo", "sube del piso", "arranca pegado al piso", "pegado al piso"]):
+            case["source_context"] = "posible capilaridad desde la base del muro"
             case["probable_pressure"] = "presion_negativa"
         elif any(token in normalized for token in ["tuberia", "tubería", "tubo", "fuga"]):
             case["source_context"] = "posible tuberia o fuga interna"
@@ -13712,6 +13746,8 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
             case["surface_state"] = "pintada"
         elif any(token in normalized for token in ["estuco", "estucada", "estucado"]):
             case["surface_state"] = "estucada"
+        elif case.get("current_state") == "con recubrimiento deteriorado":
+            case["surface_state"] = "pintada"
 
         symptoms = []
         if any(token in normalized for token in ["descascar", "se cae la pintura", "pintura caida", "pintura caída"]):
@@ -13727,10 +13763,16 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
     elif category == "piso":
         if any(token in normalized for token in ["interior", "adentro", "bajo techo"]):
             case["floor_location"] = "interior"
+        elif any(token in normalized for token in ["bodega", "local"]):
+            case["floor_location"] = "interior"
         elif any(token in normalized for token in ["exterior", "afuera", "intemperie"]):
+            case["floor_location"] = "exterior"
+        elif any(token in normalized for token in ["parqueadero", "anden", "andén"]):
             case["floor_location"] = "exterior"
 
         if any(token in normalized for token in ["cemento", "concreto", "mortero"]):
+            case["floor_material"] = "cemento o concreto"
+        elif any(token in normalized for token in ["garaje", "parqueadero", "bodega", "montacargas", "obra gris"]):
             case["floor_material"] = "cemento o concreto"
         elif any(token in normalized for token in ["ceramica", "cerámica", "baldosa", "porcelanato"]):
             case["floor_material"] = "ceramica o baldosa"
@@ -13739,6 +13781,8 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
 
         if any(token in normalized for token in ["alto trafico", "alto tráfico", "montacarga", "vehiculo", "vehículo", "carro"]):
             case["traffic_level"] = "alto trafico"
+        elif any(token in normalized for token in ["garaje", "parqueadero"]):
+            case["traffic_level"] = "trafico vehicular"
         elif any(token in normalized for token in ["peatonal", "residencial", "casa", "habitacion", "habitación"]):
             case["traffic_level"] = "trafico peatonal o residencial"
 
@@ -13747,12 +13791,21 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
         elif any(token in normalized for token in ["obra gris", "sin pintar", "concreto nuevo", "recien fundido", "recién fundido", "nuevo"]):
             case["previous_coating"] = "sin recubrimiento previo"
 
+        if not case.get("substrate_type") and case.get("floor_material") == "cemento o concreto":
+            case["substrate_type"] = "concreto o mamposteria"
+        if not case.get("exposure_environment") and case.get("floor_location") == "interior":
+            case["exposure_environment"] = "interior"
+        elif not case.get("exposure_environment") and case.get("floor_location") == "exterior":
+            case["exposure_environment"] = "exterior"
+
     elif category == "fachada":
         case["exposure_environment"] = "exterior"
-        if any(token in normalized for token in ["pintura vieja", "repint", "ya pint", "graniplast", "silcoplast", "textura", "recubrimiento"]):
+        if any(token in normalized for token in ["pintura vieja", "repint", "ya pint", "graniplast", "silcoplast", "textura", "recubrimiento", "descascar", "soplad"]):
             case["current_state"] = "con recubrimiento previo"
         elif any(token in normalized for token in ["obra gris", "sin pintar", "virgen", "nueva", "nuevo"]):
             case["current_state"] = "sin recubrimiento previo"
+        if not case.get("substrate_type"):
+            case["substrate_type"] = "concreto o mamposteria"
 
     elif category == "madera":
         if any(token in normalized for token in ["intemperie", "exterior", "sol", "lluvia"]):
@@ -13768,22 +13821,33 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
     elif category == "metal":
         if any(token in normalized for token in ["hierro", "ferroso", "acero al carbon", "acero al carbón"]):
             case["metal_type"] = "metal ferroso"
-        elif "galvanizado" in normalized:
+        elif any(token in normalized for token in ["galvanizado", "zinc", "teja de zinc", "teja zinc", "lamina galvanizada", "lámina galvanizada"]):
             case["metal_type"] = "galvanizado"
         elif "aluminio" in normalized:
             case["metal_type"] = "aluminio"
+        elif any(token in normalized for token in ["reja", "rejas", "baranda", "tanque", "puerta metalica", "puerta metálica"]):
+            case["metal_type"] = "metal ferroso"
 
         if any(token in normalized for token in ["marino", "mar", "costa", "playa"]):
             case["environment"] = "marino"
         elif any(token in normalized for token in ["industrial", "quimico", "químico", "planta"]):
             case["environment"] = "industrial"
+        elif any(token in normalized for token in ["tanque", "agua", "inmersion", "inmersión"]):
+            case["environment"] = "inmersion o contacto con agua"
         elif any(token in normalized for token in ["urbano", "ciudad", "residencial"]):
+            case["environment"] = "urbano"
+        elif any(token in normalized for token in ["jardin", "jardín", "local", "bodega"]):
             case["environment"] = "urbano"
 
         if any(token in normalized for token in ["ya pint", "repint", "esmalte", "anticorrosivo", "alquid", "epox", "epóx", "primer", "base vieja"]):
             case["previous_coating"] = "con recubrimiento previo"
         elif any(token in normalized for token in ["metal desnudo", "sin pintar", "nuevo", "nueva"]):
             case["previous_coating"] = "sin recubrimiento previo"
+
+        if not case.get("exposure_environment") and any(token in normalized for token in ["sol", "lluvia", "intemperie", "jardin", "jardín", "exterior"]):
+            case["exposure_environment"] = "exterior"
+        elif not case.get("exposure_environment") and any(token in normalized for token in ["interior", "adentro", "bajo techo", "local", "bodega"]):
+            case["exposure_environment"] = "interior"
 
     # --- Universal readiness check ---
     project_profile = _build_technical_project_profile(case)
@@ -13903,6 +13967,7 @@ def build_technical_search_query(technical_case: dict, user_message: Optional[st
             "humedad en muro",
             technical_case.get("source_context") or "",
             "presion negativa" if technical_case.get("probable_pressure") == "presion_negativa" else "",
+            technical_case.get("current_state") or "",
             technical_case.get("wall_location") or "",
             technical_case.get("surface_state") or "",
             " ".join(technical_case.get("symptoms") or []),
@@ -13917,14 +13982,18 @@ def build_technical_search_query(technical_case: dict, user_message: Optional[st
     elif category == "piso":
         parts.extend([
             "sistema pintura para piso",
+            technical_case.get("substrate_type") or "",
             technical_case.get("floor_location") or "",
             technical_case.get("floor_material") or "",
             technical_case.get("traffic_level") or "",
+            technical_case.get("current_state") or technical_case.get("previous_coating") or "",
+            technical_case.get("exposure_environment") or "",
         ])
     elif category == "madera":
         parts.extend([
             "sistema para madera",
             technical_case.get("exposure") or "",
+            technical_case.get("current_state") or "",
             technical_case.get("previous_coating") or "",
         ])
     elif category == "metal":
@@ -13932,6 +14001,8 @@ def build_technical_search_query(technical_case: dict, user_message: Optional[st
             "sistema anticorrosivo",
             technical_case.get("metal_type") or "",
             technical_case.get("environment") or "",
+            technical_case.get("current_state") or technical_case.get("previous_coating") or "",
+            technical_case.get("exposure_environment") or "",
         ])
     else:
         # General: use full conversation context as semantic query
