@@ -1,0 +1,1916 @@
+{
+  "ready_profiles": 330,
+  "conflict_profiles": 86,
+  "overlap_breakdown": {
+    "concreto": 6,
+    "cubierta": 7,
+    "exterior": 12,
+    "fachada": 7,
+    "inmersion": 4,
+    "interior": 6,
+    "ladrillo": 5,
+    "madera": 25,
+    "mamposteria": 5,
+    "metal": 22,
+    "piso": 10
+  },
+  "examples": [
+    {
+      "canonical_family": "ACCENT",
+      "source_doc_filename": "Ficha Tecnica Accent.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "ALTAS TEMPERATURAS 901 UEA750 ES",
+      "source_doc_filename": "ALTAS TEMPERATURAS 901 UEA750 [ES].pdf",
+      "overlap": [
+        "interior"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "inmersion",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "interior"
+      ],
+      "guidance_restricted": [
+        "interior"
+      ]
+    },
+    {
+      "canonical_family": "B 350",
+      "source_doc_filename": "Ficha Tecnica B-350.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "madera",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "B 352",
+      "source_doc_filename": "Ficha Tecnica B-352.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "madera",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "B 360",
+      "source_doc_filename": "Ficha Tecnica B-360.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "madera",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "B 362",
+      "source_doc_filename": "Ficha Tecnica B-362.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "madera",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "B 362 ULTRA",
+      "source_doc_filename": "Ficha Tecnica B-362 ULTRA.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "madera",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "BALL",
+      "source_doc_filename": "Ficha Tecnica Ball.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "BELL WOOD",
+      "source_doc_filename": "Ficha Tecnica Bell Wood.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "CENTURY",
+      "source_doc_filename": "Ficha Tecnica Century.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "CERRADURA A70PD",
+      "source_doc_filename": "Ficha Tecnica Cerradura A70PD.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "madera",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "CERRADURA SCHLAGE DE AULA A70PD",
+      "source_doc_filename": "Ficha Tecnica Cerradura Schlage de Aula A70PD.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "ELEGANCE",
+      "source_doc_filename": "Ficha Tecnica Elegance.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "EPOXICA BASE AGUA PINTUCO",
+      "source_doc_filename": "EPOXICA BASE AGUA PINTUCO.pdf",
+      "overlap": [
+        "mamposteria"
+      ],
+      "surface_targets": [
+        "concreto",
+        "exterior",
+        "interior",
+        "mamposteria"
+      ],
+      "restricted_surfaces": [
+        "cubierta",
+        "mamposteria",
+        "piso"
+      ],
+      "guidance_restricted": [
+        "cubierta",
+        "mamposteria",
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "EPOXY COAL TAR FREE UDA800 UDA801 ES",
+      "source_doc_filename": "EPOXY COAL TAR FREE UDA800-UDA801  [ES].pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "exterior",
+        "inmersion",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "EPOXY HS 13200 UEA203 13233 UEA204 ES",
+      "source_doc_filename": "EPOXY HS 13200  UEA203-13233 UEA204 [ES].pdf",
+      "overlap": [
+        "exterior"
+      ],
+      "surface_targets": [
+        "concreto",
+        "exterior",
+        "inmersion",
+        "interior",
+        "madera",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "exterior"
+      ],
+      "guidance_restricted": [
+        "exterior"
+      ]
+    },
+    {
+      "canonical_family": "EPOXY PRIMER 70RS UEA500 UEA501 ES",
+      "source_doc_filename": "EPOXY PRIMER 70RS  UEA500-UEA501 [ES].pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "inmersion",
+        "metal"
+      ],
+      "guidance_restricted": [
+        "inmersion",
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "FLAIR",
+      "source_doc_filename": "Ficha Tecnica Flair.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "FT INTERLINE 399",
+      "source_doc_filename": "FT INTERLINE 399.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "inmersion",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "H100 BALL",
+      "source_doc_filename": "Ficha Tecnica H100 Ball.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "H100 JUPITER",
+      "source_doc_filename": "Ficha Tecnica H100 Júpiter.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "H ORBIT",
+      "source_doc_filename": "Ficha Tecnica H Orbit.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "JUPITER",
+      "source_doc_filename": "Ficha Tecnica Júpiter.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "MASTIC EPOXY ES",
+      "source_doc_filename": "MASTIC EPOXY [ES].pdf",
+      "overlap": [
+        "exterior"
+      ],
+      "surface_targets": [
+        "exterior",
+        "inmersion",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "exterior"
+      ],
+      "guidance_restricted": [
+        "exterior"
+      ]
+    },
+    {
+      "canonical_family": "ORBIT",
+      "source_doc_filename": "Ficha Tecnica Orbit.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO ACRILTEX VINILTEX",
+      "source_doc_filename": "ACRILTEX VINILTEX.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "interior",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO ALTA TEMPERATURA NEGRA 901",
+      "source_doc_filename": "ALTA TEMPERATURA NEGRA 901.pdf",
+      "overlap": [
+        "interior"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "inmersion",
+        "interior"
+      ],
+      "guidance_restricted": [
+        "inmersion",
+        "interior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO ALTA TEMPERATURA NEGRO 901",
+      "source_doc_filename": "ALTA TEMPERATURA NEGRO 901.pdf",
+      "overlap": [
+        "interior"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "inmersion",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "interior"
+      ],
+      "guidance_restricted": [
+        "interior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO ANTICORROSIVO AMARILLO 505",
+      "source_doc_filename": "ANTICORROSIVO AMARILLO  505.pdf",
+      "overlap": [
+        "inmersion"
+      ],
+      "surface_targets": [
+        "exterior",
+        "inmersion",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "inmersion"
+      ],
+      "guidance_restricted": [
+        "inmersion"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO ANTICORROSIVO VERDE 513",
+      "source_doc_filename": "ANTICORROSIVO VERDE 513.pdf",
+      "overlap": [
+        "inmersion"
+      ],
+      "surface_targets": [
+        "exterior",
+        "inmersion",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "inmersion"
+      ],
+      "guidance_restricted": [
+        "inmersion"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCOAT",
+      "source_doc_filename": "PINTUCOAT.pdf",
+      "overlap": [
+        "exterior",
+        "inmersion",
+        "metal",
+        "piso"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "inmersion",
+        "interior",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "exterior",
+        "inmersion",
+        "metal",
+        "piso"
+      ],
+      "guidance_restricted": [
+        "exterior",
+        "inmersion",
+        "metal",
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCOAT PLUS",
+      "source_doc_filename": "PINTUCOAT PLUS.pdf",
+      "overlap": [
+        "exterior",
+        "piso"
+      ],
+      "surface_targets": [
+        "concreto",
+        "exterior",
+        "inmersion",
+        "interior",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "exterior",
+        "piso"
+      ],
+      "guidance_restricted": [
+        "exterior",
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO BASE INMUNIZANTE BARNEX",
+      "source_doc_filename": "BASE INMUNIZANTE BARNEX.pdf",
+      "overlap": [
+        "exterior",
+        "interior"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "madera",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "exterior",
+        "interior"
+      ],
+      "guidance_restricted": [
+        "exterior",
+        "interior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO CONSTRUCLEANER LADRILLO CLARO",
+      "source_doc_filename": "CONSTRUCLEANER LADRILLO CLARO.pdf",
+      "overlap": [
+        "fachada",
+        "ladrillo",
+        "piso"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "fachada",
+        "interior",
+        "ladrillo",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "fachada",
+        "ladrillo",
+        "piso"
+      ],
+      "guidance_restricted": [
+        "fachada",
+        "ladrillo",
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO CONSTRUCLEANER LADRILLO ROJO",
+      "source_doc_filename": "CONSTRUCLEANER LADRILLO ROJO.pdf",
+      "overlap": [
+        "fachada",
+        "ladrillo",
+        "piso"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "fachada",
+        "interior",
+        "ladrillo",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "fachada",
+        "ladrillo",
+        "piso"
+      ],
+      "guidance_restricted": [
+        "fachada",
+        "ladrillo",
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO CONSTRUCLEANER LIMPIADOR DESDENGRASANTE",
+      "source_doc_filename": "CONSTRUCLEANER LIMPIADOR DESDENGRASANTE.pdf",
+      "overlap": [
+        "fachada",
+        "piso"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "fachada",
+        "ladrillo",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "fachada",
+        "piso"
+      ],
+      "guidance_restricted": [
+        "fachada",
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO CONSTRUCLEANER LIMPIADOR ECOLOGICO LADRILLO",
+      "source_doc_filename": "CONSTRUCLEANER LIMPIADOR ECOLOGICO LADRILLO.pdf",
+      "overlap": [
+        "fachada",
+        "ladrillo"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "fachada",
+        "interior",
+        "ladrillo",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "fachada",
+        "ladrillo"
+      ],
+      "guidance_restricted": [
+        "fachada",
+        "ladrillo"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO CONSTRUCLEANER RESTAURADOR FACHADAS",
+      "source_doc_filename": "CONSTRUCLEANER RESTAURADOR FACHADAS.pdf",
+      "overlap": [
+        "fachada"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "fachada",
+        "interior",
+        "ladrillo",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "fachada"
+      ],
+      "guidance_restricted": [
+        "fachada"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO CONSTRUCLEANER RINSE LADRILLO CLARO",
+      "source_doc_filename": "CONSTRUCLEANER RINSE LADRILLO CLARO.pdf",
+      "overlap": [
+        "concreto",
+        "fachada",
+        "ladrillo",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "surface_targets": [
+        "concreto",
+        "exterior",
+        "fachada",
+        "interior",
+        "ladrillo",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "concreto",
+        "cubierta",
+        "fachada",
+        "ladrillo",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "guidance_restricted": [
+        "concreto",
+        "cubierta",
+        "fachada",
+        "ladrillo",
+        "mamposteria",
+        "metal",
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO CONSTRUCLEANER RINSE LADRILLO ROJO",
+      "source_doc_filename": "CONSTRUCLEANER RINSE LADRILLO ROJO.pdf",
+      "overlap": [
+        "ladrillo"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "fachada",
+        "interior",
+        "ladrillo",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "ladrillo"
+      ],
+      "guidance_restricted": [
+        "ladrillo"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO CONSTRUCRIL",
+      "source_doc_filename": "CONSTRUCRIL.pdf",
+      "overlap": [
+        "interior"
+      ],
+      "surface_targets": [
+        "concreto",
+        "exterior",
+        "interior",
+        "mamposteria"
+      ],
+      "restricted_surfaces": [
+        "interior"
+      ],
+      "guidance_restricted": [
+        "interior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO CORROTEC",
+      "source_doc_filename": "CORROTEC.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "exterior",
+        "inmersion",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO CORROTEC EPOXI ZINC 2K 10073",
+      "source_doc_filename": "CORROTEC EPOXI ZINC 2K 10073.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO DESMOLDANTE GLASS 3X1",
+      "source_doc_filename": "DESMOLDANTE GLASS 3x1.pdf",
+      "overlap": [
+        "concreto"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "madera",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "concreto",
+        "exterior"
+      ],
+      "guidance_restricted": [
+        "concreto",
+        "exterior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO DESMOLDANTE GLASS PRIME",
+      "source_doc_filename": "DESMOLDANTE GLASS PRIME.pdf",
+      "overlap": [
+        "concreto",
+        "exterior"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "madera",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "concreto",
+        "exterior"
+      ],
+      "guidance_restricted": [
+        "concreto",
+        "exterior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO DESMOLDANTE GLASS SUPREME",
+      "source_doc_filename": "DESMOLDANTE GLASS SUPREME.pdf",
+      "overlap": [
+        "concreto",
+        "exterior"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "madera",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "concreto",
+        "exterior"
+      ],
+      "guidance_restricted": [
+        "concreto",
+        "exterior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO EPOXICA BASE AGUA",
+      "source_doc_filename": "EPÓXICA BASE AGUA.pdf",
+      "overlap": [
+        "cubierta",
+        "mamposteria"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "mamposteria"
+      ],
+      "restricted_surfaces": [
+        "cubierta",
+        "mamposteria",
+        "piso"
+      ],
+      "guidance_restricted": [
+        "cubierta",
+        "mamposteria",
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO ESGRAFIADO PREMIUN GRANIPLAST",
+      "source_doc_filename": "ESGRAFIADO PREMIUN GRANIPLAST.pdf",
+      "overlap": [
+        "cubierta",
+        "exterior"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "fachada",
+        "fibrocemento",
+        "interior",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "cubierta",
+        "exterior"
+      ],
+      "guidance_restricted": [
+        "cubierta",
+        "exterior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO ESGRAFIADO STANDARD GRANIPLAST",
+      "source_doc_filename": "ESGRAFIADO STANDARD GRANIPLAST.pdf",
+      "overlap": [
+        "cubierta",
+        "exterior",
+        "metal"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "fachada",
+        "fibrocemento",
+        "interior",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "cubierta",
+        "exterior",
+        "metal"
+      ],
+      "guidance_restricted": [
+        "cubierta",
+        "exterior",
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO ESTUCO PROFESIONAL 2 EN 1",
+      "source_doc_filename": "ESTUCO PROFESIONAL 2 EN 1.pdf",
+      "overlap": [
+        "cubierta"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "interior",
+        "ladrillo",
+        "mamposteria"
+      ],
+      "restricted_surfaces": [
+        "cubierta"
+      ],
+      "guidance_restricted": [
+        "cubierta"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO FDC ANTICORROSIVO VERDE OLIVA 513",
+      "source_doc_filename": "FDC ANTICORROSIVO VERDE OLIVA 513.pdf",
+      "overlap": [
+        "interior"
+      ],
+      "surface_targets": [
+        "inmersion",
+        "interior",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "interior"
+      ],
+      "guidance_restricted": [
+        "interior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO FTP INVECRYL 500 DOCX",
+      "source_doc_filename": "FTP-INVECRYL-500-docx.pdf",
+      "overlap": [
+        "exterior"
+      ],
+      "surface_targets": [
+        "concreto",
+        "exterior",
+        "fachada",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "exterior"
+      ],
+      "guidance_restricted": [
+        "exterior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO GRANIACRYL PREMIUM GRANIPLAST",
+      "source_doc_filename": "GRANIACRYL PREMIUM GRANIPLAST.pdf",
+      "overlap": [
+        "exterior"
+      ],
+      "surface_targets": [
+        "concreto",
+        "exterior",
+        "fachada",
+        "fibrocemento",
+        "interior",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "cubierta",
+        "exterior"
+      ],
+      "guidance_restricted": [
+        "cubierta",
+        "exterior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO IMPADOC LISTO",
+      "source_doc_filename": "IMPADOC LISTO.pdf",
+      "overlap": [
+        "mamposteria"
+      ],
+      "surface_targets": [
+        "concreto",
+        "interior",
+        "ladrillo",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "mamposteria"
+      ],
+      "guidance_restricted": [
+        "mamposteria"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO IMPRIMANTE PARA TRAFICO ACRILICO NEGRO 10255632",
+      "source_doc_filename": "IMPRIMANTE PARA TRAFICO ACRILICO NEGRO 10255632.pdf",
+      "overlap": [
+        "piso"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "piso"
+      ],
+      "guidance_restricted": [
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO INTERCHAR 2090 ES",
+      "source_doc_filename": "INTERCHAR 2090 [ES].pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "exterior",
+        "inmersion",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO INTERCHARD 2060",
+      "source_doc_filename": "INTERCHARD 2060.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "inmersion",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "exterior",
+        "metal"
+      ],
+      "guidance_restricted": [
+        "exterior",
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO KORAZA DOBLE VIDA",
+      "source_doc_filename": "KORAZA DOBLE VIDA.pdf",
+      "overlap": [
+        "fachada"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "fachada",
+        "fibrocemento",
+        "interior",
+        "ladrillo",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "fachada"
+      ],
+      "guidance_restricted": [
+        "fachada"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO KORAZA PRO 750 ELASTOMERICA",
+      "source_doc_filename": "KORAZA PRO 750 ELASTOMERICA.pdf",
+      "overlap": [
+        "concreto"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "fachada",
+        "fibrocemento",
+        "ladrillo",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "concreto"
+      ],
+      "guidance_restricted": [
+        "concreto"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO LACA MULTIUSOS AEROCOLOR GENERICA",
+      "source_doc_filename": "LACA MULTIUSOS AEROCOLOR GENERICA.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "exterior",
+        "metal"
+      ],
+      "guidance_restricted": [
+        "exterior",
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO MADETEC VITRIFLEX PARTE A",
+      "source_doc_filename": "MADETEC VITRIFLEX PARTE A.pdf",
+      "overlap": [
+        "madera",
+        "piso"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "interior",
+        "madera",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera",
+        "piso"
+      ],
+      "guidance_restricted": [
+        "madera",
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO MADETEC VITRIFLEX PARTE B",
+      "source_doc_filename": "MADETEC VITRIFLEX PARTE B.pdf",
+      "overlap": [
+        "piso"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "interior",
+        "madera",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "piso"
+      ],
+      "guidance_restricted": [
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO MTN 94",
+      "source_doc_filename": "hoja_de_seguridad_mtn_94.pdf",
+      "overlap": [
+        "exterior"
+      ],
+      "surface_targets": [
+        "exterior",
+        "inmersion",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "exterior"
+      ],
+      "guidance_restricted": [
+        "exterior"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO PINTOXIDO",
+      "source_doc_filename": "PINTOXIDO.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "exterior",
+        "inmersion",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO PINTULUX TRES EN UNO",
+      "source_doc_filename": "PINTULUX TRES EN UNO.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "madera",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO PINTURA ANTIGRAFITTI",
+      "source_doc_filename": "PINTURA ANTIGRAFITTI.pdf",
+      "overlap": [
+        "mamposteria"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "mamposteria"
+      ],
+      "restricted_surfaces": [
+        "mamposteria"
+      ],
+      "guidance_restricted": [
+        "mamposteria"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO PINTURA ENTUMESENTE",
+      "source_doc_filename": "PINTURA ENTUMESENTE.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "cubierta",
+        "madera",
+        "mamposteria"
+      ],
+      "guidance_restricted": [
+        "cubierta",
+        "madera",
+        "mamposteria"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO PINTURA EPOXICA BASE SOLVENTE",
+      "source_doc_filename": "PINTURA EPOXICA BASE SOLVENTE.pdf",
+      "overlap": [
+        "piso"
+      ],
+      "surface_targets": [
+        "inmersion",
+        "interior",
+        "mamposteria",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "concreto",
+        "fachada",
+        "piso"
+      ],
+      "guidance_restricted": [
+        "concreto",
+        "fachada",
+        "piso"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO PLASTICO EN FRIO",
+      "source_doc_filename": "PLASTICO EN FRIO.pdf",
+      "overlap": [
+        "cubierta"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "cubierta"
+      ],
+      "guidance_restricted": [
+        "cubierta"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO PRIMER EPOXI 70RS",
+      "source_doc_filename": "PRIMER EPOXI 70RS.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "inmersion",
+        "metal"
+      ],
+      "guidance_restricted": [
+        "inmersion",
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO PRIMER EPOXICO DE RAPIDO SECADO GRIS",
+      "source_doc_filename": "PRIMER EPOXICO DE RAPIDO SECADO GRIS.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO PRIMER EPOXI ZINC",
+      "source_doc_filename": "primer-epoxi-zinc.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "inmersion",
+        "interior",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO SILICONITE 10",
+      "source_doc_filename": "SILICONITE 10.pdf",
+      "overlap": [
+        "cubierta"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "fachada",
+        "inmersion",
+        "ladrillo",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "cubierta"
+      ],
+      "guidance_restricted": [
+        "cubierta"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO SILICONITE 7 3103",
+      "source_doc_filename": "SILICONITE 7 3103.pdf",
+      "overlap": [
+        "cubierta"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "fachada",
+        "ladrillo"
+      ],
+      "restricted_surfaces": [
+        "cubierta"
+      ],
+      "guidance_restricted": [
+        "cubierta"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO SILICONITE 7W",
+      "source_doc_filename": "SILICONITE 7W.pdf",
+      "overlap": [
+        "concreto"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "fachada",
+        "ladrillo",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "concreto",
+        "fibrocemento"
+      ],
+      "guidance_restricted": [
+        "concreto",
+        "fibrocemento"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO VINILTEX ADVANCE",
+      "source_doc_filename": "VINILTEX ADVANCE.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "interior",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO VINILTEX BIO CUIDADO",
+      "source_doc_filename": "VINILTEX BIO CUIDADO.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO VINILTEX ULTRALAVABLE",
+      "source_doc_filename": "VINILTEX ULTRALAVABLE.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "interior",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO VINILTEX ULTRALAVABLE 2024",
+      "source_doc_filename": "FICHA TECNICA VINILTEX ULTRALAVABLE 2024 - copia.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "interior",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO VITRIFLEX BASE AGUA",
+      "source_doc_filename": "VITRIFLEX BASE AGUA.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "interior",
+        "madera",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "PINTUCO WASH PRIMER 509A B",
+      "source_doc_filename": "WASH PRIMER 509A-B.pdf",
+      "overlap": [
+        "metal"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "metal"
+      ],
+      "guidance_restricted": [
+        "metal"
+      ]
+    },
+    {
+      "canonical_family": "PINTUNOV 13285 13286",
+      "source_doc_filename": "PINTUNOV 13285 13286.pdf",
+      "overlap": [
+        "inmersion"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "inmersion",
+        "interior",
+        "madera",
+        "mamposteria",
+        "metal"
+      ],
+      "restricted_surfaces": [
+        "inmersion"
+      ],
+      "guidance_restricted": [
+        "inmersion"
+      ]
+    },
+    {
+      "canonical_family": "PLYMOUTH",
+      "source_doc_filename": "Ficha Tecnica Plymouth.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "POMO MADERA HC",
+      "source_doc_filename": "Ficha Tecnica Pomo Madera HC.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "PRESTIGE",
+      "source_doc_filename": "Ficha Tecnica Prestige.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "concreto",
+        "cubierta",
+        "exterior",
+        "interior",
+        "ladrillo",
+        "madera",
+        "mamposteria",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    },
+    {
+      "canonical_family": "SATURNO",
+      "source_doc_filename": "Ficha Tecnica Saturno.pdf",
+      "overlap": [
+        "madera"
+      ],
+      "surface_targets": [
+        "cubierta",
+        "exterior",
+        "interior",
+        "madera",
+        "metal",
+        "piso"
+      ],
+      "restricted_surfaces": [
+        "madera"
+      ],
+      "guidance_restricted": [
+        "madera"
+      ]
+    }
+  ]
+}
