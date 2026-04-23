@@ -185,8 +185,9 @@ El contenedor backend estaba construido copiando `backend/` directamente dentro 
    - `artifacts/`
    - `.streamlit/`
    - `LOGO FERREINOX SAS BIC 2024.png`
-   - `datos_empleados.xlsx`
 4. El arranque quedó corregido a `uvicorn backend.main:app --host 0.0.0.0 --port 8000`.
+
+Nota: `datos_empleados.xlsx` no se copia en la imagen porque no forma parte del repositorio desplegado en Coolify. El backend tolera su ausencia en arranque y usa fallback vacío o resolución desde base de datos cuando aplica.
 
 ### Archivos corregidos
 

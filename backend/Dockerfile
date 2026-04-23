@@ -9,4 +9,3 @@ COPY data/ /app/data/
 COPY artifacts/ /app/artifacts/
 COPY .streamlit/ /app/.streamlit/
 COPY ["LOGO FERREINOX SAS BIC 2024.png", "/app/"]
-COPY ["datos_empleados.xlsx", "/app/"]
