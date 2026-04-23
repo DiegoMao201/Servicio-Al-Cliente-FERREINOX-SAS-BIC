@@ -379,7 +379,7 @@ Debe iniciar `uvicorn` sin crash.
 No debe aparecer:
 
 - `TypeError: unsupported operand type(s) for |`
-- errores de importación
+- `ModuleNotFoundError: No module named 'backend'`
 - falta de `DATABASE_URL`
 
 ### `frontend`

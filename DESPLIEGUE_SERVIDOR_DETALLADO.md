@@ -87,10 +87,12 @@ Completa las claves de Dropbox, conexión a PostgreSQL, etc.
 - Ejemplo de sección de backend:
 ```yaml
   backend:
-    build: ./backend
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
     volumes:
-      - ./backend:/app
+      - ./data:/app/data:ro
     ports:
       - "8000:8000"
     environment:
