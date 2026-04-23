@@ -809,11 +809,12 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
     Valores None si no detectado.
     """
     # Combine last ~5 inbound messages + current
+    current_message = (user_message or "").lower()
     texts = []
     for msg in recent_messages[-10:]:
         if msg.get("direction") == "inbound":
             texts.append((msg.get("contenido") or "").lower())
-    texts.append((user_message or "").lower())
+    texts.append(current_message)
     combined = " ".join(texts)
     combined_surface = combined
     combined_without_negated_exterior = re.sub(
@@ -916,10 +917,20 @@ def extract_diagnostic_data(user_message: str, recent_messages: list) -> dict:
         "podrido": "madera deteriorada", "podrida": "madera deteriorada",
         "deteriorad": "deteriorada", "dañad": "deteriorada",
     }
-    for kw, cond in cond_signals.items():
-        if kw in combined_without_negated_humidity:
-            data["condition"] = cond
-            break
+
+    def _detect_condition(text: str) -> Optional[str]:
+        for kw, cond in cond_signals.items():
+            if kw in text:
+                return cond
+        return None
+
+    current_without_negated_humidity = re.sub(
+        r"\b(?:no\s+(?:hay|tiene|presenta|veo|se\s+ve)|sin)\b[^.\n]{0,80}\b(?:humedad|salitre|goteras?|filtraci[oó]n|moho|hongo)s?\b",
+        " ",
+        current_message,
+        flags=re.IGNORECASE,
+    )
+    data["condition"] = _detect_condition(current_without_negated_humidity) or _detect_condition(combined_without_negated_humidity)
 
     # Area
     area_match = re.search(r"(\d+)\s*(?:m2|m²|metros?\s*cuadrados?)", combined)
