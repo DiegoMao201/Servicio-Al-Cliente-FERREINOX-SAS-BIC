@@ -2836,17 +2836,28 @@ def get_openai_base_url():
     return None
 
 
+def is_deepseek_backend():
+    base_url = get_openai_base_url()
+    if base_url and "deepseek" in base_url.lower():
+        return True
+    return bool(os.getenv("DEEPSEEK_API_KEY") and not os.getenv("OPENAI_API_KEY"))
+
+
 def get_openai_model():
+    if is_deepseek_backend():
+        configured_model = _first_configured_value(
+            os.getenv("DEEPSEEK_MODEL"),
+            os.getenv("LLM_MODEL"),
+            os.getenv("OPENAI_MODEL"),
+        )
+        return configured_model or "deepseek-chat"
+
     configured_model = _first_configured_value(
         os.getenv("OPENAI_MODEL"),
         os.getenv("LLM_MODEL"),
-        os.getenv("DEEPSEEK_MODEL"),
     )
     if configured_model:
         return configured_model
-    base_url = get_openai_base_url()
-    if base_url and "deepseek" in base_url.lower():
-        return "deepseek-chat"
     return "gpt-4o-mini"
 
 

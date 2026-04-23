@@ -15,7 +15,10 @@ def main():
     deepseek_key = os.getenv("DEEPSEEK_API_KEY")
     llm_base_url = os.getenv("OPENAI_BASE_URL") or os.getenv("LLM_BASE_URL")
     using_deepseek = bool(deepseek_key and not openai_key) or (llm_base_url and "deepseek" in llm_base_url.lower())
-    llm_model = os.getenv("OPENAI_MODEL") or os.getenv("LLM_MODEL") or os.getenv("DEEPSEEK_MODEL") or ("deepseek-chat" if using_deepseek else "gpt-4o-mini")
+    if using_deepseek:
+        llm_model = os.getenv("DEEPSEEK_MODEL") or os.getenv("LLM_MODEL") or os.getenv("OPENAI_MODEL") or "deepseek-chat"
+    else:
+        llm_model = os.getenv("OPENAI_MODEL") or os.getenv("LLM_MODEL") or "gpt-4o-mini"
     provider_label = "DeepSeek" if using_deepseek else "OpenAI"
     whatsapp_access_token = os.getenv("WHATSAPP_ACCESS_TOKEN")
     whatsapp_phone_number_id = os.getenv("WHATSAPP_PHONE_NUMBER_ID")
