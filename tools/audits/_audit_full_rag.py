@@ -1,14 +1,22 @@
 """
 AUDITORÍA COMPLETA: Verificación de recomendaciones de producto vs RAG real.
-Genera ~50 escenarios realistas (superficie + contexto) y verifica que el RAG
-devuelve productos coherentes con lo que el prompt/mappings recomendarían.
+Genera escenarios realistas de WhatsApp sobre superficies, ambientes y cruces
+difíciles para revisar si el RAG prioriza familias coherentes.
 """
-import requests, json, time, re, sys
+import json
+import re
+import sys
+import time
+from pathlib import Path
+
+import requests
 
 ADMIN_KEY = "ferreinox_admin_2024"
 RAG_URL = "https://apicrm.datovatenexuspro.com/admin/rag-buscar"
+OUTPUT_JSON = Path("reports/audits/full_rag_real_world_combo_audit.json")
+OUTPUT_MD = Path("reports/audits/full_rag_real_world_combo_audit.md")
 
-# ── 50 escenarios realistas con superficie + contexto ──
+# ── Escenarios realistas con superficie + contexto ──
 # Cada escenario tiene: query, productos_correctos_esperados, productos_prohibidos, notas
 SCENARIOS = [
     # ═══ PISOS: contexto determina producto ═══
@@ -72,6 +80,20 @@ SCENARIOS = [
     {"q": "piso industrial alto desempeño brillante", "ok": ["intergard 740", "intergard"], "bad": ["pintura canchas", "viniltex"], "cat": "industrial"},
     {"q": "ambiente marino salino estructura costera acero", "ok": ["intergard", "interseal", "corrotec"], "bad": ["viniltex", "pintura canchas"], "cat": "industrial"},
     {"q": "pared planta procesadora alimentos limpieza constante", "ok": ["pintucoat", "intergard", "epoxica"], "bad": ["viniltex", "koraza", "pintura canchas"], "cat": "industrial"},
+
+    # ═══ COMBINACIONES REALES DE WHATSAPP ═══
+    {"q": "barandas metalicas de hotel frente al mar mantenimiento premium", "ok": ["interthane", "intergard", "corrotec"], "bad": ["pintulux", "viniltex", "koraza"], "cat": "combo_real"},
+    {"q": "piso taller motos gasolina aceites livianos concreto interior", "ok": ["pintucoat", "intergard"], "bad": ["pintura canchas", "viniltex", "koraza"], "cat": "combo_real"},
+    {"q": "muro sotano contra terreno humedad permanente salitre acabado levantado", "ok": ["aquablock"], "bad": ["koraza", "viniltex", "pintucoat"], "cat": "combo_real"},
+    {"q": "terraza transitable llueve moja cuarto de abajo placa concreto", "ok": ["pintuco fill", "impercoat"], "bad": ["aquablock", "viniltex", "pintucoat"], "cat": "combo_real"},
+    {"q": "cubierta fibrocemento vieja tizosa repinte exterior", "ok": ["sellomax", "koraza"], "bad": ["aquablock", "viniltex", "wash primer"], "cat": "combo_real"},
+    {"q": "fachada ventilada panel fibrocemento cuarteado repinte", "ok": ["sellomax", "koraza"], "bad": ["aquablock", "viniltex", "pintucoat"], "cat": "combo_real"},
+    {"q": "ducto horno panaderia alta temperatura exterior parcial oxido leve", "ok": ["altas temperaturas"], "bad": ["wash primer", "viniltex", "aquablock"], "cat": "combo_real"},
+    {"q": "estructura metalica interior local nuevo negro presupuesto medio", "ok": ["corrotec", "pintulux"], "bad": ["intergard", "interthane", "koraza"], "cat": "combo_real"},
+    {"q": "muro cocina industrial vapor grasa limpieza frecuente", "ok": ["epoxica", "pintucoat", "intergard"], "bad": ["viniltex", "koraza", "barnex"], "cat": "combo_real"},
+    {"q": "teja zinc caliente oxidada bodega exterior", "ok": ["corrotec", "wash primer"], "bad": ["viniltex", "koraza", "barnex"], "cat": "combo_real"},
+    {"q": "cubierta policarbonato alveolar amarillenta por uv", "ok": ["__gap__"], "bad": ["koraza", "viniltex", "pintucoat"], "cat": "combo_real"},
+    {"q": "domos acrilicos viejos craquelados por sol en cubierta", "ok": ["__gap__"], "bad": ["koraza", "viniltex", "pintucoat"], "cat": "combo_real"},
 
     # ═══ GAPS / PRODUCTOS QUE NO VENDEMOS ═══
     {"q": "pintura especial para piscina de concreto", "ok": ["__gap__"], "bad": ["pintucoat", "aquablock", "pintuco fill"], "cat": "gap"},
@@ -167,9 +189,46 @@ def check_scenario(sc):
     return status, details
 
 
+def render_markdown(details_list, results):
+    lines = [
+        "# Auditoría RAG Real World Combo",
+        "",
+        f"- Escenarios: {len(details_list)}",
+        f"- PASS: {results['PASS']}",
+        f"- WARN: {results['WARN']}",
+        f"- FAIL: {results['FAIL']}",
+        f"- ERROR: {results['ERROR']}",
+        f"- Endpoint: {RAG_URL}",
+        "",
+        "## Resumen",
+        "",
+    ]
+
+    for item in details_list:
+        scenario = item["scenario"]
+        lines.append(f"- [{scenario['cat']}] {item['status']} | {scenario['q']}")
+
+    lines.append("")
+    lines.append("## Detalle")
+    lines.append("")
+
+    for item in details_list:
+        scenario = item["scenario"]
+        lines.append(f"### {scenario['q']}")
+        lines.append("")
+        lines.append(f"- Categoría: {scenario['cat']}")
+        lines.append(f"- Estado: {item['status']}")
+        lines.append(f"- Esperado: {', '.join(scenario['ok'])}")
+        lines.append(f"- Prohibido: {', '.join(scenario['bad'])}")
+        lines.append(f"- Resultado: {item['details']}")
+        lines.append("")
+
+    return "\n".join(lines).strip() + "\n"
+
+
 def main():
     print("=" * 90)
-    print("  AUDITORÍA COMPLETA: Producto vs RAG — 50 escenarios")
+    print(f"  AUDITORÍA COMPLETA: Producto vs RAG — {len(SCENARIOS)} escenarios")
     print("=" * 90)
 
     results = {"PASS": 0, "WARN": 0, "FAIL": 0, "ERROR": 0}
@@ -191,11 +250,11 @@ def main():
     print(f"  Total: {len(SCENARIOS)}")
     print("=" * 90)
 
-    # Save detailed results
-    output_path = "reports/audits/_audit_results.json"
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(details_list, f, ensure_ascii=False, indent=2)
-    print(f"Resultados guardados en {output_path}")
+    OUTPUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT_JSON.write_text(json.dumps(details_list, ensure_ascii=False, indent=2), encoding="utf-8")
+    OUTPUT_MD.write_text(render_markdown(details_list, results), encoding="utf-8")
+    print(f"Resultados guardados en {OUTPUT_JSON}")
+    print(f"Reporte legible guardado en {OUTPUT_MD}")
 
     # Print failure/warn summary
     problems = [d for d in details_list if d["status"] in ("FAIL", "WARN")]
