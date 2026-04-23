@@ -69,6 +69,7 @@ streamlit run streamlit_app.py
 El repositorio ya está preparado para no versionar secretos reales. Usa alguno de estos mecanismos:
 
 - Streamlit Secrets para la app desplegada.
+- `GEMINI_API_KEY` en secrets o variables de entorno para auditorías semánticas y embeddings Gemini.
 - `DATABASE_URL` o `POSTGRES_DB_URI` como variable de entorno para procesos auxiliares.
 - `.env` local solo para desarrollo o Docker, nunca para GitHub.
 

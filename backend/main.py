@@ -2436,6 +2436,15 @@ def _build_hard_policies_for_context(question: str, product: str, diagnosis: dic
             _append_unique(bucket, item)
 
     normalized_query = normalize_text_value(f"{question} {product}")
+    matched_global_required_by_product: dict[str, set[str]] = {}
+    matched_global_forbidden_by_product: dict[str, set[str]] = {}
+
+    def _track_rule_product(bucket: dict[str, set[str]], value: str, rule_name: str):
+        normalized_value = normalize_text_value(value)
+        if not normalized_value:
+            return
+        bucket.setdefault(normalized_value, set()).add(rule_name)
+
     for rule in GLOBAL_TECHNICAL_POLICY_RULES:
         if not _matches_global_policy_rule(rule, normalized_query, diagnosis):
             continue
@@ -2448,8 +2457,10 @@ def _build_hard_policies_for_context(question: str, product: str, diagnosis: dic
             _append_unique("high_priority_policy_names", rule_name)
         for value in rule.get("required_products") or []:
             _append_unique("required_products", value)
+            _track_rule_product(matched_global_required_by_product, value, rule_name)
         for value in rule.get("forbidden_products") or []:
             _append_unique("forbidden_products", value)
+            _track_rule_product(matched_global_forbidden_by_product, value, rule_name)
         for value in rule.get("required_tools") or []:
             _append_unique("required_tools", value)
         for value in rule.get("forbidden_tools") or []:
@@ -2486,17 +2497,6 @@ def _build_hard_policies_for_context(question: str, product: str, diagnosis: dic
     norm_to_original_forb = {normalize_text_value(p): p for p in policies["forbidden_products"]}
     conflicts = required_set & forbidden_set
     if conflicts:
-        # Collect what the context-filtered global rules say
-        global_required_norms: set[str] = set()
-        global_forbidden_norms: set[str] = set()
-        for rule in GLOBAL_TECHNICAL_POLICY_RULES:
-            if not _matches_global_policy_rule(rule, normalized_query, diagnosis):
-                continue
-            for p in rule.get("required_products") or []:
-                global_required_norms.add(normalize_text_value(p))
-            for p in rule.get("forbidden_products") or []:
-                global_forbidden_norms.add(normalize_text_value(p))
-
         # Also collect what the structured guide recommends
         guide_product_norms: set[str] = set()
         for opt in guide.get("finish_options") or []:
@@ -2506,9 +2506,17 @@ def _build_hard_policies_for_context(question: str, product: str, diagnosis: dic
             guide_product_norms.add(normalize_text_value(primer_text))
 
         for norm_product in conflicts:
-            in_global_req = any(norm_product in gr or gr in norm_product for gr in global_required_norms)
-            in_global_forb = any(norm_product in gf or gf in norm_product for gf in global_forbidden_norms)
-            in_guide = any(norm_product in gp or gp in norm_product for gp in guide_product_norms)
+            required_rule_names = matched_global_required_by_product.get(norm_product, set())
+            forbidden_rule_names = matched_global_forbidden_by_product.get(norm_product, set())
+            in_global_req = bool(required_rule_names)
+            in_global_forb = bool(forbidden_rule_names)
+            in_guide = norm_product in guide_product_norms
+
+            # If two matched global policies intentionally disagree for the same
+            # product, preserve both sides. The tests assert this accumulation in
+            # mixed-surface and double-contradiction scenarios.
+            if in_global_req and in_global_forb:
+                continue
 
             if in_global_req and not in_global_forb:
                 # Global rule requires it → remove from forbidden

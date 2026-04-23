@@ -40,6 +40,7 @@ def get_gemini_api_key() -> str | None:
     return (
         os.getenv("GEMINI_API_KEY")
         or os.getenv("GOOGLE_API_KEY")
+        or _read_streamlit_secret_value("GEMINI_API_KEY")
         or _read_streamlit_secret_value("gemini", "api_key")
         or _read_streamlit_secret_value("GOOGLE_API_KEY")
     )
