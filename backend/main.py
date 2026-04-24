@@ -20796,8 +20796,95 @@ async def _flush_debounce_buffer(phone_number: str):
 
 
 @app.post("/webhooks/whatsapp")
-async def receive_whatsapp_webhook(request: Request):
-    payload = await request.json()
+async def receive_whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
+    """F1 — Endpoint asíncrono.
+
+    Responsabilidad MÍNIMA: parsear JSON, descartar reintentos de Meta vía
+    cache de idempotencia in-memory, encolar el procesamiento en background
+    y devolver HTTP 200 inmediatamente (Meta exige < ~10s).
+
+    Todo el trabajo pesado (LLM, RAG, BI, envío a WhatsApp) corre en
+    `_process_whatsapp_payload_with_resilience` dentro de un BackgroundTask.
+    """
+    try:
+        payload = await request.json()
+    except Exception as exc:
+        logger.warning("Webhook payload no es JSON válido: %s", exc)
+        return {"status": "ignored", "reason": "invalid_payload"}
+
+    # F1.1 — Pre-emptive idempotency: descartar reintentos de Meta antes
+    # de gastar tokens del LLM o entrar en debounce.
+    try:
+        from idempotency import (
+            extract_inbound_message_ids,
+            webhook_idempotency_cache,
+        )
+    except ImportError:
+        from backend.idempotency import (  # type: ignore
+            extract_inbound_message_ids,
+            webhook_idempotency_cache,
+        )
+
+    msg_ids = extract_inbound_message_ids(payload)
+    new_ids = webhook_idempotency_cache.filter_new(msg_ids)
+    if msg_ids and not new_ids:
+        logger.info("WEBHOOK duplicate ignored: ids=%s", msg_ids)
+        return {"status": "duplicate_ignored", "message_ids": msg_ids}
+    webhook_idempotency_cache.mark_processing_many(new_ids)
+
+    # F1.4 — Lanzar a background con guard de degradación graceful.
+    background_tasks.add_task(_process_whatsapp_payload_with_resilience, payload)
+    return {"status": "received", "queued_message_ids": new_ids}
+
+
+async def _process_whatsapp_payload_with_resilience(payload: dict):
+    """F1.4 — Wrapper de degradación graceful.
+
+    Si `_process_whatsapp_payload` falla por TimeoutError / APIError /
+    cualquier excepción inesperada, intentamos enviar al cliente un mensaje
+    estándar de fallback en vez de dejarlo en silencio. La excepción se
+    re-loguea con stack para alertas.
+    """
+    try:
+        return await _process_whatsapp_payload(payload)
+    except Exception as exc:  # noqa: BLE001
+        logger.error(
+            "WEBHOOK background processing FAILED: %s", exc, exc_info=True
+        )
+        try:
+            from agent_response_sanitizer import GRACEFUL_DEGRADATION_MESSAGE
+        except ImportError:
+            from backend.agent_response_sanitizer import GRACEFUL_DEGRADATION_MESSAGE  # type: ignore
+        # Intentar avisar al cliente con mensaje seguro.
+        try:
+            phones = []
+            for entry in payload.get("entry", []) or []:
+                for change in (entry or {}).get("changes", []) or []:
+                    value = (change or {}).get("value", {}) or {}
+                    for message in value.get("messages", []) or []:
+                        from_number = message.get("from")
+                        if from_number:
+                            phones.append(from_number)
+            for phone in set(phones):
+                try:
+                    send_whatsapp_text_message(phone, GRACEFUL_DEGRADATION_MESSAGE)
+                except Exception as send_exc:
+                    logger.error(
+                        "WEBHOOK fallback message FAILED for %s: %s",
+                        phone, send_exc,
+                    )
+        except Exception as outer_exc:  # noqa: BLE001
+            logger.error("WEBHOOK fallback dispatch FAILED: %s", outer_exc)
+        return None
+
+
+async def _process_whatsapp_payload(payload: dict):
+    """Procesamiento principal del webhook (extraído del endpoint en F1).
+
+    Equivalente al cuerpo histórico de `receive_whatsapp_webhook`. No
+    cambia la lógica de negocio: sólo se ejecuta ahora dentro de
+    `BackgroundTasks` para liberar la respuesta HTTP a Meta.
+    """
     processed_messages = []
 
     for entry in payload.get("entry", []):
@@ -21062,6 +21149,26 @@ async def receive_whatsapp_webhook(request: Request):
                             {"error": str(exc), "response_text": response_text},
                             intent_detectado=ai_result.get("intent"),
                         )
+
+                    # F1.3 — Caja Negra: persistir auditoría del turno.
+                    try:
+                        from telemetry import (
+                            build_entry_from_ai_result,
+                            get_audit_logger,
+                        )
+                        _is_internal = bool(
+                            (conversation_context or {}).get("internal_auth", {}).get("user")
+                        )
+                        _audit_entry = build_entry_from_ai_result(
+                            ai_result=ai_result if isinstance(ai_result, dict) else {},
+                            role="internal" if _is_internal else "external",
+                            phone_e164=context.get("telefono_e164"),
+                            conversation_id=context.get("conversation_id"),
+                            user_message=content,
+                        )
+                        get_audit_logger().record_agent_turn(_audit_entry)
+                    except Exception as audit_exc:  # noqa: BLE001
+                        logger.warning("AUDIT log failed (non-blocking): %s", audit_exc)
 
                     source_filename = ai_result.get("technical_source_filename") if isinstance(ai_result, dict) else None
                     if source_filename:

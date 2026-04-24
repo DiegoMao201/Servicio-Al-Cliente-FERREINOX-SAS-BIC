@@ -1213,6 +1213,17 @@ def generate_agent_reply_v3(
     if not response_text:
         response_text = "Gracias por escribirnos. ¿En qué te puedo ayudar?"
 
+    # ── G1: Sanitizer final (defensa #N) — bloquea fugas de JSON / tags
+    # internas / payloads de tool_call ANTES de enviar al usuario.
+    try:
+        from agent_response_sanitizer import sanitize_agent_response
+    except ImportError:
+        from backend.agent_response_sanitizer import sanitize_agent_response  # type: ignore
+    response_text = sanitize_agent_response(
+        response_text,
+        conversation_id=(context or {}).get("conversation_id") if isinstance(context, dict) else None,
+    )
+
     confidence = m.score_agent_confidence(response_text, tool_calls_made, intent)
     is_farewell = m.detect_farewell(user_message)
     if is_farewell:
