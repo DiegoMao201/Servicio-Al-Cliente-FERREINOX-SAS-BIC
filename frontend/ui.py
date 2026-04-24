@@ -1,4 +1,5 @@
 import html
+import math
 
 import streamlit as st
 
@@ -394,15 +395,26 @@ def render_flow_step(step_number, title, description):
     )
 
 
+def _normalize_message_content(content):
+    if content is None:
+        return "Mensaje sin texto adjunto."
+    if isinstance(content, str):
+        return content
+    if isinstance(content, float) and math.isnan(content):
+        return "Mensaje sin texto adjunto."
+    return str(content)
+
+
 def render_message(direction, created_at, intent, content):
     direction_label = "Cliente" if direction == "inbound" else "Agente"
     tone_class = "fx-inbound" if direction == "inbound" else "fx-outbound"
     intent_label = intent or "sin clasificar"
+    body = _normalize_message_content(content)
     st.markdown(
         f"""
         <div class="fx-message {tone_class}">
             <div class="fx-message-meta">{html.escape(direction_label)} · {html.escape(str(created_at))} · {html.escape(intent_label)}</div>
-            <div class="fx-message-body">{html.escape(content or '')}</div>
+            <div class="fx-message-body">{html.escape(body)}</div>
         </div>
         """,
         unsafe_allow_html=True,
