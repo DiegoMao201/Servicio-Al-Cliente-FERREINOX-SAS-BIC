@@ -271,6 +271,25 @@ def _format_preview_value(key: str, value: Any) -> str:
     return str(value)
 
 
+def _build_promo_price_before_iva(unit_cost: Any, margin_pct: float = 0.10) -> float:
+    try:
+        cost_value = float(unit_cost or 0)
+    except (TypeError, ValueError):
+        return 0.0
+    denominator = 1 - margin_pct
+    if cost_value <= 0 or denominator <= 0:
+        return 0.0
+    return round(cost_value / denominator, 2)
+
+
+def _first_non_empty_text(*values: Any) -> Optional[str]:
+    for value in values:
+        text_value = str(value or "").strip()
+        if text_value and text_value.lower() != "sin clientes objetivo claros":
+            return text_value
+    return None
+
+
 def detect_requested_routine(user_message: Optional[str]) -> Optional[str]:
     normalized = _normalize_text(user_message)
     if not normalized:
@@ -1459,6 +1478,7 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 MAX(inv.referencia) AS referencia,
                 MAX(inv.descripcion) AS descripcion,
                 COALESCE(SUM(inv.stock_disponible), 0) AS stock_total,
+                COALESCE(AVG(inv.costo_promedio_und), 0) AS costo_promedio_und,
                 COALESCE(SUM(inv.stock_disponible * COALESCE(inv.costo_promedio_und, 0)), 0) AS inventory_value
             FROM public.vw_inventario_agente inv
             WHERE :store_code IS NULL OR inv.cod_almacen = :store_code
@@ -1498,6 +1518,7 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 COALESCE(inv.referencia, ph.referencia_normalizada) AS referencia,
                 COALESCE(inv.descripcion, ph.descripcion_venta) AS descripcion,
                 COALESCE(inv.stock_total, 0) AS stock_total,
+                COALESCE(inv.costo_promedio_und, 0) AS costo_promedio_und,
                 COALESCE(inv.inventory_value, 0) AS inventory_value,
                 ph.ventas_historicas,
                 COALESCE(pc.ventas_actuales, 0) AS ventas_actuales,
@@ -1527,6 +1548,7 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 COALESCE(SUM(COALESCE(public.fn_parse_numeric(rv.valor_venta), 0)), 0) AS ventas_historicas_cliente
             FROM public.raw_ventas_detalle rv
             JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+                        JOIN top_products tp ON tp.referencia_normalizada = am.referencia_normalizada
             WHERE LOWER(rv.tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(rv.fecha_venta) BETWEEN :history_start AND :history_end
               AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
@@ -1539,6 +1561,7 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 public.fn_keep_alnum(rv.cliente_id) AS cod_cliente
             FROM public.raw_ventas_detalle rv
             JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+                        JOIN top_products tp ON tp.referencia_normalizada = am.referencia_normalizada
             WHERE LOWER(rv.tipo_documento) LIKE '%factura%'
               AND public.fn_parse_date(rv.fecha_venta) BETWEEN :current_start AND :current_end
               AND (:store_code IS NULL OR LEFT(COALESCE(rv.serie, ''), 3) = :store_code)
@@ -1559,6 +1582,8 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
         target_clients AS (
             SELECT
                 referencia_normalizada,
+                MAX(CASE WHEN rn = 1 THEN nombre_cliente END) AS cliente_objetivo_1,
+                MAX(CASE WHEN rn = 2 THEN nombre_cliente END) AS cliente_objetivo_2,
                 string_agg(nombre_cliente, ', ' ORDER BY ventas_historicas_cliente DESC) AS clientes_objetivo
             FROM target_ranked
             WHERE rn <= 3
@@ -1569,6 +1594,7 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
             tp.referencia,
             tp.descripcion,
             tp.stock_total,
+            tp.costo_promedio_und,
             tp.inventory_value,
             tp.ventas_historicas,
             tp.ventas_actuales,
@@ -1576,6 +1602,8 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
             tp.brecha_oportunidad,
             tp.ultima_venta AS fecha_ultima_venta,
             tp.dias_sin_venta,
+            COALESCE(tc.cliente_objetivo_1, 'Sin cliente objetivo 1') AS cliente_objetivo_1,
+            COALESCE(tc.cliente_objetivo_2, 'Sin cliente objetivo 2') AS cliente_objetivo_2,
             COALESCE(tc.clientes_objetivo, 'Sin clientes objetivo claros') AS clientes_objetivo
         FROM top_products tp
         LEFT JOIN target_clients tc ON tc.referencia_normalizada = tp.referencia_normalizada
@@ -1596,7 +1624,12 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 "limit": limit,
             },
         ).mappings().all()
-    return [dict(row) for row in rows], period_label
+    normalized_rows = []
+    for row in rows:
+        normalized_row = dict(row)
+        normalized_row["precio_promo_sugerido"] = _build_promo_price_before_iva(normalized_row.get("costo_promedio_und"))
+        normalized_rows.append(normalized_row)
+    return normalized_rows, period_label
 
 
 def _build_products_to_push_summary(rows: list[dict], period_label: str, limit: int) -> str:
@@ -1605,9 +1638,19 @@ def _build_products_to_push_summary(rows: list[dict], period_label: str, limit: 
     for row in rows[: min(limit, 5)]:
         dias = row.get("dias_sin_venta")
         dias_text = f"{int(dias)} días" if isinstance(dias, Number) else "sin dato"
+        promo_value = float(row.get("precio_promo_sugerido") or 0)
+        promo_text = _format_currency(promo_value) if promo_value > 0 else "N/D"
+        client_1 = _first_non_empty_text(row.get("cliente_objetivo_1"), row.get("clientes_objetivo"))
+        client_2 = _first_non_empty_text(row.get("cliente_objetivo_2"))
         lines.append(
-            f"- {row.get('referencia')} | {row.get('descripcion')} | stock {_format_number(row.get('stock_total'))} | actual {_format_currency(row.get('ventas_actuales'))} vs base {_format_currency(row.get('promedio_base'))} | brecha {_format_currency(row.get('brecha_oportunidad'))} | clientes {row.get('clientes_objetivo')} | {dias_text} sin venta"
+            f"- {row.get('referencia')} | {row.get('descripcion')} | stock {_format_number(row.get('stock_total'))} | actual {_format_currency(row.get('ventas_actuales'))} vs base {_format_currency(row.get('promedio_base'))} | brecha {_format_currency(row.get('brecha_oportunidad'))} | precio promo sugerido {promo_text} + IVA | {dias_text} sin venta"
         )
+        if client_1:
+            lines.append(f"  Acción 1: contactar a {client_1} y ofrecer precio promocional de {promo_text} + IVA para reactivar rotación inmediata.")
+        if client_2:
+            lines.append(f"  Acción 2: llamar a {client_2}, validar consumo histórico y cerrar oferta táctica con el mismo precio promocional {promo_text} + IVA.")
+        elif client_1:
+            lines.append(f"  Acción 2: activar mostrador y equipo comercial con precio de oportunidad {promo_text} + IVA hasta mover el stock disponible.")
     lines.append("Si quieres el detalle completo, te lo envío por correo con Excel.")
     return "\n".join(lines)
 
@@ -2535,8 +2578,8 @@ def _build_monthly_commercial_plan_report_bundle(payload: dict, store_code: Opti
                 },
                 {
                     "name": "Productos impulso",
-                    "headers": ["Almacen", "Referencia", "Descripcion", "Stock", "Ventas actuales", "Promedio base", "Brecha oportunidad", "Clientes objetivo"],
-                    "keys": ["almacen_nombre", "referencia", "descripcion", "stock_total", "ventas_actuales", "promedio_base", "brecha_oportunidad", "clientes_objetivo"],
+                    "headers": ["Almacen", "Referencia", "Descripcion", "Stock", "Costo unitario", "Precio promo +10% margen", "Ventas actuales", "Promedio base", "Brecha oportunidad", "Cliente objetivo 1", "Cliente objetivo 2", "Clientes objetivo"],
+                    "keys": ["almacen_nombre", "referencia", "descripcion", "stock_total", "costo_promedio_und", "precio_promo_sugerido", "ventas_actuales", "promedio_base", "brecha_oportunidad", "cliente_objetivo_1", "cliente_objetivo_2", "clientes_objetivo"],
                     "rows": push_rows,
                 },
             ],
@@ -3069,8 +3112,8 @@ def _report_rows_and_headers(report_type: str, engine, store_code: Optional[str]
         detail_sheet = "Detalle productos"
     elif report_type == "productos_a_impulsar":
         rows, period_label = _fetch_products_to_push_rows(engine, pending_args.get("periodo") or "este mes", store_code, vendor_code, limit)
-        headers = ["Almacen", "Referencia", "Descripcion", "Stock", "Ventas actuales", "Promedio base", "Brecha oportunidad", "Clientes objetivo"]
-        keys = ["almacen_nombre", "referencia", "descripcion", "stock_total", "ventas_actuales", "promedio_base", "brecha_oportunidad", "clientes_objetivo"]
+        headers = ["Almacen", "Referencia", "Descripcion", "Stock", "Costo unitario", "Precio promo +10% margen", "Ventas actuales", "Promedio base", "Brecha oportunidad", "Cliente objetivo 1", "Cliente objetivo 2", "Clientes objetivo"]
+        keys = ["almacen_nombre", "referencia", "descripcion", "stock_total", "costo_promedio_und", "precio_promo_sugerido", "ventas_actuales", "promedio_base", "brecha_oportunidad", "cliente_objetivo_1", "cliente_objetivo_2", "clientes_objetivo"]
         title = "Reporte de Productos a Impulsar"
         metrics = [
             ("Periodo analizado", period_label),
