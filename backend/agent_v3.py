@@ -114,6 +114,104 @@ def _collect_recent_inbound_text(user_message: str, recent_messages: list[dict],
     return " ".join(combined).strip()
 
 
+def _extract_plaintext_tool_payload(text: str, active_tools: list[dict]) -> Optional[dict]:
+    if not text:
+        return None
+    allowed_names = {
+        ((tool or {}).get("function") or {}).get("name")
+        for tool in active_tools or []
+    }
+    normalized = re.sub(
+        r"^\s*(?:json|tool|tool_call|function_call)\s*(?:\r?\n)+",
+        "",
+        text.strip(),
+        count=1,
+        flags=re.IGNORECASE,
+    )
+    start = normalized.find("{")
+    end = normalized.rfind("}")
+    if start == -1 or end <= start:
+        return None
+    try:
+        payload = json.loads(normalized[start:end + 1])
+    except Exception:
+        return None
+    if not isinstance(payload, dict):
+        return None
+
+    function_block = payload.get("function") if isinstance(payload.get("function"), dict) else {}
+    fn_name = payload.get("name") or function_block.get("name")
+    fn_args = payload.get("parameters")
+    if fn_args is None:
+        fn_args = function_block.get("arguments")
+    if isinstance(fn_args, str):
+        try:
+            fn_args = json.loads(fn_args)
+        except Exception:
+            return None
+    if fn_name not in allowed_names or not isinstance(fn_args, dict):
+        return None
+    return {"name": fn_name, "args": fn_args}
+
+
+def _retry_after_plaintext_tool_leak(
+    assistant_message,
+    *,
+    messages: list[dict],
+    active_tools: list[dict],
+    client,
+    m,
+    agent_profile: str,
+    user_message: str,
+    tool_choice,
+    parallel_tool_calls: bool,
+    conversation_context: dict,
+):
+    leaked_payload = _extract_plaintext_tool_payload(assistant_message.content or "", active_tools)
+    if assistant_message.tool_calls or not leaked_payload:
+        return assistant_message
+
+    leaked_name = leaked_payload["name"]
+    logger.error(
+        "V3 plaintext tool leak detected — retrying | tool=%s | preview=%r",
+        leaked_name,
+        (assistant_message.content or "")[:240],
+    )
+    messages.append({"role": "assistant", "content": assistant_message.content or ""})
+
+    extra_instruction = ""
+    if leaked_name == "enviar_reporte_interno_correo" and not _should_force_internal_report_email_tool(
+        agent_profile,
+        user_message,
+        conversation_context,
+    ):
+        extra_instruction = (
+            " El usuario no pidió explícitamente enviar correo en este turno. "
+            "No llames enviar_reporte_interno_correo salvo petición explícita; resume en WhatsApp y ofrece el correo como opción."
+        )
+
+    messages.append({
+        "role": "system",
+        "content": (
+            "CORRECCIÓN OBLIGATORIA: acabas de imprimir un payload de herramienta en texto plano. "
+            "Eso es inválido para WhatsApp. Nunca muestres JSON, herramientas ni parámetros al usuario. "
+            "Si necesitas una herramienta, úsala como tool_call real. Si no, responde en lenguaje natural." + extra_instruction
+        ),
+    })
+
+    retry_kwargs = {
+        "model": m.get_openai_model(),
+        "messages": messages,
+        "tools": active_tools,
+        "temperature": 0.2,
+        "parallel_tool_calls": parallel_tool_calls,
+    }
+    if tool_choice is not None:
+        retry_kwargs["tool_choice"] = tool_choice
+    retry_response = client.chat.completions.create(**retry_kwargs)
+    return retry_response.choices[0].message
+
+
 def _should_force_internal_report_email_tool(agent_profile: str, user_message: str, conversation_context: dict) -> bool:
     if agent_profile != "internal":
         return False
@@ -1043,6 +1141,18 @@ def generate_agent_reply_v3(
     logger.info("V3 LLM initial: %dms", int((t_first - t_start) * 1000))
 
     assistant_message = response.choices[0].message
+    assistant_message = _retry_after_plaintext_tool_leak(
+        assistant_message,
+        messages=messages,
+        active_tools=active_tools,
+        client=client,
+        m=m,
+        agent_profile=agent_profile,
+        user_message=user_message,
+        tool_choice=_llm_extra_kwargs.get("tool_choice"),
+        parallel_tool_calls=_llm_extra_kwargs.get("parallel_tool_calls", True),
+        conversation_context=conversation_context,
+    )
 
     if _needs_forced_technical_retry():
         logger.info("V3 retry: advisory response promised a technical lookup without calling tools")
@@ -1067,6 +1177,18 @@ def generate_agent_reply_v3(
             temperature=0.2,
         )
         assistant_message = response.choices[0].message
+        assistant_message = _retry_after_plaintext_tool_leak(
+            assistant_message,
+            messages=messages,
+            active_tools=active_tools,
+            client=client,
+            m=m,
+            agent_profile=agent_profile,
+            user_message=user_message,
+            tool_choice="auto",
+            parallel_tool_calls=True,
+            conversation_context=conversation_context,
+        )
         logger.info("V3 retry completed after missed advisory tool call")
 
     max_iterations = 6
@@ -1146,6 +1268,18 @@ def generate_agent_reply_v3(
         )
         logger.info("V3 LLM iteration %d: %dms", iteration, int((time.time() - t_loop) * 1000))
         assistant_message = response.choices[0].message
+        assistant_message = _retry_after_plaintext_tool_leak(
+            assistant_message,
+            messages=messages,
+            active_tools=active_tools,
+            client=client,
+            m=m,
+            agent_profile=agent_profile,
+            user_message=user_message,
+            tool_choice="none" if _pdf_succeeded else "auto",
+            parallel_tool_calls=True,
+            conversation_context=conversation_context,
+        )
         max_iterations -= 1
 
     # ── Si se agotaron iteraciones sin texto final, forzar respuesta ────

@@ -25,6 +25,7 @@ from typing import Optional
 logger = logging.getLogger("ferreinox_agent.sanitizer")
 
 
+_LEADING_JSON_LABEL_RE = re.compile(r"^\s*(?:json|JSON)\s*(?:\r?\n)+")
 _FENCED_CODE_RE = re.compile(r"```(?:json|JSON|tool_use|tool|python)?\s*[\s\S]*?```", re.MULTILINE)
 _ANALISIS_RE = re.compile(r"<\s*analisis\s*>[\s\S]*?<\s*/\s*analisis\s*>", re.IGNORECASE)
 _TOOL_TAG_RE = re.compile(
@@ -45,9 +46,13 @@ SAFE_FALLBACK_EMPTY = (
 )
 
 
+def _normalize_json_prefixed_text(text: str) -> str:
+    return _LEADING_JSON_LABEL_RE.sub("", text or "", count=1)
+
+
 def _looks_like_pure_json(text: str) -> bool:
     """True si la respuesta es básicamente un objeto/array JSON puro."""
-    stripped = text.strip()
+    stripped = _normalize_json_prefixed_text(text).strip()
     if not stripped:
         return False
     if not (stripped.startswith("{") or stripped.startswith("[")):
@@ -77,7 +82,7 @@ def sanitize_agent_response(
         return SAFE_FALLBACK_EMPTY
 
     original = text
-    cleaned = text
+    cleaned = _normalize_json_prefixed_text(text)
 
     # 1) Si toda la respuesta es JSON puro → fuga estructural grave.
     if _looks_like_pure_json(cleaned):
