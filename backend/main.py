@@ -34,15 +34,11 @@ from sqlalchemy import create_engine, text
 
 try:
     from gemini_embeddings import (
-        EMBEDDING_DIMENSIONS,
-        EMBEDDING_MODEL,
         generate_document_embedding,
         generate_query_embedding as generate_gemini_query_embedding,
     )
 except ImportError:
     from backend.gemini_embeddings import (
-        EMBEDDING_DIMENSIONS,
-        EMBEDDING_MODEL,
         generate_document_embedding,
         generate_query_embedding as generate_gemini_query_embedding,
     )
@@ -2891,6 +2887,14 @@ def get_openai_client():
     base_url = get_openai_base_url()
     if base_url:
         client_kwargs["base_url"] = base_url
+    else:
+        # Fallback path: no DEEPSEEK_API_KEY ni OPENAI_BASE_URL configurados.
+        # Cae al endpoint OpenAI por defecto. Producción debe usar DeepSeek.
+        logger.warning(
+            "LLM client fallback: usando endpoint OpenAI por defecto (modelo=%s). "
+            "Configura DEEPSEEK_API_KEY o OPENAI_BASE_URL para evitar este fallback.",
+            get_openai_model(),
+        )
     return OpenAI(**client_kwargs)
 
 
@@ -7686,7 +7690,6 @@ def fetch_rotation_cache(connection) -> dict:
         _rotation_cache_data = {str(row["producto_codigo"]): float(row["rotation_score"]) for row in rows}
         _rotation_cache_ts = now
         return _rotation_cache_data
-        return {str(row["producto_codigo"]): float(row["rotation_score"]) for row in rows}
     except Exception:
         return {}
 
@@ -16309,9 +16312,6 @@ def store_commercial_pdf(conversation_id: int, request_type: str, profile_name: 
     return pdf_id, filename
 
 
-    return pdf_id, filename
-
-
 # ── Memoria Técnica / Technical Advisory PDF ──────────────────────────────
 def generate_technical_advisory_pdf(
     conversation_id: int,
@@ -21336,6 +21336,21 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         )
         inventory_candidates = _filter_inventory_candidates_by_policy(inventory_candidates, hard_policies)
 
+    # ── Síntesis canónica única (las reglas de tono/anti-invención viven en el system prompt) ──
+    cierre_comercial = (
+        "Si quieres, te conecto con un asesor comercial para cotizar los productos."
+        if get_agent_profile_name() == "internal"
+        else "¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?"
+    )
+    instruccion_sintesis = (
+        "Orden de lectura: politicas_duras_contexto → conocimiento_comercial_ferreinox → "
+        "perfil_tecnico_principal → diagnostico_estructurado → guia_tecnica_estructurada → "
+        "guias_tecnicas_relacionadas/contexto_guias → respuesta_rag (sintetiza, no copies). "
+        "Si pricing_ready=false o pricing_gate='m2_required', no cotices: pide el dato faltante. "
+        "Cálculo: m² ÷ rendimiento_mínimo del RAG = galones (redondear ARRIBA). "
+        f"Cierre del turno: \"{cierre_comercial}\""
+    )
+
     result_payload = {
         "encontrado": True,
         "respuesta_rag": rag_context,
@@ -21352,46 +21367,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         "productos_sistema_prioritarios": candidate_product_names[:8],
         "productos_multimodales_relacionados": multimodal_products,
         "preguntas_pendientes": structured_diagnosis.get("required_validations") or [],
-        "mensaje": (
-            "⚡ INSTRUCCIÓN DE SÍNTESIS RAG (OBLIGATORIA): "
-            "Lee PRIMERO 'perfil_tecnico_principal'. Esa ficha JSON es la base más rica del producto: cómo se aplica, dónde se aplica, dilución, rendimiento, restricciones y alertas. "
-            "Luego lee 'guias_tecnicas_relacionadas' y 'contexto_guias' para capturar sistemas completos, preguntas de diagnóstico y rutas de decisión. "
-            "Luego lee 'diagnostico_estructurado' y 'guia_tecnica_estructurada'. Esos campos son la fuente prioritaria para: clase de problema, validaciones pendientes, sistema recomendado, productos prohibidos y compuerta de cotización. "
-            "Luego lee 'politicas_duras_contexto'. Ese objeto es CONTRACTUAL: productos prohibidos, productos obligatorios, herramientas prohibidas y pasos obligatorios. "
-            "Si aparece ahí, debes obedecerlo literalmente. No lo conviertas en sugerencia. "
-            "Los fragmentos en 'respuesta_rag' son DATOS CRUDOS de fichas técnicas. Tu trabajo NO es repetirlos textualmente. "
-            "DEBES SINTETIZARLOS como un ingeniero de aplicaciones: "
-            "0) Si 'pricing_ready' es false o 'pricing_gate' es 'm2_required', primero diagnostica y pide los datos faltantes. NO cotices todavía. "
-            "1) LEE todos los fragmentos y SINTETIZA la información para este caso específico. "
-            "   PREPARACIÓN DE SUPERFICIE es SIEMPRE obligatoria — describe los pasos de preparación que el RAG indica. "
-            "   IMPRIMANTE/SELLADOR solo si el RAG lo menciona EXPLÍCITAMENTE para este sustrato y condición. "
-            "   NO inventes capas intermedias que el RAG no recomienda. Las fichas técnicas ya son claras sobre qué sustrato y qué preparación necesita cada producto. "
-            "   Si la ficha dice 'aplicar directamente sobre superficie limpia', NO agregues imprimante. "
-            "   Si la ficha dice que necesita un primer específico, ENTONCES sí inclúyelo. "
-            "   Cada producto tiene su uso, aplicación y sustratos bien definidos — respeta esa información. "
-            "2) EXTRAE datos técnicos concretos: rendimiento m²/gal, tiempo secado, proporciones mezcla, temperatura aplicación. "
-            "   ⛔ PROHIBIDO INVENTAR DATOS TÉCNICOS. Si el RAG dice rendimiento 12-16 m²/gal, usa ESE número. "
-            "   Si el RAG NO tiene el dato, di 'según ficha técnica' y usa SOLO la tabla RENDIMIENTOS VERIFICADOS del prompt. "
-            "   NUNCA inventes un número de rendimiento, espesor, tiempo de secado o proporción que no esté en el RAG ni en el prompt. "
-            "3) Si 'conocimiento_comercial_ferreinox' está presente → PREVALECE SOBRE TODO. "
-            "   El conocimiento del asesor Ferreinox ha sido enseñado directamente por los expertos Pablo y Diego. "
-            "   Si contradice al RAG, EL EXPERTO PREVALECE. Integra como '💡 Experiencia Ferreinox: [nota]'. "
-            "   Si 'politicas_duras_contexto.forbidden_products' o 'forbidden_tools' contiene algo, PROHIBIDO ofrecerlo como opción válida. "
-            "   Si 'politicas_duras_contexto.required_products' contiene algo, DEBE aparecer en tu sistema recomendado salvo que expliques por qué aún falta validación técnica. "
-            "   Si 'politicas_duras_contexto.critical_policy_names' trae valores, DEBES abrir el primer párrafo con ese riesgo crítico y su advertencia principal antes de mezclarlo con rutas decorativas o secundarias. "
-            "   Si 'politicas_duras_contexto.dominant_policy_names' trae valores, prioriza esas rutas como eje de la asesoría. "
-            "4) INCLUYE herramientas ESPECÍFICAS para este sistema (no genéricas): rodillo de felpa + tipo, thinner/solvente específico como ajustador, lija grano correcto. "
-            "5) NUNCA respondas con un solo producto suelto sin contexto de aplicación. NUNCA cites el PDF textualmente. NUNCA digas 'según la ficha...' y copies un párrafo. "
-            "   PERO tampoco inventes productos adicionales que el RAG no recomienda para forzar un 'sistema completo'. "
-            "   Si el RAG dice que para este caso basta preparación + producto acabado, presenta ESO. No le agregues capas. "
-            "6) Si NO encontraste precio → NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. Presenta el sistema + cantidades y cierra: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?' "
-            "7) CÁLCULOS: m² ÷ rendimiento_mínimo = galones (redondear ARRIBA). Ejemplo: 165 m² ÷ 12 m²/gal = 13.75 → 14 galones. NUNCA uses el rendimiento máximo. "
-            + (
-                "8) CIERRE INTERNO: entrega la recomendación técnica final con preparación, sistema, rendimiento y advertencias. Si hace falta continuidad comercial, cierra solo con: 'Si quieres, te conecto con un asesor comercial para cotizar los productos.'"
-                if get_agent_profile_name() == "internal"
-                else "8) CIERRE: '¿Deseas que te arme la cotización formal o prefieres realizar el pedido directamente?'"
-            )
-        ),
+        "instruccion_sintesis": instruccion_sintesis,
     }
 
     if technical_profiles:
@@ -21408,92 +21384,28 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             if item.get("profile_json")
         ]
 
-    # ── Inject mandatory galones note for Pintuco Fill rendimiento queries ──
-    _q_combined = (producto + " " + pregunta).lower()
-    if "pintuco fill" in _q_combined and any(kw in _q_combined for kw in ["rinde", "rendimiento", "galón", "gal", "cuanto", "aplic", "cómo", "como"]):
-        result_payload["nota_rendimiento_obligatoria"] = (
-            "NOTA OBLIGATORIA PINTUCO FILL 7: Tu respuesta DEBE incluir TODAS estas palabras/símbolos: "
-            "'m²' (usa el símbolo exacto con superíndice ², nunca 'm2' ni 'metros cuadrados'), "
-            "'galones' (plural), 'rodillo', 'brocha', 'superficie', 'aplica'. "
-            "FRASE MODELO que debes adaptar: 'Rendimiento aprox. 3-5 m² por galón en superficie de eternit. "
-            "Se aplica con rodillo lanudo o brocha sobre superficie limpia y seca. "
-            "Para 30 m² (2 manos) necesitarías entre 6 y 10 galones.'"
-        )
-
-    # ── Inject mandatory keywords for Corrotec surface preparation queries ──
-    if any(kw in _q_combined for kw in ["corrotec", "anticorrosivo"]) and any(
-        kw in _q_combined for kw in ["prepar", "superficie", "superficie", "antes", "limpiar", "lijar", "como", "cómo"]
-    ):
-        result_payload["nota_preparacion_corrotec"] = (
-            "NOTA OBLIGATORIA CORROTEC: Tu respuesta DEBE incluir preparación de superficie antes de aplicar el anticorrosivo. "
-            "Menciona limpieza, retiro de óxido mal adherido, lijado o cepillado mecánico, y superficie seca antes de pintar."
-        )
-    # ── Inject mandatory keywords for Pintucoat drying time queries ──
-    if any(kw in _q_combined for kw in ["pintucoat", "epoxic"]) and any(
-        kw in _q_combined for kw in ["secado", "secar", "seca", "tiempo", "hora", "esperar", "entre manos", "repinte"]
-    ):
-        result_payload["nota_secado_pintucoat"] = (
-            "NOTA OBLIGATORIA SECADO PINTUCOAT: Tu respuesta DEBE incluir 'hora' o 'horas' "
-            "(tiempo de secado) y la palabra 'seca' o 'secado'. "
-            "FRASE MODELO: 'El Pintucoat seca al tacto en 2-4 horas y permite repinte a las 8-12 horas, "
-            "dependiendo de temperatura y humedad. Usa estos datos como referencia si el RAG no especifica horas exactas.'"
-        )
-
-    # ── Industrial/MPY flag: inject complete-system extraction instruction ──
+    # ── Bandera escenario industrial (instrucciones de formato viven en el system prompt) ──
     if marca_filter == "international":
-        result_payload["instruccion_industrial"] = (
-            "SISTEMA INTEGRAL OBLIGATORIO (consulta industrial International/MPY): "
-            "SINTETIZA de 'respuesta_rag' el SISTEMA COMPLETO como lo define la Guía de Mantenimiento Industrial. "
-            "NO copies párrafos del PDF. ARMA el sistema paso a paso: "
-            "🔹 Paso 1 — Preparación: norma SSPC/ISO, sa-grado, método mecánico requerido. "
-            "🔹 Paso 2 — Imprimación: producto, manos, espesor seco (µm). "
-            "🔹 Paso 3 — Capa intermedia/body coat (si aplica): producto, manos, espesor. "
-            "🔹 Paso 4 — Acabado final: producto, manos, espesor. "
-            "🔹 Paso 5 — Tiempos de repintado entre capas y curado total. "
-            "🔹 Paso 6 — Condiciones (temperatura, humedad relativa, punto de rocío). "
-            "Incluye HERRAMIENTAS ESPECÍFICAS: pistola airless/convencional, brocha de corte, rodillo industrial, thinner/solvente ajustador con referencia. "
-            "Si algún dato NO aparece en el RAG, dilo explícitamente pero NO detengas la asesoría. "
-            "Si el precio no está disponible → Escala al Asesor Técnico Comercial: 'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'"
-        )
+        result_payload["escenario_industrial"] = True
 
-    # ── Bicomponent detection: inject catalyst extraction instruction ────────
-    # If this query involves a bicomponent product, force the agent to extract
-    # the exact catalyst code + proportion from the RAG, and warn against
-    # offering the product without its catalyst.
+    # ── Bicomponente: pasamos solo DATOS estructurados (no doctrina prosa) ──
     _bicomp_info = get_bicomponent_info(f"{pregunta} {producto}")
     if _bicomp_info:
         _bkey = _bicomp_info.get("producto_base", "")
         _catalog_entry = BICOMPONENT_CATALOG.get(_bkey, {})
-        _comp_b = _catalog_entry.get("componente_b_codigo") or "ver ficha técnica"
-        _prop = _catalog_entry.get("proporcion_galon") or _catalog_entry.get("nota") or "ver ficha técnica"
-        result_payload["instruccion_bicomponente"] = (
-            f"⚠️ PRODUCTO BICOMPONENTE DETECTADO ({_bkey.upper()}). REGLAS OBLIGATORIAS: "
-            f"1) Extrae de 'respuesta_rag' el nombre exacto del COMP B / catalizador, su código y la proporción de mezcla. "
-            f"2) CATÁLOGO INTERNO VERIFICADO → catalizador: '{_comp_b}', proporción galón: '{_prop}'. "
-            f"   Si el RAG confirma datos distintos, usa los del RAG. Si el RAG no los tiene, usa el catálogo interno. "
-            f"   NUNCA INVENTES un código de catalizador distinto a estos datos. "
-            f"3) Llama `consultar_inventario` por separado para: (a) el COMP A, (b) el catalizador COMP B. "
-            f"4) Presenta al cliente SIEMPRE el par: COMP A + COMP B en proporción correcta. "
-            f"5) PROHIBIDO mencionar solo el COMP A sin el catalizador. "
-        )
-        if _catalog_entry.get("restriccion_exterior"):
-            result_payload["instruccion_bicomponente"] += (
-                f"6) RESTRICCIÓN EXTERIOR: {_catalog_entry['restriccion_exterior']}"
-            )
-        # If this is Interseal and query involves water/potable — inject conditional application note
+        result_payload["bicomponente"] = {
+            "producto_base": _bkey,
+            "componente_b_codigo": _catalog_entry.get("componente_b_codigo") or "ver ficha técnica",
+            "proporcion_galon": _catalog_entry.get("proporcion_galon") or _catalog_entry.get("nota") or "ver ficha técnica",
+            "restriccion_exterior": _catalog_entry.get("restriccion_exterior") or None,
+        }
+        # Aplicación condicional agua potable / inmersión (solo dato verificado del catálogo)
         _q_agua = normalize_text_value(f"{pregunta} {producto}")
         _agua_keywords = ["agua potable", "tanque agua", "inmercion", "inmersion", "nsf", "ansi", "sumergido", "lining"]
         if _bkey == "interseal" and any(kw in _q_agua for kw in _agua_keywords):
             _agua_note = _catalog_entry.get("aplicacion_condicional_agua_potable", "")
             if _agua_note:
-                result_payload["instruccion_agua_potable"] = (
-                    "⚠️ CONSULTA DE APLICACIÓN CONDICIONAL (agua potable / inmersión): "
-                    f"CONOCIMIENTO TÉCNICO VERIFICADO: {_agua_note} "
-                    "INSTRUCCIÓN: Lee los fragmentos del RAG y construye la respuesta condicional completa: "
-                    "certificación detectada, preparación requerida, limitaciones de color/capacidad, "
-                    "tiempos de curado, y alternativas si las hay. "
-                    "NUNCA respondas con un 'no manejamos eso' para esta aplicación sin haber leído el RAG."
-                )
+                result_payload["aplicacion_agua_potable"] = _agua_note
 
     if inventory_candidates:
         result_payload["productos_inventario_relacionados"] = [
@@ -21508,21 +21420,14 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             }
             for p in inventory_candidates
         ]
-        result_payload["instruccion_productos"] = (
-            "CANDIDATOS TÉCNICOS EN PORTAFOLIO (NO son confirmación de stock). "
-            "Lee primero `productos_sistema_prioritarios`: esa es la lista canónica derivada de la guía estructurada y de las políticas duras. "
-            "Si `productos_inventario_relacionados` no cubre todos esos prioritarios, debes buscar los faltantes con `consultar_inventario` o `consultar_inventario_lote` usando esos nombres canónicos. "
-            "Estos productos son técnicamente compatibles con la consulta, pero NO los presentes al cliente como "
-            "disponibles hasta que llames `consultar_inventario` con el nombre exacto de cada producto. "
-            "OBLIGATORIO: en este mismo turno o en el siguiente, llama `consultar_inventario` para confirmar "
-            "disponibilidad real y referencia ERP antes de recomendar al cliente. "
-            "Nunca reuses estas referencias de turnos anteriores sin una llamada fresca a `consultar_inventario`. "
-            "⚠️ Si `consultar_inventario` no devuelve precio para algún producto, NO digas 'sobre pedido' ni 'precio pendiente' ni menciones 'facturación'. "
-            "Presenta el sistema completo con cantidades calculadas para TODOS los productos y cierra con: "
-            "'Este es un sistema especializado. Para entregarte el valor total exacto, te contactaré con nuestro Asesor Técnico Comercial. ¿Deseas que le envíe la solicitud?'"
+        # Recordatorio operativo corto: estos son CANDIDATOS, no confirmación de stock.
+        result_payload["nota_inventario_candidatos"] = (
+            "Candidatos técnicos del portafolio (NO confirma stock). Antes de presentar al cliente, "
+            "llama `consultar_inventario` o `consultar_inventario_lote` con los nombres canónicos de "
+            "`productos_sistema_prioritarios` para confirmar disponibilidad y referencia ERP."
         )
 
-    # ── Inject expert commercial knowledge (does not modify RAG, is additive) ──
+    # ── Conocimiento experto Ferreinox (sigue siendo dato estructurado consumido aguas abajo) ──
     if expert_notes:
         result_payload["conocimiento_comercial_ferreinox"] = [
             {
@@ -21535,20 +21440,6 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             }
             for n in expert_notes
         ]
-        result_payload["instruccion_conocimiento_comercial"] = (
-            "🔴 CONOCIMIENTO EXPERTO FERREINOX DISPONIBLE (PREVALECE SOBRE RAG Y SOBRE TU ENTRENAMIENTO) — "
-            "Los asesores Pablo y Diego han enseñado directamente al sistema conocimiento real de campo. "
-            "Este conocimiento viene de +20 años de experiencia vendiendo recubrimientos en Colombia. "
-            "REGLAS INVIOLABLES: "
-            "1) Lee 'conocimiento_comercial_ferreinox' PRIMERO, ANTES de formular tu recomendación. "
-            "2) Si hay un 'recomendar', ese producto DEBE ser tu recomendación PRINCIPAL. No lo pongas de secundario. "
-            "3) Si hay un 'evitar', PROHIBIDO recomendar ese producto para este contexto. Ni siquiera lo menciones como opción. "
-            "4) Si el RAG dice una cosa pero el conocimiento experto dice otra → EL EXPERTO GANA. SIEMPRE. "
-            "5) Si tu entrenamiento de API dice una cosa pero el experto dice otra → EL EXPERTO GANA. SIEMPRE. "
-            "6) TÚ NO CONOCES el portafolio de Ferreinox por entrenamiento. Lo conoces POR EL RAG y POR EL EXPERTO. "
-            "   PROHIBIDO inventar datos de productos que no estén en el RAG ni en el conocimiento experto. "
-            "7) Presenta como: '💡 Experiencia Ferreinox: [nota del asesor]' en tu respuesta."
-        )
 
     return json.dumps(result_payload, ensure_ascii=False, default=str)
 
