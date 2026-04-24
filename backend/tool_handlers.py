@@ -253,12 +253,20 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
 
     expert_notes = fetch_expert_knowledge(f"{producto} {pregunta}", limit=8)
     structured_diagnosis = _build_structured_diagnosis(pregunta, producto, best_similarity)
+    # ── Phase D1: two-pass guide build ───────────────────────────────────
+    # Pass 1: preliminary guide from RAG chunks only. Used to derive
+    #         candidate inventory terms downstream.
+    # Pass 2 (after inventory lookup): final guide with bicomponent
+    #         verification against actual inventory.
+    rag_chunks_for_guide = list(chunks) + list(guide_chunks)
     structured_guide = _build_structured_technical_guide(
         pregunta,
         producto,
         structured_diagnosis,
         expert_notes,
         best_similarity,
+        rag_chunks=rag_chunks_for_guide,
+        inventory_candidates=None,
     )
     hard_policies = _build_hard_policies_for_context(
         pregunta,
@@ -315,6 +323,20 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             allow_portfolio_expansion=False,
         )
         inventory_candidates = _filter_inventory_candidates_by_policy(inventory_candidates, hard_policies)
+
+    # ── Phase D1: pass 2 of guide build, now with verified inventory ─────
+    # Re-runs bicomponent validation. If a catalyst is missing in the
+    # actual inventory, the guide flips bicomponent_verified=False and
+    # emits a critical alert that blocks pricing downstream.
+    structured_guide = _build_structured_technical_guide(
+        pregunta,
+        producto,
+        structured_diagnosis,
+        expert_notes,
+        best_similarity,
+        rag_chunks=rag_chunks_for_guide,
+        inventory_candidates=inventory_candidates,
+    )
 
     # ── Síntesis canónica única (las reglas de tono/anti-invención viven en el system prompt) ──
     cierre_comercial = (

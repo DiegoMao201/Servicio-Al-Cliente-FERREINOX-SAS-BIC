@@ -29,17 +29,13 @@ Funciones movidas (Move & Wire — sin cambios de comportamiento):
   - ``lookup_inventory_candidates_from_terms``
 
 Stubs explícitos (TODO: RECONSTRUIR LOGICA DE NEGOCIO):
-  - ``_build_structured_diagnosis``
-  - ``_build_structured_technical_guide``
-
-Estos dos últimos eran referenciados desde ``tool_handlers``,
-``main.admin_rag_buscar``, ``test_global_policy_matrix*.py``,
-``tools/audits/audit_rag_from_policy_batteries.py`` y
-``tools/diagnostics/_diag_rag_fachada.py`` pero **nunca tuvieron una
-definición** en el repositorio (verificado vía
-``git log -p --all -S "def _build_structured_diagnosis"`` → 0 hits).
-Los stubs devuelven la estructura mínima esperada por los consumidores
-downstream para evitar ``AttributeError`` en producción y tests.
+  - ``_build_structured_diagnosis`` — REIMPLEMENTADO en Fase D1
+    (extracción determinista de los 3 pilares — sustrato/estado/exposición —
+    contra ``DiagnosisPayload`` Pydantic).
+  - ``_build_structured_technical_guide`` — REIMPLEMENTADO en Fase D1
+    (whitelist estricta de SKUs desde inventory + rag_chunks, validación
+    bicomponente vs ``BICOMPONENT_CATALOG`` y alerta crítica si falta el
+    catalizador).
 """
 
 from __future__ import annotations
@@ -78,92 +74,199 @@ def _m():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# STUBS — TODO: RECONSTRUIR LÓGICA DE NEGOCIO
+# Phase D1 — Implementaciones reales de _build_structured_diagnosis y
+#            _build_structured_technical_guide
 # ─────────────────────────────────────────────────────────────────────────────
-# ╔═══════════════════════════════════════════════════════════════════════════╗
-# ║                                                                           ║
-# ║   ⚠️  STUBS TEMPORALES  ⚠️                                                ║
-# ║                                                                           ║
-# ║   Las funciones `_build_structured_diagnosis` y                           ║
-# ║   `_build_structured_technical_guide` son referenciadas en todo el       ║
-# ║   código (tool_handlers, main.admin_rag_buscar, 4 archivos de tests,     ║
-# ║   2 herramientas de auditoría) pero NUNCA tuvieron una `def` en el      ║
-# ║   repositorio. Probablemente se perdieron en una refactorización         ║
-# ║   anterior al primer commit accesible (2026-04).                         ║
-# ║                                                                           ║
-# ║   Estos stubs retornan la estructura MÍNIMA esperada por los             ║
-# ║   consumidores downstream:                                                ║
-# ║                                                                           ║
-# ║     - `_build_hard_policies_for_context(...)` lee:                       ║
-# ║         diagnosis.get("...")  → consumido pasivamente                    ║
-# ║         guide.get("required_validations") / .get("base_or_primer") /    ║
-# ║         .get("finish_options") / .get("commercial_alternatives")        ║
-# ║                                                                           ║
-# ║     - `_derive_policy_inventory_candidate_terms(guide, ...)` lee:        ║
-# ║         guide.get("base_or_primer") / .get("finish_options") /          ║
-# ║         .get("commercial_alternatives")                                  ║
-# ║                                                                           ║
-# ║     - `_handle_tool_consultar_conocimiento_tecnico` lee:                ║
-# ║         diagnosis.get("required_validations")  → preguntas_pendientes   ║
-# ║         (campo expuesto al LLM)                                          ║
-# ║                                                                           ║
-# ║   Resultado neto: el endpoint funciona, no hay AttributeError, pero    ║
-# ║   el motor de diagnóstico estructurado y la guía técnica destilada     ║
-# ║   están NEUTRALIZADOS hasta que se reimplementen.                       ║
-# ║                                                                           ║
-# ║   TODO PARA SESIÓN DEDICADA:                                             ║
-# ║     1. Definir el contrato exacto de `diagnosis` y `structured_guide`. ║
-# ║     2. Implementar la lógica con base en los keywords usados por       ║
-# ║        `_matches_global_policy_rule` (en backend/policies.py).         ║
-# ║     3. Cubrir con tests de `test_global_policy_matrix*.py`.            ║
-# ║                                                                           ║
-# ╚═══════════════════════════════════════════════════════════════════════════╝
+# Las versiones stub (Fase C3) fueron reemplazadas por las implementaciones
+# deterministas más abajo. Contratos Pydantic en backend/schemas/.
 
-_STUB_WARN_KEY = "_rag_helpers_stub_warned"
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase D1 — Reimplementación determinista de los dos motores estructurados
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# Reglas inquebrantables (ver backend/schemas/):
+#   - Cero alucinación comercial: ningún SKU entra a la guía sin venir de
+#     inventory_candidates o rag_chunks (con metadata.sku poblada).
+#   - Flujo consultivo estricto: el diagnóstico no se marca ready sin los
+#     3 pilares (sustrato + estado + exposición).
+#   - Validación química: si el sistema es bicomponente y falta el
+#     catalizador en inventario → alerta crítica + pricing bloqueado.
+#
+# Implementación por extracción determinista de keywords (sin LLM).
+# Fast, testable, reproducible. Si en el futuro se requiere mayor recall,
+# añadir un LLM call estructurado a JSON como pre-paso opcional.
+
+# ── Mapas de keywords para los 3 pilares del diagnóstico ────────────────
+_SUBSTRATE_DETECT: dict[str, list[str]] = {
+    "metal": [
+        "metal", "metalic", "hierro", "acero", "galvaniz", "lamina",
+        "tuberia metalica", "reja", "porton", "estructura metalica",
+        "teja zinc", "teja metalica", "tubo metalico",
+    ],
+    "concreto": [
+        "concreto", "cemento", "mamposteria", "ladrillo", "pared",
+        "muro", "fachada", "estuco", "drywall", "bloque", "placa de concreto",
+    ],
+    "madera": [
+        "madera", "mdf", "triplex", "mueble", "closet", "puerta de madera",
+        "deck", "piso de madera",
+    ],
+    "fibrocemento": ["fibrocemento", "eternit", "asbesto"],
+    "plastico": ["plastico", "pvc", "polietileno"],
+    "ceramica": ["ceramica", "porcelanato", "azulejo", "ceramico"],
+}
+
+_STATE_DETECT: dict[str, list[str]] = {
+    "oxidado": ["oxido", "oxidad", "corrosion", "corroid", "herrumbre"],
+    "descascarado": ["descascar", "desprend", "saltando", "saltad", "pelando"],
+    "humedo": [
+        "humedad", "humedo", "filtracion", "moho", "hongos",
+        "salitre", "eflorescencia",
+    ],
+    "agrietado": ["grieta", "fisura", "agrietad", "fisurad"],
+    "manchado": ["manchad", "negread", "ennegrec", "contaminad", "sucio"],
+    "deteriorado": ["deteriorad", "envejecid", "decolorad", "entizad"],
+    "intacto": [
+        "obra blanca", "primera mano", "sin pintar", "sin pintura",
+        "concreto nuevo", "estuco nuevo",
+    ],
+}
+
+_EXPOSURE_DETECT: dict[str, list[str]] = {
+    "sumergido": [
+        "sumergid", "inmersion", "tanque de agua", "piscina", "agua potable",
+    ],
+    "alta_temperatura": [
+        "alta temperatura", "horno", "caldera", "chimenea", "tuberia de vapor",
+    ],
+    "trafico_pesado": [
+        "trafico pesado", "montacargas", "estibadores", "uso industrial",
+    ],
+    "trafico_liviano": [
+        "trafico liviano", "peatonal", "garaje residencial",
+    ],
+    "exterior": ["exterior", "intemperie", "fachada", "patio", "techo exterior"],
+    "interior": [
+        "interior", "habitacion", "alcoba", "sala", "comedor",
+        "oficina", "bano", "cocina",
+    ],
+}
 
 
-def _warn_stub_once(name: str) -> None:
-    """Emite warning una sola vez por proceso por nombre de stub."""
-    state = getattr(_warn_stub_once, _STUB_WARN_KEY, None)
-    if state is None:
-        state = set()
-        setattr(_warn_stub_once, _STUB_WARN_KEY, state)
-    if name in state:
-        return
-    state.add(name)
-    logger.warning(
-        "rag_helpers.%s() es un STUB temporal — devuelve estructura vacía. "
-        "Reimplementar con la lógica de diagnóstico estructurado original.",
-        name,
+def _detect_pillar(text: str, mapping: dict[str, list[str]]) -> Optional[str]:
+    """Devuelve la primera categoría del mapa cuya keyword aparezca en text."""
+    for label, keywords in mapping.items():
+        for kw in keywords:
+            if kw in text:
+                return label
+    return None
+
+
+def _build_structured_diagnosis(
+    question: str,
+    product: str,
+    best_similarity: float,
+) -> dict[str, Any]:
+    """Diagnóstico estructurado con los 3 pilares obligatorios (Fase D1).
+
+    Reemplaza al stub. Extracción determinista por keywords sobre el texto
+    normalizado de ``question + product``. El payload nunca se marca
+    ``ready=True`` salvo que los 3 pilares (sustrato, estado, exposición)
+    estén presentes. Cuando falta info, ``required_validations`` contiene
+    instrucciones explícitas para que el agente las solicite.
+
+    Returns:
+        dict con el contrato legacy + campos Phase D1
+        (``has_substrate``, ``has_state``, ``has_exposure``,
+        ``technical_summary``, ``_schema_version="D1"``).
+    """
+    try:
+        from schemas.diagnosis import DiagnosisPayload
+    except ImportError:
+        from backend.schemas.diagnosis import DiagnosisPayload
+
+    main = _m()
+    text = main.normalize_text_value(f"{question or ''} {product or ''}")
+
+    detected_substrate = _detect_pillar(text, _SUBSTRATE_DETECT)
+    detected_state = _detect_pillar(text, _STATE_DETECT)
+    detected_exposure = _detect_pillar(text, _EXPOSURE_DETECT)
+
+    has_substrate = detected_substrate is not None
+    has_state = detected_state is not None
+    has_exposure = detected_exposure is not None
+
+    missing: list[str] = []
+    if not has_substrate:
+        missing.append(
+            "Solicitar SUSTRATO: ¿qué material es la superficie? "
+            "(metal, concreto, madera, fibrocemento, drywall, etc.)"
+        )
+    if not has_state:
+        missing.append(
+            "Solicitar ESTADO ACTUAL: ¿cómo se encuentra hoy? "
+            "(oxidado, descascarado, con humedad, agrietado, intacto, etc.)"
+        )
+    if not has_exposure:
+        missing.append(
+            "Solicitar NIVEL DE EXPOSICIÓN: ¿interior, exterior, intemperie, "
+            "sumergido, alta temperatura, tráfico pesado/liviano?"
+        )
+
+    technical_summary: Optional[str] = None
+    if has_substrate and has_state and has_exposure:
+        technical_summary = (
+            f"Sustrato: {detected_substrate} | Estado: {detected_state} | "
+            f"Exposición: {detected_exposure}"
+        )
+
+    payload = DiagnosisPayload(
+        has_substrate=has_substrate,
+        has_state=has_state,
+        has_exposure=has_exposure,
+        missing_info_requests=missing,
+        technical_summary=technical_summary,
+        detected_substrate=detected_substrate,
+        detected_state=detected_state,
+        detected_exposure=detected_exposure,
+        category=detected_substrate or "general",
+    )
+    return payload.to_legacy_dict(
+        question=question,
+        product=product,
+        best_similarity=best_similarity,
     )
 
 
-def _build_structured_diagnosis(question: str, product: str, best_similarity: float) -> dict[str, Any]:
-    """STUB: reconstruir lógica de negocio.
+# ── Indicadores de bicomponente (familias químicas que requieren catalizador) ─
+_BICOMPONENT_INDICATORS: list[str] = [
+    "epoxic", "epoxi", "epoxy",
+    "poliuretano", "polyurethane",
+    "polyurea", "poliurea",
+]
 
-    Estructura mínima válida consumida por:
-      - ``_build_hard_policies_for_context`` (lee claves opcionales)
-      - ``tool_handlers._handle_tool_consultar_conocimiento_tecnico``
-        (lee ``required_validations``)
-      - ``test_global_policy_matrix*.py`` (asserts sobre el dict completo)
-    """
-    _warn_stub_once("_build_structured_diagnosis")
-    return {
-        "category": "general",
-        "ready": False,
-        "system": "",
-        "surface_type": "",
-        "condition": "",
-        "interior_exterior": "",
-        "area_m2": None,
-        "humidity_source": None,
-        "traffic": None,
-        "required_validations": [],
-        "best_similarity": float(best_similarity or 0.0),
-        "question": question or "",
-        "product": product or "",
-        "_stub": True,
-    }
+_CATALYST_KEYWORDS: list[str] = [
+    "catalizador", "comp b", "componente b", "endurecedor",
+    "hardener", "activator", "activador", "parte b",
+]
+
+_PRIMER_KEYWORDS: list[str] = [
+    "imprimante", "primer", "anticorrosivo", "wash primer", "interseal",
+    "imprim",
+]
+
+_SOLVENT_KEYWORDS: list[str] = ["solvente", "thinner", "diluyente"]
+
+
+def _classify_sku_role(descripcion_norm: str) -> str:
+    """Detecta el rol (catalizador/imprimante/solvente/acabado) por keywords."""
+    if any(k in descripcion_norm for k in _CATALYST_KEYWORDS):
+        return "catalizador"
+    if any(k in descripcion_norm for k in _PRIMER_KEYWORDS):
+        return "imprimante"
+    if any(k in descripcion_norm for k in _SOLVENT_KEYWORDS):
+        return "solvente"
+    return "acabado"
 
 
 def _build_structured_technical_guide(
@@ -172,28 +275,222 @@ def _build_structured_technical_guide(
     diagnosis: dict[str, Any],
     expert_notes: list[dict[str, Any]],
     best_similarity: float,
+    *,
+    rag_chunks: Optional[list[dict[str, Any]]] = None,
+    inventory_candidates: Optional[list[dict[str, Any]]] = None,
 ) -> dict[str, Any]:
-    """STUB: reconstruir lógica de negocio.
+    """Guía técnica destilada con SKUs verificados y validación bicomponente.
 
-    Estructura mínima válida consumida por:
-      - ``_derive_policy_inventory_candidate_terms`` (lee
-        ``base_or_primer``, ``finish_options``, ``commercial_alternatives``)
-      - ``_build_hard_policies_for_context`` (lee claves opcionales)
-      - ``tool_handlers._handle_tool_consultar_conocimiento_tecnico`` (re-emite
-        el dict como ``guia_tecnica_estructurada``)
+    Reemplaza al stub. Reglas estrictas:
+
+      - ``approved_skus`` contiene SÓLO SKUs venidos de
+        ``inventory_candidates`` (codigo) o ``rag_chunks`` (metadata.sku).
+        Cualquier nombre que no provenga de una fuente verificada es
+        rechazado.
+      - Si se detecta familia química bicomponente (epóxico/poliuretano/
+        polyurea) en el contexto y no hay un SKU con rol "catalizador" en
+        inventario → ``bicomponent_verified=False`` + alerta crítica
+        ``BICOMPONENT_MISSING_CATALYST``. Esto bloquea pricing aguas abajo
+        (``pricing_ready=False``, ``pricing_gate="bicomponent_missing_catalyst"``).
+      - Las preparaciones de superficie sólo se generan si el diagnóstico
+        upstream está completo (``diagnosis.ready==True``).
+
+    Args:
+        rag_chunks: chunks devueltos por ``search_technical_chunks``
+            (filtrados ya por ``RAG_PGVECTOR_DISTANCE_THRESHOLD``).
+        inventory_candidates: rows de ``lookup_inventory_candidates_from_terms``.
+
+    Returns:
+        dict con el contrato legacy + campos Phase D1.
     """
-    _warn_stub_once("_build_structured_technical_guide")
-    return {
-        "preparation_steps": [],
-        "base_or_primer": [],
-        "finish_options": [],
-        "commercial_alternatives": [],
-        "restrictions": [],
-        "pricing_ready": False,
-        "pricing_gate": None,
-        "best_similarity": float(best_similarity or 0.0),
-        "_stub": True,
-    }
+    try:
+        from schemas.technical_guide import (
+            ApprovedSku,
+            TechnicalAlert,
+            TechnicalGuidePayload,
+        )
+    except ImportError:
+        from backend.schemas.technical_guide import (
+            ApprovedSku,
+            TechnicalAlert,
+            TechnicalGuidePayload,
+        )
+    try:
+        from bicomponents import get_bicomponent_info
+    except ImportError:
+        from backend.bicomponents import get_bicomponent_info
+
+    main = _m()
+    rag_chunks = rag_chunks or []
+    inventory_candidates = inventory_candidates or []
+
+    def _norm(value: Any) -> str:
+        return main.normalize_text_value(str(value or "")).strip()
+
+    # ─── 1. Construir whitelist de SKUs desde fuentes verificadas ─────────
+    approved_skus: list[ApprovedSku] = []
+    seen_skus: set[str] = set()
+
+    def _emit_sku(
+        sku: str,
+        descripcion: str,
+        chem: Optional[str],
+        source: str,
+    ) -> None:
+        sku_clean = (sku or "").strip()
+        if not sku_clean or sku_clean in seen_skus:
+            return
+        descripcion_norm = _norm(descripcion or sku_clean)
+        role = _classify_sku_role(descripcion_norm)
+        try:
+            sku_obj = ApprovedSku(
+                sku=sku_clean,
+                descripcion=descripcion or sku_clean,
+                role=role,  # type: ignore[arg-type]
+                chemical_family=(chem or None),
+                source=source,  # type: ignore[arg-type]
+            )
+        except Exception:
+            # Pydantic rechazó el rol o source — descartar silenciosamente
+            return
+        seen_skus.add(sku_clean)
+        approved_skus.append(sku_obj)
+
+    # Inventory primero (fuente más fuerte: efectivamente comprable)
+    for inv in inventory_candidates:
+        sku = inv.get("codigo") or inv.get("referencia")
+        descripcion = inv.get("descripcion") or inv.get("etiqueta_auditable") or ""
+        chem = (
+            inv.get("chemical_family")
+            or inv.get("familia_quimica")
+            or inv.get("familia_producto")
+        )
+        _emit_sku(sku, descripcion, chem, "inventory")
+
+    # RAG chunks segundo — sólo si exponen un SKU explícito en metadata
+    for chunk in rag_chunks:
+        meta = chunk.get("metadata") or {}
+        sku = (meta.get("sku") or meta.get("codigo") or chunk.get("codigo") or "").strip()
+        if not sku:
+            continue
+        descripcion = (
+            meta.get("nombre_comercial")
+            or chunk.get("doc_filename")
+            or sku
+        )
+        chem = (
+            meta.get("chemical_family")
+            or meta.get("canonical_family")
+            or chunk.get("familia_producto")
+        )
+        _emit_sku(sku, descripcion, chem, "rag_chunk")
+
+    # ─── 2. Detección de requerimiento bicomponente ──────────────────────
+    family_signals: list[str] = []
+    for s in approved_skus:
+        if s.chemical_family:
+            family_signals.append(_norm(s.chemical_family))
+        family_signals.append(_norm(s.descripcion))
+    family_signals.append(_norm(product))
+    family_signals.append(_norm(question))
+    for chunk in rag_chunks:
+        meta = chunk.get("metadata") or {}
+        for key in ("chemical_family", "canonical_family"):
+            value = meta.get(key)
+            if value:
+                family_signals.append(_norm(value))
+    for note in expert_notes or []:
+        for key in ("producto_recomendado", "nota_comercial", "contexto_tags"):
+            value = note.get(key)
+            if value:
+                family_signals.append(_norm(value))
+
+    full_text = " ".join(family_signals)
+    bicomponent_required = any(ind in full_text for ind in _BICOMPONENT_INDICATORS)
+
+    # Cross-check contra el catálogo curado (BICOMPONENT_CATALOG)
+    if not bicomponent_required:
+        for s in approved_skus:
+            if get_bicomponent_info(s.descripcion):
+                bicomponent_required = True
+                break
+
+    # ─── 3. Verificar presencia del catalizador en inventario ────────────
+    alerts: list[TechnicalAlert] = []
+    bicomponent_verified = False
+    if bicomponent_required:
+        catalyst_in_inventory = any(
+            s.role == "catalizador" and s.source == "inventory"
+            for s in approved_skus
+        )
+        if catalyst_in_inventory:
+            bicomponent_verified = True
+        else:
+            alerts.append(
+                TechnicalAlert(
+                    severity="critical",
+                    code="BICOMPONENT_MISSING_CATALYST",
+                    message=(
+                        "ALERTA TÉCNICA: el sistema detectado es BICOMPONENTE "
+                        "(epóxico / poliuretano / polyurea) pero NO se encontró "
+                        "el catalizador (Componente B / endurecedor / hardener) "
+                        "en el inventario disponible. NO se puede ofrecer este "
+                        "sistema sin la pareja completa. Solicitar al área de "
+                        "compras o sugerir alternativa monocomponente."
+                    ),
+                )
+            )
+
+    # ─── 4. Pasos de preparación (sólo con diagnóstico completo) ─────────
+    prep_steps: list[str] = []
+    if (diagnosis or {}).get("ready"):
+        substrate = (diagnosis or {}).get("surface_type") or ""
+        state = (diagnosis or {}).get("condition") or ""
+        if "metal" in substrate:
+            if "oxido" in state or "oxidad" in state:
+                prep_steps = [
+                    "Limpieza mecánica SSPC-SP3 mínimo (cepillo de alambre rotatorio).",
+                    "Para inmersión o ambiente severo: chorreado abrasivo SSPC-SP10 (Sa 2.5).",
+                    "Eliminar polvo y residuos con aire comprimido seco.",
+                    "Aplicar imprimante anticorrosivo dentro de las primeras 4 horas.",
+                ]
+            else:
+                prep_steps = [
+                    "Limpieza mecánica SSPC-SP2 / SP3.",
+                    "Desengrasado con solvente apropiado.",
+                    "Eliminar polvo y residuos.",
+                ]
+        elif "concreto" in substrate or "fibrocemento" in substrate:
+            if "humed" in state or "salitre" in state:
+                prep_steps = [
+                    "Identificar y eliminar la fuente de humedad ANTES de pintar.",
+                    "Lavado con solución desinfectante (hipoclorito 1:10) si hay moho.",
+                    "Esperar 28 días de fragua si es concreto nuevo.",
+                    "Aplicar imprimante anti-alcalino o sellador anti-humedad según el caso.",
+                ]
+            else:
+                prep_steps = [
+                    "Lavar con detergente neutro y enjuagar.",
+                    "Reparar grietas con masilla acrílica o estuco.",
+                    "Lijar y eliminar polvo.",
+                ]
+        elif "madera" in substrate:
+            prep_steps = [
+                "Lijar en sentido de la veta con grano 120-180.",
+                "Eliminar polvo con paño seco.",
+                "Aplicar sellador para madera antes del acabado.",
+            ]
+
+    # ─── 5. Ensamblar el payload ─────────────────────────────────────────
+    payload = TechnicalGuidePayload(
+        surface_preparation_steps=prep_steps,
+        approved_skus=approved_skus,
+        bicomponent_required=bicomponent_required,
+        bicomponent_verified=bicomponent_verified,
+        alerts=alerts,
+    )
+    return payload.to_legacy_dict(best_similarity=best_similarity)
+
 
 
 # ─────────────────────────────────────────────────────────────────────────────
