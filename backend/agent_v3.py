@@ -342,7 +342,24 @@ def _should_preload_technical_guidance(
         return False
     if conversation_context.get("latest_technical_guidance"):
         return False
-    if technical_case and not _best_effort_ready_for_rag(True, initial_diagnostic, technical_case):
+    # If the initial diagnostic is already substantially complete
+    # (surface + condition + location), we want to preload RAG even if
+    # the technical_case hasn't been promoted to ready=True yet.
+    # Otherwise apply the conservative best-effort gate.
+    diagnostic_substantially_complete = bool(
+        initial_diagnostic.get("surface")
+        and initial_diagnostic.get("condition")
+        and (
+            initial_diagnostic.get("interior_exterior")
+            or initial_diagnostic.get("traffic")
+            or initial_diagnostic.get("humidity_source")
+        )
+    )
+    if (
+        technical_case
+        and not diagnostic_substantially_complete
+        and not _best_effort_ready_for_rag(True, initial_diagnostic, technical_case)
+    ):
         return False
 
     # ── CRITICAL: never preload if diagnostic is still incomplete ──

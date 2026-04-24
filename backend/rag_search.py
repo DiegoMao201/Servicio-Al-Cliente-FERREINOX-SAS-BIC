@@ -21,6 +21,7 @@ Reglas:
 from __future__ import annotations
 
 import json
+import os
 import re
 import unicodedata
 from typing import Optional
@@ -218,7 +219,18 @@ def _infer_technical_metadata_prefilters(question: str, product: str = "", diagn
 def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None = None,
                             segment_filters: list[str] | None = None,
                             metadata_prefilters: dict | None = None) -> list[dict]:
-    """Semantic search over vectorized technical sheet chunks using pgvector cosine distance."""
+    """Semantic search over vectorized technical sheet chunks using pgvector cosine distance.
+
+    Threshold dinámico (Fase C3 HITO 4):
+      Si la variable de entorno ``RAG_PGVECTOR_DISTANCE_THRESHOLD`` está
+      definida con un float > 0, se aplica un filtro adicional en SQL
+      ``(1 - (embedding <=> :q)) >= threshold`` para descartar chunks
+      cuya similitud coseno esté por debajo del umbral.
+
+      Default = 0 = sin filtrado adicional (comportamiento histórico
+      preservado). Se recomienda subir gradualmente (ej. 0.30) tras
+      tuning empírico contra ``test_global_policy_matrix*.py``.
+    """
     embedding = _generate_query_embedding(query)
     if not embedding:
         return []
@@ -252,6 +264,17 @@ def search_technical_chunks(query: str, top_k: int = 5, marca_filter: str | None
     elif chemical_family_terms:
         where_clauses.append("LOWER(COALESCE(metadata ->> 'chemical_family', '')) = ANY(%s)")
         params.append(chemical_family_terms)
+
+    # Threshold dinámico opt-in vía env var. Default 0.0 = no filtra.
+    try:
+        distance_threshold = float(os.getenv("RAG_PGVECTOR_DISTANCE_THRESHOLD", "0") or "0")
+    except (TypeError, ValueError):
+        distance_threshold = 0.0
+    if distance_threshold > 0:
+        where_clauses.append("(1 - (embedding <=> %s::vector)) >= %s")
+        params.append(embedding_literal)
+        params.append(distance_threshold)
+
     params.extend([embedding_literal, top_k])
 
     try:

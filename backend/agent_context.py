@@ -714,8 +714,21 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
         return "reclamo"
 
     # 4. BI internal (employee only)
+    # Excepción: una consulta puntual de inventario sobre una referencia
+    # concreta (ej. "inventario de sd1 en galón") es lookup de producto,
+    # no BI agregado. Se delega al paso 10 (consulta_productos).
     if internal_auth and any(s in msg_lower for s in _BI_SIGNALS):
-        return "bi_interno"
+        bi_signals_in_msg = [s for s in _BI_SIGNALS if s in msg_lower]
+        only_inventory_signal = bi_signals_in_msg == ["inventario"]
+        looks_like_specific_lookup = bool(
+            re.search(r"\binventario\s+de\b", msg_lower)
+            and (
+                _SHORT_REFERENCE_PATTERNS.search(msg_lower)
+                or any(p in msg_lower for p in _SPECIFIC_PRODUCTS)
+            )
+        )
+        if not (only_inventory_signal and looks_like_specific_lookup):
+            return "bi_interno"
 
     # 5. Document request
     if any(kw in msg_lower for kw in ["ficha técnica", "ficha tecnica", "hoja de seguridad", "fds", "msds"]):

@@ -1,21 +1,20 @@
 """Capa de Herramientas (Tool Handlers) — orquestación de tools del LLM.
 
-Extraído de ``backend.main`` durante la Fase C2 (Modularización), Paso 5.
+Extraído de ``backend.main`` durante la Fase C2 (Step 5) y refinado en la
+Fase C3 HITO 1 (eliminación del accesor lazy ``_m()``).
 
 Contiene los handlers más voluminosos y aislables de la capa de tools del agente:
-  - ``_handle_tool_consultar_conocimiento_tecnico``: pieza central del RAG;
-    orquesta búsqueda vectorial + pre-filtros + perfiles técnicos +
-    políticas duras + bicomponentes + candidatos comerciales.
+  - ``_handle_tool_consultar_conocimiento_tecnico``: pieza central del RAG.
   - ``_handle_tool_consultar_base_color``: lookup en LIBRO DE FORMULAS.
-  - ``_handle_tool_consultar_referencia_international``: tabla AkzoNobel
-    con kits/precios IVA-incluido y RAL.
+  - ``_handle_tool_consultar_referencia_international``: tabla AkzoNobel.
 
 Reglas:
   - Lógica intacta (Move & Wire). Sin cambios de comportamiento.
-  - Todas las dependencias internas de ``backend.main`` se acceden vía un
-    accesor lazy ``_m()`` que importa el módulo a call-time, evitando
-    cualquier ciclo de import y respetando la inicialización runtime de
-    constantes (``PORTFOLIO_CATEGORY_MAP``) y caches.
+  - Importa directamente de los módulos extraídos (``rag_search``,
+    ``rag_helpers``, ``policies``, ``bicomponents``, ``agent_profiles``).
+    NO depende de ``backend.main``.
+  - El acoplamiento residual hacia helpers primitivos aún en ``main`` queda
+    confinado dentro de ``rag_helpers`` (capa única de borde).
   - Las funciones se re-exportan desde ``backend.main`` para preservar la
     API pública (``main._handle_tool_consultar_conocimiento_tecnico(...)``
     sigue siendo válido).
@@ -62,9 +61,41 @@ try:
 except ImportError:
     from backend.agent_profiles import get_agent_profile_name
 
+try:
+    from rag_helpers import (
+        _build_structured_diagnosis,
+        _build_structured_technical_guide,
+        _derive_policy_inventory_candidate_terms,
+        _filter_inventory_candidates_by_policy,
+        _filter_profiles_by_surface_compatibility,
+        _filter_rag_candidates_by_surface_and_policy,
+        _infer_surface_types_from_query,
+        extract_candidate_products_from_rag_context,
+        fetch_expert_knowledge,
+        lookup_inventory_candidates_from_terms,
+    )
+except ImportError:
+    from backend.rag_helpers import (
+        _build_structured_diagnosis,
+        _build_structured_technical_guide,
+        _derive_policy_inventory_candidate_terms,
+        _filter_inventory_candidates_by_policy,
+        _filter_profiles_by_surface_compatibility,
+        _filter_rag_candidates_by_surface_and_policy,
+        _infer_surface_types_from_query,
+        extract_candidate_products_from_rag_context,
+        fetch_expert_knowledge,
+        lookup_inventory_candidates_from_terms,
+    )
 
-def _m():
-    """Lazy accesor del módulo ``backend.main`` para evitar ciclos."""
+
+def _main_primitives():
+    """Acceso a primitivas aún residentes en ``backend.main``.
+
+    Helpers que se usan dentro del cuerpo de los handlers pero todavía
+    no se han extraído (``normalize_text_value``, ``parse_numeric_value``,
+    ``PORTFOLIO_CATEGORY_MAP``). Migrar en Fase C4.
+    """
     try:
         from backend import main as _main
     except ImportError:
@@ -87,7 +118,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             ensure_ascii=False,
         )
 
-    main = _m()
+    primitives = _main_primitives()
 
     # Build search query combining question + product context
     search_query = pregunta
@@ -117,7 +148,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     if not marca_filter and any(kw in _q_lower for kw in _INDUSTRIAL_MPY_KEYWORDS):
         marca_filter = "international"
     segment_filters = _infer_portfolio_segments_for_query(pregunta, producto, explicit_segment)
-    prefilter_diagnosis = main._build_structured_diagnosis(pregunta, producto, 0.0)
+    prefilter_diagnosis = _build_structured_diagnosis(pregunta, producto, 0.0)
     metadata_prefilters = _infer_technical_metadata_prefilters(pregunta, producto, prefilter_diagnosis)
     metadata_prefilter_active = bool(metadata_prefilters.get("canonical_family_patterns") or metadata_prefilters.get("chemical_family_terms"))
     metadata_prefilter_fallback = False
@@ -147,10 +178,10 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     best_sim_initial = max((c.get("similarity", 0) for c in chunks), default=0)
     if best_sim_initial < 0.70 and not producto:
         # Extract key terms from the question and expand via portfolio map
-        pregunta_norm = main.normalize_text_value(pregunta)
+        pregunta_norm = primitives.normalize_text_value(pregunta)
         portfolio_products: list[str] = []
         # Check full question and individual words against PORTFOLIO_CATEGORY_MAP
-        for category_key, brand_terms in main.PORTFOLIO_CATEGORY_MAP.items():
+        for category_key, brand_terms in primitives.PORTFOLIO_CATEGORY_MAP.items():
             if category_key in pregunta_norm or pregunta_norm in category_key:
                 for bt in brand_terms:
                     if bt != "__SIN_PRODUCTO_FERREINOX__" and bt not in portfolio_products:
@@ -158,8 +189,8 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
         for word in pregunta_norm.split():
             if len(word) < 4:
                 continue
-            if word in main.PORTFOLIO_CATEGORY_MAP:
-                for bt in main.PORTFOLIO_CATEGORY_MAP[word]:
+            if word in primitives.PORTFOLIO_CATEGORY_MAP:
+                for bt in primitives.PORTFOLIO_CATEGORY_MAP[word]:
                     if bt != "__SIN_PRODUCTO_FERREINOX__" and bt not in portfolio_products:
                         portfolio_products.append(bt)
         # Do targeted RAG searches for top portfolio products
@@ -220,9 +251,9 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     guide_profiles = fetch_technical_profiles(guide_canonical_families, guide_source_files, limit=3, segment_filters=segment_filters or None)
     multimodal_products = search_multimodal_product_index(search_query, top_k=3, marca_filter=marca_filter)
 
-    expert_notes = main.fetch_expert_knowledge(f"{producto} {pregunta}", limit=8)
-    structured_diagnosis = main._build_structured_diagnosis(pregunta, producto, best_similarity)
-    structured_guide = main._build_structured_technical_guide(
+    expert_notes = fetch_expert_knowledge(f"{producto} {pregunta}", limit=8)
+    structured_diagnosis = _build_structured_diagnosis(pregunta, producto, best_similarity)
+    structured_guide = _build_structured_technical_guide(
         pregunta,
         producto,
         structured_diagnosis,
@@ -241,22 +272,22 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     # Detect what surface the user is asking about, then use profile
     # metadata (restricted_surfaces) to filter out incompatible products.
     # This replaces thousands of specific rules with data-driven filtering.
-    diagnosed_surfaces = main._infer_surface_types_from_query(pregunta, producto)
+    diagnosed_surfaces = _infer_surface_types_from_query(pregunta, producto)
     all_profiles = technical_profiles + guide_profiles
-    surface_restricted_families = main._filter_profiles_by_surface_compatibility(
+    surface_restricted_families = _filter_profiles_by_surface_compatibility(
         all_profiles, diagnosed_surfaces, query_text=f"{pregunta} {producto}",
     )
 
     # Derive commercial candidates from the structured guide/policies first.
     # RAG-only extraction is kept as a fallback, but it must not override
     # products that the contextual policies already marked as required/prohibited.
-    candidate_product_names = main._derive_policy_inventory_candidate_terms(
+    candidate_product_names = _derive_policy_inventory_candidate_terms(
         structured_guide,
         hard_policies,
         expert_notes=expert_notes,
         explicit_product=producto,
     )
-    rag_candidate_names = main.extract_candidate_products_from_rag_context(
+    rag_candidate_names = extract_candidate_products_from_rag_context(
         rag_context,
         source_files[0] if source_files else None,
         original_question=pregunta,
@@ -265,7 +296,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
     # Before: RAG candidates were appended unconditionally, re-injecting wrong products.
     # Now: filter against forbidden_products AND surface-restricted families.
     forbidden_list = hard_policies.get("forbidden_products") or []
-    rag_candidate_names = main._filter_rag_candidates_by_surface_and_policy(
+    rag_candidate_names = _filter_rag_candidates_by_surface_and_policy(
         rag_candidate_names, forbidden_list, surface_restricted_families,
     )
     for candidate_name in rag_candidate_names:
@@ -278,12 +309,12 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
 
     inventory_candidates = []
     if candidate_product_names:
-        inventory_candidates = main.lookup_inventory_candidates_from_terms(
+        inventory_candidates = lookup_inventory_candidates_from_terms(
             candidate_product_names,
             conversation_context,
             allow_portfolio_expansion=False,
         )
-        inventory_candidates = main._filter_inventory_candidates_by_policy(inventory_candidates, hard_policies)
+        inventory_candidates = _filter_inventory_candidates_by_policy(inventory_candidates, hard_policies)
 
     # ── Síntesis canónica única (las reglas de tono/anti-invención viven en el system prompt) ──
     cierre_comercial = (
@@ -349,7 +380,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
             "restriccion_exterior": _catalog_entry.get("restriccion_exterior") or None,
         }
         # Aplicación condicional agua potable / inmersión (solo dato verificado del catálogo)
-        _q_agua = main.normalize_text_value(f"{pregunta} {producto}")
+        _q_agua = primitives.normalize_text_value(f"{pregunta} {producto}")
         _agua_keywords = ["agua potable", "tanque agua", "inmercion", "inmersion", "nsf", "ansi", "sumergido", "lining"]
         if _bkey == "interseal" and any(kw in _q_agua for kw in _agua_keywords):
             _agua_note = _catalog_entry.get("aplicacion_condicional_agua_potable", "")
@@ -364,7 +395,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
                 "etiqueta_auditable": p.get("etiqueta_auditable"),
                 "marca": p.get("marca"),
                 "presentacion": p.get("presentacion"),
-                "disponible": bool(p.get("stock_total") and main.parse_numeric_value(p.get("stock_total")) > 0),
+                "disponible": bool(p.get("stock_total") and primitives.parse_numeric_value(p.get("stock_total")) > 0),
                 "complementarios": p.get("productos_complementarios") or [],
             }
             for p in inventory_candidates
@@ -400,7 +431,7 @@ def _handle_tool_consultar_conocimiento_tecnico(args, context, conversation_cont
 def _handle_tool_consultar_base_color(fn_args: dict) -> str:
     color = fn_args.get("color", "")
     producto = fn_args.get("producto", "")
-    results = _m().lookup_color_base(color, producto)
+    results = _main_primitives().lookup_color_base(color, producto)
     if not results:
         return json.dumps({
             "encontrado": False,
@@ -460,7 +491,7 @@ def _handle_tool_consultar_referencia_international(fn_args: dict) -> str:
         ral = "7038"
         _used_default_ral = True
 
-    results = _m().lookup_international_product(producto, base, ral)
+    results = _main_primitives().lookup_international_product(producto, base, ral)
     if not results:
         return json.dumps({
             "encontrado": False,
