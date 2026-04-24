@@ -290,6 +290,14 @@ def _first_non_empty_text(*values: Any) -> Optional[str]:
     return None
 
 
+def _resolve_indicator_query_type(args: dict) -> str:
+    query_type = _normalize_text((args or {}).get("tipo_consulta") or (args or {}).get("tipo_reporte") or "")
+    aliases = {
+        "cartera_vencida": "cartera_vencida_resumen",
+    }
+    return aliases.get(query_type, query_type)
+
+
 def detect_requested_routine(user_message: Optional[str]) -> Optional[str]:
     normalized = _normalize_text(user_message)
     if not normalized:
@@ -1098,6 +1106,10 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
             inv.referencia,
             inv.descripcion,
             inv.stock_total,
+            CASE
+                WHEN COALESCE(inv.stock_total, 0) <= 0 THEN 0
+                ELSE COALESCE(inv.inventory_value, 0) / NULLIF(inv.stock_total, 0)
+            END AS costo_promedio_und,
             inv.historial_ventas_metric,
             inv.reorder_point,
             inv.reorder_qty_recommended,
@@ -1153,6 +1165,7 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
                 referencia,
                 descripcion,
                 stock_total,
+                costo_promedio_und,
                 historial_ventas_metric,
                 stock_total * costo_promedio_und AS inventory_value,
                 GREATEST(
@@ -1190,6 +1203,7 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
                         h.referencia,
                         h.descripcion,
                         h.stock_total,
+                        h.costo_promedio_und,
                         h.historial_ventas_metric,
                         h.reorder_point,
                         h.reorder_qty_recommended,
@@ -1218,7 +1232,28 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
         logger.warning("inventory health MV unavailable, using direct fallback query: %s", exc)
         with engine.begin() as connection:
             rows = connection.execute(fallback_sql, query_params).mappings().all()
-    return [dict(row) for row in rows]
+    normalized_rows = []
+    for row in rows:
+        normalized_row = dict(row)
+        normalized_row["precio_promo_sugerido"] = _build_promo_price_before_iva(normalized_row.get("costo_promedio_und"))
+        normalized_rows.append(normalized_row)
+    return normalized_rows
+
+
+def _build_inventory_promo_pricing_summary(rows: list[dict], limit: int, store_code: Optional[str]) -> str:
+    scope_text = _describe_commercial_scope(store_code, None)
+    lines = [
+        f"Precios promocionales sugeridos para baja rotación en {scope_text}: {len(rows)} referencias con precio interno calculado sobre costo + margen objetivo 10%.",
+        "Todos los valores están expresados como precio promocional sugerido + IVA.",
+    ]
+    for row in rows[: min(limit, 5)]:
+        dias = row.get("dias_sin_venta")
+        dias_text = f"{int(dias)} días" if isinstance(dias, Number) else "sin venta reciente"
+        lines.append(
+            f"- {row.get('referencia')} | {row.get('descripcion')} | costo {_format_currency(row.get('costo_promedio_und'))} | promo {_format_currency(row.get('precio_promo_sugerido'))} + IVA | stock {_format_number(row.get('stock_total'))} | {dias_text}"
+        )
+    lines.append("Si quieres el listado completo, te lo envío por correo con Excel incluyendo costo, precio promo y stock por referencia.")
+    return "\n".join(lines)
 
 
 def _fetch_cartera_rows(engine, limit: int, vendor_code: Optional[str] = None) -> list[dict]:
@@ -2656,14 +2691,17 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
     if not internal_auth.get("user_id"):
         return "No hay sesión interna válida para consultar indicadores."
 
-    store_code, vendor_code = _resolve_indicator_scope(args, internal_auth)
+    resolved_args = _merge_report_args_with_context(args, conversation_context)
+    query_type = _resolve_indicator_query_type(resolved_args)
+    if query_type:
+        resolved_args["tipo_consulta"] = query_type
+    store_code, vendor_code = _resolve_indicator_scope(resolved_args, internal_auth)
     if not vendor_code:
-        vendor_name = str(args.get("vendedor_nombre") or args.get("vendedor_codigo") or "").strip()
+        vendor_name = str(resolved_args.get("vendedor_nombre") or resolved_args.get("vendedor_codigo") or "").strip()
         if vendor_name:
             vendor_code = _resolve_vendor_by_name(engine, vendor_name)
-    query_type = _normalize_text(args.get("tipo_consulta") or "")
-    limit = _clamp_limit(args.get("limite"), default=5, minimum=3, maximum=20)
-    remembered_args = dict(args or {})
+    limit = _clamp_limit(resolved_args.get("limite"), default=5, minimum=3, maximum=50)
+    remembered_args = dict(resolved_args or {})
     if store_code:
         remembered_args["almacen"] = store_code
     if vendor_code:
@@ -2687,6 +2725,12 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
                 return "No encontré referencias quedadas o de baja rotación para ese filtro."
             return _build_inventory_indicator_summary("Baja rotación", rows, limit)
 
+        if query_type == "precio_promocion_baja_rotacion":
+            rows = _fetch_inventory_rows(engine, ["sin_movimiento", "sobrestock"], store_code, limit)
+            if not rows:
+                return "No encontré referencias de baja rotación para calcular precio promocional."
+            return _build_inventory_promo_pricing_summary(rows, limit, store_code)
+
         if query_type == "cartera_vencida_resumen":
             rows = _fetch_cartera_rows(engine, limit, vendor_code)
             if not rows:
@@ -2706,13 +2750,13 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
             return _build_inventory_indicator_summary("Sobrestock", rows, limit)
 
         if query_type == "clientes_mayor_decrecimiento":
-            rows, period_label = _fetch_client_decline_rows(engine, args.get("periodo"), store_code, limit, vendor_code)
+            rows, period_label = _fetch_client_decline_rows(engine, resolved_args.get("periodo"), store_code, limit, vendor_code)
             if not rows:
                 return f"No encontré clientes con decrecimiento para {period_label}."
             return _build_client_decline_summary(rows, period_label, limit)
 
         if query_type == "plan_comercial_mensual":
-            period_value = args.get("periodo") or "este mes"
+            period_value = resolved_args.get("periodo") or "este mes"
             plan_payload = _build_monthly_commercial_plan_report_payload(engine, period_value, store_code, vendor_code, limit)
             snapshot = plan_payload["snapshot"]
             reactivation_rows = plan_payload["reactivation_rows"]
@@ -2721,25 +2765,25 @@ def handle_consultar_indicadores_internos(engine, args: dict, conversation_conte
             return _build_monthly_commercial_plan_summary(snapshot, reactivation_rows, decline_rows, push_rows, store_code, vendor_code, limit)
 
         if query_type == "clientes_a_reactivar":
-            rows, period_label = _fetch_clients_without_purchase_rows(engine, args.get("periodo") or "este mes", store_code, vendor_code, limit)
+            rows, period_label = _fetch_clients_without_purchase_rows(engine, resolved_args.get("periodo") or "este mes", store_code, vendor_code, limit)
             if not rows:
                 return f"No encontré clientes claros para reactivar en {period_label}."
             return _build_clients_without_purchase_summary(rows, period_label, limit, "Clientes a reactivar")
 
         if query_type == "clientes_sin_compra_periodo":
-            rows, period_label = _fetch_clients_without_purchase_rows(engine, args.get("periodo") or "este mes", store_code, vendor_code, limit)
+            rows, period_label = _fetch_clients_without_purchase_rows(engine, resolved_args.get("periodo") or "este mes", store_code, vendor_code, limit)
             if not rows:
                 return f"No encontré clientes sin compra para {period_label}."
             return _build_clients_without_purchase_summary(rows, period_label, limit, "Clientes sin compra")
 
         if query_type == "productos_no_vendidos_periodo":
-            rows, period_label = _fetch_products_without_sale_rows(engine, args.get("periodo") or "este mes", store_code, vendor_code, limit)
+            rows, period_label = _fetch_products_without_sale_rows(engine, resolved_args.get("periodo") or "este mes", store_code, vendor_code, limit)
             if not rows:
                 return f"No encontré productos con historial que hayan dejado de venderse en {period_label}."
             return _build_products_without_sale_summary(rows, period_label, limit)
 
         if query_type == "productos_a_impulsar":
-            rows, period_label = _fetch_products_to_push_rows(engine, args.get("periodo") or "este mes", store_code, vendor_code, limit)
+            rows, period_label = _fetch_products_to_push_rows(engine, resolved_args.get("periodo") or "este mes", store_code, vendor_code, limit)
             if not rows:
                 return f"No encontré productos claros para impulsar en {period_label}."
             return _build_products_to_push_summary(rows, period_label, limit)

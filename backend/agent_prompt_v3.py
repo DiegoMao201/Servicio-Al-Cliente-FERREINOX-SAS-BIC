@@ -446,6 +446,7 @@ AGENT_TOOLS_V3 = [
                         "enum": [
                             "proyeccion_ventas_mes",
                             "inventario_baja_rotacion",
+                            "precio_promocion_baja_rotacion",
                             "cartera_vencida_resumen",
                             "quiebres_stock",
                             "sobrestock",

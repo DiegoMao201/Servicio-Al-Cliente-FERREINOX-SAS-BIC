@@ -31,6 +31,19 @@ _INTERNAL_REPORT_EMAIL_SIGNALS = (
     "mail",
     "email",
 )
+_INTERNAL_PROMO_PRICE_SIGNALS = (
+    "precio promocion",
+    "precio promoción",
+    "precios promocion",
+    "precios promoción",
+    "precio promo",
+    "precios promo",
+    "promocion",
+    "promoción",
+    "descuento",
+    "descuentos",
+    "margen",
+)
 
 _EXPERT_DIRECTIVE_INTENTS = {"asesoria", "pedido_directo", "cotizacion", "confirmacion", "correccion", "reclamo"}
 
@@ -45,6 +58,17 @@ def _looks_like_internal_report_email_followup(user_message: str, conversation_c
     return bool(_EMAIL_ADDRESS_RE.search(user_message or "")) and any(
         signal in normalized for signal in _INTERNAL_REPORT_EMAIL_SIGNALS
     )
+
+
+def _looks_like_internal_promo_price_followup(user_message: str, conversation_context: dict) -> bool:
+    remembered_report = (conversation_context or {}).get("last_internal_report_request") or {}
+    report_label = str(remembered_report.get("tipo_reporte") or remembered_report.get("tipo_consulta") or "").strip().lower()
+    if report_label != "inventario_baja_rotacion":
+        return False
+    normalized = " ".join((user_message or "").lower().split())
+    if not normalized:
+        return False
+    return any(signal in normalized for signal in _INTERNAL_PROMO_PRICE_SIGNALS)
 
 # ─── Cache de embeddings por turno (evita llamadas redundantes a OpenAI) ──────
 # TTL de 120s: si el mismo semantic_query se repite en menos de 2 min, reutiliza el embedding.
@@ -758,6 +782,8 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
         )
         if not (only_inventory_signal and looks_like_specific_lookup):
             return "bi_interno"
+    if internal_auth and _looks_like_internal_promo_price_followup(msg, conversation_context):
+        return "bi_interno"
     if internal_auth and _looks_like_internal_report_email_followup(msg, conversation_context):
         return "bi_interno"
 
@@ -1183,6 +1209,8 @@ def build_turn_context(
             lines.append("Último reporte interno listo para correo: " + ", ".join(summary_parts))
             if _looks_like_internal_report_email_followup(user_message, conversation_context):
                 lines.append("Acción obligatoria: reutiliza ese último reporte y llama enviar_reporte_interno_correo antes de confirmar envío.")
+            if _looks_like_internal_promo_price_followup(user_message, conversation_context):
+                lines.append("Acción obligatoria: reutiliza ese último reporte de baja rotación y llama consultar_indicadores_internos con tipo_consulta=precio_promocion_baja_rotacion antes de responder.")
         try:
             try:
                 import main as main_module
