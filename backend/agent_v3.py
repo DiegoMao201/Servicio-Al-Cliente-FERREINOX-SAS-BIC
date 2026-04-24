@@ -252,6 +252,10 @@ def _should_force_internal_promo_pricing_tool(agent_profile: str, user_message: 
     return any(signal in normalized for signal in _INTERNAL_PROMO_PRICE_SIGNALS)
 
 
+def _should_force_internal_bi_tool(agent_profile: str, initial_intent: str) -> bool:
+    return agent_profile == "internal" and initial_intent == "bi_interno"
+
+
 _TECHNICAL_RESPONSE_SECTIONS = [
     "**Diagnóstico:**",
     "**Sistema Recomendado:**",
@@ -1090,6 +1094,7 @@ def generate_agent_reply_v3(
         user_message,
         conversation_context,
     )
+    _force_internal_bi_tool = _should_force_internal_bi_tool(agent_profile, initial_intent)
     if _force_internal_report_email_tool:
         remembered_report = dict(conversation_context.get("last_internal_report_request") or {})
         messages.append({
@@ -1099,6 +1104,16 @@ def generate_agent_reply_v3(
                 "Debes llamar enviar_reporte_interno_correo en este turno usando el correo mencionado por el usuario y reutilizando los filtros del último reporte recordado. "
                 "Nunca confirmes envío exitoso sin ejecutar esa herramienta.\n"
                 f"Último reporte recordado: {json.dumps(remembered_report, ensure_ascii=False)}"
+            ),
+        })
+    elif _force_internal_bi_tool:
+        messages.append({
+            "role": "system",
+            "content": (
+                "CONSULTA BI INTERNA OBLIGATORIA: este turno es una consulta interna de ventas, cartera o indicadores comerciales. "
+                "Debes llamar al menos una herramienta BI en este turno antes de responder. "
+                "Usa consultar_ventas_internas, consultar_indicadores_internos o consultar_bi_universal según corresponda. "
+                "Nunca respondas desde memoria ni inventes cifras internas sin ejecutar una herramienta."
             ),
         })
     if _force_internal_promo_pricing_tool:
@@ -1172,6 +1187,10 @@ def generate_agent_reply_v3(
             }
             _llm_extra_kwargs["parallel_tool_calls"] = False
             logger.info("V3 internal promo pricing continuation — forcing consultar_indicadores_internos")
+        elif _force_internal_bi_tool:
+            _llm_extra_kwargs["tool_choice"] = "required"
+            _llm_extra_kwargs["parallel_tool_calls"] = False
+            logger.info("V3 internal BI turn — forcing tool_choice=required")
         elif _advisory_complete and not tool_calls_made:
             _llm_extra_kwargs["tool_choice"] = "required"
             logger.info("V3 advisory complete — forcing tool_choice=required")

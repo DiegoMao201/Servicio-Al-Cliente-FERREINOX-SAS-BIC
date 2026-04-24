@@ -607,6 +607,7 @@ _CLAIM_SIGNALS = [
 _BI_SIGNALS = [
     "ventas", "cuánto llevo", "cuanto llevo", "facturación", "facturacion",
     "cómo voy", "como voy", "cómo vamos", "como vamos", "vendí", "vendi", "cuánto vendí", "cuanto vendi",
+    "presupuesto", "meta del mes", "meta mensual", "cumplimiento",
     "cartera de", "compras de", "compras acumuladas", "proyeccion", "proyección",
     "proyectamos", "baja rotacion", "baja rotación", "rotacion", "rotación",
     "quiebre", "quiebres", "sobrestock", "vencidos", "vencidas", "quedados",
