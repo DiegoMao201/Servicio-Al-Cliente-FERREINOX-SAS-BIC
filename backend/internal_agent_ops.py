@@ -818,6 +818,14 @@ def _merge_report_args_with_context(args: dict, conversation_context: Optional[d
     return merged
 
 
+def _resolve_internal_report_type(args: dict) -> str:
+    report_type = _normalize_text((args or {}).get("tipo_reporte") or (args or {}).get("tipo_consulta") or "")
+    aliases = {
+        "cartera_vencida_resumen": "cartera_vencida",
+    }
+    return aliases.get(report_type, report_type)
+
+
 def _extract_limit_from_question(question: str, default: int, minimum: int, maximum: int) -> int:
     normalized = _normalize_text(question)
     patterns = [
@@ -3315,14 +3323,16 @@ def handle_enviar_reporte_interno_correo(engine, args: dict, conversation_contex
     if not internal_auth.get("user_id"):
         return "No hay sesión interna válida para enviar reportes por correo."
 
-    report_type = _normalize_text(args.get("tipo_reporte") or "")
+    resolved_args = _merge_report_args_with_context(args, conversation_context)
+    report_type = _resolve_internal_report_type(resolved_args)
+    if report_type:
+        resolved_args["tipo_reporte"] = report_type
     employee_context = internal_auth.get("employee_context") or {}
-    destination_email = str(args.get("email_destino") or internal_auth.get("email") or "").strip().lower()
+    destination_email = str(resolved_args.get("email_destino") or internal_auth.get("email") or "").strip().lower()
     if not _is_valid_email(destination_email):
         return "No tengo un correo destino válido. Pídele al colaborador el correo y luego reintenta el envío."
-    resolved_args = _merge_report_args_with_context(args, conversation_context)
     store_code, vendor_code = _resolve_indicator_scope(resolved_args, internal_auth)
-    limit = _clamp_limit(args.get("limite"), default=100, minimum=10, maximum=500)
+    limit = _clamp_limit(resolved_args.get("limite"), default=100, minimum=10, maximum=500)
     context_with_args = dict(conversation_context or {})
     context_with_args["pending_tool_args"] = resolved_args
     _remember_internal_report_request(

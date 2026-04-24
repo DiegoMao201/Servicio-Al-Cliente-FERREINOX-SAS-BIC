@@ -15,7 +15,36 @@ from typing import Optional
 
 logger = logging.getLogger("agent_context")
 
+_EMAIL_ADDRESS_RE = re.compile(r"\b[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}\b", re.IGNORECASE)
+_INTERNAL_REPORT_EMAIL_SIGNALS = (
+    "envialo",
+    "envíalo",
+    "enviamelo",
+    "envíamelo",
+    "mandalo",
+    "mándalo",
+    "mandamelo",
+    "mándamelo",
+    "reenvialo",
+    "reenvíalo",
+    "correo",
+    "mail",
+    "email",
+)
+
 _EXPERT_DIRECTIVE_INTENTS = {"asesoria", "pedido_directo", "cotizacion", "confirmacion", "correccion", "reclamo"}
+
+
+def _looks_like_internal_report_email_followup(user_message: str, conversation_context: dict) -> bool:
+    remembered_report = (conversation_context or {}).get("last_internal_report_request") or {}
+    if not remembered_report:
+        return False
+    normalized = " ".join((user_message or "").lower().split())
+    if not normalized:
+        return False
+    return bool(_EMAIL_ADDRESS_RE.search(user_message or "")) and any(
+        signal in normalized for signal in _INTERNAL_REPORT_EMAIL_SIGNALS
+    )
 
 # ─── Cache de embeddings por turno (evita llamadas redundantes a OpenAI) ──────
 # TTL de 120s: si el mismo semantic_query se repite en menos de 2 min, reutiliza el embedding.
@@ -729,6 +758,8 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
         )
         if not (only_inventory_signal and looks_like_specific_lookup):
             return "bi_interno"
+    if internal_auth and _looks_like_internal_report_email_followup(msg, conversation_context):
+        return "bi_interno"
 
     # 5. Document request
     if any(kw in msg_lower for kw in ["ficha técnica", "ficha tecnica", "hoja de seguridad", "fds", "msds"]):
@@ -1137,6 +1168,21 @@ def build_turn_context(
         emp = internal_auth.get("employee_context") or {}
         rol = internal_auth.get("role", "empleado")
         lines.append(f"Empleado interno: {emp.get('full_name', '?')} ({rol}, sede {emp.get('sede', '?')})")
+        remembered_report = conversation_context.get("last_internal_report_request") or {}
+        if remembered_report:
+            report_label = remembered_report.get("tipo_reporte") or remembered_report.get("tipo_consulta") or "reporte interno"
+            summary_parts = [f"tipo={report_label}"]
+            if remembered_report.get("vendedor_nombre"):
+                summary_parts.append(f"vendedor={remembered_report['vendedor_nombre']}")
+            if remembered_report.get("vendedor_codigo"):
+                summary_parts.append(f"codigo_vendedor={remembered_report['vendedor_codigo']}")
+            if remembered_report.get("almacen"):
+                summary_parts.append(f"almacen={remembered_report['almacen']}")
+            if remembered_report.get("periodo"):
+                summary_parts.append(f"periodo={remembered_report['periodo']}")
+            lines.append("Último reporte interno listo para correo: " + ", ".join(summary_parts))
+            if _looks_like_internal_report_email_followup(user_message, conversation_context):
+                lines.append("Acción obligatoria: reutiliza ese último reporte y llama enviar_reporte_interno_correo antes de confirmar envío.")
         try:
             try:
                 import main as main_module

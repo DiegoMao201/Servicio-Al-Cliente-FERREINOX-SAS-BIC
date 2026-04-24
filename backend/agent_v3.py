@@ -36,6 +36,23 @@ _TECHNICAL_PRODUCT_GUARD_SIGNALS = [
 
 logger = logging.getLogger("agent_v3")
 
+_INTERNAL_REPORT_EMAIL_RE = re.compile(r"\b[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}\b", re.IGNORECASE)
+_INTERNAL_REPORT_EMAIL_SIGNALS = (
+    "envialo",
+    "envíalo",
+    "enviamelo",
+    "envíamelo",
+    "mandalo",
+    "mándalo",
+    "mandamelo",
+    "mándamelo",
+    "reenvialo",
+    "reenvíalo",
+    "correo",
+    "mail",
+    "email",
+)
+
 # Importaciones diferidas de main.py (se configuran en init)
 _main = None
 
@@ -95,6 +112,20 @@ def _collect_recent_inbound_text(user_message: str, recent_messages: list[dict],
     if (user_message or "").strip():
         combined.append(user_message.strip())
     return " ".join(combined).strip()
+
+
+def _should_force_internal_report_email_tool(agent_profile: str, user_message: str, conversation_context: dict) -> bool:
+    if agent_profile != "internal":
+        return False
+    remembered_report = (conversation_context or {}).get("last_internal_report_request") or {}
+    if not remembered_report:
+        return False
+    normalized = " ".join((user_message or "").lower().split())
+    if not normalized:
+        return False
+    if not _INTERNAL_REPORT_EMAIL_RE.search(user_message or ""):
+        return False
+    return any(signal in normalized for signal in _INTERNAL_REPORT_EMAIL_SIGNALS)
 
 
 _TECHNICAL_RESPONSE_SECTIONS = [
@@ -925,6 +956,23 @@ def generate_agent_reply_v3(
             ),
         })
 
+    _force_internal_report_email_tool = _should_force_internal_report_email_tool(
+        agent_profile,
+        user_message,
+        conversation_context,
+    )
+    if _force_internal_report_email_tool:
+        remembered_report = dict(conversation_context.get("last_internal_report_request") or {})
+        messages.append({
+            "role": "system",
+            "content": (
+                "CONTINUIDAD OBLIGATORIA DE REPORTE INTERNO: el colaborador está pidiendo enviar o reenviar por correo el último reporte interno ya consultado. "
+                "Debes llamar enviar_reporte_interno_correo en este turno usando el correo mencionado por el usuario y reutilizando los filtros del último reporte recordado. "
+                "Nunca confirmes envío exitoso sin ejecutar esa herramienta.\n"
+                f"Último reporte recordado: {json.dumps(remembered_report, ensure_ascii=False)}"
+            ),
+        })
+
     def _needs_forced_technical_retry() -> bool:
         if tool_calls_made or assistant_message.tool_calls:
             return False
@@ -970,12 +1018,19 @@ def generate_agent_reply_v3(
             and not _diagnostic_blocked
             and (recommendation_ready or best_effort_ready)
         )
-        if _advisory_complete and not tool_calls_made:
+        if _force_internal_report_email_tool:
+            _llm_extra_kwargs["tool_choice"] = {
+                "type": "function",
+                "function": {"name": "enviar_reporte_interno_correo"},
+            }
+            _llm_extra_kwargs["parallel_tool_calls"] = False
+            logger.info("V3 internal report email continuation — forcing enviar_reporte_interno_correo")
+        elif _advisory_complete and not tool_calls_made:
             _llm_extra_kwargs["tool_choice"] = "required"
             logger.info("V3 advisory complete — forcing tool_choice=required")
         else:
             _llm_extra_kwargs["tool_choice"] = "auto"
-        _llm_extra_kwargs["parallel_tool_calls"] = True
+            _llm_extra_kwargs["parallel_tool_calls"] = True
 
     t_start = time.time()
     response = client.chat.completions.create(
