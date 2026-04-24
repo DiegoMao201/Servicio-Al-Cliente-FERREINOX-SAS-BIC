@@ -45,20 +45,15 @@ def interceptar_cotizacion_si_aplica(
     Evalúa si la respuesta actual es una cotización y, de ser así,
     la redirige al pipeline determinístico.
 
-    Condiciones para interceptar:
-      1. Se llamó consultar_inventario o consultar_inventario_lote en este turno
-      2. La respuesta contiene precios ($ + números)
-      3. Hay respuesta RAG disponible (latest_technical_guidance)
-      4. NO es empleado interno (ellos hacen pedidos directos)
+        Condiciones para interceptar:
+            1. Se llamó consultar_inventario o consultar_inventario_lote en este turno
+            2. La respuesta contiene precios ($ + números)
+            3. Hay respuesta RAG disponible (latest_technical_guidance)
 
     Returns:
         dict compatible con el return de generate_agent_reply_v3() si interceptó,
         None si no aplica.
     """
-    # ── Guard: No interceptar empleados internos ──
-    if conversation_context.get("internal_auth"):
-        return None
-
     # ── Guard: No interceptar si no hay herramientas de inventario llamadas ──
     inventory_tools = {"consultar_inventario", "consultar_inventario_lote"}
     tools_used = {tc["name"] for tc in tool_calls_made}

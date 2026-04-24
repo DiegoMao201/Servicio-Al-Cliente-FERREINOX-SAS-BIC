@@ -50,6 +50,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelna
 app = FastAPI(title="CRM Ferreinox Backend", version="2026.3.1")
 
 INVENTORY_ACTIVE_LOOKBACK_YEARS = int(os.getenv("INVENTORY_ACTIVE_LOOKBACK_YEARS", "2"))
+_EXPERT_CACHE_TTL = float(os.getenv("EXPERT_CACHE_TTL_SECONDS", "300"))
+_expert_knowledge_cache: list[dict] = []
+_expert_knowledge_cache_ts = 0.0
 
 # ── Agent V3 (production engine) ──────────────────────────────────────────────
 try:

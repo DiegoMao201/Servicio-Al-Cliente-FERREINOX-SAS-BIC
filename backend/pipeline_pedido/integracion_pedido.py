@@ -575,6 +575,7 @@ def _es_linea_contexto(line_lower: str) -> bool:
         r'^(?:por\s+favor)\s*[,.]?\s*$',
         r'^\s*muchas\s+gracias\s*[,.]?\s*gracias\s*[,.]?\s*$',
         r'^\s*(?:necesito\s+)?(?:este\s+)?pedido\s*:??\s*$',
+        r'^\s*(?:puedo|podemos|quiero|quisiera|necesito)\s+(?:montar|armar|hacer|crear|generar|pasar)\s+(?:un\s+)?pedido\b.*$',
     ]
     for pat in _CONTEXT_PATTERNS:
         if re.search(pat, line_lower):

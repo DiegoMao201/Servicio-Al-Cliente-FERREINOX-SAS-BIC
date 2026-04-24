@@ -45,8 +45,8 @@ def get_agent_runtime_config() -> dict:
             "profile": "internal",
             "system_prompt": AGENT_SYSTEM_PROMPT_INTERNAL,
             "tools": _filter_tools_by_name(AGENT_TOOLS_V3, AGENT_INTERNAL_ALLOWED_TOOL_NAMES),
-            "enable_order_pipeline": False,
-            "enable_quote_pipeline": False,
+            "enable_order_pipeline": True,
+            "enable_quote_pipeline": True,
             "enable_iva_guard": False,
             "force_first_advisory_depth_turn": False,
         }
