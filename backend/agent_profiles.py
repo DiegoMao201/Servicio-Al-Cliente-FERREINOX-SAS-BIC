@@ -7,6 +7,8 @@ def get_agent_profile_name() -> str:
         return "internal"
     if raw_profile in {"customer", "cliente", "clientes", "customer_public", "publico"}:
         return "customer"
+    if raw_profile in {"ferreamigo", "ferreamigo_b2b", "b2b", "d2"}:
+        return "ferreamigo"
     return "legacy"
 
 
@@ -24,10 +26,18 @@ def get_agent_runtime_config() -> dict:
         from agent_prompt_v3 import AGENT_SYSTEM_PROMPT_V3, AGENT_TOOLS_V3
         from agent_prompt_internal import AGENT_SYSTEM_PROMPT_INTERNAL, AGENT_INTERNAL_ALLOWED_TOOL_NAMES
         from agent_prompt_customer import AGENT_SYSTEM_PROMPT_CUSTOMER, AGENT_CUSTOMER_ALLOWED_TOOL_NAMES
+        from agent_prompt_ferreamigo import (
+            FERREAMIGO_SYSTEM_PROMPT,
+            FERREAMIGO_ALLOWED_TOOL_NAMES,
+        )
     except ImportError:
         from backend.agent_prompt_v3 import AGENT_SYSTEM_PROMPT_V3, AGENT_TOOLS_V3
         from backend.agent_prompt_internal import AGENT_SYSTEM_PROMPT_INTERNAL, AGENT_INTERNAL_ALLOWED_TOOL_NAMES
         from backend.agent_prompt_customer import AGENT_SYSTEM_PROMPT_CUSTOMER, AGENT_CUSTOMER_ALLOWED_TOOL_NAMES
+        from backend.agent_prompt_ferreamigo import (
+            FERREAMIGO_SYSTEM_PROMPT,
+            FERREAMIGO_ALLOWED_TOOL_NAMES,
+        )
 
     profile = get_agent_profile_name()
     if profile == "internal":
@@ -46,6 +56,20 @@ def get_agent_runtime_config() -> dict:
             "profile": "customer",
             "system_prompt": AGENT_SYSTEM_PROMPT_CUSTOMER,
             "tools": _filter_tools_by_name(AGENT_TOOLS_V3, AGENT_CUSTOMER_ALLOWED_TOOL_NAMES),
+            "enable_order_pipeline": False,
+            "enable_quote_pipeline": False,
+            "enable_iva_guard": False,
+            "force_first_advisory_depth_turn": True,
+        }
+
+    if profile == "ferreamigo":
+        # Phase D2 — state machine prompt (TRIAGE → DIAGNOSIS_GATHERING →
+        # TECHNICAL_RECOMMENDATION → ORDER_PREP). Tool surface idéntica al
+        # canal customer pero con routing determinista forzado por prompt.
+        return {
+            "profile": "ferreamigo",
+            "system_prompt": FERREAMIGO_SYSTEM_PROMPT,
+            "tools": _filter_tools_by_name(AGENT_TOOLS_V3, FERREAMIGO_ALLOWED_TOOL_NAMES),
             "enable_order_pipeline": False,
             "enable_quote_pipeline": False,
             "enable_iva_guard": False,
