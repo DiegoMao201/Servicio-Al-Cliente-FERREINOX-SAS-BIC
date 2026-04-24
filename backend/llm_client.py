@@ -180,4 +180,75 @@ __all__ = [
     "get_openai_model",
     "get_openai_client",
     "get_product_nlu_system_prompt",
+    # Phase E1 — dynamic tool binding
+    "build_llm_runtime_kwargs",
+    "RBACToolViolationError",
 ]
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# Phase E1 — Dynamic tool binding entrypoint.
+#
+# El llamador (típicamente el dispatcher de mensajes en main.py /
+# customer_handlers.py) construye el SessionContext UNA VEZ y se lo
+# pasa a esta función. La función devuelve el dict de kwargs que se
+# pueden inyectar directamente a `client.chat.completions.create(...)`:
+#
+#     ctx = classify_session_from_phone(phone, ...)
+#     kw = build_llm_runtime_kwargs(ctx, base_messages=...)
+#     resp = client.chat.completions.create(model=..., **kw)
+#
+# Doble defensa: además del filtro por whitelist al armar `tools`, el
+# dispatcher debe re-validar cada `tool_call.name` contra
+# `is_tool_allowed_for_session` ANTES de invocar el handler real.
+# ─────────────────────────────────────────────────────────────────────────
+
+
+class RBACToolViolationError(PermissionError):
+    """Se eleva si el LLM intenta llamar una tool fuera de su whitelist."""
+
+
+def build_llm_runtime_kwargs(
+    session,  # SessionContext
+    *,
+    base_messages: list[dict],
+    extra_tool_definitions: list[dict] | None = None,
+    tool_choice: str = "auto",
+) -> dict:
+    """Arma el payload listo para `client.chat.completions.create`.
+
+    Inyecta:
+      * ``messages``: messages base con el system prompt FERREAMIGO
+        (con addendum interno si la sesión es INTERNAL).
+      * ``tools``: array filtrado por whitelist RBAC.
+      * ``tool_choice``: "auto" por defecto; permite forzar una tool.
+
+    El array de tools se construye dinámicamente — el LLM jamás ve la
+    definición de una tool para la que no tiene permiso.
+    """
+    try:
+        from agent_prompt_ferreamigo import build_ferreamigo_system_prompt
+        from rbac import build_tools_for_session
+    except ImportError:
+        from backend.agent_prompt_ferreamigo import build_ferreamigo_system_prompt
+        from backend.rbac import build_tools_for_session
+
+    system_prompt = build_ferreamigo_system_prompt(internal=session.is_internal)
+
+    # Si el caller ya inyectó un system message, reemplazarlo; si no, anteponerlo.
+    msgs = list(base_messages or [])
+    if msgs and msgs[0].get("role") == "system":
+        msgs[0] = {"role": "system", "content": system_prompt}
+    else:
+        msgs.insert(0, {"role": "system", "content": system_prompt})
+
+    tools = build_tools_for_session(
+        session,
+        extra_tool_definitions=extra_tool_definitions,
+    )
+
+    kwargs: dict = {"messages": msgs}
+    if tools:
+        kwargs["tools"] = tools
+        kwargs["tool_choice"] = tool_choice
+    return kwargs

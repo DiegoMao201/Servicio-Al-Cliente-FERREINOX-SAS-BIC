@@ -14,6 +14,19 @@ y la guía técnica destilada. Reglas inquebrantables:
 from __future__ import annotations
 
 from .diagnosis import DiagnosisPayload
+from .internal_tools import (
+    CheckInventoryBIInput,
+    CheckInventoryBIOutput,
+    Currency,
+    GetCarteraStatusInput,
+    GetCarteraStatusOutput,
+    InventoryStockRow,
+    OrderLineConfirmed,
+    OrderLineInput,
+    OrderLineRejected,
+    SubmitOrderInput,
+    SubmitOrderOutput,
+)
 from .technical_guide import (
     ApprovedSku,
     SkuRole,
@@ -29,4 +42,16 @@ __all__ = [
     "SourceKind",
     "TechnicalAlert",
     "TechnicalGuidePayload",
+    # Phase E1 — internal tools
+    "Currency",
+    "CheckInventoryBIInput",
+    "CheckInventoryBIOutput",
+    "InventoryStockRow",
+    "GetCarteraStatusInput",
+    "GetCarteraStatusOutput",
+    "SubmitOrderInput",
+    "SubmitOrderOutput",
+    "OrderLineInput",
+    "OrderLineConfirmed",
+    "OrderLineRejected",
 ]

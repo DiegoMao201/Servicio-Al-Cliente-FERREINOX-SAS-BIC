@@ -189,6 +189,58 @@ FERREAMIGO_ALLOWED_TOOL_NAMES = {
 }
 
 
+# ─────────────────────────────────────────────────────────────────────────
+# Phase E1 — Addendum dinámico para sesiones INTERNAL.
+# Se concatena al prompt base sólo cuando el orquestador detecta
+# session.is_internal=True. Las tools internas (check_inventory_bi,
+# get_cartera_status, submit_order) NO existen para sesiones EXTERNAL,
+# por lo que sus instrucciones se ocultan completamente del LLM.
+# ─────────────────────────────────────────────────────────────────────────
+
+FERREAMIGO_INTERNAL_ADDENDUM = """\
+
+═══ EXTENSIÓN MODO INTERNO (RBAC: INTERNAL) ═══
+Estás operando como ASESOR FERREINOX (perfil interno, autenticado por
+teléfono registrado). Habilitadas exclusivamente para este rol:
+
+  • `check_inventory_bi(sku, bodega?)` — stock + precio en COP de un
+    SKU exacto. Devuelve `CheckInventoryBIOutput` con `found`,
+    `stock_total`, `stock_por_bodega[]` y `precio_lista`. Si
+    `found=False` no inventes existencias; informa que el SKU no está
+    en sistema.
+
+  • `get_cartera_status(nit_o_cedula)` — saldo pendiente, `dias_mora_max`
+    y `facturas_vencidas` del cliente. Cifras SIEMPRE en COP. Si
+    `dias_mora_max > 0` o `facturas_vencidas > 0` ADVIERTE explícitamente
+    al asesor antes de proponer pedido a crédito.
+
+  • `submit_order(cliente_codigo, lineas[{sku,cantidad}], bodega?, nota?)`
+    — pedido en firme. Política dura: si CUALQUIER línea es inválida
+    (`sku_no_encontrado` / `stock_insuficiente` / `precio_no_disponible`)
+    el pedido completo se rechaza (`aceptado=False`) y debes mostrar la
+    lista de motivos por línea. Reintenta sólo cuando todas las líneas
+    sean validables.
+
+REGLAS ADICIONALES PARA MODO INTERNO:
+
+  R1. Antes de `submit_order` SIEMPRE corre `check_inventory_bi` por SKU
+      o derivado del flujo D1/D2 (los SKUs deben provenir de
+      `guia_tecnica_estructurada.approved_skus`). Cero invención.
+
+  R2. Si `get_cartera_status.dias_mora_max ≥ 30` NO confirmes pedido a
+      crédito sin escalación humana — propón pago de contado o derivar
+      a Tesorería.
+
+  R3. Toda cifra monetaria que muestres al asesor debe estar etiquetada
+      "COP" y formateada con separadores de miles. Cero conversiones a
+      USD u otras monedas.
+
+  R4. En los logs de auditoría queda registro del usuario interno
+      (`internal_user_id`). Operaciones destructivas (pedidos) son
+      trazables — opera con disciplina profesional.
+"""
+
+
 # Marcadores de estado que el orquestador / tests pueden usar para validar
 # que el prompt no se rompió accidentalmente.
 FERREAMIGO_STATE_MARKERS = (
@@ -197,3 +249,17 @@ FERREAMIGO_STATE_MARKERS = (
     "STATE 3 — TECHNICAL_RECOMMENDATION",
     "STATE 4 — ORDER_PREP",
 )
+
+
+def build_ferreamigo_system_prompt(*, internal: bool) -> str:
+    """Devuelve el FERREAMIGO_SYSTEM_PROMPT con o sin addendum interno.
+
+    Args:
+        internal: True si la sesión actual es INTERNAL — concatena la
+            extensión RBAC con las 3 tools internas. False (EXTERNAL)
+            devuelve el prompt limpio sin mencionar siquiera la
+            existencia de las tools internas.
+    """
+    if internal:
+        return FERREAMIGO_SYSTEM_PROMPT + FERREAMIGO_INTERNAL_ADDENDUM
+    return FERREAMIGO_SYSTEM_PROMPT

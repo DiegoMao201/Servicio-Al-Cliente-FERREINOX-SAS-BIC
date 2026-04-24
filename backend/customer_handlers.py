@@ -450,4 +450,71 @@ def _handle_tool_registrar_cliente_nuevo(
 __all__ = [
     "_handle_tool_verificar_identidad",
     "_handle_tool_registrar_cliente_nuevo",
+    "build_session_context_from_phone",
+    "fetch_internal_user_by_phone",
 ]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Phase E1 — RBAC entrypoint para cada mensaje entrante.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def fetch_internal_user_by_phone(phone_e164: str) -> Optional[dict]:
+    """Lookup del usuario interno por teléfono normalizado.
+
+    Devuelve el row con scopes resueltos o None si el teléfono no está
+    registrado en ``internal_users``. Es la única consulta que decide
+    el rol del usuario en producción — el costo de una consulta indexada
+    es despreciable contra el costo de una fuga de datos.
+    """
+    if not phone_e164:
+        return None
+    try:
+        from backend import main as _main
+    except ImportError:
+        import main as _main  # type: ignore
+
+    engine = _main.get_db_engine()
+    with engine.connect() as conn:
+        row = conn.execute(
+            text(
+                """
+                SELECT id, username, full_name, phone_e164, is_active
+                FROM internal_users
+                WHERE phone_e164 = :phone
+                LIMIT 1
+                """
+            ),
+            {"phone": phone_e164},
+        ).mappings().first()
+    if not row:
+        return None
+    user_payload = dict(row)
+    try:
+        user_payload["scopes"] = _main.fetch_internal_user_scopes(user_payload["id"])
+    except Exception:
+        user_payload["scopes"] = []
+    return user_payload
+
+
+def build_session_context_from_phone(phone_number: Optional[str]):
+    """Crea un SessionContext inmutable a partir del teléfono entrante.
+
+    Esta función es el ÚNICO punto donde se decide si la conversación
+    es INTERNAL o EXTERNAL. El resto del pipeline (orquestador, RBAC,
+    tool dispatcher) consume el SessionContext resultante sin
+    re-clasificar.
+    """
+    try:
+        from backend import main as _main
+        from backend.session_context import classify_session_from_phone
+    except ImportError:
+        import main as _main  # type: ignore
+        from session_context import classify_session_from_phone  # type: ignore
+
+    return classify_session_from_phone(
+        phone_number,
+        normalize_phone=_main.normalize_phone_e164,
+        fetch_internal_user_by_phone=fetch_internal_user_by_phone,
+    )
