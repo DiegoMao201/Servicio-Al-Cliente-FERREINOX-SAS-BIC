@@ -252,10 +252,6 @@ def _should_force_internal_promo_pricing_tool(agent_profile: str, user_message: 
     return any(signal in normalized for signal in _INTERNAL_PROMO_PRICE_SIGNALS)
 
 
-def _should_force_internal_bi_tool(agent_profile: str, initial_intent: str) -> bool:
-    return agent_profile == "internal" and initial_intent == "bi_interno"
-
-
 _TECHNICAL_RESPONSE_SECTIONS = [
     "**Diagnóstico:**",
     "**Sistema Recomendado:**",
@@ -486,6 +482,52 @@ def _build_inventory_lookup_short_circuit(
         "confidence": m.score_agent_confidence(response_text, [], inventory_result.get("intent") or "consulta_productos"),
         "is_farewell": False,
     }
+
+
+def _resolve_data_backed_turn_policy(
+    initial_intent: str,
+    agent_profile: str,
+    profile_name: Optional[str],
+    conversation_context: dict,
+    user_message: str,
+    m,
+):
+    if _should_route_to_inventory_lookup(initial_intent, conversation_context, m):
+        return {
+            "mode": "short_circuit",
+            "response": _build_inventory_lookup_short_circuit(
+                profile_name,
+                conversation_context,
+                user_message,
+                m,
+            ),
+        }
+
+    if initial_intent == "documento":
+        return {
+            "mode": "force_specific_tool",
+            "tool_name": "buscar_documento_tecnico",
+            "system_message": (
+                "CONSULTA DOCUMENTAL OBLIGATORIA: este turno está pidiendo una ficha técnica, hoja de seguridad o documento técnico. "
+                "Debes llamar buscar_documento_tecnico en este turno antes de responder. "
+                "Nunca prometas enviar o revisar documentos sin ejecutar la herramienta."
+            ),
+            "log_label": "document lookup",
+        }
+
+    if agent_profile == "internal" and initial_intent == "bi_interno":
+        return {
+            "mode": "force_required_tool",
+            "system_message": (
+                "CONSULTA BI INTERNA OBLIGATORIA: este turno es una consulta interna de ventas, cartera o indicadores comerciales. "
+                "Debes llamar al menos una herramienta BI en este turno antes de responder. "
+                "Usa consultar_ventas_internas, consultar_indicadores_internos o consultar_bi_universal según corresponda. "
+                "Nunca respondas desde memoria ni inventes cifras internas sin ejecutar una herramienta."
+            ),
+            "log_label": "internal BI",
+        }
+
+    return None
 
 
 def _should_preload_technical_guidance(
@@ -859,6 +901,18 @@ def generate_agent_reply_v3(
     if _is_explicit_inventory_query(user_message):
         conversation_context.pop("commercial_draft", None)
 
+    data_backed_turn_policy = _resolve_data_backed_turn_policy(
+        initial_intent,
+        agent_profile,
+        profile_name,
+        conversation_context,
+        user_message,
+        m,
+    )
+    if data_backed_turn_policy and data_backed_turn_policy.get("mode") == "short_circuit":
+        logger.info("V3 data-backed turn routed via deterministic short-circuit: intent=%s", initial_intent)
+        return data_backed_turn_policy["response"]
+
     # ══════════════════════════════════════════════════════════════════════
     # PIPELINE PEDIDO DETERMINÍSTICO — Intercepta pedidos directos antes
     # del LLM. Resuelve productos, genera Excel, envía correos, todo sin IA.
@@ -1094,7 +1148,6 @@ def generate_agent_reply_v3(
         user_message,
         conversation_context,
     )
-    _force_internal_bi_tool = _should_force_internal_bi_tool(agent_profile, initial_intent)
     if _force_internal_report_email_tool:
         remembered_report = dict(conversation_context.get("last_internal_report_request") or {})
         messages.append({
@@ -1106,15 +1159,10 @@ def generate_agent_reply_v3(
                 f"Último reporte recordado: {json.dumps(remembered_report, ensure_ascii=False)}"
             ),
         })
-    elif _force_internal_bi_tool:
+    elif data_backed_turn_policy and data_backed_turn_policy.get("mode") in {"force_specific_tool", "force_required_tool"}:
         messages.append({
             "role": "system",
-            "content": (
-                "CONSULTA BI INTERNA OBLIGATORIA: este turno es una consulta interna de ventas, cartera o indicadores comerciales. "
-                "Debes llamar al menos una herramienta BI en este turno antes de responder. "
-                "Usa consultar_ventas_internas, consultar_indicadores_internos o consultar_bi_universal según corresponda. "
-                "Nunca respondas desde memoria ni inventes cifras internas sin ejecutar una herramienta."
-            ),
+            "content": data_backed_turn_policy.get("system_message") or "",
         })
     if _force_internal_promo_pricing_tool:
         remembered_report = dict(conversation_context.get("last_internal_report_request") or {})
@@ -1187,10 +1235,17 @@ def generate_agent_reply_v3(
             }
             _llm_extra_kwargs["parallel_tool_calls"] = False
             logger.info("V3 internal promo pricing continuation — forcing consultar_indicadores_internos")
-        elif _force_internal_bi_tool:
+        elif data_backed_turn_policy and data_backed_turn_policy.get("mode") == "force_specific_tool":
+            _llm_extra_kwargs["tool_choice"] = {
+                "type": "function",
+                "function": {"name": data_backed_turn_policy["tool_name"]},
+            }
+            _llm_extra_kwargs["parallel_tool_calls"] = False
+            logger.info("V3 %s turn — forcing %s", data_backed_turn_policy.get("log_label") or "data-backed", data_backed_turn_policy["tool_name"])
+        elif data_backed_turn_policy and data_backed_turn_policy.get("mode") == "force_required_tool":
             _llm_extra_kwargs["tool_choice"] = "required"
             _llm_extra_kwargs["parallel_tool_calls"] = False
-            logger.info("V3 internal BI turn — forcing tool_choice=required")
+            logger.info("V3 %s turn — forcing tool_choice=required", data_backed_turn_policy.get("log_label") or "data-backed")
         elif _advisory_complete and not tool_calls_made:
             _llm_extra_kwargs["tool_choice"] = "required"
             logger.info("V3 advisory complete — forcing tool_choice=required")
