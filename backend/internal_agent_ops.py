@@ -72,6 +72,14 @@ _MESES_NOMBRES = {
 }
 
 _STORE_ALIAS_TO_CODE = {
+    "cedi": "155",
+    "centro de distribucion": "155",
+    "centro de distribución": "155",
+    "bodega cedi": "155",
+    "bodega distribucion": "155",
+    "bodega distribución": "155",
+    "bodega de distribucion": "155",
+    "bodega de distribución": "155",
     "armenia": "156",
     "san francisco": "156",
     "manizales": "157",
@@ -90,6 +98,7 @@ _STORE_ALIAS_TO_CODE = {
 }
 
 _STORE_CODE_LABELS = {
+    "155": "CEDI",
     "156": "Armenia",
     "157": "Manizales",
     "158": "Opalo",
@@ -597,8 +606,22 @@ def _clamp_limit(raw_value: Any, default: int, minimum: int, maximum: int) -> in
 
 
 def _resolve_store_code(raw_value: Any) -> Optional[str]:
-    normalized = re.sub(r"\D", "", str(raw_value or "")).strip()
-    return normalized or None
+    raw_text = str(raw_value or "").strip()
+    if not raw_text:
+        return None
+
+    normalized_digits = re.sub(r"\D", "", raw_text)
+    if normalized_digits:
+        return normalized_digits
+
+    normalized_text = _normalize_text(raw_text)
+    for alias, code in _STORE_ALIAS_TO_CODE.items():
+        if alias == normalized_text:
+            return code
+    for alias, code in _STORE_ALIAS_TO_CODE.items():
+        if alias in normalized_text:
+            return code
+    return None
 
 
 def _is_seller_scoped_user(internal_auth: Optional[dict]) -> bool:
@@ -637,7 +660,7 @@ def _resolve_vendor_code(raw_value: Any, internal_auth: Optional[dict]) -> Optio
 
 def _extract_store_code_from_question(question: str) -> Optional[str]:
     normalized = _normalize_text(question)
-    direct_code = re.search(r"\b(156|157|158|189|238|439|463)\b", normalized)
+    direct_code = re.search(r"\b(155|156|157|158|189|238|439|463)\b", normalized)
     if direct_code:
         return direct_code.group(1)
     for alias, code in _STORE_ALIAS_TO_CODE.items():
@@ -1612,7 +1635,7 @@ def _get_sales_dimension_sql_parts(dimension: str) -> tuple[str, str, str]:
     if dimension == "tienda":
         return (
             "LEFT(COALESCE(serie, ''), 3)",
-            "CASE LEFT(COALESCE(serie, ''), 3) WHEN '156' THEN 'Armenia' WHEN '157' THEN 'Manizales' WHEN '158' THEN 'Opalo' WHEN '189' THEN 'Pereira' WHEN '238' THEN 'Laureles' WHEN '439' THEN 'FerreBOX' WHEN '463' THEN 'Cerritos' ELSE 'Otra sede' END",
+            "CASE LEFT(COALESCE(serie, ''), 3) WHEN '155' THEN 'CEDI' WHEN '156' THEN 'Armenia' WHEN '157' THEN 'Manizales' WHEN '158' THEN 'Opalo' WHEN '189' THEN 'Pereira' WHEN '238' THEN 'Laureles' WHEN '439' THEN 'FerreBOX' WHEN '463' THEN 'Cerritos' ELSE 'Otra sede' END",
             "NULL::text AS codigo_aux, NULL::text AS detalle_aux",
         )
     if dimension == "vendedor":
