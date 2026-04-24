@@ -3,6 +3,7 @@ import calendar
 import io
 import json
 import logging
+import os
 from numbers import Number
 import re
 from datetime import date, datetime, timedelta
@@ -20,6 +21,7 @@ from sqlalchemy.exc import SQLAlchemyError
 logger = logging.getLogger("internal_agent_ops")
 
 _LAST_INTERNAL_REPORT_REQUEST_KEY = "last_internal_report_request"
+_INVENTORY_ACTIVE_LOOKBACK_YEARS = int(os.getenv("INVENTORY_ACTIVE_LOOKBACK_YEARS", "2"))
 
 _XL_DARK_FILL = PatternFill("solid", fgColor="111827")
 _XL_ACCENT_FILL = PatternFill("solid", fgColor="F59E0B")
@@ -1089,7 +1091,7 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
     query_params = {"statuses": health_statuses, "store_code": store_code, "limit": limit}
 
     primary_sql = text(
-        """
+        f"""
         WITH last_sales AS (
             SELECT
                 am.referencia_normalizada,
@@ -1124,7 +1126,8 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
         LEFT JOIN last_sales ls
           ON ls.referencia_normalizada = inv.referencia_normalizada
          AND ls.store_prefix = inv.cod_almacen
-        WHERE inv.health_status = ANY(:statuses)
+                WHERE inv.health_status = ANY(:statuses)
+                    AND COALESCE(ls.last_sale_date, DATE '1900-01-01') >= CURRENT_DATE - INTERVAL '{_INVENTORY_ACTIVE_LOOKBACK_YEARS} years'
           AND (:store_code IS NULL OR inv.cod_almacen = :store_code)
         ORDER BY inv.inventory_value DESC, inv.reorder_qty_recommended DESC, inv.historial_ventas_metric ASC
         LIMIT :limit
@@ -1132,7 +1135,7 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
     )
 
     fallback_sql = text(
-        """
+        f"""
         WITH last_sales AS (
             SELECT
                 am.referencia_normalizada,
@@ -1219,6 +1222,7 @@ def _fetch_inventory_rows(engine, health_statuses: list[str], store_code: Option
                     ON ls.referencia_normalizada = public.fn_keep_alnum(h.referencia)
                  AND ls.store_prefix = h.cod_almacen
                 WHERE h.health_status = ANY(:statuses)
+                    AND COALESCE(ls.last_sale_date, DATE '1900-01-01') >= CURRENT_DATE - INTERVAL '{_INVENTORY_ACTIVE_LOOKBACK_YEARS} years'
                     AND (:store_code IS NULL OR h.cod_almacen = :store_code)
                 ORDER BY h.inventory_value DESC, h.reorder_qty_recommended DESC, h.historial_ventas_metric ASC
         LIMIT :limit

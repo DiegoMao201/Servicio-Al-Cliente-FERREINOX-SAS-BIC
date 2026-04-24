@@ -49,6 +49,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelna
 
 app = FastAPI(title="CRM Ferreinox Backend", version="2026.3.1")
 
+INVENTORY_ACTIVE_LOOKBACK_YEARS = int(os.getenv("INVENTORY_ACTIVE_LOOKBACK_YEARS", "2"))
+
 # ── Agent V3 (production engine) ──────────────────────────────────────────────
 try:
     from agent_v3 import generate_agent_reply_v3
@@ -7105,14 +7107,27 @@ def fetch_smart_product_rows(
     rows = connection.execute(
         text(
             f"""
+            WITH recent_sales AS (
+                SELECT
+                    am.referencia_normalizada,
+                    MAX(public.fn_parse_date(rv.fecha_venta)) AS last_sale_date
+                FROM public.raw_ventas_detalle rv
+                JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+                WHERE LOWER(COALESCE(rv.tipo_documento, '')) LIKE '%factura%'
+                GROUP BY am.referencia_normalizada
+            )
             SELECT p.producto_codigo, p.referencia, p.descripcion, p.marca, p.departamentos, p.stock_total, p.costo_promedio_und, p.stock_por_tienda,
                    p.linea_clasificacion, p.marca_clasificacion, p.familia_clasificacion, p.aplicacion_clasificacion, p.cat_producto, p.descripcion_ebs, p.tipo_articulo,
                    p.nombre_comercial_abracol, p.familia_abracol, p.descripcion_larga_abracol, p.portafolio_abracol,
+                   rs.last_sale_date AS ultima_venta,
                    ({match_score_sql}) AS match_score,
                    COALESCE(rot.rotation_score, 0) AS rotation_score
             FROM mv_productos p
             LEFT JOIN mv_product_rotation rot ON rot.producto_codigo = p.producto_codigo
-            WHERE {where_clause}
+            LEFT JOIN recent_sales rs
+              ON rs.referencia_normalizada = public.fn_keep_alnum(COALESCE(p.referencia, p.producto_codigo))
+            WHERE ({where_clause})
+              AND rs.last_sale_date >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years'
             ORDER BY ({match_score_sql}) DESC, COALESCE(rot.rotation_score, 0) DESC, stock_total DESC NULLS LAST
             LIMIT {int(limit)}
             """
@@ -7139,8 +7154,18 @@ def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, s
     rows = connection.execute(
         text(
             f"""
+            WITH recent_sales AS (
+                SELECT
+                    am.referencia_normalizada,
+                    MAX(public.fn_parse_date(rv.fecha_venta)) AS last_sale_date
+                FROM public.raw_ventas_detalle rv
+                JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+                WHERE LOWER(COALESCE(rv.tipo_documento, '')) LIKE '%factura%'
+                GROUP BY am.referencia_normalizada
+            )
             SELECT referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
                    linea_clasificacion, marca_clasificacion, familia_clasificacion, aplicacion_clasificacion, cat_producto, descripcion_ebs, tipo_articulo,
+                   ultima_venta,
                    ({match_score_sql}) AS match_score,
                    COALESCE(rot.rotation_score, 0) AS rotation_score
             FROM (
@@ -7164,12 +7189,16 @@ def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, s
                     MAX(aplicacion_clasificacion) AS aplicacion_clasificacion,
                     MAX(cat_producto) AS cat_producto,
                     MAX(descripcion_ebs) AS descripcion_ebs,
-                    MAX(tipo_articulo) AS tipo_articulo
-                FROM public.vw_inventario_agente_activo
+                    MAX(tipo_articulo) AS tipo_articulo,
+                    MAX(rs.last_sale_date) AS ultima_venta
+                FROM public.vw_inventario_agente_activo inv
+                LEFT JOIN recent_sales rs
+                  ON rs.referencia_normalizada = inv.referencia_normalizada
                 WHERE {inner_where}
                 GROUP BY referencia, descripcion, marca
             ) inventory
             LEFT JOIN mv_product_rotation rot ON rot.producto_codigo = inventory.referencia
+            WHERE inventory.ultima_venta >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years'
             ORDER BY ({match_score_sql}) DESC, COALESCE(rot.rotation_score, 0) DESC, stock_total DESC NULLS LAST
             LIMIT {int(limit)}
             """
@@ -15327,12 +15356,25 @@ def fetch_products_from_catalog(connection, where_clause: str, params: dict, mat
     return connection.execute(
         text(
             f"""
+            WITH recent_sales AS (
+                SELECT
+                    am.referencia_normalizada,
+                    MAX(public.fn_parse_date(rv.fecha_venta)) AS last_sale_date
+                FROM public.raw_ventas_detalle rv
+                JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+                WHERE LOWER(COALESCE(rv.tipo_documento, '')) LIKE '%factura%'
+                GROUP BY am.referencia_normalizada
+            )
             SELECT producto_codigo, referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
                    linea_clasificacion, marca_clasificacion, familia_clasificacion, aplicacion_clasificacion, cat_producto, descripcion_ebs, tipo_articulo,
                    nombre_comercial_abracol, familia_abracol, descripcion_larga_abracol, portafolio_abracol,
+                   rs.last_sale_date AS ultima_venta,
                    ({match_score_sql}) AS match_score
-            FROM mv_productos
-            WHERE {where_clause}
+            FROM mv_productos p
+            LEFT JOIN recent_sales rs
+              ON rs.referencia_normalizada = public.fn_keep_alnum(COALESCE(p.referencia, p.producto_codigo))
+            WHERE ({where_clause})
+              AND rs.last_sale_date >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years'
             ORDER BY match_score DESC, stock_total DESC NULLS LAST, descripcion ASC NULLS LAST
             LIMIT {int(limit)}
             """
@@ -15345,8 +15387,18 @@ def fetch_products_from_store_inventory(connection, where_clause: str, params: d
     return connection.execute(
         text(
             f"""
+            WITH recent_sales AS (
+                SELECT
+                    am.referencia_normalizada,
+                    MAX(public.fn_parse_date(rv.fecha_venta)) AS last_sale_date
+                FROM public.raw_ventas_detalle rv
+                JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+                WHERE LOWER(COALESCE(rv.tipo_documento, '')) LIKE '%factura%'
+                GROUP BY am.referencia_normalizada
+            )
             SELECT referencia, descripcion, marca, departamentos, stock_total, costo_promedio_und, stock_por_tienda,
                    linea_clasificacion, marca_clasificacion, familia_clasificacion, aplicacion_clasificacion, cat_producto, descripcion_ebs, tipo_articulo,
+                   ultima_venta,
                    ({match_score_sql}) AS match_score
             FROM (
                 SELECT
@@ -15374,11 +15426,15 @@ def fetch_products_from_store_inventory(connection, where_clause: str, params: d
                     MAX(aplicacion_clasificacion) AS aplicacion_clasificacion,
                     MAX(cat_producto) AS cat_producto,
                     MAX(descripcion_ebs) AS descripcion_ebs,
-                    MAX(tipo_articulo) AS tipo_articulo
-                FROM public.vw_inventario_agente_activo
+                    MAX(tipo_articulo) AS tipo_articulo,
+                    MAX(rs.last_sale_date) AS ultima_venta
+                FROM public.vw_inventario_agente_activo inv
+                LEFT JOIN recent_sales rs
+                  ON rs.referencia_normalizada = inv.referencia_normalizada
                 WHERE {where_clause}
                 GROUP BY referencia, descripcion, marca
             ) inventory
+            WHERE inventory.ultima_venta >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years'
             ORDER BY match_score DESC, stock_total DESC NULLS LAST, descripcion ASC NULLS LAST
             LIMIT {int(limit)}
             """
@@ -15660,11 +15716,24 @@ def fetch_curated_catalog_product_rows(connection, text_value: Optional[str], pr
                 color_groups.append("(" + " AND ".join(token_clauses) + ")")
         if color_groups:
             where_clause = f"({where_clause}) AND ({' OR '.join(color_groups)})"
+    where_clause = (
+        f"({where_clause}) AND COALESCE(rs.last_sale_date, p.ultima_venta, DATE '1900-01-01') >= "
+        f"CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years'"
+    )
     score_clause = " + ".join(score_terms) if score_terms else "0"
 
     return connection.execute(
         text(
             f"""
+            WITH recent_sales AS (
+                SELECT
+                    am.referencia_normalizada,
+                    MAX(public.fn_parse_date(rv.fecha_venta)) AS last_sale_date
+                FROM public.raw_ventas_detalle rv
+                JOIN public.articulos_maestro am ON am.codigo_articulo = rv.codigo_articulo
+                WHERE LOWER(COALESCE(rv.tipo_documento, '')) LIKE '%factura%'
+                GROUP BY am.referencia_normalizada
+            )
             SELECT
                 p.producto_codigo,
                 p.referencia,
@@ -15676,7 +15745,7 @@ def fetch_curated_catalog_product_rows(connection, text_value: Optional[str], pr
                 p.costo_promedio_und,
                 p.ventas_unidades_total,
                 p.ventas_valor_total,
-                p.ultima_venta,
+                COALESCE(p.ultima_venta, MAX(rs.last_sale_date)) AS ultima_venta,
                 p.presentacion_canonica,
                 p.color_detectado,
                 p.color_raiz,
@@ -15720,6 +15789,8 @@ def fetch_curated_catalog_product_rows(connection, text_value: Optional[str], pr
                 END AS finish_score,
                 CASE WHEN COALESCE(p.stock_total, 0) > 0 THEN 1 ELSE 0 END AS stock_score
             FROM public.vw_agent_catalog_product_search p
+            LEFT JOIN recent_sales rs
+                ON rs.referencia_normalizada = public.fn_keep_alnum(COALESCE(p.referencia, p.producto_codigo))
             LEFT JOIN public.vw_agent_catalog_alias_active a
                 ON a.producto_codigo = p.producto_codigo
             WHERE {where_clause}
@@ -15749,7 +15820,7 @@ def fetch_curated_catalog_product_rows(connection, text_value: Optional[str], pr
                 finish_score DESC,
                 stock_score DESC,
                 COALESCE(p.ventas_unidades_total, 0) DESC,
-                COALESCE(p.ultima_venta, DATE '1900-01-01') DESC,
+                COALESCE(MAX(rs.last_sale_date), p.ultima_venta, DATE '1900-01-01') DESC,
                 COALESCE(p.stock_total, 0) DESC,
                 match_score DESC,
                 descripcion ASC NULLS LAST
