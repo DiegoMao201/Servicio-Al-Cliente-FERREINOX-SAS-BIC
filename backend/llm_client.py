@@ -1,0 +1,183 @@
+"""Cliente LLM (DeepSeek vía SDK OpenAI-compatible).
+
+Módulo extraído de `backend/main.py` durante la Fase C2 (modularización).
+Centraliza la configuración del backend LLM y el caché del prompt NLU.
+
+IMPORTANTE: El SDK `openai` se usa intencionalmente como transporte para
+DeepSeek (API OpenAI-compatible). El fallback a `gpt-4o-mini` permanece
+como red de seguridad y emite WARNING explícito.
+"""
+
+from __future__ import annotations
+
+import logging
+import os
+import re
+from pathlib import Path
+from typing import Optional
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # Python < 3.11
+    import tomli as tomllib  # type: ignore[no-redef]
+
+from openai import OpenAI
+
+
+logger = logging.getLogger("ferreinox_agent")
+
+
+# ── Paths ─────────────────────────────────────────────────────────────────
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+_SECRETS_PATH = _REPO_ROOT / ".streamlit" / "secrets.toml"
+_ARTIFACTS_PATH = _REPO_ROOT / "artifacts"
+PRODUCT_NLU_PROMPT_PATH = _ARTIFACTS_PATH / "SYSTEM_PROMPT_NLU_EXTRACCION_PRODUCTO.md"
+PRODUCT_NLU_PROMPT_FALLBACK = (
+    "Eres un extractor NLU para pedidos ferreteros. Devuelve solo JSON válido con las claves "
+    "cantidad_inferida, presentacion_canonica_inferida, producto_base, color y acabado. "
+    "Si no sabes un valor, devuelve null. Interpreta 1/5 como cuñete, 1/1 como galon y 1/4 como cuarto. "
+    "Conserva colores compuestos como verde bronce y no inventes acabados."
+)
+PRODUCT_NLU_PROMPT_CACHE: Optional[str] = None
+
+
+# ── Helpers genéricos de configuración ────────────────────────────────────
+def _read_streamlit_secret_value(*keys: str) -> Optional[str]:
+    if not _SECRETS_PATH.exists() or not keys:
+        return None
+    try:
+        raw_text = _SECRETS_PATH.read_text(encoding="utf-8")
+    except Exception:
+        return None
+
+    last_key = re.escape(keys[-1])
+    quoted_match = re.search(rf"(?mi)^\s*{last_key}\s*=\s*\"([^\"]+)\"\s*$", raw_text)
+    if quoted_match:
+        return quoted_match.group(1).strip()
+
+    bare_match = re.search(rf"(?mi)^\s*{last_key}\s*=\s*([^#\r\n]+)", raw_text)
+    if bare_match:
+        return bare_match.group(1).strip().strip('"').strip("'")
+
+    try:
+        parsed = tomllib.loads(raw_text)
+    except Exception:
+        return None
+
+    current = parsed
+    for key in keys:
+        if not isinstance(current, dict):
+            return None
+        current = current.get(key)
+        if current is None:
+            return None
+    if isinstance(current, str):
+        return current.strip()
+    return None
+
+
+def _first_configured_value(*values):
+    for value in values:
+        if value is None:
+            continue
+        stripped = value.strip() if isinstance(value, str) else value
+        if stripped:
+            return stripped
+    return None
+
+
+# ── Resolución de credenciales y endpoint ─────────────────────────────────
+def get_openai_api_key():
+    return _first_configured_value(
+        os.getenv("OPENAI_API_KEY"),
+        os.getenv("DEEPSEEK_API_KEY"),
+        _read_streamlit_secret_value("openai", "api_key"),
+        _read_streamlit_secret_value("deepseek", "api_key"),
+    )
+
+
+def get_openai_base_url():
+    configured_base_url = _first_configured_value(
+        os.getenv("OPENAI_BASE_URL"),
+        os.getenv("LLM_BASE_URL"),
+        os.getenv("DEEPSEEK_BASE_URL"),
+    )
+    if configured_base_url:
+        return configured_base_url
+    if os.getenv("DEEPSEEK_API_KEY") and not os.getenv("OPENAI_API_KEY"):
+        return "https://api.deepseek.com"
+    return None
+
+
+def is_deepseek_backend():
+    base_url = get_openai_base_url()
+    if base_url and "deepseek" in base_url.lower():
+        return True
+    return bool(os.getenv("DEEPSEEK_API_KEY") and not os.getenv("OPENAI_API_KEY"))
+
+
+def get_openai_model():
+    if is_deepseek_backend():
+        configured_model = _first_configured_value(
+            os.getenv("DEEPSEEK_MODEL"),
+            os.getenv("LLM_MODEL"),
+            os.getenv("OPENAI_MODEL"),
+        )
+        return configured_model or "deepseek-chat"
+
+    configured_model = _first_configured_value(
+        os.getenv("OPENAI_MODEL"),
+        os.getenv("LLM_MODEL"),
+    )
+    if configured_model:
+        return configured_model
+    return "gpt-4o-mini"
+
+
+def get_openai_client():
+    api_key = get_openai_api_key()
+    if not api_key:
+        raise RuntimeError("No se encontró OPENAI_API_KEY ni DEEPSEEK_API_KEY para generar respuestas del agente.")
+    client_kwargs = {"api_key": api_key}
+    base_url = get_openai_base_url()
+    if base_url:
+        client_kwargs["base_url"] = base_url
+    else:
+        # Fallback path: no DEEPSEEK_API_KEY ni OPENAI_BASE_URL configurados.
+        # Cae al endpoint OpenAI por defecto. Producción debe usar DeepSeek.
+        logger.warning(
+            "LLM client fallback: usando endpoint OpenAI por defecto (modelo=%s). "
+            "Configura DEEPSEEK_API_KEY o OPENAI_BASE_URL para evitar este fallback.",
+            get_openai_model(),
+        )
+    return OpenAI(**client_kwargs)
+
+
+def get_product_nlu_system_prompt():
+    global PRODUCT_NLU_PROMPT_CACHE
+    if PRODUCT_NLU_PROMPT_CACHE is not None:
+        return PRODUCT_NLU_PROMPT_CACHE
+
+    try:
+        PRODUCT_NLU_PROMPT_CACHE = PRODUCT_NLU_PROMPT_PATH.read_text(encoding="utf-8").strip()
+    except Exception:
+        PRODUCT_NLU_PROMPT_CACHE = PRODUCT_NLU_PROMPT_FALLBACK
+
+    if not PRODUCT_NLU_PROMPT_CACHE:
+        PRODUCT_NLU_PROMPT_CACHE = PRODUCT_NLU_PROMPT_FALLBACK
+    return PRODUCT_NLU_PROMPT_CACHE
+
+
+__all__ = [
+    "PRODUCT_NLU_PROMPT_PATH",
+    "PRODUCT_NLU_PROMPT_FALLBACK",
+    "PRODUCT_NLU_PROMPT_CACHE",
+    "_first_configured_value",
+    "_read_streamlit_secret_value",
+    "get_openai_api_key",
+    "get_openai_base_url",
+    "is_deepseek_backend",
+    "get_openai_model",
+    "get_openai_client",
+    "get_product_nlu_system_prompt",
+]

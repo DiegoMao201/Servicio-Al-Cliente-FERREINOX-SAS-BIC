@@ -65,6 +65,85 @@ try:
 except ImportError:
     from backend.technical_product_canonicalization import canonicalize_technical_product_list, canonicalize_technical_product_term
 
+# ── Módulos extraídos en Fase C2 (re-exportados para preservar la API pública de main) ──
+try:
+    from bicomponents import BICOMPONENT_CATALOG, _BICOMPONENT_KEYWORDS, get_bicomponent_info
+except ImportError:
+    from backend.bicomponents import BICOMPONENT_CATALOG, _BICOMPONENT_KEYWORDS, get_bicomponent_info
+
+try:
+    from policies import (
+        RAG_METADATA_CANONICAL_HINTS,
+        RAG_METADATA_CHEMICAL_HINTS,
+        _build_hard_policies_for_context,
+        _extract_forbidden_note_items,
+        _is_tool_policy_item,
+        _matches_global_policy_rule,
+        _mention_is_negated_in_query,
+        _query_matches_all_tokens,
+        _query_matches_any_token,
+        _query_matches_token,
+        _split_policy_items,
+    )
+except ImportError:
+    from backend.policies import (
+        RAG_METADATA_CANONICAL_HINTS,
+        RAG_METADATA_CHEMICAL_HINTS,
+        _build_hard_policies_for_context,
+        _extract_forbidden_note_items,
+        _is_tool_policy_item,
+        _matches_global_policy_rule,
+        _mention_is_negated_in_query,
+        _query_matches_all_tokens,
+        _query_matches_any_token,
+        _query_matches_token,
+        _split_policy_items,
+    )
+
+try:
+    from llm_client import (
+        PRODUCT_NLU_PROMPT_PATH,
+        PRODUCT_NLU_PROMPT_FALLBACK,
+        _first_configured_value,
+        _read_streamlit_secret_value,
+        get_openai_api_key,
+        get_openai_base_url,
+        is_deepseek_backend,
+        get_openai_model,
+        get_openai_client,
+        get_product_nlu_system_prompt,
+    )
+except ImportError:
+    from backend.llm_client import (
+        PRODUCT_NLU_PROMPT_PATH,
+        PRODUCT_NLU_PROMPT_FALLBACK,
+        _first_configured_value,
+        _read_streamlit_secret_value,
+        get_openai_api_key,
+        get_openai_base_url,
+        is_deepseek_backend,
+        get_openai_model,
+        get_openai_client,
+        get_product_nlu_system_prompt,
+    )
+
+try:
+    from auth_internal import (
+        INTERNAL_PASSWORD_ITERATIONS,
+        hash_password_with_salt,
+        build_password_credentials,
+        verify_password_hash,
+        hash_session_token,
+    )
+except ImportError:
+    from backend.auth_internal import (
+        INTERNAL_PASSWORD_ITERATIONS,
+        hash_password_with_salt,
+        build_password_credentials,
+        verify_password_hash,
+        hash_session_token,
+    )
+
 # ── Color formulas data (from LIBRO DE FORMULAS) ──
 _COLOR_FORMULAS: list[dict] = []
 _COLOR_FORMULAS_FILE = Path(__file__).resolve().parent.parent / "data" / "color_formulas.json"
@@ -97,7 +176,7 @@ if _INTERNATIONAL_PRODUCTS_FILE.exists():
 INTERNAL_ROLES = {"empleado", "vendedor", "gerente", "operador", "administrador"}
 INTERNAL_SCOPE_TYPES = {"cliente", "vendedor_codigo", "vendedor_nombre", "zona", "almacen"}
 INTERNAL_SESSION_TTL_HOURS = int(os.getenv("INTERNAL_AUTH_SESSION_TTL_HOURS", "12"))
-INTERNAL_PASSWORD_ITERATIONS = int(os.getenv("INTERNAL_AUTH_PASSWORD_ITERATIONS", "390000"))
+# INTERNAL_PASSWORD_ITERATIONS: re-exportado desde backend.auth_internal (Fase C2).
 INTERNAL_LOGIN_PATTERN = re.compile(r"^\s*login\s+([a-z0-9._-]{3,80})\s+(.+?)\s*$", re.IGNORECASE)
 INTERNAL_CEDULA_PATTERN = re.compile(r"\b(\d{6,15})\b")
 INTERNAL_LOGOUT_PATTERNS = {
@@ -182,9 +261,8 @@ class InternalLoginRequest(BaseModel):
 
 SECRETS_PATH = Path(__file__).resolve().parent.parent / ".streamlit" / "secrets.toml"
 ARTIFACTS_PATH = Path(__file__).resolve().parent.parent / "artifacts"
-PRODUCT_NLU_PROMPT_PATH = ARTIFACTS_PATH / "SYSTEM_PROMPT_NLU_EXTRACCION_PRODUCTO.md"
-PRODUCT_NLU_PROMPT_FALLBACK = """Eres un extractor NLU para pedidos ferreteros. Devuelve solo JSON válido con las claves cantidad_inferida, presentacion_canonica_inferida, producto_base, color y acabado. Si no sabes un valor, devuelve null. Interpreta 1/5 como cuñete, 1/1 como galon y 1/4 como cuarto. Conserva colores compuestos como verde bronce y no inventes acabados."""
-PRODUCT_NLU_PROMPT_CACHE: Optional[str] = None
+# PRODUCT_NLU_PROMPT_PATH y PRODUCT_NLU_PROMPT_FALLBACK ahora viven en backend.llm_client
+# (re-importados arriba para preservar referencias externas).
 PRODUCT_NLU_CACHE_MAX_ITEMS = 256
 PRODUCT_NLU_CACHE: dict[str, dict] = {}
 TECHNICAL_DOC_FOLDER = "/data/FICHAS TÉCNICAS Y HOJAS DE SEGURIDAD"
@@ -1963,699 +2041,14 @@ GLOBAL_TECHNICAL_POLICY_RULES = [
 ]
 
 
-def _mention_is_negated_in_query(normalized_query: str, start_index: int) -> bool:
-    window = normalized_query[max(0, start_index - 45):start_index]
-    negation_cues = [
-        " no ", " nunca ", " evita ", " evitar ", " prohibido ", " jamas ", " jamás ",
-        " no quiero ", " no usar ", " no voy a usar ", " no pienso usar ", " no aplicar ",
-    ]
-    return any(cue in f" {window} " for cue in negation_cues)
+# Helpers de matching/policies (_mention_is_negated_in_query, _query_matches_*,
+# _matches_global_policy_rule, _split_policy_items, _is_tool_policy_item,
+# _extract_forbidden_note_items, _build_hard_policies_for_context) viven en
+# backend.policies (re-importados al inicio de main para preservar la API).
 
 
-def _query_matches_token(normalized_query: str, token: str, allow_negated: bool = True) -> bool:
-    padded_query = f" {normalized_query} "
-    normalized_token = normalize_text_value(token)
-    if not normalized_token:
-        return False
-
-    search_candidates = [f" {normalized_token} ", normalized_token]
-    for search_token in search_candidates:
-        start = padded_query.find(search_token)
-        while start != -1:
-            if allow_negated or not _mention_is_negated_in_query(padded_query, start):
-                return True
-            start = padded_query.find(search_token, start + len(search_token))
-    return False
-
-
-def _query_matches_all_tokens(normalized_query: str, tokens: list[str], allow_negated: bool = True) -> bool:
-    return all(_query_matches_token(normalized_query, token, allow_negated=allow_negated) for token in tokens or [])
-
-
-def _query_matches_any_token(normalized_query: str, tokens: list[str], allow_negated: bool = True) -> bool:
-    return any(_query_matches_token(normalized_query, token, allow_negated=allow_negated) for token in tokens or [])
-
-
-def _matches_global_policy_rule(rule: dict, normalized_query: str, diagnosis: dict) -> bool:
-    problem_class = diagnosis.get("problem_class")
-    problem_classes = rule.get("problem_classes") or set()
-    if problem_classes and problem_class not in problem_classes:
-        return False
-    if rule.get("match_all") and not _query_matches_all_tokens(normalized_query, rule.get("match_all") or []):
-        return False
-    if rule.get("match_all_non_negated") and not _query_matches_all_tokens(normalized_query, rule.get("match_all_non_negated") or [], allow_negated=False):
-        return False
-    if rule.get("match_any") and not _query_matches_any_token(normalized_query, rule.get("match_any") or []):
-        return False
-    if rule.get("match_any_non_negated") and not _query_matches_any_token(normalized_query, rule.get("match_any_non_negated") or [], allow_negated=False):
-        return False
-    if rule.get("exclude_any") and _query_matches_any_token(normalized_query, rule.get("exclude_any") or []):
-        return False
-    return bool(problem_classes or rule.get("match_all") or rule.get("match_all_non_negated") or rule.get("match_any") or rule.get("match_any_non_negated"))
-
-
-def _infer_problem_class_from_rag_query(question: str, product: str = "") -> Optional[str]:
-    normalized = normalize_text_value(f"{question} {product}")
-    if not normalized:
-        return None
-
-    if any(token in normalized for token in ["eternit", "fibrocemento", "asbesto", "asbesto cemento"]):
-        return "eternit_fibrocemento"
-
-    if any(token in normalized for token in ["ladrillo a la vista", "ladrillo", "fachaleta", "mamposteria a la vista"]):
-        return "ladrillo_vista"
-
-    if any(token in normalized for token in ["madera", "barnex", "wood stain", "barniz", "vitrificar", "escalera madera", "deck", "pergola", "pérgola"]):
-        return "madera"
-
-    if any(token in normalized for token in ["metal", "reja", "porton", "acero", "hierro"]) and any(
-        token in normalized for token in ["alquidico", "alquidico", "esmalte sintetico", "pintura de aceite", "anticorrosivo viejo", "ya pintado", "pintada"]
-    ):
-        return "metal_pintado_alquidico"
-
-    if any(token in normalized for token in ["humedad", "salitre", "capilaridad", "presion negativa", "presión negativa", "filtracion", "filtración", "moho", "pared mojada", "muro mojado"]):
-        if any(token in normalized for token in ["interior", "muro", "pared", "base del muro", "viene del piso", "jardinera", "sube del piso"]):
-            if any(token in normalized for token in ["base del muro", "viene del piso", "jardinera", "capilaridad", "presion negativa", "presión negativa"]):
-                return "humedad_interior_capilaridad"
-            return "humedad_interior_general"
-        if any(token in normalized for token in ["fachada", "exterior", "lluvia", "sol y lluvia"]):
-            return "fachada_exterior"
-
-    if any(token in normalized for token in ["piso", "garaje", "montacargas", "trafico", "tráfico", "estibador", "intergard 2002", "pintucoat", "intergard 740", "epoxico", "epóxico", "epoxi", "concreto nuevo", "recien fundido", "reci en fundido", "recien vaciado", "sin curar", "obra gris"]):
-        return "piso_industrial"
-
-    if any(token in normalized for token in ["fachada", "muro exterior", "exterior", "intemperie", "lluvia sol"]):
-        return "fachada_exterior"
-
-    if any(token in normalized for token in ["oxido", "óxido", "reja", "metal", "corrosion", "corrosión", "corrotec", "pintoxido"]):
-        return "metal_oxidado"
-
-    return None
-
-
-def _estimate_problem_class_confidence(problem_class: Optional[str], question: str, product: str, best_similarity: float) -> str:
-    if not problem_class:
-        return "baja"
-
-    normalized = normalize_text_value(f"{question} {product}")
-    signal_count = 0
-    signal_map = {
-        "eternit_fibrocemento": ["eternit", "fibrocemento", "asbesto", "sellomax", "koraza"],
-        "ladrillo_vista": ["ladrillo", "siliconite", "construcleaner"],
-        "metal_pintado_alquidico": ["metal", "reja", "alquidico", "esmalte", "anticorrosivo viejo"],
-        "humedad_interior_capilaridad": ["humedad", "salitre", "interior", "muro", "viene del piso", "jardinera", "capilaridad"],
-        "humedad_interior_general": ["humedad", "salitre", "interior", "muro", "pared"],
-        "fachada_exterior": ["fachada", "exterior", "intemperie", "lluvia"],
-        "metal_oxidado": ["metal", "reja", "oxido", "óxido", "corrotec"],
-        "piso_industrial": ["piso", "concreto", "trafico", "tráfico", "montacargas"],
-        "madera": ["madera", "barnex", "barniz", "wood stain"],
-    }
-    for token in signal_map.get(problem_class, []):
-        if token in normalized:
-            signal_count += 1
-
-    if best_similarity >= 0.82 or signal_count >= 5:
-        return "alta"
-    if best_similarity >= 0.68 or signal_count >= 3:
-        return "media"
-    return "baja"
-
-
-def _build_structured_diagnosis(question: str, product: str, best_similarity: float) -> dict:
-    problem_class = _infer_problem_class_from_rag_query(question, product)
-    confidence = _estimate_problem_class_confidence(problem_class, question, product, best_similarity)
-    normalized = normalize_text_value(f"{question} {product}")
-
-    probable_cause = None
-    if problem_class == "eternit_fibrocemento":
-        probable_cause = "fibrocemento exterior sensible a polvo y envejecimiento"
-    elif problem_class == "ladrillo_vista":
-        probable_cause = "sustrato mineral expuesto que debe protegerse sin ocultar la textura"
-    elif problem_class == "metal_pintado_alquidico":
-        probable_cause = "incompatibilidad quimica entre base alquidica vieja y sistema industrial 2K"
-    elif problem_class == "humedad_interior_capilaridad":
-        probable_cause = "capilaridad/presión negativa"
-    elif problem_class == "humedad_interior_general":
-        probable_cause = "humedad interior por definir"
-    elif problem_class == "fachada_exterior":
-        probable_cause = "intemperismo/filtración exterior"
-    elif problem_class == "metal_oxidado":
-        probable_cause = "corrosión por exposición"
-    elif problem_class == "piso_industrial":
-        probable_cause = "desgaste mecánico / requerimiento por tráfico"
-
-    required_validations_map = {
-        "eternit_fibrocemento": [
-            "Confirmar si el fibrocemento es exterior y si ya esta pintado o envejecido.",
-            "Validar si hay polvo de asbesto o deterioro que obligue a preparacion humeda.",
-            "Solicitar m2 reales antes de cotizar.",
-        ],
-        "ladrillo_vista": [
-            "Confirmar si el cliente quiere conservar la apariencia natural del ladrillo.",
-            "Validar si requiere solo limpieza o limpieza mas hidrofugacion.",
-            "Solicitar m2 reales antes de cotizar.",
-        ],
-        "metal_pintado_alquidico": [
-            "Confirmar si la base actual es esmalte sintetico, anticorrosivo alquidico o pintura de aceite.",
-            "Validar si aceptan remocion total hasta metal desnudo.",
-            "Solicitar m2 o dimensiones antes de cotizar.",
-        ],
-        "humedad_interior_capilaridad": [
-            "Confirmar origen de humedad desde base del muro/piso/jardinera.",
-            "Validar estado del revoque o base soplada.",
-            "Solicitar m² reales antes de cotizar.",
-        ],
-        "humedad_interior_general": [
-            "Confirmar causa: base del muro, arriba, lateral o temporada.",
-            "Validar estado de la base/revoque.",
-            "Solicitar m² reales antes de cotizar.",
-        ],
-        "fachada_exterior": [
-            "Confirmar si es exterior real y nivel de deterioro.",
-            "Solicitar m² reales antes de cotizar.",
-        ],
-        "metal_oxidado": [
-            "Confirmar grado de oxidación.",
-            "Confirmar si es interior o exterior.",
-            "Solicitar m² o dimensiones antes de cotizar.",
-        ],
-        "piso_industrial": [
-            "Confirmar si es concreto nuevo o viejo/ya pintado.",
-            "Confirmar curado de 28 días si es nuevo.",
-            "Confirmar tipo de tráfico y si es interior/exterior.",
-            "Solicitar m² reales antes de cotizar.",
-        ],
-        "madera": [
-            "Confirmar si es interior o exterior.",
-            "Confirmar si quiere acabado transparente o color sólido.",
-            "Solicitar área o dimensiones antes de cotizar.",
-        ],
-    }
-
-    observed_signals = []
-    for token in ["humedad", "salitre", "capilaridad", "jardinera", "muro", "interior", "fachada", "exterior", "oxido", "óxido", "reja", "piso", "montacargas", "madera", "barniz", "eternit", "fibrocemento", "ladrillo", "alquidico"]:
-        if token in normalized:
-            observed_signals.append(token)
-
-    return {
-        "problem_class": problem_class,
-        "confidence": confidence,
-        "probable_cause": probable_cause,
-        "pricing_ready": False if problem_class in {"eternit_fibrocemento", "ladrillo_vista", "metal_pintado_alquidico", "humedad_interior_capilaridad", "humedad_interior_general", "fachada_exterior", "metal_oxidado", "piso_industrial", "madera"} else True,
-        "required_validations": required_validations_map.get(problem_class, []),
-        "observed_signals": observed_signals,
-    }
-
-
-def _build_structured_technical_guide(question: str, product: str, diagnosis: dict, expert_notes: list[dict], best_similarity: float) -> dict:
-    problem_class = diagnosis.get("problem_class")
-    normalized = normalize_text_value(f"{question} {product}")
-
-    guide = {
-        "problem_class": problem_class,
-        "source_confidence": diagnosis.get("confidence") or _estimate_problem_class_confidence(problem_class, question, product, best_similarity),
-        "preparation_steps": [],
-        "base_or_primer": [],
-        "intermediate_steps": [],
-        "finish_options": [],
-        "diluents_or_adjusters": [],
-        "tools": [],
-        "required_questions": diagnosis.get("required_validations") or [],
-        "forbidden_products_or_shortcuts": [],
-        "commercial_alternatives": [],
-        "pricing_gate": "m2_required" if problem_class in {"eternit_fibrocemento", "ladrillo_vista", "metal_pintado_alquidico", "humedad_interior_capilaridad", "humedad_interior_general", "fachada_exterior", "metal_oxidado", "piso_industrial", "madera"} else "none",
-        "hard_rules_applied": [],
-    }
-
-    if problem_class == "eternit_fibrocemento":
-        guide["preparation_steps"] = [
-            "Preparacion humeda con hidrolavadora, jabon, hipoclorito y cepillo; nunca lijar en seco ni rasquetear.",
-            "Retirar solo material flojo sin generar polvo.",
-        ]
-        guide["base_or_primer"] = ["Sellomax antes del acabado si el eternit ya esta pintado o envejecido."]
-        guide["finish_options"] = [
-            {"producto": "Koraza", "rol": "acabado exterior", "nivel": "premium"},
-        ]
-        guide["tools"] = ["Hidrolavadora", "Cepillo", "Escoba de cerdas duras", "Brocha", "Rodillo"]
-        guide["forbidden_products_or_shortcuts"] = [
-            "Intervinil, Pinturama o vinilos interiores como acabado exterior.",
-            "Lijado en seco, rasqueteo o preparacion mecanica que genere polvo.",
-        ]
-        guide["hard_rules_applied"] = [
-            "Fibrocemento exterior: preparacion humeda obligatoria + Sellomax + acabado exterior.",
-        ]
-    elif problem_class == "ladrillo_vista":
-        guide["preparation_steps"] = [
-            "Limpieza tecnica del ladrillo antes de protegerlo.",
-        ]
-        guide["base_or_primer"] = ["Construcleaner Limpiador Desengrasante como limpieza previa."]
-        guide["finish_options"] = [
-            {"producto": "Siliconite 7", "rol": "hidrofugante", "nivel": "premium"},
-        ]
-        guide["tools"] = ["Cepillo", "Brocha", "Rodillo segun absorcion"]
-        guide["forbidden_products_or_shortcuts"] = [
-            "Acido muriatico para limpieza.",
-            "Koraza si el objetivo es conservar el ladrillo a la vista.",
-        ]
-    elif problem_class == "metal_pintado_alquidico":
-        guide["preparation_steps"] = [
-            "Remocion total hasta metal desnudo antes de migrar a sistema epoxico o poliuretano.",
-        ]
-        guide["base_or_primer"] = ["Corrotec si se mantiene sistema alquidico. Wash Primer o sistema epoxico solo despues de remocion total."]
-        guide["finish_options"] = [
-            {"producto": "Pintulux 3 en 1", "rol": "acabado compatible si se mantiene familia alquidica", "nivel": "estándar"},
-        ]
-        guide["tools"] = ["Disco flap", "Grata", "Lija Abracol", "Brocha Goya Profesional"]
-        guide["forbidden_products_or_shortcuts"] = [
-            "Aplicar epoxicos o poliuretanos directamente sobre esmalte sintetico o anticorrosivo alquidico viejo.",
-        ]
-    elif problem_class == "humedad_interior_capilaridad":
-        guide["preparation_steps"] = [
-            "Remover por completo pintura soplada/descascarada y salitre hasta base sana.",
-            "Si el revoque está quemado o meteorizado, reemplazarlo antes del sistema nuevo.",
-        ]
-        guide["base_or_primer"] = ["Aquablock Ultra - 2 manos con brocha para cargar producto."]
-        guide["intermediate_steps"] = ["Estuco Acrílico para Exterior/Humedad (en ERP suele resolverse como estuco prof ext blanco) después del Aquablock para nivelar. NUNCA antes."]
-        guide["finish_options"] = [
-            {"producto": "Viniltex Advanced", "rol": "acabado final", "nivel": "premium"},
-            {"producto": "Intervinil", "rol": "acabado final", "nivel": "intermedio"},
-            {"producto": "Pinturama", "rol": "acabado final", "nivel": "económico"},
-        ]
-        guide["tools"] = ["Brocha Goya Profesional", "Rodillo", "Lija / raspado para preparación"]
-        guide["forbidden_products_or_shortcuts"] = [
-            "Koraza como imprimante o acabado interior.",
-            "Pintuco Fill como solución principal para capilaridad interior desde la base del muro.",
-            "Cotizar por galones sugeridos por el cliente sin metraje.",
-        ]
-        guide["hard_rules_applied"] = [
-            PRODUCT_TECHNICAL_HARD_RULES["koraza"]["no_es_para"],
-            PRODUCT_TECHNICAL_HARD_RULES["aquablock"]["es_para"],
-        ]
-    elif problem_class == "humedad_interior_general":
-        guide["preparation_steps"] = [
-            "Diagnosticar causa de humedad antes de pintar.",
-            "Remover base dañada y salitre donde aplique.",
-        ]
-        guide["base_or_primer"] = ["Aquablock / Aquablock Ultra según presión negativa y severidad."]
-        guide["intermediate_steps"] = ["Estuco Acrílico para Exterior/Humedad (en ERP suele resolverse como estuco prof ext blanco) si se requiere nivelación después del bloqueador de humedad."]
-        guide["finish_options"] = [
-            {"producto": "Viniltex Advanced", "rol": "acabado final", "nivel": "premium"},
-            {"producto": "Intervinil", "rol": "acabado final", "nivel": "intermedio"},
-            {"producto": "Pinturama", "rol": "acabado final", "nivel": "económico"},
-        ]
-        guide["tools"] = ["Brocha", "Rodillo", "Lija / raspado para preparación"]
-        guide["forbidden_products_or_shortcuts"] = ["Koraza como sellador de humedad interior."]
-        guide["hard_rules_applied"] = [PRODUCT_TECHNICAL_HARD_RULES["koraza"]["no_es_para"]]
-    elif problem_class == "fachada_exterior":
-        guide["preparation_steps"] = ["Remover pintura suelta o base soplada antes de repintar."]
-        guide["finish_options"] = [
-            {"producto": "Koraza", "rol": "acabado exterior", "nivel": "premium"},
-            {"producto": "Viniltex", "rol": "acabado exterior cuando la exposicion es moderada y el sistema es arquitectonico compatible", "nivel": "intermedio"},
-        ]
-        guide["tools"] = ["Lija Abracol", "Brocha Goya Profesional", "Rodillo"]
-        guide["forbidden_products_or_shortcuts"] = [
-            "Intervinil o Pinturama como acabado en fachadas de alta exposicion.",
-            "Aquablock como acabado exterior.",
-        ]
-    elif problem_class == "metal_oxidado":
-        guide["preparation_steps"] = ["Preparación mecánica con lija, disco flap o grata según el grado de óxido."]
-        guide["base_or_primer"] = ["Pintóxido si hay óxido profundo.", "Corrotec o Corrotec Premium como anticorrosivo."]
-        guide["finish_options"] = [{"producto": "Pintulux 3 en 1", "rol": "acabado final", "nivel": "estándar"}]
-        guide["tools"] = ["Disco flap", "Grata", "Brocha Goya Profesional", "Lija Abracol"]
-    elif problem_class == "piso_industrial":
-        guide["preparation_steps"] = ["Confirmar estado del piso y preparación mecánica adecuada."]
-        guide["base_or_primer"] = ["Interseal gris RAL 7038 para concreto cuando aplique."]
-        guide["finish_options"] = [
-            {"producto": "Pintucoat", "rol": "acabado para tráfico medio", "nivel": "medio"},
-            {"producto": "Intergard 740", "rol": "acabado brillante tráfico medio", "nivel": "medio"},
-            {"producto": "Intergard 2002 + cuarzo", "rol": "sistema tráfico pesado", "nivel": "alto desempeño"},
-        ]
-        guide["forbidden_products_or_shortcuts"] = ["No cotizar sin m² ni sin protocolo diagnóstico del piso."]
-    elif problem_class == "madera":
-        guide["preparation_steps"] = ["Diagnosticar si es interior/exterior y si quiere transparente o color sólido."]
-        guide["finish_options"] = [
-            {"producto": "Barnex", "rol": "acabado exterior transparente", "nivel": "premium"},
-            {"producto": "Wood Stain", "rol": "acabado exterior transparente", "nivel": "intermedio"},
-            {"producto": "Esmalte Doméstico", "rol": "acabado color sólido", "nivel": "económico"},
-            {"producto": "Pintulux Máxima Protección", "rol": "acabado color sólido", "nivel": "premium"},
-        ]
-        guide["tools"] = ["Brocha Goya Profesional", "Lijas Abracol 80-100 y 220-320", "Removedor Pintuco"]
-
-    if "interthane" in normalized:
-        guide["diluents_or_adjusters"].append("UFA151 como ajustador/diluyente del sistema de poliuretano cuando aplique.")
-        guide["hard_rules_applied"].append(PRODUCT_TECHNICAL_HARD_RULES["interthane"]["bicomponente"])
-    if "pintucoat" in normalized:
-        guide["diluents_or_adjusters"].append("Thinner Epóxico Pintuco cuando el sistema lo requiera.")
-        guide["hard_rules_applied"].append(PRODUCT_TECHNICAL_HARD_RULES["pintucoat"]["bicomponente"])
-
-    if expert_notes:
-        guide["expert_overrides"] = [
-            {
-                "tipo": note.get("tipo"),
-                "recomendar": note.get("producto_recomendado"),
-                "evitar": note.get("producto_desestimado"),
-                "nota": note.get("nota_comercial"),
-            }
-            for note in expert_notes[:5]
-        ]
-    else:
-        guide["expert_overrides"] = []
-
-    return guide
-
-
-def _split_policy_items(raw_value: Optional[str]) -> list[str]:
-    if not raw_value:
-        return []
-    cleaned = raw_value.replace("\n", ",")
-    chunks = re.split(r"[;,]|\s+\+\s+|\s+y\s+", cleaned, flags=re.IGNORECASE)
-    results = []
-    for chunk in chunks:
-        value = (chunk or "").strip(" .:-")
-        normalized = normalize_text_value(value)
-        if len(normalized) < 3:
-            continue
-        if value not in results:
-            results.append(value)
-    return results
-
-
-def _is_tool_policy_item(item: str) -> bool:
-    normalized = normalize_text_value(item)
-    tool_tokens = {
-        "hidrolavadora", "escoba", "cepillo", "brocha", "rodillo", "lija", "lijas",
-        "rasqueta", "espatula", "espátula", "grata", "disco flap", "pulidora",
-        "pistola", "airless", "thinner", "solvente", "jabón", "jabon", "hipoclorito",
-    }
-    return any(token in normalized for token in tool_tokens)
-
-
-def _extract_forbidden_note_items(note_text: str) -> list[str]:
-    items = []
-    patterns = [
-        r"nunca\s+(?:recomendar|usar|aplicar|incluir|listar ni incluir)\s+(.+?)(?:\.|$)",
-        r"prohibido\s+(?:usar|recomendar|incluir)\s+(.+?)(?:\.|$)",
-        r"evitar\s+(.+?)(?:\.|$)",
-    ]
-    for pattern in patterns:
-        for match in re.finditer(pattern, note_text or "", flags=re.IGNORECASE):
-            for item in _split_policy_items(match.group(1)):
-                if item not in items:
-                    items.append(item)
-    return items
-
-
-def _build_hard_policies_for_context(question: str, product: str, diagnosis: dict, guide: dict, expert_notes: list[dict]) -> dict:
-    policies = {
-        "problem_class": diagnosis.get("problem_class"),
-        "required_products": [],
-        "forbidden_products": [],
-        "required_tools": [],
-        "forbidden_tools": [],
-        "mandatory_steps": [],
-        "mandatory_step_signals": [],
-        "rules_text": [],
-        "policy_names": [],
-        "critical_policy_names": [],
-        "high_priority_policy_names": [],
-        "dominant_policy_names": [],
-        "highest_priority_level": "none",
-    }
-
-    def _append_unique(bucket: str, value: str):
-        cleaned = (value or "").strip()
-        if not cleaned:
-            return
-        if cleaned not in policies[bucket]:
-            policies[bucket].append(cleaned)
-
-    for step in (guide.get("preparation_steps") or []):
-        _append_unique("mandatory_steps", step)
-
-    for step in (guide.get("preparation_steps") or []):
-        lowered_step = normalize_text_value(step)
-        for candidate in ["preparacion humeda", "sellomax", "koraza", "aquablock", "retirar el acabado", "metal desnudo", "intergard 2002", "cuarzo", "interthane", "28 dias", "curado", "construcleaner", "siliconite", "barnex", "wood stain", "poliuretano alto trafico"]:
-            if candidate in lowered_step:
-                _append_unique("mandatory_step_signals", candidate)
-
-    for note in expert_notes or []:
-        note_text = (note.get("nota_comercial") or "").strip()
-        if note_text:
-            _append_unique("rules_text", note_text)
-
-        # Only inject products into required/forbidden from high-relevance notes.
-        # Low-scoring notes still contribute their text (rules_text) for LLM context
-        # but should not override product recommendations from better-matched rules.
-        note_score = note.get("_expert_score") or 0.0
-        inject_products = note_score >= 5.0
-
-        if inject_products:
-            for item in _split_policy_items(note.get("producto_recomendado")):
-                bucket = "required_tools" if _is_tool_policy_item(item) else "required_products"
-                _append_unique(bucket, item)
-
-            explicit_avoid_items = _split_policy_items(note.get("producto_desestimado"))
-            note_avoid_items = _extract_forbidden_note_items(note_text)
-            for item in explicit_avoid_items + note_avoid_items:
-                bucket = "forbidden_tools" if _is_tool_policy_item(item) else "forbidden_products"
-                _append_unique(bucket, item)
-
-        normalized_note = normalize_text_value(note_text)
-        for candidate in ["preparacion humeda", "sellomax", "koraza", "aquablock", "metal desnudo", "intergard 2002", "cuarzo", "interthane", "28 dias", "curado", "construcleaner", "siliconite", "barnex", "wood stain", "poliuretano alto trafico", "misma familia", "agua con agua"]:
-            if candidate in normalized_note:
-                _append_unique("mandatory_step_signals", candidate)
-
-    for forbidden in (guide.get("forbidden_products_or_shortcuts") or []):
-        _append_unique("rules_text", forbidden)
-        for item in _split_policy_items(forbidden):
-            bucket = "forbidden_tools" if _is_tool_policy_item(item) else "forbidden_products"
-            _append_unique(bucket, item)
-
-    normalized_query = normalize_text_value(f"{question} {product}")
-    matched_global_required_by_product: dict[str, set[str]] = {}
-    matched_global_forbidden_by_product: dict[str, set[str]] = {}
-
-    def _track_rule_product(bucket: dict[str, set[str]], value: str, rule_name: str):
-        normalized_value = normalize_text_value(value)
-        if not normalized_value:
-            return
-        bucket.setdefault(normalized_value, set()).add(rule_name)
-
-    for rule in GLOBAL_TECHNICAL_POLICY_RULES:
-        if not _matches_global_policy_rule(rule, normalized_query, diagnosis):
-            continue
-        rule_name = rule.get("name") or "regla_contextual"
-        _append_unique("policy_names", rule_name)
-        priority = normalize_text_value(rule.get("priority") or "normal")
-        if priority == "critical":
-            _append_unique("critical_policy_names", rule_name)
-        elif priority == "high":
-            _append_unique("high_priority_policy_names", rule_name)
-        for value in rule.get("required_products") or []:
-            _append_unique("required_products", value)
-            _track_rule_product(matched_global_required_by_product, value, rule_name)
-        for value in rule.get("forbidden_products") or []:
-            _append_unique("forbidden_products", value)
-            _track_rule_product(matched_global_forbidden_by_product, value, rule_name)
-        for value in rule.get("required_tools") or []:
-            _append_unique("required_tools", value)
-        for value in rule.get("forbidden_tools") or []:
-            _append_unique("forbidden_tools", value)
-        for value in rule.get("mandatory_steps") or []:
-            _append_unique("mandatory_steps", value)
-        for value in rule.get("mandatory_step_signals") or []:
-            _append_unique("mandatory_step_signals", value)
-        for value in rule.get("rules_text") or []:
-            _append_unique("rules_text", value)
-
-    if any(token in normalized_query for token in ["eternit", "fibrocemento", "asbesto"]):
-        _append_unique("mandatory_steps", "Preparación húmeda obligatoria; nunca lijar en seco ni rasquetear.")
-        _append_unique("mandatory_step_signals", "preparacion humeda")
-
-    if policies["critical_policy_names"]:
-        policies["dominant_policy_names"] = list(policies["critical_policy_names"])
-        policies["highest_priority_level"] = "critical"
-    elif policies["high_priority_policy_names"]:
-        policies["dominant_policy_names"] = list(policies["high_priority_policy_names"])
-        policies["highest_priority_level"] = "high"
-    elif policies["policy_names"]:
-        policies["dominant_policy_names"] = [policies["policy_names"][0]]
-        policies["highest_priority_level"] = "normal"
-
-    # ── Resolve contradictions: product in both required AND forbidden ─────
-    # GLOBAL_TECHNICAL_POLICY_RULES are authoritative (already filtered by
-    # problem_class).  Expert notes may inject conflicting recommendations
-    # from different contexts (e.g., interior-humidity rule forbids Koraza
-    # while facade rule requires it).  Use the global rules as tiebreaker.
-    required_set = {normalize_text_value(p) for p in policies["required_products"]}
-    forbidden_set = {normalize_text_value(p) for p in policies["forbidden_products"]}
-    norm_to_original_req = {normalize_text_value(p): p for p in policies["required_products"]}
-    norm_to_original_forb = {normalize_text_value(p): p for p in policies["forbidden_products"]}
-    conflicts = required_set & forbidden_set
-    if conflicts:
-        # Also collect what the structured guide recommends
-        guide_product_norms: set[str] = set()
-        for opt in guide.get("finish_options") or []:
-            if isinstance(opt, dict) and opt.get("producto"):
-                guide_product_norms.add(normalize_text_value(opt["producto"]))
-        for primer_text in guide.get("base_or_primer") or []:
-            guide_product_norms.add(normalize_text_value(primer_text))
-
-        for norm_product in conflicts:
-            required_rule_names = matched_global_required_by_product.get(norm_product, set())
-            forbidden_rule_names = matched_global_forbidden_by_product.get(norm_product, set())
-            in_global_req = bool(required_rule_names)
-            in_global_forb = bool(forbidden_rule_names)
-            in_guide = norm_product in guide_product_norms
-
-            # If two matched global policies intentionally disagree for the same
-            # product, preserve both sides. The tests assert this accumulation in
-            # mixed-surface and double-contradiction scenarios.
-            if in_global_req and in_global_forb:
-                continue
-
-            if in_global_req and not in_global_forb:
-                # Global rule requires it → remove from forbidden
-                original = norm_to_original_forb.get(norm_product)
-                if original and original in policies["forbidden_products"]:
-                    policies["forbidden_products"].remove(original)
-            elif in_global_forb and not in_global_req:
-                # Global rule forbids it → remove from required
-                original = norm_to_original_req.get(norm_product)
-                if original and original in policies["required_products"]:
-                    policies["required_products"].remove(original)
-            elif in_guide:
-                # Structured guide recommends it → favour required
-                original = norm_to_original_forb.get(norm_product)
-                if original and original in policies["forbidden_products"]:
-                    policies["forbidden_products"].remove(original)
-            else:
-                # Ambiguous → remove from required (conservative: do not mandate)
-                original = norm_to_original_req.get(norm_product)
-                if original and original in policies["required_products"]:
-                    policies["required_products"].remove(original)
-
-    return policies
-
-# ── Catálogo verificado de productos bicomponentes ────────────────────────
-# Fuente de verdad interna: los catalizadores y proporciones aquí registrados
-# PREVALECEN sobre cualquier respuesta del RAG o memoria del LLM.
-# Si el RAG no confirma la relación, el agente DEBE citar este catálogo.
-BICOMPONENT_CATALOG: dict[str, dict] = {
-    # ─ Pintucoat (Pintuco) ─────────────────────────────────────────────────
-    # galón COMP A (3.44L, ref 516 o 517) → catalizador 13227 COMP B 0.37L (1/8)
-    # cuñete COMP A (15.14L) → catalizador 13227 COMP B 1.89L
-    "pintucoat": {
-        "tipo_sistema": "epoxica_dos_componentes",
-        "componente_a_descripcion": "Pintucoat 516 o 517 COMP A (base de color)",
-        "componente_b_codigo": "13227",
-        "componente_b_descripcion": "Pintucoat COMP B catalizador",
-        "proporcion_galon": "COMP A 3.44L + catalizador 13227 COMP B 0.37L (1/8 de galón)",
-        "proporcion_cunete": "COMP A 15.14L + catalizador 13227 COMP B 1.89L",
-        "pot_life_horas": 6,
-        "restriccion_exterior": (
-            "Pintucoat es epóxico y ENTIZA (se decolora) en exteriores expuestos al sol. "
-            "En exterior REQUIERE capa de acabado con poliuretano (Interthane). "
-            "NUNCA ofrecer Pintulux 3en1 como acabado sobre Pintucoat: Pintulux es esmalte alquídico, "
-            "no es poliuretano y no da la resistencia UV requerida."
-        ),
-        "acabado_exterior_obligatorio": "interthane",
-        "resistencia": "media",
-        "acabado": "mate",
-        "uso_piso": True,
-        "nota_resistencia": (
-            "Pintucoat es de resistencia MEDIA. NO resiste tráfico pesado de montacargas/estibadores. "
-            "Para tráfico pesado recomendar Intergard 2002 + cuarzo (ref 5891610). "
-            "Alternativa brillante de resistencia media: Intergard 740."
-        ),
-    },
-    # ─ Interthane (International / AkzoNobel) ─────────────────────────────
-    # galón (3.7L, PHA120 o PHA130) → catalizador PHA046 0.5L
-    # cuñete (20L) → catalizador PHA046 3.7L
-    "interthane": {
-        "tipo_sistema": "poliuretano_dos_componentes",
-        "componente_a_descripcion": "Interthane 990 COMP A (color, ej. PHA120 o PHA130)",
-        "componente_b_codigo": "PHA046",
-        "componente_b_descripcion": "Interthane 990 PHA046 catalizador (hardener)",
-        "proporcion_galon": "COMP A 3.7L + catalizador PHA046 0.5L",
-        "proporcion_cunete": "COMP A 20L + catalizador PHA046 3.7L",
-        "nota": "Verificar relación exacta en ficha técnica según número de lote y temperatura.",
-    },
-    # ─ Interseal (International / AkzoNobel) ──────────────────────────────
-    "interseal": {
-        "tipo_sistema": "epoxica_dos_componentes",
-        "componente_a_descripcion": "Interseal COMP A",
-        "componente_b_descripcion": "Interseal COMP B catalizador — consultar ficha técnica Internacional",
-        "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.",
-        "aplicacion_condicional_agua_potable": (
-            "Interseal 670HS tiene certificación NSF/ANSI 61 para agua potable en tanques > 100 gal (378.5L). "
-            "Condiciones obligatorias: (1) preparación Sa 2.5 / SSPC-SP10, (2) colores específicos certificados "
-            "(verificar lote con distribuidor), (3) respetar tiempo de curado completo antes de servicio. "
-            "Alternativa de mayor desempeño en inmersión permanente: línea Interline (100% sólidos, sin solventes)."
-        ),
-    },
-    # ─ Intergard (International / AkzoNobel) ── GENÉRICO ────────────────────
-    "intergard": {
-        "tipo_sistema": "epoxica_dos_componentes",
-        "componente_a_descripcion": "Intergard COMP A (primer epóxico)",
-        "componente_b_descripcion": "Intergard COMP B catalizador — consultar ficha técnica International",
-        "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International o la Guía de Sistemas.",
-    },
-    # ─ Intergard 740 (International / AkzoNobel) ── PISOS TRÁFICO MEDIO ACABADO BRILLANTE ──
-    "intergard 740": {
-        "tipo_sistema": "epoxica_dos_componentes",
-        "componente_a_descripcion": "Intergard 740 COMP A (acabado brillante)",
-        "componente_b_descripcion": "Intergard 740 COMP B catalizador — consultar ficha técnica International",
-        "nota": "Epóxico para pisos de tráfico MEDIO con acabado BRILLANTE. Alternativa al Pintucoat cuando el cliente quiere más brillo.",
-        "resistencia": "media",
-        "acabado": "brillante",
-        "uso_piso": True,
-    },
-    # ─ Intergard 2002 (International / AkzoNobel) ── SOBRE PEDIDO — ESCALAR A ASESOR ──
-    "intergard 2002": {
-        "tipo_sistema": "epoxica_dos_componentes",
-        "componente_a_descripcion": "Intergard 2002 COMP A (alto volumen de sólidos)",
-        "componente_b_descripcion": "Intergard 2002 COMP B catalizador — consultar ficha técnica International",
-        "sobre_pedido": True,
-        "nota": (
-            "⚠️ PRODUCTO SOBRE PEDIDO — NO cotizar precio, NO buscar inventario. "
-            "Intergard 2002 es un sistema especializado para pisos de tráfico PESADO (montacargas, estibadores) "
-            "que requiere asesoría técnica personalizada. ESCALAR al Asesor Técnico Comercial. "
-            "Sistema referencial: Interseal gris RAL 7038 (imprimante) → Intergard 2002 + cuarzo ref 5891610 → sello opcional."
-        ),
-        "resistencia": "alta (con cuarzo)",
-        "acabado": "mate/satinado",
-        "uso_piso": True,
-        "cuarzo_ref": "5891610",
-    },
-    # ─ Interfine (International / AkzoNobel) ──────────────────────────────
-    "interfine": {
-        "tipo_sistema": "poliuretano_dos_componentes",
-        "componente_a_descripcion": "Interfine 979 COMP A",
-        "componente_b_descripcion": "Interfine COMP B catalizador — consultar ficha técnica International",
-        "nota": "Relación de mezcla y código de catalizador deben extraerse de la ficha técnica International.",
-    },
-}
-
-# Alias rápidos para buscar si un producto cae en BICOMPONENT_CATALOG
-_BICOMPONENT_KEYWORDS: frozenset[str] = frozenset(BICOMPONENT_CATALOG.keys()) | frozenset([
-    "pintucoat 516", "pintucoat 517", "pintucoat plus",
-    "interthane 990", "interseal 670", "intergard 475",
-    "dos componentes", "bicomponente", "comp a", "comp b",
-    "pha046", "pha120", "pha130",
-    "catalizador 13227",
-    "1550", "1551", "poliuretano alto trafico", "pisos trafic alt",
-    "vitrificar", "vitrificar piso",
-])
-
-
-def get_bicomponent_info(product_name_or_query: str) -> dict | None:
-    """Return bicomponent catalog entry if the query matches a known 2-component product."""
-    q = normalize_text_value(product_name_or_query)
-    for key, info in BICOMPONENT_CATALOG.items():
-        if key in q:
-            return {"producto_base": key, **info}
-    return None
+# BICOMPONENT_CATALOG, _BICOMPONENT_KEYWORDS y get_bicomponent_info viven en
+# backend.bicomponents (re-importados al inicio de main para preservar la API).
 
 
 DIRECTION_ALIASES = {
@@ -2757,39 +2150,9 @@ def get_postgrest_url():
     return os.getenv("PGRST_URL", "http://localhost:3000").rstrip("/")
 
 
-def _read_streamlit_secret_value(*keys: str) -> Optional[str]:
-    secrets_path = Path(__file__).resolve().parent.parent / ".streamlit" / "secrets.toml"
-    if not secrets_path.exists() or not keys:
-        return None
-    try:
-        raw_text = secrets_path.read_text(encoding="utf-8")
-    except Exception:
-        return None
-
-    last_key = re.escape(keys[-1])
-    quoted_match = re.search(rf"(?mi)^\s*{last_key}\s*=\s*\"([^\"]+)\"\s*$", raw_text)
-    if quoted_match:
-        return quoted_match.group(1).strip()
-
-    bare_match = re.search(rf"(?mi)^\s*{last_key}\s*=\s*([^#\r\n]+)", raw_text)
-    if bare_match:
-        return bare_match.group(1).strip().strip('"').strip("'")
-
-    try:
-        parsed = tomllib.loads(raw_text)
-    except Exception:
-        return None
-
-    current = parsed
-    for key in keys:
-        if not isinstance(current, dict):
-            return None
-        current = current.get(key)
-        if current is None:
-            return None
-    if isinstance(current, str):
-        return current.strip()
-    return None
+# _read_streamlit_secret_value, _first_configured_value y todas las funciones get_openai_*
+# (incluido get_product_nlu_system_prompt) viven ahora en backend.llm_client
+# (re-importadas al inicio de main para preservar la API pública).
 
 
 def get_database_url():
@@ -2808,63 +2171,6 @@ def get_whatsapp_verify_token():
     return os.getenv("WHATSAPP_VERIFY_TOKEN", "ferreinox-verify-token")
 
 
-def _first_configured_value(*values):
-    for value in values:
-        if value is None:
-            continue
-        stripped = value.strip() if isinstance(value, str) else value
-        if stripped:
-            return stripped
-    return None
-
-
-def get_openai_api_key():
-    return _first_configured_value(
-        os.getenv("OPENAI_API_KEY"),
-        os.getenv("DEEPSEEK_API_KEY"),
-        _read_streamlit_secret_value("openai", "api_key"),
-        _read_streamlit_secret_value("deepseek", "api_key"),
-    )
-
-
-def get_openai_base_url():
-    configured_base_url = _first_configured_value(
-        os.getenv("OPENAI_BASE_URL"),
-        os.getenv("LLM_BASE_URL"),
-        os.getenv("DEEPSEEK_BASE_URL"),
-    )
-    if configured_base_url:
-        return configured_base_url
-    if os.getenv("DEEPSEEK_API_KEY") and not os.getenv("OPENAI_API_KEY"):
-        return "https://api.deepseek.com"
-    return None
-
-
-def is_deepseek_backend():
-    base_url = get_openai_base_url()
-    if base_url and "deepseek" in base_url.lower():
-        return True
-    return bool(os.getenv("DEEPSEEK_API_KEY") and not os.getenv("OPENAI_API_KEY"))
-
-
-def get_openai_model():
-    if is_deepseek_backend():
-        configured_model = _first_configured_value(
-            os.getenv("DEEPSEEK_MODEL"),
-            os.getenv("LLM_MODEL"),
-            os.getenv("OPENAI_MODEL"),
-        )
-        return configured_model or "deepseek-chat"
-
-    configured_model = _first_configured_value(
-        os.getenv("OPENAI_MODEL"),
-        os.getenv("LLM_MODEL"),
-    )
-    if configured_model:
-        return configured_model
-    return "gpt-4o-mini"
-
-
 def get_whatsapp_access_token():
     token = os.getenv("WHATSAPP_ACCESS_TOKEN")
     if not token:
@@ -2877,40 +2183,6 @@ def get_whatsapp_phone_number_id():
     if not phone_number_id:
         raise RuntimeError("No se encontró WHATSAPP_PHONE_NUMBER_ID para enviar mensajes.")
     return phone_number_id
-
-
-def get_openai_client():
-    api_key = get_openai_api_key()
-    if not api_key:
-        raise RuntimeError("No se encontró OPENAI_API_KEY ni DEEPSEEK_API_KEY para generar respuestas del agente.")
-    client_kwargs = {"api_key": api_key}
-    base_url = get_openai_base_url()
-    if base_url:
-        client_kwargs["base_url"] = base_url
-    else:
-        # Fallback path: no DEEPSEEK_API_KEY ni OPENAI_BASE_URL configurados.
-        # Cae al endpoint OpenAI por defecto. Producción debe usar DeepSeek.
-        logger.warning(
-            "LLM client fallback: usando endpoint OpenAI por defecto (modelo=%s). "
-            "Configura DEEPSEEK_API_KEY o OPENAI_BASE_URL para evitar este fallback.",
-            get_openai_model(),
-        )
-    return OpenAI(**client_kwargs)
-
-
-def get_product_nlu_system_prompt():
-    global PRODUCT_NLU_PROMPT_CACHE
-    if PRODUCT_NLU_PROMPT_CACHE is not None:
-        return PRODUCT_NLU_PROMPT_CACHE
-
-    try:
-        PRODUCT_NLU_PROMPT_CACHE = PRODUCT_NLU_PROMPT_PATH.read_text(encoding="utf-8").strip()
-    except Exception:
-        PRODUCT_NLU_PROMPT_CACHE = PRODUCT_NLU_PROMPT_FALLBACK
-
-    if not PRODUCT_NLU_PROMPT_CACHE:
-        PRODUCT_NLU_PROMPT_CACHE = PRODUCT_NLU_PROMPT_FALLBACK
-    return PRODUCT_NLU_PROMPT_CACHE
 
 
 def normalize_nullable_phrase(raw_value):
@@ -4185,29 +3457,8 @@ def fetch_internal_employee_record_by_cedula(document_value: Optional[str]):
     return build_employee_record_from_internal_user_row(dict(row) if row else None)
 
 
-def hash_password_with_salt(password: str, salt_hex: str):
-    return hashlib.pbkdf2_hmac(
-        "sha256",
-        (password or "").encode("utf-8"),
-        bytes.fromhex(salt_hex),
-        INTERNAL_PASSWORD_ITERATIONS,
-    ).hex()
-
-
-def build_password_credentials(password: str):
-    if not password or len(password) < 8:
-        raise HTTPException(status_code=400, detail="La contraseña interna debe tener al menos 8 caracteres.")
-    salt_hex = secrets.token_hex(16)
-    return salt_hex, hash_password_with_salt(password, salt_hex)
-
-
-def verify_password_hash(password: str, salt_hex: str, expected_hash: str):
-    calculated_hash = hash_password_with_salt(password, salt_hex)
-    return hmac.compare_digest(calculated_hash, expected_hash)
-
-
-def hash_session_token(raw_token: str):
-    return hashlib.sha256((raw_token or "").encode("utf-8")).hexdigest()
+# hash_password_with_salt, build_password_credentials, verify_password_hash, hash_session_token
+# fueron extraídos a backend.auth_internal en Fase C2 (re-exportados al inicio del módulo).
 
 
 def ensure_internal_auth_tables():
@@ -9345,27 +8596,8 @@ PORTFOLIO_SEGMENT_QUERY_HINTS = {
     ],
 }
 
-RAG_METADATA_CANONICAL_HINTS = {
-    "eternit_fibrocemento": ["%sellomax%", "%koraza%"],
-    "ladrillo_vista": ["%siliconite%", "%construcleaner%"],
-    "metal_pintado_alquidico": ["%wash primer%", "%corrotec%", "%pintoxido%", "%intergard%"],
-    "humedad_interior_capilaridad": ["%aquablock%"],
-    "humedad_interior_general": ["%aquablock%"],
-    "fachada_exterior": ["%koraza%"],
-    "metal_oxidado": ["%corrotec%", "%pintoxido%", "%wash primer%"],
-    "piso_industrial": ["%pintucoat%", "%intergard 740%", "%intergard 2002%"],
-    "madera": ["%barnex%", "%wood stain%", "%barniz%"],
-}
-
-RAG_METADATA_CHEMICAL_HINTS = {
-    "metal_pintado_alquidico": ["epoxico", "epoxi", "anticorrosivo"],
-    "humedad_interior_capilaridad": ["impermeabilizante"],
-    "humedad_interior_general": ["impermeabilizante"],
-    "fachada_exterior": ["elastomerico", "impermeabilizante"],
-    "metal_oxidado": ["anticorrosivo", "wash_primer"],
-    "piso_industrial": ["epoxico", "poliuretano"],
-    "madera": ["barniz", "protector_madera"],
-}
+# RAG_METADATA_CANONICAL_HINTS y RAG_METADATA_CHEMICAL_HINTS viven en
+# backend.policies (re-importados al inicio de main para preservar la API).
 
 
 def _normalize_portfolio_segment(value: str | None) -> str | None:
