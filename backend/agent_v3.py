@@ -823,6 +823,51 @@ def _preload_technical_guidance(args: dict, context: dict, conversation_context:
     return result
 
 
+def _build_agent_reply_result(
+    *,
+    response_text: str,
+    intent: str,
+    tool_calls_made: list[dict],
+    conversation_context: dict,
+    context: dict,
+    user_message: str,
+    m,
+    advisory_diagnostic_turn_done: Optional[bool] = None,
+):
+    confidence = m.score_agent_confidence(response_text, tool_calls_made, intent)
+    is_farewell = m.detect_farewell(user_message)
+    if is_farewell:
+        intent = "despedida"
+
+    context_updates = {
+        key: value
+        for key, value in {
+            "last_product_request": conversation_context.get("last_product_request"),
+            "last_product_query": conversation_context.get("last_product_query"),
+            "last_product_context": conversation_context.get("last_product_context"),
+            "latest_technical_guidance": conversation_context.get("latest_technical_guidance"),
+            "commercial_draft": conversation_context.get("commercial_draft"),
+            "technical_advisory_case": conversation_context.get("technical_advisory_case"),
+            "technical_cases": conversation_context.get("technical_cases"),
+            "active_technical_case_id": conversation_context.get("active_technical_case_id"),
+            "technical_case_sequence": conversation_context.get("technical_case_sequence"),
+            "pending_case_resolution_candidates": conversation_context.get("pending_case_resolution_candidates"),
+            "_advisory_diagnostic_turn_done": advisory_diagnostic_turn_done,
+        }.items()
+        if value is not None
+    }
+
+    return {
+        "response_text": response_text,
+        "intent": intent,
+        "tool_calls": tool_calls_made,
+        "context_updates": context_updates,
+        "should_create_task": False,
+        "confidence": confidence,
+        "is_farewell": is_farewell,
+    }
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # CORE: generate_agent_reply_v3
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1237,6 +1282,35 @@ def generate_agent_reply_v3(
                     f"Resultado: {preload_result}"
                 ),
             })
+
+    active_guidance_now = conversation_context.get("latest_technical_guidance") or {}
+    if (
+        effective_advisory_flow
+        and initial_intent == "asesoria"
+        and not _diagnostic_blocked
+        and active_guidance_now
+        and hasattr(m, "build_technical_advisory_flow_reply")
+    ):
+        try:
+            deterministic_reply = m.build_technical_advisory_flow_reply(
+                profile_name,
+                user_message,
+                conversation_context,
+            )
+        except Exception:
+            deterministic_reply = None
+        if isinstance(deterministic_reply, dict) and (deterministic_reply.get("response_text") or "").strip():
+            conversation_context.update(dict(deterministic_reply.get("context_updates") or {}))
+            return _build_agent_reply_result(
+                response_text=(deterministic_reply.get("response_text") or "").strip(),
+                intent=deterministic_reply.get("intent") or "asesoria_tecnica",
+                tool_calls_made=tool_calls_made,
+                conversation_context=conversation_context,
+                context=context,
+                user_message=user_message,
+                m=m,
+                advisory_diagnostic_turn_done=conversation_context.get("_advisory_diagnostic_turn_done"),
+            )
 
     if has_active_technical_guidance:
         active_guidance = conversation_context.get("latest_technical_guidance") or {}
@@ -1654,38 +1728,16 @@ def generate_agent_reply_v3(
         conversation_id=(context or {}).get("conversation_id") if isinstance(context, dict) else None,
     )
 
-    confidence = m.score_agent_confidence(response_text, tool_calls_made, intent)
-    is_farewell = m.detect_farewell(user_message)
-    if is_farewell:
-        intent = "despedida"
-
-    return {
-        "response_text": response_text,
-        "intent": intent,
-        "tool_calls": tool_calls_made,
-        "context_updates": {
-            key: value
-            for key, value in {
-                "last_product_request": conversation_context.get("last_product_request"),
-                "last_product_query": conversation_context.get("last_product_query"),
-                "last_product_context": conversation_context.get("last_product_context"),
-                "latest_technical_guidance": conversation_context.get("latest_technical_guidance"),
-                "commercial_draft": conversation_context.get("commercial_draft"),
-                "technical_advisory_case": conversation_context.get("technical_advisory_case"),
-                "technical_cases": conversation_context.get("technical_cases"),
-                "active_technical_case_id": conversation_context.get("active_technical_case_id"),
-                "technical_case_sequence": conversation_context.get("technical_case_sequence"),
-                "pending_case_resolution_candidates": conversation_context.get("pending_case_resolution_candidates"),
-                # Process gate: after first advisory turn, mark diagnostic exchange done
-                # so the NEXT turn allows tools and RAG preload.
-                "_advisory_diagnostic_turn_done": True if _first_advisory_turn else conversation_context.get("_advisory_diagnostic_turn_done"),
-            }.items()
-            if value is not None
-        },
-        "should_create_task": False,
-        "confidence": confidence,
-        "is_farewell": is_farewell,
-    }
+    return _build_agent_reply_result(
+        response_text=response_text,
+        intent=intent,
+        tool_calls_made=tool_calls_made,
+        conversation_context=conversation_context,
+        context=context,
+        user_message=user_message,
+        m=m,
+        advisory_diagnostic_turn_done=True if _first_advisory_turn else conversation_context.get("_advisory_diagnostic_turn_done"),
+    )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
