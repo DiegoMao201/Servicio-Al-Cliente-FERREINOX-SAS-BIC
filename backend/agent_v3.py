@@ -527,6 +527,20 @@ def _resolve_data_backed_turn_policy(
             "log_label": "internal BI",
         }
 
+    if agent_profile == "internal" and initial_intent in {"pedido_directo", "cotizacion", "confirmacion", "correccion"}:
+        return {
+            "mode": "force_required_tool",
+            "system_message": (
+                "FLUJO COMERCIAL INTERNO OBLIGATORIO: este turno está armando, corrigiendo o cerrando una cotización/pedido interno. "
+                "Debes llamar al menos una herramienta en este turno antes de responder. "
+                "Usa consultar_inventario o consultar_inventario_lote para validar referencias, stock y precios reales. "
+                "Usa confirmar_pedido_y_generar_pdf SOLO cuando el colaborador ya confirmó el cierre final del pedido o cotización. "
+                "Usa registrar_cliente_nuevo SOLO si falta validar un cliente nuevo para cerrar. "
+                "Nunca respondas de memoria, nunca inventes SKUs, precios o disponibilidad y nunca cierres con tools=[] en este flujo."
+            ),
+            "log_label": "internal commercial",
+        }
+
     return None
 
 
