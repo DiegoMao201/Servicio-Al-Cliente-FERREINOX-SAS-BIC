@@ -482,6 +482,89 @@ def _build_inventory_lookup_short_circuit(
         "confidence": m.score_agent_confidence(response_text, [], inventory_result.get("intent") or "consulta_productos"),
         "is_farewell": False,
     }
+def _try_deterministic_pdf_confirmation(
+    agent_runtime: dict,
+    conversation_context: dict,
+    user_message: str,
+    context: dict,
+    profile_name: Optional[str],
+    m,
+):
+    if not agent_runtime.get("enable_quote_pipeline", True):
+        return None
+
+    try:
+        try:
+            from pipeline_deterministico.integracion import interceptar_confirmacion_pdf
+        except ImportError:
+            from backend.pipeline_deterministico.integracion import interceptar_confirmacion_pdf
+
+        payload_pdf = interceptar_confirmacion_pdf(
+            main_module=m,
+            conversation_context=conversation_context,
+            context=context,
+            user_message=user_message,
+        )
+        if not payload_pdf:
+            return None
+
+        commercial_draft = dict(conversation_context.get("commercial_draft") or {})
+        customer_context = dict(commercial_draft.get("customer_context") or payload_pdf.get("customer_context") or {})
+        extract_delivery_channel = getattr(m, "extract_delivery_channel", None)
+        extract_email_address = getattr(m, "extract_email_address", None)
+        requested_channel = extract_delivery_channel(user_message) if callable(extract_delivery_channel) else None
+        contact_email = extract_email_address(user_message) if callable(extract_email_address) else ""
+        contact_email = contact_email or commercial_draft.get("contact_email") or ""
+        canal_envio = "email" if requested_channel == "email" and contact_email else "whatsapp"
+        nombre_despacho = (
+            payload_pdf.get("nombre_despacho")
+            or commercial_draft.get("nombre_despacho")
+            or customer_context.get("nombre_cliente")
+            or profile_name
+            or "Cliente"
+        )
+        fn_args = {
+            "nombre_despacho": nombre_despacho,
+            "canal_envio": canal_envio,
+            "correo_cliente": contact_email,
+            "items_pedido": [],
+            "tipo_documento": payload_pdf.get("tipo_documento") or "cotizacion",
+            "resumen_asesoria": payload_pdf.get("resumen_asesoria") or "",
+        }
+        result = m._handle_tool_confirmar_pedido(fn_args, context, conversation_context)
+        tool_calls_made = [{"name": "confirmar_pedido_y_generar_pdf", "args": fn_args, "result": result}]
+
+        try:
+            parsed_result = json.loads(result)
+        except Exception:
+            parsed_result = {}
+
+        response_text = parsed_result.get("mensaje") or "Ya procesé el documento solicitado."
+        if fn_args["tipo_documento"] == "cotizacion" and parsed_result.get("exito"):
+            response_text = (
+                response_text.rstrip(". ")
+                + ". Si quieres, la convierto en pedido y solo en ese momento genero el Excel para ICG."
+            )
+
+        return {
+            "response_text": response_text,
+            "intent": "cotizacion" if fn_args["tipo_documento"] == "cotizacion" else "pedido",
+            "tool_calls": tool_calls_made,
+            "context_updates": {
+                key: value
+                for key, value in {
+                    "commercial_draft": conversation_context.get("commercial_draft"),
+                    "_ultimo_pipeline_trace": conversation_context.get("_ultimo_pipeline_trace"),
+                }.items()
+                if value is not None
+            },
+            "should_create_task": False,
+            "confidence": 0.98,
+            "is_farewell": False,
+        }
+    except Exception as exc:
+        logger.warning("V3 deterministic PDF confirmation failed: %s", exc, exc_info=True)
+        return None
 
 
 def _resolve_data_backed_turn_policy(
@@ -926,6 +1009,18 @@ def generate_agent_reply_v3(
     if data_backed_turn_policy and data_backed_turn_policy.get("mode") == "short_circuit":
         logger.info("V3 data-backed turn routed via deterministic short-circuit: intent=%s", initial_intent)
         return data_backed_turn_policy["response"]
+
+    deterministic_pdf_confirmation = _try_deterministic_pdf_confirmation(
+        agent_runtime=agent_runtime,
+        conversation_context=conversation_context,
+        user_message=user_message,
+        context=context,
+        profile_name=profile_name,
+        m=m,
+    )
+    if deterministic_pdf_confirmation:
+        logger.info("V3 deterministic PDF confirmation short-circuit")
+        return deterministic_pdf_confirmation
 
     # ══════════════════════════════════════════════════════════════════════
     # PIPELINE PEDIDO DETERMINÍSTICO — Intercepta pedidos directos antes

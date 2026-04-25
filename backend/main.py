@@ -18280,6 +18280,9 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     correo_cliente = args.get("correo_cliente", "")
     items_pedido = args.get("items_pedido") or []
     tipo_documento = args.get("tipo_documento", "pedido")  # "cotizacion" o "pedido"
+    es_pedido = tipo_documento == "pedido"
+    request_label = "pedido" if es_pedido else "cotización"
+    request_label_cap = "Pedido" if es_pedido else "Cotización"
     resumen_asesoria = args.get("resumen_asesoria", "")
     nombre_despacho_original = nombre_despacho  # Preservar el nombre que el LLM envió del cliente
     commercial_draft = dict(conversation_context.get("commercial_draft") or {})
@@ -18720,7 +18723,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
     export_summary = None
     export_error = None
 
-    if internal_user:
+    if internal_user and es_pedido:
         try:
             export_summary = export_confirmed_order_to_icg(
                 order_id,
@@ -18768,74 +18771,75 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
         )
 
     # ── NOTIFICACIÓN A TIENDA/CIUDAD: enviar correo a la sede de despacho ──
-    try:
-        # Determine delivery city from customer context or conversation
-        _delivery_city = (
-            (customer_context or {}).get("ciudad", "")
-            or (commercial_draft.get("customer_context") or {}).get("ciudad", "")
-            or ""
-        ).upper().strip()
-        # Map city to store code
-        _CITY_TO_STORE = {
-            "PEREIRA": "189", "MANIZALES": "157", "ARMENIA": "156",
-            "DOSQUEBRADAS": "158", "CERRITOS": "463",
-        }
-        _dest_store = _CITY_TO_STORE.get(_delivery_city, "189")  # Default: Pereira
-        _dest_email = DEFAULT_TRANSFER_DESTINATION_EMAILS.get(_dest_store, "tiendapintucopereira@ferreinox.co")
+    if es_pedido:
+        try:
+            # Determine delivery city from customer context or conversation
+            _delivery_city = (
+                (customer_context or {}).get("ciudad", "")
+                or (commercial_draft.get("customer_context") or {}).get("ciudad", "")
+                or ""
+            ).upper().strip()
+            # Map city to store code
+            _CITY_TO_STORE = {
+                "PEREIRA": "189", "MANIZALES": "157", "ARMENIA": "156",
+                "DOSQUEBRADAS": "158", "CERRITOS": "463",
+            }
+            _dest_store = _CITY_TO_STORE.get(_delivery_city, "189")  # Default: Pereira
+            _dest_email = DEFAULT_TRANSFER_DESTINATION_EMAILS.get(_dest_store, "tiendapintucopereira@ferreinox.co")
 
-        # Build items summary for the store email
-        _items_summary_lines = []
-        for _item in (commercial_draft.get("items") or []):
-            _desc = _item.get("audit_label") or build_item_audit_label(_item)
-            _qty = _item.get("quantity") or _item.get("cantidad") or 1
-            _ref = _item.get("referencia") or _item.get("reference") or ""
-            _items_summary_lines.append(f"• {_qty}x {_desc} (ref: {_ref})")
-        _items_html = "<br>".join(_items_summary_lines) or "Ver PDF adjunto"
+            # Build items summary for the store email
+            _items_summary_lines = []
+            for _item in (commercial_draft.get("items") or []):
+                _desc = _item.get("audit_label") or build_item_audit_label(_item)
+                _qty = _item.get("quantity") or _item.get("cantidad") or 1
+                _ref = _item.get("referencia") or _item.get("reference") or ""
+                _items_summary_lines.append(f"• {_qty}x {_desc} (ref: {_ref})")
+            _items_html = "<br>".join(_items_summary_lines) or "Ver PDF adjunto"
 
-        _logistica_note = ""
-        if _delivery_city and _delivery_city not in _CITY_TO_STORE:
-            _logistica_note = (
-                f"<p><strong>⚠️ CIUDAD FUERA DEL EJE CAFETERO:</strong> {_delivery_city}. "
-                f"Despacho centralizado desde Pereira. Verificar logística y contactar al cliente.</p>"
+            _logistica_note = ""
+            if _delivery_city and _delivery_city not in _CITY_TO_STORE:
+                _logistica_note = (
+                    f"<p><strong>⚠️ CIUDAD FUERA DEL EJE CAFETERO:</strong> {_delivery_city}. "
+                    f"Despacho centralizado desde Pereira. Verificar logística y contactar al cliente.</p>"
+                )
+
+            _store_subject = f"📦 Nuevo Pedido WhatsApp CRM-{context['conversation_id']} — {nombre_despacho}"
+            _store_html = (
+                f"<h3>Nuevo Pedido desde WhatsApp</h3>"
+                f"<p><strong>Cliente:</strong> {nombre_despacho}</p>"
+                f"<p><strong>Teléfono:</strong> {context.get('telefono_e164', 'N/A')}</p>"
+                f"<p><strong>Ciudad entrega:</strong> {_delivery_city or 'No especificada'}</p>"
+                f"{_logistica_note}"
+                f"<p><strong>Productos:</strong></p><p>{_items_html}</p>"
+                f"<p><strong>PDF:</strong> <a href='{pdf_url}'>{pdf_filename}</a></p>"
+                f"<p>Pedido generado automáticamente por FERRO (Agente IA).</p>"
             )
-
-        _store_subject = f"📦 Nuevo Pedido WhatsApp CRM-{context['conversation_id']} — {nombre_despacho}"
-        _store_html = (
-            f"<h3>Nuevo Pedido desde WhatsApp</h3>"
-            f"<p><strong>Cliente:</strong> {nombre_despacho}</p>"
-            f"<p><strong>Teléfono:</strong> {context.get('telefono_e164', 'N/A')}</p>"
-            f"<p><strong>Ciudad entrega:</strong> {_delivery_city or 'No especificada'}</p>"
-            f"{_logistica_note}"
-            f"<p><strong>Productos:</strong></p><p>{_items_html}</p>"
-            f"<p><strong>PDF:</strong> <a href='{pdf_url}'>{pdf_filename}</a></p>"
-            f"<p>Pedido generado automáticamente por FERRO (Agente IA).</p>"
-        )
-        run_background_io(
-            "store-order-email",
-            send_sendgrid_email,
-            _dest_email,
-            _store_subject,
-            _store_html,
-            f"Nuevo pedido WhatsApp: {nombre_despacho} | {_items_html}",
-            cc_emails=DEFAULT_TRANSFER_CC_EMAILS,
-        )
-    except Exception as _store_exc:
-        logger.warning("Failed to queue store notification email: %s", _store_exc)
+            run_background_io(
+                "store-order-email",
+                send_sendgrid_email,
+                _dest_email,
+                _store_subject,
+                _store_html,
+                f"Nuevo pedido WhatsApp: {nombre_despacho} | {_items_html}",
+                cc_emails=DEFAULT_TRANSFER_CC_EMAILS,
+            )
+        except Exception as _store_exc:
+            logger.warning("Failed to queue store notification email: %s", _store_exc)
 
     if canal_envio == "email" and correo_cliente:
         try:
-            subject = f"Pedido Ferreinox CRM-{context['conversation_id']}"
+            subject = f"{request_label_cap} Ferreinox CRM-{context['conversation_id']}"
             optional_pdf_link = f"<p>También puede consultarlo aquí: <a href='{pdf_url}'>{pdf_filename}</a></p>" if pdf_url else ""
             html_content = (
                 f"<p>Estimado/a {nombre_despacho},</p>"
-                f"<p>Adjuntamos el PDF de su pedido.</p>"
+                f"<p>Adjuntamos el PDF de su {request_label}.</p>"
                 f"<p>Archivo: <strong>{pdf_filename}</strong></p>"
                 f"{optional_pdf_link}"
                 f"<p>Gracias por su preferencia.<br>Ferreinox SAS BIC</p>"
             )
             send_sendgrid_email(
                 correo_cliente, subject, html_content,
-                f"Pedido Ferreinox adjunto: {pdf_filename}",
+                f"{request_label_cap} Ferreinox adjunta: {pdf_filename}",
                 attachments=[
                     {
                         "content": base64.b64encode(PDF_STORAGE[pdf_id]["buffer"]).decode("ascii"),
@@ -18847,9 +18851,9 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
             )
             store_outbound_message(
                 context["conversation_id"], None, "system",
-                f"PDF pedido enviado por correo a {correo_cliente}",
+                f"PDF {request_label} enviado por correo a {correo_cliente}",
                 {"pdf_id": pdf_id, "email": correo_cliente},
-                intent_detectado="pedido_pdf_email",
+                intent_detectado="pedido_pdf_email" if es_pedido else "cotizacion_pdf_email",
             )
             logger.info(
                 "confirmar_pedido_y_generar_pdf customer email sent conv=%s order_id=%s elapsed=%dms",
@@ -18866,7 +18870,8 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                  "alertas_conocimiento_experto": _alertas_experto_str,
                  "advertencia_sistema_incompleto": _missing_guidance_warning,
                  "mensaje": (
-                     f"El PDF del pedido fue enviado al correo {correo_cliente} exitosamente."
+                     f"El PDF de la {request_label} fue enviado al correo {correo_cliente} exitosamente."
+                     + (" Si quieres, la convierto en pedido y solo ahí genero el Excel para ICG." if not es_pedido else "")
                      + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
                      + (f" {_missing_guidance_warning}" if _missing_guidance_warning else "")
                  )},
@@ -18889,13 +18894,13 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                 context["telefono_e164"],
                 PDF_STORAGE[pdf_id]["buffer"],
                 pdf_filename,
-                caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
+                caption=f"📄 Aquí tienes el PDF de tu {request_label}, {nombre_despacho}.",
             )
             store_outbound_message(
                 context["conversation_id"], None, "system",
-                f"PDF pedido enviado por WhatsApp: {pdf_filename}",
+                f"PDF {request_label} enviado por WhatsApp: {pdf_filename}",
                 {"pdf_id": pdf_id, "pdf_url": pdf_url},
-                intent_detectado="pedido_pdf_whatsapp",
+                intent_detectado="pedido_pdf_whatsapp" if es_pedido else "cotizacion_pdf_whatsapp",
             )
             logger.info(
                 "confirmar_pedido_y_generar_pdf whatsapp sent conv=%s order_id=%s total_elapsed=%dms",
@@ -18911,7 +18916,8 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                  "alertas_conocimiento_experto": _alertas_experto_str,
                  "advertencia_sistema_incompleto": _missing_guidance_warning,
                  "mensaje": (
-                     f"El PDF del pedido '{pdf_filename}' fue enviado por WhatsApp exitosamente."
+                     f"El PDF de la {request_label} '{pdf_filename}' fue enviado por WhatsApp exitosamente."
+                     + (" Si quieres, la convierto en pedido y solo ahí genero el Excel para ICG." if not es_pedido else "")
                      + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
                      + (f" {_missing_guidance_warning}" if _missing_guidance_warning else "")
                  )},
@@ -18930,7 +18936,7 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                         context["telefono_e164"],
                         pdf_url,
                         pdf_filename,
-                        caption=f"📄 Aquí tienes el soporte de tu pedido, {nombre_despacho}.",
+                        caption=f"📄 Aquí tienes el PDF de tu {request_label}, {nombre_despacho}.",
                     )
                     return json.dumps(
                         {"exito": True, "canal": "whatsapp", "archivo": pdf_filename,
@@ -18940,7 +18946,8 @@ def _handle_tool_confirmar_pedido(args, context, conversation_context):
                          "alertas_conocimiento_experto": _alertas_experto_str,
                          "advertencia_sistema_incompleto": _missing_guidance_warning,
                          "mensaje": (
-                             f"El PDF del pedido '{pdf_filename}' fue enviado por WhatsApp exitosamente."
+                                      f"El PDF de la {request_label} '{pdf_filename}' fue enviado por WhatsApp exitosamente."
+                                      + (" Si quieres, la convierto en pedido y solo ahí genero el Excel para ICG." if not es_pedido else "")
                              + (f" Advertencia de exportación ICG: {export_error}" if export_error else "")
                              + (f" {_missing_guidance_warning}" if _missing_guidance_warning else "")
                          )},
