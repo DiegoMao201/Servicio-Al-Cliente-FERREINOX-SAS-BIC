@@ -7101,11 +7101,20 @@ def fetch_smart_product_rows(
 
     all_score_parts = score_parts + numeric_pattern_bonus
     match_score_sql = " + ".join(all_score_parts) if all_score_parts else "0"
+    allow_stale_with_stock = bool((product_request or {}).get("allow_stale_with_stock"))
 
     where_clause = f"({' OR '.join(ilike_filters)})"
 
     if store_filters:
-        return _fetch_smart_from_store(connection, where_clause, params, match_score_sql, store_filters, limit)
+        return _fetch_smart_from_store(
+            connection,
+            where_clause,
+            params,
+            match_score_sql,
+            store_filters,
+            limit,
+            allow_stale_with_stock=allow_stale_with_stock,
+        )
 
     rows = connection.execute(
         text(
@@ -7140,19 +7149,25 @@ def fetch_smart_product_rows(
     return [dict(r) for r in rows]
 
 
-def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, store_filters, limit):
+def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, store_filters, limit, allow_stale_with_stock: bool = False):
     """Store-filtered variant of smart search."""
     store_sql = []
     for si, sc in enumerate(store_filters):
         params[f"store_{si}"] = sc
-        store_sql.append(f"cod_almacen = :store_{si}")
+        store_sql.append(f"inv.cod_almacen = :store_{si}")
 
     # Build inner WHERE: use pat_ and var_ ILIKE filters for broader matching
     pat_keys = sorted([k for k in params if k.startswith("pat_") or k.startswith("var_")])
-    inner_filters = [f"search_blob ILIKE :{k}" for k in pat_keys]
+    inner_filters = [f"inv.search_blob ILIKE :{k}" for k in pat_keys]
     if not inner_filters:
         inner_filters = ["TRUE"]
     inner_where = f"({' OR '.join(inner_filters)}) AND ({' OR '.join(store_sql)})"
+
+    activity_clause = (
+        f"(inventory.ultima_venta >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years' OR COALESCE(inventory.stock_total, 0) > 0)"
+        if allow_stale_with_stock
+        else f"inventory.ultima_venta >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years'"
+    )
 
     rows = connection.execute(
         text(
@@ -7185,7 +7200,7 @@ def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, s
                     ) FILTER (WHERE COALESCE(stock_disponible, 0) > 0) AS stock_por_tienda,
                     MAX(search_blob) AS search_blob,
                     public.fn_keep_alnum(MAX(descripcion) || ' ' || MAX(referencia) || ' ' || MAX(marca)) AS search_compact,
-                    MAX(referencia_normalizada) AS referencia_normalizada,
+                    MAX(inv.referencia_normalizada) AS referencia_normalizada,
                     MAX(linea_clasificacion) AS linea_clasificacion,
                     MAX(marca_clasificacion) AS marca_clasificacion,
                     MAX(familia_clasificacion) AS familia_clasificacion,
@@ -7201,7 +7216,7 @@ def _fetch_smart_from_store(connection, where_clause, params, match_score_sql, s
                 GROUP BY referencia, descripcion, marca
             ) inventory
             LEFT JOIN mv_product_rotation rot ON rot.producto_codigo = inventory.referencia
-            WHERE inventory.ultima_venta >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years'
+            WHERE {activity_clause}
             ORDER BY ({match_score_sql}) DESC, COALESCE(rot.rotation_score, 0) DESC, stock_total DESC NULLS LAST
             LIMIT {int(limit)}
             """
@@ -15389,7 +15404,12 @@ def fetch_products_from_catalog(connection, where_clause: str, params: dict, mat
     ).mappings().all()
 
 
-def fetch_products_from_store_inventory(connection, where_clause: str, params: dict, match_score_sql: str, limit: int = 25):
+def fetch_products_from_store_inventory(connection, where_clause: str, params: dict, match_score_sql: str, limit: int = 25, allow_stale_with_stock: bool = False):
+    activity_clause = (
+        f"(inventory.ultima_venta >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years' OR COALESCE(inventory.stock_total, 0) > 0)"
+        if allow_stale_with_stock
+        else f"inventory.ultima_venta >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years'"
+    )
     return connection.execute(
         text(
             f"""
@@ -15425,7 +15445,7 @@ def fetch_products_from_store_inventory(connection, where_clause: str, params: d
                         COALESCE(MAX(referencia), '') || ' ' ||
                         COALESCE(MAX(marca), '')
                     ) AS search_compact,
-                    MAX(referencia_normalizada) AS referencia_normalizada,
+                    MAX(inv.referencia_normalizada) AS referencia_normalizada,
                     MAX(linea_clasificacion) AS linea_clasificacion,
                     MAX(marca_clasificacion) AS marca_clasificacion,
                     MAX(familia_clasificacion) AS familia_clasificacion,
@@ -15440,7 +15460,7 @@ def fetch_products_from_store_inventory(connection, where_clause: str, params: d
                 WHERE {where_clause}
                 GROUP BY referencia, descripcion, marca
             ) inventory
-            WHERE inventory.ultima_venta >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years'
+                        WHERE {activity_clause}
             ORDER BY match_score DESC, stock_total DESC NULLS LAST, descripcion ASC NULLS LAST
             LIMIT {int(limit)}
             """
@@ -15449,7 +15469,7 @@ def fetch_products_from_store_inventory(connection, where_clause: str, params: d
     ).mappings().all()
 
 
-def fetch_reference_product_rows(connection, references: list[str], store_filters: list[str], match_score: int):
+def fetch_reference_product_rows(connection, references: list[str], store_filters: list[str], match_score: int, allow_stale_with_stock: bool = False):
     if not references:
         return []
 
@@ -15459,19 +15479,20 @@ def fetch_reference_product_rows(connection, references: list[str], store_filter
     for index, reference_value in enumerate(references[:5]):
         params[f"reference_{index}"] = normalize_reference_value(reference_value)
         catalog_reference_filters.append(f"producto_codigo = :reference_{index}")
-        inventory_reference_filters.append(f"referencia_normalizada = :reference_{index}")
+        inventory_reference_filters.append(f"inv.referencia_normalizada = :reference_{index}")
 
     if store_filters:
         store_filters_sql = []
         for store_index, store_code in enumerate(store_filters):
             params[f"store_{store_index}"] = store_code
-            store_filters_sql.append(f"cod_almacen = :store_{store_index}")
+            store_filters_sql.append(f"inv.cod_almacen = :store_{store_index}")
         return fetch_products_from_store_inventory(
             connection,
             f"({' OR '.join(inventory_reference_filters)}) AND ({' OR '.join(store_filters_sql)})",
             params,
             str(match_score),
             limit=5,
+            allow_stale_with_stock=allow_stale_with_stock,
         )
 
     return fetch_products_from_catalog(
@@ -15483,7 +15504,7 @@ def fetch_reference_product_rows(connection, references: list[str], store_filter
     )
 
 
-def fetch_code_product_rows(connection, product_codes: list[str], store_filters: list[str]):
+def fetch_code_product_rows(connection, product_codes: list[str], store_filters: list[str], allow_stale_with_stock: bool = False):
     if not product_codes:
         return []
 
@@ -15515,9 +15536,9 @@ def fetch_code_product_rows(connection, product_codes: list[str], store_filters:
         store_code_filters = []
         store_score_terms = []
         for index, code in enumerate(product_codes[:3]):
-            store_code_filters.append(f"referencia_normalizada = :code_exact_{index}")
-            store_code_filters.append(f"referencia_normalizada LIKE :code_like_{index}")
-            store_code_filters.append(f"search_blob ILIKE :code_like_{index}")
+            store_code_filters.append(f"inv.referencia_normalizada = :code_exact_{index}")
+            store_code_filters.append(f"inv.referencia_normalizada LIKE :code_like_{index}")
+            store_code_filters.append(f"inv.search_blob ILIKE :code_like_{index}")
             store_score_terms.append(
                 f"CASE WHEN referencia_normalizada = :code_exact_{index} THEN 100"
                 f" WHEN referencia_normalizada LIKE :code_like_{index} OR search_blob ILIKE :code_like_{index} THEN 1 ELSE 0 END"
@@ -15525,13 +15546,14 @@ def fetch_code_product_rows(connection, product_codes: list[str], store_filters:
         store_filters_sql = []
         for store_index, store_code in enumerate(store_filters):
             params[f"store_{store_index}"] = store_code
-            store_filters_sql.append(f"cod_almacen = :store_{store_index}")
+            store_filters_sql.append(f"inv.cod_almacen = :store_{store_index}")
         return fetch_products_from_store_inventory(
             connection,
             f"({' OR '.join(store_code_filters)}) AND ({' OR '.join(store_filters_sql)})",
             params,
             " + ".join(store_score_terms) if store_score_terms else "0",
             limit=15,
+            allow_stale_with_stock=allow_stale_with_stock,
         )
 
     where_clause = f"({' OR '.join(code_filters)})"
@@ -15539,7 +15561,7 @@ def fetch_code_product_rows(connection, product_codes: list[str], store_filters:
     return fetch_products_from_catalog(connection, where_clause, params, match_score_sql, limit=15)
 
 
-def fetch_term_product_rows(connection, query_terms: list[str], store_filters: list[str]):
+def fetch_term_product_rows(connection, query_terms: list[str], store_filters: list[str], allow_stale_with_stock: bool = False):
     if not query_terms:
         return []
 
@@ -15597,18 +15619,19 @@ def fetch_term_product_rows(connection, query_terms: list[str], store_filters: l
         store_search_filters = []
         store_score_terms = []
         for index, term in enumerate(query_terms[:5]):
-            store_search_filters.append(f"search_blob ILIKE :pattern_{index}")
+            store_search_filters.append(f"inv.search_blob ILIKE :pattern_{index}")
             store_score_terms.append(f"CASE WHEN search_blob ILIKE :pattern_{index} THEN 1 ELSE 0 END")
         store_filters_sql = []
         for store_index, store_code in enumerate(store_filters):
             params[f"store_{store_index}"] = store_code
-            store_filters_sql.append(f"cod_almacen = :store_{store_index}")
+            store_filters_sql.append(f"inv.cod_almacen = :store_{store_index}")
         return fetch_products_from_store_inventory(
             connection,
             f"({' OR '.join(store_search_filters)}) AND ({' OR '.join(store_filters_sql)})",
             params,
             " + ".join(store_score_terms) if store_score_terms else "0",
             limit=25,
+            allow_stale_with_stock=allow_stale_with_stock,
         )
 
     where_clause = f"({' OR '.join(search_filters)})"
@@ -15648,6 +15671,7 @@ def build_curated_catalog_search_terms(text_value: Optional[str], product_reques
 
 def fetch_curated_catalog_product_rows(connection, text_value: Optional[str], product_request: Optional[dict], limit: int = 12):
     request = product_request or {}
+    allow_stale_with_stock = bool(request.get("allow_stale_with_stock"))
     search_terms = build_curated_catalog_search_terms(text_value, request)
     if not search_terms:
         return []
@@ -15722,10 +15746,13 @@ def fetch_curated_catalog_product_rows(connection, text_value: Optional[str], pr
                 color_groups.append("(" + " AND ".join(token_clauses) + ")")
         if color_groups:
             where_clause = f"({where_clause}) AND ({' OR '.join(color_groups)})"
-    where_clause = (
-        f"({where_clause}) AND COALESCE(rs.last_sale_date, p.ultima_venta, DATE '1900-01-01') >= "
-        f"CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years'"
+    activity_clause = (
+        f"(COALESCE(rs.last_sale_date, p.ultima_venta, DATE '1900-01-01') >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years' "
+        f"OR COALESCE(p.stock_total, 0) > 0)"
+        if allow_stale_with_stock
+        else f"COALESCE(rs.last_sale_date, p.ultima_venta, DATE '1900-01-01') >= CURRENT_DATE - INTERVAL '{INVENTORY_ACTIVE_LOOKBACK_YEARS} years'"
     )
+    where_clause = f"({where_clause}) AND {activity_clause}"
     score_clause = " + ".join(score_terms) if score_terms else "0"
 
     return connection.execute(
@@ -16068,6 +16095,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
     store_filters = product_request.get("store_filters") or []
     brand_filters = product_request.get("brand_filters") or []
     normalized_query = normalize_text_value(search_query_text)
+    allow_stale_with_stock = bool(product_request.get("allow_stale_with_stock"))
 
     if not terms and not product_codes and not learned_references:
         return []
@@ -16079,7 +16107,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             rotation_cache = fetch_rotation_cache(connection)
 
             if product_codes:
-                code_rows = fetch_code_product_rows(connection, product_codes, store_filters)
+                code_rows = fetch_code_product_rows(connection, product_codes, store_filters, allow_stale_with_stock=allow_stale_with_stock)
                 if code_rows:
                     ranked_code_rows = rank_product_match_rows([dict(row) for row in code_rows], product_request, normalized_query, rotation_cache, text_value)
                     ranked_code_rows = filter_rows_by_requested_presentation(ranked_code_rows, product_request)
@@ -16095,14 +16123,14 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
                             fuzzy_codes.append(code[:pos] + code[pos + 1] + code[pos] + code[pos + 2:])
                 fuzzy_codes = list(dict.fromkeys(c for c in fuzzy_codes if len(c) >= 4))[:20]
                 if fuzzy_codes:
-                    fuzzy_rows = fetch_code_product_rows(connection, fuzzy_codes[:3], store_filters)
+                    fuzzy_rows = fetch_code_product_rows(connection, fuzzy_codes[:3], store_filters, allow_stale_with_stock=allow_stale_with_stock)
                     if fuzzy_rows:
                         ranked_fuzzy = rank_product_match_rows([dict(row) for row in fuzzy_rows], product_request, normalized_query, rotation_cache, text_value)
                         ranked_fuzzy = filter_rows_by_requested_presentation(ranked_fuzzy, product_request)
                         return ranked_fuzzy[:10]
 
             if learned_references:
-                learned_rows = fetch_reference_product_rows(connection, learned_references, store_filters, 90)
+                learned_rows = fetch_reference_product_rows(connection, learned_references, store_filters, 90, allow_stale_with_stock=allow_stale_with_stock)
                 if learned_rows:
                     return filter_rows_by_requested_presentation([dict(row) for row in learned_rows], product_request)
 
@@ -16138,7 +16166,7 @@ def lookup_product_context(text_value: Optional[str], product_request: Optional[
             # (skip it when smart search already found strong matches to save a DB roundtrip)
             good_smart_count = sum(1 for r in ranked_term_rows if (r.get("match_score") or 0) >= 3)
             if good_smart_count < 3:
-                legacy_rows = fetch_term_product_rows(connection, query_terms, store_filters)
+                legacy_rows = fetch_term_product_rows(connection, query_terms, store_filters, allow_stale_with_stock=allow_stale_with_stock)
                 if legacy_rows:
                     legacy_ranked = rank_product_match_rows([dict(row) for row in legacy_rows], product_request, normalized_query, rotation_cache, search_query_text)
                     ranked_term_rows = _merge_product_rows(ranked_term_rows, legacy_ranked)

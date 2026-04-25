@@ -1013,6 +1013,7 @@ def match_pedido_completo(
         prod_request = {
             "requested_unit": pres_canonica,
             "store_filters": [tienda_codigo] if tienda_codigo else [],
+            "allow_stale_with_stock": True,
             "nlu_processed": True,  # Evitar NLU redundante en lookup_fn
         }
 
