@@ -12025,6 +12025,23 @@ def infer_technical_problem_category(text_value: Optional[str], existing_categor
     normalized = normalize_text_value(text_value)
     if not normalized:
         return existing_category or "general"
+
+    def _contains_token(text: str, token: str) -> bool:
+        if " " in token:
+            return token in text
+        return re.search(rf"(?<![a-z0-9]){re.escape(token)}(?![a-z0-9])", text) is not None
+
+    def _has_affirmative_humidity_signal(text: str) -> bool:
+        for token in humidity_context_tokens:
+            if not _contains_token(text, token):
+                continue
+            if token == "humedad" and re.search(r"\b(?:sin humedad|nada de humedad|no(?:\s+\w+){0,3}\s+humedad)\b", text):
+                continue
+            if token in {"humedo", "húmedo", "humeda", "húmeda"} and re.search(r"\b(?:sin|no)(?:\s+\w+){0,2}\s+h[úu]med[oa]\b", text):
+                continue
+            return True
+        return False
+
     metal_surface_tokens = [
         "metal", "metalico", "metalica", "hierro", "acero", "galvanizado", "aluminio",
         "reja", "rejas", "baranda", "barandas", "porton", "porton", "portón", "tanque",
@@ -12033,7 +12050,7 @@ def infer_technical_problem_category(text_value: Optional[str], existing_categor
     ]
     humidity_context_tokens = [
         "humedad", "gotera", "goteras", "filtracion", "filtración", "capilaridad", "moho", "salitre",
-        "descascar", "manchas negras", "barranco", "talud", "moja", "mojando", "llueve", "filtra", "gotea",
+        "manchas negras", "barranco", "talud", "moja", "mojando", "llueve", "filtra", "gotea",
         "vapor", "condensacion", "condensación", "humedo", "húmedo", "humeda", "húmeda", "blanquea", "blanqueando",
         "suda", "sudando", "sudor", "negra",
     ]
@@ -12052,18 +12069,19 @@ def infer_technical_problem_category(text_value: Optional[str], existing_categor
         return "metal"
     if any(token in normalized for token in ["corrosion", "corrosión", "oxido", "óxido", "oxidado", "oxidada", "anticorrosivo", "oxidand"]):
         return "metal"
-    if any(token in normalized for token in ["terraza", "cubierta", "techo", "placa", "azotea"]) and any(token in normalized for token in humidity_context_tokens):
-        return "humedad"
-    if any(token in normalized for token in ["muro", "pared", "culata", "sotano", "sótano", "baño", "bano", "cocina"]) and any(token in normalized for token in humidity_context_tokens):
-        return "humedad"
     if any(token in normalized for token in ["fachada", "fachadas", "muro exterior", "culata", "graniplast", "silcoplast", "fibrocemento", "eternit", "panel cementicio"]):
         return "fachada"
+    humidity_signal = _has_affirmative_humidity_signal(normalized)
+    if any(token in normalized for token in ["terraza", "cubierta", "techo", "placa", "azotea"]) and humidity_signal:
+        return "humedad"
+    if any(token in normalized for token in ["muro", "pared", "culata", "sotano", "sótano", "baño", "bano", "cocina"]) and humidity_signal:
+        return "humedad"
     if any(token in normalized for token in [
         "piso", "pisos", "cemento", "concreto", "pintura para piso", "epoxica", "epóxica",
         "garaje", "parqueadero", "bodega", "montacargas", "trafico pesado", "tráfico pesado", "taller",
     ]):
         return "piso"
-    if any(token in normalized for token in humidity_context_tokens):
+    if humidity_signal:
         return "humedad"
     if any(token in normalized for token in ["madera", "barniz", "laca", "lasur", "protector madera"]):
         return "madera"
@@ -12590,7 +12608,7 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
             symptoms.append("descascaramiento")
         if any(token in normalized for token in ["manchas negras", "negra", "negras", "moho", "hongo"]):
             symptoms.append("manchas negras o moho")
-        if any(token in normalized for token in ["humeda", "húmeda", "humedo", "húmedo"]):
+        if re.search(r"(?<![a-z0-9])h[úu]med[oa](?![a-z0-9])", normalized):
             symptoms.append("superficie humeda")
         if any(token in normalized for token in ["salitre", "polvillo blanco", "blanquea"]):
             symptoms.append("salitre")
@@ -12644,6 +12662,10 @@ def extract_technical_advisory_case(text_value: Optional[str], conversation_cont
             case["current_state"] = "con recubrimiento previo"
         elif any(token in normalized for token in ["obra gris", "sin pintar", "virgen", "nueva", "nuevo"]):
             case["current_state"] = "sin recubrimiento previo"
+        if any(token in normalized for token in ["pintada", "pintado", "pintura"]):
+            case["surface_state"] = "pintada"
+        elif any(token in normalized for token in ["estuco", "estucada", "estucado"]):
+            case["surface_state"] = "estucada"
         if not case.get("substrate_type"):
             case["substrate_type"] = "concreto o mamposteria"
 

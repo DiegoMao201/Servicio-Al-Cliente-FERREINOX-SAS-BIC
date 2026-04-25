@@ -765,7 +765,9 @@ def _infer_active_technical_category(conversation_context: dict, m) -> Optional[
         return "madera"
     if any(token in problem_class for token in ["piso", "trafico", "cancha"]):
         return "piso"
-    if any(token in problem_class for token in ["humedad", "fachada", "eternit", "fibrocemento", "ladrillo", "cubierta", "terraza"]):
+    if any(token in problem_class for token in ["fachada", "eternit", "fibrocemento", "ladrillo"]):
+        return "fachada"
+    if any(token in problem_class for token in ["humedad", "cubierta", "terraza"]):
         return "humedad"
 
     source_text = " ".join(

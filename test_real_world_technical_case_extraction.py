@@ -47,6 +47,18 @@ class RealWorldTechnicalCaseExtractionTests(unittest.TestCase):
         self.assertEqual(technical_case["probable_pressure"], "presion_negativa")
         self.assertIn("salitre", technical_case["search_query"] if "search_query" in technical_case else build_technical_search_query(technical_case, message))
 
+    def test_negated_humidity_follow_up_keeps_active_fachada_case(self):
+        message = "Esta pintada y la pintada esta en mal estado algunas partes con desprendimiento no tenemos humedad y esta en estuco no tiene fisuras son 80 mts"
+
+        technical_case = extract_technical_advisory_case(
+            message,
+            {"technical_advisory_case": {"category": "fachada", "stage": "diagnosing"}},
+        )
+
+        self.assertEqual(technical_case["category"], "fachada")
+        self.assertEqual(technical_case["substrate_type"], "concreto o mamposteria")
+        self.assertEqual(technical_case["surface_state"], "pintada")
+
     def test_metal_tank_query_carries_water_contact_signal_into_search(self):
         message = "Necesito pintar un tanque metalico de agua que esta oxidado por dentro y por fuera."
 
