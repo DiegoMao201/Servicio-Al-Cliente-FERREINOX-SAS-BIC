@@ -14542,7 +14542,10 @@ def generate_commercial_pdf(
     cliente_contexto: Optional[dict],
     detail: dict,
 ):
-    from pdf_generator import generate_commercial_pdf_v2
+    try:
+        from pdf_generator import generate_commercial_pdf_v2
+    except ImportError:
+        from backend.pdf_generator import generate_commercial_pdf_v2
     return generate_commercial_pdf_v2(
         conversation_id,
         request_type,

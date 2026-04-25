@@ -933,10 +933,16 @@ def generate_agent_reply_v3(
     # ══════════════════════════════════════════════════════════════════════
     if agent_runtime.get("enable_order_pipeline", True):
         try:
-            from pipeline_pedido.integracion_pedido import (
-                interceptar_pedido_si_aplica,
-                interceptar_respuesta_ral_pedido,
-            )
+            try:
+                from pipeline_pedido.integracion_pedido import (
+                    interceptar_pedido_si_aplica,
+                    interceptar_respuesta_ral_pedido,
+                )
+            except ImportError:
+                from backend.pipeline_pedido.integracion_pedido import (
+                    interceptar_pedido_si_aplica,
+                    interceptar_respuesta_ral_pedido,
+                )
 
             # Primero: ¿está respondiendo un RAL pendiente?
             ral_pendiente = interceptar_respuesta_ral_pedido(
@@ -1456,7 +1462,10 @@ def generate_agent_reply_v3(
     # ══════════════════════════════════════════════════════════════════════
     if agent_runtime.get("enable_quote_pipeline", True):
         try:
-            from pipeline_deterministico.integracion import interceptar_cotizacion_si_aplica
+            try:
+                from pipeline_deterministico.integracion import interceptar_cotizacion_si_aplica
+            except ImportError:
+                from backend.pipeline_deterministico.integracion import interceptar_cotizacion_si_aplica
             _pipeline_result = interceptar_cotizacion_si_aplica(
                 main_module=m,
                 openai_client=client,
