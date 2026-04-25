@@ -784,32 +784,116 @@ def _infer_active_technical_category(conversation_context: dict, m) -> Optional[
 
 
 def _detect_new_technical_topic_switch(user_message: str, conversation_context: dict, m) -> Optional[dict]:
+    def _contains_token(text: str, token: str) -> bool:
+        if " " in token:
+            return token in text
+        return re.search(rf"(?<![a-z0-9]){re.escape(token)}(?![a-z0-9])", text) is not None
+
+    def _category_anchor_hits(text: str, category: str) -> int:
+        anchor_map = {
+            "metal": ["metal", "metalica", "metalico", "teja", "zinc", "galvanizado", "lamina", "reja", "baranda", "tuberia"],
+            "madera": ["madera", "barniz", "barnex", "lasur", "deck", "pergola", "triplex", "mdf"],
+            "piso": ["piso", "garaje", "parqueadero", "cancha", "montacargas", "trafico", "bodega"],
+            "fachada": ["fachada", "muro exterior", "fibrocemento", "eternit", "panel cementicio", "ladrillo", "graniplast", "silcoplast"],
+            "humedad": ["humedad", "salitre", "gotera", "filtracion", "moho", "condensacion", "gotea", "capilaridad"],
+        }
+        if category == "humedad" and re.search(r"\b(?:sin humedad|nada de humedad|no(?:\s+\w+){0,3}\s+humedad)\b", text):
+            return 0
+        return sum(1 for token in anchor_map.get(category, []) if _contains_token(text, token))
+
+    def _looks_like_explicit_new_technical_topic(text: str, active_category: str, new_category: str) -> bool:
+        if not new_category or new_category == active_category:
+            return False
+        if any(
+            signal in text
+            for signal in [
+                "otro caso", "otro tema", "otro frente", "aparte", "ademas necesito",
+                "ademas tengo", "además necesito", "además tengo", "tambien necesito",
+                "tambien tengo", "también necesito", "también tengo", "por otro lado",
+            ]
+        ):
+            return True
+
+        new_hits = _category_anchor_hits(text, new_category)
+        active_hits = _category_anchor_hits(text, active_category)
+        if new_category == "metal":
+            return new_hits >= 2 and new_hits > active_hits
+        return new_hits >= 2 and new_hits > active_hits
+
     if not user_message:
         return None
     context = conversation_context or {}
     if not (context.get("commercial_draft") or context.get("latest_technical_guidance") or context.get("technical_advisory_case")):
         return None
 
+    normalized_message = m.normalize_text_value(user_message)
+    active_category = _infer_active_technical_category(context, m)
+    if not active_category or active_category == "general":
+        return None
+
     try:
+        contextual_case = m.extract_technical_advisory_case(user_message, context)
         fresh_case = m.extract_technical_advisory_case(user_message, {})
     except Exception:
         return None
 
-    new_category = (fresh_case.get("category") or "").strip().lower()
-    if not new_category or new_category == "general":
+    contextual_category = (contextual_case.get("category") or "").strip().lower()
+    if contextual_category == active_category:
         return None
 
-    active_category = _infer_active_technical_category(context, m)
-    if not active_category or active_category == "general":
+    new_case = contextual_case if contextual_category not in {"", "general", active_category} else fresh_case
+    new_category = (new_case.get("category") or "").strip().lower()
+    if not new_category or new_category == "general":
         return None
     if active_category == new_category:
+        return None
+    if not _looks_like_explicit_new_technical_topic(normalized_message, active_category, new_category):
         return None
 
     return {
         "active_category": active_category,
         "new_category": new_category,
-        "technical_case": fresh_case,
+        "technical_case": new_case,
     }
+
+
+def _should_continue_active_technical_flow(
+    initial_intent: str,
+    user_message: str,
+    conversation_context: dict,
+    initial_diagnostic: dict,
+    technical_case: Optional[dict],
+    m,
+) -> bool:
+    if initial_intent not in {"general", "consulta_productos"}:
+        return False
+    active_category = _infer_active_technical_category(conversation_context or {}, m)
+    case_category = ((technical_case or {}).get("category") or "").strip().lower()
+    if not active_category or case_category != active_category:
+        return False
+
+    normalized = m.normalize_text_value(user_message or "")
+    has_structured_follow_up = bool(
+        initial_diagnostic.get("surface")
+        or initial_diagnostic.get("condition")
+        or initial_diagnostic.get("interior_exterior")
+        or initial_diagnostic.get("area_m2")
+        or initial_diagnostic.get("traffic")
+        or initial_diagnostic.get("humidity_source")
+        or (technical_case or {}).get("substrate_type")
+        or (technical_case or {}).get("surface_state")
+        or (technical_case or {}).get("current_state")
+        or (technical_case or {}).get("symptoms")
+    )
+    has_advisory_follow_up_signal = any(
+        token in normalized
+        for token in [
+            "que sistema", "que me recomiendas", "me recomiendas", "como preparo",
+            "como la preparo", "como lo preparo", "aplico", "sirve o no", "desprendimiento",
+            "fisuras", "mts", "m2", "metros", "pintad", "estuc", "oxid", "salitre",
+        ]
+    )
+    return has_structured_follow_up or has_advisory_follow_up_signal
 
 
 def _preload_technical_guidance(args: dict, context: dict, conversation_context: dict, m) -> Optional[str]:
@@ -1200,6 +1284,23 @@ def generate_agent_reply_v3(
             technical_case = dict(conversation_context.get("technical_advisory_case") or technical_case)
         except Exception:
             technical_case = None
+
+    if not effective_advisory_flow and _should_continue_active_technical_flow(
+        initial_intent,
+        user_message,
+        conversation_context,
+        initial_diagnostic,
+        technical_case,
+        m,
+    ):
+        logger.info(
+            "V3 advisory continuity promotion: intent=%s active_category=%s case_category=%s",
+            initial_intent,
+            _infer_active_technical_category(conversation_context, m),
+            (technical_case or {}).get("category"),
+        )
+        initial_intent = "asesoria"
+        effective_advisory_flow = True
 
     project_profile = dict((technical_case or {}).get("project_profile") or {})
     project_profile_complete = bool((technical_case or {}).get("ready") and project_profile.get("complete"))

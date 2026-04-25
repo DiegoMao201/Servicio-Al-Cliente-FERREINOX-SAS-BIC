@@ -190,6 +190,41 @@ class AgentV3PreloadTests(unittest.TestCase):
 
         self.assertIsNone(topic_switch)
 
+    def test_detect_new_technical_topic_switch_keeps_active_facade_follow_up(self):
+        conversation_context = {
+            "latest_technical_guidance": {
+                "source_question": "sistema para fachada exterior con recubrimiento deteriorado",
+                "diagnostico_estructurado": {"problem_class": "fachada_exterior"},
+            },
+            "technical_advisory_case": {"category": "fachada", "stage": "diagnosing"},
+        }
+
+        topic_switch = agent_v3._detect_new_technical_topic_switch(
+            "Esta pintada y la pintada esta en mal estado algunas partes con desprendimiento no tenemos humedad y esta en estuco no tiene fisuras son 80 mts.",
+            conversation_context,
+            main,
+        )
+
+        self.assertIsNone(topic_switch)
+
+    def test_intent_classifier_keeps_active_technical_follow_up_as_advisory(self):
+        conversation_context = {
+            "technical_advisory_case": {"category": "fachada", "stage": "diagnosing"},
+            "latest_technical_guidance": {
+                "source_question": "sistema para fachada exterior con recubrimiento deteriorado",
+                "diagnostico_estructurado": {"problem_class": "fachada_exterior"},
+            },
+        }
+
+        result = agent_context.classify_intent(
+            "Esta pintada, está en estuco y son 80 mts. Algunas partes tienen desprendimiento.",
+            conversation_context,
+            [],
+            {},
+        )
+
+        self.assertEqual(result, "asesoria")
+
     def test_consultive_block_message_for_galvanized_roof_forces_disambiguation(self):
         technical_case = {
             "category": "metal",

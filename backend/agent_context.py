@@ -48,6 +48,16 @@ _INTERNAL_PROMO_PRICE_SIGNALS = (
 _EXPERT_DIRECTIVE_INTENTS = {"asesoria", "pedido_directo", "cotizacion", "confirmacion", "correccion", "reclamo"}
 
 
+def _has_active_technical_context(conversation_context: dict) -> bool:
+    context = conversation_context or {}
+    draft = context.get("commercial_draft") or {}
+    return bool(
+        context.get("technical_advisory_case")
+        or context.get("latest_technical_guidance")
+        or draft.get("technical_guidance")
+    )
+
+
 def _looks_like_internal_report_email_followup(user_message: str, conversation_context: dict) -> bool:
     remembered_report = (conversation_context or {}).get("last_internal_report_request") or {}
     if not remembered_report:
@@ -631,8 +641,23 @@ _PRICE_SIGNALS = [
 ]
 
 _INVENTORY_SIGNALS = [
-    "inventario", "stock", "disponible", "disponibilidad", "tenemos", "hay",
+    "inventario", "stock", "disponible", "disponibilidad",
 ]
+
+
+def _has_inventory_request(msg_lower: str, has_reference_like: bool) -> bool:
+    if any(signal in msg_lower for signal in _INVENTORY_SIGNALS):
+        return True
+
+    if not has_reference_like:
+        return False
+
+    return bool(
+        re.search(
+            r"\b(?:tienen|tienes|manejan|consiguen|consigue|hay|venden|trabajan|cuentan con)\b",
+            msg_lower,
+        )
+    )
 
 
 def _looks_like_direct_commercial_batch(message: str) -> bool:
@@ -821,8 +846,28 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
     has_price_request = any(s in msg_lower for s in _PRICE_SIGNALS)
     has_condition = any(s in msg_lower for s in _CONDITION_SIGNALS)
     has_surface = any(s in msg_lower for s in _SURFACE_SIGNALS)
-    has_inventory_request = any(s in msg_lower for s in _INVENTORY_SIGNALS)
     has_reference_like = has_specific or bool(_SHORT_REFERENCE_PATTERNS.search(msg_lower))
+    has_inventory_request = _has_inventory_request(msg_lower, has_reference_like)
+    has_active_technical_context = _has_active_technical_context(conversation_context)
+    has_followup_technical_detail = bool(
+        diagnostic_surface
+        or diagnostic_condition
+        or diagnostic_location
+        or diagnostic.get("area_m2")
+        or diagnostic.get("traffic")
+        or diagnostic.get("humidity_source")
+        or diagnostic.get("substrate_type")
+    )
+    has_technical_followup_signal = any(
+        signal in msg_lower
+        for signal in [
+            "que sistema", "qué sistema", "que me recomiendas", "qué me recomiendas",
+            "me recomiendas", "como lo preparo", "cómo lo preparo", "como la preparo",
+            "cómo la preparo", "como preparo", "cómo preparo", "sirve o no", "aplico",
+            "aplicaria", "aplicaría", "desprendimiento", "fisuras", "estuc", "pintad",
+            "oxid", "salitre", "humedad", "moho", "metros", "mts", "m2",
+        ]
+    )
 
     if _looks_like_direct_commercial_batch(msg):
         return "pedido_directo"
@@ -851,6 +896,14 @@ def classify_intent(user_message: str, conversation_context: dict, recent_messag
     # If Python can already infer a usable technical case from the current turn + history,
     # force advisory intent even when the wording is brief or follow-up style.
     if has_structured_diagnostic:
+        return "asesoria"
+
+    if (
+        has_active_technical_context
+        and not has_price_request
+        and not has_inventory_request
+        and (has_followup_technical_detail or has_technical_followup_signal)
+    ):
         return "asesoria"
 
     # 11. Advisory (describes surface/need without naming specific product)
