@@ -13,10 +13,12 @@ Responsabilidades:
 """
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 import json
 import logging
 import os
 import re
+from threading import Lock
 from dataclasses import dataclass, field, asdict
 from pathlib import Path
 from typing import Callable, Optional
@@ -53,6 +55,7 @@ _COLOR_FORMULAS_JSON = _find_data_file("color_formulas.json")
 # ============================================================================
 _international_catalog: list[dict] | None = None
 _color_formulas: list[dict] | None = None
+_DEFAULT_MATCH_MAX_WORKERS = max(1, int(os.getenv("PIPELINE_PEDIDO_MAX_WORKERS", "4") or "4"))
 
 
 def _load_international() -> list[dict]:
@@ -774,8 +777,69 @@ def match_pedido_completo(
 
     nombres_resueltos: list[str] = []  # Para detección bicomponente posterior
 
-    for linea_raw in lineas_parseadas:
-        # ── PRE-PROCESAR: fracciones, códigos, aliases, color formulas ──
+    lookup_cache: dict[tuple, list[dict]] = {}
+    price_cache: dict[str, dict] = {}
+    lookup_lock = Lock()
+    price_lock = Lock()
+
+    def _freeze_request(product_request: dict | None) -> tuple:
+        if not product_request:
+            return ()
+        frozen_items = []
+        for key, value in sorted(product_request.items()):
+            if isinstance(value, list):
+                frozen_items.append((key, tuple(value)))
+            else:
+                frozen_items.append((key, value))
+        return tuple(frozen_items)
+
+    def _cached_lookup(query: str, product_request: dict | None = None) -> list[dict]:
+        cache_key = (str(query or "").strip(), _freeze_request(product_request))
+        with lookup_lock:
+            cached = lookup_cache.get(cache_key)
+        if cached is not None:
+            return [dict(row) for row in cached]
+
+        try:
+            rows = lookup_fn(query, product_request)
+        except TypeError:
+            rows = lookup_fn(query)
+        except Exception as exc:
+            logger.error("lookup_fn EXCEPCION para q=%r: %s", query, exc)
+            rows = []
+
+        normalized_rows = [dict(row) for row in (rows or [])]
+        with lookup_lock:
+            lookup_cache[cache_key] = normalized_rows
+        return [dict(row) for row in normalized_rows]
+
+    def _cached_price(codigo: str) -> dict:
+        ref = str(codigo or "").strip()
+        if not ref:
+            return {}
+        with price_lock:
+            cached = price_cache.get(ref)
+        if cached is not None:
+            return dict(cached)
+
+        try:
+            price_data = price_fn(ref) or {}
+        except Exception as exc:
+            logger.error("price_fn EXCEPCION para ref=%r: %s", ref, exc)
+            price_data = {}
+        normalized_price = dict(price_data)
+        with price_lock:
+            price_cache[ref] = normalized_price
+        return dict(normalized_price)
+
+    def _resolver_linea(linea_raw: dict) -> dict:
+        linea_result = {
+            "resueltos": [],
+            "pendientes": [],
+            "fallidos": [],
+            "nombres_resueltos": [],
+        }
+
         linea = preprocesar_linea(linea_raw)
 
         texto_original = linea.get("texto", "")
@@ -787,14 +851,12 @@ def match_pedido_completo(
         marca = linea.get("marca", "")
         color_formula = linea.get("_color_formula")
 
-        # ── Paso 0.5: Detectar aerosol genérico → pedir clarificación ──
         producto_norm_check = _norm(producto)
         if ("aerosol" in producto_norm_check
                 and "aerocolor" not in producto_norm_check
                 and "tekbond" not in producto_norm_check
                 and "alta temperatura" not in producto_norm_check):
-            # Aerosol genérico sin especificar línea → preguntar
-            resultado.productos_pendientes.append(LineaPendiente(
+            linea_result["pendientes"].append(LineaPendiente(
                 producto_solicitado=producto,
                 cantidad=cantidad,
                 unidad=unidad,
@@ -810,15 +872,13 @@ def match_pedido_completo(
                 ],
                 original_text=texto_original,
             ))
-            continue
+            return linea_result
 
-        # ── Paso 0.7: Pulidora sola → referencia 120025 ──
         if (re.fullmatch(r'pulidora', producto_norm_check)
                 or producto_norm_check == "pulidora"):
-            # "pulidora" sin más = referencia 120025
-            rows = lookup_fn(PULIDORA_DEFAULT_REF)
+            rows = _cached_lookup(PULIDORA_DEFAULT_REF)
             if not rows:
-                rows = lookup_fn("pulidora 120025")
+                rows = _cached_lookup("pulidora 120025")
             if rows:
                 best = rows[0]
                 codigo = best.get("referencia", PULIDORA_DEFAULT_REF)
@@ -829,11 +889,11 @@ def match_pedido_completo(
                 )
                 precio = 0
                 if codigo:
-                    precio_data = price_fn(codigo) or {}
+                    precio_data = _cached_price(codigo)
                     precio = float(precio_data.get("precio_mejor", 0) or 0)
                 stock = float(best.get("stock_total", 0) or 0)
 
-                resuelto = LineaResuelta(
+                linea_result["resueltos"].append(LineaResuelta(
                     producto_solicitado=producto,
                     cantidad=cantidad,
                     unidad=unidad or "galon",
@@ -847,20 +907,17 @@ def match_pedido_completo(
                     score_match=1.0,
                     tipo_match="pulidora_default",
                     original_text=texto_original,
-                )
-                resultado.productos_resueltos.append(resuelto)
-                nombres_resueltos.append(descripcion)
-                continue
+                ))
+                linea_result["nombres_resueltos"].append(descripcion)
+            return linea_result
 
-        # ── Paso 1: Detectar si es producto International ──
         intl = detectar_linea_international(producto)
         if intl:
             ral = intl["ral"]
             linea_intl = intl["lineas"][0] if intl["lineas"] else ""
 
-            # Si requiere RAL y no lo tiene → pendiente
             if _norm(linea_intl) in LINEAS_RAL_OBLIGATORIO and not ral:
-                resultado.productos_pendientes.append(LineaPendiente(
+                linea_result["pendientes"].append(LineaPendiente(
                     producto_solicitado=producto,
                     cantidad=cantidad,
                     unidad=unidad,
@@ -872,13 +929,11 @@ def match_pedido_completo(
                     ),
                     original_text=texto_original,
                 ))
-                continue
+                return linea_result
 
-            # Si tiene RAL, buscar en catálogo International
             if ral:
                 entry = buscar_international_por_ral(linea_intl, ral)
                 if entry:
-                    # Determinar presentación y precio
                     if unidad in ("cunete", "cuñete"):
                         codigo = entry.get("codigo_cunete", "")
                         precio = float(entry.get("precio_cunete", 0))
@@ -895,7 +950,7 @@ def match_pedido_completo(
                         marca="International",
                         presentacion_real=unidad or "galon",
                         precio_unitario=precio,
-                        stock_disponible=0,  # Se valida después vs DB
+                        stock_disponible=0,
                         disponible=True,
                         score_match=1.0,
                         tipo_match="international_catalog",
@@ -905,38 +960,33 @@ def match_pedido_completo(
                         linea_international=linea_intl,
                         original_text=texto_original,
                     )
-
-                    # Enriquecer con stock real si lookup_fn disponible
                     if codigo:
-                        rows = lookup_fn(codigo)
+                        rows = _cached_lookup(codigo)
                         if rows:
                             best = rows[0]
                             resuelto.stock_disponible = float(best.get("stock_total", 0) or 0)
                             resuelto.disponible = resuelto.stock_disponible > 0
 
-                    resultado.productos_resueltos.append(resuelto)
-                    nombres_resueltos.append(producto)
-                    continue
-                else:
-                    resultado.productos_pendientes.append(LineaPendiente(
-                        producto_solicitado=producto,
-                        cantidad=cantidad,
-                        unidad=unidad,
-                        razon="ral_not_found",
-                        mensaje_usuario=(
-                            f"No encontre el RAL {ral} en la linea *{linea_intl}*. "
-                            f"Verifica el codigo RAL o consulta las opciones disponibles."
-                        ),
-                        original_text=texto_original,
-                    ))
-                    continue
+                    linea_result["resueltos"].append(resuelto)
+                    linea_result["nombres_resueltos"].append(producto)
+                    return linea_result
 
-        # ── Paso 2: Color formula directo — si el código ya está en el JSON ──
+                linea_result["pendientes"].append(LineaPendiente(
+                    producto_solicitado=producto,
+                    cantidad=cantidad,
+                    unidad=unidad,
+                    razon="ral_not_found",
+                    mensaje_usuario=(
+                        f"No encontre el RAL {ral} en la linea *{linea_intl}*. "
+                        f"Verifica el codigo RAL o consulta las opciones disponibles."
+                    ),
+                    original_text=texto_original,
+                ))
+                return linea_result
+
         if color_formula and color_formula.get("_source") == "international":
-            # Código directo de producto International (e.g., "13883")
             intl_entry = color_formula.get("_entry", {})
             if intl_entry:
-                # Determinar presentación y precio
                 if unidad in ("cunete", "cuñete"):
                     codigo_intl = intl_entry.get("codigo_cunete", "")
                     precio_intl = float(intl_entry.get("precio_cunete", 0))
@@ -970,25 +1020,18 @@ def match_pedido_completo(
                     linea_international=linea_intl,
                     original_text=texto_original,
                 )
-                # Enriquecer con stock real
                 if codigo_intl:
-                    r = lookup_fn(codigo_intl)
-                    if r:
-                        resuelto.stock_disponible = float(r[0].get("stock_total", 0) or 0)
+                    rows = _cached_lookup(codigo_intl)
+                    if rows:
+                        resuelto.stock_disponible = float(rows[0].get("stock_total", 0) or 0)
                         resuelto.disponible = resuelto.stock_disponible > 0
-                resultado.productos_resueltos.append(resuelto)
-                nombres_resueltos.append(linea_intl)
-                continue
+                linea_result["resueltos"].append(resuelto)
+                linea_result["nombres_resueltos"].append(linea_intl)
+                return linea_result
 
-        # ── Paso 3: Lookup normal contra inventario ──
-        # Construir query de búsqueda con toda la info disponible
         acabado = linea.get("acabado", "")
-
-        # IMPORTANTE: Construir busqueda incluyendo producto+color+acabado+marca
-        # pero SIN reemplazar producto por código solo (pierde contexto)
         busqueda = producto
         if codigos:
-            # Incluir código JUNTO con producto, no reemplazar
             code_str = codigos[0]
             if code_str not in busqueda:
                 busqueda = f"{busqueda} {code_str}"
@@ -998,7 +1041,6 @@ def match_pedido_completo(
             busqueda = f"{busqueda} {acabado}"
         if marca and marca.lower() not in busqueda.lower():
             busqueda = f"{busqueda} {marca}"
-        # Si hay color formula, enriquecer con producto + base para mejor match
         if color_formula and not color_formula.get("_source"):
             base_info = color_formula.get("base", "")
             prod_formula = color_formula.get("producto", "")
@@ -1007,26 +1049,16 @@ def match_pedido_completo(
             if base_info and base_info.lower() not in busqueda.lower():
                 busqueda = f"{busqueda} {base_info}"
 
-        # Construir product_request para que lookup_fn filtre por
-        # presentación y tienda del lado de la DB
         pres_canonica = _canonizar_presentacion(unidad) if unidad else ""
         prod_request = {
             "requested_unit": pres_canonica,
             "store_filters": [tienda_codigo] if tienda_codigo else [],
             "allow_stale_with_stock": True,
-            "nlu_processed": True,  # Evitar NLU redundante en lookup_fn
+            "nlu_processed": True,
         }
 
         def _lookup(q: str) -> list[dict]:
-            """Wrapper que pasa product_request a lookup_fn y filtra presentación."""
-            try:
-                r = lookup_fn(q, prod_request)
-            except TypeError:
-                # fallback si lookup_fn no acepta product_request
-                r = lookup_fn(q)
-            except Exception as exc:
-                logger.error("_lookup EXCEPCION para q=%r: %s", q, exc)
-                return []
+            r = _cached_lookup(q, prod_request)
             logger.info(
                 "_lookup q=%r → %d rows (pre-filtro), prod_request=%s",
                 q[:60], len(r) if r else 0, prod_request,
@@ -1042,21 +1074,17 @@ def match_pedido_completo(
 
         rows = _lookup(busqueda)
         if not rows:
-            # Retry sin color/acabado/marca (solo producto base)
             rows = _lookup(producto)
         if not rows and color:
-            # Retry: producto + color compuesto
             rows = _lookup(f"{producto} {color}")
         if not rows and codigos:
             for c in codigos:
                 rows = _lookup(c)
                 if rows:
                     break
-        # Retry: si hay color_formula, buscar por producto+nombre_color del JSON
         if not rows and color_formula:
             retry_q = f"{color_formula.get('producto', '')} {color_formula.get('nombre', '')}"
             rows = _lookup(retry_q.strip())
-        # Último recurso: buscar solo con código + presentación
         if not rows and codigos and unidad:
             for c in codigos:
                 rows = _lookup(f"{c} {unidad}")
@@ -1064,16 +1092,15 @@ def match_pedido_completo(
                     break
 
         if not rows:
-            resultado.productos_fallidos.append(LineaFallida(
+            linea_result["fallidos"].append(LineaFallida(
                 producto_solicitado=producto,
                 cantidad=cantidad,
                 unidad=unidad,
                 razon="not_found",
                 original_text=texto_original,
             ))
-            continue
+            return linea_result
 
-        # Seleccionar mejor match
         best = rows[0]
         codigo = (
             best.get("referencia")
@@ -1088,10 +1115,9 @@ def match_pedido_completo(
             or ""
         )
 
-        # Obtener precio
         precio = 0
         if codigo:
-            precio_data = price_fn(codigo) or {}
+            precio_data = _cached_price(codigo)
             precio = float(precio_data.get("precio_mejor", 0) or 0)
         if not precio:
             precio = float(best.get("precio_venta", 0) or best.get("pvp_sap", 0) or 0)
@@ -1101,11 +1127,8 @@ def match_pedido_completo(
         marca_real = best.get("marca", "") or best.get("marca_producto", "") or ""
         pres_real = best.get("presentacion_canonica", "") or unidad or ""
         cat_prod = best.get("cat_producto", "") or ""
-
-        # Detectar bicomponente
         bico_key = detectar_bicomponente(descripcion)
 
-        # Aplicar descuento si corresponde
         descuento = 0.0
         if descuentos:
             for d in descuentos:
@@ -1134,11 +1157,25 @@ def match_pedido_completo(
             original_text=texto_original,
             cat_producto=cat_prod,
         )
-        resultado.productos_resueltos.append(resuelto)
-        nombres_resueltos.append(descripcion)
+        linea_result["resueltos"].append(resuelto)
+        linea_result["nombres_resueltos"].append(descripcion)
+        return linea_result
+
+    if len(lineas_parseadas) <= 1:
+        resolved_batches = [_resolver_linea(lineas_parseadas[0])] if lineas_parseadas else []
+    else:
+        max_workers = min(_DEFAULT_MATCH_MAX_WORKERS, len(lineas_parseadas))
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            resolved_batches = list(executor.map(_resolver_linea, lineas_parseadas))
+
+    for batch in resolved_batches:
+        resultado.productos_resueltos.extend(batch["resueltos"])
+        resultado.productos_pendientes.extend(batch["pendientes"])
+        resultado.productos_fallidos.extend(batch["fallidos"])
+        nombres_resueltos.extend(batch["nombres_resueltos"])
 
     # ── Paso 3: Detectar bicomponentes faltantes ──
-    _inyectar_bicomponentes(resultado, nombres_resueltos, lookup_fn, price_fn)
+    _inyectar_bicomponentes(resultado, nombres_resueltos, _cached_lookup, _cached_price)
 
     return resultado
 

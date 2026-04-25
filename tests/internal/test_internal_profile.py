@@ -32,8 +32,8 @@ class InternalAgentProfileTests(unittest.TestCase):
         tool_names = [tool["function"]["name"] for tool in runtime_config["tools"]]
 
         self.assertEqual(runtime_config["profile"], "internal")
-        self.assertFalse(runtime_config["enable_order_pipeline"])
-        self.assertFalse(runtime_config["enable_quote_pipeline"])
+        self.assertTrue(runtime_config["enable_order_pipeline"])
+        self.assertTrue(runtime_config["enable_quote_pipeline"])
         self.assertFalse(runtime_config["enable_iva_guard"])
         self.assertFalse(runtime_config["force_first_advisory_depth_turn"])
         self.assertEqual(
@@ -46,6 +46,8 @@ class InternalAgentProfileTests(unittest.TestCase):
                 "consultar_indicadores_internos",
                 "enviar_reporte_interno_correo",
                 "buscar_documento_tecnico",
+                "confirmar_pedido_y_generar_pdf",
+                "registrar_cliente_nuevo",
             ],
         )
 
@@ -85,7 +87,7 @@ class InternalAgentProfileTests(unittest.TestCase):
 
         system_prompt = runtime_config["system_prompt"]
 
-        self.assertIn("No crear cotizaciones.", system_prompt)
+        self.assertIn("No crear cotizaciones automáticamente.", system_prompt)
         self.assertIn("No preguntes m² por defecto en este canal.", system_prompt)
         self.assertIn("Consultar indicadores internos de ventas, proyeccion, cartera e inventario.", system_prompt)
         self.assertIn("Exportar reportes internos por correo con Excel adjunto", system_prompt)
@@ -96,6 +98,7 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertIn("productos para impulsar", system_prompt)
         self.assertIn("SU propia cartera y SU propio código de vendedor", system_prompt)
         self.assertIn("Si quieres, te conecto con un asesor comercial para cotizar los productos.", system_prompt)
+        self.assertIn("Guiar cotizaciones internas y armado de pedidos cuando el colaborador lo pida explícitamente.", system_prompt)
 
     def test_universal_bi_plan_detects_open_analytics_intent(self):
         plan = internal_agent_ops._infer_universal_bi_plan(
@@ -249,6 +252,17 @@ class InternalAgentProfileTests(unittest.TestCase):
         )
         self.assertEqual(plan["kind"], "indicator")
         self.assertEqual(plan["tipo_consulta"], "plan_comercial_mensual")
+
+    def test_universal_bi_plan_detects_promotions_as_monthly_commercial_plan(self):
+        plan = internal_agent_ops._infer_universal_bi_plan(
+            "que promociones tenemos este mes y dame 20 productos para mover",
+            None,
+            None,
+        )
+
+        self.assertEqual(plan["kind"], "indicator")
+        self.assertEqual(plan["tipo_consulta"], "plan_comercial_mensual")
+        self.assertEqual(plan["limite"], 20)
 
     def test_detect_internal_query_intent_flags_sales_and_projection_questions(self):
         self.assertEqual(
@@ -753,6 +767,52 @@ class InternalAgentProfileTests(unittest.TestCase):
         self.assertIn("Productos impulso", workbook.sheetnames)
         self.assertGreaterEqual(len(workbook["Tablero Ejecutivo"]._charts), 2)
         self.assertEqual(workbook["Acciones mes"]["A2"].value, "Reactivación")
+
+    def test_monthly_commercial_plan_payload_respects_requested_limit(self):
+        snapshot = {"period_label": "abril 2026", "neto": 12000000, "prev_neto": 15000000}
+
+        with mock.patch.object(internal_agent_ops, "_fetch_sales_total_snapshot", return_value=snapshot):
+            with mock.patch.object(internal_agent_ops, "_fetch_clients_without_purchase_rows", return_value=([], "abril 2026")) as fetch_reactivation:
+                with mock.patch.object(internal_agent_ops, "_fetch_client_decline_rows", return_value=([], "abril 2026")) as fetch_decline:
+                    with mock.patch.object(internal_agent_ops, "_fetch_products_to_push_rows", return_value=([], "abril 2026")) as fetch_push:
+                        payload = internal_agent_ops._build_monthly_commercial_plan_report_payload(
+                            mock.Mock(),
+                            "abril 2026",
+                            "189",
+                            "154011",
+                            20,
+                        )
+
+        fetch_reactivation.assert_called_once_with(mock.ANY, "abril 2026", "189", "154011", 20)
+        fetch_decline.assert_called_once_with(mock.ANY, "abril 2026", "189", 20, "154011")
+        fetch_push.assert_called_once_with(mock.ANY, "abril 2026", "189", "154011", 20)
+        self.assertEqual(payload["period_label"], "abril 2026")
+
+    def test_fetch_clients_without_purchase_rows_applies_dormant_days_threshold(self):
+        engine = mock.MagicMock()
+        connection = engine.begin.return_value.__enter__.return_value
+        connection.execute.return_value.mappings.return_value.all.return_value = []
+
+        internal_agent_ops._fetch_clients_without_purchase_rows(engine, "este mes", "189", "154011", 20)
+
+        sql = connection.execute.call_args.args[0]
+        params = connection.execute.call_args.args[1]
+        self.assertIn("min_dormant_days", params)
+        self.assertEqual(params["min_dormant_days"], internal_agent_ops._MIN_DORMANT_CLIENT_DAYS)
+        self.assertIn("CURRENT_DATE - h.ultima_compra", str(sql))
+
+    def test_fetch_products_to_push_rows_excludes_colorants_from_promotions(self):
+        engine = mock.MagicMock()
+        connection = engine.begin.return_value.__enter__.return_value
+        connection.execute.return_value.mappings.return_value.all.return_value = []
+
+        internal_agent_ops._fetch_products_to_push_rows(engine, "este mes", "189", "154011", 20)
+
+        sql = connection.execute.call_args.args[0]
+        params = connection.execute.call_args.args[1]
+        self.assertEqual(params["excluded_product_pattern"], internal_agent_ops._NON_SELLABLE_PROMO_PRODUCT_PATTERN)
+        self.assertIn("categoria_producto", str(sql))
+        self.assertIn("excluded_product_pattern", str(sql))
 
 
 if __name__ == "__main__":

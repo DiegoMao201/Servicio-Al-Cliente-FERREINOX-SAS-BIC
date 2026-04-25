@@ -22,6 +22,10 @@ logger = logging.getLogger("internal_agent_ops")
 
 _LAST_INTERNAL_REPORT_REQUEST_KEY = "last_internal_report_request"
 _INVENTORY_ACTIVE_LOOKBACK_YEARS = int(os.getenv("INVENTORY_ACTIVE_LOOKBACK_YEARS", "2"))
+_MIN_DORMANT_CLIENT_DAYS = int(os.getenv("INTERNAL_DORMANT_CLIENT_DAYS", "25"))
+_NON_SELLABLE_PROMO_PRODUCT_PATTERN = (
+    r"(colorant|colorante|colorantes|concentrado|concentrados|entonador|entonadores|tint(?:e|es|ing)?)"
+)
 
 _XL_DARK_FILL = PatternFill("solid", fgColor="111827")
 _XL_ACCENT_FILL = PatternFill("solid", fgColor="F59E0B")
@@ -296,6 +300,8 @@ def _resolve_indicator_query_type(args: dict) -> str:
     query_type = _normalize_text((args or {}).get("tipo_consulta") or (args or {}).get("tipo_reporte") or "")
     aliases = {
         "cartera_vencida": "cartera_vencida_resumen",
+        "promociones": "plan_comercial_mensual",
+        "promocion": "plan_comercial_mensual",
     }
     return aliases.get(query_type, query_type)
 
@@ -874,6 +880,8 @@ def _resolve_internal_report_type(args: dict) -> str:
     report_type = _normalize_text((args or {}).get("tipo_reporte") or (args or {}).get("tipo_consulta") or "")
     aliases = {
         "cartera_vencida_resumen": "cartera_vencida",
+        "promociones": "plan_comercial_mensual",
+        "promocion": "plan_comercial_mensual",
     }
     return aliases.get(report_type, report_type)
 
@@ -990,6 +998,7 @@ def _infer_universal_bi_plan(question: str, explicit_period: Optional[str], expl
         "qué hacer este mes", "vender mas", "vender más", "prioridades comerciales",
         "acciones comerciales", "donde tenemos oportunidad", "dónde tenemos oportunidad",
         "como vender mas", "cómo vender más", "en que enfocarnos", "en qué enfocarnos",
+        "promociones", "promocion", "promoción", "que promocion tenemos", "qué promoción tenemos",
     ]):
         return {"kind": "indicator", "tipo_consulta": "plan_comercial_mensual", "periodo": period_value, "limite": limit}
 
@@ -1368,6 +1377,7 @@ def _fetch_clients_without_purchase_rows(engine, periodo_raw: Optional[str], sto
         WHERE cp.cod_cliente IS NULL
           AND h.ventas_historicas > 0
           AND h.meses_activos >= 2
+                    AND (CURRENT_DATE - h.ultima_compra) >= :min_dormant_days
         ORDER BY h.ventas_historicas DESC, h.ultima_compra DESC
         LIMIT :limit
         """
@@ -1383,6 +1393,7 @@ def _fetch_clients_without_purchase_rows(engine, periodo_raw: Optional[str], sto
                 "current_end": current_end,
                 "store_code": store_code,
                 "vendor_code": vendor_code,
+                "min_dormant_days": _MIN_DORMANT_CLIENT_DAYS,
                 "limit": limit,
             },
         ).mappings().all()
@@ -1516,6 +1527,8 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 CASE WHEN :store_code IS NULL THEN 'Consolidado' ELSE MAX(inv.almacen_nombre) END AS almacen_nombre,
                 MAX(inv.referencia) AS referencia,
                 MAX(inv.descripcion) AS descripcion,
+                MAX(inv.categoria_producto) AS categoria_producto,
+                MAX(inv.marca_producto) AS marca_producto,
                 COALESCE(SUM(inv.stock_disponible), 0) AS stock_total,
                 COALESCE(AVG(inv.costo_promedio_und), 0) AS costo_promedio_und,
                 COALESCE(SUM(inv.stock_disponible * COALESCE(inv.costo_promedio_und, 0)), 0) AS inventory_value
@@ -1559,6 +1572,8 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 COALESCE(inv.stock_total, 0) AS stock_total,
                 COALESCE(inv.costo_promedio_und, 0) AS costo_promedio_und,
                 COALESCE(inv.inventory_value, 0) AS inventory_value,
+                COALESCE(inv.categoria_producto, '') AS categoria_producto,
+                COALESCE(inv.marca_producto, '') AS marca_producto,
                 ph.ventas_historicas,
                 COALESCE(pc.ventas_actuales, 0) AS ventas_actuales,
                 ROUND(ph.ventas_historicas / GREATEST(ph.meses_activos, 1), 2) AS promedio_base,
@@ -1571,6 +1586,11 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
             WHERE ph.ventas_historicas > 0
               AND ph.meses_activos >= 2
               AND COALESCE(inv.stock_total, 0) > 0
+                            AND NOT (
+                                        LOWER(COALESCE(inv.descripcion, ph.descripcion_venta, '')) ~ :excluded_product_pattern
+                                 OR LOWER(COALESCE(inv.categoria_producto, '')) ~ :excluded_product_pattern
+                                 OR LOWER(COALESCE(inv.marca_producto, '')) ~ :excluded_product_pattern
+                            )
         ),
         top_products AS (
             SELECT *
@@ -1660,6 +1680,7 @@ def _fetch_products_to_push_rows(engine, periodo_raw: Optional[str], store_code:
                 "current_end": current_end,
                 "store_code": store_code,
                 "vendor_code": vendor_code,
+                "excluded_product_pattern": _NON_SELLABLE_PROMO_PRODUCT_PATTERN,
                 "limit": limit,
             },
         ).mappings().all()
@@ -2487,9 +2508,9 @@ def _build_monthly_commercial_plan_report_payload(
     limit: int,
 ) -> dict:
     snapshot = _fetch_sales_total_snapshot(engine, period_value, store_code, vendor_code)
-    reactivation_rows, period_label = _fetch_clients_without_purchase_rows(engine, period_value, store_code, vendor_code, min(limit, 10))
-    decline_rows, _ = _fetch_client_decline_rows(engine, period_value, store_code, min(limit, 10), vendor_code)
-    push_rows, _ = _fetch_products_to_push_rows(engine, period_value, store_code, vendor_code, min(limit, 10))
+    reactivation_rows, period_label = _fetch_clients_without_purchase_rows(engine, period_value, store_code, vendor_code, limit)
+    decline_rows, _ = _fetch_client_decline_rows(engine, period_value, store_code, limit, vendor_code)
+    push_rows, _ = _fetch_products_to_push_rows(engine, period_value, store_code, vendor_code, limit)
     return {
         "snapshot": snapshot,
         "period_label": period_label or snapshot.get("period_label") or period_value,
